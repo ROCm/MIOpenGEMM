@@ -27,6 +27,11 @@ public:
 
   std::map<std::string, unsigned> params;
   
+ 
+ static std::vector<std::tuple<gemmgeometry::Geometry, std::string>> kernel_cache;
+
+
+  
 public:
 
 

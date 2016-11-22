@@ -24,7 +24,7 @@ float Geometry::distance(const Geometry & gg){
   
   float distance;
   
-  if (tA != gg.tA || tB != gg.tB || m < gg.m || n < gg.n){
+  if (tA != gg.tA || tB != gg.tB || isColMajor != gg.isColMajor || m < gg.m || n < gg.n){
     distance = std::numeric_limits<float>::max();
   } 
    

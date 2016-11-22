@@ -161,8 +161,8 @@ def get_tinygemm_results():
   filefound = False
   #offset, enforce deterministic
   tinygemm_results = {'00': {}, '10': {}, '01':{} } 
-  for key in tinygemm_results.keys():
-    tinygemm_results[key] = {'gflop/s':{}, 'hyperparams':{}, 'timesfound':{}}
+  #for key in tinygemm_results.keys():
+    #tinygemm_results[key] = {'gflop/s':{}, 'hyperparams':{}, 'timesfound':{}}
   
   for newfile in files:    
     geomfrag =  newfile.split("ed")[1][2::].split(".txt")[0]
@@ -171,15 +171,47 @@ def get_tinygemm_results():
     tinykey = '%d%d'%(offset, ed)
     filly = open(os.path.join(deepbenchresults_dir, newfile))
     allnewlines = filly.readlines()
+    for l in allnewlines:
+      if "INPUT_CALL" in l:
+        if geomfrag not in tinygemm_results[tinykey].keys():
+          tinygemm_results[tinykey][geomfrag] = {}
+           
+        tinygemm_results[tinykey][geomfrag]["INPUT_CALL"] = l
+        break
+        
     kern_new, time_found, gf_new = allnewlines[-2].split()
     tf_new = float(gf_new)/1000.
-    tinygemm_results[tinykey]["gflop/s"][geomfrag] = tf_new
-    tinygemm_results[tinykey]["hyperparams"][geomfrag] = kern_new
-    tinygemm_results[tinykey]["timesfound"][geomfrag] = time_found
+    tinygemm_results[tinykey][geomfrag]["gflop/s"] = tf_new
+    tinygemm_results[tinykey][geomfrag]["hyperparams"] = kern_new
+    tinygemm_results[tinykey][geomfrag]["timesfound"] = time_found
 
   return tinygemm_results
-    
+
+def get_kernel_cache_string():
+
+  add_best_string = ""
   
+  tgrs = get_tinygemm_results()
+  for okey in ["00", "10"]:
+    for k in tgrs[okey].keys():
+      geom = {}
+      for kv in tgrs[okey][k]["INPUT_CALL"].split(": ")[1].strip().split(" "):
+        key, val = kv.split(":")
+        geom[key] = int(val)
+      
+      for k2 in ['tA', 'tB', 'tC','colMaj']:
+        geom[k2] = "true"*(geom[k2] == 1) + "false"*(geom[k2] == 0)
+        
+      add_best_string  += '  std::make_tuple<gemmgeometry::Geometry, std::string> ( {%s, %s, %s, %s, %d, %d, %d, %d, %d, %d} ,   "%s" ), \n'%(geom['colMaj'], geom['tA'], geom['tB'], geom['tC'], geom['lda'], geom['ldb'], geom['ldc'], geom['m'], geom['n'], geom['k'], tgrs[okey][k]["hyperparams"])
+
+  kernel_cache_string = r"""
+std::vector<std::tuple<gemmgeometry::Geometry, std::string> > 
+HyperParams::kernel_cache = {
+%s
+};
+"""%(add_best_string)
+  
+  print kernel_cache_string
 
 def plot_full_summary():
 
@@ -199,7 +231,7 @@ def plot_full_summary():
   
   tg_tfs = {}
   for key in ["10", "01", "00"]:
-    tg_tfs[key] = np.array([tgresults[key]["gflop/s"][frag] for frag in frags])
+    tg_tfs[key] = np.array([tgresults[key][frag]["gflop/s"] for frag in frags])
   
  
   tenresults = get_tensile_results()
@@ -262,9 +294,9 @@ def plot_tensile_tinygemm():
   tg_tfs = {}
   for key in ["10", "01", "00"]:
     
-    print len(tgresults[key]["gflop/s"].keys())
+    print len(tgresults[key].keys())
     print len(get_baidu_problem_frags())
-    tg_tfs[key] = np.array([tgresults[key]["gflop/s"][frag] for frag in get_baidu_problem_frags()])
+    tg_tfs[key] = np.array([tgresults[key][frag]["gflop/s"] for frag in get_baidu_problem_frags()])
   
  
   tenresults = get_tensile_results()

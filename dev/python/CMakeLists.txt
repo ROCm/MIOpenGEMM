@@ -27,4 +27,9 @@ target_link_libraries(pytinygemm LINK_PUBLIC tinygemm  ${OpenCL_LIBRARY})
 
 execute_process(COMMAND python-config --cflags OUTPUT_VARIABLE CFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
 
+string(REPLACE "-Wall" "" CFLAGS ${CFLAGS})
+string(REPLACE "-Wextra" "" CFLAGS ${CFLAGS})
+string(REPLACE "-pedantic" "" CFLAGS ${CFLAGS})
+
 SET(CMAKE_CXX_FLAGS  " ${CFLAGS} --std=c++11")
+

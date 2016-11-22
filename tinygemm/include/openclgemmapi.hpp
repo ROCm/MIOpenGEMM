@@ -25,9 +25,9 @@ namespace clgemm{
 tinygemm::TinyGemmSolution
 find(
 float allotted_time,
-cl_context & context,
+cl_context & context, //TODO remove
 cl_command_queue & command_queue,
-cl_device_id & device_id_to_use,
+cl_device_id & device_id_to_use, //TODO remove
 cl_mem a,   
 cl_mem b,
 cl_mem c,

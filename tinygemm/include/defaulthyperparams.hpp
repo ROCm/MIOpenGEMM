@@ -1,4 +1,10 @@
-//std::map<std::string, std::string> kernel_cache = {
+#ifndef DEFAULTHYPERPARAMS
+#define DEFAULTHYPERPARAMS
+
+#include "problemgeometry.hpp"
+
+//namespace hyperparams{
+//}
 
 //'m1024_n128_k3072_tA1_tB0': 'Y96_X64_y6_x4_U16_P1_GA2_APLU0_BPLU0_PU1_LIW1_MIW1_ET1_ICE5_UFO0',
 //'m1024_n16_k3072_tA1_tB0': 'Y16_X16_y2_x2_U32_P1_GA2_APLU0_BPLU1_PU0_LIW0_MIW0_ET1_ICE9_UFO0',
@@ -96,3 +102,6 @@
 //'m7680_n64_k2560_tA1_tB0': 'Y96_X64_y6_x4_U32_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ET1_ICE3_UFO0'
 
 //}
+
+
+#endif
