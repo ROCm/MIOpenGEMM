@@ -22,7 +22,11 @@ class Geometry{
     
     std::string get_string() const;
     
+    /* how far away is gg ? Note that this is not a true distance: it is not sym.*/
+    float distance(const Geometry & gg);
+    
 };
+
 
 }
 
