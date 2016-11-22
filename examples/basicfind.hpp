@@ -17,7 +17,7 @@
 
   
 template <typename TFloat> 
-void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned n, unsigned k, unsigned lda, unsigned ldb, unsigned ldc, double alpha, double beta, char floattype, float allotted_time, bool verbose, std::string logfile, bool enforce_deterministic, unsigned n_postfind_runs){
+void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned n, unsigned k, unsigned lda, unsigned ldb, unsigned ldc, unsigned a_offset, unsigned b_offset, unsigned c_offset, double alpha, double beta, char floattype, float allotted_time, bool verbose, std::string logfile, bool enforce_deterministic, unsigned n_postfind_runs){
   
   /* OpenCL boilerplate. This might be different depending on your system. 
    * tinygemm does not help in setting up OpenCL boilerplate, 
@@ -41,18 +41,18 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
   command_queue = clCreateCommandQueue(context, device_id_to_use, CL_QUEUE_PROFILING_ENABLE, &ret);  
   /* fill matrices with random floats. It is important to fill them with random floats, 
   * as if they're integers, the kernel can, and doe, cheat! (runs faster) */
-  size_t n_a = lda * (tA == isColMajor ? m : k);
+  size_t n_a = lda * (tA == isColMajor ? m : k) + a_offset;
   std::vector<TFloat> v_a(n_a, 0); 
   for (size_t i = 0; i < n_a; ++i){
     v_a[i] = TFloat(rand() % 1000) / 1000. - 0.4;
   }
-  size_t n_b = ldb * (tB == isColMajor ? k : n);  
+  size_t n_b = ldb * (tB == isColMajor ? k : n) + b_offset;  
   std::vector<TFloat> v_b(n_b, 0); 
   for (size_t i = 0; i < n_b; ++i){
     v_b[i] = TFloat(rand() % 1000) / 1000. - 0.5;
   }
   
-  size_t n_c = ldc * (tC == isColMajor ? m : n);   
+  size_t n_c = ldc * (tC == isColMajor ? m : n) + c_offset;   
   std::vector<TFloat> v_c(n_c, 0); 
   for (size_t i = 0; i < n_c; ++i){
     v_c[i] = TFloat(rand() % 1000) / 500 - 1.;
@@ -74,7 +74,7 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
   /* ***************
    * Find a kernel *
    * ***************/
-  gemmgeometry::Geometry geometry(isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k);
+  gemmgeometry::Geometry geometry(isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, a_offset, b_offset, c_offset);
   tinygemm::TinyGemmSolution soln = clgemm::find(allotted_time, context, command_queue, device_id_to_use, a_gpu, b_gpu, c_gpu, enforce_deterministic, floattype,  geometry, alpha, beta, verbose, logfile);
 
   
@@ -117,8 +117,9 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
       ret = clSetKernelArg(betac_kernel, 0, sizeof(unsigned), &betac_kernel_worksize_params.at("dim_coal"));
       ret = clSetKernelArg(betac_kernel, 1, sizeof(unsigned), &betac_kernel_worksize_params.at("dim_uncoal"));
       ret = clSetKernelArg(betac_kernel, 2, sizeof(unsigned), &ldc);
-      ret = clSetKernelArg(betac_kernel, 3, sizeof(cl_mem), (void *)&c_gpu);
-      ret = clSetKernelArg(betac_kernel, 4, sizeof(TFloat), &beta_true_type); 
+      ret = clSetKernelArg(betac_kernel, 3, sizeof(unsigned), &c_offset);
+      ret = clSetKernelArg(betac_kernel, 4, sizeof(cl_mem), (void *)&c_gpu);
+      ret = clSetKernelArg(betac_kernel, 5, sizeof(TFloat), &beta_true_type); 
     }
     
     /* setting up main_kernel */
@@ -139,6 +140,11 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
     ret = clSetKernelArg(main_kernel, 8, sizeof(unsigned), &m);
     ret = clSetKernelArg(main_kernel, 9, sizeof(unsigned), &n);
     ret = clSetKernelArg(main_kernel, 10, sizeof(unsigned), &k);
+    ret = clSetKernelArg(main_kernel, 11, sizeof(unsigned), &a_offset);
+    ret = clSetKernelArg(main_kernel, 12, sizeof(unsigned), &b_offset);
+    ret = clSetKernelArg(main_kernel, 13, sizeof(unsigned), &c_offset);  
+  
+  
     main_kernel_worksize_params = soln.get_main_kernel_worksize_params(m,n);
   
   

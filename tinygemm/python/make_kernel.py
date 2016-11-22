@@ -1286,10 +1286,21 @@ __kernel void gpu_%s("""%(get_kernelname()),
   const unsigned ldc,
   const unsigned m,
   const unsigned n,
-  const unsigned k 
-//  __global TFLOAT       *          tommaguchi
+  const unsigned k,
+  const unsigned a_offset,
+  const unsigned b_offset,
+  const unsigned c_offset  
   )
 {
+
+  /* In OpenCL, host code does not have access to raw data pointers. */
+  /* Host code works with cl_mem objects, which encapsulate and hide raw points. */
+  /* For this reason, host code CANNOT simply increment pointers to data, */
+  /* as one can do with pointers for CPU gemm, or cublas gemm for that matter. */
+  
+  a += a_offset;
+  b += b_offset;
+  c += c_offset;
 
   %s 
   %s        

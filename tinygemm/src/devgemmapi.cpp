@@ -95,22 +95,22 @@ public:
 
   void benchgemm_cpu(std::vector<std::string> cpu_algs){
     if (false){
-      slowcpugemm::gemm_3fors_cpu<TFloat>(gg.isColMajor, gg.tA, gg.tB, gg.tC, gg.lda, gg.ldb, gg.ldc, gg.m, gg.n, gg.k, a, b, c, alpha, beta, cpu_algs, mowri);  
+      slowcpugemm::gemm_3fors_cpu<TFloat>(gg.isColMajor, gg.tA, gg.tB, gg.tC, gg.lda, gg.ldb, gg.ldc, gg.m, gg.n, gg.k, a + gg.a_offset, b + gg.b_offset, c + gg.c_offset, alpha, beta, cpu_algs, mowri);  
     }
   }
 
 
   size_t get_c_memsize(){
-    auto c_memsize = sizingup::get_n_elements_padded(gg.m, gg.n, gg.ldc, gg.isColMajor, gg.tC)*sizeof(TFloat);
+    auto c_memsize = sizingup::get_n_elements_padded(gg.m, gg.n, gg.ldc, gg.isColMajor, gg.tC, gg.c_offset)*sizeof(TFloat);
     return c_memsize;
   }
 
   size_t get_a_memsize(){
-    return sizingup::get_n_elements_padded(gg.m, gg.k, gg.lda, gg.isColMajor, gg.tA)*sizeof(TFloat);
+    return sizingup::get_n_elements_padded(gg.m, gg.k, gg.lda, gg.isColMajor, gg.tA, gg.a_offset)*sizeof(TFloat);
   }
   
   size_t get_b_memsize(){
-    return sizingup::get_n_elements_padded(gg.k, gg.n, gg.ldb, gg.isColMajor, gg.tB)*sizeof(TFloat);
+    return sizingup::get_n_elements_padded(gg.k, gg.n, gg.ldb, gg.isColMajor, gg.tB, gg.b_offset)*sizeof(TFloat);
   }
    
   
@@ -201,7 +201,7 @@ public:
         
         if (do_test != 0){
           /* compare */
-          accuracytests::accuracy_test(gg.isColMajor, gg.tC, gg.m, gg.n, gg.ldc, c_true_for_test, c, mowri, 1e-6);
+          accuracytests::accuracy_test(gg.isColMajor, gg.tC, gg.m, gg.n, gg.ldc, c_true_for_test, c, gg.c_offset, mowri, 1e-6);
         }
       }
     }
@@ -228,7 +228,7 @@ void hello(){
 
 
 template <typename TFloat>
-void benchgemm(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned n, unsigned k, TFloat alpha, const TFloat * a, unsigned lda, const TFloat * b, unsigned ldb, TFloat beta, TFloat * c, unsigned ldc, std::vector<std::string> cpu_algs, std::vector<std::vector<std::string> > gpu_kernel_filenames, bool capture_output, std::string & output, const TFloat * c_true_for_test, unsigned do_test, unsigned n_runs, std::string outputfilename, bool findfirst, float allotted_time, bool enforce_deterministic){
+void benchgemm(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned n, unsigned k, TFloat alpha, const TFloat * a, unsigned lda, unsigned a_offset, const TFloat * b, unsigned ldb, unsigned b_offset, TFloat beta, TFloat * c, unsigned ldc, unsigned c_offset, std::vector<std::string> cpu_algs, std::vector<std::vector<std::string> > gpu_kernel_filenames, bool capture_output, std::string & output, const TFloat * c_true_for_test, unsigned do_test, unsigned n_runs, std::string outputfilename, bool findfirst, float allotted_time, bool enforce_deterministic){
   
   //if (findfirst == true){
     //gemmgeometry::Geometry gg(isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k);  
@@ -249,7 +249,7 @@ void benchgemm(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
     throw std::runtime_error("allotted_time is positive, so findfirst was expected to be true. We are being pedantic here, but please set allotted_time to a negative value. Just checking that you're aware that allotted_time is specific to the find algorith");
   }
   
-  gemmgeometry::Geometry gg(isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k);  
+  gemmgeometry::Geometry gg(isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, a_offset, b_offset, c_offset);  
   std::stringstream buffer;
   auto cout_buff = std::cout.rdbuf();
   if (capture_output == true){
@@ -281,9 +281,9 @@ void benchgemm(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
   }
 }
 
-template void benchgemm(bool isColMajor, bool tA, bool tB, bool tC,  unsigned m, unsigned n, unsigned k, float alpha, const float * a, unsigned lda, const float * b, unsigned ldb, float beta, float * c, unsigned ldc, std::vector<std::string> cpu_algs, std::vector<std::vector<std::string> > gpu_kernel_filenames, bool capture_output, std::string & output, const float * c_true_for_test, unsigned do_test, unsigned n_runs, std::string outputfilename, bool findfirst, float allotted_time, bool enforce_deterministic);
+template void benchgemm(bool isColMajor, bool tA, bool tB, bool tC,  unsigned m, unsigned n, unsigned k, float alpha, const float * a, unsigned lda, unsigned a_offset, const float * b, unsigned ldb, unsigned b_offset, float beta, float * c, unsigned ldc, unsigned c_offset, std::vector<std::string> cpu_algs, std::vector<std::vector<std::string> > gpu_kernel_filenames, bool capture_output, std::string & output, const float * c_true_for_test, unsigned do_test, unsigned n_runs, std::string outputfilename, bool findfirst, float allotted_time, bool enforce_deterministic);
 
-template void benchgemm(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned n, unsigned k, double alpha, const double * a, unsigned lda, const double * b, unsigned ldb, double beta, double * c, unsigned ldc, std::vector<std::string> cpu_algs, std::vector<std::vector<std::string> > gpu_kernel_filenames, bool capture_output, std::string & output, const double * c_true_for_test, unsigned do_test, unsigned n_runs, std::string outputfilename, bool findfirst, float allotted_time, bool enforce_deterministic);
+template void benchgemm(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned n, unsigned k, double alpha, const double * a, unsigned lda, unsigned a_offset, const double * b, unsigned ldb, unsigned b_offset, double beta, double * c, unsigned ldc, unsigned c_offset, std::vector<std::string> cpu_algs, std::vector<std::vector<std::string> > gpu_kernel_filenames, bool capture_output, std::string & output, const double * c_true_for_test, unsigned do_test, unsigned n_runs, std::string outputfilename, bool findfirst, float allotted_time, bool enforce_deterministic);
 
 
 

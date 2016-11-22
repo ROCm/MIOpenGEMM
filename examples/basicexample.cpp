@@ -32,8 +32,12 @@ void basicexample(){
   bool enforce_deterministic = false;
   unsigned n_postfind_runs = 20;
   
+
+  unsigned a_offset = 100;
+  unsigned b_offset = 200;
+  unsigned c_offset = 300;
   
-  basicfind<TFloat>(isColMajor, tA, tB, tC, m, n, k, lda, ldb, ldc, alpha, beta, floattype, allotted_time, verbose, logfile, enforce_deterministic, n_postfind_runs);
+  basicfind<TFloat>(isColMajor, tA, tB, tC, m, n, k, lda, ldb, ldc, a_offset, b_offset, c_offset, alpha, beta, floattype, allotted_time, verbose, logfile, enforce_deterministic, n_postfind_runs);
   
   
 }

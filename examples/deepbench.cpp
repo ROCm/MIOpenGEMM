@@ -165,10 +165,14 @@ int main(){
       unsigned ldb = (tB == isColMajor ? n : k) + (ldx_offset == 1 ? 7 : 0);
       unsigned ldc = (tC == isColMajor ? n : m) + (ldx_offset == 1 ? 13 : 0);
       
+      unsigned a_offset = 0;
+      unsigned b_offset = 0;
+      unsigned c_offset = 0;
+      
       unsigned n_postfind_runs = 0;
       
       
-      basicfind<float>(isColMajor, tA, tB, tC, m, n, k, lda, ldb, ldc, alpha, beta, floattype, allotted_time, verbose, ss_logfile.str(), enforce_deterministic, n_postfind_runs);    
+      basicfind<float>(isColMajor, tA, tB, tC, m, n, k, lda, ldb, ldc, a_offset, b_offset, c_offset, alpha, beta, floattype, allotted_time, verbose, ss_logfile.str(), enforce_deterministic, n_postfind_runs);    
     }
   }
   

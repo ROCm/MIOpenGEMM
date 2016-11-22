@@ -14,10 +14,13 @@
 #define TFLOAT double
 
 __attribute__((reqd_work_group_size(N_WORK_ITEMS_PER_GROUP,1,1)))
-__kernel void heeltemal(const unsigned dim_coal, const unsigned dim_uncoal, const unsigned ldc, __global TFLOAT * c, TFLOAT beta){
+__kernel void heeltemal(const unsigned dim_coal, const unsigned dim_uncoal, const unsigned ldc, const unsigned c_offset, __global TFLOAT * c, TFLOAT beta){
 /* n_work_groups : number of work groups (determined by host from dimensions of the problem)
  * dim_coal : less than or equal to ldc, this is size in the contiguous direction (m for c matrix if col contiguous and not transposed) 
  * dim_uncol : the other dimension of the matrix */
+
+
+  c += c_offset;
  
   unsigned group_id = get_group_id(0);
   unsigned local_id = get_local_id(0);

@@ -5,7 +5,7 @@ import numpy as np
 import numpy.random as npr
 import time
 import sys
-sys.path.append("../../build/dev/python")
+sys.path.append("../../../build/dev/python")
 import pytinygemm
 
 
@@ -104,26 +104,27 @@ def get_data_dimensions(matrix_mnk, factorwaste, constantwaste, data_geometry):
   
   return data_dimensions
 
-def set_stroud_memory(x_true, ldx, is_transpose, is_colmajor, npftype):
+def set_stroud_memory(x_true, ldx, is_transpose, is_colmajor, offset, npftype):
   """
-  because strouding is cooling than striding
+  stroud == stride 
   """
   height, width = x_true.shape
   x_mem = None
   if (is_transpose + is_colmajor) % 2 == 0:
-    x_mem = 10.*np.array(npr.randint(-10, 10, size = (height, ldx)), dtype = npftype)
-    x_mem[0:height, 0:width] = x_true
+    x_mem = 10.*np.array(npr.randint(-10, 10, size = (height*ldx + offset, )), dtype = npftype)
+    x_mem_postoff = x_mem[offset::].reshape(height, ldx)
+    x_mem_postoff[0:height, 0:width] = x_true
   else:
-    x_mem = 10.*np.array(npr.randint(-10, 10, size = (width, ldx)), dtype = npftype)
-    x_mem[0:width, 0:height] = x_true.T
-  
+    x_mem = 10.*np.array(npr.randint(-10, 10, size = (width*ldx + offset, )), dtype = npftype)
+    x_mem_postoff = x_mem[offset::].reshape(width, ldx)
+    x_mem_postoff[0:width, 0:height] = x_true.T
   return x_mem
 
 
 
 
 def go_experiment(kernel_savedir = None, kernel_span = {'Y_X_y_x' :[[64, 64, 4, 4]], 'unrolls': [16], 'pads' : [1], 'group_allocations' : [1], 'work_item_load_a_pll_to_unrolls' : [0],'work_item_load_b_pll_to_unrolls' : [0],'unroll_pragmas' : [0,1], 'load_to_lds_interwovens' : [0], 'use_edge_tricks' :[1], 'n_work_items_per_c_elms': [1], 'unroll_for_offsets' : [0]}, 
-matrix_mnk = {'m': 640, 'n':2560, 'k':11213}, data_geometry = {'tA':False, 'tB':False, 'tC': False, 'isColMajor':True}, double_type = np.float32, outputfilename = "",factorwaste = {'a':1, 'b':1, 'c':1}, constantwaste = {'a':5, 'b':7, 'c':13}, n_runs = 7, do_test = True, findfirst = False, allotted_time = -1., enforce_deterministic = False, forcefilewrite = False):
+matrix_mnk = {'m': 640, 'n':2560, 'k':11213}, data_geometry = {'tA':False, 'tB':False, 'tC': False, 'isColMajor':True}, double_type = np.float32, outputfilename = "",factorwaste = {'a':1, 'b':1, 'c':1}, constantwaste = {'a':5, 'b':7, 'c':13}, offsets = {'a': 10, 'b': 33, 'c': 129}, n_runs = 7, do_test = True, findfirst = False, allotted_time = -1., enforce_deterministic = False, forcefilewrite = False):
   """
   kernel_savedir
     if findfirst == False : 
@@ -200,9 +201,9 @@ matrix_mnk = {'m': 640, 'n':2560, 'k':11213}, data_geometry = {'tA':False, 'tB':
   b_up = 0.1*np.array(npr.randint(-10, 11, size = (data_dimensions['k'], data_dimensions['n'])), dtype = double_type)
   c_pre_up = 0.1*np.array(npr.randint(-10, 11, size = (data_dimensions['m'], data_dimensions['n'])), dtype = double_type)
   
-  a_mem = set_stroud_memory(a_up, data_dimensions['lda'], data_geometry['tA'], data_geometry['isColMajor'], double_type)
-  b_mem = set_stroud_memory(b_up, data_dimensions['ldb'], data_geometry['tB'], data_geometry['isColMajor'], double_type)
-  c_pre_mem = set_stroud_memory(c_pre_up, data_dimensions['ldc'], data_geometry['tC'], data_geometry['isColMajor'], double_type)
+  a_mem = set_stroud_memory(a_up, data_dimensions['lda'], data_geometry['tA'], data_geometry['isColMajor'], offsets['a'], double_type)
+  b_mem = set_stroud_memory(b_up, data_dimensions['ldb'], data_geometry['tB'], data_geometry['isColMajor'], offsets['b'], double_type)
+  c_pre_mem = set_stroud_memory(c_pre_up, data_dimensions['ldc'], data_geometry['tC'], data_geometry['isColMajor'], offsets['c'], double_type)
   
   REDUCE_THE_GEOMETRY_IS_DEPRECATED = True
   reduced_data_geometry = None
@@ -254,7 +255,7 @@ matrix_mnk = {'m': 640, 'n':2560, 'k':11213}, data_geometry = {'tA':False, 'tB':
           """
           
   
-  results = pytinygemm.pytinygemm(data_geometry['isColMajor'], data_geometry['tA'], data_geometry['tB'], data_geometry['tC'], data_dimensions['m'], data_dimensions['n'], data_dimensions['k'], alpha, a_mem, data_dimensions['lda'], b_mem, data_dimensions['ldb'], beta, data_dimensions['ldc'], cpu_algs_list, gpu_kernel_filenames_list_list, capture_output = False, c_pre_mem = c_pre_mem.ravel(), c_pos_up = c_pos_up.ravel(), do_test = do_test, n_runs = n_runs, outputfilename = outputfilename, findfirst = findfirst, allotted_time = allotted_time, enforce_deterministic = enforce_deterministic)
+  results = pytinygemm.pytinygemm(data_geometry['isColMajor'], data_geometry['tA'], data_geometry['tB'], data_geometry['tC'], data_dimensions['m'], data_dimensions['n'], data_dimensions['k'], alpha, a_mem, data_dimensions['lda'], offsets['a'], b_mem, data_dimensions['ldb'], offsets['b'], beta, data_dimensions['ldc'], offsets['c'], cpu_algs_list, gpu_kernel_filenames_list_list, capture_output = False, c_pre_mem = c_pre_mem.ravel(), c_pos_up = c_pos_up.ravel(), do_test = do_test, n_runs = n_runs, outputfilename = outputfilename, findfirst = findfirst, allotted_time = allotted_time, enforce_deterministic = enforce_deterministic)
   
 
   ######## the benchmarking cartesian product case #########################################################

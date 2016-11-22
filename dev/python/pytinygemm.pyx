@@ -10,7 +10,7 @@ cimport cython.floating
 cdef extern from "devgemmapi.hpp" namespace "devgemmns":	
   void hello() except +
 
-  void benchgemm[TFloat](bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned n, unsigned k, TFloat alpha, const TFloat * a, unsigned lda, const TFloat * b, unsigned ldb, TFloat beta, TFloat * c, unsigned ldc, vector[string] cpu_algs, vector[vector[string]] gpu_kernel_filenames, bool capture_output, string & output, const TFloat * c_true_for_test, unsigned do_test, unsigned n_runs, string outputfilename, bool findfirst, float allotted_time, bool enforce_deterministic) except +;
+  void benchgemm[TFloat](bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned n, unsigned k, TFloat alpha, const TFloat * a, unsigned lda, unsigned a_offset, const TFloat * b, unsigned ldb, unsigned b_offset, TFloat beta, TFloat * c, unsigned ldc, unsigned c_offset, vector[string] cpu_algs, vector[vector[string]] gpu_kernel_filenames, bool capture_output, string & output, const TFloat * c_true_for_test, unsigned do_test, unsigned n_runs, string outputfilename, bool findfirst, float allotted_time, bool enforce_deterministic) except +;
 
 
 
@@ -55,7 +55,7 @@ def dangerwrap(f):
   return q.get()
 
 
-def basetinygemm(datatype, isColMajor, tA, tB, tC, m, n, k, alpha, cython.floating [:] a, lda, cython.floating [:] b, ldb, beta, ldc, cpu_algs_list, gpu_kernel_filenames_list_list, capture_output, cython.floating [:] c_pre_mem, cython.floating [:] c_pos_up, do_test, n_runs, outputfilename, findfirst, allotted_time, enforce_deterministic):
+def basetinygemm(datatype, isColMajor, tA, tB, tC, m, n, k, alpha, cython.floating [:] a, lda, a_offset, cython.floating [:] b, ldb, b_offset, beta, ldc, c_offset, cpu_algs_list, gpu_kernel_filenames_list_list, capture_output, cython.floating [:] c_pre_mem, cython.floating [:] c_pos_up, do_test, n_runs, outputfilename, findfirst, allotted_time, enforce_deterministic):
 
   cdef string astring  
   cdef vector[string] filenames_vec
@@ -74,7 +74,7 @@ def basetinygemm(datatype, isColMajor, tA, tB, tC, m, n, k, alpha, cython.floati
     cpu_algs_vec.push_back(alg)  
   
       
-  cdef void (*cw_gemm) (bool, bool, bool, bool, unsigned, unsigned, unsigned, cython.floating, const cython.floating * , unsigned, const cython.floating * , unsigned, cython.floating, cython.floating *, unsigned , vector[string], vector[vector[string]], bool capture_output, string & output, const cython.floating *, unsigned, unsigned, string, bool, float, bool) except+
+  cdef void (*cw_gemm) (bool, bool, bool, bool, unsigned, unsigned, unsigned, cython.floating, const cython.floating *, unsigned, unsigned,  const cython.floating *, unsigned, unsigned,  cython.floating, cython.floating *, unsigned, unsigned, vector[string], vector[vector[string]], bool capture_output, string & output, const cython.floating *, unsigned, unsigned, string, bool, float, bool) except+
 
   X = [1]
   if cython.floating is double:
@@ -83,7 +83,7 @@ def basetinygemm(datatype, isColMajor, tA, tB, tC, m, n, k, alpha, cython.floati
   else:
     cw_gemm=&benchgemm[float]
     
-  cw_gemm(isColMajor, tA, tB, tC, m,n,k, alpha, &a[0],lda, &b[0], ldb, beta, &c_pre_mem[0], ldc, cpu_algs_vec, filenames_vec_vec, capture_output, captured_output, &c_pos_up[0], do_test, n_runs, outputfilename, findfirst, allotted_time, enforce_deterministic)
+  cw_gemm(isColMajor, tA, tB, tC, m,n,k, alpha, &a[0],lda, a_offset, &b[0], ldb, b_offset, beta, &c_pre_mem[0], ldc, c_offset, cpu_algs_vec, filenames_vec_vec, capture_output, captured_output, &c_pos_up[0], do_test, n_runs, outputfilename, findfirst, allotted_time, enforce_deterministic)
   
   X = np.array(c_pos_up)#.reshape(m, ldc)
 
@@ -99,7 +99,7 @@ def pyhello():
   
   
 
-def pytinygemm(isColMajor, tA, tB, tC, m, n, k, alpha, a, lda, b, ldb, beta, ldc, cpu_algs_list, gpu_kernel_filenames_list_list, capture_output, c_pos_up, c_pre_mem, do_test, n_runs, outputfilename, findfirst, allotted_time, enforce_deterministic):
+def pytinygemm(isColMajor, tA, tB, tC, m, n, k, alpha, a, lda, a_offset, b, ldb, b_offset, beta, ldc, c_offset, cpu_algs_list, gpu_kernel_filenames_list_list, capture_output, c_pos_up, c_pre_mem, do_test, n_runs, outputfilename, findfirst, allotted_time, enforce_deterministic):
   """
   isColMajor:
     currently only 0 is supported
@@ -153,5 +153,5 @@ def pytinygemm(isColMajor, tA, tB, tC, m, n, k, alpha, a, lda, b, ldb, beta, ldc
   if not outputfilename:
     outputfilename = ""
   
-  return dangerwrap(lambda : basetinygemm("not important TODO remove", isColMajor, tA, tB, tC, m, n, k, alpha, a.ravel(), lda, b.ravel(), ldb, beta, ldc, cpu_algs_list, gpu_kernel_filenames_list_list, capture_output, c_pre_mem = c_pre_mem.ravel(), c_pos_up = c_pos_up.ravel(), do_test = do_test, n_runs = n_runs, outputfilename = outputfilename, findfirst = findfirst, allotted_time = allotted_time, enforce_deterministic = enforce_deterministic))
+  return dangerwrap(lambda : basetinygemm("not important TODO remove", isColMajor, tA, tB, tC, m, n, k, alpha, a.ravel(), lda, a_offset, b.ravel(), ldb, b_offset, beta, ldc, c_offset, cpu_algs_list, gpu_kernel_filenames_list_list, capture_output, c_pre_mem = c_pre_mem.ravel(), c_pos_up = c_pos_up.ravel(), do_test = do_test, n_runs = n_runs, outputfilename = outputfilename, findfirst = findfirst, allotted_time = allotted_time, enforce_deterministic = enforce_deterministic))
   

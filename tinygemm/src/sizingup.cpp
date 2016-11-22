@@ -19,36 +19,37 @@ void set_workforce(size_t & n_work_groups, size_t & local_work_size, size_t & gl
 }
 
 
-size_t get_n_elements_padded(unsigned h, unsigned w, unsigned ldx, bool isColMajor, bool tX){
+size_t get_n_elements_padded(unsigned h, unsigned w, unsigned ldx, bool isColMajor, bool tX, unsigned offset){
   size_t nelements = ((unsigned(isColMajor) + unsigned(tX))%2 == 1) ? 
   static_cast<size_t>(ldx)*static_cast<size_t>(w):
   static_cast<size_t>(ldx)*static_cast<size_t>(h);
+  nelements += offset;
   return nelements;
 }
 
 
 void check_sizes_ok_for_unsigned(const gemmgeometry::Geometry & gg){
-  check_sizes_ok_for_unsigned(gg.isColMajor, gg.tA, gg.tB, gg.tC, gg.m, gg.n, gg.k, gg.lda, gg.ldb, gg.ldc);
+  check_sizes_ok_for_unsigned(gg.isColMajor, gg.tA, gg.tB, gg.tC, gg.m, gg.n, gg.k, gg.lda, gg.ldb, gg.ldc, gg.a_offset, gg.b_offset, gg.c_offset);
 }
 
-void check_sizes_ok_for_unsigned(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned n, unsigned k, unsigned lda, unsigned ldb, unsigned ldc){
+void check_sizes_ok_for_unsigned(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned n, unsigned k, unsigned lda, unsigned ldb, unsigned ldc, unsigned a_offset, unsigned b_offset, unsigned c_offset){
   
   size_t max_size = std::pow(2, 8*sizeof(unsigned));
 
   std::string base_frag("is too large : unsigned will wrap in address space. Code needs modification. \n");
   std::string errm = "";
 
-  if (sizingup::get_n_elements_padded(m, k, lda, isColMajor, tA)  >= max_size){
+  if (sizingup::get_n_elements_padded(m, k, lda, isColMajor, tA, a_offset)  >= max_size){
     errm += "a";
     errm += base_frag;
   }
 
-  if (sizingup::get_n_elements_padded(k, n, ldb, isColMajor, tB)  >= max_size){
+  if (sizingup::get_n_elements_padded(k, n, ldb, isColMajor, tB, b_offset)  >= max_size){
     errm += "b";
     errm += base_frag;
   }
 
-  if (sizingup::get_n_elements_padded(m, n, ldc, isColMajor, tC)  >= max_size){
+  if (sizingup::get_n_elements_padded(m, n, ldc, isColMajor, tC, c_offset)  >= max_size){
     errm += "c";
     errm += base_frag;
   }

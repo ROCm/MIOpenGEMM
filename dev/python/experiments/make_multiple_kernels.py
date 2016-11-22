@@ -1,5 +1,5 @@
 import sys
-sys.path.append("../../tinygemm/python")
+sys.path.append("../../../tinygemm/python")
 
 import make_kernel
 reload(make_kernel)

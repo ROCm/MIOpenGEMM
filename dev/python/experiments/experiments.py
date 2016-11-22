@@ -8,6 +8,8 @@ reload(utility_functions)
 
 from IPython.core.debugger import Tracer
 
+sys.path.append("../deepbench")
+
 import baidu_bench
 reload(baidu_bench)
 

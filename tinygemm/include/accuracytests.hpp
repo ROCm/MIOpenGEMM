@@ -5,10 +5,12 @@
 namespace accuracytests {
 
 template <typename TFloat>
-void accuracy_test(bool isColMajor, bool tC, unsigned m, unsigned n, unsigned ldc, const TFloat * c_true, const TFloat * c_computed, outputwriting::OutputWriter & mowri, double l1_rel_err_tol){
+void accuracy_test(bool isColMajor, bool tC, unsigned m, unsigned n, unsigned ldc, const TFloat * c_true, const TFloat * c_computed, unsigned c_offset, outputwriting::OutputWriter & mowri, double l1_rel_err_tol){
    
   mowri << "Performing accuracy test. " << Flush;
-
+  
+  c_computed += c_offset;
+  
   /* The different cases of tC, isColMajor are handled in this block */
   if (isColMajor == false){
     std::swap(n,m);

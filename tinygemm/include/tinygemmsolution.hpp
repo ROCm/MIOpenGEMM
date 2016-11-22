@@ -5,6 +5,8 @@
 #include <string> 
 #include <map>
 
+
+#include "problemgeometry.hpp"
 namespace tinygemm{
 
 class TinyGemmSolutionStatistics{
@@ -12,16 +14,20 @@ class TinyGemmSolutionStatistics{
     /* the median time and flop/s recorded with the(se) kernel(s) on the specified benchmarked problem */
     float median_benchmark_time;
     float median_benchmark_gflops;
-    unsigned benchmarked_m, benchmarked_n, benchmared_k;
-    
+    gemmgeometry::Geometry benchmarked_geometry; //, benchmarked_n, benchmared_k;
     /* the time in seconds at which this solution was discovered  */
-    float time_when_benchmarked;
+    float solution_discovery_time;
+    
+    TinyGemmSolutionStatistics(float median_benchmark_time, float median_benchmark_gflops, gemmgeometry::Geometry benchmarked_geometry, float solution_discovery_time):median_benchmark_time(median_benchmark_time), median_benchmark_gflops(median_benchmark_gflops), benchmarked_geometry(benchmarked_geometry), solution_discovery_time(solution_discovery_time) {}
   
 };
 
 class TinyGemmSolution{
 
 public:
+
+
+
   /* Either an empty string, or the kernel to perform the C <- beta C part of GEMM 
   */
   std::string betac_kernel;
@@ -43,10 +49,10 @@ public:
   std::map<std::string, unsigned> allparams;
 
   /* currently 'f' or 'd' for single and double precision, respectively */
-  char floattype;
-
+  char floattype;  
   TinyGemmSolutionStatistics statistics;
 
+  TinyGemmSolution(std::string betac_kernel, std::string main_kernel, std::string betac_kernel_function_name, std::string main_kernel_function_name, std::map<std::string, unsigned> allparams, char floattype, TinyGemmSolutionStatistics tgss): betac_kernel(betac_kernel), main_kernel(main_kernel), betac_kernel_function_name(betac_kernel_function_name), main_kernel_function_name(main_kernel_function_name), allparams(allparams), floattype(floattype), statistics(tgss){}
 
   /* A TinyGemmSolution is only valid for a fixed basic geometry (tA, tB, etc) , but can be used for any size m,n,k, 
    * as long as the kernel macro tile size is not larger than m x n. This function should be used to determine

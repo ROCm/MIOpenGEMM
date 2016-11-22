@@ -17,8 +17,11 @@ class Geometry{
     unsigned m;
     unsigned n;
     unsigned k; 
+    unsigned a_offset;
+    unsigned b_offset;
+    unsigned c_offset; 
     
-    Geometry(bool isColMajor, bool tA, bool tB, bool tC, unsigned lda, unsigned ldb, unsigned ldc, unsigned m, unsigned n, unsigned k);
+    Geometry(bool isColMajor, bool tA, bool tB, bool tC, unsigned lda, unsigned ldb, unsigned ldc, unsigned m, unsigned n, unsigned k, unsigned a_offset, unsigned b_offset, unsigned c_offset);
     
     Geometry (const Geometry & ) = default;
     

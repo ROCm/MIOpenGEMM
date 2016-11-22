@@ -59,6 +59,12 @@ class DevGemmTester{
     size_t lda;    
     size_t ldb;
     size_t ldc;
+    
+    size_t a_offset;    
+    size_t b_offset;
+    size_t c_offset;
+    
+    
     std::vector<float> v_c;
     std::vector<float> v_a;
     std::vector<float> v_b;
@@ -125,7 +131,7 @@ class DevGemmTester{
     int red_benchmark(std::vector<std::vector<std::string> > & gpu_kernel_filenames, bool findfirst, float allotted_time, bool enforce_deterministic = false){
       std::cout << "about to call devgemmns::gemm<float>" << std::endl;
       /* We pass cpu pointers to devgemmns::benchmark, which does all the necessary opencl gpu boilerplating */
-      devgemmns::benchgemm<float>(isColMajor, tA, tB, tC, m, n, k, alpha, v_a.data(), lda, v_b.data(), ldb, beta, v_c.data(), ldc, {}, gpu_kernel_filenames, capture_output, output, nullptr, do_test, n_runs, outputfilename, findfirst, allotted_time, enforce_deterministic);
+      devgemmns::benchgemm<float>(isColMajor, tA, tB, tC, m, n, k, alpha, v_a.data(), lda, a_offset, v_b.data(), ldb, b_offset, beta, v_c.data(), ldc, c_offset, {}, gpu_kernel_filenames, capture_output, output, nullptr, do_test, n_runs, outputfilename, findfirst, allotted_time, enforce_deterministic);
       return 0;
     }
       
