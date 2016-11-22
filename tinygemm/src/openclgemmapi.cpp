@@ -451,6 +451,7 @@ public:
         /* reason 0 : it's already been considered */
         if (std::find(hyper_front_history.begin(), hyper_front_history.end(), hp) != hyper_front_history.end()){
           /* this kernel has already been considered */
+          mowri << "already considered" << Endl;
         }
         
         else{
@@ -494,7 +495,8 @@ public:
             /* attempt to generate the kernel. Certain `bad' kernels are only caught at this stage, with tests for hyper-parameter compatibilty in the 
              * python script which I don't want to recode here. The main compatibility issue caught here is that load sizes from global are multiples
              * of the number of work items. */
-            int kernel_write_status = mkkern::make_kernel_via_python(kerneldir,  floattostring::get_float_string(floattype), all_int_parms, kernelname);
+            bool verbose_report_from_python = global_counter == 0 ? true : false;
+            int kernel_write_status = mkkern::make_kernel_via_python(kerneldir,  floattostring::get_float_string(floattype), all_int_parms, kernelname, verbose_report_from_python);
             
             /* the kernel was succesfully generated, we now compile and benchmark it */
             if (kernel_write_status == 0){

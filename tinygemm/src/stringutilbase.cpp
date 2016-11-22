@@ -2,6 +2,7 @@
 #include "stringutilbase.hpp"
 #include <stdexcept>
 #include <iostream>
+#include <tuple>
 namespace stringutil{
 //split the string tosplit by delim. With x appearances of delim in tosplit, the returned vector will have length x + 1 (even if appearances at the start, end, contiguous.
 std::vector<std::string> split(const std::string & tosplit, const std::string & delim){
@@ -31,6 +32,12 @@ std::vector<std::string> split(const std::string & tosplit, const std::string & 
 	}
 	
 	return spv;
+}
+
+
+std::tuple<std::string, unsigned> splitnumeric(std::string alphanum){
+	size_t split_point = alphanum.find_first_of("0123456789");
+	return  std::make_tuple<std::string, unsigned>(alphanum.substr(0, split_point), std::stoi(alphanum.substr(split_point, alphanum.size() )));
 }
 
 bool isws(const char & c){

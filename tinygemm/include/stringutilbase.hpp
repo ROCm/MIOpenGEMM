@@ -13,6 +13,10 @@ std::vector<std::string> split(const std::string & tosplit, const std::string & 
 std::vector<std::string> split(const std::string & tosplit);
 
 std::string getdirfromfn(const std::string & fn);
+
+//split something like QWE111 into QWE and 111.
+std::tuple<std::string, unsigned> splitnumeric(std::string alphanum);
+
 }
 
 

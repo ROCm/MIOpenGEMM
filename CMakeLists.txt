@@ -9,7 +9,7 @@ find_package( OpenCL REQUIRED )
 
 # What I want to do here : uses sets the above directory, and at configuration time the file system is generated.
 #Currently, I assume that the tree structure of the writing dir is already setup. 
-add_definitions(-DDIR_FOR_WRITING="/somewhere/to/write")
+add_definitions(-DDIR_FOR_WRITING="/home/james/tinygemmout")
 
 
 #SET(CMAKE_CXX_COMPILER clang++)

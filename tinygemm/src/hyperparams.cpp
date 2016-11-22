@@ -1,15 +1,17 @@
 #include <iostream>
-#include "hyperparams.hpp"
 #include <vector>
 #include <sstream>
 #include <fstream>
-#include "stringutilbase.hpp"
 #include <algorithm>
-
 #include <cmath>
 #include <algorithm>
 #include <random>
 
+#include "stringutilbase.hpp"
+#include "stringutilbase.hpp"
+#include "hyperparams.hpp"
+#include "defaulthyperparams.hpp"
+#include "stringutilbase.hpp"
 
 
 namespace hyperparams{
@@ -135,23 +137,52 @@ HyperParams get_default_small(bool enforce_deterministic){
   }
   
 
-  /* Add, to one_aways, a HyperParams object initialised as default_hp and then modified by parameters */
-  void add_hyperparam(const HyperParams & default_hp, unsigned Y, unsigned X, unsigned y, unsigned x, unsigned U, unsigned P, unsigned GA, unsigned APLU, unsigned BPLU, unsigned PU, unsigned LIW, unsigned MIW, unsigned ICE, unsigned UFO, std::vector<HyperParams> & one_aways){
+  /////* Add, to one_aways, a HyperParams object initialised as default_hp and then modified by parameters */
+  ////void add_hyperparam(const HyperParams & default_hp, unsigned Y, unsigned X, unsigned y, unsigned x, unsigned U, unsigned P, unsigned GA, unsigned APLU, unsigned BPLU, unsigned PU, unsigned LIW, unsigned MIW, unsigned ICE, unsigned UFO, std::vector<HyperParams> & one_aways){
+    ////HyperParams hp(default_hp.params);
+    ////hp.params["micro_tile_height"] = y;
+    ////hp.params["micro_tile_width"] = x;
+    ////hp.params["macro_tile_height"] = Y;
+    ////hp.params["macro_tile_width"] = X;
+    ////hp.params["group_allocation"] = GA;
+    ////hp.params["work_item_load_a_pll_to_unroll"] = APLU;
+    ////hp.params["work_item_load_b_pll_to_unroll"] = BPLU;
+    ////hp.params["unroll_pragma"] = PU;
+    ////hp.params["load_to_lds_interwoven"] = LIW;
+    ////hp.params["c_micro_tiles_interwoven"] = MIW;
+    ////hp.params["unroll"] = U;
+    ////hp.params["n_work_items_per_c_elm"] = ICE;
+    ////hp.params["pad"] = P;
+    ////hp.params["unroll_for_offset"] = UFO;
+    ////one_aways.push_back(hp);
+  ////}
+  
+  void add_hyperparam(const HyperParams & default_hp, std::string hyperstring, std::vector<HyperParams> & one_aways){
+    auto frags = stringutil::split(hyperstring, "_");
+    
+    std::map<std::string, unsigned> stripped;
+    std::string key;
+    unsigned val;
+    for (auto & x : frags){
+      std::tie(key, val) = stringutil::splitnumeric(x);
+      stripped[key] = val;
+    }
+
     HyperParams hp(default_hp.params);
-    hp.params["micro_tile_height"] = y;
-    hp.params["micro_tile_width"] = x;
-    hp.params["macro_tile_height"] = Y;
-    hp.params["macro_tile_width"] = X;
-    hp.params["group_allocation"] = GA;
-    hp.params["work_item_load_a_pll_to_unroll"] = APLU;
-    hp.params["work_item_load_b_pll_to_unroll"] = BPLU;
-    hp.params["unroll_pragma"] = PU;
-    hp.params["load_to_lds_interwoven"] = LIW;
-    hp.params["c_micro_tiles_interwoven"] = MIW;
-    hp.params["unroll"] = U;
-    hp.params["n_work_items_per_c_elm"] = ICE;
-    hp.params["pad"] = P;
-    hp.params["unroll_for_offset"] = UFO;
+    hp.params["micro_tile_height"] = stripped.at("y");
+    hp.params["micro_tile_width"] = stripped.at("x");
+    hp.params["macro_tile_height"] = stripped.at("Y");
+    hp.params["macro_tile_width"] = stripped.at("X");
+    hp.params["group_allocation"] = stripped.at("GA");
+    hp.params["work_item_load_a_pll_to_unroll"] = stripped.at("APLU");
+    hp.params["work_item_load_b_pll_to_unroll"] = stripped.at("BPLU");
+    hp.params["unroll_pragma"] = stripped.at("PU");
+    hp.params["load_to_lds_interwoven"] = stripped.at("LIW");
+    hp.params["c_micro_tiles_interwoven"] = stripped.at("MIW");
+    hp.params["unroll"] = stripped.at("U");
+    hp.params["n_work_items_per_c_elm"] = stripped.at("ICE");
+    hp.params["pad"] = stripped.at("P");
+    hp.params["unroll_for_offset"] = stripped.at("UFO");
     one_aways.push_back(hp);
   }
     
@@ -435,87 +466,92 @@ HyperParams get_default_small(bool enforce_deterministic){
     bool add_custom_edges = true;
     if (add_custom_edges == true){
       
+      
       /* ************************ custom edges ***************************************************
        * This is the place to add some edges which experience shows can tunnel out of local minima, or
        * lead to some kernels which have found to be very good on some problems  */
       
-      /* custom edge 1. */
-      if (params.at("micro_tile_height") == 8 &&  params.at("micro_tile_width") == 8){
-        //removed
-      }
+      auto add_hps = [this, & one_aways](std::string hparamstring){
+        add_hyperparam(*this, hparamstring, one_aways);
+      };
       
-      /* custom edge 2.  */
+      /* custom edge 2. Y16_X16_y2_x2_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ET1_ICE6_UFO0  */
       if (params.at("micro_tile_height")*params.at("micro_tile_width") <=4 ){
-       add_hyperparam(*this, 16, 16, 2, 2, 16, 1, 1, 0, 1, 1, 0, 1, 6, 0, one_aways);
+        add_hps("Y16_X16_y2_x2_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ET1_ICE6_UFO0");
       }
   
       /* custom edge 3. Y48_X32_y3_x2_U16_P1_GA2_APLU1_BPLU0_PU0_LIW0_MIW1_ET1_ICE5_UFO0 */    
       if (params.at("micro_tile_height")*params.at("micro_tile_width") <=16 ){
-        add_hyperparam(*this, 48, 32, 3, 2, 16, 1, 2, 1, 0, 0, 0, 1, 5, 0, one_aways);
+        add_hps("Y48_X32_y3_x2_U16_P1_GA2_APLU1_BPLU0_PU0_LIW0_MIW1_ET1_ICE5_UFO0");
       }
   
-      /* custom edge 4.     Y64_X64_y4_x4_U16_P1_GA2_APLU0_BPLU0_PU0_LIW1_MIW1_ET1_ICE4_UFO0 */
+      /* custom edge 4. Y64_X64_y4_x4_U16_P1_GA2_APLU0_BPLU0_PU0_LIW1_MIW1_ET1_ICE4_UFO0 */
       if (params.at("micro_tile_height")*params.at("micro_tile_width") <=20 ){
-        add_hyperparam(*this, 64, 64, 4, 4, 16, 1, 2, 0, 0, 0, 1, 1, 4, 0, one_aways);
+        //add_hyperparam(*this, 64, 64, 4, 4, 16, 1, 2, 0, 0, 0, 1, 1, 4, 0, one_aways);
+        add_hps("Y64_X64_y4_x4_U16_P1_GA2_APLU0_BPLU0_PU0_LIW1_MIW1_ET1_ICE4_UFO0");
       }
       
-      /* custom edge 5. */
+      /* custom edge 5. Y128_X128_y8_x8_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ET1_ICE1_UFO0 */
       if (params.at("micro_tile_height")*params.at("micro_tile_width") >=16 ){
-        add_hyperparam(*this, 128, 128, 8, 8, 16, 1, 1, 0, 1, 1, 0, 1, 1, 0, one_aways);
+        add_hps("Y128_X128_y8_x8_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ET1_ICE1_UFO0");
       }
       
       /* custom edge 6  Y80_X64_y5_x4_U16_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ET1_ICE2_UFO0 */
       if (params.at("micro_tile_height")*params.at("micro_tile_width") >=8 ){
-        add_hyperparam(*this, 80, 64, 5, 4, 16, 1, 2, 0, 1, 1, 0, 1, 2, 0, one_aways);
+        add_hps("Y80_X64_y5_x4_U16_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ET1_ICE2_UFO0");
       }
   
       /* custom edge 7   Y96_X64_y6_x4_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ET1_ICE4_UFO0 */
       if (params.at("micro_tile_height") >= params.at("micro_tile_width") &&  params.at("micro_tile_height")*params.at("micro_tile_width") >=10){
-        add_hyperparam(*this, 96, 64, 6, 4, 16, 1, 1, 0, 1, 1, 0, 1, 4, 0, one_aways);
+        add_hps("Y96_X64_y6_x4_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ET1_ICE4_UFO0");
       }
   
             
       /* custom edge 8 Y128_X64_y8_x4_U16_P1_GA2_APLU0_BPLU1_PU0_LIW0_MIW1_ET1_ICE3_UFO0 */
       if ((params.at("micro_tile_height") == 8 || params.at("micro_tile_height") == 4) && params.at("micro_tile_width") ==  4){
-        add_hyperparam(*this, 128, 64, 8, 4, 16, 1, 2, 0, 1, 0, 0, 1, 3, 0, one_aways);
+        add_hps("Y128_X64_y8_x4_U16_P1_GA2_APLU0_BPLU1_PU0_LIW0_MIW1_ET1_ICE3_UFO0");
       }
       
   
       /* custom edge 9 Y64_X64_y4_x4_U16_P1_GA3_APLU0_BPLU1_PU1_LIW0_MIW1_ET1_ICE1_UFO0 */
       if ((params.at("micro_tile_height") == 8 || params.at("micro_tile_height") == 4) && params.at("micro_tile_width") ==  4){    
-        add_hyperparam(*this, 64, 64, 4, 4, 16, 1, 3, 0, 1, 1, 0, 1, 1, 0, one_aways);
+        add_hps("Y64_X64_y4_x4_U16_P1_GA3_APLU0_BPLU1_PU1_LIW0_MIW1_ET1_ICE1_UFO0");
       }
       
   
       /* custom edge 10 Y48_X64_y3_x4_U16_P1_GA2_APLU0_BPLU1_PU0_LIW0_MIW1_ET1_ICE1_UFO0 */
       if ((params.at("micro_tile_height")*params.at("micro_tile_height") == 24) && params.at("n_work_items_per_c_elm") >  1){    
-        add_hyperparam(*this, 48, 64, 3, 4, 16, 1, 2, 0, 1, 0, 0, 1, 1, 0, one_aways);
+        add_hps("Y48_X64_y3_x4_U16_P1_GA2_APLU0_BPLU1_PU0_LIW0_MIW1_ET1_ICE1_UFO0");
       }
     
       /* custom edge 11 Y24_X40_y3_x5_U16_P1_GA1_APLU1_BPLU1_PU0_LIW0_MIW1_ET1_ICE1_UFO0 */
       if (params.at("micro_tile_height") == 3 && params.at("micro_tile_height") < params.at("micro_tile_width")){    
-        add_hyperparam(*this, 24, 40, 3, 5, 16, 1, 1, 1, 1, 0, 0, 1, 1, 0, one_aways);
+        add_hps("Y24_X40_y3_x5_U16_P1_GA1_APLU1_BPLU1_PU0_LIW0_MIW1_ET1_ICE1_UFO0");
       }
       
-      
+      /* custom edge 12 Y64_X64_y4_x4_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ET1_ICE1_UFO0 */
       if (params.at("micro_tile_height")*params.at("micro_tile_height") > 5 && params.at("micro_tile_height")*params.at("micro_tile_height") < 48 && params.at("n_work_items_per_c_elm") >  1){    
-        add_hyperparam(*this, 64, 64, 4, 4, 16, 1, 1, 0, 1, 1, 0, 1, 1, 0, one_aways);
+        add_hps("Y64_X64_y4_x4_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ET1_ICE1_UFO0");
       }
       
+      /* custom edge 13 Y128_X128_y8_x8_U8_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ET1_ICE1_UFO1 */
+      /* custom edge 14 Y128_X128_y8_x8_U8_P1_GA2_APLU1_BPLU1_PU1_LIW0_MIW1_ET1_ICE1_UFO1 */
       if (gg.tA == gg.isColMajor && gg.tB != gg.isColMajor && params.at("micro_tile_height")*params.at("micro_tile_height") == 64){
-        add_hyperparam(*this, 128, 128, 8, 8, 8, 1, 1, 1, 1, 1, 0, 1, 1, 1, one_aways);
-        add_hyperparam(*this, 128, 128, 8, 8, 8, 1, 2, 1, 1, 1, 0, 1, 1, 1, one_aways);
+        add_hps("Y128_X128_y8_x8_U8_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ET1_ICE1_UFO1");
+        add_hps("Y128_X128_y8_x8_U8_P1_GA2_APLU1_BPLU1_PU1_LIW0_MIW1_ET1_ICE1_UFO1");
       }
 
+      /* custom edge 15 Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ET1_ICE1_UFO1 */
+      /* custom edge 16 Y128_X128_y8_x8_U8_P1_GA2_APLU0_BPLU0_PU1_LIW0_MIW1_ET1_ICE1_UFO1 */
       else if (gg.tA != gg.isColMajor && gg.tB == gg.isColMajor && params.at("micro_tile_height")*params.at("micro_tile_height") == 64){
-        add_hyperparam(*this, 128, 128, 8, 8, 8, 1, 1, 0, 0, 1, 0, 1, 1, 1, one_aways);
-        add_hyperparam(*this, 128, 128, 8, 8, 8, 1, 2, 0, 0, 1, 0, 1, 1, 1, one_aways);
+        add_hps("Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ET1_ICE1_UFO1");
+        add_hps("Y128_X128_y8_x8_U8_P1_GA2_APLU0_BPLU0_PU1_LIW0_MIW1_ET1_ICE1_UFO1");
       }
+      
+      
     }
     
     
-    
-    //Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ET1_ICE1_UFO1
     
     
     /* shuffle them, which bounds the expected time to finding an improvement 
@@ -540,10 +576,8 @@ HyperParams get_default_small(bool enforce_deterministic){
         auto blip = std::find(two_aways.begin(), two_aways.end(), hp2);
         if (blip == two_aways.end()) {
           two_aways.push_back(hp2);
-          //std::cout << "new!" << std::endl;
         }
         else{
-          //std::cout << "seen." << std::endl;
         }
       }
     }

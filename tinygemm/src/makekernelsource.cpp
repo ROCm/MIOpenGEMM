@@ -1,5 +1,7 @@
 #include "makekernelsource.hpp"
 #include "hyperparams.hpp"
+#include "defaultoutpath.hpp"
+
 
 #include <cstdlib>
 #include <iostream>
@@ -10,7 +12,7 @@
 namespace mkkern{
   
 /* returns 0 if the kernel was succesfully written. If the hyperparameters don't gel, a kernel will not be written, and a non-zero int will be returned */
-int make_kernel_via_python(std::string dir_name, std::string t_float, std::map<std::string, unsigned> all_int_parms, std::string kernelname){
+int make_kernel_via_python(std::string dir_name, std::string t_float, std::map<std::string, unsigned> all_int_parms, std::string kernelname, bool verbose_report){
 
   
   std::string parameter_string(" --dir_name ");
@@ -60,8 +62,9 @@ int make_kernel_via_python(std::string dir_name, std::string t_float, std::map<s
   //std::abort();
   
   
-  bool verbose_report = false;
+  //bool verbose_report = true;
   if (verbose_report == true){
+    syscall += " 0>>/dev/null";
     /* print want make_kernel does, good and bad */ 
   }
   else{

@@ -6,6 +6,11 @@
 #include "makekernelsource.hpp"
 #include "defaultoutpath.hpp"
 
+
+
+
+#include "stringutilbase.hpp"
+
 /* Note that currently (13/11/2016) most testing is done through dev/python scripts */
 
 /* testing the writing to text file of a gemm kernel */
@@ -32,7 +37,7 @@ int make_kernel(){
   all_int_parms["n_target_active_workgroups"] = 64;
   std::string dir_name = "~/atest/directory/ofsorts";
   std::string t_float = "float";
-  mkkern::make_kernel_via_python(dir_name, t_float, all_int_parms, "");
+  mkkern::make_kernel_via_python(dir_name, t_float, all_int_parms, "", true);
   return 0;
 }
 
@@ -143,6 +148,7 @@ class DevGemmTester{
 
 
 int main (){
+    
   DevGemmTester dgt;
   
   bool test_benchmark = false;
