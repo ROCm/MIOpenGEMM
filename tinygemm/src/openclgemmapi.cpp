@@ -23,15 +23,6 @@
 namespace clgemm{
 
 
-
-//class CloorException: public std::runtime_error {
-  //virtual const char* what() const throw()
-  //{
-    //return "My exception happened";
-  //}
-//} cloorexception;
-
-
 void confirm_cl_status(cl_int ret, std::string function, std::string argument){
   if (ret != CL_SUCCESS){
     std::stringstream errms;
@@ -59,10 +50,8 @@ class MultiFloatType{
 
 class OpenCLGemmEncapsulator{
 public: 
-  /* references to all constructor parameters */
-  cl_context & context;
+  /* references to constructor parameters */
   cl_command_queue & command_queue;
-  cl_device_id & device_id_to_use;
   std::string & outputfilename;
   const char & floattype; 
   const gemmgeometry::Geometry & gg;
@@ -103,14 +92,14 @@ private:
   float t_total_with_both, t_just_scaling, t_just_main;
   /* vector times over all n_runs runs */
   std::vector<float> v_t_total_with_both, v_t_just_scaling, v_t_just_main;
+  /* These are set in the constructor by querying command_queue */
+  cl_context context;
+  cl_device_id device_id_to_use;
 
 
 public:
-      
   OpenCLGemmEncapsulator(
-    cl_context & context,
     cl_command_queue & command_queue, 
-    cl_device_id & device_id_to_use,
     const char & floattype,
     const gemmgeometry::Geometry & gg,  
     const double & alpha,
@@ -120,10 +109,8 @@ public:
     cl_mem & c_gpu,
     std::string & outputfilename,
     bool verbose):
-      
-    context(context),
+
     command_queue(command_queue), 
-    device_id_to_use(device_id_to_use),
     outputfilename(outputfilename),
     floattype(floattype), 
     gg(gg),
@@ -136,10 +123,19 @@ public:
     m_beta(beta),
     mowri(verbose, outputfilename.compare("") != 0, outputfilename)
     {
-      
+        
+      ret = clGetCommandQueueInfo(command_queue, CL_QUEUE_CONTEXT, sizeof(cl_context), &context, NULL);
+      if (ret != CL_SUCCESS){
+        throw std::runtime_error("Problem using clGetCommandQueueInfo, trying to get CL_QUEUE_CONTEXT (in constructor in openclgemmapi.cpp");
+      }
+      ret = clGetCommandQueueInfo(command_queue, CL_QUEUE_DEVICE, sizeof(cl_device_id), &device_id_to_use, NULL);
+      if (ret != CL_SUCCESS){
+        throw std::runtime_error("Problem using clGetCommandQueueInfo, trying to get CL_QUEUE_DEVICE (in constructor in openclgemmapi.cpp");        
+      }
+
       set_floatsize();
       run_checks();
-      setup_betac_kernel(); //TODO : release when done.
+      setup_betac_kernel(); //TODO : release when done. TODO : don't want to do this if allotted_time is negative !
 
     }
     
@@ -158,7 +154,7 @@ public:
 
 
   void setup_betac_kernel(){
-    /* jit compile the betackernel source : change to loading a binary (?) */
+    /* jit compile the betackernel source  */
     openclutil::set_program_and_kernel(betac_program, betac_kernel, betac_kernel_function_name, context, device_id_to_use, betac::get_cl_file_path(floattype));
     betac::set_betackernel_sizes(floattype, gg.isColMajor, gg.tC, gg.m, gg.n, dim_coal, dim_uncoal, betac_global_work_size, betac_local_work_size);
     mowri << "in setup_betac_kernel, global_work_size : " << betac_global_work_size << Endl; 
@@ -652,9 +648,9 @@ public:
 tinygemm::TinyGemmSolution
 find(
 float allotted_time,
-cl_context & context,
+//cl_context & context,
 cl_command_queue & command_queue,
-cl_device_id & device_id_to_use,
+//cl_device_id & device_id_to_use,
 cl_mem a,   
 cl_mem b,
 cl_mem c,
@@ -675,7 +671,12 @@ std::string logfile){
   //defpaths::scratchpadfinddir
   
 //  std::string outputfilename("");
-  OpenCLGemmEncapsulator oger(context, command_queue, device_id_to_use, floattype, gg, alpha, beta, a, b, c, logfile, verbose);
+  
+  //OpenCLGemmEncapsulator oger(context, command_queue, device_id_to_use, floattype, gg, alpha, beta, a, b, c, logfile, verbose);
+  
+  
+  OpenCLGemmEncapsulator oger(command_queue, floattype, gg, alpha, beta, a, b, c, logfile, verbose);
+  
   return oger.find(allotted_time, enforce_deterministic);
 
 }
@@ -685,9 +686,9 @@ std::string logfile){
 
 
 void benchgemm(
-  cl_context & context,
+  //cl_context & context,
   cl_command_queue & command_queue, 
-  cl_device_id & device_id_to_use,
+  //cl_device_id & device_id_to_use,
   std::string kernelfilename,
   unsigned n_runs,
   const char floattype, 
@@ -700,7 +701,9 @@ void benchgemm(
   bool verbose,
   std::string logfile){
     
-  OpenCLGemmEncapsulator oger(context, command_queue, device_id_to_use, floattype, gg, alpha, beta, a_gpu, b_gpu, c_gpu, logfile, verbose);
+  //OpenCLGemmEncapsulator oger(context, command_queue, device_id_to_use, floattype, gg, alpha, beta, a_gpu, b_gpu, c_gpu, logfile, verbose);
+  
+  OpenCLGemmEncapsulator oger(command_queue, floattype, gg, alpha, beta, a_gpu, b_gpu, c_gpu, logfile, verbose);
   oger.benchgemm(kernelfilename, n_runs);
 }
   

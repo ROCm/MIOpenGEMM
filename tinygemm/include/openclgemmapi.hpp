@@ -25,9 +25,7 @@ namespace clgemm{
 tinygemm::TinyGemmSolution
 find(
 float allotted_time,
-cl_context & context, //TODO remove
 cl_command_queue & command_queue,
-cl_device_id & device_id_to_use, //TODO remove
 cl_mem a,   
 cl_mem b,
 cl_mem c,
@@ -42,9 +40,7 @@ std::string logfile = "");
 
 
 void benchgemm(
-cl_context & context,               
 cl_command_queue & command_queue, 
-cl_device_id & device_id_to_use,
 std::string kernelfilename,         // could be a .cl file, or a file with a list of the parameters required to make a .cl file with the python script (TODO).
 unsigned n_runs,
 const char floattype, 
@@ -58,7 +54,7 @@ bool verbose = true,
 std::string logfile = "");
 
 
-/* I have a rough idea what this will do : it will check that strictly smaller problems that MNK always at least as fast as MNK. If they're not, they should be using MNK's kernel, update this in the cache table. Of course, should check that MNK's tile is smaller than the matrix C being updated. TODO */
+/* I have a rough idea what I want this to do : it will check that strictly smaller problems that MNK always at least as fast as MNK. If they're not, they should be using MNK's kernel, update this in the cache table. Of course, should check that MNK's tile is smaller than the matrix C being updated. TODO */
 void kernel_cache_audit(std::string floattype);
 
 } //namespace

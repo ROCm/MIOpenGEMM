@@ -142,16 +142,18 @@ public:
 
   /* dev code's placenta to the outside world */  
   void base_benchgemm(std::string kernel_filename, size_t number_of_runs){
-    clgemm::benchgemm(context, command_queue, device_id_to_use, kernel_filename, number_of_runs, floattostring::get_float_char<TFloat>(), gg, alpha, beta, a_gpu, b_gpu, c_gpu, true, mowri.filename);
+    //clgemm::benchgemm(context, command_queue, device_id_to_use, kernel_filename, number_of_runs, floattostring::get_float_char<TFloat>(), gg, alpha, beta, a_gpu, b_gpu, c_gpu, true, mowri.filename);
+    
+    clgemm::benchgemm(command_queue, kernel_filename, number_of_runs, floattostring::get_float_char<TFloat>(), gg, alpha, beta, a_gpu, b_gpu, c_gpu, true, mowri.filename);
   }
   
   tinygemm::TinyGemmSolution find(float allotted_time, bool enforce_deterministic){
 
     tinygemm::TinyGemmSolution tgs = clgemm::find(
       allotted_time,
-      context,
+      //context,
       command_queue,
-      device_id_to_use,
+      //device_id_to_use,
       a_gpu,   
       b_gpu,
       c_gpu,

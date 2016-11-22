@@ -75,8 +75,9 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
    * Find a kernel *
    * ***************/
   gemmgeometry::Geometry geometry(isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, a_offset, b_offset, c_offset);
-  tinygemm::TinyGemmSolution soln = clgemm::find(allotted_time, context, command_queue, device_id_to_use, a_gpu, b_gpu, c_gpu, enforce_deterministic, floattype,  geometry, alpha, beta, verbose, logfile);
+  //tinygemm::TinyGemmSolution soln = clgemm::find(allotted_time, context, command_queue, device_id_to_use, a_gpu, b_gpu, c_gpu, enforce_deterministic, floattype,  geometry, alpha, beta, verbose, logfile);
 
+  tinygemm::TinyGemmSolution soln = clgemm::find(allotted_time, command_queue, a_gpu, b_gpu, c_gpu, enforce_deterministic, floattype,  geometry, alpha, beta, verbose, logfile);
   
   /* Request to see how to proceed after the kernel(s) have been found */
   if (n_postfind_runs > 0){
