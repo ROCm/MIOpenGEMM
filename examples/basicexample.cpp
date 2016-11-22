@@ -21,11 +21,12 @@ void basicexample(){
    * 'd' for double-precision, 64-bit doubles */
   char floattype = (sizeof(TFloat) == 4) ? 'f' : 'd';
   /* define how long to search for, in seconds. No kernels will be compiled after this allotted time. */
-  float allotted_time = 30.0;
+  float allotted_time = -1.0;
   /* print output to terminal (true) or complete silence to terminal (false) */
   bool verbose = true;
   /* print output to logfile (non-empty string) or not (empty string) */
-  std::string logfile("/home/james/libraries/tinygemm/examples/findlog.txt");
+  /* MUST BE SET BY USER */
+  std::string logfile("/home/james/tinygemm/examples/findlog.txt");
   /* enforce that the kernel is deterministic, or not. Note that 
    * for small problems, non-deterministic kernels are significantly (2x) faster */
   bool enforce_deterministic = false;

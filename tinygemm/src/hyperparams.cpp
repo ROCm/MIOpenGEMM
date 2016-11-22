@@ -14,10 +14,8 @@
 
 namespace hyperparams{
 
-
 HyperParams get_default_big(){
-  
-  
+    
   std::map<std::string, unsigned> params;
   params["micro_tile_width"] = 8;  
   params["micro_tile_height"] = 8;
@@ -85,7 +83,7 @@ HyperParams get_default_small(bool enforce_deterministic){
 }
 
 
-  HyperParams::HyperParams(std::map<std::string, unsigned> params):params(params){ //, g(rd())
+  HyperParams::HyperParams(std::map<std::string, unsigned> params):params(params){
     do_checks();
     
 
@@ -202,7 +200,7 @@ HyperParams get_default_small(bool enforce_deterministic){
             
             /* eliminate too dramatic changes in volume unless going to an `even hub' */
             bool volumn_change_good = ((nx%2 == 0 and ny%2 == 0) || (delta_volume <= 2.01 and delta_volume > 0.499));
-            /* you can only go to 5,8 from 4,8 */
+            /* the only way to get to 5,8 is from 4,8 */
             bool condition_on_58 = ((x == 4 && y == 8) || (x == 8 && y == 4) || (!(nx == 5 && ny == 8) && !(nx == 8 && ny == 5)));
             if (not_too_skinny and skininess_change_good and volumn_change_good and condition_on_58){
               micro_tile_edges[ {x,y} ].push_back( {nx, ny} );
@@ -324,7 +322,7 @@ HyperParams get_default_small(bool enforce_deterministic){
       HyperParams hp(params);
       hp.params["unroll"] = unroll;
 
-      /* (weak) observations suggest that unroll > 8 does not work very well with ufo. */
+      /* (weak) observations suggest that unroll > 8 does not work well with ufo. */
       if (unroll > 8){
         hp.params["unroll_for_offset"] = 0;
       }

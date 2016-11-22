@@ -486,8 +486,6 @@ public:
               all_int_parms[x.first] = x.second;
               //mowri << x.first << "  : " << x.second  << Endl;
             }
-            
-            //std::abort();
              
             /* User defined parameters ? */
             std::string kerneldir = defpaths::scratchpadfinddir + "/";
