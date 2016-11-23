@@ -1,5 +1,5 @@
 #include <chrono>
-#include <stdexcept>
+#include "tinygemmerror.hpp"
 
 #include "slowcpugemm.hpp"
 #include "outputwriter.hpp"
@@ -80,7 +80,7 @@ template <typename TFloat>
 void gemm_3fors_cpu(bool tA, bool tB, bool tC, unsigned m, unsigned n, unsigned k, unsigned lda, unsigned ldb, unsigned ldc, const TFloat * a, const TFloat * b, TFloat * c, TFloat alpha, TFloat beta){
     
   if (tA == true && tB == true){
-    throw std::runtime_error("tA and tB should have been redirected before calling gemm_3fors_cpu");
+    throw tinygemm_error("tA and tB should have been redirected before calling gemm_3fors_cpu");
   }
     
   else if (tA == false && tB == false){
@@ -101,7 +101,7 @@ void gemm_3fors_cpu(bool tA, bool tB, bool tC, unsigned m, unsigned n, unsigned 
     }
     
     else{
-      throw std::runtime_error("this will never happen");
+      throw tinygemm_error("this will never happen");
     }
   }
 }
@@ -125,7 +125,7 @@ void check_cpu_algs(std::vector<std::string> cpu_algs){
       std::string errm = "unrecognised cpu algorithm, ";
       errm += alg;
       errm += "\n";
-      throw std::runtime_error(errm);
+      throw tinygemm_error(errm);
     }
   }
 }

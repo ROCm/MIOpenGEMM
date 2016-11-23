@@ -1,6 +1,6 @@
 #include <iostream>
 #include <string>
-#include <stdexcept>
+#include "tinygemmerror.hpp"
 
 #include "outputwriter.hpp"
 
@@ -10,7 +10,7 @@ namespace outputwriting{
 OutputWriter::OutputWriter(bool to_terminal, bool to_file, std::string filename):to_terminal(to_terminal), to_file(to_file), filename(filename){
   if (to_file == true){
     if (filename.compare("") == 0){
-      throw std::runtime_error("empty filename passed to OutputWrite, with to_file flag true. This is not possible.");
+      throw tinygemm_error("empty filename passed to OutputWrite, with to_file flag true. This is not possible.");
     }
     
     file.open(filename, std::ios::out);
@@ -20,7 +20,7 @@ OutputWriter::OutputWriter(bool to_terminal, bool to_file, std::string filename)
       std::string errm = "bad filename in constructor of OutputWriter object. The filename provided is `";
       errm += filename;
       errm += "'. The directory of the file must exist, OutputWriters do not create directories. Either create all directories in the path, or change the provided path.  ";
-      throw std::runtime_error(errm);
+      throw tinygemm_error(errm);
     }
   }
 }

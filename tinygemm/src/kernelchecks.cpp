@@ -6,6 +6,7 @@
 #include <map>
 #include <algorithm>
 #include "kernelsnips.hpp"
+#include "tinygemmerror.hpp"
 
 namespace tinygemm{
 namespace kernelutil{
@@ -257,7 +258,7 @@ bool tA, bool tB, bool tC, bool isColMajor, unsigned m, unsigned n, std::string 
   }        
   
   if (isError == true){
-    throw std::runtime_error(errm);
+    throw tinygemm_error(errm);
   }
 }
 
@@ -268,7 +269,7 @@ void check_gpu_kernel_filename(std::string kernel_filename){
     std::string errm("This error is being thrown from check_gpu_kernel_filename, in kernelchecks.cpp. The kernel_filename passed in is ` ");
     errm +=  kernel_filename;
     errm += "', which for some reason cannot be opened.  ";
-    throw std::runtime_error(errm);
+    throw tinygemm_error(errm);
   }
 }
 
@@ -280,7 +281,7 @@ void check_gpu_kernel_filenames(const std::vector<std::vector<std::string>> & gp
       std::string errm("The size of this element of gpu_kernel_filenames is ");
       errm += std::to_string(v.size());
       errm += ".\nCurrently, we can only handle 1 kernel file. \nCurrently, there is no need to support multiple kernel files. ";
-      throw std::runtime_error(errm);
+      throw tinygemm_error(errm);
     }
     for (auto & kernel_filename : v){
       check_gpu_kernel_filename(kernel_filename);

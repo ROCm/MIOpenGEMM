@@ -8,6 +8,7 @@
 
 #include "tinygemmgeometry.hpp"
 #include "tinygemmsolution.hpp"
+#include "tinygemmerror.hpp"
 
 namespace tinygemm{
 

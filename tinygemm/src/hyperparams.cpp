@@ -11,7 +11,9 @@
 #include "stringutilbase.hpp"
 #include "stringutilbase.hpp"
 #include "hyperparams.hpp"
+#include "tinygemmerror.hpp"
 #include "stringutilbase.hpp"
+
 
 
 namespace tinygemm{
@@ -77,7 +79,7 @@ HyperParams get_default(const tinygemm::TinyGemmGeometry & gg, bool enforce_dete
 
   /* The case  of  (gg.m < 16 || gg.n < 16) */  
   if (gg.m < 16 || gg.n < 16) {
-    throw std::runtime_error("Currently, we do not support matrices which are skinnier (m or n) than 16. This can easily be fixed... please contanct me at jnewling@idiap.ch ");
+    throw tinygemm_error("Currently, we do not support matrices which are skinnier (m or n) than 16. This can easily be fixed... please contanct me at jnewling@idiap.ch ");
   }
   
   tinygemm::TinyGemmGeometry nearestgeometry;
@@ -128,7 +130,7 @@ void HyperParams::do_checks(){
       std::string errm("The parameter `");
       errm += x;
       errm += "', which should appear as a hyper-parameter but appears not to, should be included\n";
-      throw std::runtime_error(errm);
+      throw tinygemm_error(errm);
     }
   }
   
@@ -138,7 +140,7 @@ void HyperParams::do_checks(){
       std::string errm("The parameter `");
       errm += x.first;
       errm += "', which appears in the user-defined list of hyper-parameter, is not recognised\n";
-      throw std::runtime_error(errm);        
+      throw tinygemm_error(errm);        
     }
   }
 }
@@ -173,7 +175,7 @@ void add_hyperparam(const HyperParams & default_hp, std::string hyperstring, std
 std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeometry & gg){
   
   if (gg.m < 16 || gg.n < 16){
-    throw std::runtime_error("Currently, if matrix C has a dimension less that 16, it is not supported. If you are seeing this, please remind to fix it..  jnewling@amd.com / jnewling@idiap.ch ");
+    throw tinygemm_error("Currently, if matrix C has a dimension less that 16, it is not supported. If you are seeing this, please remind to fix it..  jnewling@amd.com / jnewling@idiap.ch ");
   }
  
   std::vector<HyperParams> one_aways;

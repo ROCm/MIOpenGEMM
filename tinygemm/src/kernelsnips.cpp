@@ -11,7 +11,7 @@
 #include <utility>
 
 #include "stringutilbase.hpp"
-
+#include "tinygemmerror.hpp"
 
 namespace tinygemm{
 namespace kernelutil{
@@ -22,7 +22,7 @@ namespace kernelutil{
   get_as_single_string(std::string filename){
     std::ifstream input(filename);
     if(!input.good()){
-      throw std::runtime_error( "Error attempting to open '" + filename + "', in kernelutil::get_as_single_string.  ");
+      throw tinygemm_error( "Error attempting to open '" + filename + "', in kernelutil::get_as_single_string.  ");
     }
     
     
@@ -39,7 +39,7 @@ namespace kernelutil{
 
     std::ifstream input(kernel_filename);
     if(!input.good()){
-      throw std::runtime_error( "Error opening '" + kernel_filename + "'. ");
+      throw tinygemm_error( "Error opening '" + kernel_filename + "'. ");
     }
     
     
@@ -59,7 +59,7 @@ namespace kernelutil{
             std::string errm ("The following line in the .cl file : \n");
             errm += line;
             errm += "\nis unexpected, as it does not have enough fragments in it ";  
-            throw std::runtime_error(errm);
+            throw tinygemm_error(errm);
           }
           
           else{
@@ -100,7 +100,7 @@ namespace kernelutil{
         
     std::ifstream input(kernel_filename);
     if(!input.good()){
-      throw std::runtime_error( "Error opening '" + kernel_filename + "' in get_kernel_function_name. ");
+      throw tinygemm_error( "Error opening '" + kernel_filename + "' in get_kernel_function_name. ");
     }
     
     
@@ -118,7 +118,7 @@ namespace kernelutil{
         }
       }
     }
-    throw std::runtime_error("Unable to determine the function name in .cl file");
+    throw tinygemm_error("Unable to determine the function name in .cl file");
   }
 
 

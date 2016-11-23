@@ -1,5 +1,5 @@
 #include <string>
-#include <stdexcept>
+#include "tinygemmerror.hpp"
 #include "kernelsnips.hpp"
 #include "outputwriter.hpp"
 #include "defaultoutpath.hpp"
@@ -23,7 +23,7 @@ void set_platform_etc(cl_platform_id & platform, cl_uint & num_platforms, cl_con
     std::string errm("There's been an error in set_platform_etc in openclutil.cpp: the return status of clCreateContextFromType is not CL_SUCCESS. The status returned is ");
     errm += status;
     errm + ". ";
-    throw std::runtime_error(errm);
+    throw tinygemm_error(errm);
   }
   
   /* Query the number of devices */
@@ -31,7 +31,7 @@ void set_platform_etc(cl_platform_id & platform, cl_uint & num_platforms, cl_con
   clGetContextInfo(context, CL_CONTEXT_NUM_DEVICES, sizeof(int), &deviceListSize, nullptr);
   
   if (deviceListSize == 0){
-    throw std::runtime_error("There are no devices detected. \nSpecifically, using clGetContextInfo with CL_CONTEX_NUM_DEVICES as the flag returns 0. \nThis error is being thrown from set_platform_etc in openclutil.cpp. Please have a look...");
+    throw tinygemm_error("There are no devices detected. \nSpecifically, using clGetContextInfo with CL_CONTEX_NUM_DEVICES as the flag returns 0. \nThis error is being thrown from set_platform_etc in openclutil.cpp. Please have a look...");
   }
 
   
@@ -69,7 +69,7 @@ void set_platform_etc(cl_platform_id & platform, cl_uint & num_platforms, cl_con
   if (max_max_compute_units < 64){
     std::string errm = device_compute_unit_count_string;
     errm += "As this is less than 64, an error is being thrown. \nIf you wish to use a device with fewer than 64 CUs, please make changes here (in openclutil.cpp)";
-    throw std::runtime_error(errm);
+    throw tinygemm_error(errm);
   }
   
   else{
@@ -97,7 +97,7 @@ void set_program_and_kernel(cl_program & program, cl_kernel & kernel, std::strin
   free(source);
   
   if (ret != 0){
-    throw std::runtime_error("Error in clCreateProgramWithSource");
+    throw tinygemm_error("Error in clCreateProgramWithSource");
   }
   /* To generate isa code, add this :   ``` -save-temps= + defpaths::isacodedir + "/"  '''    to the following string  */
   std::string buildOptions_11 = "-cl-std=CL2.0";
@@ -119,7 +119,7 @@ void set_program_and_kernel(cl_program & program, cl_kernel & kernel, std::strin
     FILE *filebinary = fopen(filename_bin.c_str(), "w");
     fwrite(v_binary.data(), 1, size, filebinary);
     /* the binary file has been written to filename_bin */ 
-    throw std::runtime_error("go look at created binary file!");
+    throw tinygemm_error("go look at created binary file!");
     /* done */
   }
   
@@ -127,12 +127,12 @@ void set_program_and_kernel(cl_program & program, cl_kernel & kernel, std::strin
     char buffer[10240];
     clGetProgramBuildInfo(program, device_id_to_use, CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer, NULL);
     fprintf(stderr, "CL Compilation failed:\n%s", buffer);
-    throw std::runtime_error("Error in clBuildProgram");
+    throw tinygemm_error("Error in clBuildProgram");
   }
   
   kernel = clCreateKernel(program, kernel_function_name.c_str(), &ret);  
   if (ret != CL_SUCCESS){
-    throw std::runtime_error("Error in clCreateKernel");
+    throw tinygemm_error("Error in clCreateKernel");
   }
 }  
   

@@ -1,6 +1,6 @@
 #include <vector>
 #include <iostream>
-#include <stdexcept>
+#include "tinygemmerror.hpp"
 #include <vector>
 #include <sstream>
 #include <fstream>
@@ -17,7 +17,7 @@
 #include <map>
 #include <cmath>
 #include <algorithm>
-#include <stdexcept>
+#include "tinygemmerror.hpp"
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -46,6 +46,9 @@
 
 namespace tinygemm{
 namespace dev{
+
+
+
 
 
 
@@ -84,6 +87,7 @@ public:
   
   Gemini(tinygemm::TinyGemmGeometry gg, const TFloat * a, const TFloat * b, TFloat * c, TFloat alpha, TFloat beta, std::string outputfilename):gg(gg), a(a), b(b), c(c), alpha(alpha), beta(beta), outputfilename(outputfilename), mowri(true, outputfilename.compare("") != 0, outputfilename)  {
   
+    
     consistencychecks::check_ldx_mnk_consistent(gg);
     sizingup::check_sizes_ok_for_unsigned(gg); 
     c_start_copy.resize(get_c_memsize()/sizeof(TFloat));
@@ -241,15 +245,16 @@ void benchgemm(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
   //}
   
   if (findfirst == true && gpu_kernel_filenames.size() != 0){
-    throw std::runtime_error("findfirst is true, and so gpu_kernel_filenames should be an empty list \n ");
+    throw tinygemm_error( "findfirst is true, and so gpu_kernel_filenames should be an empty list \n");
+    //tinygemm_error("findfirst is true, and so gpu_kernel_filenames should be an empty list \n ");
   }
   
   if (findfirst == true && cpu_algs.size() != 0){
-    throw std::runtime_error("findfirst is true, and so cpu_algs should be an empty list \n ");
+    throw tinygemm_error("findfirst is true, and so cpu_algs should be an empty list \n ");
   }
   
   if (allotted_time >= 0 and findfirst == false){
-    throw std::runtime_error("allotted_time is positive, so findfirst was expected to be true. We are being pedantic here, but please set allotted_time to a negative value. Just checking that you're aware that allotted_time is specific to the find algorith");
+    throw tinygemm_error("allotted_time is positive, so findfirst was expected to be true. We are being pedantic here, but please set allotted_time to a negative value. Just checking that you're aware that allotted_time is specific to the find algorith");
   }
   
   tinygemm::TinyGemmGeometry gg(isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, a_offset, b_offset, c_offset);  

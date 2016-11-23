@@ -48,7 +48,7 @@ void accuracy_test(bool isColMajor, bool tC, unsigned m, unsigned n, unsigned ld
   }
   
   if (sum_l1_c_true < l1_rel_err_tol){
-    throw std::runtime_error("Not sure what to do : Is the true c basically a matrix of zeros? Apparently the sum of the absolute values is less than 1e-6, in accuracy_test");
+    throw tinygemm_error("Not sure what to do : Is the true c basically a matrix of zeros? Apparently the sum of the absolute values is less than 1e-6, in accuracy_test");
   }
   
   double rel_err = sum_l1_diff / sum_l1_c_true;
@@ -84,7 +84,7 @@ void accuracy_test(bool isColMajor, bool tC, unsigned m, unsigned n, unsigned ld
     }
     mowri << "The above two submatrices are correct up to transposes in c." << Endl;
     
-    throw std::runtime_error("Accuracy test failed");
+    throw tinygemm_error("Accuracy test failed");
   }
   mowri << "Test passed [rel_err = " <<  rel_err << "]." << Endl;
 }

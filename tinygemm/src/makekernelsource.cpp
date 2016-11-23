@@ -1,6 +1,7 @@
 #include "makekernelsource.hpp"
 #include "hyperparams.hpp"
 #include "defaultoutpath.hpp"
+#include "tinygemmerror.hpp"
 
 
 #include <cstdlib>
@@ -33,7 +34,7 @@ int make_kernel_via_python(std::string dir_name, std::string t_float, std::map<s
       std::string errm("The received parameter, `");
       errm += x.first;
       errm += "' does not appear to be a valid parameter. ";
-      throw std::runtime_error(errm);
+      throw tinygemm_error(errm);
     }
   }
   
@@ -42,7 +43,7 @@ int make_kernel_via_python(std::string dir_name, std::string t_float, std::map<s
       std::string errm("The parameter `");
       errm += x;
       errm += "' appears to be missing in make_kernel_via_parameters";
-      throw std::runtime_error(errm);
+      throw tinygemm_error(errm);
     }
     
     else{

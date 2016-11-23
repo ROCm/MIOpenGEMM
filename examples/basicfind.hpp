@@ -5,12 +5,13 @@
 #include <vector>
 #include <thread>
 #include <chrono>
-#include <stdexcept>
+
 #include <map>
 #include <chrono>
 
 /* Required header for using tinygemm */
 #include "tinygemm.hpp"
+
 
 /* The following two header files define functions which help with opencl boilerplating on my systems, they are not necessary */
 #include "outputwriter.hpp"
@@ -219,7 +220,7 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
       //std::string errm ("Problem in clCreateProgramWithSource for betac_kernel in tinygemm : basicfind.hpp. \nThe error code returned is  ");
       //errm += std::to_string(ret) ;
       //errm += " . ";
-      //throw std::runtime_error(errm);
+      //throw tinygemm_error(errm);
     //}    
     
 
@@ -228,12 +229,12 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
       //char buffer[10240];
       //clGetProgramBuildInfo(betac_program, device_id_to_use, CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer, NULL);
       //fprintf(stderr, "CL Compilation failed:\n%s", buffer);
-      //throw std::runtime_error("Error in clBuildProgram");
+      //throw tinygemm_error("Error in clBuildProgram");
     //}
 
 
     //if (ret != CL_SUCCESS){
-      //throw std::runtime_error("Error in clCreateKernel");
+      //throw tinygemm_error("Error in clCreateKernel");
     //}
     
 

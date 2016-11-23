@@ -2,6 +2,7 @@
 
 #include "betackernelutil.hpp"
 #include "kernelsnips.hpp"
+#include "tinygemmerror.hpp"
 
 namespace tinygemm{
 namespace betac{
@@ -22,7 +23,7 @@ std::string get_cl_file_path(char fchar){
     std::string errm = "fchar has value `";
     errm += fchar;
     errm += "', which is not valid. It should be either `f' or `d'. This error is being throunw from set_betackernel_sizes, in betackernelutil.cpp";
-    throw std::runtime_error(errm);
+    throw tinygemm_error(errm);
   }
   
   return cl_file_path;
@@ -43,7 +44,7 @@ void set_betackernel_sizes(char fchar, bool isColMajor, bool tC, unsigned m, uns
   auto betac_parms = kernelutil::get_integer_preprocessor_parameters(get_cl_file_path(fchar));       
   
   if (betac_parms.count("N_WORK_ITEMS_PER_GROUP") + betac_parms.count("WORK_PER_THREAD") != 2){
-    throw std::runtime_error("It is required that both N_WORK_ITEMS_PER_GROUP and WORK_PER_THREAD are defined in the scaling kernel, something looks weird here.");
+    throw tinygemm_error("It is required that both N_WORK_ITEMS_PER_GROUP and WORK_PER_THREAD are defined in the scaling kernel, something looks weird here.");
   }
   
   betac_local_work_size = betac_parms["N_WORK_ITEMS_PER_GROUP"];

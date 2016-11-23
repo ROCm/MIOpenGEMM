@@ -1,6 +1,6 @@
 
 #include "stringutilbase.hpp"
-#include <stdexcept>
+#include "tinygemmerror.hpp"
 #include <iostream>
 #include <tuple>
 
@@ -79,7 +79,7 @@ std::string getdirfromfn(const std::string & fn){
 	auto morcels = split(fn, "/");
 
 	if (morcels[0].compare("") != 0){
-		throw std::runtime_error("The string passed to getdirfromfn is not a valid path as there is no leading / .");
+		throw tinygemm_error("The string passed to getdirfromfn is not a valid path as there is no leading / .");
 	}
 
 	std::string dir = "/";

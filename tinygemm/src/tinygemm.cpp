@@ -1,4 +1,4 @@
-#include <stdexcept>
+#include "tinygemmerror.hpp"
 #include <thread>
 #include <sstream>
 #include <limits>
@@ -33,7 +33,7 @@ void confirm_cl_status(cl_int ret, std::string function, std::string argument){
   if (ret != CL_SUCCESS){
     std::stringstream errms;
     errms << "failure to set cl kernel arg, " << argument << ", in function " << function << "." << " error!";
-    throw std::runtime_error(errms.str());
+    throw tinygemm_error(errms.str());
   }
 }
 
@@ -151,11 +151,11 @@ public:
 
       ret = clGetCommandQueueInfo(command_queue, CL_QUEUE_CONTEXT, sizeof(cl_context), &context, NULL);
       if (ret != CL_SUCCESS){
-        throw std::runtime_error("Problem using clGetCommandQueueInfo, trying to get CL_QUEUE_CONTEXT (in constructor in openclgemmapi.cpp");
+        throw tinygemm_error("Problem using clGetCommandQueueInfo, trying to get CL_QUEUE_CONTEXT (in constructor in openclgemmapi.cpp");
       }
       ret = clGetCommandQueueInfo(command_queue, CL_QUEUE_DEVICE, sizeof(cl_device_id), &device_id_to_use, NULL);
       if (ret != CL_SUCCESS){
-        throw std::runtime_error("Problem using clGetCommandQueueInfo, trying to get CL_QUEUE_DEVICE (in constructor in openclgemmapi.cpp");        
+        throw tinygemm_error("Problem using clGetCommandQueueInfo, trying to get CL_QUEUE_DEVICE (in constructor in openclgemmapi.cpp");        
       }
       
       if (nobenching == false){
@@ -167,13 +167,13 @@ public:
 
   void run_checks(){
     if (c_gpu == a_gpu || c_gpu == b_gpu){
-      throw std::runtime_error("c should be distinct from a and b for gemm, otherwise race condition arises (one thread writes its result to c before another one has finished reading from c)");
+      throw tinygemm_error("c should be distinct from a and b for gemm, otherwise race condition arises (one thread writes its result to c before another one has finished reading from c)");
     }
     /* Confirm that the input parameters make sense */
     consistencychecks::check_ldx_mnk_consistent(gg);
     sizingup::check_sizes_ok_for_unsigned(gg);
     if (floattype != 'd' and floattype != 'f'){
-      throw std::runtime_error("floattype should be one of 'f' and 'd'");
+      throw tinygemm_error("floattype should be one of 'f' and 'd'");
     }
   }
 
@@ -207,7 +207,7 @@ public:
     }
     
     else{
-      throw std::runtime_error("Unrecognised floattype char. Currently, only 'f' (single precision) and 'd' (double precision) are supported");
+      throw tinygemm_error("Unrecognised floattype char. Currently, only 'f' (single precision) and 'd' (double precision) are supported");
     }
   }
 
@@ -248,7 +248,7 @@ public:
   void enqueue_betac_kernel(){
     ret = clEnqueueNDRangeKernel(command_queue, betac_kernel, 1, NULL, &betac_global_work_size, &betac_local_work_size, 0, NULL, &event_betac_kernel);
     if (ret != CL_SUCCESS){
-      throw std::runtime_error("Error in clEnqueueNDRangeKernel (in the scaling kernel)");
+      throw tinygemm_error("Error in clEnqueueNDRangeKernel (in the scaling kernel)");
     }
   }
 
@@ -262,7 +262,7 @@ public:
       errm += std::to_string(ret);
       errm += " )";
       errm += "\n";
-      throw std::runtime_error(errm);
+      throw tinygemm_error(errm);
     }
     
     /* Either returning CL_SUCCESS or CL_OUT_OF_RESOURCES.  */
@@ -391,7 +391,7 @@ public:
   void benchgemm(std::string kernelfilename, unsigned n_runs){
 
     if (n_runs == 0){
-      throw std::runtime_error("n_runs to benchgemm should be a positive integer");
+      throw tinygemm_error("n_runs to benchgemm should be a positive integer");
     }
     
     mowri << "INPUT_CALL   \t:" << gg.get_string() << Endl;
@@ -413,11 +413,11 @@ public:
   tinygemm::TinyGemmSolution find(float allotted_time, bool enforce_deterministic){  
     
     if (allotted_time > 0 && nobenching == true){
-      throw std::runtime_error("allotted_time > 0 and nobencking == false, which does not make sense. Algo problem, come fix ");
+      throw tinygemm_error("allotted_time > 0 and nobencking == false, which does not make sense. Algo problem, come fix ");
     }
     
     else if (allotted_time <= 0 && nobenching == false){
-      throw std::runtime_error("allotted_time <= 0 and nobenching == false. This makes no sense : algo problem, come fix ");
+      throw tinygemm_error("allotted_time <= 0 and nobenching == false. This makes no sense : algo problem, come fix ");
     }
     
     if (allotted_time <= 0){
@@ -621,7 +621,7 @@ public:
     }
     
     if (path_of_best_solns.size() == 0){
-      throw std::runtime_error("\nUser should never see this error, this is an internal problem. Possibly, there were no solutions found. Which is strange, as at least the initial kernel (the initial hyper front) should have been a solution. Either, the initial kernel was not valid (which should not happen unless my filters are broken) or for whatever reason the kernel was not generated or did not compile. Maybe there is some preceding warning printed which sheds light on this? Other possibilities are bad dir_name or kernelname in make_kernel.py. set verbose_report to True in makekernelsource if you (james) can't figure this out ");
+      throw tinygemm_error("\nUser should never see this error, this is an internal problem. Possibly, there were no solutions found. Which is strange, as at least the initial kernel (the initial hyper front) should have been a solution. Either, the initial kernel was not valid (which should not happen unless my filters are broken) or for whatever reason the kernel was not generated or did not compile. Maybe there is some preceding warning printed which sheds light on this? Other possibilities are bad dir_name or kernelname in make_kernel.py. set verbose_report to True in makekernelsource if you (james) can't figure this out ");
     }
   
     mowri << "best time : " << best_time << Endl;
@@ -698,7 +698,7 @@ const tinygemm::TinyGemmGeometry & gg
   bool verbose_report_from_python = true;
   int kernel_write_status = tinygemm::mkkern::make_kernel_via_python(kerneldir,  floattostring::get_float_string(floattype), all_int_parms, kernelname, verbose_report_from_python);
   if (kernel_write_status != CL_SUCCESS){
-    throw std::runtime_error("A problem arose in the python script to generate the kernel. Throwing from get_default.");
+    throw tinygemm_error("A problem arose in the python script to generate the kernel. Throwing from get_default.");
   }
   
   //auto end = std::chrono::high_resolution_clock::now();

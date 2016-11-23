@@ -1,4 +1,4 @@
-#include <stdexcept>
+#include "tinygemmerror.hpp"
 #include <string> 
 
 #include "consistencychecks.hpp"
@@ -86,7 +86,7 @@ namespace consistencychecks{
 
     errm += "This error is being reported from tinygemm file consistencychecks.cpp\n";
     if (isproblem == true){
-      throw std::runtime_error(errm);
+      throw tinygemm_error(errm);
     }
   }
 

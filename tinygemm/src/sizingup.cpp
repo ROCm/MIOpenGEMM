@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <cmath>
 #include <string>
-#include <stdexcept>
+#include "tinygemmerror.hpp"
 
 #include "sizingup.hpp"
 #include "tinygemmgeometry.hpp"
@@ -56,7 +56,7 @@ void check_sizes_ok_for_unsigned(bool isColMajor, bool tA, bool tB, bool tC, uns
   }
   
   if (errm.compare("") != 0){
-    throw std::runtime_error(errm);
+    throw tinygemm_error(errm);
   }
 }
   

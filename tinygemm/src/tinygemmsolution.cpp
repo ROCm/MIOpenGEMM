@@ -6,7 +6,7 @@
 #include "tinygemmsolution.hpp"
 #include "sizingup.hpp"
 #include "betackernelutil.hpp"
-
+#include "tinygemmerror.hpp"
 
 namespace tinygemm{
 
@@ -35,7 +35,7 @@ std::map<std::string, size_t> TinyGemmSolution::get_main_kernel_worksize_params(
       //}
     
       //zzzzzzzzzzzzzzzzzzzzzzzzzzzzz
-      throw std::runtime_error(get_errm(x));
+      throw tinygemm_error(get_errm(x));
     }
   }
   
@@ -63,7 +63,7 @@ std::map<std::string, size_t> TinyGemmSolution::get_betac_kernel_worksize_params
   std::vector<std::string> integral_params_needed {"is_col_major", "c_transposed"};
   for (auto & x : integral_params_needed){
     if (allparams.count(x) == 0){
-      throw std::runtime_error(get_errm(x));
+      throw tinygemm_error(get_errm(x));
     }
   }
  
@@ -74,7 +74,7 @@ std::map<std::string, size_t> TinyGemmSolution::get_betac_kernel_worksize_params
     std::string errm("Just checking that floattype is either 'd' or 'f' in get_betac_kernel_worksize_params in tinygemmsolution.cpp, and it is not, it is `");
     errm += floattype;
     errm += "'. This is strange (14/11/2016, we only support 32 and 64 bit floats)";
-    throw std::runtime_error(errm);
+    throw tinygemm_error(errm);
   }
   
   betac::set_betackernel_sizes(floattype, allparams["is_col_major"], allparams["c_transposed"], m, n, dim_coal, dim_uncoal, betac_global_work_size, betac_local_work_size);  
