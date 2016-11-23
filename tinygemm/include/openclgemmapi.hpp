@@ -23,6 +23,14 @@ namespace clgemm{
 
 
 tinygemm::TinyGemmSolution
+get_default(
+const bool enforce_deterministic, 
+const char floattype, 
+const gemmgeometry::Geometry & gg
+);
+
+
+tinygemm::TinyGemmSolution
 find(
 float allotted_time,
 cl_command_queue & command_queue,
@@ -36,6 +44,8 @@ const double alpha,
 const double beta, 
 bool verbose = false,   
 std::string logfile = "");
+
+
 
 
 
@@ -59,27 +69,3 @@ void kernel_cache_audit(std::string floattype);
 
 } //namespace
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

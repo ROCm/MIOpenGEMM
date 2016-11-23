@@ -22,6 +22,11 @@
 
 namespace clgemm{
 
+    /* Make these user defined parameters ? This is where all kernels will be written, overwriting was was previously there.  */
+static std::string kerneldir = defpaths::scratchpadfinddir + "/";
+static std::string kernelname = "atinygemmkernel";
+static std::string kernelfilename = kerneldir + kernelname + ".cl";
+
 
 void confirm_cl_status(cl_int ret, std::string function, std::string argument){
   if (ret != CL_SUCCESS){
@@ -45,6 +50,17 @@ class MultiFloatType{
 };
 
 
+/* Return the int parameters required by make_kernel, other than the hyper parameters */
+std::map<std::string, unsigned> get_bare_bones_int_parms(const gemmgeometry::Geometry & gg){
+  std::map<std::string, unsigned> all_int_parms;
+  all_int_parms["is_col_major"] = gg.isColMajor;
+  all_int_parms["a_transposed"] = gg.tA;
+  all_int_parms["b_transposed"] = gg.tB;
+  all_int_parms["c_transposed"] = gg.tC;
+  all_int_parms["use_edge_trick"] = 1;
+  
+  return all_int_parms;
+}
 
     
 
@@ -393,7 +409,7 @@ public:
   
   
   
-  tinygemm::TinyGemmSolution find(float allotted_time, bool enforce_deterministic){    
+  tinygemm::TinyGemmSolution find(float allotted_time, bool enforce_deterministic){  
     
     if (allotted_time > 0 && nobenching == true){
       throw std::runtime_error("allotted_time > 0 and nobencking == false, which does not make sense. Algo problem, come fix ");
@@ -404,8 +420,11 @@ public:
     }
     
     if (allotted_time <= 0){
-      throw std::runtime_error("Should return the nearest cached : TODO do this. At this point, you have the hyper_front start, just wrap it in a tinygemm solution and kabam. ");
+      mowri << "Allotted time insufficient for benchmarking, returning default TinyGemmSolution" << Endl;
+      return get_default(enforce_deterministic, floattype, gg);      
     }
+
+      
     
     
     auto start = std::chrono::high_resolution_clock::now();
@@ -413,7 +432,6 @@ public:
     std::chrono::duration<float> fp_ms = end - start;
     float elapsed_seconds = fp_ms.count();
 
-    
     /* we will count how many kernels are successfully generated AND compiled AND benchmarked */
     unsigned global_counter = 0;
         
@@ -424,12 +442,7 @@ public:
     std::vector<hyperparams::HyperParams> hyper_front_history;
     
     /* we set some initial parameters: the ones which are not in HyperParam object but eventually needed by the python script to generate kernel */
-    std::map<std::string, unsigned> all_int_parms;
-    all_int_parms["is_col_major"] = gg.isColMajor;
-    all_int_parms["a_transposed"] = gg.tA;
-    all_int_parms["b_transposed"] = gg.tB;
-    all_int_parms["c_transposed"] = gg.tC;
-    all_int_parms["use_edge_trick"] = 1;
+    std::map<std::string, unsigned> all_int_parms = get_bare_bones_int_parms(gg);
     
     /* while generating, compiling and benchmarking kernels, we will keep track of the fastest found thus far */
     float best_time = std::numeric_limits<float>::max();
@@ -440,14 +453,8 @@ public:
     std::vector<hyperparams::HyperParams> hyper_front = { hyperparams::get_default(gg, enforce_deterministic) };
     
     //hyperparams::get_initial_front(gg, enforce_deterministic);
-    
-    
     auto hyper_param_start = hyper_front[0];
 
-    /* Make these user defined parameters ? This is where all kernels will be written, overwriting was was previously there.  */
-    std::string kerneldir = defpaths::scratchpadfinddir + "/";
-    std::string kernelname = "atinygemmkernel";
-    std::string kernelfilename = kerneldir + kernelname + ".cl";
 
 
 
@@ -658,6 +665,60 @@ std::string logfile){
 
 }
 
+
+/* takes 0.05 seconds. 0.35 of this is spent in python script generating kernel and writing it, the rest is spent finding default. */
+/* I can get through about 5 benchmarks per second, that is 1 every 0.2 seconds, so the python script is something to be concerned about... */
+tinygemm::TinyGemmSolution
+get_default(
+const bool enforce_deterministic, 
+const char floattype, 
+const gemmgeometry::Geometry & gg
+){
+  
+  
+   
+
+  
+  
+  std::map<std::string, unsigned> all_int_parms = get_bare_bones_int_parms(gg);
+  hyperparams::HyperParams hp = hyperparams::get_default(gg, enforce_deterministic);
+  for (auto & x : hp.params){
+    all_int_parms[x.first] = x.second;
+  }
+  
+  
+    
+  
+
+  //auto start = std::chrono::high_resolution_clock::now();
+ 
+  
+
+  bool verbose_report_from_python = true;
+  int kernel_write_status = mkkern::make_kernel_via_python(kerneldir,  floattostring::get_float_string(floattype), all_int_parms, kernelname, verbose_report_from_python);
+  if (kernel_write_status != CL_SUCCESS){
+    throw std::runtime_error("A problem arose in the python script to generate the kernel. Throwing from get_default.");
+  }
+  
+  //auto end = std::chrono::high_resolution_clock::now();
+  //std::chrono::duration<float> fp_ms = end - start;
+  //float time_in_get_default = fp_ms.count();
+  
+  //std::cout << "time in get_default : " << time_in_get_default << " [s] " << std::endl;
+
+
+  float median_time = std::numeric_limits<float>::max();
+  float elapsed_seconds = 0.;
+  float median_benchmark_gflops = 0.;                
+  tinygemm::TinyGemmSolutionStatistics tgss(median_time, median_benchmark_gflops, gg, elapsed_seconds);
+  std::string soln_betac_kernel = all_int_parms.at("n_work_items_per_c_elm") == 1 ?  ""  : kernelutil::get_as_single_string(betac::get_cl_file_path(floattype));
+  std::string soln_betac_kernel_function_name = all_int_parms.at("n_work_items_per_c_elm") == 1 ? "" : kernelutil::get_kernel_function_name(betac::get_cl_file_path(floattype));
+  std::string soln_main_kernel = kernelutil::get_as_single_string(kernelfilename);
+  std::string soln_main_kernel_function_name = kernelutil::get_kernel_function_name(kernelfilename);                
+  tinygemm::TinyGemmSolution tgs(soln_betac_kernel, soln_main_kernel, soln_betac_kernel_function_name, soln_main_kernel_function_name, all_int_parms, floattype, tgss);
+
+  return tgs;
+}
 
 
 
