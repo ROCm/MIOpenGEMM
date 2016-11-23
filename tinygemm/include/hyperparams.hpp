@@ -52,12 +52,6 @@ public:
 HyperParams get_default(const gemmgeometry::Geometry & gg, bool enforce_deterministic);
 
 
-
-
-//HyperParams get_default_big();
-//HyperParams get_default_medium();
-//HyperParams get_default_small();
-
 }
 
 #endif

@@ -166,12 +166,6 @@ public:
     openclutil::set_program_and_kernel(betac_program, betac_kernel, betac_kernel_function_name, context, device_id_to_use, betac::get_cl_file_path(floattype));
     betac::set_betackernel_sizes(floattype, gg.isColMajor, gg.tC, gg.m, gg.n, dim_coal, dim_uncoal, betac_global_work_size, betac_local_work_size);
     mowri << "in setup_betac_kernel, global_work_size : " << betac_global_work_size << Endl; 
-    //if (betac_global_work_size > 4*64*40*64){
-      //mowri << "The number of threads running the scaling kernel looks very large (greater than 4 64 40 64). Could increase WORK_PER_THREAD to bring down... " << Endl;
-    //}
-    
-    //mowri << "global work size (scaling kernel) is " << betac_global_work_size <<  " (recommended is ~ 4*64*40*64 =  655360)" <<  Endl;
- 
     ret = clSetKernelArg(betac_kernel, 0, sizeof(unsigned), &dim_coal);
     confirm_cl_status(ret, "clSetKernelArg", "dim_coal");
     ret = clSetKernelArg(betac_kernel, 1, sizeof(unsigned), &dim_uncoal);
@@ -646,9 +640,7 @@ public:
 tinygemm::TinyGemmSolution
 find(
 float allotted_time,
-//cl_context & context,
 cl_command_queue & command_queue,
-//cl_device_id & device_id_to_use,
 cl_mem a,   
 cl_mem b,
 cl_mem c,
@@ -659,24 +651,9 @@ const double alpha,
 const double beta,
 bool verbose, 
 std::string logfile){
-  
   //TODO : add bool verbose and std::string logfile
-  
-
-
-  /*user defined filename ?*/
-  
-  //defpaths::scratchpadfinddir
-  
-//  std::string outputfilename("");
-  
-  //OpenCLGemmEncapsulator oger(context, command_queue, device_id_to_use, floattype, gg, alpha, beta, a, b, c, logfile, verbose);
-  
-  
-  bool nobenching = allotted_time <= 0 ?  true : false ;
-  
+  bool nobenching = allotted_time <= 0 ?  true : false ;  
   OpenCLGemmEncapsulator oger(command_queue, floattype, gg, alpha, beta, a, b, c, logfile, verbose, nobenching);
-  
   return oger.find(allotted_time, enforce_deterministic);
 
 }
@@ -686,9 +663,7 @@ std::string logfile){
 
 
 void benchgemm(
-  //cl_context & context,
-  cl_command_queue & command_queue, 
-  //cl_device_id & device_id_to_use,
+  cl_command_queue & command_queue,
   std::string kernelfilename,
   unsigned n_runs,
   const char floattype, 
@@ -700,9 +675,6 @@ void benchgemm(
   cl_mem c_gpu,
   bool verbose,
   std::string logfile){
-    
-  //OpenCLGemmEncapsulator oger(context, command_queue, device_id_to_use, floattype, gg, alpha, beta, a_gpu, b_gpu, c_gpu, logfile, verbose);
-  
   bool nobenching = false;
   OpenCLGemmEncapsulator oger(command_queue, floattype, gg, alpha, beta, a_gpu, b_gpu, c_gpu, logfile, verbose, nobenching);
   oger.benchgemm(kernelfilename, n_runs);
@@ -713,5 +685,3 @@ void benchgemm(
 
 
 
-//Y256_X256_y4_x4_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ET1_ICE2
-//Y256_X256_y4_x4_U16_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ET1_ICE4
