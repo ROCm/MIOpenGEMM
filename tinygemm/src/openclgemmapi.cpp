@@ -95,6 +95,7 @@ private:
   /* These are set in the constructor by querying command_queue */
   cl_context context;
   cl_device_id device_id_to_use;
+  bool nobenching;
 
 
 public:
@@ -108,7 +109,8 @@ public:
     cl_mem & b_gpu, 
     cl_mem & c_gpu,
     std::string & outputfilename,
-    bool verbose):
+    bool verbose, 
+    bool nobenching):
 
     command_queue(command_queue), 
     outputfilename(outputfilename),
@@ -121,9 +123,15 @@ public:
     c_gpu(c_gpu),
     m_alpha(alpha),
     m_beta(beta),
-    mowri(verbose, outputfilename.compare("") != 0, outputfilename)
+    mowri(verbose, outputfilename.compare("") != 0, outputfilename),
+    nobenching(nobenching)
     {
-        
+
+
+      set_floatsize();
+      run_checks();
+
+
       ret = clGetCommandQueueInfo(command_queue, CL_QUEUE_CONTEXT, sizeof(cl_context), &context, NULL);
       if (ret != CL_SUCCESS){
         throw std::runtime_error("Problem using clGetCommandQueueInfo, trying to get CL_QUEUE_CONTEXT (in constructor in openclgemmapi.cpp");
@@ -132,10 +140,10 @@ public:
       if (ret != CL_SUCCESS){
         throw std::runtime_error("Problem using clGetCommandQueueInfo, trying to get CL_QUEUE_DEVICE (in constructor in openclgemmapi.cpp");        
       }
-
-      set_floatsize();
-      run_checks();
-      setup_betac_kernel(); //TODO : release when done. TODO : don't want to do this if allotted_time is negative !
+      
+      if (nobenching == false){
+        setup_betac_kernel(); //TODO : release when done. 
+      }
 
     }
     
@@ -193,8 +201,8 @@ public:
   }
 
   void check_file_and_set_from(std::string kernelfn){
+    
     /* check that the parameters in the kernelfile look reasonable */
-        
     kernelutil::check_gpu_kernel_preprocessor_parameters(kernelfn, gg.tA, gg.tB, gg.tC, gg.isColMajor, gg.m, gg.n, floattostring::get_float_string(floattype));
     
     /* extract the parameters which are needed to determine the number of work groups and work items to launch, directly from kernel source */
@@ -224,8 +232,6 @@ public:
     ret = clSetKernelArg(kernel, 11, sizeof(unsigned), &gg.a_offset);
     ret = clSetKernelArg(kernel, 12, sizeof(unsigned), &gg.b_offset);
     ret = clSetKernelArg(kernel, 13, sizeof(unsigned), &gg.c_offset);
-
-
   }
 
   void enqueue_betac_kernel(){
@@ -237,8 +243,7 @@ public:
 
 
   
-  int enqueue_main_kernel(){
-    
+  int enqueue_main_kernel(){    
     ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_work_size, &local_work_size, 0,NULL, &event_main_kernel);
     /* Handle the failure case which is not CL_OUT_OF_RESOURCES */ 
     if (ret != CL_SUCCESS && ret != CL_OUT_OF_RESOURCES){
@@ -306,14 +311,12 @@ public:
       /* This pause should have zero effect, but mysteriously it smooths out the run times between runs when working with certain gpu drivers
        * It has something to do with overheating.  */        
       if (n_runs > 1){
-        std::this_thread::sleep_for(std::chrono::milliseconds(80));
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
       }
   
       /* ***************************************************************************************
        *  Note on timing : the same results have been obtained whth timespec and std::chrono.  *
        *  **************************************************************************************/
-
-      /* 20 Nov removed cl finish */
 
       /* Enqueue the beta c kernel if nec */
       if (does_betac_inc == 0){
@@ -376,6 +379,10 @@ public:
   /* try-wrapped in gemini */
   void benchgemm(std::string kernelfilename, unsigned n_runs){
 
+    if (n_runs == 0){
+      throw std::runtime_error("n_runs to benchgemm should be a positive integer");
+    }
+    
     mowri << "INPUT_CALL   \t:" << gg.get_string() << Endl;
     full_kernel_setup_from_source_file(kernelfilename);
     mowri << "Entering the core gemm loops" << Endl;
@@ -385,30 +392,37 @@ public:
     
     ret = clReleaseKernel(kernel);
     ret = clReleaseProgram(program);
+  
   }//gemm
   
   
   
   
   
-  tinygemm::TinyGemmSolution find(float allotted_time, bool enforce_deterministic){
+  tinygemm::TinyGemmSolution find(float allotted_time, bool enforce_deterministic){    
+    
+    if (allotted_time > 0 && nobenching == true){
+      throw std::runtime_error("allotted_time > 0 and nobencking == false, which does not make sense. Algo problem, come fix ");
+    }
+    
+    else if (allotted_time <= 0 && nobenching == false){
+      throw std::runtime_error("allotted_time <= 0 and nobenching == false. This makes no sense : algo problem, come fix ");
+    }
+    
+    if (allotted_time <= 0){
+      throw std::runtime_error("Should return the nearest cached : TODO do this. At this point, you have the hyper_front start, just wrap it in a tinygemm solution and kabam. ");
+    }
+    
     
     auto start = std::chrono::high_resolution_clock::now();
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<float> fp_ms = end - start;
     float elapsed_seconds = fp_ms.count();
 
-    if (allotted_time <= 0){
-      throw std::runtime_error("Should return the nearest cached : TODO develop caching scheme");
-    }
     
     /* we will count how many kernels are successfully generated AND compiled AND benchmarked */
     unsigned global_counter = 0;
-    
-    /* we initialise the `hyper-front' with a single HyperParams, selected based on problem dimensions (TODO : should be based on cache table look-up) */
-    std::vector<hyperparams::HyperParams> hyper_front = hyperparams::get_initial_front(gg, enforce_deterministic);
-    auto hyper_param_start = hyper_front[0];
-    
+        
     /* we track the best TinyGemmSolution found during the search  */    
     std::vector<tinygemm::TinyGemmSolution> path_of_best_solns;
     
@@ -427,7 +441,23 @@ public:
     float best_time = std::numeric_limits<float>::max();
     hyperparams::HyperParams best_hyper_params;
     
+
+    /* we initialise the `hyper-front' with a single HyperParams, selected based on problem dimensions (TODO : should be based on cache table look-up) */
+    std::vector<hyperparams::HyperParams> hyper_front = { hyperparams::get_default(gg, enforce_deterministic) };
     
+    //hyperparams::get_initial_front(gg, enforce_deterministic);
+    
+    
+    auto hyper_param_start = hyper_front[0];
+
+    /* Make these user defined parameters ? This is where all kernels will be written, overwriting was was previously there.  */
+    std::string kerneldir = defpaths::scratchpadfinddir + "/";
+    std::string kernelname = "atinygemmkernel";
+    std::string kernelfilename = kerneldir + kernelname + ".cl";
+
+
+
+
     bool improvement_found_on_front = true;
     
     /* a hyper front consists of all kernels within a certain "distance of the current best. We start with a front
@@ -438,34 +468,20 @@ public:
     
     mowri << "allotted time : " << allotted_time << Endl;
     while (improvement_found_on_front == true){
-
       improvement_found_on_front = false;
- 
       mowri << "\nnew hyper front size : " << hyper_front.size() << Endl;
-      unsigned hfi = 0;
-      
-      
-      //std::abort();
-      while (hfi < hyper_front.size() && improvement_found_on_front == false && elapsed_seconds < allotted_time){
-        
-        hyperparams::HyperParams hp = hyper_front[hfi];
 
-        /* certain kernels will not be generated, for diverse reasons : */
+      unsigned hfi = 0;
+      while (hfi < hyper_front.size() && improvement_found_on_front == false && elapsed_seconds < allotted_time){        
+        hyperparams::HyperParams hp = hyper_front[hfi];
+        /* certain kernels will not be generated, for diverse reasons */
         /* reason 0 : it's already been considered */
         if (std::find(hyper_front_history.begin(), hyper_front_history.end(), hp) != hyper_front_history.end()){
           /* this kernel has already been considered */
-          mowri << "already considered" << Endl;
         }
         
         else{
           hyper_front_history.push_back(hp);
-        
-        
-        
-        
-        
-          //for (unsigned blaa = 0; blaa < 1000000; ++blaa){
-        
         
           /* reason 1 : the macro tile is too tall */
           if (gg.m < hp.params.at("macro_tile_height")){
@@ -488,16 +504,11 @@ public:
             
             for (auto & x : hp.params){
               all_int_parms[x.first] = x.second;
-              //mowri << x.first << "  : " << x.second  << Endl;
             }
-             
-            /* User defined parameters ? */
-            std::string kerneldir = defpaths::scratchpadfinddir + "/";
-            std::string kernelname = "atinygemmkernel";// + std::to_string(global_counter); // + ".cl";
-          
             /* attempt to generate the kernel. Certain `bad' kernels are only caught at this stage, with tests for hyper-parameter compatibilty in the 
              * python script which I don't want to recode here. The main compatibility issue caught here is that load sizes from global are multiples
-             * of the number of work items. */
+             * of the number of work items. In the case of `stupid' mistakes (bad paths, run time problems) the python output from the first kernel 
+             * generated (global_counter = 0) will be printed explicitly, so that hopefully the user will see what the problem is.  */
             bool verbose_report_from_python = global_counter == 0 ? true : false;
             int kernel_write_status = mkkern::make_kernel_via_python(kerneldir,  floattostring::get_float_string(floattype), all_int_parms, kernelname, verbose_report_from_python);
             
@@ -508,7 +519,7 @@ public:
               ++global_counter;
               mowri << "global gen-com-bench : " << global_counter  <<  "." << Endl;
   
-              std::string kernelfilename = kerneldir + kernelname + ".cl";
+
               
               /* bench 2 times. TODO: unhardwire this. */
               benchgemm(kernelfilename, 2);
@@ -522,36 +533,30 @@ public:
               mowri << "median time  : " << median_time << "\t m-Gflops/s : " << 2.0 * gg.m * gg.n * gg.k / (median_time * 1e6) << Endl;
               mowri << "elapsed seconds : " << elapsed_seconds << Endl;
       
-              /* A new best kernel! we're only interested in an improvement if it's 0.5% or more */
+              /* A new best kernel !!! we're only interested in an improvement if it's 0.5% or more */
               if (median_time < 0.995*best_time){
                 improvement_found_on_front = true;
                 best_time = median_time;
                 best_hyper_params = hp;
                 mowri << "---------- NEW BEST TIME FOUND --------- : " << best_time << Endl << "breaking from current hyper front, creating new hyper front " << Endl;
-                
-                
-                
 
                 end = std::chrono::high_resolution_clock::now();
                 fp_ms = end - start;
                 elapsed_seconds = fp_ms.count();
 
 
-                float median_benchmark_gflops = (2. * gg.m * gg.n * gg.k) / (median_time * 10e5);
-                
+                float median_benchmark_gflops = (2. * gg.m * gg.n * gg.k) / (median_time * 10e5);                
                 tinygemm::TinyGemmSolutionStatistics tgss(median_time, median_benchmark_gflops, gg, elapsed_seconds);
                 
-
                 //set kernel files
                 //TODO : should not be determining whether a kernel does betac or not based on this, find true parameter
                 std::string soln_betac_kernel = all_int_parms.at("n_work_items_per_c_elm") == 1 ?  ""  : kernelutil::get_as_single_string(betac::get_cl_file_path(floattype));
                 std::string soln_betac_kernel_function_name = all_int_parms.at("n_work_items_per_c_elm") == 1 ? "" : betac_kernel_function_name;
                 std::string soln_main_kernel = kernelutil::get_as_single_string(kernelfilename);
-                std::string soln_main_kernel_function_name = kernel_function_name;
-                
+                std::string soln_main_kernel_function_name = kernel_function_name;                
                 tinygemm::TinyGemmSolution tgs(soln_betac_kernel, soln_main_kernel, soln_betac_kernel_function_name, soln_main_kernel_function_name, all_int_parms, floattype, tgss);
+
                 path_of_best_solns.push_back(tgs); 
-                
               }
             }
           
@@ -571,7 +576,6 @@ public:
         fp_ms = end - start;
         elapsed_seconds = fp_ms.count();
         
-        //std::chrono::system_clock::now()-start;
       }
 
       /* TODO: maybe. add another level of loop here. get_one_aways, then get_two_aways, etc. 
@@ -621,22 +625,16 @@ public:
     mowri << "best time : " << best_time << Endl;
     mowri << "best kernel : " << best_hyper_params.get_string() << Endl;
     mowri << "start kernel : " << hyper_param_start.get_string() << Endl;
-    
     mowri << "the kernels along the path the final solution :  " << Endl; 
     mowri << "hyper parameter string                                     \t time when found\t median gflop/s" << Endl;
-
-
 
     for (auto & x : path_of_best_solns){
       mowri <<  x.get_hyper_param_string() << "\t " << x.statistics.solution_discovery_time << "\t\t " << x.statistics.median_benchmark_gflops  << Endl;
     } 
     mowri <<  path_of_best_solns.back().get_hyper_param_string() << "\t " << elapsed_seconds << "\t\t " << path_of_best_solns.back().statistics.median_benchmark_gflops  << Endl;
     
-    
-    
     return path_of_best_solns.back();
   }
-  
 }; 
 
 
@@ -675,7 +673,9 @@ std::string logfile){
   //OpenCLGemmEncapsulator oger(context, command_queue, device_id_to_use, floattype, gg, alpha, beta, a, b, c, logfile, verbose);
   
   
-  OpenCLGemmEncapsulator oger(command_queue, floattype, gg, alpha, beta, a, b, c, logfile, verbose);
+  bool nobenching = allotted_time <= 0 ?  true : false ;
+  
+  OpenCLGemmEncapsulator oger(command_queue, floattype, gg, alpha, beta, a, b, c, logfile, verbose, nobenching);
   
   return oger.find(allotted_time, enforce_deterministic);
 
@@ -703,7 +703,8 @@ void benchgemm(
     
   //OpenCLGemmEncapsulator oger(context, command_queue, device_id_to_use, floattype, gg, alpha, beta, a_gpu, b_gpu, c_gpu, logfile, verbose);
   
-  OpenCLGemmEncapsulator oger(command_queue, floattype, gg, alpha, beta, a_gpu, b_gpu, c_gpu, logfile, verbose);
+  bool nobenching = false;
+  OpenCLGemmEncapsulator oger(command_queue, floattype, gg, alpha, beta, a_gpu, b_gpu, c_gpu, logfile, verbose, nobenching);
   oger.benchgemm(kernelfilename, n_runs);
 }
   

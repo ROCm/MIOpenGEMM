@@ -1,6 +1,8 @@
 #ifndef BASICFIND_HPP
 #define BASICFIND_HPP
 
+#include <thread>
+#include <chrono>
 #include <stdexcept>
 #include <map>
 #include <chrono>
@@ -166,6 +168,9 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
     /* That's all you need to know, and don't forget the clReleases! */
     
     
+    
+
+    
     /* We will now take a look at how the times reported in benchmarking, 
      * which use cl_events to get accurate gpu times, compare to times
      * obtained here on the host side.  */ 
@@ -189,7 +194,7 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
     float difference_in_times = host_times[n_postfind_runs + 1] - host_times[1];
     std::cout << "Difference in times : " << difference_in_times << " [s]. This corresponds to  " << 1e-9*(2.*m*n*k*n_postfind_runs) / difference_in_times << " gflop/s. " << std::endl;
     std::cout << "We need to decide how to proceed with the DeepBench benchmarking, it seems to me that their approach (run 10 times, no subtraction as above) underestimates cudnn performance." << std::endl;
-    
+    std::cout << soln.get_hyper_param_string() << std::endl;
   }
   
   /* Cleaning up, closing shop. */

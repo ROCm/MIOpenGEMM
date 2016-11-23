@@ -20,51 +20,38 @@ static std::vector<std::string> all_int_param_names = {"micro_tile_width",  "mic
 "is_col_major", "a_transposed",  "b_transposed",  "c_transposed", "use_edge_trick"};
 
 
-
 class HyperParams{
 
 public:
-
   std::map<std::string, unsigned> params;
+  static std::vector<std::tuple<gemmgeometry::Geometry, std::string>> kernel_cache;
   
- 
- static std::vector<std::tuple<gemmgeometry::Geometry, std::string>> kernel_cache;
-
-
   
 public:
-
-
   unsigned get_workgroup_size();
-  
   unsigned get_nwitems_h();
-  
   unsigned get_nwitems_w();
-  
   void do_checks();
-  
   HyperParams(std::map<std::string, unsigned>);
-  
   HyperParams() = default;
-
   bool operator == (const HyperParams & hpr);
-  
   std::vector<HyperParams> get_one_aways(const gemmgeometry::Geometry & gg);
-  
   std::vector<HyperParams> get_two_aways(const gemmgeometry::Geometry & gg);  
   
   //check that it won't overflow by considering (m,n,tC).
-  bool can_be_used_on(const gemmgeometry::Geometry & gg);
-  
+  bool can_be_used_on(const gemmgeometry::Geometry & gg);  
   std::string get_string();
 
-
-private:
 
 };  
 
 
-std::vector<HyperParams> get_initial_front(const gemmgeometry::Geometry & gg, bool enforce_deterministic); 
+//std::vector<HyperParams> get_initial_front(const gemmgeometry::Geometry & gg, bool enforce_deterministic); 
+
+
+HyperParams get_default(const gemmgeometry::Geometry & gg, bool enforce_deterministic);
+
+
 
 
 //HyperParams get_default_big();

@@ -1,4 +1,5 @@
 #include <cmath>
+#include <iostream>
 #include <limits>
 #include <string>
 #include <sstream>
@@ -19,17 +20,25 @@ std::string Geometry::get_string() const{
 }
 
 
-float Geometry::distance(const Geometry & gg){
+float Geometry::get_distance(const Geometry & gg) const{
   //problems which are "larger" are infinitely far away (their tile might not fit...)
   
   float distance;
   
   if (tA != gg.tA || tB != gg.tB || isColMajor != gg.isColMajor || m < gg.m || n < gg.n){
+    //std::cout << gg.get_string() << std::endl;
+    //std::cout << get_string() << std::endl;
     distance = std::numeric_limits<float>::max();
   } 
    
   else{
-    distance =  std::abs(float(k) - float(gg.k)) + std::abs(float(m) - float(gg.m)) + std::abs(float(n) - float(gg.n)) + std::abs(float(lda) - float(gg.lda)) + std::abs(float(ldb) - float(gg.ldb)) + std::abs(float(ldc) - float(gg.ldc));
+    distance =  
+    0.2*std::abs(float(k) - float(gg.k)) + 
+    1.0*std::abs(float(m) - float(gg.m)) + 
+    1.0*std::abs(float(n) - float(gg.n)) + 
+    1.0*std::abs(float(lda) - float(gg.lda)) + 
+    1.0*std::abs(float(ldb) - float(gg.ldb)) + 
+    0.2*std::abs(float(ldc) - float(gg.ldc));
   }
   return distance;
 }
