@@ -7,7 +7,7 @@ cimport cython
 cimport cython.floating
 
 
-cdef extern from "devgemmapi.hpp" namespace "devgemmns":	
+cdef extern from "devtinygemm.hpp" namespace "tinygemm::dev":	
   void hello() except +
 
   void benchgemm[TFloat](bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned n, unsigned k, TFloat alpha, const TFloat * a, unsigned lda, unsigned a_offset, const TFloat * b, unsigned ldb, unsigned b_offset, TFloat beta, TFloat * c, unsigned ldc, unsigned c_offset, vector[string] cpu_algs, vector[vector[string]] gpu_kernel_filenames, bool capture_output, string & output, const TFloat * c_true_for_test, unsigned do_test, unsigned n_runs, string outputfilename, bool findfirst, float allotted_time, bool enforce_deterministic) except +;

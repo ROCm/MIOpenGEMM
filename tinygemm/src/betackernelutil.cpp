@@ -3,6 +3,7 @@
 #include "betackernelutil.hpp"
 #include "kernelsnips.hpp"
 
+namespace tinygemm{
 namespace betac{
 
 const std::string cl_file_f32_path(PATH_BETAC_KERNEL_DIR + std::string("betackernel_f32.cl"));
@@ -54,4 +55,5 @@ void set_betackernel_sizes(char fchar, bool isColMajor, bool tC, unsigned m, uns
 
 
 
+}
 }

@@ -5,6 +5,8 @@
 #include "defaultoutpath.hpp"
 #include  <CL/cl.h>
 
+
+namespace tinygemm{
 namespace openclutil{
 
 void set_platform_etc(cl_platform_id & platform, cl_uint & num_platforms, cl_context & context, cl_device_id & device_id_to_use, outputwriting::OutputWriter & mowri){
@@ -135,5 +137,5 @@ void set_program_and_kernel(cl_program & program, cl_kernel & kernel, std::strin
 }  
   
   
-} // end namespace
+}} // end namespace
 

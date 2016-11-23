@@ -12,6 +12,8 @@
 
 #include "stringutilbase.hpp"
 
+
+namespace tinygemm{
 namespace kernelutil{
 
 
@@ -130,7 +132,7 @@ namespace kernelutil{
   }
 
 
-} //namespace
+}} //namespace
 
 
 

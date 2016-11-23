@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+namespace tinygemm{
 namespace stringutil{
 //split the string tosplit by delim. With x appearances of delim in tosplit, the returned vector will have length x + 1 (even if appearances at the start, end, contiguous.
 std::vector<std::string> split(const std::string & tosplit, const std::string & delim);
@@ -18,7 +19,7 @@ std::string getdirfromfn(const std::string & fn);
 std::tuple<std::string, unsigned> splitnumeric(std::string alphanum);
 
 }
-
+}
 
 
 #endif

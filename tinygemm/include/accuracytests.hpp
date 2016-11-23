@@ -2,6 +2,10 @@
 #define ACCURACYTESTS_HPP
 
 #include <algorithm>
+
+
+namespace tinygemm {
+
 namespace accuracytests {
 
 template <typename TFloat>
@@ -85,6 +89,6 @@ void accuracy_test(bool isColMajor, bool tC, unsigned m, unsigned n, unsigned ld
   mowri << "Test passed [rel_err = " <<  rel_err << "]." << Endl;
 }
 
-} //namespace
+}} //namespaces
 
 #endif

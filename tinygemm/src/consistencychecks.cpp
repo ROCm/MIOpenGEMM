@@ -3,10 +3,11 @@
 
 #include "consistencychecks.hpp"
 
+namespace tinygemm{
 namespace consistencychecks{
 
 
-  void check_ldx_mnk_consistent(const gemmgeometry::Geometry  & gg){
+  void check_ldx_mnk_consistent(const tinygemm::TinyGemmGeometry  & gg){
       check_ldx_mnk_consistent(gg.isColMajor, gg.tA, gg.tB, gg.tC, gg.lda, gg.ldb, gg.ldc, gg.m, gg.n, gg.k);
   }
 
@@ -89,4 +90,5 @@ namespace consistencychecks{
     }
   }
 
+}
 } //namespace

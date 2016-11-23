@@ -6,7 +6,7 @@
 #include <map>
 
 
-#include "problemgeometry.hpp"
+#include "tinygemmgeometry.hpp"
 namespace tinygemm{
 
 class TinyGemmSolutionStatistics{
@@ -14,11 +14,11 @@ class TinyGemmSolutionStatistics{
     /* the median time and flop/s recorded with the(se) kernel(s) on the specified benchmarked problem */
     float median_benchmark_time;
     float median_benchmark_gflops;
-    gemmgeometry::Geometry benchmarked_geometry; //, benchmarked_n, benchmared_k;
+    tinygemm::TinyGemmGeometry benchmarked_geometry; //, benchmarked_n, benchmared_k;
     /* the time in seconds at which this solution was discovered  */
     float solution_discovery_time;
     
-    TinyGemmSolutionStatistics(float median_benchmark_time, float median_benchmark_gflops, gemmgeometry::Geometry benchmarked_geometry, float solution_discovery_time):median_benchmark_time(median_benchmark_time), median_benchmark_gflops(median_benchmark_gflops), benchmarked_geometry(benchmarked_geometry), solution_discovery_time(solution_discovery_time) {}
+    TinyGemmSolutionStatistics(float median_benchmark_time, float median_benchmark_gflops, tinygemm::TinyGemmGeometry benchmarked_geometry, float solution_discovery_time):median_benchmark_time(median_benchmark_time), median_benchmark_gflops(median_benchmark_gflops), benchmarked_geometry(benchmarked_geometry), solution_discovery_time(solution_discovery_time) {}
   
 };
 

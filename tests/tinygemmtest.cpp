@@ -1,8 +1,8 @@
 #include <iostream>
 #include <vector>
 
-#include "openclgemmapi.hpp"
-#include "devgemmapi.hpp"
+#include "tinygemm.hpp"
+#include "devtinygemm.hpp"
 #include "makekernelsource.hpp"
 #include "defaultoutpath.hpp"
 
@@ -37,7 +37,7 @@ int make_kernel(){
   all_int_parms["n_target_active_workgroups"] = 64;
   std::string dir_name = "~/atest/directory/ofsorts";
   std::string t_float = "float";
-  mkkern::make_kernel_via_python(dir_name, t_float, all_int_parms, "", true);
+  tinygemm::mkkern::make_kernel_via_python(dir_name, t_float, all_int_parms, "", true);
   return 0;
 }
 
@@ -129,9 +129,9 @@ class DevGemmTester{
     }
     
     int red_benchmark(std::vector<std::vector<std::string> > & gpu_kernel_filenames, bool findfirst, float allotted_time, bool enforce_deterministic = false){
-      std::cout << "about to call devgemmns::gemm<float>" << std::endl;
-      /* We pass cpu pointers to devgemmns::benchmark, which does all the necessary opencl gpu boilerplating */
-      devgemmns::benchgemm<float>(isColMajor, tA, tB, tC, m, n, k, alpha, v_a.data(), lda, a_offset, v_b.data(), ldb, b_offset, beta, v_c.data(), ldc, c_offset, {}, gpu_kernel_filenames, capture_output, output, nullptr, do_test, n_runs, outputfilename, findfirst, allotted_time, enforce_deterministic);
+      std::cout << "about to call tinygemm::dev::gemm<float>" << std::endl;
+      /* We pass cpu pointers to tinygemm::dev::benchmark, which does all the necessary opencl gpu boilerplating */
+      tinygemm::dev::benchgemm<float>(isColMajor, tA, tB, tC, m, n, k, alpha, v_a.data(), lda, a_offset, v_b.data(), ldb, b_offset, beta, v_c.data(), ldc, c_offset, {}, gpu_kernel_filenames, capture_output, output, nullptr, do_test, n_runs, outputfilename, findfirst, allotted_time, enforce_deterministic);
       return 0;
     }
       

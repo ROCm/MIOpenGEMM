@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <map>
 
+namespace tinygemm{
 namespace kernelutil{
 
 std::pair<std::map<std::string, unsigned>, std::map<std::string, std::string>> 
@@ -22,5 +23,6 @@ std::string
 get_as_single_string(std::string filename);
 
 } //namespace
+}
 
 #endif

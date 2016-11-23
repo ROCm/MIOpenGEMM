@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iostream>
 
+namespace tinygemm{
 namespace outputwriting{
   
 class Flusher{
@@ -63,6 +64,7 @@ OutputWriter & OutputWriter::operator << (Endline e);
 extern outputwriting::Flusher Flush;
 extern outputwriting::Endline Endl;
 
+}
 
 
 #endif

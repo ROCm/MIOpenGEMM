@@ -5,8 +5,9 @@
 #include <map>
 #include <random>
 
-#include "problemgeometry.hpp"
+#include "tinygemmgeometry.hpp"
 
+namespace tinygemm{
 namespace hyperparams{
 
 
@@ -24,7 +25,7 @@ class HyperParams{
 
 public:
   std::map<std::string, unsigned> params;
-  static std::vector<std::tuple<gemmgeometry::Geometry, std::string>> kernel_cache;
+  static std::vector<std::tuple<tinygemm::TinyGemmGeometry, std::string>> kernel_cache;
   
   
 public:
@@ -35,23 +36,24 @@ public:
   HyperParams(std::map<std::string, unsigned>);
   HyperParams() = default;
   bool operator == (const HyperParams & hpr);
-  std::vector<HyperParams> get_one_aways(const gemmgeometry::Geometry & gg);
-  std::vector<HyperParams> get_two_aways(const gemmgeometry::Geometry & gg);  
+  std::vector<HyperParams> get_one_aways(const tinygemm::TinyGemmGeometry & gg);
+  std::vector<HyperParams> get_two_aways(const tinygemm::TinyGemmGeometry & gg);  
   
   //check that it won't overflow by considering (m,n,tC).
-  bool can_be_used_on(const gemmgeometry::Geometry & gg);  
+  bool can_be_used_on(const tinygemm::TinyGemmGeometry & gg);  
   std::string get_string();
 
 
 };  
 
 
-//std::vector<HyperParams> get_initial_front(const gemmgeometry::Geometry & gg, bool enforce_deterministic); 
+//std::vector<HyperParams> get_initial_front(const tinygemm::TinyGemmGeometry & gg, bool enforce_deterministic); 
 
 
-HyperParams get_default(const gemmgeometry::Geometry & gg, bool enforce_deterministic);
+HyperParams get_default(const tinygemm::TinyGemmGeometry & gg, bool enforce_deterministic);
 
 
+}
 }
 
 #endif

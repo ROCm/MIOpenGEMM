@@ -4,8 +4,9 @@
 #include <stdexcept>
 
 #include "sizingup.hpp"
-#include "problemgeometry.hpp"
+#include "tinygemmgeometry.hpp"
 
+namespace tinygemm{
 namespace sizingup{
 
 
@@ -28,7 +29,7 @@ size_t get_n_elements_padded(unsigned h, unsigned w, unsigned ldx, bool isColMaj
 }
 
 
-void check_sizes_ok_for_unsigned(const gemmgeometry::Geometry & gg){
+void check_sizes_ok_for_unsigned(const tinygemm::TinyGemmGeometry & gg){
   check_sizes_ok_for_unsigned(gg.isColMajor, gg.tA, gg.tB, gg.tC, gg.m, gg.n, gg.k, gg.lda, gg.ldb, gg.ldc, gg.a_offset, gg.b_offset, gg.c_offset);
 }
 
@@ -60,4 +61,5 @@ void check_sizes_ok_for_unsigned(bool isColMajor, bool tA, bool tB, bool tC, uns
 }
   
   
+}
 }

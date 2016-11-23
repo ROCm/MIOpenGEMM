@@ -4,6 +4,7 @@
 
 #include "redirection.hpp"
 
+namespace tinygemm{
 namespace redirection{
   
 template <typename T>
@@ -69,6 +70,7 @@ void confirm_redirection(bool isColMajor, bool tA, bool tB, unsigned m, unsigned
   }
 }
 
+}
 }
   
 //TODO : add redirect for gpu opencl buffers.

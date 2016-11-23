@@ -6,6 +6,7 @@
 #include "redirection.hpp"
 
 
+namespace tinygemm{
 namespace slowcpugemm{
 
 template<typename TFloat>
@@ -156,4 +157,4 @@ void check_cpu_algs(std::vector<std::string> cpu_algs){
 
   template void gemm_3fors_cpu(bool isColMajor, bool tA, bool tB, bool tC, unsigned lda, unsigned ldb, unsigned ldc, unsigned m, unsigned n, unsigned k, const double * a, const double * b, double * c, double alpha, double beta, std::vector<std::string> algs, outputwriting::OutputWriter & mowri);  
   
-} //namespace
+}} //namespace

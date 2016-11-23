@@ -1,6 +1,7 @@
 #include "floattostring.hpp"
 #include <string>
 
+namespace tinygemm{
 namespace floattostring{
 
 std::string float_string_type(double x){
@@ -34,4 +35,4 @@ std::string get_float_string(char floattype){
   }
 }
 
-}
+}}

@@ -7,6 +7,7 @@
 #include <algorithm>
 #include "kernelsnips.hpp"
 
+namespace tinygemm{
 namespace kernelutil{
 
 void run_preprocessor_parameter_tests(std::map<std::string, unsigned> ipps, std::map<std::string, std::string> spps,
@@ -306,4 +307,4 @@ void check_gpu_kernels_preprocessor_parameters(const std::vector<std::vector<std
 }
 
 
-} //namespace
+}} //namespace

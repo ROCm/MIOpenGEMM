@@ -9,6 +9,7 @@
 #include <vector>
 #include <algorithm>
 
+namespace tinygemm{
 namespace mkkern{
   
 /* returns 0 if the kernel was succesfully written. If the hyperparameters don't gel, a kernel will not be written, and a non-zero int will be returned */
@@ -77,7 +78,7 @@ int make_kernel_via_python(std::string dir_name, std::string t_float, std::map<s
   return success;
 }
 
-} //namespace
+}} //namespace
 
 
  

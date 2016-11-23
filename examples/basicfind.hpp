@@ -1,6 +1,8 @@
 #ifndef BASICFIND_HPP
+
 #define BASICFIND_HPP
 
+#include <vector>
 #include <thread>
 #include <chrono>
 #include <stdexcept>
@@ -8,7 +10,7 @@
 #include <chrono>
 
 /* Required header for using tinygemm */
-#include "openclgemmapi.hpp"
+#include "tinygemm.hpp"
 
 /* The following two header files define functions which help with opencl boilerplating on my systems, they are not necessary */
 #include "outputwriter.hpp"
@@ -38,8 +40,8 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
   cl_int ret;
   cl_platform_id platform = nullptr;
   cl_uint num_platforms;
-  outputwriting::OutputWriter mowri(verbose, logfile.compare("") != 0, logfile);
-  openclutil::set_platform_etc(platform, num_platforms, context, device_id_to_use, mowri);
+  tinygemm::outputwriting::OutputWriter mowri(verbose, logfile.compare("") != 0, logfile);
+  tinygemm::openclutil::set_platform_etc(platform, num_platforms, context, device_id_to_use, mowri);
   command_queue = clCreateCommandQueue(context, device_id_to_use, CL_QUEUE_PROFILING_ENABLE, &ret);  
   /* fill matrices with random floats. It is important to fill them with random floats, 
   * as if they're integers, the kernel can, and doe, cheat! (runs faster) */
@@ -76,10 +78,10 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
   /* ***************
    * Find a kernel *
    * ***************/
-  gemmgeometry::Geometry geometry(isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, a_offset, b_offset, c_offset);
-  //tinygemm::TinyGemmSolution soln = clgemm::find(allotted_time, context, command_queue, device_id_to_use, a_gpu, b_gpu, c_gpu, enforce_deterministic, floattype,  geometry, alpha, beta, verbose, logfile);
+  tinygemm::TinyGemmGeometry geometry(isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, a_offset, b_offset, c_offset);
+  //tinygemm::TinyGemmSolution soln = tinygemm::find(allotted_time, context, command_queue, device_id_to_use, a_gpu, b_gpu, c_gpu, enforce_deterministic, floattype,  geometry, alpha, beta, verbose, logfile);
 
-  tinygemm::TinyGemmSolution soln = clgemm::find(allotted_time, command_queue, a_gpu, b_gpu, c_gpu, enforce_deterministic, floattype,  geometry, alpha, beta, verbose, logfile);
+  tinygemm::TinyGemmSolution soln = tinygemm::find(allotted_time, command_queue, a_gpu, b_gpu, c_gpu, enforce_deterministic, floattype,  geometry, alpha, beta, verbose, logfile);
   
   /* Request to see how to proceed after the kernel(s) have been found */
   if (n_postfind_runs > 0){

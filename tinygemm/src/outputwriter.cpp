@@ -4,6 +4,7 @@
 
 #include "outputwriter.hpp"
 
+namespace tinygemm{
 namespace outputwriting{
 
 OutputWriter::OutputWriter(bool to_terminal, bool to_file, std::string filename):to_terminal(to_terminal), to_file(to_file), filename(filename){
@@ -68,3 +69,5 @@ OutputWriter & OutputWriter::operator << (Endline e){
 
 outputwriting::Endline Endl;
 outputwriting::Flusher Flush;
+
+}
