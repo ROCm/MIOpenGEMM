@@ -146,7 +146,7 @@ class DevGemmTester{
     
     int call_find(){
       std::vector<std::vector<std::string> > gpu_kernel_filenames {};
-      red_benchmark(gpu_kernel_filenames, true, 10.0, false); //10 seconds, don't force determinisitc
+      red_benchmark(gpu_kernel_filenames, true, 10.0, false); //10 seconds, don't force to be determinisitc
       return 0;
     } 
 };

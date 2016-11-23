@@ -16,3 +16,8 @@
 *.pdf
 *.png
 *a.out
+*.exe
+*.dylib
+*.dll
+*.a
+*.lib

@@ -11,16 +11,6 @@
 
 namespace tinygemm{
 
-
-/* floattype
- * 'f' : 32-bit single precision
- * 'd' : 64-bit double precision
- * the user must guarantee that a,b and c are in agreement with floattype. 
- * 
- * TODO : is there a way to signal that a,b should be CL_MEM_READ_ONLY ?
- * */
-
-
 tinygemm::TinyGemmSolution
 get_default(
 const bool enforce_deterministic, 
@@ -31,13 +21,20 @@ const tinygemm::TinyGemmGeometry & gg
 
 tinygemm::TinyGemmSolution
 find(
-float allotted_time, // [s]
+/* in seconds */
+float allotted_time, 
 cl_command_queue & command_queue,
 cl_mem a,   
 cl_mem b,
 cl_mem c,
 const bool enforce_deterministic,
-const char floattype,  // 'f' or 'd'
+/* floattype
+ * 'f' : 32-bit single precision
+ * 'd' : 64-bit double precision 
+ * the user must guarantee that a,b and c are in agreement with floattype, 
+ * TODO is there a way to check float type from a,b,c? If so, floattype is not nec. */
+const char floattype,
+/* see tinygemm/include/tinygemmgeometry.hpp for TinyGemmGeometry parameters */
 const tinygemm::TinyGemmGeometry & gg,
 const double alpha,
 const double beta, 
@@ -50,11 +47,11 @@ std::string logfile = "");
 
 void benchgemm(
 cl_command_queue & command_queue, 
-std::string kernelfilename,         // could be a .cl file, or a file with a list of the parameters required to make a .cl file with the python script (TODO).
+std::string kernelfilename,         // name of a .cl file
 unsigned n_runs,
 const char floattype, 
 const tinygemm::TinyGemmGeometry & gg,
-const double alpha,                 // alpha and beta will have precision changed if necessary (in impl)
+const double alpha,                 
 const double beta,
 cl_mem a,                           
 cl_mem b, 
@@ -63,7 +60,7 @@ bool verbose = true,
 std::string logfile = "");
 
 
-/* I have a rough idea what I want this to do : it will check that strictly smaller problems that MNK always at least as fast as MNK. If they're not, they should be using MNK's kernel, update this in the cache table. Of course, should check that MNK's tile is smaller than the matrix C being updated. TODO */
+/* (experimental) I have a rough idea what I want this to do : it will check that strictly smaller problems that MNK always at least as fast as MNK. If they're not, they should be using MNK's kernel, update this in the cache table. Of course, should check that MNK's tile is smaller than the matrix C being updated. TODO */
 void kernel_cache_audit(std::string floattype);
 
 } //namespace
