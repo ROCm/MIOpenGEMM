@@ -24,7 +24,7 @@ tinygemm::TinyGemmSolution
 find(
 /* in seconds */
 float allotted_time, 
-cl_command_queue & command_queue,
+cl_command_queue command_queue,
 cl_mem a,   
 cl_mem b,
 cl_mem c,
@@ -47,7 +47,7 @@ std::string logfile = "");
 
 
 void benchgemm(
-cl_command_queue & command_queue, 
+cl_command_queue  command_queue, 
 std::string kernelfilename,         // name of a .cl file
 unsigned n_runs,
 const char floattype, 

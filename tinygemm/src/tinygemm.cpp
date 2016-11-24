@@ -68,7 +68,7 @@ std::map<std::string, unsigned> get_bare_bones_int_parms(const tinygemm::TinyGem
 class OpenCLGemmEncapsulator{
 public: 
   /* references to constructor parameters */
-  cl_command_queue & command_queue;
+  cl_command_queue command_queue;
   std::string & outputfilename;
   const char & floattype; 
   const tinygemm::TinyGemmGeometry & gg;
@@ -117,7 +117,7 @@ private:
 
 public:
   OpenCLGemmEncapsulator(
-    cl_command_queue & command_queue, 
+    cl_command_queue command_queue, 
     const char & floattype,
     const tinygemm::TinyGemmGeometry & gg,  
     const double & alpha,
@@ -648,7 +648,7 @@ public:
 tinygemm::TinyGemmSolution
 find(
 float allotted_time,
-cl_command_queue & command_queue,
+cl_command_queue command_queue,
 cl_mem a,   
 cl_mem b,
 cl_mem c,
@@ -725,7 +725,7 @@ const tinygemm::TinyGemmGeometry & gg
 
 
 void benchgemm(
-  cl_command_queue & command_queue,
+  cl_command_queue command_queue,
   std::string kernelfilename,
   unsigned n_runs,
   const char floattype, 
