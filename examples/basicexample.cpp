@@ -15,9 +15,9 @@ void basicexample(){
   unsigned m = 30;    
   unsigned n = 40;
   unsigned k = 50;
-  unsigned lda = //(tA == isColMajor ? k : m ) + 3;
-  unsigned ldb = //(tB == isColMajor ? n : k ) + 5;
-  unsigned ldc = //(tC == isColMajor ? n : m ) + 11;
+  unsigned lda = (tA == isColMajor ? k : m ) + 3;
+  unsigned ldb = (tB == isColMajor ? n : k ) + 5;
+  unsigned ldc = (tC == isColMajor ? n : m ) + 11;
   unsigned a_offset = 100;
   unsigned b_offset = 200;
   unsigned c_offset = 300;
