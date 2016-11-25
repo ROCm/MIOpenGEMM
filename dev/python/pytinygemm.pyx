@@ -83,6 +83,7 @@ def basetinygemm(datatype, isColMajor, tA, tB, tC, m, n, k, alpha, cython.floati
   else:
     cw_gemm=&benchgemm[float]
     
+  #TODO : remove the lda, ldb, ldc excess !!!!!!! (DONE)
   cw_gemm(isColMajor, tA, tB, tC, m,n,k, alpha, &a[0],lda, a_offset, &b[0], ldb, b_offset, beta, &c_pre_mem[0], ldc, c_offset, cpu_algs_vec, filenames_vec_vec, capture_output, captured_output, &c_pos_up[0], do_test, n_runs, outputfilename, findfirst, allotted_time, enforce_deterministic)
   
   X = np.array(c_pos_up)#.reshape(m, ldc)

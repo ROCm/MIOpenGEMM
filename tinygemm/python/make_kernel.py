@@ -1401,7 +1401,11 @@ __kernel void gpu_%s("""%(get_kernelname()),
   %s
   %s 
 }
-"""%(get_c_work_item_vertical_next(),  get_c_work_item_horizontal_next(), get_split_on_k_vardecl_write_string(), get_final_write_all() )]
+
+"""%(get_c_work_item_vertical_next(),  get_c_work_item_horizontal_next(), get_split_on_k_vardecl_write_string(), get_final_write_all() ),
+
+'\0 '
+]
 
 
   full_string = "".join(sub_strings)

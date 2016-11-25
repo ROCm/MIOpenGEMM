@@ -17,59 +17,6 @@ import write_directories
 reload(write_directories)
 
 
-#0.738442054129 m3072_n128_k1024_tA1_tB0
-#0.753311546841 m4096_n128_k4096_tA1_tB0
-#0.776140958983 m4096_n7000_k4096_tA1_tB0
-#0.797877045555 m3072_n64_k1024_tA1_tB0
-#0.805500446828 m3072_n16_k1024_tA1_tB0
-#0.826991315136 m4096_n64_k4096_tA1_tB0
-#0.85587414966 m2048_n128_k2048_tA1_tB0
-#0.869822256569 m2048_n7000_k2048_tA1_tB0
-#0.874059691913 m2560_n64_k2560_tA1_tB0
-#0.883901437372 m2048_n64_k2048_tA1_tB0
-#0.889522746302 m7680_n64_k2560_tA1_tB0
-#0.906643958408 m4096_n7000_k4096_tA0_tB0
-#0.908084326306 m5124_n9124_k4096_tA0_tB0
-#0.908352682146 m5124_n9124_k4096_tA1_tB0
-#0.916727373068 m2048_n32_k2048_tA1_tB0
-#0.920759177398 m5124_n9124_k2048_tA1_tB0
-#0.922715231788 m3072_n32_k1024_tA1_tB0
-#0.923610645822 m5124_n9124_k2048_tA0_tB0
-#0.934558537534 m5124_n9124_k2560_tA1_tB0
-#0.952964920711 m4096_n128_k4096_tA0_tB0
-#0.960172094745 m2048_n7000_k2048_tA0_tB0
-#0.960618651893 m5124_n9124_k2560_tA0_tB0
-#0.97291081012 m7680_n128_k2560_tA1_tB0
-#0.992566782811 m2560_n7000_k2560_tA1_tB0
-#0.997962694676 m4096_n7133_k4096_tA0_tB1
-#0.998551968651 m5124_n9124_k1760_tA0_tB0
-
-                                                                                                    
-
-#3072 	128 	1024 	1 	0 	0.281  	 	0.597  	 	0.279  	 	2.866  	 	1.349  	 	2.882  	 	A1B0C1f32___Y32_X32_y4_x4_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ET1_ICE1
-
-
-
-#Y32_X32_y4_x4_U16_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ET1_ICE1_UFO0
-#Y32_X32_y4_x4_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ET1_ICE1
-
-#0.923610645822 m5124_n9124_k2048_tA0_tB0
-#0.805500446828 m3072_n16_k1024_tA1_tB0
-
-
-  #matrix_mnk = {'m': 4012, 'n': 4098, 'k': 4221} #1997}
-  
-
-#Y96_X96_y6_x6_U32_P1_GA1_APLU1_BPLU1_PU0_LIW0_MIW1_ET1_ICE1_UFO0	 17.8594		 4767.17
-#Y128_X96_y8_x6_U16_P1_GA3_APLU0_BPLU1_PU0_LIW0_MIW1_ET1_ICE2_UFO0	 27.531		 4900.67
-#Y128_X96_y8_x6_U16_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ET1_ICE2_UFO0	 15.7641		 4875.41
-#Y96_X128_y6_x8_U8_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ET1_ICE1_UFO1	 11.2582		 4517.03  
-#Y96_X128_y6_x8_U8_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ET1_ICE1_UFO1	 12.0179		 4515.64  
-#Y96_X96_y6_x6_U16_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ET1_ICE1_UFO1	 20.7935		 4600.87
-#Y64_X96_y4_x6_U16_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ET1_ICE1_UFO0	 24.1395		 4677.04
-#Y128_X96_y8_x6_U16_P1_GA3_APLU0_BPLU1_PU0_LIW0_MIW1_ET1_ICE2_UFO0	 28.41		 4896.17
- 
-  
 def do_find_test(matrix_mnk = {'m': 4001, 'n':4002, 'k':4055}, data_geometry = {'tA':True, 'tB':False, 'tC': False, 'isColMajor':True}):
      
   utility_functions.go_experiment(kernel_savedir = None, kernel_span = None, double_type = np.float32, outputfilename = "", factorwaste = {'a':1, 'b':1, 'c':1}, constantwaste = {'a':0, 'b':0, 'c':0}, n_runs = 5, do_test = False, findfirst = True, allotted_time = 200., matrix_mnk = matrix_mnk, data_geometry = data_geometry, enforce_deterministic = False)
@@ -140,11 +87,11 @@ def do_kernel_tests(outputfilename = "default", kernel_savedir = None, do_test =
 
   #A1B0C0f32___Y32_X32_y4_x4_U16_P1_GA2_APLU0_BPLU0_PU1_LIW0_MIW1_ET1_ICE1
 
-  data_geometry = {'tA':False, 'tB': False, 'tC': False, 'isColMajor':True} 
+  data_geometry = {'tA':False, 'tB': True, 'tC': False, 'isColMajor':True} 
   #matrix_mnk = {'m': 4092, 'n': 4092, 'k': 4092} #16 is unroll!!
   #'m': 4012, 'n':4098, 'k':4221
  
-  matrix_mnk = {'m': 3432, 'n': 2433, 'k': 8432} #1997}
+  matrix_mnk = {'m': 30, 'n': 40, 'k': 50} #1997}
   
   micro_tiles = [[8,8]] #[[4,6], [5,5], [6,6], [7,7], [8,8]]
   mm_tiles = [[16*a, 16*b, a, b] for a, b in micro_tiles]
