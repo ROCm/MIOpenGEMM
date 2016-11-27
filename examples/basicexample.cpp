@@ -4,33 +4,33 @@ template <typename TFloat>
 void basicexample(){
   /* define the GEMM problem */
   bool isColMajor = true;
+
+
   bool tA = true;
   bool tB = false;
   bool tC = false;
   
-  
-  
-  
-  
-  unsigned m = 30;    
-  unsigned n = 40;
-  unsigned k = 50;
-  unsigned lda = (tA == isColMajor ? k : m ) + 3;
-  unsigned ldb = (tB == isColMajor ? n : k ) + 5;
-  unsigned ldc = (tC == isColMajor ? n : m ) + 11;
-  unsigned a_offset = 100;
-  unsigned b_offset = 200;
-  unsigned c_offset = 300;
+  unsigned m = 100; //3000;    
+  unsigned n = 32;//400;
+  unsigned k = 26939;//500;
+
+  unsigned lda = (tA == isColMajor ? k : m ) + 0;//3;
+  unsigned ldb = (tB == isColMajor ? n : k ) + 0;//5;
+  unsigned ldc = (tC == isColMajor ? n : m ) + 0;//11;
+
+  unsigned a_offset = 0;//100;
+  unsigned b_offset = 0;//200;
+  unsigned c_offset = 0;//300;
 
   /* These must be double, irrespective of the float type of the matrices */
-  double alpha = 1.1;
-  double beta = 0.3;
+  double alpha = 1.0;
+  double beta = .2;//0.3;
   /* floattype should be 
    * 'f' for single-precision, 32-bit floats and 
    * 'd' for double-precision, 64-bit doubles */
   char floattype = (sizeof(TFloat) == 4) ? 'f' : 'd';
   /* define how long to search for, in seconds. No kernels will be compiled after this allotted time. */
-  float allotted_time = 25.0;
+  float allotted_time = 15.01;
   /* print output to terminal (true) or complete silence to terminal (false) */
   bool verbose = true;
   /* print output to logfile (non-empty string) or not (empty string) */

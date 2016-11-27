@@ -43,11 +43,29 @@ bool verbose = false,
 std::string logfile = "");
 
 
+/* like find, but c will be corrupted. */
+tinygemm::TinyGemmSolution
+nonconst_find(
+float allotted_time, 
+cl_command_queue command_queue,
+cl_mem a,   
+cl_mem b,
+cl_mem c,
+const bool enforce_deterministic,
+const char floattype,
+const tinygemm::TinyGemmGeometry & gg,
+const double alpha,
+const double beta, 
+bool verbose = false,   
+std::string logfile = "");
+
+
+
 
 
 
 void benchgemm(
-cl_command_queue  command_queue, 
+cl_command_queue command_queue, 
 std::string kernelfilename,         // name of a .cl file
 unsigned n_runs,
 const char floattype, 

@@ -152,9 +152,9 @@ public:
     tinygemm::benchgemm(command_queue, kernel_filename, number_of_runs, floattostring::get_float_char<TFloat>(), gg, alpha, beta, a_gpu, b_gpu, c_gpu, true, mowri.filename);
   }
   
-  tinygemm::TinyGemmSolution find(float allotted_time, bool enforce_deterministic){
+  tinygemm::TinyGemmSolution nonconst_find(float allotted_time, bool enforce_deterministic){
 
-    tinygemm::TinyGemmSolution tgs = tinygemm::find(
+    tinygemm::TinyGemmSolution tgs = tinygemm::nonconst_find(
       allotted_time,
       //context,
       command_queue,
@@ -268,7 +268,7 @@ void benchgemm(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
   
   
   if (findfirst == true){
-    tinygemm::TinyGemmSolution tgs = gem.find(allotted_time, enforce_deterministic); 
+    tinygemm::TinyGemmSolution tgs = gem.nonconst_find(allotted_time, enforce_deterministic); 
     std::string kernelfilename = defpaths::scratchpadfinddir + "/kernfoundinbenchmark.cl"; 
     std::ofstream out(kernelfilename);
     out << tgs.main_kernel;

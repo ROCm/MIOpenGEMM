@@ -63,7 +63,20 @@ std::map<std::string, unsigned> get_bare_bones_int_parms(const tinygemm::TinyGem
   return all_int_parms;
 }
 
-    
+
+size_t get_floatsize(char floattype){
+  size_t floatsize;
+  if (floattype == 'f'){
+    floatsize = sizeof(float);
+  }
+  else if (floattype == 'd'){
+    floatsize = sizeof(double);
+  }
+  else{
+    throw tinygemm_error("Unrecognised floattype char. Currently, only 'f' (single precision) and 'd' (double precision) are supported");
+  }
+  return floatsize;
+}
 
 class OpenCLGemmEncapsulator{
 public: 
@@ -198,17 +211,9 @@ public:
   }
 
 
+
   void set_floatsize(){
-    if (floattype == 'f'){
-      floatsize = sizeof(float);
-    }
-    else if (floattype == 'd'){
-      floatsize = sizeof(double);
-    }
-    
-    else{
-      throw tinygemm_error("Unrecognised floattype char. Currently, only 'f' (single precision) and 'd' (double precision) are supported");
-    }
+    floatsize = get_floatsize(floattype);    
   }
 
   void check_file_and_set_from(std::string kernelfn){
@@ -646,7 +651,7 @@ public:
 
 /* functions for the end-user */ 
 tinygemm::TinyGemmSolution
-find(
+nonconst_find(
 float allotted_time,
 cl_command_queue command_queue,
 cl_mem a,   
@@ -664,6 +669,59 @@ std::string logfile){
   OpenCLGemmEncapsulator oger(command_queue, floattype, gg, alpha, beta, a, b, c, logfile, verbose, nobenching);
   return oger.find(allotted_time, enforce_deterministic);
 
+}
+
+
+
+/* functions for the end-user */ 
+tinygemm::TinyGemmSolution
+find(
+float allotted_time,
+cl_command_queue command_queue,
+cl_mem a,   
+cl_mem b,
+cl_mem c,
+const bool enforce_deterministic,
+const char floattype, 
+const tinygemm::TinyGemmGeometry & gg,
+const double alpha,
+const double beta,
+bool verbose, 
+std::string logfile){
+  
+  cl_mem c_copied;
+  cl_event c_copy_event; 
+
+  size_t n_c = gg.ldc * (gg.tC == gg.isColMajor ? gg.m : gg.n) + gg.c_offset;
+  size_t c_memsize = get_floatsize(floattype)*n_c;
+  cl_int ret;
+  
+  
+  cl_context context;
+  ret = clGetCommandQueueInfo(command_queue, CL_QUEUE_CONTEXT, sizeof(cl_context), &context, NULL);
+  if (ret != CL_SUCCESS){
+    throw tinygemm_error("Problem using clGetCommandQueueInfo, trying to get CL_QUEUE_CONTEXT (in find, in openclgemmapi.cpp)");
+  }
+  
+  c_copied = clCreateBuffer (context, CL_MEM_READ_WRITE, c_memsize, NULL, &ret);  
+  if (ret != CL_SUCCESS) {
+    std::string errm ("in tinygemm.cpp, find function. Attempting to create cl_mem c_copy with clCreateBuffer. Failed to do so, with exit status ");
+    errm += std::to_string(ret);
+    throw tinygemm_error(errm);
+  }
+  
+  ret = clEnqueueCopyBuffer (command_queue, c, c_copied, 0, 0, c_memsize, 0, NULL, &c_copy_event);
+  if (ret != CL_SUCCESS){
+    std::string errm("in tinygemm.cpp, find function. Attempting to copy cl_mem c with clEnqueueCopyBuffer. Failed to do so, with exit status ");
+    errm += std::to_string(ret);
+    throw tinygemm_error(errm);
+  }
+  
+  clWaitForEvents(1, &c_copy_event);
+
+  std::abort();
+  return nonconst_find(allotted_time, command_queue, a, b, c_copied, enforce_deterministic, floattype, gg, alpha, beta, verbose, logfile);
+  
 }
 
 

@@ -171,14 +171,18 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
     /* That's all you need to know, and don't forget the clReleases! */
     
     
-    
+
+    ret = clEnqueueNDRangeKernel(command_queue, betac_kernel, 1, NULL, &betac_kernel_worksize_params.at("global_work_size"), &betac_kernel_worksize_params.at("local_work_size"), 0, NULL, NULL);
+    ret = clEnqueueNDRangeKernel(command_queue, main_kernel, 1, NULL, &main_kernel_worksize_params.at("global_work_size"), &main_kernel_worksize_params.at("local_work_size"), 0,NULL, &event_main_kernel);  
+    clFinish(command_queue);
 
     
     /* We will now take a look at how the times reported in benchmarking, 
      * which use cl_events to get accurate gpu times, compare to times
      * obtained here on the host side.  */ 
     std::map<unsigned, float> host_times;
-    for (unsigned npr : std::vector<unsigned> {1, n_postfind_runs + 1}){
+    size_t npr = n_postfind_runs;
+    //for (unsigned npr : std::vector<unsigned> {1, n_postfind_runs + 1}){
       auto start = std::chrono::high_resolution_clock::now();
       for (unsigned pfr = 0; pfr < npr; ++pfr){
         if (soln.betac_kernel.compare("") != 0){
@@ -186,6 +190,7 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
         }
         ret = clEnqueueNDRangeKernel(command_queue, main_kernel, 1, NULL, &main_kernel_worksize_params.at("global_work_size"), &main_kernel_worksize_params.at("local_work_size"), 0,NULL, &event_main_kernel);  
       }
+          clFinish(command_queue);
       /* Wait for the final kernel to complete, then record the elapsed time */
       clWaitForEvents(1, &event_main_kernel);
       auto end = std::chrono::high_resolution_clock::now();
@@ -193,7 +198,7 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
       float elapsed_seconds = fp_ms.count();
       host_times[npr] = elapsed_seconds;  
       std::cout << "Time to complete " << npr << " run(s) : " << elapsed_seconds << " [s]." << " This corresponds to " << 1e-9*(2.*m*n*k*npr) / elapsed_seconds << " gflop/s. " << std::endl;
-    }
+   // }
     float difference_in_times = host_times[n_postfind_runs + 1] - host_times[1];
     std::cout << "Difference in times : " << difference_in_times << " [s]. This corresponds to  " << 1e-9*(2.*m*n*k*n_postfind_runs) / difference_in_times << " gflop/s. " << std::endl;
     std::cout << "We need to decide how to proceed with the DeepBench benchmarking, it seems to me that their approach (run 10 times, no subtraction as above) underestimates cudnn performance." << std::endl;
