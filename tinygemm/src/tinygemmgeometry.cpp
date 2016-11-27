@@ -20,6 +20,14 @@ std::string TinyGemmGeometry::get_string() const{
 }
 
 
+std::string TinyGemmGeometry::get_networkconfig_string() const{
+  std::stringstream geometry_stringstream;
+  geometry_stringstream << "tC" << tC << "_tA" << tA << "_tB" << tB << "_colMaj" << isColMajor << "_m" << m << "_n" << n << "_k" << k << "_lda" << lda << "_ldb" << ldb << "_ldc" << ldc;
+  return geometry_stringstream.str();
+}
+
+
+
 float TinyGemmGeometry::get_distance(const TinyGemmGeometry & gg) const{
   //problems which are "larger" are infinitely far away (their tile might not fit...)
   

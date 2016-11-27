@@ -30,6 +30,8 @@ class TinyGemmGeometry{
     TinyGemmGeometry() = default;
     
     std::string get_string() const;
+
+    std::string get_networkconfig_string() const;
     
     /* how far away is gg ? Note that this is not a true distance: it is not symmetrical */
     float get_distance(const TinyGemmGeometry & gg) const;

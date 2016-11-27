@@ -41,8 +41,8 @@ public:
   /* The names of the betac and main kernels, ie __kernel void THIS_STRING_HERE */
   std::string betac_kernel_function_name;
   std::string main_kernel_function_name;
-                
-                  
+
+
   /* all hyper parameters (unroll, tile size, etc) and basic geometry parameters (tA, tB, tC, isColMajor)
    * these are the same as the values defined as preprocessor flags in main_kernel.
    * NOTE : these are NOT needed to run kernels, just here to describle what the kernel does under the hood  */
@@ -63,8 +63,13 @@ public:
   /* ditto the above comment, but for betac_kernel */
   std::map<std::string, size_t> get_betac_kernel_worksize_params(unsigned m, unsigned n);
 
+  /* return a string summarising the TinyGemmGeometry, less offsets (a request from MLOpen) */
+  std::string get_networkconfig_string() const;
+
+
   /* return a string describing the hyper parameters */
-  std::string get_hyper_param_string();
+  std::string get_hyper_param_string() const;
+  
 
 };
 

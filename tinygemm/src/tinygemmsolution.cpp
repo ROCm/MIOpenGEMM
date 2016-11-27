@@ -34,7 +34,6 @@ std::map<std::string, size_t> TinyGemmSolution::get_main_kernel_worksize_params(
         //std::cout << y.first  << " " << y.second << std::endl;
       //}
     
-      //zzzzzzzzzzzzzzzzzzzzzzzzzzzzz
       throw tinygemm_error(get_errm(x));
     }
   }
@@ -88,10 +87,15 @@ std::map<std::string, size_t> TinyGemmSolution::get_betac_kernel_worksize_params
 
 }
 
-std::string TinyGemmSolution::get_hyper_param_string(){
+
+std::string TinyGemmSolution::get_networkconfig_string() const{
+  return statistics.benchmarked_geometry.get_networkconfig_string();
+}
+
+std::string TinyGemmSolution::get_hyper_param_string() const{
 
   std::stringstream ss;
-  ss << "Y" << allparams["macro_tile_height"] <<  "_X" << allparams["macro_tile_width"] << "_y" << allparams["micro_tile_height"] << "_x" << allparams["micro_tile_width"] << "_U" << allparams["unroll"] << "_P" << allparams["pad"] << "_GA" << allparams["group_allocation"] << "_APLU" << allparams["work_item_load_a_pll_to_unroll"] << "_BPLU" << allparams["work_item_load_b_pll_to_unroll"] << "_PU" << allparams["unroll_pragma"] << "_LIW" << allparams["load_to_lds_interwoven"] << "_MIW" << allparams["c_micro_tiles_interwoven"]  << "_ET" << 1 << "_ICE" << allparams["n_work_items_per_c_elm"] << "_UFO" << allparams.at("unroll_for_offset");
+  ss << "Y" << allparams.at("macro_tile_height") <<  "_X" << allparams.at("macro_tile_width") << "_y" << allparams.at("micro_tile_height") << "_x" << allparams.at("micro_tile_width") << "_U" << allparams.at("unroll") << "_P" << allparams.at("pad") << "_GA" << allparams.at("group_allocation") << "_APLU" << allparams.at("work_item_load_a_pll_to_unroll") << "_BPLU" << allparams.at("work_item_load_b_pll_to_unroll") << "_PU" << allparams.at("unroll_pragma") << "_LIW" << allparams.at("load_to_lds_interwoven") << "_MIW" << allparams.at("c_micro_tiles_interwoven")  << "_ET" << 1 << "_ICE" << allparams.at("n_work_items_per_c_elm") << "_UFO" << allparams.at("unroll_for_offset");
   
   return ss.str();
 }
