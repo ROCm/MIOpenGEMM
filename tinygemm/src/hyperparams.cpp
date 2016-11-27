@@ -575,7 +575,7 @@ bool HyperParams::can_be_used_on(const tinygemm::TinyGemmGeometry & gg){
  * TODO : make this the starting kernel (get_initial_front) 
  * TODO : figure out how to make cache contain only reduced problems.... very important! */
 std::vector<std::tuple<tinygemm::TinyGemmGeometry, std::string> > 
-HyperParams::kernel_cache = {
+HyperParams::kernel_cache = {                             /* colMaj tA    tB     tC     lda   ldb   ldc   m     n    k     ao bo co                                                                       */
   std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 3072, 3072, 1024, 1024, 128, 3072, 0, 0, 0} , "Y96_X64_y6_x4_U16_P1_GA2_APLU0_BPLU0_PU1_LIW1_MIW1_ET1_ICE5_UFO0" ), 
   std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1760, 1760, 1760, 1760, 128, 1760, 0, 0, 0} , "Y64_X64_y4_x4_U32_P1_GA2_APLU0_BPLU0_PU1_LIW1_MIW1_ET1_ICE2_UFO0" ), 
   std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 4096, 4096, 4096, 4096, 32, 4096, 0, 0, 0} , "Y64_X32_y4_x2_U16_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ET1_ICE3_UFO0" ), 

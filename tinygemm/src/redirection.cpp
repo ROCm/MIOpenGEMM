@@ -51,6 +51,7 @@ template void redirect(bool & isColMajor, bool & tA, bool & tB, bool & tC, unsig
 
 template void redirect(bool & isColMajor, bool & tA, bool & tB, bool & tC, unsigned & m, unsigned & n, unsigned & lda, unsigned & ldb, cl_mem & a, cl_mem & b);
 
+template void redirect(bool & isColMajor, bool & tA, bool & tB, bool & tC, unsigned & m, unsigned & n, unsigned & lda, unsigned & ldb, std::string & a, std::string & b);
 
 void confirm_redirection(bool isColMajor, bool tA, bool tB, unsigned m, unsigned n){
   if (isColMajor == false) {
