@@ -260,7 +260,10 @@ public:
 
   
   int enqueue_main_kernel(){    
-    ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_work_size, &local_work_size, 0,NULL, &event_main_kernel);
+	if(does_betac_inc == 0)
+	    ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_work_size, &local_work_size, 1, &event_betac_kernel, &event_main_kernel);
+	else
+		ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_work_size, &local_work_size, 0,NULL, &event_main_kernel);
     /* Handle the failure case which is not CL_OUT_OF_RESOURCES */ 
     if (ret != CL_SUCCESS && ret != CL_OUT_OF_RESOURCES){
       std::string errm("Error in clEnqueueNDRangeKernel (in the main kernel), The CL_STATUS value is ( ");
@@ -529,7 +532,7 @@ public:
 
               
               /* bench 2 times. TODO: unhardwire this. */
-              benchgemm(kernelfilename, 2);
+              benchgemm(kernelfilename, 4);
               std::sort(v_t_total_with_both.begin(), v_t_total_with_both.end());
               float median_time = v_t_total_with_both[0]; //[v_t_total_with_both.size()/2]; taking the fastest. with 3 runs, this is reasonable :) fans, overheating, ergh.
 
@@ -719,7 +722,7 @@ std::string logfile){
   
   clWaitForEvents(1, &c_copy_event);
 
-  std::abort();
+  //std::abort();
   return nonconst_find(allotted_time, command_queue, a, b, c_copied, enforce_deterministic, floattype, gg, alpha, beta, verbose, logfile);
   
 }
