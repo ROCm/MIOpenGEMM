@@ -1,14 +1,19 @@
 #include "basicfind.hpp"
 
+
 template <typename TFloat>
 void basicexample(){
   /* define the GEMM problem */
   bool isColMajor = true;
 
 
+  bool tC = false;
   bool tA = true;
   bool tB = false;
-  bool tC = false;
+
+
+//tC:0 tA:1 tB:0 colMaj:1 m:100 n:32 k:26939 lda:26939 ldb:26939 ldc:100 a_offset:0 b_offset:0 c_offset:0
+
   
   unsigned m = 100; //3000;    
   unsigned n = 32;//400;
@@ -30,7 +35,7 @@ void basicexample(){
    * 'd' for double-precision, 64-bit doubles */
   char floattype = (sizeof(TFloat) == 4) ? 'f' : 'd';
   /* define how long to search for, in seconds. No kernels will be compiled after this allotted time. */
-  float allotted_time = 15.01;
+  float allotted_time = 55.01;
   /* print output to terminal (true) or complete silence to terminal (false) */
   bool verbose = true;
   /* print output to logfile (non-empty string) or not (empty string) */

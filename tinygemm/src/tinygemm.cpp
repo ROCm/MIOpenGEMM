@@ -126,6 +126,8 @@ private:
   cl_context context;
   cl_device_id device_id_to_use;
   bool nobenching;
+  
+  //unsigned n_runs_in_find_per_kernel;
 
 
 public:
@@ -141,6 +143,7 @@ public:
     std::string & outputfilename,
     bool verbose, 
     bool nobenching):
+//    unsigned n_runs_in_find_per_kernel):
 
     command_queue(command_queue), 
     outputfilename(outputfilename),
@@ -259,8 +262,22 @@ public:
 
 
   
-  int enqueue_main_kernel(){    
-    ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_work_size, &local_work_size, 0,NULL, &event_main_kernel);
+  int enqueue_main_kernel(){
+    
+    
+    if(does_betac_inc == 0){
+      ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_work_size, &local_work_size, 1, &event_betac_kernel, &event_main_kernel);
+    }
+    else{
+      ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_work_size, &local_work_size, 0,NULL, &event_main_kernel);
+    }
+
+        
+    //ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_work_size, &local_work_size, 0,NULL, &event_main_kernel);
+
+
+
+
     /* Handle the failure case which is not CL_OUT_OF_RESOURCES */ 
     if (ret != CL_SUCCESS && ret != CL_OUT_OF_RESOURCES){
       std::string errm("Error in clEnqueueNDRangeKernel (in the main kernel), The CL_STATUS value is ( ");
@@ -341,7 +358,7 @@ public:
 
 
       /* At this point, the main kernel has been succesfully compiled, 
-       * but it still possible that the resources necessary (LDS etc) are
+       * but it is still possible that the resources necessary (LDS etc) are
        * not sufficient on this machine. We catch this case here. */
       /* Attempt to enqueue the main kernel */      
       int status = enqueue_main_kernel();
@@ -415,7 +432,7 @@ public:
   
   
   
-  tinygemm::TinyGemmSolution find(float allotted_time, bool enforce_deterministic){  
+  tinygemm::TinyGemmSolution find(float allotted_time, bool enforce_deterministic, unsigned n_runs_in_find_per_kernel){  
     
     if (allotted_time > 0 && nobenching == true){
       throw tinygemm_error("allotted_time > 0 and nobencking == false, which does not make sense. Algo problem, come fix ");
@@ -529,9 +546,11 @@ public:
 
               
               /* bench 2 times. TODO: unhardwire this. */
-              benchgemm(kernelfilename, 2);
+              benchgemm(kernelfilename, n_runs_in_find_per_kernel);
               std::sort(v_t_total_with_both.begin(), v_t_total_with_both.end());
-              float median_time = v_t_total_with_both[0]; //[v_t_total_with_both.size()/2]; taking the fastest. with 3 runs, this is reasonable :) fans, overheating, ergh.
+
+              /* Taking the fastest. TODO make this transparent */
+              float median_time = v_t_total_with_both[0]; //[v_t_total_with_both.size()/2]; 
 
               end = std::chrono::high_resolution_clock::now();
               fp_ms = end - start;
@@ -664,10 +683,15 @@ const double alpha,
 const double beta,
 bool verbose, 
 std::string logfile){
-  //TODO : add bool verbose and std::string logfile
+  
+  
+  /* The number of times each kernel is run in find. 
+   * consider adding this parameter to user API. */
+  unsigned n_runs_in_find_per_kernel = 4;
+  
   bool nobenching = allotted_time <= 0 ?  true : false ;  
   OpenCLGemmEncapsulator oger(command_queue, floattype, gg, alpha, beta, a, b, c, logfile, verbose, nobenching);
-  return oger.find(allotted_time, enforce_deterministic);
+  return oger.find(allotted_time, enforce_deterministic, n_runs_in_find_per_kernel);
 
 }
 
@@ -688,6 +712,7 @@ const double alpha,
 const double beta,
 bool verbose, 
 std::string logfile){
+  
   
   cl_mem c_copied;
   cl_event c_copy_event; 
@@ -724,7 +749,7 @@ std::string logfile){
 }
 
 
-/* takes 0.05 seconds. 0.35 of this is spent in python script generating kernel and writing it, the rest is spent finding default. */
+/* takes 0.05 seconds. 0.035 of this is spent in python script generating kernel and writing it, the rest is spent finding default. */
 /* I can get through about 5 benchmarks per second, that is 1 every 0.2 seconds, so the python script is something to be concerned about... */
 tinygemm::TinyGemmSolution
 get_default(

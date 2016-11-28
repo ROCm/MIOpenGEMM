@@ -80,18 +80,16 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
    * Find a kernel *
    * ***************/
   tinygemm::TinyGemmGeometry geometry(isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, a_offset, b_offset, c_offset);
-  //tinygemm::TinyGemmSolution soln = tinygemm::find(allotted_time, context, command_queue, device_id_to_use, a_gpu, b_gpu, c_gpu, enforce_deterministic, floattype,  geometry, alpha, beta, verbose, logfile);
-
   tinygemm::TinyGemmSolution soln = tinygemm::find(allotted_time, command_queue, a_gpu, b_gpu, c_gpu, enforce_deterministic, floattype,  geometry, alpha, beta, verbose, logfile);
   
   /* Request to see how to proceed after the kernel(s) have been found */
   if (n_postfind_runs > 0){
 
     /* We now show how to use the kernel(s) in soln.
-     * if soln.betac_kernel is an empty string, then soln.main_kernel does GEMM all by itself. Otherwise, both betac and main kernels need to be used.
-     * */
-    
-    /* We use the kernel on the same problem as benchmarked: the standard workflow with tinygemm.  */
+     * if soln.betac_kernel is an empty string, then soln.main_kernel does GEMM all by itself. 
+     * Otherwise, both betac and main kernels need to be used.
+     * We use the kernel on the same problem as benchmarked. 
+     * I expect this will be the standard workflow with tinygemm.  */
     
     
     cl_program betac_program = NULL;
@@ -149,13 +147,9 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
     ret = clSetKernelArg(main_kernel, 11, sizeof(unsigned), &a_offset);
     ret = clSetKernelArg(main_kernel, 12, sizeof(unsigned), &b_offset);
     ret = clSetKernelArg(main_kernel, 13, sizeof(unsigned), &c_offset);  
-  
-  
-    main_kernel_worksize_params = soln.get_main_kernel_worksize_params(m,n);
-  
-  
-  
     
+    
+    main_kernel_worksize_params = soln.get_main_kernel_worksize_params(m,n);
   
     /* Enqueue the kernel(s) */
     cl_event event_main_kernel;
@@ -169,20 +163,14 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
   
   
     /* That's all you need to know, and don't forget the clReleases! */
-    
-    
 
-    ret = clEnqueueNDRangeKernel(command_queue, betac_kernel, 1, NULL, &betac_kernel_worksize_params.at("global_work_size"), &betac_kernel_worksize_params.at("local_work_size"), 0, NULL, NULL);
-    ret = clEnqueueNDRangeKernel(command_queue, main_kernel, 1, NULL, &main_kernel_worksize_params.at("global_work_size"), &main_kernel_worksize_params.at("local_work_size"), 0,NULL, &event_main_kernel);  
-    clFinish(command_queue);
 
     
     /* We will now take a look at how the times reported in benchmarking, 
      * which use cl_events to get accurate gpu times, compare to times
      * obtained here on the host side.  */ 
     std::map<unsigned, float> host_times;
-    size_t npr = n_postfind_runs;
-    //for (unsigned npr : std::vector<unsigned> {1, n_postfind_runs + 1}){
+    for (unsigned npr : std::vector<unsigned> {1, n_postfind_runs + 1}){
       auto start = std::chrono::high_resolution_clock::now();
       for (unsigned pfr = 0; pfr < npr; ++pfr){
         if (soln.betac_kernel.compare("") != 0){
@@ -190,7 +178,7 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
         }
         ret = clEnqueueNDRangeKernel(command_queue, main_kernel, 1, NULL, &main_kernel_worksize_params.at("global_work_size"), &main_kernel_worksize_params.at("local_work_size"), 0,NULL, &event_main_kernel);  
       }
-          clFinish(command_queue);
+      
       /* Wait for the final kernel to complete, then record the elapsed time */
       clWaitForEvents(1, &event_main_kernel);
       auto end = std::chrono::high_resolution_clock::now();
@@ -198,10 +186,10 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
       float elapsed_seconds = fp_ms.count();
       host_times[npr] = elapsed_seconds;  
       std::cout << "Time to complete " << npr << " run(s) : " << elapsed_seconds << " [s]." << " This corresponds to " << 1e-9*(2.*m*n*k*npr) / elapsed_seconds << " gflop/s. " << std::endl;
-   // }
+    }
     float difference_in_times = host_times[n_postfind_runs + 1] - host_times[1];
     std::cout << "Difference in times : " << difference_in_times << " [s]. This corresponds to  " << 1e-9*(2.*m*n*k*n_postfind_runs) / difference_in_times << " gflop/s. " << std::endl;
-    std::cout << "We need to decide how to proceed with the DeepBench benchmarking, it seems to me that their approach (run 10 times, no subtraction as above) underestimates cudnn performance." << std::endl;
+    std::cout << "Note to self and MLOpeners : we need to decide how to proceed with the DeepBench benchmarking, baidu's approach  (run 10 times after warm-up, no subtraction as above) *might* underestimate cudnn performance. For many problems (generally the large ones), tinygemm and host times are the same. Occasionally (for small problems it seems), the host time is 20% slower." << std::endl;
     std::cout << soln.get_hyper_param_string() << std::endl;
   }
   
@@ -218,44 +206,3 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
 
 
 #endif
-
-
-
-    //if (ret != CL_SUCCESS){
-      //std::string errm ("Problem in clCreateProgramWithSource for betac_kernel in tinygemm : basicfind.hpp. \nThe error code returned is  ");
-      //errm += std::to_string(ret) ;
-      //errm += " . ";
-      //throw tinygemm_error(errm);
-    //}    
-    
-
-
-    //if (ret != 0){
-      //char buffer[10240];
-      //clGetProgramBuildInfo(betac_program, device_id_to_use, CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer, NULL);
-      //fprintf(stderr, "CL Compilation failed:\n%s", buffer);
-      //throw tinygemm_error("Error in clBuildProgram");
-    //}
-
-
-    //if (ret != CL_SUCCESS){
-      //throw tinygemm_error("Error in clCreateKernel");
-    //}
-    
-
-
-  //worksize_params["n_work_groups"] = n_work_groups;
-  //worksize_params["local_work_size"] = local_work_size;
-  //worksize_params["global_work_size"] = global_work_size;  
-  
-
-
-     //* To use it, follow the standard OpenCL approach of
-     //* (1) setting the parameters (look at the kernel's parameters in soln.main_kernel to see what these are)
-     //* (2) determine the local_work_size and global_work_size (by using soln.get_main_kernel_worksize_params)
-     //* (3) clEnqueueNDRangeKernel. 
-     //* 
-     //* If soln.betac_kernel is not an empty string, then betac_kernel needs to be enqueued before main_kernel.
-     //* Again, you need to (1) set parameters (look at betac_kernel to see what is needed) then (2) determine
-     //* local_work_size and global_work_size (use soln.get_betac_kernel_worksize_params) and (3) use clEnqueueNDRangeKernel
-     //* This is done below.
