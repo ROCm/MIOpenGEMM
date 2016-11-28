@@ -10,7 +10,7 @@ namespace redirection{
 template <typename T>
 void redirect(bool & isColMajor, bool & tA, bool & tB, bool & tC, unsigned & m, unsigned & n, unsigned & lda, unsigned & ldb, T & a, T  & b){
 
-  throw tinygemm_error("In tinygemm :: redirection.cpp. Redirection has been deprecated, it needs fixing up since the introduction of a_offset, b_offset.");
+ // throw tinygemm_error("In tinygemm :: redirection.cpp. Redirection has been deprecated, it needs fixing up since the introduction of a_offset, b_offset.");
   
   if (isColMajor == false){
     
