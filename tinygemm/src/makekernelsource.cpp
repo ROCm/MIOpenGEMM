@@ -59,10 +59,6 @@ int make_kernel_via_python(std::string dir_name, std::string t_float, std::map<s
   syscall += " ";
   syscall += parameter_string;
   
-  //std::cout << syscall << std::endl;
-  
-  //std::abort();
-  
   
   //bool verbose_report = true;
   if (verbose_report == true){

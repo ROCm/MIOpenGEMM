@@ -7,17 +7,20 @@ void basicexample(){
   bool isColMajor = true;
 
 
+
+
+// ./driver/MLOpenDriver conv  -W 341 -H 79 -c 32 -n 8 -k 32 -y 5 -x 10 -p 0 -q 0 -u 2 -v 2/
+// tC:0 tA:1 tB:0 colMaj:1 m:1600 n:32 k:6308 lda:6308 ldb:6308 ldc:1600 a_offset:0 b_offset:0 c_offset:0
+
+
   bool tC = false;
   bool tA = true;
   bool tB = false;
 
-
-//tC:0 tA:1 tB:0 colMaj:1 m:100 n:32 k:26939 lda:26939 ldb:26939 ldc:100 a_offset:0 b_offset:0 c_offset:0
-
   
-  unsigned m = 100; //3000;    
+  unsigned m = 33;//1600; //3000;    
   unsigned n = 32;//400;
-  unsigned k = 26939;//500;
+  unsigned k = 63080;//500;
 
   unsigned lda = (tA == isColMajor ? k : m ) + 0;//3;
   unsigned ldb = (tB == isColMajor ? n : k ) + 0;//5;

@@ -174,6 +174,10 @@ public:
         throw tinygemm_error("Problem using clGetCommandQueueInfo, trying to get CL_QUEUE_DEVICE (in constructor in openclgemmapi.cpp");        
       }
       
+      
+      //std::cout << device_id_to_use  << std::endl;
+      
+      
       if (nobenching == false){
         setup_betac_kernel(); //TODO : release when done. 
       }
