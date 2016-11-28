@@ -719,7 +719,6 @@ std::string logfile){
   
   clWaitForEvents(1, &c_copy_event);
 
-  std::abort();
   return nonconst_find(allotted_time, command_queue, a, b, c_copied, enforce_deterministic, floattype, gg, alpha, beta, verbose, logfile);
   
 }
