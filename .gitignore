@@ -21,3 +21,4 @@
 *.dll
 *.a
 *.lib
+*kernels_found_deepbench*

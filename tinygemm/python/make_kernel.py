@@ -136,7 +136,9 @@ n_work_items_per_c_elm = 3,
 #UFO
 unroll_for_offset = 0,
  # haven't optimised over this
-n_target_active_workgroups = 64
+n_target_active_workgroups = 64, 
+# Mayank asked for this 
+with_tailing_end_char = True 
 ):
   """
 dir_name : string
@@ -1404,7 +1406,7 @@ __kernel void gpu_%s("""%(get_kernelname()),
 
 """%(get_c_work_item_vertical_next(),  get_c_work_item_horizontal_next(), get_split_on_k_vardecl_write_string(), get_final_write_all() ),
 
-'\0 '
+'' + '\0 '*(with_tailing_end_char == True)
 ]
 
 

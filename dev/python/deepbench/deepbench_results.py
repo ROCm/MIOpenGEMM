@@ -7,6 +7,10 @@ from IPython.core.debugger import Tracer
 import deeptensile
 reload(deeptensile)
 
+import sys
+sys.path.append("../../../tinygemm/python")
+import make_kernel
+
 
 
 def get_baidu_problem_frags():
@@ -187,6 +191,7 @@ def get_tinygemm_results():
 
   return tinygemm_results
 
+
 def get_kernel_cache_string():
 
   add_best_string = ""
@@ -283,44 +288,132 @@ def plot_full_summary():
   pl.ylabel ("current tflop/s")
   pl.xlabel("dimensions id, ordered by problem size m.n.k")
 
-def plot_tensile_tinygemm():
+def plot_tensile_tinygemm(dosave = True, withdeterministic = False):
   
   
-  pl.figure(2, figsize = (20, 5))
+  pl.figure(2, figsize = (21, 8))
   
   pl.clf()
   
+  baidu_problem_frags = get_baidu_problem_frags()
   tgresults = get_tinygemm_results()
   tg_tfs = {}
   for key in ["10", "01", "00"]:
     
     print len(tgresults[key].keys())
-    print len(get_baidu_problem_frags())
-    tg_tfs[key] = np.array([tgresults[key][frag]["gflop/s"] for frag in get_baidu_problem_frags()])
+    print len(baidu_problem_frags)
+    tg_tfs[key] = np.array([tgresults[key][frag]["gflop/s"] for frag in baidu_problem_frags])
   
  
   tenresults = get_tensile_results()
-  tensile_tfs = np.array([tenresults[frag] for frag in get_baidu_problem_frags()])
+  tensile_tfs = np.array([tenresults[frag] for frag in baidu_problem_frags])
     
   
   
   index = np.arange(tensile_tfs.size)
-  bar_width = 0.35
+  if withdeterministic == False:
+    bar_width = 0.35
+  
   opacity = 0.8
   error_config = {'ecolor': '0.3'}
-  rects1 = pl.bar(index, tg_tfs["00"], bar_width, alpha=opacity, color='b', label='tinygemm')
-  rects2 = pl.bar(index + bar_width, tensile_tfs/1000., bar_width, alpha=opacity, color='r', label='Tensile')
+  
+  if withdeterministic == True:
+    bar_width = 0.24
+    rects0 = pl.bar(index, tg_tfs["01"], bar_width, alpha=opacity, color='g', label='tinygemm, no-k-split')
+  
+  rects2 = pl.bar(index + 1*bar_width, tensile_tfs/1000., bar_width, alpha=opacity, color='r', label='Tensile')
+  rects1 = pl.bar(index + 2*bar_width, tg_tfs["00"], bar_width, alpha=opacity, color='b', label='tinygemm')
+
   pl.ylabel('tflop/s')
   pl.legend()
-  pl.xlim([0,index.max()])
-  pl.plot([0,index.max()], [8.2, 8.2], color = 'orange', linewidth = 5) 
+  pl.xlim([0,index.max() + 1])
+  pl.plot([0,index.max() + 1], [8.2, 8.2], color = 'orange', linewidth = 5)
   pl.ylim([0,14.5])
-  pl.xlabel("deepbench problem id")
-  pl.subplots_adjust(left = 0.1, bottom = 0.22, right = 0.95)
-  pl.text(1, 8.4, "FIJI TARGET", fontsize = 14 )
+  pl.xlabel("deepbench problem")
+  pl.subplots_adjust(left = 0.1, bottom = 0.42, right = 0.95)
+  pl.text(1, 8.4, "FIJI TARGET", fontsize = 14)
+
   
-  fn = "./data/tensile_tinygemm_fiji.pdf"
-  pl.savefig(fn)
-  import commands
-  commands.getstatusoutput("pdfcrop %s %s"%(fn, fn))
+  pl.xticks(range(len(baidu_problem_frags)), baidu_problem_frags, rotation = 80)
+
+  
+  if dosave:
+    if withdeterministic == False:
+      fn = "./data/tensile_tinygemm_fiji.pdf"
+    else:
+      fn = "./data/tensile_tinygemm_fiji_with_deterministic.pdf"
+    pl.savefig(fn)
+    import commands
+    commands.getstatusoutput("pdfcrop %s %s"%(fn, fn))
+  
+
+
+def make_best_kernels():
+  tinygemm_results = get_tinygemm_results()
+  
+  for key in tinygemm_results["00"].keys():
+    k = int(key.split("k")[1].split("_")[0])
+    m = int(key.split("m")[1].split("_")[0])
+    n = int(key.split("n")[1].split("_")[0])    
+    tA = int(key.split("tA")[1].split("_")[0])    
+    tB = int(key.split("tB")[1].split("_")[0])    
+  
+    for detstring in ["00", "01"]:
+      hp = tinygemm_results[detstring][key]['hyperparams']
+      Y = int(hp.split("Y")[1].split("_")[0])
+      X = int(hp.split("_X")[1].split("_")[0])
+      y = int(hp.split("_y")[1].split("_")[0])
+      x = int(hp.split("_x")[1].split("_")[0])
+      U = int(hp.split("_U")[1].split("_")[0])
+      P = int(hp.split("_P")[1].split("_")[0])
+      GA = int(hp.split("_GA")[1].split("_")[0])
+      APLU = int(hp.split("_APLU")[1].split("_")[0])
+      BPLU = int(hp.split("_BPLU")[1].split("_")[0])
+      PU = int(hp.split("_PU")[1].split("_")[0]) 
+      LIW = int(hp.split("_LIW")[1].split("_")[0]) 
+      MIW = int(hp.split("_MIW")[1].split("_")[0]) 
+      ET = int(hp.split("_ET")[1].split("_")[0]) 
+      ICE = int(hp.split("_ICE")[1].split("_")[0]) 
+      UFO = int(hp.split("_UFO")[1].split("_")[0]) 
+      
+      print key
+      print tinygemm_results[detstring][key]['hyperparams']
+      print k,m,n,tA,tB, hp, Y, X, y, x, U, P, GA, APLU, BPLU, PU, LIW, MIW, ET, UFO
+      make_kernel.make_kernel(dir_name = "./kernels_found_deepbench/geom_%s/"%(key,), kernelname = None, t_float = "float", 
+  #tA1 tB0 tC0 CM1 
+  a_transposed = tA, b_transposed = tB, c_transposed = 0, is_col_major = 1, 
+  #x
+  micro_tile_width = x, 
+  #y
+  micro_tile_height = y, 
+  #X
+  macro_tile_width = X, 
+  #Y
+  macro_tile_height = Y, 
+  #U
+  unroll = U, 
+  #P
+  pad = P, 
+  #GA
+  group_allocation = GA, 
+  #APLU
+  work_item_load_a_pll_to_unroll = APLU, 
+  #BPLU
+  work_item_load_b_pll_to_unroll = BPLU, 
+  #PU
+  unroll_pragma = PU, 
+  #LIW
+  load_to_lds_interwoven = LIW, 
+  #MIW
+  c_micro_tiles_interwoven = MIW, 
+  #ET
+  use_edge_trick = ET,  
+  #ICE
+  n_work_items_per_c_elm = ICE,
+  #UFO
+  unroll_for_offset = UFO,
+   # haven't optimised over this
+  n_target_active_workgroups = 64, 
+  
+  with_tailing_end_char = False)
   
