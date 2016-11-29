@@ -54,10 +54,10 @@ HyperParams get_hyperparam(const HyperParams & default_hp, std::string hyperstri
 
 HyperParams get_default_small(bool enforce_deterministic){
   std::map<std::string, unsigned> params;
-  params["micro_tile_width"] = 2;  
-  params["micro_tile_height"] = 2;
-  params["macro_tile_width"] = 16;
-  params["macro_tile_height"] = 16; 
+  params["micro_tile_width"] = 1;//2;  
+  params["micro_tile_height"] = 1;//2;
+  params["macro_tile_width"] = 8;//16;
+  params["macro_tile_height"] = 8;//16; 
   params["unroll"] = 16;
   params["pad"] = 1;    
   params["group_allocation"] = 1;
@@ -77,9 +77,9 @@ HyperParams get_default_small(bool enforce_deterministic){
 HyperParams get_default(const tinygemm::TinyGemmGeometry & gg, bool enforce_deterministic){
   HyperParams default_hp = get_default_small(enforce_deterministic);
 
-  /* The case  of  (gg.m < 16 || gg.n < 16) */  
-  if (gg.m < 16 || gg.n < 16) {
-    throw tinygemm_error("Currently, we do not support matrices which are skinnier (m or n) than 16. This can easily be fixed... please contanct me at jnewling@idiap.ch ");
+  /* The case  of  (gg.m < 8 || gg.n < 8) */  
+  if (gg.m < 8 || gg.n < 8) {
+    throw tinygemm_error("Currently, we do not support matrices which are skinnier (m or n) than 16. This can easily be fixed... please contanct me via git ");
   }
   
   tinygemm::TinyGemmGeometry nearestgeometry;
@@ -96,9 +96,7 @@ HyperParams get_default(const tinygemm::TinyGemmGeometry & gg, bool enforce_dete
     hp = get_hyperparam(default_hp, hpstring);
     float new_distance = gg.get_distance(geo);
     if (new_distance < min_distance){
-      std::cout << "distance : " << new_distance << std::endl;
       nearestgeometry = geo;
-      std::cout << nearestgeometry.get_string() << std::endl;
       best_hp = hp;
       min_distance = new_distance;
     }
@@ -174,13 +172,13 @@ void add_hyperparam(const HyperParams & default_hp, std::string hyperstring, std
   
 std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeometry & gg){
   
-  if (gg.m < 16 || gg.n < 16){
-    throw tinygemm_error("Currently, if matrix C has a dimension less that 16, it is not supported. If you are seeing this, please remind to fix it..  jnewling@amd.com / jnewling@idiap.ch ");
+  if (gg.m < 8 || gg.n < 8){
+    throw tinygemm_error("Currently, if matrix C has a dimension less that 16, it is not supported. If you are seeing this, please remind to fix it via github ");
   }
  
   std::vector<HyperParams> one_aways;
+  
   size_t n_h0 = get_nwitems_h();
-
   size_t n_w0 = get_nwitems_w();
 
   
@@ -280,36 +278,27 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
   /* ***************** n_work_items_per_c_elms ************************
    * These hold the tile size constant, and explore just n_work_items_per_c_elm
    */
-   
-  std::map<unsigned, std::vector<unsigned> > map_n_work_items_per_c_elms_1_away;
-  map_n_work_items_per_c_elms_1_away[1] = {2};
-  map_n_work_items_per_c_elms_1_away[2] = {1,3,4};
-  map_n_work_items_per_c_elms_1_away[3] = {2,4,6};
-  map_n_work_items_per_c_elms_1_away[4] = {2,3,5,6};
-  map_n_work_items_per_c_elms_1_away[5] = {4,6,7,8};
-  map_n_work_items_per_c_elms_1_away[6] = {4,5,7,8};
-  map_n_work_items_per_c_elms_1_away[7] = {6,8};
-  map_n_work_items_per_c_elms_1_away[8] = {5,7,9,10};
-  map_n_work_items_per_c_elms_1_away[9] = {8,10};
-  map_n_work_items_per_c_elms_1_away[10] = {8,14};
-  map_n_work_items_per_c_elms_1_away[14] = {8,10};
-  
-  for (auto & n_work_items_per_c_elm : map_n_work_items_per_c_elms_1_away[params.at("n_work_items_per_c_elm")]){
-    HyperParams hp(params);
-    hp.params["n_work_items_per_c_elm"] = n_work_items_per_c_elm;
-    /* Observations suggest that k-split > 1 does not work very well with ufo. */
-    if (n_work_items_per_c_elm > 1){
-      hp.params["unroll_for_offset"] = 0;
+    
+  std::vector<int> delta_k_split = {-4, -2, -1, 1, 2, 4, 8};
+  for (auto & dx : delta_k_split){
+    int old_k_split = static_cast<int>(params.at("n_work_items_per_c_elm"));
+    int new_k_split =  old_k_split + dx;
+    if (new_k_split > 0 &&  (new_k_split / old_k_split <= 2)){
+      HyperParams hp(params);
+      hp.params["n_work_items_per_c_elm"] = new_k_split;
+      /* Observations suggest that k-split > 1 does not work very well with ufo. */
+      if (new_k_split > 1){
+        hp.params["unroll_for_offset"] = 0;
+      }
+      one_aways.push_back(hp);
     }
-      
-    one_aways.push_back(hp);
   }
-
-  /* ***************** macro tile sizes ********************************/
-
-  /* For Nvidia, where a wavefront (warp) is 32, should this be different? TODO */
   
-  /* The standard 8x8 and 16x16 tiling schemes.*/
+
+
+  /* ***************** macro tile sizes *************************************** */
+  /* For Nvidia, where a wavefront (warp) is 32, should this be different? TODO */
+  /* The standard 8x8 and 16x16 tiling schemes. *********************************/
   std::vector<unsigned> wg_hw_s = {8, 16};
   for (auto & wg_hw : wg_hw_s){
     HyperParams hp(params);
@@ -319,32 +308,30 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
   }
   
   /* Currently, if C has m or n less than 16, an error is thrown. */
+  /* **************** unrolls **********************************  */
   
-  /* **************** unrolls *****************************************
-   * */
-  std::vector<unsigned> unrolls = {8, 16};
-  std::map<unsigned, std::vector<unsigned>> unroll_map;
-  unroll_map[8]  = {16};
-  unroll_map[16] = {8,32};
-  unroll_map[32] = {16, 48};
-  unroll_map[48] = {32, 64};
-  unroll_map[64] = {48};
-  
-  for (auto unroll : unroll_map.at(params.at("unroll"))){
-    HyperParams hp(params);
-    hp.params["unroll"] = unroll;
-    /* (weak) observations suggest that unroll > 8 does not work well with ufo. */
-    if (unroll > 8){
-      hp.params["unroll_for_offset"] = 0;
+  std::vector<int> delta_unrolls = {-16, -8, +8, +16};
+  for (auto & d_unroll : delta_unrolls){
+    int old_unroll = params.at("unroll");
+    int new_unroll = old_unroll + d_unroll;
+    if (new_unroll > 0 && new_unroll <= 60){
+      HyperParams hp(params);
+      hp.params["unroll"] = new_unroll;
+      /* (weak) observations suggest that unroll > 8 does not work well with ufo. */
+      if (new_unroll > 8){
+        hp.params["unroll_for_offset"] = 0;
+      }
+      one_aways.push_back(hp);
     }
-    one_aways.push_back(hp);
   }
+    
+  
   
   if (params.at("n_work_items_per_c_elm") >= 4){ //if n_work_items_per_c_elm is 4,5,6,7,8,9,10 ... consider making it 2,2,2,2,4,4,4,4 ... with an "increase" in unroll_map
     HyperParams hp_2(params);
-    hp_2.params["unroll"] = unroll_map.at(params.at("unroll")).back();
+    hp_2.params["unroll"] = 16*(hp_2.params["unroll"]/16 + 1); //= unroll_map.at(params.at("unroll")).back();
     hp_2.params["n_work_items_per_c_elm"] = 2*(params.at("n_work_items_per_c_elm")/4);
-    hp_2.params["unroll_for_offset"] = 0; /* this is a mere whim */
+    //hp_2.params["unroll_for_offset"] = 0; /* this is a mere whim */
     one_aways.push_back(hp_2);
   }  
   
@@ -490,9 +477,15 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
       add_hps("Y24_X40_y3_x5_U16_P1_GA1_APLU1_BPLU1_PU0_LIW0_MIW1_ET1_ICE1_UFO0");
     }
 
-    if (params.at("micro_tile_height")*params.at("micro_tile_height") > 5 && params.at("micro_tile_height")*params.at("micro_tile_height") < 48 && params.at("n_work_items_per_c_elm") >  1){    
+    if (params.at("micro_tile_height")*params.at("micro_tile_width") > 5 && params.at("micro_tile_height")*params.at("micro_tile_width") < 48 && params.at("n_work_items_per_c_elm") >  1){    
       add_hps("Y64_X64_y4_x4_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ET1_ICE1_UFO0");
     }
+
+    if (gg.m*gg.n < 64*64 && gg.k > 20000){    
+      add_hps("Y16_X32_y1_x2_U48_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ET1_ICE32_UFO0");
+    }
+    
+    
     
     if (gg.tA == gg.isColMajor && gg.tB != gg.isColMajor && params.at("micro_tile_height")*params.at("micro_tile_height") == 64){
       add_hps("Y128_X128_y8_x8_U8_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ET1_ICE1_UFO1");
@@ -503,6 +496,9 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
       add_hps("Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ET1_ICE1_UFO1");
       add_hps("Y128_X128_y8_x8_U8_P1_GA2_APLU0_BPLU0_PU1_LIW0_MIW1_ET1_ICE1_UFO1");
     }
+    
+    
+    
   }
   
   /* shuffle them, which bounds the expected time to finding an improvement 
@@ -572,7 +568,6 @@ bool HyperParams::can_be_used_on(const tinygemm::TinyGemmGeometry & gg){
  * small, medium, large: On a Fiji! 
  * TODO : regenerate with longer runs and more problems.
  * TODO : should not be a single vector, this has linear find time. At least seperate out isColMajor, tA, tB  
- * TODO : make this the starting kernel (get_initial_front) 
  * TODO : figure out how to make cache contain only reduced problems.... very important! */
 std::vector<std::tuple<tinygemm::TinyGemmGeometry, std::string> > 
 HyperParams::kernel_cache = {                             /* colMaj tA    tB     tC     lda   ldb   ldc   m     n    k     ao bo co                                                                       */
@@ -764,9 +759,97 @@ HyperParams::kernel_cache = {                             /* colMaj tA    tB    
   std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 7685, 7687, 2573, 2560, 128, 7680, 0, 0, 0} , "Y80_X64_y5_x4_U16_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ET1_ICE4_UFO0" ), 
   std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2565, 2567, 2573, 2560, 64, 2560, 0, 0, 0} , "Y80_X64_y5_x4_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ET1_ICE4_UFO0" ), 
   std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 5129, 2055, 5137, 5124, 9124, 2048, 0, 0, 0} , "Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ET1_ICE1_UFO0" ), 
+  
+  
+  //some back conv problems : 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1000, 1000, 16, 16, 16, 1000, 0, 0, 0} ,   "Y8_X8_y1_x1_U40_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ET1_ICE7_UFO0" ), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 5760, 5760, 144, 144, 32, 5760, 0, 0, 0} ,   "Y8_X8_y1_x1_U32_P1_GA1_APLU1_BPLU1_PU0_LIW0_MIW1_ET1_ICE7_UFO0" ), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 23040, 23040, 9, 9, 16, 23040, 0, 0, 0} ,   "Y8_X8_y1_x1_U48_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW0_ET1_ICE37_UFO0" ), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 12544, 12544, 147, 147, 64, 12544, 0, 0, 0} ,   "Y32_X64_y2_x4_U32_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ET1_ICE24_UFO0" ), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 26939, 26939, 100, 100, 32, 26939, 0, 0, 0} ,   "Y16_X32_y1_x2_U32_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW0_ET1_ICE18_UFO0" ), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2916, 2916, 27, 27, 64, 2916, 0, 0, 0} ,   "Y8_X8_y1_x1_U32_P1_GA2_APLU1_BPLU1_PU0_LIW0_MIW1_ET1_ICE12_UFO0" ), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 50176, 50176, 27, 27, 64, 50176, 0, 0, 0} ,   "Y16_X32_y1_x2_U48_P1_GA2_APLU1_BPLU1_PU1_LIW0_MIW0_ET1_ICE32_UFO0" ), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 49, 49, 832, 832, 256, 49, 0, 0, 0} ,   "Y32_X32_y2_x2_U8_P1_GA2_APLU0_BPLU0_PU1_LIW0_MIW1_ET1_ICE1_UFO0" ), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 784, 784, 192, 192, 64, 784, 0, 0, 0} ,   "Y16_X16_y1_x1_U16_P1_GA1_APLU1_BPLU0_PU1_LIW0_MIW1_ET1_ICE5_UFO0" ), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2916, 2916, 576, 576, 64, 2916, 0, 0, 0} ,   "Y64_X32_y4_x2_U16_P1_GA1_APLU1_BPLU0_PU1_LIW0_MIW1_ET1_ICE7_UFO0" ), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 6308, 6308, 1600, 1600, 32, 6308, 0, 0, 0} ,   "Y64_X32_y4_x2_U40_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ET1_ICE5_UFO0" ), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1440, 1440, 288, 288, 64, 1440, 0, 0, 0} ,   "Y32_X32_y2_x2_U32_P1_GA1_APLU1_BPLU0_PU0_LIW0_MIW1_ET1_ICE6_UFO0" ), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 49, 49, 4608, 4608, 512, 49, 0, 0, 0} ,   "Y32_X48_y2_x3_U16_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ET1_ICE1_UFO0" ), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 49, 49, 2304, 2304, 512, 49, 0, 0, 0} ,   "Y32_X32_y2_x2_U16_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ET1_ICE1_UFO0" ), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 196, 196, 512, 512, 192, 196, 0, 0, 0} ,   "Y32_X16_y2_x1_U16_P1_GA1_APLU1_BPLU1_PU0_LIW0_MIW1_ET1_ICE1_UFO0" ), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 49, 49, 20800, 20800, 128, 49, 0, 0, 0} ,   "Y32_X32_y2_x2_U8_P1_GA3_APLU1_BPLU0_PU1_LIW0_MIW0_ET1_ICE1_UFO0" ), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 360, 360, 576, 576, 128, 360, 0, 0, 0} ,   "Y16_X16_y2_x2_U24_P1_GA2_APLU1_BPLU1_PU1_LIW0_MIW0_ET1_ICE1_UFO0" ), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 196, 196, 4608, 4608, 512, 196, 0, 0, 0} ,   "Y96_X64_y6_x4_U16_P1_GA2_APLU1_BPLU1_PU1_LIW0_MIW1_ET1_ICE1_UFO0" ), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 196, 196, 12800, 12800, 48, 196, 0, 0, 0} ,   "Y32_X48_y2_x3_U16_P1_GA2_APLU1_BPLU1_PU0_LIW0_MIW1_ET1_ICE1_UFO0" ), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 3136, 3136, 1152, 1152, 256, 3136, 0, 0, 0} ,   "Y80_X64_y5_x4_U16_P1_GA1_APLU0_BPLU0_PU0_LIW0_MIW1_ET1_ICE2_UFO0" ), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 196, 196, 1152, 1152, 256, 196, 0, 0, 0} ,   "Y48_X32_y3_x2_U16_P1_GA2_APLU1_BPLU0_PU0_LIW0_MIW1_ET1_ICE1_UFO0" ), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 12544, 12544, 576, 576, 128, 12544, 0, 0, 0} ,   "Y96_X128_y6_x8_U32_P1_GA3_APLU0_BPLU0_PU0_LIW0_MIW1_ET1_ICE20_UFO0" ), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 784, 784, 4800, 4800, 32, 784, 0, 0, 0} ,   "Y32_X32_y2_x2_U32_P1_GA1_APLU1_BPLU0_PU1_LIW0_MIW1_ET1_ICE5_UFO0" ), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 729, 729, 1152, 1152, 128, 729, 0, 0, 0} ,   "Y48_X32_y3_x2_U16_P1_GA2_APLU1_BPLU1_PU0_LIW0_MIW1_ET1_ICE2_UFO0" ), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 784, 784, 2304, 2304, 512, 784, 0, 0, 0} ,   "Y96_X64_y6_x4_U16_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ET1_ICE1_UFO0" ), 
+
 
 };
 
 
  
-}} // namespace
+}
+} // namespace
+
+
+
+
+
+   
+  //std::map<unsigned, std::vector<unsigned> > map_n_work_items_per_c_elms_1_away;
+  //map_n_work_items_per_c_elms_1_away[1] = {2};
+  //map_n_work_items_per_c_elms_1_away[2] = {1,3,4};
+  //map_n_work_items_per_c_elms_1_away[3] = {2,4,6};
+  //map_n_work_items_per_c_elms_1_away[4] = {2,3,5,6,16};
+  //map_n_work_items_per_c_elms_1_away[5] = {4,6,7,8};
+  //map_n_work_items_per_c_elms_1_away[6] = {4,5,7,8};
+  //map_n_work_items_per_c_elms_1_away[7] = {6,8,12};
+  //map_n_work_items_per_c_elms_1_away[8] = {5,7,9,10};
+  //map_n_work_items_per_c_elms_1_away[9] = {8,10,12};
+  //map_n_work_items_per_c_elms_1_away[10] = {8,12,14,16};
+  //map_n_work_items_per_c_elms_1_away[12] = {10,14,16,18};
+  //map_n_work_items_per_c_elms_1_away[14] = {10,12,16,18,20};
+  //map_n_work_items_per_c_elms_1_away[16] = {12,14,18,20,24};
+  //map_n_work_items_per_c_elms_1_away[18] = {14,16,20,24,29};
+  //map_n_work_items_per_c_elms_1_away[20] = {16,18,24,29,34};
+  //map_n_work_items_per_c_elms_1_away[24] = {18,20,29,34,40};
+  //map_n_work_items_per_c_elms_1_away[29] = {20,24,34,40};
+  //map_n_work_items_per_c_elms_1_away[34] = {24,29,40};
+  //map_n_work_items_per_c_elms_1_away[40] = {29,34};    
+
+  //for (auto & n_work_items_per_c_elm : map_n_work_items_per_c_elms_1_away[params.at("n_work_items_per_c_elm")]){
+    //HyperParams hp(params);
+    //hp.params["n_work_items_per_c_elm"] = n_work_items_per_c_elm;
+    ///* Observations suggest that k-split > 1 does not work very well with ufo. */
+    //if (n_work_items_per_c_elm > 1){
+      //hp.params["unroll_for_offset"] = 0;
+    //}
+      
+    //one_aways.push_back(hp);
+  //}
+
+
+  //std::vector<unsigned> unrolls = {8, 16};
+  //std::map<unsigned, std::vector<unsigned>> unroll_map;
+  //unroll_map[8]  = {16};
+  //unroll_map[16] = {8,32};
+  //unroll_map[32] = {16, 48};
+  //unroll_map[48] = {32, 64};
+  //unroll_map[64] = {48};
+  
+  
+  
+  //for (auto unroll : unroll_map.at(params.at("unroll"))){
+    //HyperParams hp(params);
+    //hp.params["unroll"] = unroll;
+    ///* (weak) observations suggest that unroll > 8 does not work well with ufo. */
+    //if (unroll > 8){
+      //hp.params["unroll_for_offset"] = 0;
+    //}
+    //one_aways.push_back(hp);
+  //}

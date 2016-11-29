@@ -352,13 +352,16 @@ public:
   
   void core_gemm_loop(size_t n_runs){
     
+    //auto core_loop_start = std::chrono::high_resolution_clock::now();
+
+
     reset_v_times();
     for (size_t kqq = 0; kqq < n_runs; ++kqq){
 
       /* This pause should have zero effect, but mysteriously it smooths out the run times between runs when working with certain gpu drivers
        * It has something to do with overheating.  */        
       if (n_runs > 1){
-        std::this_thread::sleep_for(std::chrono::milliseconds(30));
+        std::this_thread::sleep_for(std::chrono::milliseconds(0));
       }
   
       /* ***************************************************************************************
@@ -401,6 +404,13 @@ public:
         throw std::logic_error("How can this not be CL_SUCCESS or CL_OUT_OF_RESOURCES? Algo prob, come fix");
       }
     }
+    
+    
+    //auto core_loop_end = std::chrono::high_resolution_clock::now();
+    //std::chrono::duration<float> fp_ms = core_loop_end - core_loop_start;
+    //float elapsed_seconds = fp_ms.count();
+    //mowri << "time in core_loop : " << elapsed_seconds*1000 << Endl;
+
   }
 
 
@@ -551,8 +561,8 @@ public:
               benchgemm(kernelfilename, n_runs_in_find_per_kernel);
               std::sort(v_t_total_with_both.begin(), v_t_total_with_both.end());
 
-              /* Taking the fastest. TODO make this transparent */
-              float median_time = v_t_total_with_both[0]; //[v_t_total_with_both.size()/2]; 
+              /* Taking the fastest or median? */ 
+              float median_time = v_t_total_with_both[v_t_total_with_both.size()/2]; //[0]; 
               
               if (std::abs(v_t_total_with_both.back() - median_time) / median_time > 0.2) {
                 mowri << "tinygemm_warning: large variance in times. " <<  Endl;

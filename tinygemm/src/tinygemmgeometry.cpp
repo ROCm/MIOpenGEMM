@@ -34,8 +34,6 @@ float TinyGemmGeometry::get_distance(const TinyGemmGeometry & gg) const{
   float distance;
   
   if (tA != gg.tA || tB != gg.tB || isColMajor != gg.isColMajor || m < gg.m || n < gg.n){
-    //std::cout << gg.get_string() << std::endl;
-    //std::cout << get_string() << std::endl;
     distance = std::numeric_limits<float>::max();
   } 
    

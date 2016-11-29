@@ -191,9 +191,45 @@ def get_tinygemm_results():
 
   return tinygemm_results
 
+def get_tinygemm_backconv_results():
+  
+  deepbenchresults_dir = "/home/james/tinygemmout/backconvwrw"
+  files = os.listdir(deepbenchresults_dir)
+  filefound = False
+  
+  tinygemm_backconv_results = {}
+  
+  for newfile in files:    
+    geomfrag =  newfile.split("at120_")[1].split(".txt")[0]
+    filly = open(os.path.join(deepbenchresults_dir, newfile))
+    allnewlines = filly.readlines()
+    for l in allnewlines:
+      if "INPUT_CALL" in l:
+        if geomfrag not in tinygemm_backconv_results.keys():
+          tinygemm_backconv_results[geomfrag] = {}
+           
+        tinygemm_backconv_results[geomfrag]["INPUT_CALL"] = l
+        break
 
+
+    print "\n\n\n\n", 
+    
+    #for l in allnewlines[-30::]:
+      #print l,
+
+        
+    kern_new, time_found, gf_new = allnewlines[-2].split()
+    tf_new = float(gf_new)/1000.
+    tinygemm_backconv_results[geomfrag]["gflop/s"] = tf_new
+    tinygemm_backconv_results[geomfrag]["hyperparams"] = kern_new
+    tinygemm_backconv_results[geomfrag]["timesfound"] = time_found
+
+  return tinygemm_backconv_results
+  
 def get_kernel_cache_string():
-
+  """
+  also see zzz
+  """
   add_best_string = ""
   
   tgrs = get_tinygemm_results()
@@ -207,7 +243,8 @@ def get_kernel_cache_string():
       for k2 in ['tA', 'tB', 'tC','colMaj']:
         geom[k2] = "true"*(geom[k2] == 1) + "false"*(geom[k2] == 0)
         
-      add_best_string  += '  std::make_tuple<gemmgeometry::Geometry, std::string> ( {%s, %s, %s, %s, %d, %d, %d, %d, %d, %d} ,   "%s" ), \n'%(geom['colMaj'], geom['tA'], geom['tB'], geom['tC'], geom['lda'], geom['ldb'], geom['ldc'], geom['m'], geom['n'], geom['k'], tgrs[okey][k]["hyperparams"])
+      add_best_string  += '  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {%s, %s, %s, %s, %d, %d, %d, %d, %d, %d, 0, 0, 0} ,   "%s" ), \n'%(geom['colMaj'], geom['tA'], geom['tB'], geom['tC'], geom['lda'], geom['ldb'], geom['ldc'], geom['m'], geom['n'], geom['k'], tgrs[k]["hyperparams"])
+
 
   kernel_cache_string = r"""
 std::vector<std::tuple<gemmgeometry::Geometry, std::string> > 
@@ -217,6 +254,35 @@ HyperParams::kernel_cache = {
 """%(add_best_string)
   
   print kernel_cache_string
+
+
+
+def get_kernel_cache_string_backconvprobs():
+  add_best_string = ""  
+  tgrs = get_tinygemm_backconv_results()
+  for k in tgrs.keys():
+    geom = {}
+    for kv in tgrs[k]["INPUT_CALL"].split(": ")[1].strip().split(" "):
+      key, val = kv.split(":")
+      geom[key] = int(val)
+    
+    for k2 in ['tA', 'tB', 'tC','colMaj']:
+      geom[k2] = "true"*(geom[k2] == 1) + "false"*(geom[k2] == 0)
+      
+    add_best_string  += '  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {%s, %s, %s, %s, %d, %d, %d, %d, %d, %d, 0, 0, 0} ,   "%s" ), \n'%(geom['colMaj'], geom['tA'], geom['tB'], geom['tC'], geom['lda'], geom['ldb'], geom['ldc'], geom['m'], geom['n'], geom['k'], tgrs[k]["hyperparams"])
+    
+    
+    kernel_cache_string = r"""
+std::vector<std::tuple<gemmgeometry::Geometry, std::string> > 
+HyperParams::kernel_cache = {
+%s
+};
+"""%(add_best_string)
+  
+  print kernel_cache_string
+
+
+
 
 def plot_full_summary():
 

@@ -83,13 +83,15 @@ def do_kernel_tests(outputfilename = "default", kernel_savedir = None, do_test =
 
   data_geometry = {'tA':True, 'tB': False, 'tC': False, 'isColMajor':True}
   
-
-  matrix_mnk = {'m': 100, 'n': 32, 'k': 26939}
   
-  micro_tiles = [[3,2]] 
+  #Y16_X32_y1_x2_U48_P1_GA2_APLU1_BPLU1_PU0_LIW0_MIW0_ET1_ICE32_UFO0
+ #m:27 n:64 k:50176
+  matrix_mnk = {'m': 27, 'n': 64, 'k': 50176}
+  
+  micro_tiles = [[1,2]] 
   mm_tiles = [[16*a, 16*b, a, b] for a, b in micro_tiles]
   #with padding 2 I sometimes get better than with padding 1 (!)
-  kernel_span = {'Y_X_y_x' :mm_tiles, 'unrolls':[16], 'pads' : [1], 'group_allocations' : [2], 'work_item_load_a_pll_to_unrolls' : [1],'work_item_load_b_pll_to_unrolls' : [0],'unroll_pragmas' : [0], 'load_to_lds_interwovens' : [0], 'c_micro_tiles_interwovens': [1], 'use_edge_tricks':[1], 'n_work_items_per_c_elms':[5], "unroll_for_offsets":[0]}#3,6,8,10]}#,3,4,5,6,7,8]}
+  kernel_span = {'Y_X_y_x' :mm_tiles, 'unrolls':[48], 'pads' : [1], 'group_allocations' : [2], 'work_item_load_a_pll_to_unrolls' : [1],'work_item_load_b_pll_to_unrolls' : [1],'unroll_pragmas' : [0], 'load_to_lds_interwovens' : [0], 'c_micro_tiles_interwovens': [0], 'use_edge_tricks':[1], 'n_work_items_per_c_elms':[32], "unroll_for_offsets":[0]}#3,6,8,10]}#,3,4,5,6,7,8]}
   constantwaste = {'a':0, 'b':0, 'c':0}
   
   
@@ -130,7 +132,7 @@ def do_kernel_tests(outputfilename = "default", kernel_savedir = None, do_test =
   print "kernel_savedir : ", kernel_savedir
   print "outputfilename : ", outputfilename
   
-  utility_functions.go_experiment(kernel_savedir = kernel_savedir, data_geometry = data_geometry, matrix_mnk = matrix_mnk, kernel_span = kernel_span, n_runs = 200, outputfilename = outputfilename, do_test = do_test, double_type = double_type, constantwaste = constantwaste, forcefilewrite = forcefilewrite)
+  utility_functions.go_experiment(kernel_savedir = kernel_savedir, data_geometry = data_geometry, matrix_mnk = matrix_mnk, kernel_span = kernel_span, n_runs = 1000, outputfilename = outputfilename, do_test = do_test, double_type = double_type, constantwaste = constantwaste, forcefilewrite = forcefilewrite)
 
 def do_baidu_kernel_tests():
   """
