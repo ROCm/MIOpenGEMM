@@ -81,25 +81,15 @@ def do_kernel_tests(outputfilename = "default", kernel_savedir = None, do_test =
   double_type = np.float32
   
 
-    
-    
-    #3072 	128 	1024 	1 	0 	0.281  	 	0.597  	 	0.279  	 	2.866  	 	1.349  	 	2.882  	 	A1B0C1f32___Y32_X32_y4_x4_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ET1_ICE1
-
-  #A1B0C0f32___Y32_X32_y4_x4_U16_P1_GA2_APLU0_BPLU0_PU1_LIW0_MIW1_ET1_ICE1
-
-  data_geometry = {'tA':False, 'tB': True, 'tC': False, 'isColMajor':True} 
-  #matrix_mnk = {'m': 4092, 'n': 4092, 'k': 4092} #16 is unroll!!
-  #'m': 4012, 'n':4098, 'k':4221
- 
-  matrix_mnk = {'m': 30, 'n': 40, 'k': 50} #1997}
+  data_geometry = {'tA':True, 'tB': False, 'tC': False, 'isColMajor':True}
   
-  micro_tiles = [[8,8]] #[[4,6], [5,5], [6,6], [7,7], [8,8]]
+
+  matrix_mnk = {'m': 100, 'n': 32, 'k': 26939}
+  
+  micro_tiles = [[3,2]] 
   mm_tiles = [[16*a, 16*b, a, b] for a, b in micro_tiles]
   #with padding 2 I sometimes get better than with padding 1 (!)
-  kernel_span = {'Y_X_y_x' :mm_tiles, 'unrolls':[8], 'pads' : [1], 'group_allocations' : [1], 'work_item_load_a_pll_to_unrolls' : [0],'work_item_load_b_pll_to_unrolls' : [0],'unroll_pragmas' : [1], 'load_to_lds_interwovens' : [0,1], 'c_micro_tiles_interwovens': [0,1], 'use_edge_tricks':[1], 'n_work_items_per_c_elms':[1], "unroll_for_offsets":[1]}#3,6,8,10]}#,3,4,5,6,7,8]}
-  #constantwaste = {'a':1, 'b':2, 'c':3}
-  #constantwaste = {'a':5, 'b':7, 'c':13}
-  #constantwaste = {'a':0, 'b':0, 'c':0}
+  kernel_span = {'Y_X_y_x' :mm_tiles, 'unrolls':[16], 'pads' : [1], 'group_allocations' : [2], 'work_item_load_a_pll_to_unrolls' : [1],'work_item_load_b_pll_to_unrolls' : [0],'unroll_pragmas' : [0], 'load_to_lds_interwovens' : [0], 'c_micro_tiles_interwovens': [1], 'use_edge_tricks':[1], 'n_work_items_per_c_elms':[5], "unroll_for_offsets":[0]}#3,6,8,10]}#,3,4,5,6,7,8]}
   constantwaste = {'a':0, 'b':0, 'c':0}
   
   
@@ -140,14 +130,14 @@ def do_kernel_tests(outputfilename = "default", kernel_savedir = None, do_test =
   print "kernel_savedir : ", kernel_savedir
   print "outputfilename : ", outputfilename
   
-  utility_functions.go_experiment(kernel_savedir = kernel_savedir, data_geometry = data_geometry, matrix_mnk = matrix_mnk, kernel_span = kernel_span, n_runs = 5, outputfilename = outputfilename, do_test = do_test, double_type = double_type, constantwaste = constantwaste, forcefilewrite = forcefilewrite)
+  utility_functions.go_experiment(kernel_savedir = kernel_savedir, data_geometry = data_geometry, matrix_mnk = matrix_mnk, kernel_span = kernel_span, n_runs = 200, outputfilename = outputfilename, do_test = do_test, double_type = double_type, constantwaste = constantwaste, forcefilewrite = forcefilewrite)
 
 def do_baidu_kernel_tests():
   """
   Run through the baidu problem set parameters, and do a kernel search
   """
 
-  baidu_problem_set = baidu_bench.get_baidu_problem_set(aslist = True)  
+  baidu_problem_set = baidu_bench.get_baidu_problem_set(aslist = True) 
 
   benchmark_n = 0
   basedir_kernels = os.path.join(write_directories.kernels_base_directory, "baidu_benching_%d"%(benchmark_n))
@@ -162,7 +152,7 @@ def do_baidu_kernel_tests():
   os.mkdir(basedir_output)
     
   potential_micro_tiles = [[2,2], [8,8]]
-  potential_tiles = [[8*a,8*b, a, b] for a,b in potential_micro_tiles] #+ [[16*a,16*b, a, b] for a,b in potential_micro_tiles]
+  potential_tiles = [[8*a,8*b, a, b] for a,b in potential_micro_tiles]
 
   for bp in baidu_problem_set:
     
@@ -245,41 +235,3 @@ def do_mn_tests(micro_tile_hw = 8, start_dim = 256 - 8, end_dim = 256 + 8, strid
       kernel_span['use_edge_tricks'] = [1]
       outputfilename = os.path.join(savedir, "dimension%s_noredirect.txt"%(dimension))
       utility_functions.go_experiment(kernel_savedir = None, data_geometry = data_geometry, matrix_mnk = matrix_mnk, kernel_span = kernel_span, n_runs = 10, outputfilename = outputfilename, do_test = False)
-
-
-
-
-  ##Y128_X128_y8_x8_U8_P1_GA1_APLU1_BPLU1_PU0_LIW0_MIW1_ET1_ICE1_UFO0	 20.5247		 5133.22
-#_  Y128_X128_y8_x8_U8_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ET1_ICE1_UFO1
-   #Y128_X128_y8_x8_U8_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ET1_ICE1_UFO1
-  
-  
-  
-  #Y128_X128_y8_x8_U8_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ET1_ICE1_UFO1
-#global gen-com-bench : 18.
-#INPUT_CALL   	: tC:0 tA:1 tB:0 colMaj:1 m:4012 n:4098 k:4221 lda:4221 ldb:4221 ldc:4012
-#main kernel global work size : 270336 (recommended ~ 4*64*40*64 = 655360)
-#Entering setting of program and kernel, compiling ...... done
-#Entering the core gemm loops
-#elapsed time : 26.8656    Gflops/s : 5166.32
-#elapsed time : 27.2238    Gflops/s : 5098.34
-#elapsed time : 27.7296    Gflops/s : 5005.35
-#elapsed time : 27.6589    Gflops/s : 5018.15
-#elapsed time : 27.8414    Gflops/s : 4985.25
-#median time  : 27.6589	 m-Gflops/s : 5018.15
-#elapsed seconds : 10.7975
-
-
-                                                                                               #Y128_X128_y8_x8_U8_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ET1_ICE1_UFO1
-#Source kernel (2/6) /home/james/tinygemmout/kernels/experiment_temporary_directory/A1B0C0f32___Y128_X128_y8_x8_U8_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ET1_ICE1_UFO1.cl
-#in setup_beta_c_kernel, global_work_size : 4110336
-#INPUT_CALL   	: tC:0 tA:1 tB:0 colMaj:1 m:4012 n:4098 k:4221 lda:4221 ldb:4221 ldc:4012
-#main kernel global work size : 270336 (recommended ~ 4*64*40*64 = 655360)
-#Entering setting of program and kernel, compiling ...... done
-#Entering the core gemm loops
-#elapsed time : 26.1072    Gflops/s : 5316.4
-#elapsed time : 26.1925    Gflops/s : 5299.09
-#elapsed time : 26.3405    Gflops/s : 5269.32
-#elapsed time : 26.3294    Gflops/s : 5271.53
-#elapsed time : 26.671    Gflops/s : 5204.01
-

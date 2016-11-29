@@ -35,4 +35,5 @@ std::string get_float_string(char floattype){
   }
 }
 
-}}
+}
+}

@@ -27,13 +27,6 @@ std::map<std::string, size_t> TinyGemmSolution::get_main_kernel_worksize_params(
   std::vector<std::string> integral_params_needed {"n_work_items_per_c_elm", "macro_tile_height", "macro_tile_width", "micro_tile_height", "micro_tile_width"}; //, "n_workitems_per_workgroup"};
   for (auto & x : integral_params_needed){
     if (allparams.count(x) == 0){
-  
-      
-      //std::cout << "allparams:\n";
-      //for (auto & y : allparams){
-        //std::cout << y.first  << " " << y.second << std::endl;
-      //}
-    
       throw tinygemm_error(get_errm(x));
     }
   }

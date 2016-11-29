@@ -42,7 +42,6 @@ def get_reduced_geometry(data_geometry, data_dimensions):
   reduced_data_geometry = data_geometry
   
   if data_geometry['isColMajor'] == False:
-    
     X = {
     'tA':data_geometry['tB'], 
     'tB':data_geometry['tA'], 
@@ -69,11 +68,7 @@ def get_reduced_geometry(data_geometry, data_dimensions):
     'tC':not data_geometry['tC'], 
     'isColMajor':data_geometry['isColMajor']
     }
-  
-  
 
-
-  
   return reduced_data_geometry
     
  
@@ -124,7 +119,7 @@ def set_stroud_memory(x_true, ldx, is_transpose, is_colmajor, offset, npftype):
 
 
 def go_experiment(kernel_savedir = None, kernel_span = {'Y_X_y_x' :[[64, 64, 4, 4]], 'unrolls': [16], 'pads' : [1], 'group_allocations' : [1], 'work_item_load_a_pll_to_unrolls' : [0],'work_item_load_b_pll_to_unrolls' : [0],'unroll_pragmas' : [0,1], 'load_to_lds_interwovens' : [0], 'use_edge_tricks' :[1], 'n_work_items_per_c_elms': [1], 'unroll_for_offsets' : [0]}, 
-matrix_mnk = {'m': 640, 'n':2560, 'k':11213}, data_geometry = {'tA':False, 'tB':False, 'tC': False, 'isColMajor':True}, double_type = np.float32, outputfilename = "",factorwaste = {'a':1, 'b':1, 'c':1}, constantwaste = {'a':5, 'b':7, 'c':13}, offsets = {'a': 10, 'b': 33, 'c': 129}, n_runs = 7, do_test = True, findfirst = False, allotted_time = -1., enforce_deterministic = False, forcefilewrite = False):
+matrix_mnk = {'m': 640, 'n':2560, 'k':11213}, data_geometry = {'tA':False, 'tB':False, 'tC': False, 'isColMajor':True}, double_type = np.float32, outputfilename = "",factorwaste = {'a':1, 'b':1, 'c':1}, constantwaste = {'a':5, 'b':7, 'c':13}, offsets = {'a': 0, 'b': 0, 'c': 0}, n_runs = 7, do_test = True, findfirst = False, allotted_time = -1., enforce_deterministic = False, forcefilewrite = False):
   """
   kernel_savedir
     if findfirst == False : 
@@ -255,7 +250,7 @@ matrix_mnk = {'m': 640, 'n':2560, 'k':11213}, data_geometry = {'tA':False, 'tB':
           """
           
   
-  results = pytinygemm.pytinygemm(data_geometry['isColMajor'], data_geometry['tA'], data_geometry['tB'], data_geometry['tC'], data_dimensions['m'], data_dimensions['n'], data_dimensions['k'], alpha, a_mem, data_dimensions['lda'], offsets['a'], b_mem, data_dimensions['ldb'], offsets['b'], beta, data_dimensions['ldc'], offsets['c'], cpu_algs_list, gpu_kernel_filenames_list_list, capture_output = False, c_pre_mem = c_pre_mem.ravel(), c_pos_up = c_pos_up.ravel(), do_test = do_test, n_runs = n_runs, outputfilename = outputfilename, findfirst = findfirst, allotted_time = allotted_time, enforce_deterministic = enforce_deterministic)
+  pytinygemm.pytinygemm(data_geometry['isColMajor'], data_geometry['tA'], data_geometry['tB'], data_geometry['tC'], data_dimensions['m'], data_dimensions['n'], data_dimensions['k'], alpha, a_mem, data_dimensions['lda'], offsets['a'], b_mem, data_dimensions['ldb'], offsets['b'], beta, data_dimensions['ldc'], offsets['c'], cpu_algs_list, gpu_kernel_filenames_list_list, capture_output = False, c_pre_mem = c_pre_mem.ravel(), c_pos_up = c_pos_up.ravel(), do_test = do_test, n_runs = n_runs, outputfilename = outputfilename, findfirst = findfirst, allotted_time = allotted_time, enforce_deterministic = enforce_deterministic)
   
 
   ######## the benchmarking cartesian product case #########################################################
@@ -273,4 +268,4 @@ matrix_mnk = {'m': 640, 'n':2560, 'k':11213}, data_geometry = {'tA':False, 'tB':
         print os.listdir(kernel_savedir)
         raise RuntimeError("This is strange. kernel_savedir `%s' should be empty now"%(kernel_savedir,))
   ###########################################################################################################  
-    
+  

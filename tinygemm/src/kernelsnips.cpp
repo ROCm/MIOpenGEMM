@@ -16,8 +16,6 @@
 namespace tinygemm{
 namespace kernelutil{
 
-
-
   std::string
   get_as_single_string(std::string filename){
     std::ifstream input(filename);
@@ -25,14 +23,11 @@ namespace kernelutil{
       throw tinygemm_error( "Error attempting to open '" + filename + "', in kernelutil::get_as_single_string.  ");
     }
     
-    
     std::ifstream t(filename);
     std::stringstream buffer;
     buffer << t.rdbuf();
     return buffer.str();
   }
-
-  
   
   std::pair<std::map<std::string, unsigned>, std::map<std::string, std::string>> 
   get_all_preprocessor_parameters(std::string kernel_filename){
@@ -128,7 +123,7 @@ namespace kernelutil{
     macro_tile_height = ipp["MACRO_TILE_HEIGHT"];
     n_workitems_per_workgroup = ipp["N_WORK_ITEMS_PER_WORKGROUP"]; 
     n_work_items_per_c_elm = ipp["N_WORK_ITEMS_PER_C_ELM"];
-    does_beta_c_inc = ipp["DOES_ALPHA_C_INC"];
+    does_beta_c_inc = ipp["DOES_ALPHA_C_INC"]; //TODO : `ALPHA' in kernel headers should be BETA. 
   }
 
 

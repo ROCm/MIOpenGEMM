@@ -59,7 +59,6 @@ std::map<std::string, unsigned> get_bare_bones_int_parms(const tinygemm::TinyGem
   all_int_parms["b_transposed"] = gg.tB;
   all_int_parms["c_transposed"] = gg.tC;
   all_int_parms["use_edge_trick"] = 1;
-  
   return all_int_parms;
 }
 
@@ -126,65 +125,83 @@ private:
   cl_context context;
   cl_device_id device_id_to_use;
   bool nobenching;
-  
-  //unsigned n_runs_in_find_per_kernel;
 
 
 public:
   OpenCLGemmEncapsulator(
-    cl_command_queue command_queue, 
-    const char & floattype,
-    const tinygemm::TinyGemmGeometry & gg,  
-    const double & alpha,
-    const double & beta,
-    cl_mem & a_gpu,
-    cl_mem & b_gpu, 
-    cl_mem & c_gpu,
-    std::string & outputfilename,
-    bool verbose, 
-    bool nobenching):
-//    unsigned n_runs_in_find_per_kernel):
+  cl_command_queue command_queue, 
+  const char & floattype,
+  const tinygemm::TinyGemmGeometry & gg,  
+  const double & alpha,
+  const double & beta,
+  cl_mem & a_gpu,
+  cl_mem & b_gpu, 
+  cl_mem & c_gpu,
+  std::string & outputfilename,
+  bool verbose, 
+  bool nobenching):
 
-    command_queue(command_queue), 
-    outputfilename(outputfilename),
-    floattype(floattype), 
-    gg(gg),
-    alpha(alpha),
-    beta(beta),
-    a_gpu(a_gpu),
-    b_gpu(b_gpu), 
-    c_gpu(c_gpu),
-    m_alpha(alpha),
-    m_beta(beta),
-    mowri(verbose, outputfilename.compare("") != 0, outputfilename),
-    nobenching(nobenching)
-    {
-
-
-      set_floatsize();
-      run_checks();
-
-
-      ret = clGetCommandQueueInfo(command_queue, CL_QUEUE_CONTEXT, sizeof(cl_context), &context, NULL);
-      if (ret != CL_SUCCESS){
-        throw tinygemm_error("Problem using clGetCommandQueueInfo, trying to get CL_QUEUE_CONTEXT (in constructor in openclgemmapi.cpp");
-      }
-      ret = clGetCommandQueueInfo(command_queue, CL_QUEUE_DEVICE, sizeof(cl_device_id), &device_id_to_use, NULL);
-      if (ret != CL_SUCCESS){
-        throw tinygemm_error("Problem using clGetCommandQueueInfo, trying to get CL_QUEUE_DEVICE (in constructor in openclgemmapi.cpp");        
-      }
-      
-      
-      //std::cout << device_id_to_use  << std::endl;
-      
-      
-      if (nobenching == false){
-        setup_betac_kernel(); //TODO : release when done. 
-      }
-
+  command_queue(command_queue), 
+  outputfilename(outputfilename),
+  floattype(floattype), 
+  gg(gg),
+  alpha(alpha),
+  beta(beta),
+  a_gpu(a_gpu),
+  b_gpu(b_gpu), 
+  c_gpu(c_gpu),
+  m_alpha(alpha),
+  m_beta(beta),
+  mowri(verbose, outputfilename.compare("") != 0, outputfilename),
+  nobenching(nobenching)
+  {
+    set_floatsize();
+    run_checks();
+    ret = clGetCommandQueueInfo(command_queue, CL_QUEUE_CONTEXT, sizeof(cl_context), &context, NULL);
+    if (ret != CL_SUCCESS){
+      throw tinygemm_error("Problem using clGetCommandQueueInfo, trying to get CL_QUEUE_CONTEXT (in constructor in openclgemmapi.cpp");
+    }
+    ret = clGetCommandQueueInfo(command_queue, CL_QUEUE_DEVICE, sizeof(cl_device_id), &device_id_to_use, NULL);
+    if (ret != CL_SUCCESS){
+      throw tinygemm_error("Problem using clGetCommandQueueInfo, trying to get CL_QUEUE_DEVICE (in constructor in openclgemmapi.cpp");        
+    }      
+    if (nobenching == false){ // || (std::abs(beta - 1.) < 1e-9)){
+      setup_betac_kernel(); 
+    }
+  }
+ 
+ 
+  ~OpenCLGemmEncapsulator(){
+    if (nobenching == false){
+      release_betac_kernel_and_program();
+    }
+  }
+  
+  void release_betac_kernel_and_program(){
+    ret = clReleaseKernel(betac_kernel);
+    if (ret != CL_SUCCESS){
+      throw tinygemm_error("failed in clReleaseKernel, in release_betac_kernel_and_program");
     }
     
+    ret = clReleaseProgram(betac_program);
+    if (ret != CL_SUCCESS){
+      throw tinygemm_error("failed in clReleaseProgram, in release_betac_kernel_and_program");
+    }
+  }
 
+
+  void release_main_kernel_and_program(){
+    ret = clReleaseKernel(kernel);
+    if (ret != CL_SUCCESS){
+      throw tinygemm_error("failed in clReleaseKernel, in release_main_kernel_and_program");
+    }
+    
+    ret = clReleaseProgram(program);
+    if (ret != CL_SUCCESS){
+      throw tinygemm_error("failed in clReleaseProgram, in release_main_kernel_and_program");
+    }
+  }
+  
   void run_checks(){
     if (c_gpu == a_gpu || c_gpu == b_gpu){
       throw tinygemm_error("c should be distinct from a and b for gemm, otherwise race condition arises (one thread writes its result to c before another one has finished reading from c)");
@@ -268,19 +285,12 @@ public:
   
   int enqueue_main_kernel(){
     
-    
     if(does_betac_inc == 0){
       ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_work_size, &local_work_size, 1, &event_betac_kernel, &event_main_kernel);
     }
     else{
       ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_work_size, &local_work_size, 0,NULL, &event_main_kernel);
     }
-
-        
-    //ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_work_size, &local_work_size, 0,NULL, &event_main_kernel);
-
-
-
 
     /* Handle the failure case which is not CL_OUT_OF_RESOURCES */ 
     if (ret != CL_SUCCESS && ret != CL_OUT_OF_RESOURCES){
@@ -314,7 +324,7 @@ public:
     }
   }
   
-  /* Will be used when a kernel failed to be enqueued, so just set then time really big */
+  /* Will be used when a kernel failed to be enqueued, so just set the time really big */
   void update_run_times_really_bad(){
     t_just_main = std::numeric_limits<float>::max();
     v_t_total_with_both.push_back(std::numeric_limits<float>::max());
@@ -348,7 +358,7 @@ public:
       /* This pause should have zero effect, but mysteriously it smooths out the run times between runs when working with certain gpu drivers
        * It has something to do with overheating.  */        
       if (n_runs > 1){
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        std::this_thread::sleep_for(std::chrono::milliseconds(30));
       }
   
       /* ***************************************************************************************
@@ -411,6 +421,10 @@ public:
     set_main_kernel_arguments();
   }
   
+
+
+
+
   
         
   /* try-wrapped in gemini */
@@ -423,14 +437,10 @@ public:
     mowri << "INPUT_CALL   \t:" << gg.get_string() << Endl;
     full_kernel_setup_from_source_file(kernelfilename);
     mowri << "Entering the core gemm loops" << Endl;
-    
     core_gemm_loop(n_runs);
+    release_main_kernel_and_program();
     
-    
-    ret = clReleaseKernel(kernel);
-    ret = clReleaseProgram(program);
-  
-  }//gemm
+  }
   
   
   
@@ -450,9 +460,6 @@ public:
       mowri << "Allotted time insufficient for benchmarking, returning default TinyGemmSolution" << Endl;
       return get_default(enforce_deterministic, floattype, gg);      
     }
-
-      
-    
     
     auto start = std::chrono::high_resolution_clock::now();
     auto end = std::chrono::high_resolution_clock::now();
@@ -477,14 +484,8 @@ public:
     
 
     /* we initialise the `hyper-front' with a single HyperParams, selected based on problem dimensions (TODO : should be based on cache table look-up) */
-    std::vector<hyperparams::HyperParams> hyper_front = { hyperparams::get_default(gg, enforce_deterministic) };
-    
-    //hyperparams::get_initial_front(gg, enforce_deterministic);
+    std::vector<hyperparams::HyperParams> hyper_front = { hyperparams::get_default(gg, enforce_deterministic) };    
     auto hyper_param_start = hyper_front[0];
-
-
-
-
 
     bool improvement_found_on_front = true;
     
@@ -542,20 +543,21 @@ public:
             
             /* the kernel was succesfully generated, we now compile and benchmark it */
             if (kernel_write_status == 0){
-              
+
               mowri << "\n" << hp.get_string() << Endl;
               ++global_counter;
               mowri << "global gen-com-bench : " << global_counter  <<  "." << Endl;
-  
 
-              
-              /* bench 2 times. TODO: unhardwire this. */
               benchgemm(kernelfilename, n_runs_in_find_per_kernel);
               std::sort(v_t_total_with_both.begin(), v_t_total_with_both.end());
 
               /* Taking the fastest. TODO make this transparent */
               float median_time = v_t_total_with_both[0]; //[v_t_total_with_both.size()/2]; 
-
+              
+              if (std::abs(v_t_total_with_both.back() - median_time) / median_time > 0.2) {
+                mowri << "tinygemm_warning: large variance in times. " <<  Endl;
+              }
+              
               end = std::chrono::high_resolution_clock::now();
               fp_ms = end - start;
               elapsed_seconds = fp_ms.count();
@@ -574,7 +576,6 @@ public:
                 fp_ms = end - start;
                 elapsed_seconds = fp_ms.count();
 
-
                 float median_benchmark_gflops = (2. * gg.m * gg.n * gg.k) / (median_time * 10e5);                
                 tinygemm::TinyGemmSolutionStatistics tgss(median_time, median_benchmark_gflops, gg, elapsed_seconds);
                 
@@ -591,14 +592,10 @@ public:
             }
           
             else{
-              //std::cout << kernel_write_status << std::endl;
               mowri << "\nSkipping this kernel, hyper-parameters incompatible" << Endl;
             }
           }
         }
-        
-        
-        //} //delme
         
         ++hfi;
         
@@ -660,17 +657,12 @@ public:
 
     for (auto & x : path_of_best_solns){
       mowri <<  x.get_hyper_param_string() << "\t " << x.statistics.solution_discovery_time << "\t\t " << x.statistics.median_benchmark_gflops  << Endl;
-    } 
+    }
+     
     mowri <<  path_of_best_solns.back().get_hyper_param_string() << "\t " << elapsed_seconds << "\t\t " << path_of_best_solns.back().statistics.median_benchmark_gflops  << Endl;
-    
     return path_of_best_solns.back();
   }
 }; 
-
-
-
-
-
 
 /* functions for the end-user */ 
 tinygemm::TinyGemmSolution
@@ -687,19 +679,13 @@ const double alpha,
 const double beta,
 bool verbose, 
 std::string logfile){
-  
-  
   /* The number of times each kernel is run in find. 
    * consider adding this parameter to user API. */
-  unsigned n_runs_in_find_per_kernel = 4;
-  
+  unsigned n_runs_in_find_per_kernel = 6;
   bool nobenching = allotted_time <= 0 ?  true : false ;  
   OpenCLGemmEncapsulator oger(command_queue, floattype, gg, alpha, beta, a, b, c, logfile, verbose, nobenching);
   return oger.find(allotted_time, enforce_deterministic, n_runs_in_find_per_kernel);
-
 }
-
-
 
 /* functions for the end-user */ 
 tinygemm::TinyGemmSolution
@@ -717,14 +703,11 @@ const double beta,
 bool verbose, 
 std::string logfile){
   
-  
   cl_mem c_copied;
   cl_event c_copy_event; 
-
   size_t n_c = gg.ldc * (gg.tC == gg.isColMajor ? gg.m : gg.n) + gg.c_offset;
   size_t c_memsize = get_floatsize(floattype)*n_c;
   cl_int ret;
-  
   
   cl_context context;
   ret = clGetCommandQueueInfo(command_queue, CL_QUEUE_CONTEXT, sizeof(cl_context), &context, NULL);
@@ -747,9 +730,14 @@ std::string logfile){
   }
   
   clWaitForEvents(1, &c_copy_event);
-
-  return nonconst_find(allotted_time, command_queue, a, b, c_copied, enforce_deterministic, floattype, gg, alpha, beta, verbose, logfile);
-  
+  auto soln =  nonconst_find(allotted_time, command_queue, a, b, c_copied, enforce_deterministic, floattype, gg, alpha, beta, verbose, logfile);
+  ret = clReleaseMemObject(c_copied);
+  if (ret != CL_SUCCESS){
+    std::string errm("in tinygemm.cpp, find function. Attempting to release memory with clReleaseMemObject. Failed to do so, with exit status ");
+    errm += std::to_string(ret);
+    throw tinygemm_error(errm);
+  }  
+  return soln;
 }
 
 
@@ -761,39 +749,16 @@ const bool enforce_deterministic,
 const char floattype, 
 const tinygemm::TinyGemmGeometry & gg
 ){
-  
-  
-   
-
-  
-  
   std::map<std::string, unsigned> all_int_parms = get_bare_bones_int_parms(gg);
   hyperparams::HyperParams hp = hyperparams::get_default(gg, enforce_deterministic);
   for (auto & x : hp.params){
     all_int_parms[x.first] = x.second;
   }
-  
-  
-    
-  
-
-  //auto start = std::chrono::high_resolution_clock::now();
- 
-  
-
   bool verbose_report_from_python = true;
   int kernel_write_status = tinygemm::mkkern::make_kernel_via_python(kerneldir,  floattostring::get_float_string(floattype), all_int_parms, kernelname, verbose_report_from_python);
   if (kernel_write_status != CL_SUCCESS){
     throw tinygemm_error("A problem arose in the python script to generate the kernel. Throwing from get_default.");
   }
-  
-  //auto end = std::chrono::high_resolution_clock::now();
-  //std::chrono::duration<float> fp_ms = end - start;
-  //float time_in_get_default = fp_ms.count();
-  
-  //std::cout << "time in get_default : " << time_in_get_default << " [s] " << std::endl;
-
-
   float median_time = std::numeric_limits<float>::max();
   float elapsed_seconds = 0.;
   float median_benchmark_gflops = 0.;                

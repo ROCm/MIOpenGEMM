@@ -52,7 +52,7 @@ void set_platform_etc(cl_platform_id & platform, cl_uint & num_platforms, cl_con
   for (int i = 0; i < deviceListSize; ++i){
     /* get name and number of compute units of the device whose id is devices[i] */
     
-    //std::cout << "i " << devices[i] << std::endl;
+
     clGetDeviceInfo(devices[i], CL_DEVICE_NAME, sizeof(deviceName), deviceName, nullptr);
     clGetDeviceInfo(devices[i], CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(cl_uint), &max_compute_units, nullptr);
     
@@ -80,8 +80,7 @@ void set_platform_etc(cl_platform_id & platform, cl_uint & num_platforms, cl_con
   }
   
   
-  //device_id_to_use = devices[0];
-  //std::cout << device_id_to_use << std::endl;
+
 }
 
 

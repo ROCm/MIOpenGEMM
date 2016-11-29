@@ -348,6 +348,46 @@ def plot_tensile_tinygemm(dosave = True, withdeterministic = False):
   
 
 
+def make_time_table():
+
+
+  baidu_results = get_baidu_results()
+
+  frags = [k for k in get_baidu_problem_frags() if k in baidu_results["max"].keys() and k in baidu_results["pas"].keys()]
+
+
+  nvidia_tfs = {}
+  for key in ["pas", "max"]:
+    nvidia_tfs[key] = np.array([baidu_results[key][frag] for frag in frags])
+
+
+
+  tgresults = get_tinygemm_results()
+  
+  tg_tfs = {}
+  for key in ["10", "01", "00"]:
+    tg_tfs[key] = np.array([tgresults[key][frag]["gflop/s"] for frag in frags])
+  
+ 
+  tenresults = get_tensile_results()
+  tensile_tfs = np.array([tenresults[frag] for frag in frags])
+
+  #Tracer()()
+  
+  #Tracer()()
+
+  print "problem \t\t\t\tpas \t max \t tinygemm \t tgdet \t tensile" 
+  for frag in frags:
+    
+    flops = 1e-9*float( int(frag.split("m")[1].split("_")[0]) * int(frag.split("n")[1].split("_")[0]) * int(frag.split("k")[1].split("_")[0]))
+    print frag, "\t  %.5f %.5f \t%.5f \t%.5f \t%.5f"%(flops/baidu_results["pas"][frag], flops/baidu_results["max"][frag], flops/tgresults["00"][frag]["gflop/s"], flops/tgresults["01"][frag]["gflop/s"],  flops/(tenresults[frag]/1000.)) #, nvidia_tfs["max"][frag], tensile_tfs[frag]
+
+
+
+    #print frag, "\t  ", baidu_results["pas"][frag], baidu_results["max"][frag], tgresults["00"][frag]["gflop/s"], tgresults["01"][frag]["gflop/s"],  (tenresults[frag]/1000.) #, nvidia_tfs["max"][frag], tensile_tfs[frag]
+
+   
+
 def make_best_kernels():
   tinygemm_results = get_tinygemm_results()
   

@@ -54,7 +54,6 @@ int make_kernel_via_python(std::string dir_name, std::string t_float, std::map<s
     }
   }
 
-  //std::cout << PATH_MAKE_KERNEL_CMDL_PY << std::endl;
   std::string syscall(PATH_MAKE_KERNEL_CMDL_PY );
   syscall += " ";
   syscall += parameter_string;
@@ -70,7 +69,7 @@ int make_kernel_via_python(std::string dir_name, std::string t_float, std::map<s
   }
   
   //TODO : pipe raised python errors elsewhere, in case an important one is thrown.    
-   int success = std::system(syscall.c_str());  
+  int success = std::system(syscall.c_str());  
   
   return success;
 }
