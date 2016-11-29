@@ -8,9 +8,9 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/cythongen)
 include_directories("../../tinygemm/include")
 
 
-add_library(pytinygemm SHARED ${CYTHONGEN_CPP})
+add_library(pytinygemm SHARED  ${CYTHONGEN_CPP})
+#SHARED
 
-#Knock of the default prefix as it is a python library. Set the Linker language manually as initially cythongen is empty
 SET_TARGET_PROPERTIES(pytinygemm PROPERTIES LINKER_LANGUAGE CXX PREFIX "")
 
 #How and when to cythonise

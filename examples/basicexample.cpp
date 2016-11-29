@@ -5,22 +5,13 @@ template <typename TFloat>
 void basicexample(){
   /* define the GEMM problem */
   bool isColMajor = true;
-
-
   bool tC = false;
   bool tA = true;
   bool tB = false;
-  
-  
-  //20800, 128, 49
-   
-  //m ,  n ,  k , lda ,ldb, ldc, tA, tB
-  
-  //1, 0, 27, 64, 50176, 50176, 50176, 64 
-  
-  unsigned m = 20800;//100;//1600; //3000;    
-  unsigned n = 128;//400;
-  unsigned k = 49;//26939;//500;
+
+  unsigned m = 20800;
+  unsigned n = 128;
+  unsigned k = 49;
 
   unsigned lda = (tA == isColMajor ? k : m ) + 0;//3;
   unsigned ldb = (tB == isColMajor ? n : k ) + 0;//5;
@@ -48,16 +39,10 @@ void basicexample(){
    * for small problems, non-deterministic kernels are significantly (2x) faster */
   bool enforce_deterministic = false;
   unsigned n_postfind_runs = 5;//4;
-  
-  
   basicfind<TFloat>(isColMajor, tA, tB, tC, m, n, k, lda, ldb, ldc, a_offset, b_offset, c_offset, alpha, beta, floattype, allotted_time, verbose, logfile, enforce_deterministic, n_postfind_runs);
-  
-  
 }
 
 int main(){
   basicexample<float>(); /* or example<double> for dgemm example */
   return 0;
 }
-
-

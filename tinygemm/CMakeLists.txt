@@ -11,10 +11,12 @@ GLOB_RECURSE source_files src/* include/* python/* opencl/*)
 
 
 add_library(
-"tinygemm" "SHARED" ${source_files})
+"tinygemm" SHARED ${source_files})
+
+#
 
 target_link_libraries(
-"tinygemm" "-OpenCL")
+"tinygemm" ${OPENCL_LIBRARIES})
 
 # see https://cmake.org/examples/ for inspiration
-target_include_directories (tinygemm PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories (tinygemm PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${OPENCL_INCLUDE_DIRS})
