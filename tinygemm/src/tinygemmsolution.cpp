@@ -72,7 +72,7 @@ std::map<std::string, size_t> TinyGemmSolution::get_betac_kernel_worksize_params
   betac::set_betackernel_sizes(floattype, allparams["is_col_major"], allparams["c_transposed"], m, n, dim_coal, dim_uncoal, betac_global_work_size, betac_local_work_size);  
 
   betac_worksize_params["dim_coal"] = dim_coal;
-  betac_worksize_params["dim_uncoal"] = dim_coal;
+  betac_worksize_params["dim_uncoal"] = dim_uncoal;
   betac_worksize_params["global_work_size"] = betac_global_work_size;
   betac_worksize_params["local_work_size"] = betac_local_work_size;    
 

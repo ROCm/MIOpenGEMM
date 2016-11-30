@@ -59,7 +59,7 @@ def do_geometry_tests(kernel_savedir = None):
     
 #def do_kernel_tests(outputfilename = "default", kernel_savedir = '/home/james/tinygemmout/kernels/ufotesting', do_test = True, forcefilewrite = True):
 #def do_kernel_tests(outputfilename = "default", kernel_savedir = '/home/james/tinygemmout/kernels/test101', do_test = False, forcefilewrite = False):  
-def do_kernel_tests(outputfilename = "default", kernel_savedir = None, do_test = False, forcefilewrite = False):
+def do_kernel_tests(outputfilename = "default", kernel_savedir = None, do_test = True, forcefilewrite = False):
   """
   Current champion : Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ET1_ICE1_??? TODO : add missing hyper params.
   
@@ -81,12 +81,12 @@ def do_kernel_tests(outputfilename = "default", kernel_savedir = None, do_test =
   double_type = np.float32
   
 
-  data_geometry = {'tA':True, 'tB': False, 'tC': False, 'isColMajor':True}
+  data_geometry = {'tA':True, 'tB': False, 'tC': False, 'isColMajor':False}
   
   
   #Y16_X32_y1_x2_U48_P1_GA2_APLU1_BPLU1_PU0_LIW0_MIW0_ET1_ICE32_UFO0
  #m:27 n:64 k:50176
-  matrix_mnk = {'m': 27, 'n': 64, 'k': 50176}
+  matrix_mnk = {'m': 300, 'n': 90, 'k': 40}
   
   micro_tiles = [[1,2]] 
   mm_tiles = [[16*a, 16*b, a, b] for a, b in micro_tiles]
@@ -132,7 +132,7 @@ def do_kernel_tests(outputfilename = "default", kernel_savedir = None, do_test =
   print "kernel_savedir : ", kernel_savedir
   print "outputfilename : ", outputfilename
   
-  utility_functions.go_experiment(kernel_savedir = kernel_savedir, data_geometry = data_geometry, matrix_mnk = matrix_mnk, kernel_span = kernel_span, n_runs = 1000, outputfilename = outputfilename, do_test = do_test, double_type = double_type, constantwaste = constantwaste, forcefilewrite = forcefilewrite)
+  utility_functions.go_experiment(kernel_savedir = kernel_savedir, data_geometry = data_geometry, matrix_mnk = matrix_mnk, kernel_span = kernel_span, n_runs = 4, outputfilename = outputfilename, do_test = do_test, double_type = double_type, constantwaste = constantwaste, forcefilewrite = forcefilewrite)
 
 def do_baidu_kernel_tests():
   """

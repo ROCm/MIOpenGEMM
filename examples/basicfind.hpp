@@ -8,6 +8,10 @@
 
 #include <map>
 #include <chrono>
+#include <sstream>
+
+/* Required for basic error check performed */
+#include <algorithm>
 
 /* Required header for using tinygemm */
 #include "tinygemm.hpp"
@@ -18,11 +22,13 @@
 #include "openclutil.hpp"
 
 
+#include "slowcpugemm.hpp"
+
 
 
   
 template <typename TFloat> 
-void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned n, unsigned k, unsigned lda, unsigned ldb, unsigned ldc, unsigned a_offset, unsigned b_offset, unsigned c_offset, double alpha, double beta, char floattype, float allotted_time, bool verbose, std::string logfile, bool enforce_deterministic, unsigned n_postfind_runs){
+void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned n, unsigned k, unsigned lda, unsigned ldb, unsigned ldc, unsigned a_offset, unsigned b_offset, unsigned c_offset, double alpha, double beta, char floattype, float allotted_time, bool verbose, std::string logfile, bool enforce_deterministic, unsigned n_postfind_runs, bool do_cpu_test){
   
   /* OpenCL boilerplate. This might be different depending on your system. 
    * tinygemm does not help in setting up OpenCL boilerplate, 
@@ -45,22 +51,24 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
   tinygemm::openclutil::set_platform_etc(platform, num_platforms, context, device_id_to_use, mowri);
   command_queue = clCreateCommandQueue(context, device_id_to_use, CL_QUEUE_PROFILING_ENABLE, &ret);  
   /* fill matrices with random floats. It is important to fill them with random floats, 
-  * as if they're integers, the kernel can, and doe, cheat! (runs faster) */
+  * as if they're integers, the kernel can, and do, cheat! (runs faster) */
+  
+  srand(time(NULL));
   size_t n_a = lda * (tA == isColMajor ? m : k) + a_offset;
   std::vector<TFloat> v_a(n_a, 0); 
   for (size_t i = 0; i < n_a; ++i){
-    v_a[i] = TFloat(rand() % 1000) / 1000. - 0.4;
+    v_a[i] = 1.;//TFloat(rand() % 1000) / 1000. - 0.4;
   }
   size_t n_b = ldb * (tB == isColMajor ? k : n) + b_offset;  
   std::vector<TFloat> v_b(n_b, 0); 
   for (size_t i = 0; i < n_b; ++i){
-    v_b[i] = TFloat(rand() % 1000) / 1000. - 0.5;
+    v_b[i] = 1.;//TFloat(rand() % 1000) / 1000. - 0.5;
   }
   
   size_t n_c = ldc * (tC == isColMajor ? m : n) + c_offset;   
   std::vector<TFloat> v_c(n_c, 0); 
   for (size_t i = 0; i < n_c; ++i){
-    v_c[i] = TFloat(rand() % 1000) / 500 - 1.;
+    v_c[i] = 1.;//TFloat(rand() % 1000) / 500 - 1.;
   }
   a_gpu = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(TFloat)*n_a, NULL, &ret);
   b_gpu = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(TFloat)*n_b, NULL, &ret);
@@ -76,11 +84,20 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
 
 
   
+
+  tinygemm::TinyGemmGeometry geometry(isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, a_offset, b_offset, c_offset);
+
+
+
   /* ***************
    * Find a kernel *
    * ***************/
-  tinygemm::TinyGemmGeometry geometry(isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, a_offset, b_offset, c_offset);
   tinygemm::TinyGemmSolution soln = tinygemm::find(allotted_time, command_queue, a_gpu, b_gpu, c_gpu, enforce_deterministic, floattype,  geometry, alpha, beta, verbose, logfile);
+  
+  
+  if (do_cpu_test == true && n_postfind_runs < 1){
+    throw std::runtime_error("do_cpu_test is true, and n_postfind_runs < 1. If you wish to run the cpu test, n_postfind_runs should take a positive integral value");
+  }
   
   /* Request to see how to proceed after the kernel(s) have been found */
   if (n_postfind_runs > 0){
@@ -153,44 +170,91 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
   
     /* Enqueue the kernel(s) */
     cl_event event_main_kernel;
+    
     /* Enqueue the betac kernel if necessary */
     if (soln.betac_kernel.compare("") != 0){
       ret = clEnqueueNDRangeKernel(command_queue, betac_kernel, 1, NULL, &betac_kernel_worksize_params.at("global_work_size"), &betac_kernel_worksize_params.at("local_work_size"), 0, NULL, NULL);
+      if (ret != CL_SUCCESS){
+        throw std::runtime_error("Error in basicfind.hpp, in clEnqueueNDRangeKernel (betac kernel)");
+      } 
     }
+    
     /* Enqueue the main kernel */
     ret = clEnqueueNDRangeKernel(command_queue, main_kernel, 1, NULL, &main_kernel_worksize_params.at("global_work_size"), &main_kernel_worksize_params.at("local_work_size"), 0,NULL, &event_main_kernel);  
     clWaitForEvents(1, &event_main_kernel);
+    if (ret != CL_SUCCESS){
+      throw std::runtime_error("Error in basicfind.hpp, in clEnqueueNDRangeKernel (main kernel)");
+    } 
   
-  
-    /* That's all you need to know, and don't forget the clReleases! */
-
-
     
-    /* We will now take a look at how the times reported in benchmarking, 
-     * which use cl_events to get accurate gpu times, compare to times
-     * obtained here on the host side.  */ 
-    std::map<unsigned, float> host_times;
-    for (unsigned npr : std::vector<unsigned> {1, n_postfind_runs + 1}){
-      auto start = std::chrono::high_resolution_clock::now();
-      for (unsigned pfr = 0; pfr < npr; ++pfr){
-        if (soln.betac_kernel.compare("") != 0){
-          ret = clEnqueueNDRangeKernel(command_queue, betac_kernel, 1, NULL, &betac_kernel_worksize_params.at("global_work_size"), &betac_kernel_worksize_params.at("local_work_size"), 0, NULL, NULL);
-        }
-        ret = clEnqueueNDRangeKernel(command_queue, main_kernel, 1, NULL, &main_kernel_worksize_params.at("global_work_size"), &main_kernel_worksize_params.at("local_work_size"), 0,NULL, &event_main_kernel);  
+    if (do_cpu_test == true){
+      /* We do a check with cpu */
+      std::vector<std::string> algs {"3fors"};
+      auto c_cpu_final = v_c;
+      tinygemm::slowcpugemm::gemms_cpu<TFloat>(geometry, v_a.data(), v_b.data(), c_cpu_final.data(), alpha, beta, algs, mowri);
+
+      auto c_copied_from_gpu = std::vector<TFloat>(v_c.size(), 0);
+      cl_event event_read_c_back;
+      ret = clEnqueueReadBuffer(command_queue, c_gpu, CL_TRUE, 0, sizeof(TFloat)*c_copied_from_gpu.size(), c_copied_from_gpu.data(), 0, NULL, &event_read_c_back);
+      if (ret != CL_SUCCESS){
+        throw std::runtime_error("Error in basicfind.hpp, in clEnqueueReadBuffer");      
       }
       
-      /* Wait for the final kernel to complete, then record the elapsed time */
-      clWaitForEvents(1, &event_main_kernel);
-      auto end = std::chrono::high_resolution_clock::now();
-      std::chrono::duration<float> fp_ms = end - start;
-      float elapsed_seconds = fp_ms.count();
-      host_times[npr] = elapsed_seconds;  
-      std::cout << "Time to complete " << npr << " run(s) : " << elapsed_seconds << " [s]." << " This corresponds to " << 1e-9*(2.*m*n*k*npr) / elapsed_seconds << " gflop/s. " << std::endl;
+      clWaitForEvents(1, &event_read_c_back);
+  
+      std::cout << "running accuracy test...";
+      float max_relerr = 0;
+      for (unsigned i = 0; i < v_c.size(); ++i){
+      //for (unsigned i = 0; i < 20; ++i){        
+        float absdifference = std::abs(c_copied_from_gpu[i] - c_cpu_final[i]);
+        float sumabs = std::abs(c_copied_from_gpu[i]) + std::abs(c_cpu_final[i]);
+        float relerr = absdifference / std::max<float>(1e-9, sumabs);
+        max_relerr = std::max(max_relerr, relerr);
+        
+        if (max_relerr > 0.01){
+          std::stringstream ss;
+          ss << "\n{" << i << "} before : " << v_c[i] << "    from gpu : "  << c_copied_from_gpu[i] << "     from cpu : " << c_cpu_final[i] << "  relerr : " << relerr << std::endl;
+          throw std::runtime_error(ss.str());
+        }
+      }
+      std::cout << "max_relerr=" << max_relerr << std::endl;
     }
-    float difference_in_times = host_times[n_postfind_runs + 1] - host_times[1];
-    std::cout << "Difference in times : " << difference_in_times << " [s]. This corresponds to  " << 1e-9*(2.*m*n*k*n_postfind_runs) / difference_in_times << " gflop/s. " << std::endl;
-    std::cout << "Note to self and MLOpeners : we need to decide how to proceed with the DeepBench benchmarking, baidu's approach  (run 10 times after warm-up, no subtraction as above) *might* underestimate cudnn performance. For many problems (generally the large ones), tinygemm and host times are the same. Occasionally (for small problems it seems), the host time is 20% slower." << std::endl;
-    std::cout << soln.get_hyper_param_string() << std::endl;
+
+    
+    /* That's all you need to know, and don't forget the clReleases! */
+    
+
+
+    if (n_postfind_runs > 1){
+    
+      /* We will now take a look at how the times reported in benchmarking, 
+       * which use cl_events to get accurate gpu times, compare to times
+       * obtained here on the host side.  */ 
+      std::map<unsigned, float> host_times;
+      for (unsigned npr : std::vector<unsigned> {1, n_postfind_runs + 1}){
+        auto start = std::chrono::high_resolution_clock::now();
+        for (unsigned pfr = 0; pfr < npr; ++pfr){
+          if (soln.betac_kernel.compare("") != 0){
+            ret = clEnqueueNDRangeKernel(command_queue, betac_kernel, 1, NULL, &betac_kernel_worksize_params.at("global_work_size"), &betac_kernel_worksize_params.at("local_work_size"), 0, NULL, NULL);
+          }
+          ret = clEnqueueNDRangeKernel(command_queue, main_kernel, 1, NULL, &main_kernel_worksize_params.at("global_work_size"), &main_kernel_worksize_params.at("local_work_size"), 0,NULL, &event_main_kernel);  
+        }
+        
+        /* Wait for the final kernel to complete, then record the elapsed time */
+        clWaitForEvents(1, &event_main_kernel);
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<float> fp_ms = end - start;
+        float elapsed_seconds = fp_ms.count();
+        host_times[npr] = elapsed_seconds;  
+        std::cout << "Time to complete " << npr << " run(s) : " << elapsed_seconds << " [s]." << " This corresponds to " << 1e-9*(2.*m*n*k*npr) / elapsed_seconds << " gflop/s. " << std::endl;
+      }
+      float difference_in_times = host_times[n_postfind_runs + 1] - host_times[1];
+      std::cout << "Difference in times : " << difference_in_times << " [s]. This corresponds to  " << 1e-9*(2.*m*n*k*n_postfind_runs) / difference_in_times << " gflop/s. " << std::endl;
+      std::cout << "Note to self and MLOpeners : we need to decide how to proceed with the DeepBench benchmarking, baidu's approach  (run 10 times after warm-up, no subtraction as above) *might* underestimate cudnn performance. For many problems (generally the large ones), tinygemm and host times are the same. Occasionally (for small problems it seems), the host time is 20% slower." << std::endl;
+      std::cout << soln.get_hyper_param_string() << std::endl;
+    
+    }
+  
   }
   
   /* Cleaning up, closing shop. */

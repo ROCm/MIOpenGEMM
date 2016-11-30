@@ -1443,5 +1443,3 @@ def get_default_call():
   default_call = ''.join(['%s%s'%(x,y) for x,y in zip(['--%s '%(x,) for x in function_parms], ['%s  '%(x,) for x in default_values])])
   default_call = default_call.replace("where_to_write_kernel_to___filename_is_auto_from_parms", ".|.-.|.")
   return default_call
-
-

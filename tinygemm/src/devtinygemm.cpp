@@ -100,7 +100,7 @@ public:
 
   void benchgemm_cpu(std::vector<std::string> cpu_algs){
     if (false){
-      slowcpugemm::gemm_3fors_cpu<TFloat>(gg.isColMajor, gg.tA, gg.tB, gg.tC, gg.lda, gg.ldb, gg.ldc, gg.m, gg.n, gg.k, a + gg.a_offset, b + gg.b_offset, c + gg.c_offset, alpha, beta, cpu_algs, mowri);  
+      slowcpugemm::gemms_cpu<TFloat>(gg, a, b, c, alpha, beta, cpu_algs, mowri);  
     }
   }
 

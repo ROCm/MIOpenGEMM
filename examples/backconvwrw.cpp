@@ -65,7 +65,10 @@ std::make_tuple(20800, 128, 49, 49, 49, 20800, true, false),
     unsigned b_offset = 0;
     unsigned c_offset = 0;    
     unsigned n_postfind_runs = 0;
-    basicfind<float>(isColMajor, tA, tB, tC, m, n, k, lda, ldb, ldc, a_offset, b_offset, c_offset, alpha, beta, floattype, allotted_time, verbose, ss_logfile.str(), enforce_deterministic, n_postfind_runs);    
+    
+    bool do_cpu_test = false;
+    
+    basicfind<float>(isColMajor, tA, tB, tC, m, n, k, lda, ldb, ldc, a_offset, b_offset, c_offset, alpha, beta, floattype, allotted_time, verbose, ss_logfile.str(), enforce_deterministic, n_postfind_runs, do_cpu_test);    
   }
   
   return 0;

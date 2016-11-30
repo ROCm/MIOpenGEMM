@@ -8,50 +8,65 @@ namespace tinygemm{
 namespace redirection{
   
 template <typename T>
-void redirect(bool & isColMajor, bool & tA, bool & tB, bool & tC, unsigned & m, unsigned & n, unsigned & lda, unsigned & ldb, T & a, T  & b){
-
- // throw tinygemm_error("In tinygemm :: redirection.cpp. Redirection has been deprecated, it needs fixing up since the introduction of a_offset, b_offset.");
-  
+void redirect_base(bool & isColMajor, bool & tA, bool & tB, bool & tC, unsigned & m, unsigned & n, T & a, T  & b){  
   if (isColMajor == false){
-    
     /* minimal changes to get into row major : */
     std::swap(tA, tB);
     std::swap(a, b);
-    std::swap(lda, ldb);
-    std::swap(m,n);
+    std::swap(m, n);
     isColMajor = true;
-    
     /* it might still be TT or m < n && tA + tB == 1, redirect again */
-    redirect<T>(isColMajor, tA, tB, tC, m, n, lda, ldb, a, b);//isColMajor, tA, tB, tC, a, b, c, lda, ldb, ldc, m, n, k);
+    redirect_base<T>(isColMajor, tA, tB, tC, m, n, a, b);
   }
   
   else if (tA == true && tB == true){
-
     tC = ~tC;
     tA = false;
     tB = false;
-    std::swap(lda, ldb);
     std::swap(a,b);
     std::swap(m,n);
   }
   
   else if (m  > n && ((tA == true  && tB == false) || (tA == false  && tB == true))) {
-
     tC = ~tC;
-    std::swap(lda, ldb);
     std::swap(a,b);
     std::swap(m,n);
   }
 }
 
+template <typename TFloat> 
+class MatrixBundle{
+  public : 
+    const TFloat * x;
+    unsigned ldx;
+    unsigned x_offset;
+    MatrixBundle(const TFloat * x, unsigned ldx, unsigned x_offset):x(x), ldx(ldx), x_offset(x_offset) {}
+};
 
-template void redirect(bool & isColMajor, bool & tA, bool & tB, bool & tC, unsigned & m, unsigned & n, unsigned & lda, unsigned & ldb, const double * & a, const double * & b);
+template <typename TFloat>
+void redirect(bool & isColMajor, bool & tA, bool & tB, bool & tC, unsigned & m, unsigned & n, unsigned & lda, unsigned & ldb, unsigned & a_offset, unsigned & b_offset, const TFloat * & a, const TFloat * & b){
 
-template void redirect(bool & isColMajor, bool & tA, bool & tB, bool & tC, unsigned & m, unsigned & n, unsigned & lda, unsigned & ldb, const float * & a, const float * & b);
+  MatrixBundle<TFloat> a_bundle (a, lda, a_offset);
+  MatrixBundle<TFloat> b_bundle (b, ldb, b_offset);
+  redirect_base<MatrixBundle<TFloat>>(isColMajor, tA, tB, tC, m, n, a_bundle, b_bundle);
+  
+  a = a_bundle.x;
+  lda = a_bundle.ldx;
+  a_offset = a_bundle.x_offset;
+  
+  b = b_bundle.x;
+  ldb = b_bundle.ldx;
+  b_offset = b_bundle.x_offset;  
 
-template void redirect(bool & isColMajor, bool & tA, bool & tB, bool & tC, unsigned & m, unsigned & n, unsigned & lda, unsigned & ldb, cl_mem & a, cl_mem & b);
+}
 
-template void redirect(bool & isColMajor, bool & tA, bool & tB, bool & tC, unsigned & m, unsigned & n, unsigned & lda, unsigned & ldb, std::string & a, std::string & b);
+
+template void redirect(bool & isColMajor, bool & tA, bool & tB, bool & tC, unsigned & m, unsigned & n, unsigned & lda, unsigned & ldb, unsigned & a_offset, unsigned & b_offset, const double *  & a, const double * & b);
+template void redirect(bool & isColMajor, bool & tA, bool & tB, bool & tC, unsigned & m, unsigned & n, unsigned & lda, unsigned & ldb, unsigned & a_offset, unsigned & b_offset, const float *  & a, const float * & b);
+
+void redirect(bool & isColMajor, bool & tA, bool & tB, bool & tC, unsigned & m, unsigned & n, std::string & a, std::string & b){
+  redirect_base<std::string>(isColMajor, tA, tB, tC, m, n, a, b);
+}
 
 void confirm_redirection(bool isColMajor, bool tA, bool tB, unsigned m, unsigned n){
   if (isColMajor == false) {

@@ -11,6 +11,8 @@ deepbench deepbench.cpp)
 add_executable(
 backconvwrw backconvwrw.cpp)
 
+add_executable(
+smallgeometrytests smallgeometrytests.cpp)
 
 add_executable(
 redirectionexample redirectionexample.cpp)
@@ -26,3 +28,6 @@ backconvwrw LINK_PUBLIC tinygemm ${OpenCL_LIBRARY})
 
 target_link_libraries(
 redirectionexample LINK_PUBLIC tinygemm ${OpenCL_LIBRARY})
+
+target_link_libraries(
+smallgeometrytests LINK_PUBLIC tinygemm ${OpenCL_LIBRARY})

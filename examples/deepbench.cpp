@@ -170,9 +170,9 @@ int main(){
       unsigned c_offset = 0;
       
       unsigned n_postfind_runs = 0;
+      bool do_cpu_test = false;
       
-      
-      basicfind<float>(isColMajor, tA, tB, tC, m, n, k, lda, ldb, ldc, a_offset, b_offset, c_offset, alpha, beta, floattype, allotted_time, verbose, ss_logfile.str(), enforce_deterministic, n_postfind_runs);    
+      basicfind<float>(isColMajor, tA, tB, tC, m, n, k, lda, ldb, ldc, a_offset, b_offset, c_offset, alpha, beta, floattype, allotted_time, verbose, ss_logfile.str(), enforce_deterministic, n_postfind_runs, do_cpu_test);    
     }
   }
   
