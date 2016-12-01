@@ -11,7 +11,7 @@ There is an exponentially huge number of ways (kernels) for doing matrix multipl
 This may change soon (01 Dec 2016).
 
 If you do want to install experimental code (which requires Cython), comment out add_subdirectory(dev) in ./CMakeLists.txt, so that it looks like this, 
-#add_subdirectory(dev)
+ #add_subdirectory(dev)
 
 In CMakeLists.txt, you need to set a path to an empty and existing directory where tinygemm can write and delete, 
 add_definitions(-DDIR_FOR_WRITING="/path/to/where/tinygemm/can/write/and/delete/")
