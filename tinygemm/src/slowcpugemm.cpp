@@ -5,7 +5,7 @@
 #include "slowcpugemm.hpp"
 #include "outputwriter.hpp"
 #include "redirection.hpp"
-
+#include "consistencychecks.hpp"
 
 
 namespace tinygemm{
@@ -152,22 +152,10 @@ void check_cpu_algs(std::vector<std::string> cpu_algs){
   
   template <typename TFloat>
   void gemms_cpu(tinygemm::TinyGemmGeometry gg, const TFloat * a, const TFloat * b, TFloat * c, TFloat alpha, TFloat beta, std::vector<std::string> algs, outputwriting::OutputWriter & mowri){
-    
-    check_cpu_algs(algs);
-    
-    
-    
-        
-    //redirect. //<const TFloat * > 
-    
-    std::cout << "\n" << gg.get_string() << std::endl;
-        
+    check_cpu_algs(algs);        
     redirection::redirect(gg.isColMajor, gg.tA, gg.tB, gg.tC, gg.m, gg.n, gg.lda, gg.ldb, gg.a_offset, gg.b_offset, a, b);
     redirection::confirm_redirection(gg.isColMajor, gg.tA, gg.tB, gg.m, gg.n);
-    
-    std::cout << gg.get_string() << std::endl;
-    //std::abort();
-    
+    tinygemm::consistencychecks::check_ldx_mnk_consistent(gg);
     
     for (auto & alg : algs){
       mowri << "launching cpu algorithm : " << alg << Endl;      

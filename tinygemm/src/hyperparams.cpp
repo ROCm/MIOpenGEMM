@@ -488,6 +488,9 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
       add_hps("Y16_X32_y1_x2_U48_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ET1_ICE32_UFO0");
     }
     
+    if (gg.m*gg.n > 2000*2000){
+      add_hps("Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ET1_ICE1_UFO0");
+    }    
     
     
     if (gg.tA == gg.isColMajor && gg.tB != gg.isColMajor && params.at("micro_tile_height")*params.at("micro_tile_height") == 64){

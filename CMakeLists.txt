@@ -15,8 +15,7 @@ option(BUILD_SHARED_LIBS ON)
 SET(CMAKE_CXX_COMPILER clang++)
 
 add_subdirectory(tinygemm)
-add_subdirectory(tests)
-add_subdirectory(examples)
+add_subdirectory(testsexamples)
 
 # development code. It requires cython (and only builds with certain versions. You probably want to comment this out.
 add_subdirectory(dev)

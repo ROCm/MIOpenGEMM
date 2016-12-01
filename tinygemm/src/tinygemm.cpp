@@ -691,7 +691,7 @@ bool verbose,
 std::string logfile){
   /* The number of times each kernel is run in find. 
    * consider adding this parameter to user API. */
-  unsigned n_runs_in_find_per_kernel = 6;
+  unsigned n_runs_in_find_per_kernel = 3;
   bool nobenching = allotted_time <= 0 ?  true : false ;  
   OpenCLGemmEncapsulator oger(command_queue, floattype, gg, alpha, beta, a, b, c, logfile, verbose, nobenching);
   return oger.find(allotted_time, enforce_deterministic, n_runs_in_find_per_kernel);

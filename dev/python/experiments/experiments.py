@@ -59,7 +59,7 @@ def do_geometry_tests(kernel_savedir = None):
     
 #def do_kernel_tests(outputfilename = "default", kernel_savedir = '/home/james/tinygemmout/kernels/ufotesting', do_test = True, forcefilewrite = True):
 #def do_kernel_tests(outputfilename = "default", kernel_savedir = '/home/james/tinygemmout/kernels/test101', do_test = False, forcefilewrite = False):  
-def do_kernel_tests(outputfilename = "default", kernel_savedir = None, do_test = True, forcefilewrite = False):
+def do_kernel_tests(outputfilename = "default", kernel_savedir = None, do_test = False, forcefilewrite = False):
   """
   Current champion : Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ET1_ICE1_??? TODO : add missing hyper params.
   
@@ -81,18 +81,16 @@ def do_kernel_tests(outputfilename = "default", kernel_savedir = None, do_test =
   double_type = np.float32
   
 
-  data_geometry = {'tA':True, 'tB': False, 'tC': False, 'isColMajor':False}
+  data_geometry = {'tA':False, 'tB': False, 'tC': False, 'isColMajor':True}
   
   
-  #Y16_X32_y1_x2_U48_P1_GA2_APLU1_BPLU1_PU0_LIW0_MIW0_ET1_ICE32_UFO0
- #m:27 n:64 k:50176
-  matrix_mnk = {'m': 300, 'n': 90, 'k': 40}
+  matrix_mnk = {'m': 4567, 'n': 4567, 'k': 4567}
   
-  micro_tiles = [[1,2]] 
+  micro_tiles = [[8,8]] 
   mm_tiles = [[16*a, 16*b, a, b] for a, b in micro_tiles]
   #with padding 2 I sometimes get better than with padding 1 (!)
-  kernel_span = {'Y_X_y_x' :mm_tiles, 'unrolls':[48], 'pads' : [1], 'group_allocations' : [2], 'work_item_load_a_pll_to_unrolls' : [1],'work_item_load_b_pll_to_unrolls' : [1],'unroll_pragmas' : [0], 'load_to_lds_interwovens' : [0], 'c_micro_tiles_interwovens': [0], 'use_edge_tricks':[1], 'n_work_items_per_c_elms':[32], "unroll_for_offsets":[0]}#3,6,8,10]}#,3,4,5,6,7,8]}
-  constantwaste = {'a':0, 'b':0, 'c':0}
+  kernel_span = {'Y_X_y_x' :mm_tiles, 'unrolls':[8], 'pads' : [1], 'group_allocations' : [1], 'work_item_load_a_pll_to_unrolls' : [0],'work_item_load_b_pll_to_unrolls' : [1],'unroll_pragmas' : [0], 'load_to_lds_interwovens' : [0], 'c_micro_tiles_interwovens': [1], 'use_edge_tricks':[1], 'n_work_items_per_c_elms':[1], "unroll_for_offsets":[0]}#3,6,8,10]}#,3,4,5,6,7,8]}
+  constantwaste = {'a':3, 'b':5, 'c':7}
   
   
   

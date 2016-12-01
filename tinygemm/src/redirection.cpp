@@ -4,6 +4,7 @@
 
 #include "redirection.hpp"
 
+#include <iostream>
 namespace tinygemm{
 namespace redirection{
   
@@ -20,7 +21,7 @@ void redirect_base(bool & isColMajor, bool & tA, bool & tB, bool & tC, unsigned 
   }
   
   else if (tA == true && tB == true){
-    tC = ~tC;
+    tC = tC == true ? false : true;
     tA = false;
     tB = false;
     std::swap(a,b);
@@ -28,7 +29,7 @@ void redirect_base(bool & isColMajor, bool & tA, bool & tB, bool & tC, unsigned 
   }
   
   else if (m  > n && ((tA == true  && tB == false) || (tA == false  && tB == true))) {
-    tC = ~tC;
+    tC = tC == true ? false : true;
     std::swap(a,b);
     std::swap(m,n);
   }

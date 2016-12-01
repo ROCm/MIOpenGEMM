@@ -5,22 +5,22 @@
 template <typename TFloat>
 void basicexample(){
   /* define the GEMM problem */
-  bool isColMajor = false;
-  bool tA = true;
+  bool isColMajor = true;
+  bool tA = false;
   bool tB = false;
   bool tC = false;
   
-  unsigned m = 100;
-  unsigned n = 10;
-  unsigned k = 5;
+  unsigned m = 4000;
+  unsigned n = 4000;
+  unsigned k = 4000;
 
-  unsigned lda = ( tA == isColMajor ? k : m ) + 0;
-  unsigned ldb = ( tB == isColMajor ? n : k ) + 0;
-  unsigned ldc = ( tC == isColMajor ? n : m ) + 1;
+  unsigned lda = ( tA == isColMajor ? k : m ) + 1;
+  unsigned ldb = ( tB == isColMajor ? n : k ) + 2;
+  unsigned ldc = ( tC == isColMajor ? n : m ) + 3;
   
-  unsigned a_offset = 0;
-  unsigned b_offset = 0;
-  unsigned c_offset = 0;
+  unsigned a_offset = 1;
+  unsigned b_offset = 2;
+  unsigned c_offset = 3;
  
   /* These must be double, irrespective of the float type of the matrices */
   double alpha = 0.123;
@@ -30,7 +30,7 @@ void basicexample(){
    * 'd' for double-precision, 64-bit doubles */
   char floattype = (sizeof(TFloat) == 4) ? 'f' : 'd';
   /* define how long to search for, in seconds. No kernels will be compiled after this allotted time. */
-  float allotted_time = 0.01;
+  float allotted_time = 100.01;
   /* print output to terminal (true) or complete silence to terminal (false) */
   bool verbose = true;
   /* print output to logfile (non-empty string) or not (empty string) */
@@ -40,10 +40,9 @@ void basicexample(){
    * for small problems, non-deterministic kernels are significantly (2x) faster */
   bool enforce_deterministic = false;
   unsigned n_postfind_runs = 5;//4;
-  
-  bool do_cpu_test = true;
-  
+  bool do_cpu_test = false;  
   basicfind<TFloat>(isColMajor, tA, tB, tC, m, n, k, lda, ldb, ldc, a_offset, b_offset, c_offset, alpha, beta, floattype, allotted_time, verbose, logfile, enforce_deterministic, n_postfind_runs, do_cpu_test);
+
 }
 
 int main(){

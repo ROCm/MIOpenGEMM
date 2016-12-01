@@ -16,7 +16,6 @@
 /* Required header for using tinygemm */
 #include "tinygemm.hpp"
 
-
 /* The following two header files define functions which help with opencl boilerplating on my systems, they are not necessary */
 #include "outputwriter.hpp"
 #include "openclutil.hpp"
@@ -50,10 +49,10 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
   tinygemm::outputwriting::OutputWriter mowri(verbose, logfile.compare("") != 0, logfile);
   tinygemm::openclutil::set_platform_etc(platform, num_platforms, context, device_id_to_use, mowri);
   command_queue = clCreateCommandQueue(context, device_id_to_use, CL_QUEUE_PROFILING_ENABLE, &ret);  
+ 
   /* fill matrices with random floats. It is important to fill them with random floats, 
   * as if they're integers, the kernel can, and do, cheat! (runs faster) */
   
-  srand(time(NULL));
   size_t n_a = lda * (tA == isColMajor ? m : k) + a_offset;
   std::vector<TFloat> v_a(n_a, 0); 
   for (size_t i = 0; i < n_a; ++i){
@@ -70,6 +69,7 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
   for (size_t i = 0; i < n_c; ++i){
     v_c[i] = TFloat(rand() % 1000) / 500 - 1.;
   }
+  
   a_gpu = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(TFloat)*n_a, NULL, &ret);
   b_gpu = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(TFloat)*n_b, NULL, &ret);
   c_gpu = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(TFloat)*n_c, NULL, &ret);      
@@ -79,15 +79,8 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
   /* ******************************************************************
   * ******************************************************************
   * ******************************************************************/
-
   
-
-
-  
-
   tinygemm::TinyGemmGeometry geometry(isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, a_offset, b_offset, c_offset);
-
-
 
   /* ***************
    * Find a kernel *
@@ -96,10 +89,10 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
   
   
   if (do_cpu_test == true && n_postfind_runs < 1){
-    throw std::runtime_error("do_cpu_test is true, and n_postfind_runs < 1. If you wish to run the cpu test, n_postfind_runs should take a positive integral value");
+    throw tinygemm::tinygemm_error("(in basicfind.hpp, part of example/test suite) do_cpu_test is true, and n_postfind_runs < 1. If you wish to run the cpu test, n_postfind_runs should take a positive integral value");
   }
   
-  /* Request to see how to proceed after the kernel(s) have been found */
+  /* how to proceed after the kernel(s) have been found */
   if (n_postfind_runs > 0){
 
     /* We now show how to use the kernel(s) in soln.
@@ -107,8 +100,7 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
      * Otherwise, both betac and main kernels need to be used.
      * We use the kernel on the same problem as benchmarked. 
      * I expect this will be the standard workflow with tinygemm.  */
-    
-    
+     
     cl_program betac_program = NULL;
     cl_kernel betac_kernel = NULL;
     cl_program main_program = NULL;
@@ -165,7 +157,6 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
     ret = clSetKernelArg(main_kernel, 12, sizeof(unsigned), &b_offset);
     ret = clSetKernelArg(main_kernel, 13, sizeof(unsigned), &c_offset);  
     
-    
     main_kernel_worksize_params = soln.get_main_kernel_worksize_params(m,n);
   
     /* Enqueue the kernel(s) */
@@ -175,7 +166,7 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
     if (soln.betac_kernel.compare("") != 0){
       ret = clEnqueueNDRangeKernel(command_queue, betac_kernel, 1, NULL, &betac_kernel_worksize_params.at("global_work_size"), &betac_kernel_worksize_params.at("local_work_size"), 0, NULL, NULL);
       if (ret != CL_SUCCESS){
-        throw std::runtime_error("Error in basicfind.hpp, in clEnqueueNDRangeKernel (betac kernel)");
+        throw tinygemm::tinygemm_error("Error in basicfind.hpp, in clEnqueueNDRangeKernel (betac kernel)");
       } 
     }
     
@@ -183,7 +174,7 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
     ret = clEnqueueNDRangeKernel(command_queue, main_kernel, 1, NULL, &main_kernel_worksize_params.at("global_work_size"), &main_kernel_worksize_params.at("local_work_size"), 0,NULL, &event_main_kernel);  
     clWaitForEvents(1, &event_main_kernel);
     if (ret != CL_SUCCESS){
-      throw std::runtime_error("Error in basicfind.hpp, in clEnqueueNDRangeKernel (main kernel)");
+      throw tinygemm::tinygemm_error("Error in basicfind.hpp, in clEnqueueNDRangeKernel (main kernel)");
     } 
   
     
@@ -197,15 +188,13 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
       cl_event event_read_c_back;
       ret = clEnqueueReadBuffer(command_queue, c_gpu, CL_TRUE, 0, sizeof(TFloat)*c_copied_from_gpu.size(), c_copied_from_gpu.data(), 0, NULL, &event_read_c_back);
       if (ret != CL_SUCCESS){
-        throw std::runtime_error("Error in basicfind.hpp, in clEnqueueReadBuffer");      
+        throw tinygemm::tinygemm_error("Error in basicfind.hpp, in clEnqueueReadBuffer");      
       }
       
       clWaitForEvents(1, &event_read_c_back);
   
-      std::cout << "running accuracy test...";
       float max_relerr = 0;
       for (unsigned i = 0; i < v_c.size(); ++i){
-      //for (unsigned i = 0; i < 20; ++i){        
         float absdifference = std::abs(c_copied_from_gpu[i] - c_cpu_final[i]);
         float sumabs = std::abs(c_copied_from_gpu[i]) + std::abs(c_cpu_final[i]);
         float relerr = absdifference / std::max<float>(1e-9, sumabs);
@@ -213,20 +202,17 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
         
         if (max_relerr > 0.01){
           std::stringstream ss;
-          ss << "\n{" << i << "} before : " << v_c[i] << "    from gpu : "  << c_copied_from_gpu[i] << "     from cpu : " << c_cpu_final[i] << "  relerr : " << relerr << std::endl;
-          throw std::runtime_error(ss.str());
+          ss << "\nmax_relerr is above threshold, in basicfind.hpp. "; 
+          ss << "\nIndex in c : " << i << ".nValue before gemm call : " << v_c[i] << "    .\nValue after call from gpu : "  << c_copied_from_gpu[i] << ".  \nValue after call from cpu : " << c_cpu_final[i] << "  \nrelerr : " << relerr << std::endl;
+          throw tinygemm::tinygemm_error(ss.str());
         }
       }
       std::cout << "max_relerr=" << max_relerr << std::endl;
     }
 
-    
     /* That's all you need to know, and don't forget the clReleases! */
-    
-
 
     if (n_postfind_runs > 1){
-    
       /* We will now take a look at how the times reported in benchmarking, 
        * which use cl_events to get accurate gpu times, compare to times
        * obtained here on the host side.  */ 

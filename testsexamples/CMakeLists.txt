@@ -17,6 +17,14 @@ smallgeometrytests smallgeometrytests.cpp)
 add_executable(
 redirectionexample redirectionexample.cpp)
 
+add_executable(
+devtest devtest.cpp)
+
+
+
+target_link_libraries(
+devtest LINK_PUBLIC tinygemm ${OpenCL_LIBRARY})
+
 target_link_libraries(
 basicexample LINK_PUBLIC tinygemm ${OpenCL_LIBRARY})
 
