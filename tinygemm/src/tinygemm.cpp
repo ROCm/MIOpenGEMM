@@ -713,6 +713,8 @@ const double beta,
 bool verbose, 
 std::string logfile){
   
+  tinygemm::consistencychecks::check_ldx_mnk_consistent(gg);
+  
   cl_mem c_copied;
   cl_event c_copy_event; 
   size_t n_c = gg.ldc * (gg.tC == gg.isColMajor ? gg.m : gg.n) + gg.c_offset;
