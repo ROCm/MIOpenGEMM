@@ -102,15 +102,18 @@ HyperParams get_default(const tinygemm::TinyGemmGeometry & gg, bool enforce_dete
     }
   }
   
-  if (enforce_deterministic == true){
-    best_hp.params["n_work_imtes_per_c_elm"] = 1;
-  }
+
   
   /* No near matches, this means that there are no tiles which are smaller in both dimensions */
   if (min_distance == start_min_distance){
     best_hp = default_hp;
   }
-  
+
+
+  if (enforce_deterministic == true){
+    best_hp.params["n_work_items_per_c_elm"] = 1;
+  }
+    
   return best_hp;
 }
 

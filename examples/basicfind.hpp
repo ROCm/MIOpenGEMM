@@ -57,18 +57,18 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
   size_t n_a = lda * (tA == isColMajor ? m : k) + a_offset;
   std::vector<TFloat> v_a(n_a, 0); 
   for (size_t i = 0; i < n_a; ++i){
-    v_a[i] = 1.;//TFloat(rand() % 1000) / 1000. - 0.4;
+    v_a[i] = TFloat(rand() % 1000) / 1000. - 0.4;
   }
   size_t n_b = ldb * (tB == isColMajor ? k : n) + b_offset;  
   std::vector<TFloat> v_b(n_b, 0); 
   for (size_t i = 0; i < n_b; ++i){
-    v_b[i] = 1.;//TFloat(rand() % 1000) / 1000. - 0.5;
+    v_b[i] = TFloat(rand() % 1000) / 1000. - 0.5;
   }
   
   size_t n_c = ldc * (tC == isColMajor ? m : n) + c_offset;   
   std::vector<TFloat> v_c(n_c, 0); 
   for (size_t i = 0; i < n_c; ++i){
-    v_c[i] = 1.;//TFloat(rand() % 1000) / 500 - 1.;
+    v_c[i] = TFloat(rand() % 1000) / 500 - 1.;
   }
   a_gpu = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(TFloat)*n_a, NULL, &ret);
   b_gpu = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(TFloat)*n_b, NULL, &ret);

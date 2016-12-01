@@ -101,7 +101,7 @@ void gemm_3fors_cpu(const tinygemm::TinyGemmGeometry & gg, const TFloat * a, con
     
   //m, n, k, lda, ldb, ldc
   else if (gg.tA == false && gg.tB == false){
-    gemm_3fors_generic_cpu<TFloat, NNInner<TFloat> >(gg, a, b, c, alpha, beta); //tC, m, n, k, alpha, a, lda, b, ldb,  beta, c, ldc);
+    gemm_3fors_generic_cpu<TFloat, NNInner<TFloat> > (gg, a, b, c, alpha, beta); //tC, m, n, k, alpha, a, lda, b, ldb,  beta, c, ldc);
   }
   
   
@@ -159,10 +159,13 @@ void check_cpu_algs(std::vector<std::string> cpu_algs){
     
         
     //redirect. //<const TFloat * > 
+    
+    std::cout << "\n" << gg.get_string() << std::endl;
+        
     redirection::redirect(gg.isColMajor, gg.tA, gg.tB, gg.tC, gg.m, gg.n, gg.lda, gg.ldb, gg.a_offset, gg.b_offset, a, b);
     redirection::confirm_redirection(gg.isColMajor, gg.tA, gg.tB, gg.m, gg.n);
     
-    //std::cout << gg.get_string() << std::endl;
+    std::cout << gg.get_string() << std::endl;
     //std::abort();
     
     

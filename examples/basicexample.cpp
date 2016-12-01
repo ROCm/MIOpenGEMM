@@ -41,7 +41,6 @@ void basicexample(){
   bool enforce_deterministic = false;
   unsigned n_postfind_runs = 5;//4;
   
-  
   bool do_cpu_test = true;
   
   basicfind<TFloat>(isColMajor, tA, tB, tC, m, n, k, lda, ldb, ldc, a_offset, b_offset, c_offset, alpha, beta, floattype, allotted_time, verbose, logfile, enforce_deterministic, n_postfind_runs, do_cpu_test);

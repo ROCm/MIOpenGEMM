@@ -49,7 +49,7 @@ int main(){
     std::make_tuple(3072, 7435, 1024, false, true),
     std::make_tuple(7680, 5481, 2560, false, true),
     
-    
+    /* dodgey, but m = k so it works */
     std::make_tuple(2048, 16, 2048, true, false),
     std::make_tuple(2048, 32, 2048, true, false),
     std::make_tuple(2048, 64, 2048, true, false),
