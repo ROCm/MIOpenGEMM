@@ -44,7 +44,7 @@ class MultiFloatType{
     float v_f;  
     
   public:
-    MultiFloatType(double v): v_d(v), v_f(static_cast<float>(v)) {}  
+    MultiFloatType(double v): v_d(v), v_f(static_cast<float>(v)) {}
     void * operator [] (char floattype){
       return floattype == 'd' ? (void *)(& v_d) : (void * )(& v_f);
     }

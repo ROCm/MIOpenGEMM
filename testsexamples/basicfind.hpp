@@ -33,7 +33,8 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
    * tinygemm does not help in setting up OpenCL boilerplate, 
    * and assumes you can allocate memory buffers, find devices etc. 
    * Here we use our own boilerplate setup functions, which might not 
-   * work on your system, but you can give it a try and see nonetheless.   
+   * work on your system, but you can give it a try and see. Otherwise, 
+   * change this section.  
    * ******************************************************************
    * ******************************************************************
    * ******************************************************************/
@@ -56,8 +57,9 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
   size_t n_a = lda * (tA == isColMajor ? m : k) + a_offset;
   std::vector<TFloat> v_a(n_a, 0); 
   for (size_t i = 0; i < n_a; ++i){
-    v_a[i] = TFloat(rand() % 1000) / 1000. - 0.4;
+    v_a[i] = TFloat(rand() % 1000) / 1000. - 0.5;
   }
+  
   size_t n_b = ldb * (tB == isColMajor ? k : n) + b_offset;  
   std::vector<TFloat> v_b(n_b, 0); 
   for (size_t i = 0; i < n_b; ++i){
@@ -70,8 +72,8 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
     v_c[i] = TFloat(rand() % 1000) / 500 - 1.;
   }
   
-  a_gpu = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(TFloat)*n_a, NULL, &ret);
-  b_gpu = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(TFloat)*n_b, NULL, &ret);
+  a_gpu = clCreateBuffer(context, CL_MEM_READ_ONLY,  sizeof(TFloat)*n_a, NULL, &ret);
+  b_gpu = clCreateBuffer(context, CL_MEM_READ_ONLY,  sizeof(TFloat)*n_b, NULL, &ret);
   c_gpu = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(TFloat)*n_c, NULL, &ret);      
   clEnqueueWriteBuffer(command_queue, a_gpu, CL_TRUE, 0, sizeof(TFloat)*n_a, v_a.data(), 0, NULL, NULL);
   clEnqueueWriteBuffer(command_queue, b_gpu, CL_TRUE, 0, sizeof(TFloat)*n_b, v_b.data(), 0, NULL, NULL);
@@ -238,9 +240,7 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
       std::cout << "Difference in times : " << difference_in_times << " [s]. This corresponds to  " << 1e-9*(2.*m*n*k*n_postfind_runs) / difference_in_times << " gflop/s. " << std::endl;
       std::cout << "Note to self and MLOpeners : we need to decide how to proceed with the DeepBench benchmarking, baidu's approach  (run 10 times after warm-up, no subtraction as above) *might* underestimate cudnn performance. For many problems (generally the large ones), tinygemm and host times are the same. Occasionally (for small problems it seems), the host time is 20% slower." << std::endl;
       std::cout << soln.get_hyper_param_string() << std::endl;
-    
     }
-  
   }
   
   /* Cleaning up, closing shop. */

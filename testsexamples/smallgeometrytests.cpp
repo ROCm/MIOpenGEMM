@@ -10,7 +10,9 @@ void geometrytest(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsign
   unsigned a_offset = 1;
   unsigned b_offset = 2;
   unsigned c_offset = 3;
- 
+
+
+   
   /* These must be double, irrespective of the float type of the matrices */
   double alpha = 0.1231321231243234523425;
   double beta = 1.45343453456345344445346;
@@ -28,7 +30,6 @@ void geometrytest(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsign
 }
 
 int main(){
-
   unsigned m = 48;
   unsigned k = 80;
   unsigned testi = 0;
