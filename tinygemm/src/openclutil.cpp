@@ -68,11 +68,14 @@ void set_platform_etc(cl_platform_id & platform, cl_uint & num_platforms, cl_con
     device_compute_unit_count_string +=  " compute units\n";
   }
   
-  if (max_max_compute_units < 64){
+  
+  bool only_good_hardware = true;
+  if (only_good_hardware == true && max_max_compute_units < 40){
     std::string errm = device_compute_unit_count_string;
     errm += "As this is less than 64, an error is being thrown. \nIf you wish to use a device with fewer than 64 CUs, please make changes here (in openclutil.cpp)";
     throw tinygemm_error(errm);
   }
+  
   
   else{
     mowri << "Will use device " << bestDeviceName << ", which has " << max_max_compute_units << " CUs. \nTo use a different device, consider modifying set_platform_etc in openclutil.cpp (or write custom OpenCL boilerplate)." << Endl;
