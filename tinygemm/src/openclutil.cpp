@@ -64,7 +64,7 @@ void set_platform_etc(cl_platform_id & platform, cl_uint & num_platforms, cl_con
 
     device_compute_unit_count_string += deviceName;
     device_compute_unit_count_string += ", which as ";
-    device_compute_unit_count_string += max_compute_units;
+    device_compute_unit_count_string += std::to_string(max_compute_units);
     device_compute_unit_count_string +=  " compute units\n";
   }
   

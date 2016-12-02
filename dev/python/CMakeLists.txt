@@ -5,7 +5,7 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/cythongen)
 
 include_directories("../../tinygemm/include")
 
-add_library(pytinygemm SHARED ${CYTHONGEN_CPP})
+add_library(pytinygemm EXCLUDE_FROM_ALL ${CYTHONGEN_CPP})
 #SHARED
 
 SET_TARGET_PROPERTIES(pytinygemm PROPERTIES LINKER_LANGUAGE CXX PREFIX "")

@@ -12,7 +12,6 @@ find_package( OpenCL REQUIRED )
 add_definitions(-DDIR_FOR_WRITING="/home/james/tinygemmout")
 
 option(BUILD_SHARED_LIBS ON)
-SET(CMAKE_CXX_COMPILER clang++)
 
 add_subdirectory(tinygemm)
 add_subdirectory(testsexamples)
