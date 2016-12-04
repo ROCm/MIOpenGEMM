@@ -92,7 +92,9 @@ std::make_tuple(20800, 128, 49, 49, 49, 20800, true, false),
     std::cout << (prob_i + 1) <<  "/" <<  problems.size() << " \t m:" << m << " \t n:" << n << " \t k:" << k << " \t tA:" << tA << " \t tB:" << m << "  \t  elapsed time : " << elapsed_seconds << " [s]" << std::endl;    
     
     std::stringstream ss_logfile;
+#ifdef DIR_FOR_WRITING
     ss_logfile << DIR_FOR_WRITING << "/backconvwrw/" << "at" << int(allotted_time) << "_m" << m  << "_n" << n  << "_k" << k  << "_tA" << tA  << "_tB" << tB << ".txt";   
+#endif
     unsigned a_offset = 0;
     unsigned b_offset = 0;
     unsigned c_offset = 0;    

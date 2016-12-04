@@ -9,7 +9,7 @@ find_package( OpenCL REQUIRED )
 
 # What I would like here : user sets the above directory, and at configuration time the file system is generated.
 # Currently, I assume that the tree structure of the writing dir is already setup. 
-add_definitions(-DDIR_FOR_WRITING="/home/james/tinygemmout")
+# add_definitions(-DDIR_FOR_WRITING="/home/james/tinygemmout")
 
 option(BUILD_SHARED_LIBS ON)
 

@@ -266,10 +266,10 @@ void benchgemm(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
   std::ofstream nowhere;
   Gemini <TFloat> gem (gg, a, b, c, alpha, beta, outputfilename);
   
-  
+  defpaths::tmp_dir scratchpaddir{};
   if (findfirst == true){
     tinygemm::TinyGemmSolution tgs = gem.nonconst_find(allotted_time, enforce_deterministic); 
-    std::string kernelfilename = defpaths::scratchpadfinddir + "/kernfoundinbenchmark.cl"; 
+    std::string kernelfilename = scratchpaddir.name + "/kernfoundinbenchmark.cl"; 
     std::ofstream out(kernelfilename);
     out << tgs.main_kernel;
     out.close();

@@ -159,7 +159,9 @@ int main(){
       
       
       std::stringstream ss_logfile;
+#ifdef DIR_FOR_WRITING
       ss_logfile << DIR_FOR_WRITING << "/deepbench/" << "at" << int(allotted_time) << "_off" << ldx_offset << "_ed" << int(enforce_deterministic) << "_m" << m  << "_n" << n  << "_k" << k  << "_tA" << tA  << "_tB" << tB << ".txt";   
+#endif
       
       unsigned lda = (tA == isColMajor ? k : m) + (ldx_offset == 1 ? 5 : 0);
       unsigned ldb = (tB == isColMajor ? n : k) + (ldx_offset == 1 ? 7 : 0);

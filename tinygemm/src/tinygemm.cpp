@@ -23,10 +23,7 @@
 
 namespace tinygemm{
 
-/* Make these user defined parameters ? This is where all kernels will be written, overwriting was was previously there.  */
-static std::string kerneldir = defpaths::scratchpadfinddir + "/";
 static std::string kernelname = "atinygemmkernel";
-static std::string kernelfilename = kerneldir + kernelname + ".cl";
 
 
 void confirm_cl_status(cl_int ret, std::string function, std::string argument){
@@ -126,6 +123,10 @@ private:
   cl_device_id device_id_to_use;
   bool nobenching;
 
+  std::string kerneldir;
+  std::string kernelfilename;
+  defpaths::tmp_dir kernel_tmp_dir;
+
 
 public:
   OpenCLGemmEncapsulator(
@@ -168,6 +169,8 @@ public:
     if (nobenching == false){ // || (std::abs(beta - 1.) < 1e-9)){
       setup_betac_kernel(); 
     }
+    kerneldir = kernel_tmp_dir.name;
+    kernelfilename = kerneldir + "/" + kernelname + ".cl";
   }
  
  
@@ -453,7 +456,36 @@ public:
   }
   
   
-  
+  /* takes 0.05 seconds. 0.035 of this is spent in python script generating kernel and writing it, the rest is spent finding default. */
+  /* I can get through about 5 benchmarks per second, that is 1 every 0.2 seconds, so the python script is something to be concerned about... */
+  tinygemm::TinyGemmSolution
+  get_default(
+  const bool enforce_deterministic, 
+  const char floattype, 
+  const tinygemm::TinyGemmGeometry & gg
+  ){
+    std::map<std::string, unsigned> all_int_parms = get_bare_bones_int_parms(gg);
+    hyperparams::HyperParams hp = hyperparams::get_default(gg, enforce_deterministic);
+    for (auto & x : hp.params){
+      all_int_parms[x.first] = x.second;
+    }
+    bool verbose_report_from_python = true;
+    int kernel_write_status = tinygemm::mkkern::make_kernel_via_python(kerneldir,  floattostring::get_float_string(floattype), all_int_parms, kernelname, verbose_report_from_python);
+    if (kernel_write_status != CL_SUCCESS){
+      throw tinygemm_error("A problem arose in the python script to generate the kernel. Throwing from get_default.");
+    }
+    float median_time = std::numeric_limits<float>::max();
+    float elapsed_seconds = 0.;
+    float median_benchmark_gflops = 0.;                
+    tinygemm::TinyGemmSolutionStatistics tgss(median_time, median_benchmark_gflops, gg, elapsed_seconds);
+    std::string soln_betac_kernel = all_int_parms.at("n_work_items_per_c_elm") == 1 ?  ""  : kernelutil::get_as_single_string(betac::get_cl_file_path(floattype));
+    std::string soln_betac_kernel_function_name = all_int_parms.at("n_work_items_per_c_elm") == 1 ? "" : kernelutil::get_kernel_function_name(betac::get_cl_file_path(floattype));
+    std::string soln_main_kernel = kernelutil::get_as_single_string(kernelfilename);
+    std::string soln_main_kernel_function_name = kernelutil::get_kernel_function_name(kernelfilename);                
+    tinygemm::TinyGemmSolution tgs(soln_betac_kernel, soln_main_kernel, soln_betac_kernel_function_name, soln_main_kernel_function_name, all_int_parms, floattype, tgss);
+
+    return tgs;
+  }
   
   
   tinygemm::TinyGemmSolution find(float allotted_time, bool enforce_deterministic, unsigned n_runs_in_find_per_kernel){  
@@ -751,39 +783,6 @@ std::string logfile){
   }  
   return soln;
 }
-
-
-/* takes 0.05 seconds. 0.035 of this is spent in python script generating kernel and writing it, the rest is spent finding default. */
-/* I can get through about 5 benchmarks per second, that is 1 every 0.2 seconds, so the python script is something to be concerned about... */
-tinygemm::TinyGemmSolution
-get_default(
-const bool enforce_deterministic, 
-const char floattype, 
-const tinygemm::TinyGemmGeometry & gg
-){
-  std::map<std::string, unsigned> all_int_parms = get_bare_bones_int_parms(gg);
-  hyperparams::HyperParams hp = hyperparams::get_default(gg, enforce_deterministic);
-  for (auto & x : hp.params){
-    all_int_parms[x.first] = x.second;
-  }
-  bool verbose_report_from_python = true;
-  int kernel_write_status = tinygemm::mkkern::make_kernel_via_python(kerneldir,  floattostring::get_float_string(floattype), all_int_parms, kernelname, verbose_report_from_python);
-  if (kernel_write_status != CL_SUCCESS){
-    throw tinygemm_error("A problem arose in the python script to generate the kernel. Throwing from get_default.");
-  }
-  float median_time = std::numeric_limits<float>::max();
-  float elapsed_seconds = 0.;
-  float median_benchmark_gflops = 0.;                
-  tinygemm::TinyGemmSolutionStatistics tgss(median_time, median_benchmark_gflops, gg, elapsed_seconds);
-  std::string soln_betac_kernel = all_int_parms.at("n_work_items_per_c_elm") == 1 ?  ""  : kernelutil::get_as_single_string(betac::get_cl_file_path(floattype));
-  std::string soln_betac_kernel_function_name = all_int_parms.at("n_work_items_per_c_elm") == 1 ? "" : kernelutil::get_kernel_function_name(betac::get_cl_file_path(floattype));
-  std::string soln_main_kernel = kernelutil::get_as_single_string(kernelfilename);
-  std::string soln_main_kernel_function_name = kernelutil::get_kernel_function_name(kernelfilename);                
-  tinygemm::TinyGemmSolution tgs(soln_betac_kernel, soln_main_kernel, soln_betac_kernel_function_name, soln_main_kernel_function_name, all_int_parms, floattype, tgss);
-
-  return tgs;
-}
-
 
 
 

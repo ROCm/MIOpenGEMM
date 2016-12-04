@@ -1,6 +1,6 @@
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -pedantic" )
 
-include_directories("../tinygemm/include" ${OpenCL_INCLUDE_DIR})
+# include_directories("../tinygemm/include" ${OpenCL_INCLUDE_DIR})
 
 include(CTest)
 
@@ -8,46 +8,26 @@ add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -C ${
 add_custom_target(tests COMMENT "Build all tests.")
 add_dependencies(check tests)
 
-add_executable(
-devtest EXCLUDE_FROM_ALL devtest.cpp)
+function(add_test_executable TEST_NAME)
+    add_executable (${TEST_NAME} EXCLUDE_FROM_ALL ${ARGN})
+    target_link_libraries(${TEST_NAME} tinygemm)
+    if(WIN32)
+        add_test(NAME ${TEST_NAME} WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH} COMMAND $<TARGET_FILE:${TEST_NAME}>)
+    else()
+        add_test(NAME ${TEST_NAME} COMMAND $<TARGET_FILE:${TEST_NAME}>)
+    endif()
+    add_dependencies(tests ${TEST_NAME})
+    set_tests_properties(${TEST_NAME} PROPERTIES FAIL_REGULAR_EXPRESSION "FAILED")
+endfunction(add_test_executable)
 
-target_link_libraries(
-devtest LINK_PUBLIC tinygemm ${OpenCL_LIBRARY})
+add_test_executable(basicexample basicexample.cpp)
 
-add_test(NAME devtest WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH} COMMAND $<TARGET_FILE:devtest>)
-add_dependencies(tests devtest)
+add_test_executable(deepbench deepbench.cpp)
 
+add_test_executable(backconvwrw backconvwrw.cpp)
 
-add_executable(
-basicexample EXCLUDE_FROM_ALL basicexample.cpp)
+add_test_executable(smallgeometrytests smallgeometrytests.cpp)
 
-add_executable(
-deepbench EXCLUDE_FROM_ALL deepbench.cpp)
+add_test_executable(redirectionexample redirectionexample.cpp)
 
-add_executable(
-backconvwrw EXCLUDE_FROM_ALL backconvwrw.cpp)
-
-add_executable(
-smallgeometrytests EXCLUDE_FROM_ALL smallgeometrytests.cpp)
-
-add_executable(
-redirectionexample EXCLUDE_FROM_ALL redirectionexample.cpp)
-
-
-
-
-
-target_link_libraries(
-basicexample LINK_PUBLIC tinygemm ${OpenCL_LIBRARY})
-
-target_link_libraries(
-deepbench LINK_PUBLIC tinygemm ${OpenCL_LIBRARY})
-
-target_link_libraries(
-backconvwrw LINK_PUBLIC tinygemm ${OpenCL_LIBRARY})
-
-target_link_libraries(
-redirectionexample LINK_PUBLIC tinygemm ${OpenCL_LIBRARY})
-
-target_link_libraries(
-smallgeometrytests LINK_PUBLIC tinygemm ${OpenCL_LIBRARY})
+add_test_executable(devtest devtest.cpp)
