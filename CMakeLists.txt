@@ -17,7 +17,7 @@ find_package(PythonInterp REQUIRED)
 # Currently, I assume that the tree structure of the writing dir is already setup. 
 # add_definitions(-DDIR_FOR_WRITING="/home/james/tinygemmout")
 
-option(BUILD_SHARED_LIBS ON)
+option(BUILD_SHARED_LIBS "Build shared library" ON)
 
 add_subdirectory(tinygemm)
 add_subdirectory(testsexamples)
