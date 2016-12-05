@@ -1,7 +1,7 @@
 #include <string>
 #include <iostream>
 
-#include "redirection.hpp"
+#include <tinygemm/redirection.hpp>
 
 
 struct ExampleGeometry{

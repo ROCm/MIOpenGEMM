@@ -1,15 +1,15 @@
 #include <iostream>
 #include <vector>
 
-#include "tinygemm.hpp"
-#include "devtinygemm.hpp"
-#include "makekernelsource.hpp"
-#include "defaultoutpath.hpp"
+#include <tinygemm/tinygemm.hpp>
+#include <tinygemm/devtinygemm.hpp>
+#include <tinygemm/makekernelsource.hpp>
+#include <tinygemm/defaultoutpath.hpp>
 
 
 
 
-#include "stringutilbase.hpp"
+#include <tinygemm/stringutilbase.hpp>
 
 /* Note that currently (13/11/2016) most testing is done through dev/python scripts */
 

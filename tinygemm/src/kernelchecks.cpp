@@ -5,8 +5,8 @@
 #include <fstream>
 #include <map>
 #include <algorithm>
-#include "kernelsnips.hpp"
-#include "tinygemmerror.hpp"
+#include <tinygemm/kernelsnips.hpp>
+#include <tinygemm/tinygemmerror.hpp>
 
 namespace tinygemm{
 namespace kernelutil{

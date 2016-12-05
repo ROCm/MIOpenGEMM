@@ -1,8 +1,8 @@
 #include <iostream>
 #include <string>
-#include "tinygemmerror.hpp"
+#include <tinygemm/tinygemmerror.hpp>
 
-#include "outputwriter.hpp"
+#include <tinygemm/outputwriter.hpp>
 
 namespace tinygemm{
 namespace outputwriting{

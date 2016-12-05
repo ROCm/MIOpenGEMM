@@ -3,10 +3,10 @@
 #include <sstream>
 #include <iostream>
 
-#include "tinygemmsolution.hpp"
-#include "sizingup.hpp"
-#include "betackernelutil.hpp"
-#include "tinygemmerror.hpp"
+#include <tinygemm/tinygemmsolution.hpp>
+#include <tinygemm/sizingup.hpp>
+#include <tinygemm/betackernelutil.hpp>
+#include <tinygemm/tinygemmerror.hpp>
 
 namespace tinygemm{
 

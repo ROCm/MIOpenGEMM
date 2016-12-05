@@ -1,4 +1,4 @@
-#include "defaultoutpath.hpp"
+#include <tinygemm/defaultoutpath.hpp>
 #include <array>
 #include <stdlib.h>
 

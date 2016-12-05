@@ -1,9 +1,9 @@
 #include <string>
 
-#include "betackernelutil.hpp"
-#include "kernelsnips.hpp"
-#include "tinygemmerror.hpp"
-#include "config.hpp"
+#include <tinygemm/betackernelutil.hpp>
+#include <tinygemm/kernelsnips.hpp>
+#include <tinygemm/tinygemmerror.hpp>
+#include <tinygemm/config.hpp>
 
 namespace tinygemm{
 namespace betac{

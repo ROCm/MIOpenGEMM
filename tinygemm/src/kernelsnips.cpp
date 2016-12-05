@@ -10,8 +10,8 @@
 #include <algorithm>
 #include <utility>
 
-#include "stringutilbase.hpp"
-#include "tinygemmerror.hpp"
+#include <tinygemm/stringutilbase.hpp>
+#include <tinygemm/tinygemmerror.hpp>
 
 namespace tinygemm{
 namespace kernelutil{

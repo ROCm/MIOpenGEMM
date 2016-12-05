@@ -1,8 +1,8 @@
 #include <string>
-#include "tinygemmerror.hpp"
-#include "kernelsnips.hpp"
-#include "outputwriter.hpp"
-#include "defaultoutpath.hpp"
+#include <tinygemm/tinygemmerror.hpp>
+#include <tinygemm/kernelsnips.hpp>
+#include <tinygemm/outputwriter.hpp>
+#include <tinygemm/defaultoutpath.hpp>
 #include  <CL/cl.h>
 
 

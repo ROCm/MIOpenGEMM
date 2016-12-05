@@ -8,11 +8,11 @@
 #include <random>
 #include <limits>
 
-#include "stringutilbase.hpp"
-#include "stringutilbase.hpp"
-#include "hyperparams.hpp"
-#include "tinygemmerror.hpp"
-#include "stringutilbase.hpp"
+#include <tinygemm/stringutilbase.hpp>
+#include <tinygemm/stringutilbase.hpp>
+#include <tinygemm/hyperparams.hpp>
+#include <tinygemm/tinygemmerror.hpp>
+#include <tinygemm/stringutilbase.hpp>
 
 
 

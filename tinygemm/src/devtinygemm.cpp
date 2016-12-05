@@ -1,6 +1,6 @@
 #include <vector>
 #include <iostream>
-#include "tinygemmerror.hpp"
+#include <tinygemm/tinygemmerror.hpp>
 #include <vector>
 #include <sstream>
 #include <fstream>
@@ -17,29 +17,29 @@
 #include <map>
 #include <cmath>
 #include <algorithm>
-#include "tinygemmerror.hpp"
+#include <tinygemm/tinygemmerror.hpp>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <cstring>
 #include  <CL/cl.h> 
 
-#include "stringutilbase.hpp"
-#include "redirection.hpp"
-#include "outputwriter.hpp"
-#include "kernelchecks.hpp"
-#include "kernelsnips.hpp"
-#include "floattostring.hpp"
-#include "consistencychecks.hpp"
-#include "slowcpugemm.hpp"
-#include "sizingup.hpp"
-#include "openclutil.hpp"
-#include "tinygemm.hpp"
-#include "betackernelutil.hpp"
-#include "accuracytests.hpp"
-#include "devtinygemm.hpp"
-#include "tinygemmgeometry.hpp"
-#include "defaultoutpath.hpp"
+#include <tinygemm/stringutilbase.hpp>
+#include <tinygemm/redirection.hpp>
+#include <tinygemm/outputwriter.hpp>
+#include <tinygemm/kernelchecks.hpp>
+#include <tinygemm/kernelsnips.hpp>
+#include <tinygemm/floattostring.hpp>
+#include <tinygemm/consistencychecks.hpp>
+#include <tinygemm/slowcpugemm.hpp>
+#include <tinygemm/sizingup.hpp>
+#include <tinygemm/openclutil.hpp>
+#include <tinygemm/tinygemm.hpp>
+#include <tinygemm/betackernelutil.hpp>
+#include <tinygemm/accuracytests.hpp>
+#include <tinygemm/devtinygemm.hpp>
+#include <tinygemm/tinygemmgeometry.hpp>
+#include <tinygemm/defaultoutpath.hpp>
 
 
 

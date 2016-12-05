@@ -1,8 +1,8 @@
 #include <algorithm>
-#include "tinygemmerror.hpp"
+#include <tinygemm/tinygemmerror.hpp>
 #include  <CL/cl.h> 
 
-#include "redirection.hpp"
+#include <tinygemm/redirection.hpp>
 
 #include <iostream>
 namespace tinygemm{

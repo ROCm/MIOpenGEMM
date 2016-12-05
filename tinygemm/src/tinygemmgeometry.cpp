@@ -3,8 +3,8 @@
 #include <limits>
 #include <string>
 #include <sstream>
-#include "tinygemmgeometry.hpp"
-#include "consistencychecks.hpp"
+#include <tinygemm/tinygemmgeometry.hpp>
+#include <tinygemm/consistencychecks.hpp>
 
 namespace tinygemm{
 

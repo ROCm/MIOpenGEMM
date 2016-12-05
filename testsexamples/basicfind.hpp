@@ -14,14 +14,14 @@
 #include <algorithm>
 
 /* Required header for using tinygemm */
-#include "tinygemm.hpp"
+#include <tinygemm/tinygemm.hpp>
 
 /* The following two header files define functions which help with opencl boilerplating on my systems, they are not necessary */
-#include "outputwriter.hpp"
-#include "openclutil.hpp"
+#include <tinygemm/outputwriter.hpp>
+#include <tinygemm/openclutil.hpp>
 
 
-#include "slowcpugemm.hpp"
+#include <tinygemm/slowcpugemm.hpp>
 
 
 

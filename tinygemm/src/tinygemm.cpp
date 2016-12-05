@@ -1,4 +1,4 @@
-#include "tinygemmerror.hpp"
+#include <tinygemm/tinygemmerror.hpp>
 #include <thread>
 #include <sstream>
 #include <limits>
@@ -6,20 +6,20 @@
 #include <limits>
 #include <vector> 
 
-#include "tinygemm.hpp"
-#include "consistencychecks.hpp"
-#include "redirection.hpp"
-#include "outputwriter.hpp"
-#include "sizingup.hpp"
-#include "kernelsnips.hpp"
-#include "kernelchecks.hpp"
-#include "openclutil.hpp"
-#include "betackernelutil.hpp"
-#include "floattostring.hpp"
-#include "tinygemmsolution.hpp"
-#include "hyperparams.hpp"
-#include "makekernelsource.hpp"
-#include "defaultoutpath.hpp"
+#include <tinygemm/tinygemm.hpp>
+#include <tinygemm/consistencychecks.hpp>
+#include <tinygemm/redirection.hpp>
+#include <tinygemm/outputwriter.hpp>
+#include <tinygemm/sizingup.hpp>
+#include <tinygemm/kernelsnips.hpp>
+#include <tinygemm/kernelchecks.hpp>
+#include <tinygemm/openclutil.hpp>
+#include <tinygemm/betackernelutil.hpp>
+#include <tinygemm/floattostring.hpp>
+#include <tinygemm/tinygemmsolution.hpp>
+#include <tinygemm/hyperparams.hpp>
+#include <tinygemm/makekernelsource.hpp>
+#include <tinygemm/defaultoutpath.hpp>
 
 namespace tinygemm{
 

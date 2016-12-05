@@ -1,8 +1,8 @@
-#include "makekernelsource.hpp"
-#include "hyperparams.hpp"
-#include "defaultoutpath.hpp"
-#include "tinygemmerror.hpp"
-#include "config.hpp"
+#include <tinygemm/makekernelsource.hpp>
+#include <tinygemm/hyperparams.hpp>
+#include <tinygemm/defaultoutpath.hpp>
+#include <tinygemm/tinygemmerror.hpp>
+#include <tinygemm/config.hpp>
 
 #include <cstdlib>
 #include <iostream>

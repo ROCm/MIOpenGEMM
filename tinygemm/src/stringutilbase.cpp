@@ -1,6 +1,6 @@
 
-#include "stringutilbase.hpp"
-#include "tinygemmerror.hpp"
+#include <tinygemm/stringutilbase.hpp>
+#include <tinygemm/tinygemmerror.hpp>
 #include <iostream>
 #include <tuple>
 

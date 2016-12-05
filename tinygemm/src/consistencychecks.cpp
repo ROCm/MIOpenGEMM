@@ -1,7 +1,7 @@
-#include "tinygemmerror.hpp"
+#include <tinygemm/tinygemmerror.hpp>
 #include <string> 
 
-#include "consistencychecks.hpp"
+#include <tinygemm/consistencychecks.hpp>
 
 namespace tinygemm{
 namespace consistencychecks{

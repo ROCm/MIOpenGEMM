@@ -1,11 +1,11 @@
 #include <chrono>
-#include "tinygemmerror.hpp"
-#include "tinygemmgeometry.hpp"
+#include <tinygemm/tinygemmerror.hpp>
+#include <tinygemm/tinygemmgeometry.hpp>
 
-#include "slowcpugemm.hpp"
-#include "outputwriter.hpp"
-#include "redirection.hpp"
-#include "consistencychecks.hpp"
+#include <tinygemm/slowcpugemm.hpp>
+#include <tinygemm/outputwriter.hpp>
+#include <tinygemm/redirection.hpp>
+#include <tinygemm/consistencychecks.hpp>
 
 
 namespace tinygemm{
