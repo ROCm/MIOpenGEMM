@@ -3,6 +3,7 @@
 #include "betackernelutil.hpp"
 #include "kernelsnips.hpp"
 #include "tinygemmerror.hpp"
+#include "config.hpp"
 
 namespace tinygemm{
 namespace betac{

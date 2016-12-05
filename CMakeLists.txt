@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
-project(TINYGEMM)
+project(tinygemm)
 
 #Where to find FindOpenCL.cmake (etc)
 list( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )

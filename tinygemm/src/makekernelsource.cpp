@@ -2,7 +2,7 @@
 #include "hyperparams.hpp"
 #include "defaultoutpath.hpp"
 #include "tinygemmerror.hpp"
-
+#include "config.hpp"
 
 #include <cstdlib>
 #include <iostream>
