@@ -6,6 +6,7 @@ include(CTest)
 
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -C ${CMAKE_CFG_INTDIR})
 add_custom_target(tests COMMENT "Build all tests.")
+add_custom_target(examples COMMENT "Build all examples.")
 add_dependencies(check tests)
 
 function(add_test_executable TEST_NAME)
@@ -20,14 +21,20 @@ function(add_test_executable TEST_NAME)
     set_tests_properties(${TEST_NAME} PROPERTIES FAIL_REGULAR_EXPRESSION "FAILED")
 endfunction(add_test_executable)
 
-add_test_executable(basicexample basicexample.cpp)
+function(add_example_executable EX_NAME)
+    add_executable (${EX_NAME} EXCLUDE_FROM_ALL ${ARGN})
+    target_link_libraries(${EX_NAME} tinygemm)
+    add_dependencies(examples ${EX_NAME})
+endfunction(add_example_executable)
 
-add_test_executable(deepbench deepbench.cpp)
+add_example_executable(basicexample basicexample.cpp)
 
-add_test_executable(backconvwrw backconvwrw.cpp)
+add_example_executable(deepbench deepbench.cpp)
+
+add_example_executable(backconvwrw backconvwrw.cpp)
 
 add_test_executable(smallgeometrytests smallgeometrytests.cpp)
 
 add_test_executable(redirectionexample redirectionexample.cpp)
 
-add_test_executable(devtest devtest.cpp)
+add_example_executable(devtest devtest.cpp)

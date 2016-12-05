@@ -35,7 +35,7 @@ void basicexample(){
   bool verbose = true;
   /* print output to logfile (non-empty string) or not (empty string) */
   /* MUST BE SET BY USER */
-  std::string logfile("/home/james/tinygemm/examples/findlog.txt");
+  std::string logfile("basicexample-findlog.txt");
   /* enforce that the kernel is deterministic, or not. Note that 
    * for small problems, non-deterministic kernels are significantly (2x) faster */
   bool enforce_deterministic = false;
