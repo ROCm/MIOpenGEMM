@@ -54,7 +54,9 @@ int make_kernel_via_python(std::string dir_name, std::string t_float, std::map<s
     }
   }
 
-  std::string syscall(PATH_MAKE_KERNEL_CMDL_PY );
+  std::string syscall(PYTHON_EXECUTABLE);
+  syscall += " ";
+  syscall += PATH_MAKE_KERNEL_CMDL_PY;
   syscall += " ";
   syscall += parameter_string;
   

@@ -1,8 +1,8 @@
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -pedantic " )
 
 add_definitions(-DPATH_MAKE_KERNEL_CMDL_PY="${CMAKE_CURRENT_SOURCE_DIR}/python/make_kernel_cmdl.py")
-
 add_definitions(-DPATH_BETAC_KERNEL_DIR="${CMAKE_CURRENT_SOURCE_DIR}/opencl/")
+add_definitions(-DPYTHON_EXECUTABLE="${PYTHON_EXECUTABLE}")
 
 file(GLOB_RECURSE source_files src/*.cpp)
 
