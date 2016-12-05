@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.0)
 project(tinygemm)
 
+set(${PROJECT_NAME}_VERSION 0.1)
+set(${PROJECT_NAME}_VERSION_MAJOR 0)
+set(${PROJECT_NAME}_VERSION_MINOR 1)
+
 #Where to find FindOpenCL.cmake (etc)
 list( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
 
