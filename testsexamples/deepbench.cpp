@@ -116,14 +116,14 @@ int main(){
   double alpha = 1.43235342345;
   double beta = 0.45348379373;
   char floattype = 'f'; 
-  float allotted_time = 30.; 
+  float allotted_time = .003; 
   bool verbose = false;
   
   /* enforce_deterministc, ldx_offset */
   std::vector<std::tuple<bool, unsigned>> run_settings = {
     std::make_tuple(false,1), 
     std::make_tuple(false,0), 
-    std::make_tuple(true,0) 
+  //  std::make_tuple(true,0) 
   }; 
   
   /* We're just tracking the overall run time with these TODO */
@@ -171,7 +171,7 @@ int main(){
       unsigned b_offset = 0;
       unsigned c_offset = 0;
       
-      unsigned n_postfind_runs = 0;
+      unsigned n_postfind_runs = 11;
       bool do_cpu_test = false;
       
       basicfind<float>(isColMajor, tA, tB, tC, m, n, k, lda, ldb, ldc, a_offset, b_offset, c_offset, alpha, beta, floattype, allotted_time, verbose, ss_logfile.str(), enforce_deterministic, n_postfind_runs, do_cpu_test);    
