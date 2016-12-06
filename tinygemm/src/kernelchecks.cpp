@@ -5,6 +5,7 @@
 #include <fstream>
 #include <map>
 #include <algorithm>
+#include <string>
 #include <tinygemm/kernelsnips.hpp>
 #include <tinygemm/tinygemmerror.hpp>
 

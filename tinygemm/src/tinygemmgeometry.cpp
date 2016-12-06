@@ -3,6 +3,7 @@
 #include <limits>
 #include <string>
 #include <sstream>
+#include <algorithm>
 #include <tinygemm/tinygemmgeometry.hpp>
 #include <tinygemm/consistencychecks.hpp>
 

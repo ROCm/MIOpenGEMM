@@ -42,8 +42,6 @@
 #include <tinygemm/defaultoutpath.hpp>
 
 
-
-
 namespace tinygemm{
 namespace dev{
 
