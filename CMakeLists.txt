@@ -13,6 +13,8 @@ find_package( OpenCL REQUIRED )
 
 find_package(PythonInterp REQUIRED)
 
+find_package(Boost 1.36.0 COMPONENTS filesystem)
+
 # What I would like here : user sets the above directory, and at configuration time the file system is generated.
 # Currently, I assume that the tree structure of the writing dir is already setup. 
 # add_definitions(-DDIR_FOR_WRITING="/home/james/tinygemmout")
