@@ -269,11 +269,11 @@ void benchgemm(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
   defpaths::tmp_dir scratchpaddir{};
   if (findfirst == true){
     tinygemm::TinyGemmSolution tgs = gem.nonconst_find(allotted_time, enforce_deterministic); 
-    std::string kernelfilename = scratchpaddir.name + "/kernfoundinbenchmark.cl"; 
-    std::ofstream out(kernelfilename);
+    boost::filesystem::path kernelfilename = scratchpaddir.name / "kernfoundinbenchmark.cl"; 
+    std::ofstream out(kernelfilename.string());
     out << tgs.main_kernel;
     out.close();
-    gpu_kernel_filenames = {{ kernelfilename }};
+    gpu_kernel_filenames = {{ kernelfilename.string() }};
   }
   
   gem.benchgemm_cpu(cpu_algs);

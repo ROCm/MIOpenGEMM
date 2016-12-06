@@ -123,8 +123,8 @@ private:
   cl_device_id device_id_to_use;
   bool nobenching;
 
-  std::string kerneldir;
-  std::string kernelfilename;
+  boost::filesystem::path kerneldir;
+  boost::filesystem::path kernelfilename;
   defpaths::tmp_dir kernel_tmp_dir;
 
 
@@ -170,7 +170,7 @@ public:
       setup_betac_kernel(); 
     }
     kerneldir = kernel_tmp_dir.name;
-    kernelfilename = kerneldir + "/" + kernelname + ".cl";
+    kernelfilename = kerneldir / (kernelname + ".cl");
   }
  
  
@@ -470,7 +470,7 @@ public:
       all_int_parms[x.first] = x.second;
     }
     bool verbose_report_from_python = true;
-    int kernel_write_status = tinygemm::mkkern::make_kernel_via_python(kerneldir,  floattostring::get_float_string(floattype), all_int_parms, kernelname, verbose_report_from_python);
+    int kernel_write_status = tinygemm::mkkern::make_kernel_via_python(kerneldir.string(),  floattostring::get_float_string(floattype), all_int_parms, kernelname, verbose_report_from_python);
     if (kernel_write_status != CL_SUCCESS){
       throw tinygemm_error("A problem arose in the python script to generate the kernel. Throwing from get_default.");
     }
@@ -480,8 +480,8 @@ public:
     tinygemm::TinyGemmSolutionStatistics tgss(median_time, median_benchmark_gflops, gg, elapsed_seconds);
     std::string soln_betac_kernel = all_int_parms.at("n_work_items_per_c_elm") == 1 ?  ""  : kernelutil::get_as_single_string(betac::get_cl_file_path(floattype));
     std::string soln_betac_kernel_function_name = all_int_parms.at("n_work_items_per_c_elm") == 1 ? "" : kernelutil::get_kernel_function_name(betac::get_cl_file_path(floattype));
-    std::string soln_main_kernel = kernelutil::get_as_single_string(kernelfilename);
-    std::string soln_main_kernel_function_name = kernelutil::get_kernel_function_name(kernelfilename);                
+    std::string soln_main_kernel = kernelutil::get_as_single_string(kernelfilename.string());
+    std::string soln_main_kernel_function_name = kernelutil::get_kernel_function_name(kernelfilename.string());                
     tinygemm::TinyGemmSolution tgs(soln_betac_kernel, soln_main_kernel, soln_betac_kernel_function_name, soln_main_kernel_function_name, all_int_parms, floattype, tgss);
 
     return tgs;
@@ -581,7 +581,7 @@ public:
              * of the number of work items. In the case of `stupid' mistakes (bad paths, run time problems) the python output from the first kernel 
              * generated (global_counter = 0) will be printed explicitly, so that hopefully the user will see what the problem is.  */
             bool verbose_report_from_python = global_counter == 0 ? true : false;
-            int kernel_write_status = tinygemm::mkkern::make_kernel_via_python(kerneldir,  floattostring::get_float_string(floattype), all_int_parms, kernelname, verbose_report_from_python);
+            int kernel_write_status = tinygemm::mkkern::make_kernel_via_python(kerneldir.string(),  floattostring::get_float_string(floattype), all_int_parms, kernelname, verbose_report_from_python);
             
             /* the kernel was succesfully generated, we now compile and benchmark it */
             if (kernel_write_status == 0){
@@ -590,7 +590,7 @@ public:
               ++global_counter;
               mowri << "global gen-com-bench : " << global_counter  <<  "." << Endl;
 
-              benchgemm(kernelfilename, n_runs_in_find_per_kernel);
+              benchgemm(kernelfilename.string(), n_runs_in_find_per_kernel);
               std::sort(v_t_total_with_both.begin(), v_t_total_with_both.end());
 
               /* Taking the fastest or median? */ 
@@ -625,7 +625,7 @@ public:
                 //TODO : should not be determining whether a kernel does betac or not based on this, find true parameter
                 std::string soln_betac_kernel = all_int_parms.at("n_work_items_per_c_elm") == 1 ?  ""  : kernelutil::get_as_single_string(betac::get_cl_file_path(floattype));
                 std::string soln_betac_kernel_function_name = all_int_parms.at("n_work_items_per_c_elm") == 1 ? "" : betac_kernel_function_name;
-                std::string soln_main_kernel = kernelutil::get_as_single_string(kernelfilename);
+                std::string soln_main_kernel = kernelutil::get_as_single_string(kernelfilename.string());
                 std::string soln_main_kernel_function_name = kernel_function_name;                
                 tinygemm::TinyGemmSolution tgs(soln_betac_kernel, soln_main_kernel, soln_betac_kernel_function_name, soln_main_kernel_function_name, all_int_parms, floattype, tgss);
 

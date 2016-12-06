@@ -16,8 +16,8 @@ std::array<char, N> make_str_array(const char(&a)[N])
 
 tmp_dir::tmp_dir()
 {
-    auto t = make_str_array("tinygemm-XXXXXX");
-    name = mkdtemp(t.data());
+    name = boost::filesystem::temp_directory_path()/"tinygemm"/boost::filesystem::unique_path();
+    boost::filesystem::create_directories(name);
 }
 
 tmp_dir::~tmp_dir()
