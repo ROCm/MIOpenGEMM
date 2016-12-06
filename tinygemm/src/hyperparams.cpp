@@ -7,14 +7,13 @@
 #include <algorithm>
 #include <random>
 #include <limits>
+#include <array>
 
 #include <tinygemm/stringutilbase.hpp>
 #include <tinygemm/stringutilbase.hpp>
 #include <tinygemm/hyperparams.hpp>
 #include <tinygemm/tinygemmerror.hpp>
 #include <tinygemm/stringutilbase.hpp>
-
-
 
 namespace tinygemm{
 namespace hyperparams{

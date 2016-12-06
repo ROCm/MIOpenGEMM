@@ -1,4 +1,3 @@
-SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -pedantic " )
 
 include(GNUInstallDirs)
 set( LIB_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR} )

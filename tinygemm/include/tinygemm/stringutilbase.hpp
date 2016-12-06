@@ -4,6 +4,7 @@
 
 #include <string>
 #include <vector>
+#include <iso646.h>
 
 namespace tinygemm{
 namespace stringutil{

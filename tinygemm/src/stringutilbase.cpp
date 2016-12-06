@@ -3,6 +3,7 @@
 #include <tinygemm/tinygemmerror.hpp>
 #include <iostream>
 #include <tuple>
+#include <algorithm>
 
 namespace tinygemm{
 namespace stringutil{

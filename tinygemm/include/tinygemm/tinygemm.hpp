@@ -5,7 +5,7 @@
 #define OPENCLGEMMAPI_HPP
 
 #include  <CL/cl.h> 
-
+#include <iso646.h>
 #include "tinygemmgeometry.hpp"
 #include "tinygemmsolution.hpp"
 #include "tinygemmerror.hpp"
