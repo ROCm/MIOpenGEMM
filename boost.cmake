@@ -79,7 +79,7 @@ if(NOT ${B2_EXE})
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tools/build/
         )
     endif()
-    set(B2_EXE "${CMAKE_CURRENT_SOURCE_DIR}/tools/build/b2")
+    set(B2_EXE "${CMAKE_CURRENT_SOURCE_DIR}/tools/build/b2${CMAKE_EXECUTABLE_SUFFIX}")
     install(PROGRAMS ${B2_EXE} DESTINATION bin)
 endif()
 
