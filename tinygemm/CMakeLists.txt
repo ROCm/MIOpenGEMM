@@ -13,7 +13,7 @@ file(GLOB_RECURSE source_files src/*.cpp)
 add_library(tinygemm ${source_files})
 
 target_link_libraries(tinygemm ${OPENCL_LIBRARIES})
-target_link_libraries(tinygemm Boost::filesystem Boost::dynamic_linking)
+target_link_libraries(tinygemm ${Boost_LIBRARIES} Boost::disable_autolinking)
 
 target_include_directories (tinygemm PUBLIC 
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
