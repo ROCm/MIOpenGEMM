@@ -93,9 +93,8 @@ public:
     c_start_copy.resize(get_c_memsize()/sizeof(TFloat));
     std::memcpy(c_start_copy.data(), c, get_c_memsize());
     
-    
     opencl_memory_initialise();
-  
+    
   }
 
   void benchgemm_cpu(std::vector<std::string> cpu_algs){
@@ -126,13 +125,46 @@ public:
     /* Create an inorder command queue with profiling enabled. Profiling is enabled so that we can get start and end times for kernels*/
     command_queue = clCreateCommandQueue(context, device_id_to_use, CL_QUEUE_PROFILING_ENABLE, &ret);
     
+    
     /* allocate memory for a,b,c on device, send it over */
+    
+  
     a_gpu = clCreateBuffer(context, CL_MEM_READ_ONLY, get_a_memsize(), NULL, &ret);
+    if (ret != CL_SUCCESS){
+      throw tinygemm_error("creating buffer a_gpu failed in devtinygemm.cpp, exit status was " + std::to_string(ret));
+    }
+    
+  
     b_gpu = clCreateBuffer(context, CL_MEM_READ_ONLY, get_b_memsize(), NULL, &ret);
+    if (ret != CL_SUCCESS){
+      throw tinygemm_error("creating buffer b_gpu failed in devtinygemm.cpp, exit status was " + std::to_string(ret));
+    }
+
     c_gpu = clCreateBuffer(context, CL_MEM_READ_WRITE, get_c_memsize(), NULL, &ret);      
-    clEnqueueWriteBuffer(command_queue, a_gpu, CL_TRUE, 0, get_a_memsize(), a, 0, NULL, NULL);
-    clEnqueueWriteBuffer(command_queue, b_gpu, CL_TRUE, 0, get_b_memsize(), b, 0, NULL, NULL);
-    clEnqueueWriteBuffer(command_queue, c_gpu, CL_TRUE, 0, get_c_memsize(), c_start_copy.data(), 0, NULL, NULL);    
+    if (ret != CL_SUCCESS){
+      throw tinygemm_error("creating buffer c_gpu failed in devtinygemm.cpp, exit status was " + std::to_string(ret));
+    }
+    
+    
+    
+    ret = clEnqueueWriteBuffer(command_queue, a_gpu, CL_TRUE, 0, get_a_memsize(), a, 0, NULL, NULL);
+    if (ret != CL_SUCCESS){
+      throw tinygemm_error("enqueueing a failed in devtinygemm.cpp, exit status was " + std::to_string(ret));
+    }
+    
+    
+    ret = clEnqueueWriteBuffer(command_queue, b_gpu, CL_TRUE, 0, get_b_memsize(), b, 0, NULL, NULL);
+    if (ret != CL_SUCCESS){
+      throw tinygemm_error("enqueueing b failed in devtinygemm.cpp, exit status was " + std::to_string(ret));
+    }
+  
+
+    ret = clEnqueueWriteBuffer(command_queue, c_gpu, CL_TRUE, 0, get_c_memsize(), c_start_copy.data(), 0, NULL, NULL);    
+    if (ret != CL_SUCCESS){
+      throw tinygemm_error("enqueueing c failed in devtinygemm.cpp, exit status was " + std::to_string(ret));
+    }
+    
+    
     /* 20 Nov 2016 :  remove cl finish */ 
     
   }
@@ -153,6 +185,7 @@ public:
   }
   
   tinygemm::TinyGemmSolution nonconst_find(float allotted_time, bool enforce_deterministic){
+
 
     tinygemm::TinyGemmSolution tgs = tinygemm::nonconst_find(
       allotted_time,
@@ -264,12 +297,20 @@ void benchgemm(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
     std::cout.rdbuf(buffer.rdbuf());
   }
   std::ofstream nowhere;
+  
   Gemini <TFloat> gem (gg, a, b, c, alpha, beta, outputfilename);
+  
   
   defpaths::tmp_dir scratchpaddir{};
   if (findfirst == true){
+    
+    
+    
+
+
     tinygemm::TinyGemmSolution tgs = gem.nonconst_find(allotted_time, enforce_deterministic); 
     std::string kernelfilename = scratchpaddir.name + "/kernfoundinbenchmark.cl"; 
+    //std::string kernelfilename = "/home/idiap/kernfoundinbenchmark.cl";
     std::ofstream out(kernelfilename);
     out << tgs.main_kernel;
     out.close();
