@@ -85,9 +85,9 @@ class DevGemmTester{
       tA = true;
       tB = false;
       tC = false;
-      m = 3322;    
-      n = 4532;
-      k = 3131;
+      m = 1000;//3322;    
+      n = 1000;//4532;
+      k = 1000;//3131;
       alpha = 1.1;
       beta = 1.1;
       outputfilename = "";    
@@ -98,6 +98,11 @@ class DevGemmTester{
       lda = tA ? k + 1 : m + 6;    
       ldb = tB ? n + 2 : k + 5;
       ldc = tC ? n + 3 : m + 4;
+      
+      a_offset = 1;
+      b_offset = 2;
+      c_offset = 3;
+      
       size_t n_a = lda * (tA ? m : k);
       size_t n_b = ldb * (tB ? k : n);
       size_t n_c = ldc * (tC ? m : n); 
@@ -129,7 +134,6 @@ class DevGemmTester{
     }
     
     int red_benchmark(std::vector<std::vector<std::string> > & gpu_kernel_filenames, bool findfirst, float allotted_time, bool enforce_deterministic = false){
-      std::cout << "about to call tinygemm::dev::gemm<float>" << std::endl;
       /* We pass cpu pointers to tinygemm::dev::benchmark, which does all the necessary opencl gpu boilerplating */
       tinygemm::dev::benchgemm<float>(isColMajor, tA, tB, tC, m, n, k, alpha, v_a.data(), lda, a_offset, v_b.data(), ldb, b_offset, beta, v_c.data(), ldc, c_offset, {}, gpu_kernel_filenames, capture_output, output, nullptr, do_test, n_runs, outputfilename, findfirst, allotted_time, enforce_deterministic);
       return 0;
