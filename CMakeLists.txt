@@ -23,4 +23,4 @@ add_subdirectory(tinygemm)
 add_subdirectory(testsexamples)
 
 # development code. It requires cython (and only builds with certain versions. You probably want to comment this out.
-add_subdirectory(dev)
+#add_subdirectory(dev)
