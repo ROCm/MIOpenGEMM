@@ -88,25 +88,29 @@ void set_platform_etc(cl_platform_id & platform, cl_uint & num_platforms, cl_con
 
 
 
-void set_program_and_kernel(cl_program & program, cl_kernel & kernel, std::string & kernel_function_name, const cl_context & context, const cl_device_id & device_id_to_use, const std::string & filename){
+void set_program_and_kernel(cl_program & program, cl_kernel & kernel, std::string & kernel_function_name, const cl_context & context, const cl_device_id & device_id_to_use, const std::string & kernel_string){
   cl_int ret;
-  kernel_function_name = kernelutil::get_kernel_function_name(filename);
-  char *source;
-  size_t sourceSize;
-  FILE *fp = fopen(filename.c_str(), "r");
-  fseek(fp, 0, SEEK_END);
-  sourceSize = ftell(fp);
-  fseek(fp , 0, SEEK_SET);
-  source = (char *)malloc(sourceSize * sizeof(char));
-  fread(source, 1, sourceSize, fp);
-  fclose(fp);
-  program = clCreateProgramWithSource(context, 1, (const char **)&source, &sourceSize, &ret);
+  kernel_function_name = kernelutil::get_kernel_function_name(kernel_string);
   
-  free(source);
+  //char *source;
+  //size_t sourceSize;
+  //FILE *fp = fopen(filename.c_str(), "r");
+  //fseek(fp, 0, SEEK_END);
+  //sourceSize = ftell(fp);
+  //fseek(fp , 0, SEEK_SET);
+  //source = (char *)malloc(sourceSize * sizeof(char));
+  //fread(source, 1, sourceSize, fp);
+  //fclose(fp);
+  //program = clCreateProgramWithSource(context, 1, (const char **)&source, &sourceSize, &ret);
+  //free(source);
   
+  auto kernel_cstr = kernel_string.c_str();
+  auto kernel_string_size =  kernel_string.size();
+  program = clCreateProgramWithSource(context, 1, &kernel_cstr, &kernel_string_size , &ret);
   if (ret != 0){
-    throw tinygemm_error("Error in clCreateProgramWithSource");
+    throw tinygemm_error("Error in clCreateProgramWithSource (in openclutil.cpp)");
   }
+  
   /* To generate isa code, add this :   ``` -save-temps= + defpaths::isacodedir + "/"  '''    to the following string  */
   std::string buildOptions_11 = "-cl-std=CL2.0";
   auto buildOptions = buildOptions_11.c_str();
@@ -122,8 +126,8 @@ void set_program_and_kernel(cl_program & program, cl_kernel & kernel, std::strin
     clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, 0, &size, NULL);
     std::vector<unsigned char> v_binary (size + 10);
     clGetProgramInfo(program, CL_PROGRAM_BINARIES, size, v_binary.data(), NULL); 
-    std::string filename_bin(filename);
-    filename_bin += "bin";
+    //std::string filename_bin(filename);
+    std::string filename_bin = "bladibla_bin";
     FILE *filebinary = fopen(filename_bin.c_str(), "w");
     fwrite(v_binary.data(), 1, size, filebinary);
     /* the binary file has been written to filename_bin */ 

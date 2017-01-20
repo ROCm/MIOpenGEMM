@@ -178,10 +178,10 @@ public:
   }
 
   /* dev code's placenta to the outside world */  
-  void base_benchgemm(std::string kernel_filename, size_t number_of_runs){
+  void base_benchgemm(const std::string & kernel_string, size_t number_of_runs){
     //tinygemm::benchgemm(context, command_queue, device_id_to_use, kernel_filename, number_of_runs, floattostring::get_float_char<TFloat>(), gg, alpha, beta, a_gpu, b_gpu, c_gpu, true, mowri.filename);
     
-    tinygemm::benchgemm(command_queue, kernel_filename, number_of_runs, floattostring::get_float_char<TFloat>(), gg, alpha, beta, a_gpu, b_gpu, c_gpu, true, mowri.filename);
+    tinygemm::benchgemm(command_queue, kernel_string, number_of_runs, floattostring::get_float_char<TFloat>(), gg, alpha, beta, a_gpu, b_gpu, c_gpu, true, mowri.filename);
   }
   
   tinygemm::TinyGemmSolution nonconst_find(float allotted_time, bool enforce_deterministic){
@@ -207,24 +207,28 @@ public:
     
   }
 
-  void base_basegemm_with_accuracy_test(std::string kernel_filename){
+  void base_basegemm_with_accuracy_test(const std::string & kernel_string){
     clEnqueueWriteBuffer(command_queue, c_gpu, CL_TRUE, 0, get_c_memsize(), c_start_copy.data(), 0, NULL, NULL);
     /* 20 Nov 2016 : remove cl finish */
-    base_benchgemm(kernel_filename, 1);
+    base_benchgemm(kernel_string, 1);
     ret = clEnqueueReadBuffer(command_queue, c_gpu, CL_TRUE, 0, get_c_memsize(), c, 0, NULL, NULL); 
   }
 
       
-  void benchgemm_gpu(std::vector<std::vector<std::string> > gpu_kernel_filenames, unsigned n_runs, unsigned do_test,  const TFloat * c_true_for_test){
+  void benchgemm_gpu(const std::vector<std::vector<std::string> > gpu_kernel_strings, unsigned n_runs, unsigned do_test,  const TFloat * c_true_for_test){
     
     /* A check that the gpu kernel filenames are valid */
-    kernelutil::check_gpu_kernel_filenames(gpu_kernel_filenames);
-    size_t number_of_kernels_being_tested = gpu_kernel_filenames.size();
+    // kernelutil::check_gpu_kernel_filenames(gpu_kernel_filenames);
+    
+
+      
+    
+    size_t number_of_kernels_being_tested = gpu_kernel_strings.size();
     size_t this_run = 0;
     
     
     try{
-      for (auto & v : gpu_kernel_filenames){
+      for (auto & v : gpu_kernel_strings){
         ++this_run;
         /* Originally, gemini was designed to allow for option of running several (4) kernels in parallel. */
         /* Later, with the pointer relocation trick (cite TODO), we realised that this was not necessary. */
@@ -268,7 +272,7 @@ void hello(){
 
 
 template <typename TFloat>
-void benchgemm(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned n, unsigned k, TFloat alpha, const TFloat * a, unsigned lda, unsigned a_offset, const TFloat * b, unsigned ldb, unsigned b_offset, TFloat beta, TFloat * c, unsigned ldc, unsigned c_offset, std::vector<std::string> cpu_algs, std::vector<std::vector<std::string> > gpu_kernel_filenames, bool capture_output, std::string & output, const TFloat * c_true_for_test, unsigned do_test, unsigned n_runs, std::string outputfilename, bool findfirst, float allotted_time, bool enforce_deterministic){
+void benchgemm(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned n, unsigned k, TFloat alpha, const TFloat * a, unsigned lda, unsigned a_offset, const TFloat * b, unsigned ldb, unsigned b_offset, TFloat beta, TFloat * c, unsigned ldc, unsigned c_offset, std::vector<std::string> cpu_algs, const std::vector<std::vector<std::string> > gpu_kernel_strings, bool capture_output, std::string & output, const TFloat * c_true_for_test, unsigned do_test, unsigned n_runs, std::string outputfilename, bool findfirst, float allotted_time, bool enforce_deterministic){
   
   //if (findfirst == true){
     //tinygemm::TinyGemmGeometry gg(isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k);  
@@ -276,9 +280,10 @@ void benchgemm(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
     //tinygemm::TinyGemmSolution tgs = gem.find(allotted_time); 
     //main_kernel = tgs.main_kernel;
   //}
+ 
   
-  if (findfirst == true && gpu_kernel_filenames.size() != 0){
-    throw tinygemm_error( "findfirst is true, and so gpu_kernel_filenames should be an empty list \n");
+  if (findfirst == true && gpu_kernel_strings.size() != 0){
+    throw tinygemm_error( "findfirst is true, and so gpu_kernel_strings should be an empty list \n");
     //tinygemm_error("findfirst is true, and so gpu_kernel_filenames should be an empty list \n ");
   }
   
@@ -301,7 +306,7 @@ void benchgemm(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
   Gemini <TFloat> gem (gg, a, b, c, alpha, beta, outputfilename);
   
   
-  defpaths::tmp_dir scratchpaddir{};
+  //defpaths::tmp_dir scratchpaddir{};
   if (findfirst == true){
     
     
@@ -309,16 +314,17 @@ void benchgemm(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
 
 
     tinygemm::TinyGemmSolution tgs = gem.nonconst_find(allotted_time, enforce_deterministic); 
-    std::string kernelfilename = scratchpaddir.name + "/kernfoundinbenchmark.cl"; 
+    //std::string kernelfilename = scratchpaddir.name + "/kernfoundinbenchmark.cl"; 
     //std::string kernelfilename = "/home/idiap/kernfoundinbenchmark.cl";
-    std::ofstream out(kernelfilename);
-    out << tgs.main_kernel;
-    out.close();
-    gpu_kernel_filenames = {{ kernelfilename }};
+    //std::ofstream out(kernelfilename);
+    //out << tgs.main_kernel;
+    //out.close();    
+    gem.benchgemm_cpu(cpu_algs);
+    gem.benchgemm_gpu( {{ tgs.main_kernel }}, n_runs, do_test, c_true_for_test);
   }
   
   gem.benchgemm_cpu(cpu_algs);
-  gem.benchgemm_gpu(gpu_kernel_filenames, n_runs, do_test, c_true_for_test);
+  gem.benchgemm_gpu(gpu_kernel_strings, n_runs, do_test, c_true_for_test);
   
   if (capture_output == true){
     output = buffer.str();
@@ -330,13 +336,16 @@ void benchgemm(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
   }
 }
 
-template void benchgemm(bool isColMajor, bool tA, bool tB, bool tC,  unsigned m, unsigned n, unsigned k, float alpha, const float * a, unsigned lda, unsigned a_offset, const float * b, unsigned ldb, unsigned b_offset, float beta, float * c, unsigned ldc, unsigned c_offset, std::vector<std::string> cpu_algs, std::vector<std::vector<std::string> > gpu_kernel_filenames, bool capture_output, std::string & output, const float * c_true_for_test, unsigned do_test, unsigned n_runs, std::string outputfilename, bool findfirst, float allotted_time, bool enforce_deterministic);
+template void benchgemm(bool isColMajor, bool tA, bool tB, bool tC,  unsigned m, unsigned n, unsigned k, float alpha, const float * a, unsigned lda, unsigned a_offset, const float * b, unsigned ldb, unsigned b_offset, float beta, float * c, unsigned ldc, unsigned c_offset, std::vector<std::string> cpu_algs, std::vector<std::vector<std::string> > gpu_kernel_strings, bool capture_output, std::string & output, const float * c_true_for_test, unsigned do_test, unsigned n_runs, std::string outputfilename, bool findfirst, float allotted_time, bool enforce_deterministic);
 
-template void benchgemm(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned n, unsigned k, double alpha, const double * a, unsigned lda, unsigned a_offset, const double * b, unsigned ldb, unsigned b_offset, double beta, double * c, unsigned ldc, unsigned c_offset, std::vector<std::string> cpu_algs, std::vector<std::vector<std::string> > gpu_kernel_filenames, bool capture_output, std::string & output, const double * c_true_for_test, unsigned do_test, unsigned n_runs, std::string outputfilename, bool findfirst, float allotted_time, bool enforce_deterministic);
+template void benchgemm(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned n, unsigned k, double alpha, const double * a, unsigned lda, unsigned a_offset, const double * b, unsigned ldb, unsigned b_offset, double beta, double * c, unsigned ldc, unsigned c_offset, std::vector<std::string> cpu_algs, std::vector<std::vector<std::string> > gpu_kernel_strings, bool capture_output, std::string & output, const double * c_true_for_test, unsigned do_test, unsigned n_runs, std::string outputfilename, bool findfirst, float allotted_time, bool enforce_deterministic);
 
 
 
 
 }
 }
+
+
+
 

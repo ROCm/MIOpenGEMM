@@ -1,3 +1,4 @@
+#include <tinygemm/kernelstringgenerator.hpp>
 #include <tinygemm/makekernelsource.hpp>
 #include <tinygemm/hyperparams.hpp>
 #include <tinygemm/defaultoutpath.hpp>
@@ -12,7 +13,9 @@
 
 namespace tinygemm{
 namespace mkkern{
-  
+
+
+
 /* returns 0 if the kernel was succesfully written. If the hyperparameters don't gel, a kernel will not be written, and a non-zero int will be returned */
 int make_kernel_via_python(std::string dir_name, std::string t_float, std::map<std::string, unsigned> all_int_parms, std::string kernelname, bool verbose_report){
 
@@ -71,10 +74,16 @@ int make_kernel_via_python(std::string dir_name, std::string t_float, std::map<s
   }
   
   //TODO : pipe raised python errors elsewhere, in case an important one is thrown.    
+  
+  
+  std::cout << syscall << std::endl;
+  
   int success = std::system(syscall.c_str());  
   
   return success;
 }
+
+
 
 }} //namespace
 

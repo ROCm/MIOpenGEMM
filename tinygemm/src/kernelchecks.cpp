@@ -263,35 +263,37 @@ bool tA, bool tB, bool tC, bool isColMajor, unsigned m, unsigned n, std::string 
 }
 
 
-void check_gpu_kernel_filename(std::string kernel_filename){
-  std::ifstream input(kernel_filename);
-  if(!input.good()){
-    std::string errm("This error is being thrown from check_gpu_kernel_filename, in kernelchecks.cpp. The kernel_filename passed in is ` ");
-    errm +=  kernel_filename;
-    errm += "', which for some reason cannot be opened.  ";
-    throw tinygemm_error(errm);
-  }
-}
+//void check_gpu_kernel_filename(std::string kernel_filename){
+  //std::ifstream input(kernel_filename);
+  //if(!input.good()){
+    //std::string errm("This error is being thrown from check_gpu_kernel_filename, in kernelchecks.cpp. The kernel_filename passed in is ` ");
+    //errm +=  kernel_filename;
+    //errm += "', which for some reason cannot be opened.  ";
+    //throw tinygemm_error(errm);
+  //}
+//}
 
 
-/* check that the files are readable */
-void check_gpu_kernel_filenames(const std::vector<std::vector<std::string>> & gpu_kernel_filenames){
-  for (auto & v : gpu_kernel_filenames){
-    if (v.size() != 1){
-      std::string errm("The size of this element of gpu_kernel_filenames is ");
-      errm += std::to_string(v.size());
-      errm += ".\nCurrently, we can only handle 1 kernel file. \nCurrently, there is no need to support multiple kernel files. ";
-      throw tinygemm_error(errm);
-    }
-    for (auto & kernel_filename : v){
-      check_gpu_kernel_filename(kernel_filename);
-    }
-  }
-}
+//////* check that the files are readable */
+//void check_gpu_kernel_filenames(const std::vector<std::vector<std::string>> & gpu_kernel_filenames){
+  //for (auto & v : gpu_kernel_filenames){
+    //if (v.size() != 1){
+      //std::string errm("The size of this element of gpu_kernel_filenames is ");
+      //errm += std::to_string(v.size());
+      //errm += ".\nCurrently, we can only handle 1 kernel file. \nCurrently, there is no need to support multiple kernel files. ";
+      //throw tinygemm_error(errm);
+    //}
+    //for (auto & kernel_filename : v){
+      //check_gpu_kernel_filename(kernel_filename);
+    //}
+  //}
+//}
 
 
-void check_gpu_kernel_preprocessor_parameters(std::string kernel_filename, bool tA, bool tB, bool tC, bool isColMajor, unsigned m, unsigned n, std::string floatstring){
-  auto all_preprocessor_parameters = kernelutil::get_all_preprocessor_parameters(kernel_filename);
+void check_gpu_kernel_preprocessor_parameters(const std::string & kernel_string, bool tA, bool tB, bool tC, bool isColMajor, unsigned m, unsigned n, std::string floatstring){
+  
+
+  auto all_preprocessor_parameters = kernelutil::get_all_preprocessor_parameters(kernel_string);
   auto integer_preprocessor_parameters = all_preprocessor_parameters.first;
   auto non_integer_preprocessor_parameters = all_preprocessor_parameters.second;
   /* we have now extracted all of the preprocessor parameters from the file, let's check them.*/
@@ -299,8 +301,8 @@ void check_gpu_kernel_preprocessor_parameters(std::string kernel_filename, bool 
 
 }
 
-void check_gpu_kernels_preprocessor_parameters(const std::vector<std::vector<std::string>> & gpu_kernel_filenames, bool tA, bool tB, bool tC, bool isColMajor, unsigned m, unsigned n, std::string floatstring){
-  for (auto & v : gpu_kernel_filenames){
+void check_gpu_kernels_preprocessor_parameters(const std::vector<std::vector<std::string>> & gpu_kernel_strings, bool tA, bool tB, bool tC, bool isColMajor, unsigned m, unsigned n, std::string floatstring){
+  for (auto & v : gpu_kernel_strings){
     for (auto & kernel_filename : v){
       check_gpu_kernel_preprocessor_parameters(kernel_filename, tA, tB, tC, isColMajor, m, n, floatstring);
     }

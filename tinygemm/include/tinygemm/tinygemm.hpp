@@ -66,7 +66,7 @@ std::string logfile = "");
 
 void benchgemm(
 cl_command_queue command_queue, 
-std::string kernelfilename,         // name of a .cl file
+const std::string & kernel_string,         
 unsigned n_runs,
 const char floattype, 
 const tinygemm::TinyGemmGeometry & gg,

@@ -20,7 +20,7 @@ namespace kernelutil{
   get_as_single_string(std::string filename){
     std::ifstream input(filename);
     if(!input.good()){
-      throw tinygemm_error( "Error attempting to open '" + filename + "', in kernelutil::get_as_single_string.  ");
+      throw tinygemm_error( "Error attempting to open '" + filename + "', in kernelutil : :ge t_as_single_string.  ");
     }
     
     std::ifstream t(filename);
@@ -30,11 +30,11 @@ namespace kernelutil{
   }
   
   std::pair<std::map<std::string, unsigned>, std::map<std::string, std::string>> 
-  get_all_preprocessor_parameters(std::string kernel_filename){
+  get_all_preprocessor_parameters(const std::string & kernel_string){
 
-    std::ifstream input(kernel_filename);
+    std::istringstream input(kernel_string);
     if(!input.good()){
-      throw tinygemm_error( "Error opening '" + kernel_filename + "'. ");
+      throw tinygemm_error( "Error converting parameter kernel_string into a std::istringstream (in kernelsnips.cpp). ");
     }
     
     
@@ -84,18 +84,18 @@ namespace kernelutil{
   }
 
 
-  std::map<std::string, unsigned> get_integer_preprocessor_parameters(std::string kernel_filename){
-    auto all_preprocessor_parameters = get_all_preprocessor_parameters(kernel_filename);
+  std::map<std::string, unsigned> get_integer_preprocessor_parameters(const std::string & kernel_string){
+    auto all_preprocessor_parameters = get_all_preprocessor_parameters(kernel_string);
     return all_preprocessor_parameters.first;
   }
 
 
 
-  std::string get_kernel_function_name(std::string kernel_filename){
+  std::string get_kernel_function_name(const std::string & kernel_string){
         
-    std::ifstream input(kernel_filename);
+    std::istringstream input(kernel_string);
     if(!input.good()){
-      throw tinygemm_error( "Error opening '" + kernel_filename + "' in get_kernel_function_name. ");
+      throw tinygemm_error( "Error getting istringstream from parameter kernel_string in get_kernel_function_name (in kernelsnips.cpp) ");
     }
     
     
@@ -117,8 +117,8 @@ namespace kernelutil{
   }
 
 
- void set_sizes_from_kernel_source(unsigned & macro_tile_width, unsigned & macro_tile_height, unsigned & n_workitems_per_workgroup, unsigned & n_work_items_per_c_elm, unsigned & does_beta_c_inc, std::string kernelfilename){
-    auto ipp = kernelutil::get_integer_preprocessor_parameters(kernelfilename);
+ void set_sizes_from_kernel_string(unsigned & macro_tile_width, unsigned & macro_tile_height, unsigned & n_workitems_per_workgroup, unsigned & n_work_items_per_c_elm, unsigned & does_beta_c_inc, const std::string & kernel_string){
+    auto ipp = kernelutil::get_integer_preprocessor_parameters(kernel_string);
     macro_tile_width = ipp["MACRO_TILE_WIDTH"];
     macro_tile_height = ipp["MACRO_TILE_HEIGHT"];
     n_workitems_per_workgroup = ipp["N_WORK_ITEMS_PER_WORKGROUP"]; 

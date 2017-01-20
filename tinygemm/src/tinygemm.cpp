@@ -1,4 +1,5 @@
 #include <tinygemm/tinygemmerror.hpp>
+
 #include <thread>
 #include <sstream>
 #include <limits>
@@ -19,6 +20,7 @@
 #include <tinygemm/tinygemmsolution.hpp>
 #include <tinygemm/hyperparams.hpp>
 #include <tinygemm/makekernelsource.hpp>
+#include <tinygemm/kernelstringgenerator.hpp>
 #include <tinygemm/defaultoutpath.hpp>
 
 namespace tinygemm{
@@ -123,9 +125,9 @@ private:
   cl_device_id device_id_to_use;
   bool nobenching;
 
-  std::string kerneldir;
-  std::string kernelfilename;
-  defpaths::tmp_dir kernel_tmp_dir;
+  //std::string kerneldir;
+  //std::string kernelfilename;
+  //defpaths::tmp_dir kernel_tmp_dir;
 
 
 public:
@@ -169,8 +171,8 @@ public:
     if (nobenching == false){ // || (std::abs(beta - 1.) < 1e-9)){
       setup_betac_kernel(); 
     }
-    kerneldir = kernel_tmp_dir.name;
-    kernelfilename = kerneldir + "/" + kernelname + ".cl";
+    //kerneldir = kernel_tmp_dir.name;
+    //kernelfilename = kerneldir + "/" + kernelname + ".cl";
   }
  
  
@@ -220,7 +222,9 @@ public:
 
   void setup_betac_kernel(){
     /* jit compile the betackernel source  */
-    openclutil::set_program_and_kernel(betac_program, betac_kernel, betac_kernel_function_name, context, device_id_to_use, betac::get_cl_file_path(floattype));
+    
+    std::string betac_kernel_string = betac::get_betac_kernel_string(floattype);
+    openclutil::set_program_and_kernel(betac_program, betac_kernel, betac_kernel_function_name, context, device_id_to_use, betac_kernel_string); //betac::get_cl_file_path(floattype));
     betac::set_betackernel_sizes(floattype, gg.isColMajor, gg.tC, gg.m, gg.n, dim_coal, dim_uncoal, betac_global_work_size, betac_local_work_size);
     mowri << "in setup_betac_kernel, global_work_size : " << betac_global_work_size << Endl; 
     ret = clSetKernelArg(betac_kernel, 0, sizeof(unsigned), &dim_coal);
@@ -243,13 +247,13 @@ public:
     floatsize = get_floatsize(floattype);    
   }
 
-  void check_file_and_set_from(std::string kernelfn){
+  void check_and_set_from(const std::string & kernel_string){
     
-    /* check that the parameters in the kernelfile look reasonable */
-    kernelutil::check_gpu_kernel_preprocessor_parameters(kernelfn, gg.tA, gg.tB, gg.tC, gg.isColMajor, gg.m, gg.n, floattostring::get_float_string(floattype));
+    /* check that the parameters in kernel_string look reasonable */
+    kernelutil::check_gpu_kernel_preprocessor_parameters(kernel_string, gg.tA, gg.tB, gg.tC, gg.isColMajor, gg.m, gg.n, floattostring::get_float_string(floattype));
     
-    /* extract the parameters which are needed to determine the number of work groups and work items to launch, directly from kernel source */
-    kernelutil::set_sizes_from_kernel_source(macro_tile_width, macro_tile_height, n_workitems_per_workgroup, n_work_items_per_c_elm, does_betac_inc, kernelfn);
+    /* extract the parameters which are needed to determine the number of work groups and work items to launch, directly from kernel string */
+    kernelutil::set_sizes_from_kernel_string(macro_tile_width, macro_tile_height, n_workitems_per_workgroup, n_work_items_per_c_elm, does_betac_inc, kernel_string);
   }
 
 
@@ -417,18 +421,22 @@ public:
   }
 
 
-  void full_kernel_setup_from_source_file(std::string kernelfilename){
+  void full_kernel_setup_from_kernel_string(const std::string & kernel_string){
 
     /* set 5 parameters from given file: 
      * macro_tile_width, macro_tile_height, n_workitems_per_workgroup, n_work_items_per_c_elm, does_betac_inc */
-    check_file_and_set_from(kernelfilename);
+    check_and_set_from(kernel_string);
 
     /* Here we set the numbers of work groups (n_work_groups) and work items (global_work_size) for the alpha (alpha and beta) aka main kernel */  
     set_workforce();
     mowri << "main kernel global work size : " << global_work_size <<  " (recommended ~ 4*64*40*64 = 655360)" << Endl; 
     mowri << "Entering setting of program and kernel, compiling ..." << Flush;
     /* jit compile the cl source to get `kernel' (and `program') */
-    openclutil::set_program_and_kernel(program, kernel, kernel_function_name, context, device_id_to_use, kernelfilename);
+    openclutil::set_program_and_kernel(program, kernel, kernel_function_name, context, device_id_to_use, kernel_string);
+    
+    
+    
+    
     mowri << "... done" << Endl;
     /* set kernel's arguments */
     set_main_kernel_arguments();
@@ -441,14 +449,14 @@ public:
   
         
   /* try-wrapped in gemini */
-  void benchgemm(std::string kernelfilename, unsigned n_runs){
+  void benchgemm(const std::string & kernel_string, unsigned n_runs){
 
     if (n_runs == 0){
       throw tinygemm_error("n_runs to benchgemm should be a positive integer");
     }
     
     mowri << "INPUT_CALL   \t:" << gg.get_string() << Endl;
-    full_kernel_setup_from_source_file(kernelfilename);
+    full_kernel_setup_from_kernel_string(kernel_string);
     mowri << "Entering the core gemm loops" << Endl;
     core_gemm_loop(n_runs);
     release_main_kernel_and_program();
@@ -470,18 +478,49 @@ public:
       all_int_parms[x.first] = x.second;
     }
     bool verbose_report_from_python = true;
-    int kernel_write_status = tinygemm::mkkern::make_kernel_via_python(kerneldir,  floattostring::get_float_string(floattype), all_int_parms, kernelname, verbose_report_from_python);
-    if (kernel_write_status != CL_SUCCESS){
-      throw tinygemm_error("A problem arose in the python script to generate the kernel. Throwing from get_default.");
-    }
+    
+    std::string default_main_kernel_string;
+    tinygemm::kerngen::KernelStringSetStatus set_status = tinygemm::kerngen::set_kernel_string(
+    default_main_kernel_string,
+    "somekernelname",
+    floattype ==  'f' ? 32 : 64,
+    all_int_parms.at("a_transposed"),
+    all_int_parms.at("b_transposed"),
+    all_int_parms.at("c_transposed"),
+    all_int_parms.at("is_col_major"),
+    all_int_parms.at("micro_tile_width"), 
+    all_int_parms.at("micro_tile_height"), 
+    all_int_parms.at("macro_tile_width"), 
+    all_int_parms.at("macro_tile_height"), 
+    all_int_parms.at("unroll"), 
+    all_int_parms.at("pad"), 
+    all_int_parms.at("group_allocation"), 
+    all_int_parms.at("work_item_load_a_pll_to_unroll"), 
+    all_int_parms.at("work_item_load_b_pll_to_unroll"), 
+    all_int_parms.at("unroll_pragma"), 
+    all_int_parms.at("load_to_lds_interwoven"), 
+    all_int_parms.at("c_micro_tiles_interwoven"), 
+    all_int_parms.at("n_work_items_per_c_elm"),
+    all_int_parms.at("unroll_for_offset"),
+    all_int_parms.at("n_target_active_workgroups"));
+    
+  
+  
+    //int kernel_write_status = tinygemm::mkkern::make_kernel_via_python(blabladir, floattostring::get_float_string(floattype), all_int_parms, kernelname, verbose_report_from_python);
+    //if (kernel_write_status != CL_SUCCESS){
+      //throw tinygemm_error("A problem arose in the python script to generate the kernel. Throwing from get_default.");
+    //}
+    
+    
     float median_time = std::numeric_limits<float>::max();
     float elapsed_seconds = 0.;
     float median_benchmark_gflops = 0.;                
     tinygemm::TinyGemmSolutionStatistics tgss(median_time, median_benchmark_gflops, gg, elapsed_seconds);
-    std::string soln_betac_kernel = all_int_parms.at("n_work_items_per_c_elm") == 1 ?  ""  : kernelutil::get_as_single_string(betac::get_cl_file_path(floattype));
-    std::string soln_betac_kernel_function_name = all_int_parms.at("n_work_items_per_c_elm") == 1 ? "" : kernelutil::get_kernel_function_name(betac::get_cl_file_path(floattype));
-    std::string soln_main_kernel = kernelutil::get_as_single_string(kernelfilename);
-    std::string soln_main_kernel_function_name = kernelutil::get_kernel_function_name(kernelfilename);                
+    /* TODO : this can be more efficient. There is no need to generate the betac kernel twice.*/ 
+    std::string soln_betac_kernel = all_int_parms.at("n_work_items_per_c_elm") == 1 ?  ""  : betac::get_betac_kernel_string(floattype);
+    std::string soln_betac_kernel_function_name = all_int_parms.at("n_work_items_per_c_elm") == 1 ? "" : kernelutil::get_kernel_function_name(betac::get_betac_kernel_string(floattype));
+    std::string soln_main_kernel = default_main_kernel_string; 
+    std::string soln_main_kernel_function_name = kernelutil::get_kernel_function_name(default_main_kernel_string);                
     tinygemm::TinyGemmSolution tgs(soln_betac_kernel, soln_main_kernel, soln_betac_kernel_function_name, soln_main_kernel_function_name, all_int_parms, floattype, tgss);
 
     return tgs;
@@ -581,18 +620,55 @@ public:
              * of the number of work items. In the case of `stupid' mistakes (bad paths, run time problems) the python output from the first kernel 
              * generated (global_counter = 0) will be printed explicitly, so that hopefully the user will see what the problem is.  */
             bool verbose_report_from_python = global_counter == 0 ? true : false;
-            int kernel_write_status = tinygemm::mkkern::make_kernel_via_python(kerneldir,  floattostring::get_float_string(floattype), all_int_parms, kernelname, verbose_report_from_python);
             
-            /* the kernel was succesfully generated, we now compile and benchmark it */
-            if (kernel_write_status == 0){
-
+            
+            //int kernel_write_status = tinygemm::mkkern::make_kernel_via_python(kerneldir,  floattostring::get_float_string(floattype), all_int_parms, kernelname, verbose_report_from_python);
+            
+            //TODO : make function to get kernel_string 
+            //std::string main_kernel_string = "blablabla";
+            
+            
+            
+            std::string main_kernel_string;
+            tinygemm::kerngen::KernelStringSetStatus set_status = tinygemm::kerngen::set_kernel_string(
+             main_kernel_string,
+            "somekernelname",
+            floattype ==  'f' ? 32 : 64,
+            all_int_parms.at("a_transposed"),
+            all_int_parms.at("b_transposed"),
+            all_int_parms.at("c_transposed"),
+            all_int_parms.at("is_col_major"),
+            all_int_parms.at("micro_tile_width"), 
+            all_int_parms.at("micro_tile_height"), 
+            all_int_parms.at("macro_tile_width"), 
+            all_int_parms.at("macro_tile_height"), 
+            all_int_parms.at("unroll"), 
+            all_int_parms.at("pad"), 
+            all_int_parms.at("group_allocation"), 
+            all_int_parms.at("work_item_load_a_pll_to_unroll"), 
+            all_int_parms.at("work_item_load_b_pll_to_unroll"), 
+            all_int_parms.at("unroll_pragma"), 
+            all_int_parms.at("load_to_lds_interwoven"), 
+            all_int_parms.at("c_micro_tiles_interwoven"), 
+            all_int_parms.at("n_work_items_per_c_elm"),
+            all_int_parms.at("unroll_for_offset"),
+            all_int_parms.at("n_target_active_workgroups"));
+    
+    
+  
+            if (set_status.is_good() == true){
+  
+    
+              /* the kernel was succesfully generated, we now compile and benchmark it */
+              
+      
               mowri << "\n" << hp.get_string() << Endl;
               ++global_counter;
               mowri << "global gen-com-bench : " << global_counter  <<  "." << Endl;
-
-              benchgemm(kernelfilename, n_runs_in_find_per_kernel);
+  
+              benchgemm(main_kernel_string, n_runs_in_find_per_kernel);
               std::sort(v_t_total_with_both.begin(), v_t_total_with_both.end());
-
+  
               /* Taking the fastest or median? */ 
               float median_time = v_t_total_with_both[v_t_total_with_both.size()/2]; //[0]; 
               
@@ -613,28 +689,30 @@ public:
                 best_time = median_time;
                 best_hyper_params = hp;
                 mowri << "---------- NEW BEST TIME FOUND --------- : " << best_time << Endl << "breaking from current hyper front, creating new hyper front " << Endl;
-
+  
                 end = std::chrono::high_resolution_clock::now();
                 fp_ms = end - start;
                 elapsed_seconds = fp_ms.count();
-
+  
                 float median_benchmark_gflops = (2. * gg.m * gg.n * gg.k) / (median_time * 10e5);                
                 tinygemm::TinyGemmSolutionStatistics tgss(median_time, median_benchmark_gflops, gg, elapsed_seconds);
                 
                 //set kernel files
                 //TODO : should not be determining whether a kernel does betac or not based on this, find true parameter
-                std::string soln_betac_kernel = all_int_parms.at("n_work_items_per_c_elm") == 1 ?  ""  : kernelutil::get_as_single_string(betac::get_cl_file_path(floattype));
+                std::string soln_betac_kernel = all_int_parms.at("n_work_items_per_c_elm") == 1 ?  ""  : betac::get_betac_kernel_string(floattype);//kernelutil::get_as_single_string(betac::get_cl_file_path(floattype));
                 std::string soln_betac_kernel_function_name = all_int_parms.at("n_work_items_per_c_elm") == 1 ? "" : betac_kernel_function_name;
-                std::string soln_main_kernel = kernelutil::get_as_single_string(kernelfilename);
-                std::string soln_main_kernel_function_name = kernel_function_name;                
+                //TODO : this is redundant. clean up. 
+                std::string soln_main_kernel = main_kernel_string; //kernelutil::get_as_single_string(kernelfilename);
+                std::string soln_main_kernel_function_name = kernelutil::get_kernel_function_name(main_kernel_string);                
                 tinygemm::TinyGemmSolution tgs(soln_betac_kernel, soln_main_kernel, soln_betac_kernel_function_name, soln_main_kernel_function_name, all_int_parms, floattype, tgss);
-
+  
                 path_of_best_solns.push_back(tgs); 
               }
+            
             }
           
             else{
-              mowri << "\nSkipping this kernel, hyper-parameters incompatible" << Endl;
+              mowri << "\nSkipping this kernel, hyper-parameters incompatible. " <<  "Specifically, the message from the kernel string setting function was --- " << set_status.message << "\n";
             }
           }
         }
@@ -788,7 +866,7 @@ std::string logfile){
 
 void benchgemm(
   cl_command_queue command_queue,
-  std::string kernelfilename,
+  const std::string & kernel_string,
   unsigned n_runs,
   const char floattype, 
   const tinygemm::TinyGemmGeometry & gg,
@@ -801,7 +879,7 @@ void benchgemm(
   std::string logfile){
   bool nobenching = false;
   OpenCLGemmEncapsulator oger(command_queue, floattype, gg, alpha, beta, a_gpu, b_gpu, c_gpu, logfile, verbose, nobenching);
-  oger.benchgemm(kernelfilename, n_runs);
+  oger.benchgemm(kernel_string, n_runs);
 }
   
 } //namespace

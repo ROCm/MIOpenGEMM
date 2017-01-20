@@ -1,8 +1,13 @@
+
 #include <iostream>
 #include <vector>
+#include <sstream>
+#include <fstream>
 
+#include <tinygemm/tinygemmerror.hpp>
 #include <tinygemm/tinygemm.hpp>
 #include <tinygemm/devtinygemm.hpp>
+#include <tinygemm/kernelstringgenerator.hpp>
 #include <tinygemm/makekernelsource.hpp>
 #include <tinygemm/defaultoutpath.hpp>
 
@@ -15,29 +20,78 @@
 
 /* testing the writing to text file of a gemm kernel */
 int make_kernel(){
+  
+  //throw tinygemm::tinygemm_error("make make_kernel test into get kernel string test.");
+  
   std::map<std::string, unsigned> all_int_parms;
-  all_int_parms["is_col_major"] = 0;
-  all_int_parms["a_transposed"] = 0;
+  all_int_parms["is_col_major"] = 1;
+  all_int_parms["a_transposed"] = 1;
   all_int_parms["b_transposed"] = 0;
-  all_int_parms["c_transposed"] = 0;
-  all_int_parms["micro_tile_width"] = 2;  
+  all_int_parms["c_transposed"] = 1;
+  all_int_parms["micro_tile_width"] = 4;  
   all_int_parms["micro_tile_height"] = 2;
-  all_int_parms["macro_tile_width"] = 32;
+  all_int_parms["macro_tile_width"] = 64;
   all_int_parms["macro_tile_height"] = 32; 
   all_int_parms["unroll"] = 16;
-  all_int_parms["pad"] = 1;    
-  all_int_parms["group_allocation"] = 1;
-  all_int_parms["work_item_load_a_pll_to_unroll"] = 0;
-  all_int_parms["work_item_load_b_pll_to_unroll"] = 1;
+  all_int_parms["pad"] = 5;    
+  all_int_parms["group_allocation"] = 3;
+  all_int_parms["work_item_load_a_pll_to_unroll"] = 1;
+  all_int_parms["work_item_load_b_pll_to_unroll"] = 0;
   all_int_parms["unroll_pragma"] = 0;
-  all_int_parms["load_to_lds_interwoven"] = 0;
+  all_int_parms["load_to_lds_interwoven"] = 1;
   all_int_parms["c_micro_tiles_interwoven"] = 1;
   all_int_parms["use_edge_trick"] = 1;
-  all_int_parms["n_work_items_per_c_elm"] = 1;
-  all_int_parms["n_target_active_workgroups"] = 64;
-  std::string dir_name = "~/atest/directory/ofsorts";
+  all_int_parms["n_work_items_per_c_elm"] = 5;
+  all_int_parms["unroll_for_offset"] = 1;
+  all_int_parms["n_target_active_workgroups"] = 60;
+  
+  
   std::string t_float = "float";
-  tinygemm::mkkern::make_kernel_via_python(dir_name, t_float, all_int_parms, "", true);
+  
+  
+  
+  std::string kernel_string;
+  
+  tinygemm::kerngen::KernelStringSetStatus set_status = tinygemm::kerngen::set_kernel_string(
+  kernel_string,
+ "somekernelname",
+  t_float ==  "float" ? 32 : 64,
+  all_int_parms.at("a_transposed"),
+  all_int_parms.at("b_transposed"),
+  all_int_parms.at("c_transposed"),
+  all_int_parms.at("is_col_major"),
+  all_int_parms.at("micro_tile_width"), 
+  all_int_parms.at("micro_tile_height"), 
+  all_int_parms.at("macro_tile_width"), 
+  all_int_parms.at("macro_tile_height"), 
+  all_int_parms.at("unroll"), 
+  all_int_parms.at("pad"), 
+  all_int_parms.at("group_allocation"), 
+  all_int_parms.at("work_item_load_a_pll_to_unroll"), 
+  all_int_parms.at("work_item_load_b_pll_to_unroll"), 
+  all_int_parms.at("unroll_pragma"), 
+  all_int_parms.at("load_to_lds_interwoven"), 
+  all_int_parms.at("c_micro_tiles_interwoven"), 
+  all_int_parms.at("n_work_items_per_c_elm"),
+  all_int_parms.at("unroll_for_offset"),
+  all_int_parms.at("n_target_active_workgroups"));
+  
+  
+  if (set_status.is_good() == false){
+    throw tinygemm::tinygemm_error(set_status.message);
+  }
+  
+  
+  std::string dir_name = "/home/idiap/atest/directory/ofsorts";
+  tinygemm::mkkern::make_kernel_via_python(dir_name, t_float, all_int_parms, "somekernelname", true);
+ 
+  std::string cwritefn (dir_name + "/" + "somekernelnamec.cl"); 
+  std::ofstream ost (cwritefn);
+  ost << kernel_string;
+  ost.close();
+  
+  //std::cout << kernel_string << std::endl;
+  
   return 0;
 }
 
@@ -78,7 +132,7 @@ class DevGemmTester{
     DevGemmTester(){
       isColMajor = true;
       if (isColMajor == false){
-        throw std::runtime_error("in this test, isColMajor should be true");
+        throw std::runtime_error("in this test, isColMajor should be true (is this so? if so find out why and generalise. probably in the hard coded ldxs.");
       }
       
       /* free to change these parameter values */
@@ -108,7 +162,8 @@ class DevGemmTester{
       size_t n_c = ldc * (tC ? m : n); 
       
       /* TODO get the true post-gemm C so that we can do a test 
-       * (or just keep the main testing from dev/python)*/
+       * (or just keep the main testing from dev/python)
+       * update : consider geometry tests */
       do_test = false;
       
       /* fill matrices with random floats. 
@@ -133,26 +188,32 @@ class DevGemmTester{
       
     }
     
-    int red_benchmark(std::vector<std::vector<std::string> > & gpu_kernel_filenames, bool findfirst, float allotted_time, bool enforce_deterministic = false){
-      /* We pass cpu pointers to tinygemm::dev::benchmark, which does all the necessary opencl gpu boilerplating */
-      tinygemm::dev::benchgemm<float>(isColMajor, tA, tB, tC, m, n, k, alpha, v_a.data(), lda, a_offset, v_b.data(), ldb, b_offset, beta, v_c.data(), ldc, c_offset, {}, gpu_kernel_filenames, capture_output, output, nullptr, do_test, n_runs, outputfilename, findfirst, allotted_time, enforce_deterministic);
+    int red_benchmark(std::vector<std::vector<std::string> > & gpu_kernel_strings, bool findfirst, float allotted_time, bool enforce_deterministic = false){
+      /* We pass cpu pointers to tinygemm::dev::benchgemm, which does all the necessary opencl gpu boilerplating */
+      tinygemm::dev::benchgemm<float>(isColMajor, tA, tB, tC, m, n, k, alpha, v_a.data(), lda, a_offset, v_b.data(), ldb, b_offset, beta, v_c.data(), ldc, c_offset, {}, gpu_kernel_strings, capture_output, output, nullptr, do_test, n_runs, outputfilename, findfirst, allotted_time, enforce_deterministic);
       return 0;
     }
       
   
     int call_benchgemm(){
-      std::string benchgemmtestpath = "some_valid_kernel_path_cl";
-      std::vector<std::vector<std::string> > gpu_kernel_filenames {{ benchgemmtestpath }};
-      std::cout << "Hello from tinygemm test!\n";  
-      red_benchmark(gpu_kernel_filenames, false, -1.0);
+
+      // std::string k ernel_pa th = "some_valid_kernel_path or try test make kernel ??";      
+      std::string kernel_string = "bla bla bla"; //tinygemm::kernelutil::ge t_as_single_stri ng(kernel_path);
+      std::cout << kernel_string << "\n\n\nTHIS IS A TEST OF BENCHGEMM FROM FILENAMES SDTSESFSRT" << std::endl;
+      std::abort();
+      
+
+      std::vector<std::vector<std::string> > gpu_kernel_strings {{ kernel_string }};
+      std::cout << "Hello from tinygemm call_benchgemm test!\n";  
+      red_benchmark(gpu_kernel_strings, false, -1.0, false);
       return 0;
     }
     
     int call_find(){
-      std::vector<std::vector<std::string> > gpu_kernel_filenames {};
-      red_benchmark(gpu_kernel_filenames, true, 10.0, false); //10 seconds, don't force to be determinisitc
+      std::vector<std::vector<std::string> > gpu_kernel_strings {};
+      red_benchmark(gpu_kernel_strings, true, 10.0, false); //10 seconds, don't force to be determinisitc
       return 0;
-    } 
+    }
 };
 
 
