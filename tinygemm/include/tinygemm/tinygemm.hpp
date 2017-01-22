@@ -32,7 +32,7 @@ const bool enforce_deterministic,
 /* floattype
  * 'f' : 32-bit single precision
  * 'd' : 64-bit double precision 
- * the user must guarantee that a,b and c are in agreement with floattype, 
+ * the user must guarantee that a, b and c are in agreement with floattype, 
  * TODO is there a way to check float type from a,b,c? If so, floattype is not nec. */
 const char floattype,
 /* see tinygemm/include/tinygemmgeometry.hpp for TinyGemmGeometry parameters */

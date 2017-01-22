@@ -1,13 +1,26 @@
 #include <string>
+#include <sstream>
 #include <tinygemm/tinygemmerror.hpp>
 #include <tinygemm/kernelsnips.hpp>
 #include <tinygemm/outputwriter.hpp>
-#include <tinygemm/defaultoutpath.hpp>
 #include  <CL/cl.h>
 
 
 namespace tinygemm{
 namespace openclutil{
+
+
+/* TODO : move this elsewhere, improve, use for ALL cl calls. */
+void confirm_cl_status(cl_int ret, const std::string & hash){
+  if (ret != CL_SUCCESS){
+    std::stringstream errms;
+    errms << "Reporting an opencl error at " << hash << " (grep this code), which returned with cl_int " << ret;
+    throw tinygemm_error(errms.str());
+  }
+}
+
+/* TODO : make functions of the form openclutil::cl_create_buffer(context, memoryflag, memsize, hash) */
+
 
 void set_platform_etc(cl_platform_id & platform, cl_uint & num_platforms, cl_context & context, cl_device_id & device_id_to_use, outputwriting::OutputWriter & mowri){
   
@@ -81,28 +94,27 @@ void set_platform_etc(cl_platform_id & platform, cl_uint & num_platforms, cl_con
     mowri << "Will use device " << bestDeviceName << ", which has " << max_max_compute_units << " CUs. \nTo use a different device, consider modifying set_platform_etc in openclutil.cpp (or write custom OpenCL boilerplate)." << Endl;
     device_id_to_use = bestDeviceId;
   }
-  
-  
 
 }
 
 
 
-void set_program_and_kernel(cl_program & program, cl_kernel & kernel, std::string & kernel_function_name, const cl_context & context, const cl_device_id & device_id_to_use, const std::string & kernel_string){
+void set_program_and_kernel(const cl_command_queue & command_queue, cl_program & program, cl_kernel & kernel, std::string & kernel_function_name, const std::string & kernel_string){
+  
   cl_int ret;
+  
+  
+  cl_context context;
+  ret = clGetCommandQueueInfo(command_queue, CL_QUEUE_CONTEXT, sizeof(cl_context), &context, NULL);
+  
+  cl_device_id device_id_to_use;
+  ret = clGetCommandQueueInfo(command_queue, CL_QUEUE_DEVICE, sizeof(cl_device_id), &device_id_to_use, NULL);
+  //confirm_cl_status(ret, "sdrjmsldirmf49fmsd;l343");
+    
+    
   kernel_function_name = kernelutil::get_kernel_function_name(kernel_string);
   
-  //char *source;
-  //size_t sourceSize;
-  //FILE *fp = fopen(filename.c_str(), "r");
-  //fseek(fp, 0, SEEK_END);
-  //sourceSize = ftell(fp);
-  //fseek(fp , 0, SEEK_SET);
-  //source = (char *)malloc(sourceSize * sizeof(char));
-  //fread(source, 1, sourceSize, fp);
-  //fclose(fp);
-  //program = clCreateProgramWithSource(context, 1, (const char **)&source, &sourceSize, &ret);
-  //free(source);
+  
   
   auto kernel_cstr = kernel_string.c_str();
   auto kernel_string_size =  kernel_string.size();
@@ -149,5 +161,6 @@ void set_program_and_kernel(cl_program & program, cl_kernel & kernel, std::strin
 }  
   
   
-}} // end namespace
+}
+} // end namespace
 

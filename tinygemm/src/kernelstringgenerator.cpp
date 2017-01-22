@@ -53,46 +53,14 @@ std::vector<unsigned> get_multiples(unsigned N){
   tS = 13 .. 23 raise an error ((TH * TH) % tS != 0)
   tS = 24 return [6, 4] */
 
-std::tuple<unsigned, unsigned> get_tile_dimensions(unsigned TH, unsigned TW, unsigned tS){
-  unsigned tH = 0;
-  unsigned tW = 0;
 
-  std::stringstream err_ss;
-  err_ss << "TH : " << TH << " TW : " << TW << " tS : " << tS;
-
-  if ((TH*TW) % tS  != 0){
-    throw std::runtime_error("Areas of micro and macro tiles are incompatible : " + err_ss.str());
-  }
-  
-  for (auto & multiple_of_TH : get_multiples(TH)){
-    if ((tS % multiple_of_TH == 0) && ((tS / multiple_of_TH) <= TW)){
-      tH = multiple_of_TH;
-      tW = tS / tH;
-      break;
-    }
-  }
-  
-  if (tH == 0){
-    throw std::runtime_error("Impossible tiling problem in get_tile_dimensions : " + err_ss.str());
-  }
-  
-  err_ss << " tH : " << tH << " tW  " << tW;
-
-  if (tW  > tH){ 
-    //throw std::runtime_error("this is a pedantic error, can remove when confirmed no prob: no `tall' tile. best `wide' one " + err_ss.str());
-  }
-  
-  if (TW % tW != 0 || TH % TH != 0 || tW*tH != tS){
-    throw std::runtime_error("This is strange : the found micro tile size is not consistent with the macro tile : "  + err_ss.str());
-  }
-  
-  return std::tuple<unsigned, unsigned> (tH, tW); 
-}
 
 class KernelString{
 
   private:
     /* to be set in constructor based on passed in parameters */
+    
+
     /* */
     std::string strided_i_vertical;
     /* */
@@ -266,27 +234,70 @@ class KernelString{
     n_micro_tiles_vertically = macro_tile_height / micro_tile_height;
     n_micro_tiles_horizontally = macro_tile_width / micro_tile_width;
     
-    if (work_item_load_a_pll_to_unroll == 0){
-      std::tie(micro_a_tile_perp_unroll, micro_a_tile_pll_unroll) = get_tile_dimensions(macro_tile_height, unroll, n_elements_of_a_to_load_per_workitem); 
-    }
-    else{
-      std::tie(micro_a_tile_pll_unroll, micro_a_tile_perp_unroll) = get_tile_dimensions(unroll, macro_tile_height, n_elements_of_a_to_load_per_workitem);
-    }
-    n_micro_a_tiles_pll_unroll = unroll / micro_a_tile_pll_unroll;
     
+    test_parameters_prestringbuild();
     
-    if (work_item_load_b_pll_to_unroll == 0){
-      std::tie(micro_b_tile_perp_unroll, micro_b_tile_pll_unroll) = get_tile_dimensions(macro_tile_width, unroll, n_elements_of_b_to_load_per_workitem); 
-    }
-    else{
-      std::tie(micro_b_tile_pll_unroll, micro_b_tile_perp_unroll) = get_tile_dimensions(unroll, macro_tile_width, n_elements_of_b_to_load_per_workitem);
-    }
-    n_micro_b_tiles_pll_unroll = unroll / micro_b_tile_pll_unroll;
+      
+
    
-    test_parameters_prestringbuild(); 
+     
     
     
   }
+
+
+  std::string 
+  set_tile_dimensions(unsigned & tH, unsigned & tW, unsigned TH, unsigned TW, unsigned tS){
+
+    std::string set_ds("");
+  
+    std::stringstream err_ss;
+    err_ss << get_string() << "\n" << "TH : " << TH << " TW : " << TW << " tS : " << tS;
+  
+    if ((TH*TW) % tS  != 0){
+      set_ds += "Areas of micro and macro tiles are incompatible : ";
+      set_ds += err_ss.str();
+      return set_ds;
+    }
+    
+    for (auto & multiple_of_TH : get_multiples(TH)){
+      if ((tS % multiple_of_TH == 0) && ((tS / multiple_of_TH) <= TW)){
+        tH = multiple_of_TH;
+        tW = tS / tH;
+        break;
+      }
+    }
+    
+    if (tH == 0){
+      set_ds += "Impossible tiling problem in get_tile_dimensions : ";
+      set_ds += err_ss.str();
+      return set_ds;
+    }
+    
+    err_ss << " tH : " << tH << " tW  " << tW;
+  
+    if (tW  > tH){
+      //throw std::runtime_error("this is a pedantic error, can remove when confirmed no prob: no `tall' tile. best `wide' one " + err_ss.str());
+    }
+    
+    if (TW % tW != 0 || TH % TH != 0 || tW*tH != tS){
+      throw std::runtime_error("This is strange : the found micro tile size is not consistent with the macro tile : "  + err_ss.str());
+    }
+    
+    return set_ds; 
+  }
+  
+  
+  std::string get_string(){
+    std::stringstream ss;
+    ss << "Y" << macro_tile_height <<  "_X" << macro_tile_width << "_y" << micro_tile_height << "_x" << micro_tile_width << "_U" << unroll << "_P" << pad << "_GA" << group_allocation << "_APLU" << work_item_load_a_pll_to_unroll << "_BPLU" << work_item_load_b_pll_to_unroll << "_PU" << unroll_pragma << "_LIW" << load_to_lds_interwoven << "_MIW" << c_micro_tiles_interwoven  << "_ET" << 1 << "_ICE" << n_work_items_per_c_elm << "_UFO" << "unroll_for_offset";
+    
+    return ss.str();
+    
+    
+  }
+  
+  
   
   /* TODO : streamline this, so that all parameters which should be 0 or 1 are processed in a for loop. */
   /* TODO : gather all errors and put them here */
@@ -919,6 +930,32 @@ const unsigned group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
 
   
   KernelStringSetStatus set_string(std::string & kernel_string){
+
+
+
+    std::string set_dimensions_status("");
+    if (work_item_load_a_pll_to_unroll == 0){
+      set_dimensions_status += set_tile_dimensions(micro_a_tile_perp_unroll, micro_a_tile_pll_unroll, macro_tile_height, unroll, n_elements_of_a_to_load_per_workitem); 
+    }
+    else{
+      set_dimensions_status += set_tile_dimensions(micro_a_tile_pll_unroll, micro_a_tile_perp_unroll, unroll, macro_tile_height, n_elements_of_a_to_load_per_workitem);
+    }
+    
+    
+    
+    if (work_item_load_b_pll_to_unroll == 0){
+      set_dimensions_status += set_tile_dimensions(micro_b_tile_perp_unroll, micro_b_tile_pll_unroll, macro_tile_width, unroll, n_elements_of_b_to_load_per_workitem); 
+    }
+    else{
+      set_dimensions_status += set_tile_dimensions(micro_b_tile_pll_unroll, micro_b_tile_perp_unroll, unroll, macro_tile_width, n_elements_of_b_to_load_per_workitem);
+    }
+    
+    if (set_dimensions_status != ""){
+      return KernelStringSetStatus(set_dimensions_status);
+    }
+
+    n_micro_a_tiles_pll_unroll = unroll / micro_a_tile_pll_unroll;
+    n_micro_b_tiles_pll_unroll = unroll / micro_b_tile_pll_unroll;
   
   
       
@@ -1271,7 +1308,8 @@ KernelStringSetStatus set_kernel_string(
   unsigned unroll_for_offset,
   unsigned n_target_active_workgroups){
   
-  KernelString kstring(kernelname,
+  KernelString kstring(
+  kernelname,
   float_size,
   a_transposed,
   b_transposed,

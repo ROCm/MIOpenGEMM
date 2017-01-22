@@ -115,7 +115,6 @@ int main(){
   bool tC = false;
   double alpha = 1.43235342345;
   double beta = 0.45348379373;
-  char floattype = 'f'; 
   float allotted_time = .003; 
   bool verbose = false;
   
@@ -174,7 +173,7 @@ int main(){
       unsigned n_postfind_runs = 11;
       bool do_cpu_test = false;
       
-      basicfind<float>(isColMajor, tA, tB, tC, m, n, k, lda, ldb, ldc, a_offset, b_offset, c_offset, alpha, beta, floattype, allotted_time, verbose, ss_logfile.str(), enforce_deterministic, n_postfind_runs, do_cpu_test);    
+      basicfind<float>(isColMajor, tA, tB, tC, m, n, k, lda, ldb, ldc, a_offset, b_offset, c_offset, alpha, beta, allotted_time, verbose, ss_logfile.str(), enforce_deterministic, n_postfind_runs, do_cpu_test);    
     }
   }
   

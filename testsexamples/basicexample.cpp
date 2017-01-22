@@ -28,9 +28,9 @@ void basicexample(){
   /* floattype should be 
    * 'f' for single-precision, 32-bit floats and 
    * 'd' for double-precision, 64-bit doubles */
-  char floattype = (sizeof(TFloat) == 4) ? 'f' : 'd';
+  
   /* define how long to search for, in seconds. No kernels will be compiled after this allotted time. */
-  float allotted_time = 100.01;
+  float allotted_time = 1.01;
   /* print output to terminal (true) or complete silence to terminal (false) */
   bool verbose = true;
   /* print output to logfile (non-empty string) or not (empty string) */
@@ -41,7 +41,7 @@ void basicexample(){
   bool enforce_deterministic = false;
   unsigned n_postfind_runs = 5;//4;
   bool do_cpu_test = false;  
-  basicfind<TFloat>(isColMajor, tA, tB, tC, m, n, k, lda, ldb, ldc, a_offset, b_offset, c_offset, alpha, beta, floattype, allotted_time, verbose, logfile, enforce_deterministic, n_postfind_runs, do_cpu_test);
+  basicfind<TFloat>(isColMajor, tA, tB, tC, m, n, k, lda, ldb, ldc, a_offset, b_offset, c_offset, alpha, beta, allotted_time, verbose, logfile, enforce_deterministic, n_postfind_runs, do_cpu_test);
 }
 
 int main(){

@@ -66,7 +66,6 @@ std::make_tuple(20800, 128, 49, 49, 49, 20800, true, false),
   bool tC = false;
   double alpha = 1.43235342345;
   double beta = 0.45348379373;
-  char floattype = 'f'; 
   float allotted_time = 120.; 
   bool verbose = false;
   bool enforce_deterministic = false;
@@ -102,7 +101,7 @@ std::make_tuple(20800, 128, 49, 49, 49, 20800, true, false),
     
     bool do_cpu_test = false;
     
-    basicfind<float>(isColMajor, tA, tB, tC, m, n, k, lda, ldb, ldc, a_offset, b_offset, c_offset, alpha, beta, floattype, allotted_time, verbose, ss_logfile.str(), enforce_deterministic, n_postfind_runs, do_cpu_test);    
+    basicfind<float>(isColMajor, tA, tB, tC, m, n, k, lda, ldb, ldc, a_offset, b_offset, c_offset, alpha, beta, allotted_time, verbose, ss_logfile.str(), enforce_deterministic, n_postfind_runs, do_cpu_test);    
   }
   
   return 0;

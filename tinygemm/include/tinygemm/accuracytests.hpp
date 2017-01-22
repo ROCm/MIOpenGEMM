@@ -13,6 +13,17 @@ void accuracy_test(bool isColMajor, bool tC, unsigned m, unsigned n, unsigned ld
    
   mowri << "Performing accuracy test. " << Flush;
   
+  
+  if (c_computed == nullptr){
+    throw tinygemm_error("in accuracy_test, but pointer c_computed is a nullptr. c_computed needs to passed in here, all that happens here is a comparison between an externally provided c_true and c_computed");
+  }
+  
+
+  if (c_true == nullptr){
+    throw tinygemm_error("in accuracy_test, but pointer c_true is a nullptr. c_true needs to passed in here, all that happens here is a comparison between an externally provided c_true and c_computed");
+  }
+    
+  
   c_computed += c_offset;
   
   /* The different cases of tC, isColMajor are handled in this block */

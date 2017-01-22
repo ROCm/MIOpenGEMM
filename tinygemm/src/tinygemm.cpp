@@ -19,22 +19,98 @@
 #include <tinygemm/floattostring.hpp>
 #include <tinygemm/tinygemmsolution.hpp>
 #include <tinygemm/hyperparams.hpp>
-#include <tinygemm/makekernelsource.hpp>
 #include <tinygemm/kernelstringgenerator.hpp>
-#include <tinygemm/defaultoutpath.hpp>
 
 namespace tinygemm{
 
-static std::string kernelname = "atinygemmkernel";
 
 
-void confirm_cl_status(cl_int ret, std::string function, std::string argument){
-  if (ret != CL_SUCCESS){
-    std::stringstream errms;
-    errms << "failure to set cl kernel arg, " << argument << ", in function " << function << "." << " error!";
-    throw tinygemm_error(errms.str());
+
+
+//Y64_X80_y4_x5_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ET1_ICE4_UFO0
+//global gen-com-bench : 61.
+//INPUT_CALL   	: tC:0 tA:1 tB:0 colMaj:0 m:4532 n:3322 k:3131 lda:4538 ldb:3324 ldc:3325 a_offset:1 b_offset:2 c_offset:3
+//main kernel global work size : 3053568 (recommended ~ 4*64*40*64 = 655360)
+//Entering setting of program and kernel, compiling ...... done
+//Entering the core gemm loops
+//elapsed time : 26.6555	 (scaling : 0.37808	 main : 26.276 [ms])  	Gflops/s : 3536.84
+//elapsed time : 26.9309	 (scaling : 0.36544	 main : 26.5642 [ms])  	Gflops/s : 3500.68
+//elapsed time : 27.9781	 (scaling : 0.36496	 main : 27.6118 [ms])  	Gflops/s : 3369.65
+//median time  : 26.9309	 m-Gflops/s : 3500.68
+//elapsed seconds : 27.2288
+
+//Y80_X64_y5_x4_U24_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ET1_ICE2_UFO0
+//Unhandled signal in divisionErrorHandler()
+
+
+//Y80_X64_y5_x4_U24_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ET1_ICE2_UFO0
+//Unhandled signal in divisionErrorHandler()
+
+
+
+
+  void cl_release_kernel(cl_kernel kernel, const std::string & hash){
+    cl_int ret = clReleaseKernel(kernel);
+    openclutil::confirm_cl_status(ret, hash);
   }
-}
+  
+  void cl_release_program(cl_program program, const std::string & hash){
+    cl_int ret = clReleaseProgram(program);
+    openclutil::confirm_cl_status(ret, hash);
+  }
+ 
+ 
+  void cl_set_kernel_arg(cl_kernel & kernel, cl_uint arg_index, size_t arg_size, const void * arg_value, const std::string & hash){
+    cl_int ret = clSetKernelArg(kernel, arg_index, arg_size, arg_value);
+    openclutil::confirm_cl_status(ret, hash);
+  }
+
+
+  void cl_flush(cl_command_queue command_queue, const std::string & hash){
+    cl_int ret = clFlush(command_queue);
+    openclutil::confirm_cl_status(ret, hash); 
+  }
+  
+  void cl_wait_for_events(cl_uint num_events, const cl_event * event_list, const std::string & hash){
+    cl_int ret = clWaitForEvents(num_events, event_list);
+    openclutil::confirm_cl_status(ret, hash);
+  }
+
+
+  void cl_get_command_queue_info(cl_command_queue command_queue, cl_command_queue_info param_name, size_t param_value_size, void * param_value, size_t * param_value_size_ret, const std::string & hash){
+    cl_int ret = clGetCommandQueueInfo(command_queue, param_name, param_value_size, param_value, param_value_size_ret);
+    openclutil::confirm_cl_status(ret, hash);
+  }
+
+
+  cl_mem cl_create_buffer(cl_context context, cl_mem_flags flags, size_t size, void * host_ptr, const std::string & hash){
+    cl_int errcode_ret;
+    cl_mem toreturn = clCreateBuffer(context, flags, size, host_ptr, &errcode_ret);     
+    openclutil::confirm_cl_status(errcode_ret, hash);
+    return toreturn;
+  }
+   
+  void cl_enqueue_copy_buffer(cl_command_queue command_queue, cl_mem src_buffer, cl_mem dst_buffer, size_t src_offset, size_t dst_offset, size_t cb, cl_uint num_events_in_wait_list, const cl_event *event_wait_list, cl_event *event, const std::string & hash){
+    cl_int ret = clEnqueueCopyBuffer(command_queue, src_buffer, dst_buffer, src_offset, dst_offset, cb, num_events_in_wait_list, event_wait_list, event); 
+    openclutil::confirm_cl_status(ret, hash);
+  }
+ 
+
+  void cl_release_mem_object(cl_mem memobj, const std::string & hash){
+    cl_int ret = clReleaseMemObject(memobj);
+    openclutil::confirm_cl_status(ret, hash);
+  }   
+  
+  void cl_enqueue_ndrange_kernel(cl_command_queue command_queue, cl_kernel kernel, cl_uint work_dim, const size_t * global_work_offset, const size_t * global_work_size, const size_t * local_work_size,cl_uint num_events_in_wait_list, const cl_event *event_wait_list,cl_event * event, const std::string & hash){
+    cl_int ret = clEnqueueNDRangeKernel(command_queue, kernel, work_dim, global_work_offset, global_work_size, local_work_size, num_events_in_wait_list, event_wait_list, event);
+   openclutil::confirm_cl_status(ret, hash);
+  }
+   
+   
+   
+   
+   
+static std::string generickernelname = "atinygemmkernel";
 
 class MultiFloatType{
 
@@ -80,14 +156,12 @@ class OpenCLGemmEncapsulator{
 public: 
   /* references to constructor parameters */
   cl_command_queue command_queue;
-  std::string & outputfilename;
-  const char & floattype; 
-  const tinygemm::TinyGemmGeometry & gg;
-  const double & alpha;
-  const double & beta;
-  cl_mem & a_gpu;
-  cl_mem & b_gpu; 
-  cl_mem & c_gpu;
+  std::string outputfilename;
+  const char floattype; 
+  const tinygemm::TinyGemmGeometry gg;
+  cl_mem a_gpu;
+  cl_mem b_gpu; 
+  cl_mem c_gpu;
 
 
 private:
@@ -102,45 +176,38 @@ private:
   size_t n_work_groups;
   size_t local_work_size;
   size_t global_work_size;
-  cl_int ret;
-  cl_program program = NULL;
-  cl_kernel kernel = NULL;    
-  std::string kernel_function_name;
-  cl_program betac_program = NULL;
-  cl_kernel betac_kernel = NULL;
   std::string betac_kernel_function_name;
   /* parameters related to the scaling (beta C) kernel */
   unsigned dim_coal, dim_uncoal;
   size_t betac_global_work_size, betac_local_work_size;
-  /* used for getting performance of main and (possibly) betac kernels */
-  cl_event event_main_kernel;
-  cl_event event_betac_kernel;
+  bool nobenching;
   /* stores (the most recent of n_runs) execution time */
   size_t t_start_betac_kernel, t_end_betac_kernel, t_start_main_kernel, t_end_main_kernel;
   float t_total_with_both, t_just_scaling, t_just_main;
   /* vector times over all n_runs runs */
-  std::vector<float> v_t_total_with_both, v_t_just_scaling, v_t_just_main;
-  /* These are set in the constructor by querying command_queue */
-  cl_context context;
-  cl_device_id device_id_to_use;
-  bool nobenching;
-
-  //std::string kerneldir;
-  //std::string kernelfilename;
-  //defpaths::tmp_dir kernel_tmp_dir;
-
+  std::vector<float> v_t_total_with_both, v_t_just_scaling, v_t_just_main;\
+  std::string kernel_function_name;
+  cl_int ret;
+  cl_program program = nullptr;
+  cl_kernel kernel = nullptr;
+  cl_program betac_program = nullptr;
+  cl_kernel betac_kernel = nullptr;
+  /* used for getting performance of main and (possibly) betac kernels */
+  cl_event event_main_kernel;
+  cl_event event_betac_kernel;
+  
 
 public:
   OpenCLGemmEncapsulator(
   cl_command_queue command_queue, 
-  const char & floattype,
-  const tinygemm::TinyGemmGeometry & gg,  
-  const double & alpha,
-  const double & beta,
-  cl_mem & a_gpu,
-  cl_mem & b_gpu, 
-  cl_mem & c_gpu,
-  std::string & outputfilename,
+  const char floattype,
+  const tinygemm::TinyGemmGeometry gg,  
+  const double alpha,
+  const double beta,  
+  cl_mem a_gpu,
+  cl_mem b_gpu, 
+  cl_mem c_gpu,
+  std::string outputfilename,
   bool verbose, 
   bool nobenching):
 
@@ -148,8 +215,6 @@ public:
   outputfilename(outputfilename),
   floattype(floattype), 
   gg(gg),
-  alpha(alpha),
-  beta(beta),
   a_gpu(a_gpu),
   b_gpu(b_gpu), 
   c_gpu(c_gpu),
@@ -160,20 +225,11 @@ public:
   {
     set_floatsize();
     run_checks();
-    ret = clGetCommandQueueInfo(command_queue, CL_QUEUE_CONTEXT, sizeof(cl_context), &context, NULL);
-    if (ret != CL_SUCCESS){
-      throw tinygemm_error("Problem using clGetCommandQueueInfo, trying to get CL_QUEUE_CONTEXT (in constructor in openclgemmapi.cpp");
-    }
-    ret = clGetCommandQueueInfo(command_queue, CL_QUEUE_DEVICE, sizeof(cl_device_id), &device_id_to_use, NULL);
-    if (ret != CL_SUCCESS){
-      throw tinygemm_error("Problem using clGetCommandQueueInfo, trying to get CL_QUEUE_DEVICE (in constructor in openclgemmapi.cpp");        
-    }      
-    if (nobenching == false){ // || (std::abs(beta - 1.) < 1e-9)){
+    if (nobenching == false){
       setup_betac_kernel(); 
     }
-    //kerneldir = kernel_tmp_dir.name;
-    //kernelfilename = kerneldir + "/" + kernelname + ".cl";
   }
+ 
  
  
   ~OpenCLGemmEncapsulator(){
@@ -183,28 +239,16 @@ public:
   }
   
   void release_betac_kernel_and_program(){
-    ret = clReleaseKernel(betac_kernel);
-    if (ret != CL_SUCCESS){
-      throw tinygemm_error("failed in clReleaseKernel, in release_betac_kernel_and_program");
-    }
-    
-    ret = clReleaseProgram(betac_program);
-    if (ret != CL_SUCCESS){
-      throw tinygemm_error("failed in clReleaseProgram, in release_betac_kernel_and_program");
-    }
+    cl_release_kernel(betac_kernel, "weiu3newe[q[q[  qnwei34");
+    cl_release_program(betac_program, "dnflwk4fsl39ekdddasaer");
   }
 
 
   void release_main_kernel_and_program(){
-    ret = clReleaseKernel(kernel);
-    if (ret != CL_SUCCESS){
-      throw tinygemm_error("failed in clReleaseKernel, in release_main_kernel_and_program");
-    }
-    
-    ret = clReleaseProgram(program);
-    if (ret != CL_SUCCESS){
-      throw tinygemm_error("failed in clReleaseProgram, in release_main_kernel_and_program");
-    }
+
+    cl_release_kernel(kernel, "sdrmjwldiomfmwo94me");    
+    cl_release_program(program, "sdmw4t w;omwet -w9jt sd;fin");
+
   }
   
   void run_checks(){
@@ -224,21 +268,17 @@ public:
     /* jit compile the betackernel source  */
     
     std::string betac_kernel_string = betac::get_betac_kernel_string(floattype);
-    openclutil::set_program_and_kernel(betac_program, betac_kernel, betac_kernel_function_name, context, device_id_to_use, betac_kernel_string); //betac::get_cl_file_path(floattype));
+    openclutil::set_program_and_kernel(command_queue, betac_program, betac_kernel, betac_kernel_function_name, betac_kernel_string);
+    
     betac::set_betackernel_sizes(floattype, gg.isColMajor, gg.tC, gg.m, gg.n, dim_coal, dim_uncoal, betac_global_work_size, betac_local_work_size);
     mowri << "in setup_betac_kernel, global_work_size : " << betac_global_work_size << Endl; 
-    ret = clSetKernelArg(betac_kernel, 0, sizeof(unsigned), &dim_coal);
-    confirm_cl_status(ret, "clSetKernelArg", "dim_coal");
-    ret = clSetKernelArg(betac_kernel, 1, sizeof(unsigned), &dim_uncoal);
-    confirm_cl_status(ret, "clSetKernelArg", "dim_uncoal");
-    ret = clSetKernelArg(betac_kernel, 2, sizeof(unsigned), &gg.ldc);
-    confirm_cl_status(ret, "clSetKernelArg", "ldc");
-    ret = clSetKernelArg(betac_kernel, 3, sizeof(unsigned), &gg.c_offset);
-    confirm_cl_status(ret, "clSetKernelArg", "ldc");
-    ret = clSetKernelArg(betac_kernel, 4, sizeof(cl_mem), (void *)&c_gpu);
-    confirm_cl_status(ret, "clSetKernelArg", "c_gpu");
-    ret = clSetKernelArg(betac_kernel, 5, floatsize, m_beta[floattype]);// 
-    confirm_cl_status(ret, "clSetKernelArg", "m_beta[floattype]");
+    
+    cl_set_kernel_arg(betac_kernel, 0, sizeof(unsigned), &dim_coal, "sdgo8jn343etvgbertuysspdd");
+    cl_set_kernel_arg(betac_kernel, 1, sizeof(unsigned), &dim_uncoal, "cmccmcmdmckdk,f;dldkdfffj");
+    cl_set_kernel_arg(betac_kernel, 2, sizeof(unsigned), &gg.ldc, "vvkvkwwwfqtrflhpeeejfr");
+    cl_set_kernel_arg(betac_kernel, 3, sizeof(unsigned), &gg.c_offset, "qppofhederiirigdfgkjtewa");
+    cl_set_kernel_arg(betac_kernel, 4, sizeof(cl_mem), (void *)&c_gpu, "poiutasdfasdlikfgjhnee");
+    cl_set_kernel_arg(betac_kernel, 5, floatsize, m_beta[floattype], "33jf85rf,cf91ffdse2390");
   }
 
 
@@ -264,28 +304,26 @@ public:
 
 
   void set_main_kernel_arguments(){
+    
     /* set the alpha (alpha and beta) kernel parameters */
-    ret = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&c_gpu);
-    ret = clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *)&a_gpu);
-    ret = clSetKernelArg(kernel, 2, sizeof(cl_mem), (void *)&b_gpu);
-    ret = clSetKernelArg(kernel, 3, floatsize, m_alpha[floattype]);
-    ret = clSetKernelArg(kernel, 4, floatsize, m_beta[floattype]);
-    ret = clSetKernelArg(kernel, 5, sizeof(unsigned), &gg.lda);
-    ret = clSetKernelArg(kernel, 6, sizeof(unsigned), &gg.ldb);
-    ret = clSetKernelArg(kernel, 7, sizeof(unsigned), &gg.ldc);
-    ret = clSetKernelArg(kernel, 8, sizeof(unsigned), &gg.m);
-    ret = clSetKernelArg(kernel, 9, sizeof(unsigned), &gg.n);
-    ret = clSetKernelArg(kernel, 10, sizeof(unsigned), &gg.k);
-    ret = clSetKernelArg(kernel, 11, sizeof(unsigned), &gg.a_offset);
-    ret = clSetKernelArg(kernel, 12, sizeof(unsigned), &gg.b_offset);
-    ret = clSetKernelArg(kernel, 13, sizeof(unsigned), &gg.c_offset);
+    cl_set_kernel_arg(kernel, 0, sizeof(cl_mem), (void *)&c_gpu, "sdfosuidnfsdfouindsf");
+    cl_set_kernel_arg(kernel, 1, sizeof(cl_mem), (void *)&a_gpu, "sdfms dfliser0w49uj wer");
+    cl_set_kernel_arg(kernel, 2, sizeof(cl_mem), (void *)&b_gpu, "dfjsdlfiwfmwe89fmf ff");
+    cl_set_kernel_arg(kernel, 3, floatsize, m_alpha[floattype], "sdfonrwefs dfsdnfns-q3u s[049j4");
+    cl_set_kernel_arg(kernel, 4, floatsize, m_beta[floattype], "oopsjgsoe8h 455**");
+    cl_set_kernel_arg(kernel, 5, sizeof(unsigned), &gg.lda, "wfe34t9385yhng4eg45y8");
+    cl_set_kernel_arg(kernel, 6, sizeof(unsigned), &gg.ldb, "sdfsjdfjqqq12312345");
+    cl_set_kernel_arg(kernel, 7, sizeof(unsigned), &gg.ldc, "KgggtRhjU***ioiherber");
+    cl_set_kernel_arg(kernel, 8, sizeof(unsigned), &gg.m, "asdf qwernw r8234h rt5f");
+    cl_set_kernel_arg(kernel, 9, sizeof(unsigned), &gg.n, "upouyusdfnsdfhn34454_");
+    cl_set_kernel_arg(kernel, 10, sizeof(unsigned), &gg.k, "monwerwer  w349y$");
+    cl_set_kernel_arg(kernel, 11, sizeof(unsigned), &gg.a_offset, "+--__=_jI867WGE4");
+    cl_set_kernel_arg(kernel, 12, sizeof(unsigned), &gg.b_offset, "PHILERT 234BW W I7HB  wsw");
+    cl_set_kernel_arg(kernel, 13, sizeof(unsigned), &gg.c_offset, "rtd fgsdfgp987h egr5");
   }
 
   void enqueue_betac_kernel(){
-    ret = clEnqueueNDRangeKernel(command_queue, betac_kernel, 1, NULL, &betac_global_work_size, &betac_local_work_size, 0, NULL, &event_betac_kernel);
-    if (ret != CL_SUCCESS){
-      throw tinygemm_error("Error in clEnqueueNDRangeKernel (in the scaling kernel)");
-    }
+    cl_enqueue_ndrange_kernel(command_queue, betac_kernel, 1, NULL, &betac_global_work_size, &betac_local_work_size, 0, NULL, &event_betac_kernel, "sdfk kjns22");
   }
 
 
@@ -295,18 +333,15 @@ public:
     if(does_betac_inc == 0){
       ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_work_size, &local_work_size, 1, &event_betac_kernel, &event_main_kernel);
     }
+    
     else{
       ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_work_size, &local_work_size, 0,NULL, &event_main_kernel);
     }
-
-    /* Handle the failure case which is not CL_OUT_OF_RESOURCES */ 
-    if (ret != CL_SUCCESS && ret != CL_OUT_OF_RESOURCES){
-      std::string errm("Error in clEnqueueNDRangeKernel (in the main kernel), The CL_STATUS value is ( ");
-      errm += std::to_string(ret);
-      errm += " )";
-      errm += "\n";
-      throw tinygemm_error(errm);
+     
+    if (ret != CL_OUT_OF_RESOURCES){
+      openclutil::confirm_cl_status(ret, "opre on sdgff b3047bASD");
     }
+  
     
     /* Either returning CL_SUCCESS or CL_OUT_OF_RESOURCES.  */
     return ret;
@@ -388,7 +423,9 @@ public:
       int status = enqueue_main_kernel();
       
       /* I'm not really sure when to use cl Flush TODO : find out. */
-      clFlush(command_queue);
+      cl_flush(command_queue, "sdfns 3nsdkudnh fnf");
+     
+        
       
       if (status == CL_OUT_OF_RESOURCES){
         
@@ -400,7 +437,7 @@ public:
       
       else if (status == CL_SUCCESS){
         /* Wait for kernels to complete */
-        clWaitForEvents(1, &event_main_kernel);
+        cl_wait_for_events(1, &event_main_kernel, "sdfns  sws 11954623u.");
 
         /* Set the run time(s) and append to vectors */
         update_run_times();
@@ -411,13 +448,6 @@ public:
         throw std::logic_error("How can this not be CL_SUCCESS or CL_OUT_OF_RESOURCES? Algo prob, come fix");
       }
     }
-    
-    
-    //auto core_loop_end = std::chrono::high_resolution_clock::now();
-    //std::chrono::duration<float> fp_ms = core_loop_end - core_loop_start;
-    //float elapsed_seconds = fp_ms.count();
-    //mowri << "time in core_loop : " << elapsed_seconds*1000 << Endl;
-
   }
 
 
@@ -432,23 +462,15 @@ public:
     mowri << "main kernel global work size : " << global_work_size <<  " (recommended ~ 4*64*40*64 = 655360)" << Endl; 
     mowri << "Entering setting of program and kernel, compiling ..." << Flush;
     /* jit compile the cl source to get `kernel' (and `program') */
-    openclutil::set_program_and_kernel(program, kernel, kernel_function_name, context, device_id_to_use, kernel_string);
-    
-    
-    
+    openclutil::set_program_and_kernel(command_queue, program, kernel, kernel_function_name, kernel_string); //context, , device_id_to_use
     
     mowri << "... done" << Endl;
     /* set kernel's arguments */
     set_main_kernel_arguments();
   }
-  
 
 
-
-
-  
-        
-  /* try-wrapped in gemini */
+  /* try-wrapped in gemini (?) */
   void benchgemm(const std::string & kernel_string, unsigned n_runs){
 
     if (n_runs == 0){
@@ -459,6 +481,8 @@ public:
     full_kernel_setup_from_kernel_string(kernel_string);
     mowri << "Entering the core gemm loops" << Endl;
     core_gemm_loop(n_runs);
+    
+    
     release_main_kernel_and_program();
     
   }
@@ -477,12 +501,11 @@ public:
     for (auto & x : hp.params){
       all_int_parms[x.first] = x.second;
     }
-    bool verbose_report_from_python = true;
     
     std::string default_main_kernel_string;
     tinygemm::kerngen::KernelStringSetStatus set_status = tinygemm::kerngen::set_kernel_string(
     default_main_kernel_string,
-    "somekernelname",
+    generickernelname,
     floattype ==  'f' ? 32 : 64,
     all_int_parms.at("a_transposed"),
     all_int_parms.at("b_transposed"),
@@ -504,14 +527,6 @@ public:
     all_int_parms.at("unroll_for_offset"),
     all_int_parms.at("n_target_active_workgroups"));
     
-  
-  
-    //int kernel_write_status = tinygemm::mkkern::make_kernel_via_python(blabladir, floattostring::get_float_string(floattype), all_int_parms, kernelname, verbose_report_from_python);
-    //if (kernel_write_status != CL_SUCCESS){
-      //throw tinygemm_error("A problem arose in the python script to generate the kernel. Throwing from get_default.");
-    //}
-    
-    
     float median_time = std::numeric_limits<float>::max();
     float elapsed_seconds = 0.;
     float median_benchmark_gflops = 0.;                
@@ -527,7 +542,7 @@ public:
   }
   
   
-  tinygemm::TinyGemmSolution find(float allotted_time, bool enforce_deterministic, unsigned n_runs_in_find_per_kernel){  
+  tinygemm::TinyGemmSolution find(float allotted_time, bool enforce_deterministic, unsigned n_runs_in_find_per_kernel){
     
     if (allotted_time > 0 && nobenching == true){
       throw tinygemm_error("allotted_time > 0 and nobencking == false, which does not make sense. Algo problem, come fix ");
@@ -614,25 +629,18 @@ public:
             
             for (auto & x : hp.params){
               all_int_parms[x.first] = x.second;
+              //std::cout <<  x.first  << "  " << all_int_parms[x.first] << "  " << x.second << std::endl;
             }
-            /* attempt to generate the kernel. Certain `bad' kernels are only caught at this stage, with tests for hyper-parameter compatibilty in the 
-             * python script which I don't want to recode here. The main compatibility issue caught here is that load sizes from global are multiples
-             * of the number of work items. In the case of `stupid' mistakes (bad paths, run time problems) the python output from the first kernel 
-             * generated (global_counter = 0) will be printed explicitly, so that hopefully the user will see what the problem is.  */
-            bool verbose_report_from_python = global_counter == 0 ? true : false;
+            /* attempt to generate the kernel. Certain `bad' kernels are only caught at this stage (set_status.is_good() == false)
+             * with tests for hyper-parameter compatibilty in the python script which I don't want to recode here. The main compatibility 
+             * issue caught here is that load sizes from global are multiples of the number of work items.  */
             
-            
-            //int kernel_write_status = tinygemm::mkkern::make_kernel_via_python(kerneldir,  floattostring::get_float_string(floattype), all_int_parms, kernelname, verbose_report_from_python);
-            
-            //TODO : make function to get kernel_string 
-            //std::string main_kernel_string = "blablabla";
-            
-            
+            mowri << "\n" << hp.get_string() << Endl;
             
             std::string main_kernel_string;
             tinygemm::kerngen::KernelStringSetStatus set_status = tinygemm::kerngen::set_kernel_string(
-             main_kernel_string,
-            "somekernelname",
+            main_kernel_string,
+            generickernelname,
             floattype ==  'f' ? 32 : 64,
             all_int_parms.at("a_transposed"),
             all_int_parms.at("b_transposed"),
@@ -653,16 +661,12 @@ public:
             all_int_parms.at("n_work_items_per_c_elm"),
             all_int_parms.at("unroll_for_offset"),
             all_int_parms.at("n_target_active_workgroups"));
-    
-    
-  
+            
+            
             if (set_status.is_good() == true){
-  
-    
               /* the kernel was succesfully generated, we now compile and benchmark it */
+
               
-      
-              mowri << "\n" << hp.get_string() << Endl;
               ++global_counter;
               mowri << "global gen-com-bench : " << global_counter  <<  "." << Endl;
   
@@ -699,7 +703,7 @@ public:
                 
                 //set kernel files
                 //TODO : should not be determining whether a kernel does betac or not based on this, find true parameter
-                std::string soln_betac_kernel = all_int_parms.at("n_work_items_per_c_elm") == 1 ?  ""  : betac::get_betac_kernel_string(floattype);//kernelutil::get_as_single_string(betac::get_cl_file_path(floattype));
+                std::string soln_betac_kernel = all_int_parms.at("n_work_items_per_c_elm") == 1 ?  ""  : betac::get_betac_kernel_string(floattype);
                 std::string soln_betac_kernel_function_name = all_int_parms.at("n_work_items_per_c_elm") == 1 ? "" : betac_kernel_function_name;
                 //TODO : this is redundant. clean up. 
                 std::string soln_main_kernel = main_kernel_string; //kernelutil::get_as_single_string(kernelfilename);
@@ -712,7 +716,8 @@ public:
             }
           
             else{
-              mowri << "\nSkipping this kernel, hyper-parameters incompatible. " <<  "Specifically, the message from the kernel string setting function was --- " << set_status.message << "\n";
+              mowri << "\nSkipping this kernel, hyper-parameters incompatible. " << Endl;
+              mowri << "Specifically, the message from the kernel string setting function was --- " << set_status.message << "\n";
             }
           }
         }
@@ -766,7 +771,7 @@ public:
     }
     
     if (path_of_best_solns.size() == 0){
-      throw tinygemm_error("\nUser should never see this error, this is an internal problem. Possibly, there were no solutions found. Which is strange, as at least the initial kernel (the initial hyper front) should have been a solution. Either, the initial kernel was not valid (which should not happen unless my filters are broken) or for whatever reason the kernel was not generated or did not compile. Maybe there is some preceding warning printed which sheds light on this? Other possibilities are bad dir_name or kernelname in make_kernel.py. set verbose_report to True in makekernelsource if you (james) can't figure this out ");
+      throw tinygemm_error("\nUser should never see this error, this is an internal problem. Possibly, there were no solutions found. Which is strange, as at least the initial kernel (the initial hyper front) should have been a solution. Either, the initial kernel was not valid (which should not happen unless my filters are broken) or for whatever reason the kernel was not generated or did not compile. Maybe there is some preceding warning printed which sheds light on this? Another possibility is that there was an error in the kernel string generation which I did not think of. ");
     }
   
     mowri << "best time : " << best_time << Endl;
@@ -778,7 +783,7 @@ public:
     for (auto & x : path_of_best_solns){
       mowri <<  x.get_hyper_param_string() << "\t " << x.statistics.solution_discovery_time << "\t\t " << x.statistics.median_benchmark_gflops  << Endl;
     }
-     
+    
     mowri <<  path_of_best_solns.back().get_hyper_param_string() << "\t " << elapsed_seconds << "\t\t " << path_of_best_solns.back().statistics.median_benchmark_gflops  << Endl;
     return path_of_best_solns.back();
   }
@@ -802,12 +807,26 @@ std::string logfile){
   /* The number of times each kernel is run in find. 
    * consider adding this parameter to user API. */
   unsigned n_runs_in_find_per_kernel = 3;
-  bool nobenching = allotted_time <= 0 ?  true : false ;  
+  bool nobenching = allotted_time <= 0 ?  true : false;
   OpenCLGemmEncapsulator oger(command_queue, floattype, gg, alpha, beta, a, b, c, logfile, verbose, nobenching);
+  
   return oger.find(allotted_time, enforce_deterministic, n_runs_in_find_per_kernel);
+  
+  
 }
 
-/* functions for the end-user */ 
+
+
+class safe_cl_mem{
+  public:
+    cl_mem mem;
+    std::string hash = "1012sd3 sdfmsdim df";
+    ~safe_cl_mem(){
+      std::cout << "\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*releasing !" << std::endl;
+      cl_release_mem_object(mem, hash);
+    }
+};
+
 tinygemm::TinyGemmSolution
 find(
 float allotted_time,
@@ -823,44 +842,28 @@ const double beta,
 bool verbose, 
 std::string logfile){
   
+  
   tinygemm::consistencychecks::check_ldx_mnk_consistent(gg);
   
-  cl_mem c_copied;
+  std::unique_ptr<safe_cl_mem> c_copied;
   cl_event c_copy_event; 
   size_t n_c = gg.ldc * (gg.tC == gg.isColMajor ? gg.m : gg.n) + gg.c_offset;
   size_t c_memsize = get_floatsize(floattype)*n_c;
-  cl_int ret;
-  
+    
+  // TODO : outsource this to openclutil.cpp
   cl_context context;
-  ret = clGetCommandQueueInfo(command_queue, CL_QUEUE_CONTEXT, sizeof(cl_context), &context, NULL);
-  if (ret != CL_SUCCESS){
-    throw tinygemm_error("Problem using clGetCommandQueueInfo, trying to get CL_QUEUE_CONTEXT (in find, in openclgemmapi.cpp)");
-  }
+  cl_get_command_queue_info(command_queue, CL_QUEUE_CONTEXT, sizeof(cl_context), &context, nullptr, "101101110101034tiubergaa");
+  c_copied->mem = cl_create_buffer(context, CL_MEM_READ_WRITE, c_memsize, NULL, "{sh1asdfodfo<UhG{}}");        
+  cl_enqueue_copy_buffer(command_queue, c, c_copied->mem, 0, 0, c_memsize, 0, NULL, &c_copy_event, "sd s;un c09u zsd(( #O#)) sowad isfsfdh8338 dg");
+  cl_wait_for_events(1, &c_copy_event, "kfjfsdqpae9ut[4m dfg9h ,ldas;");
   
-  c_copied = clCreateBuffer (context, CL_MEM_READ_WRITE, c_memsize, NULL, &ret);  
-  if (ret != CL_SUCCESS) {
-    std::string errm ("in tinygemm.cpp, find function. Attempting to create cl_mem c_copy with clCreateBuffer. Failed to do so, with exit status ");
-    errm += std::to_string(ret);
-    throw tinygemm_error(errm);
-  }
+  std::cout << "here in find" << std::endl;
+  auto soln =  nonconst_find(allotted_time, command_queue, a, b, c_copied->mem, enforce_deterministic, floattype, gg, alpha, beta, verbose, logfile);
   
-  ret = clEnqueueCopyBuffer (command_queue, c, c_copied, 0, 0, c_memsize, 0, NULL, &c_copy_event);
-  if (ret != CL_SUCCESS){
-    std::string errm("in tinygemm.cpp, find function. Attempting to copy cl_mem c with clEnqueueCopyBuffer. Failed to do so, with exit status ");
-    errm += std::to_string(ret);
-    throw tinygemm_error(errm);
-  }
-  
-  clWaitForEvents(1, &c_copy_event);
-  auto soln =  nonconst_find(allotted_time, command_queue, a, b, c_copied, enforce_deterministic, floattype, gg, alpha, beta, verbose, logfile);
-  ret = clReleaseMemObject(c_copied);
-  if (ret != CL_SUCCESS){
-    std::string errm("in tinygemm.cpp, find function. Attempting to release memory with clReleaseMemObject. Failed to do so, with exit status ");
-    errm += std::to_string(ret);
-    throw tinygemm_error(errm);
-  }  
+  //cl_release_mem_object(*c_copied, "1v8r--f09 =0 e2dflc3gcm6");
   return soln;
 }
+
 
 
 
@@ -877,9 +880,11 @@ void benchgemm(
   cl_mem c_gpu,
   bool verbose,
   std::string logfile){
+    
   bool nobenching = false;
   OpenCLGemmEncapsulator oger(command_queue, floattype, gg, alpha, beta, a_gpu, b_gpu, c_gpu, logfile, verbose, nobenching);
   oger.benchgemm(kernel_string, n_runs);
+  
 }
   
 } //namespace

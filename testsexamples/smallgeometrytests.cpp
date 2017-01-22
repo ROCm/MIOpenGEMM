@@ -26,7 +26,7 @@ void geometrytest(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsign
   unsigned n_postfind_runs = 1;
   bool do_cpu_test = true;
     
-  basicfind<TFloat>(isColMajor, tA, tB, tC, m, n, k, lda, ldb, ldc, a_offset, b_offset, c_offset, alpha, beta, floattype, allotted_time, verbose, logfile, enforce_deterministic, n_postfind_runs, do_cpu_test);
+  basicfind<TFloat>(isColMajor, tA, tB, tC, m, n, k, lda, ldb, ldc, a_offset, b_offset, c_offset, alpha, beta, allotted_time, verbose, logfile, enforce_deterministic, n_postfind_runs, do_cpu_test);
 }
 
 int main(){

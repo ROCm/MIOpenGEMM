@@ -17,7 +17,6 @@
 #include <map>
 #include <cmath>
 #include <algorithm>
-#include <tinygemm/tinygemmerror.hpp>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -39,18 +38,12 @@
 #include <tinygemm/accuracytests.hpp>
 #include <tinygemm/devtinygemm.hpp>
 #include <tinygemm/tinygemmgeometry.hpp>
-#include <tinygemm/defaultoutpath.hpp>
 
 
 
 
 namespace tinygemm{
 namespace dev{
-
-
-
-
-
 
 template <typename TFloat>
 class Gemini{
@@ -68,8 +61,7 @@ private:
   std::vector<TFloat> c_start_copy;
   std::string outputfilename;
   outputwriting::OutputWriter mowri;
-  
-  
+
   /* opencl boilerplate */
   cl_int ret;
   cl_platform_id platform = nullptr;
@@ -85,8 +77,7 @@ private:
   
 public:
   
-  Gemini(tinygemm::TinyGemmGeometry gg, const TFloat * a, const TFloat * b, TFloat * c, TFloat alpha, TFloat beta, std::string outputfilename):gg(gg), a(a), b(b), c(c), alpha(alpha), beta(beta), outputfilename(outputfilename), mowri(true, outputfilename.compare("") != 0, outputfilename)  {
-  
+  Gemini(tinygemm::TinyGemmGeometry gg, const TFloat * a, const TFloat * b, TFloat * c, TFloat alpha, TFloat beta, std::string outputfilename) :gg(gg), a(a), b(b), c(c), alpha(alpha), beta(beta), outputfilename(outputfilename), mowri(true, outputfilename.compare("") != 0, outputfilename)  {
     
     consistencychecks::check_ldx_mnk_consistent(gg);
     sizingup::check_sizes_ok_for_unsigned(gg); 
@@ -128,6 +119,7 @@ public:
     
     /* allocate memory for a,b,c on device, send it over */
     
+    /* TODO : make functions of the form cl_mem = openclutil::cl_create_buffer(context, memoryflag, memsize, hash) */
   
     a_gpu = clCreateBuffer(context, CL_MEM_READ_ONLY, get_a_memsize(), NULL, &ret);
     if (ret != CL_SUCCESS){
@@ -217,11 +209,6 @@ public:
       
   void benchgemm_gpu(const std::vector<std::vector<std::string> > gpu_kernel_strings, unsigned n_runs, unsigned do_test,  const TFloat * c_true_for_test){
     
-    /* A check that the gpu kernel filenames are valid */
-    // kernelutil::check_gpu_kernel_filenames(gpu_kernel_filenames);
-    
-
-      
     
     size_t number_of_kernels_being_tested = gpu_kernel_strings.size();
     size_t this_run = 0;
@@ -233,12 +220,13 @@ public:
         /* Originally, gemini was designed to allow for option of running several (4) kernels in parallel. */
         /* Later, with the pointer relocation trick (cite TODO), we realised that this was not necessary. */
         /* So here we just take the first filename in the vector */
-        std::string filename(v[0]);
-        mowri << "\nSource kernel " << "(" << this_run << "/" << number_of_kernels_being_tested << ") " << filename << Endl;      
-        base_benchgemm(filename, n_runs);
+        std::string kernel_string(v[0]);
+        mowri << "\nSource kernel " << "(" << this_run << "/" << number_of_kernels_being_tested << ") "  << Endl;      
+        base_benchgemm(kernel_string, n_runs);
+
         if (do_test != 0){
           mowri << "about to perform test in Gemini benchgemm_gpu" << Endl;
-          base_basegemm_with_accuracy_test(filename);
+          base_basegemm_with_accuracy_test(kernel_string);
         }
         
         /* 20 Nov 2016 : remove cl flush and finish */
@@ -249,10 +237,7 @@ public:
         }
       }
     }
-    
-    
 
-      
     catch(...){
       mowri << "caught exception, releasing cl memory in gemini.hpp" << Endl;
       opencl_memory_release();
@@ -262,29 +247,15 @@ public:
   }
 };
 
-
-
-
 void hello(){
   std::cout << "hello!" <<std::endl;
 }
 
-
-
 template <typename TFloat>
 void benchgemm(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned n, unsigned k, TFloat alpha, const TFloat * a, unsigned lda, unsigned a_offset, const TFloat * b, unsigned ldb, unsigned b_offset, TFloat beta, TFloat * c, unsigned ldc, unsigned c_offset, std::vector<std::string> cpu_algs, const std::vector<std::vector<std::string> > gpu_kernel_strings, bool capture_output, std::string & output, const TFloat * c_true_for_test, unsigned do_test, unsigned n_runs, std::string outputfilename, bool findfirst, float allotted_time, bool enforce_deterministic){
-  
-  //if (findfirst == true){
-    //tinygemm::TinyGemmGeometry gg(isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k);  
-    //Gemini <TFloat> gem (gg, a, b, c, alpha, beta, outputfilename);
-    //tinygemm::TinyGemmSolution tgs = gem.find(allotted_time); 
-    //main_kernel = tgs.main_kernel;
-  //}
- 
-  
+    
   if (findfirst == true && gpu_kernel_strings.size() != 0){
     throw tinygemm_error( "findfirst is true, and so gpu_kernel_strings should be an empty list \n");
-    //tinygemm_error("findfirst is true, and so gpu_kernel_filenames should be an empty list \n ");
   }
   
   if (findfirst == true && cpu_algs.size() != 0){
@@ -302,29 +273,19 @@ void benchgemm(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
     std::cout.rdbuf(buffer.rdbuf());
   }
   std::ofstream nowhere;
-  
+    
   Gemini <TFloat> gem (gg, a, b, c, alpha, beta, outputfilename);
-  
-  
-  //defpaths::tmp_dir scratchpaddir{};
   if (findfirst == true){
-    
-    
-    
-
 
     tinygemm::TinyGemmSolution tgs = gem.nonconst_find(allotted_time, enforce_deterministic); 
-    //std::string kernelfilename = scratchpaddir.name + "/kernfoundinbenchmark.cl"; 
-    //std::string kernelfilename = "/home/idiap/kernfoundinbenchmark.cl";
-    //std::ofstream out(kernelfilename);
-    //out << tgs.main_kernel;
-    //out.close();    
     gem.benchgemm_cpu(cpu_algs);
     gem.benchgemm_gpu( {{ tgs.main_kernel }}, n_runs, do_test, c_true_for_test);
   }
   
-  gem.benchgemm_cpu(cpu_algs);
-  gem.benchgemm_gpu(gpu_kernel_strings, n_runs, do_test, c_true_for_test);
+  else{
+    gem.benchgemm_cpu(cpu_algs);
+    gem.benchgemm_gpu(gpu_kernel_strings, n_runs, do_test, c_true_for_test);
+  }
   
   if (capture_output == true){
     output = buffer.str();
