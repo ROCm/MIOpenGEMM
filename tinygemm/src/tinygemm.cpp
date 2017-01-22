@@ -27,84 +27,6 @@ namespace tinygemm{
 
 
 
-//Y64_X80_y4_x5_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ET1_ICE4_UFO0
-//global gen-com-bench : 61.
-//INPUT_CALL   	: tC:0 tA:1 tB:0 colMaj:0 m:4532 n:3322 k:3131 lda:4538 ldb:3324 ldc:3325 a_offset:1 b_offset:2 c_offset:3
-//main kernel global work size : 3053568 (recommended ~ 4*64*40*64 = 655360)
-//Entering setting of program and kernel, compiling ...... done
-//Entering the core gemm loops
-//elapsed time : 26.6555	 (scaling : 0.37808	 main : 26.276 [ms])  	Gflops/s : 3536.84
-//elapsed time : 26.9309	 (scaling : 0.36544	 main : 26.5642 [ms])  	Gflops/s : 3500.68
-//elapsed time : 27.9781	 (scaling : 0.36496	 main : 27.6118 [ms])  	Gflops/s : 3369.65
-//median time  : 26.9309	 m-Gflops/s : 3500.68
-//elapsed seconds : 27.2288
-
-//Y80_X64_y5_x4_U24_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ET1_ICE2_UFO0
-//Unhandled signal in divisionErrorHandler()
-
-
-//Y80_X64_y5_x4_U24_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ET1_ICE2_UFO0
-//Unhandled signal in divisionErrorHandler()
-
-
-
-
-  void cl_release_kernel(cl_kernel kernel, const std::string & hash){
-    cl_int ret = clReleaseKernel(kernel);
-    openclutil::confirm_cl_status(ret, hash);
-  }
-  
-  void cl_release_program(cl_program program, const std::string & hash){
-    cl_int ret = clReleaseProgram(program);
-    openclutil::confirm_cl_status(ret, hash);
-  }
- 
- 
-  void cl_set_kernel_arg(cl_kernel & kernel, cl_uint arg_index, size_t arg_size, const void * arg_value, const std::string & hash){
-    cl_int ret = clSetKernelArg(kernel, arg_index, arg_size, arg_value);
-    openclutil::confirm_cl_status(ret, hash);
-  }
-
-
-  void cl_flush(cl_command_queue command_queue, const std::string & hash){
-    cl_int ret = clFlush(command_queue);
-    openclutil::confirm_cl_status(ret, hash); 
-  }
-  
-  void cl_wait_for_events(cl_uint num_events, const cl_event * event_list, const std::string & hash){
-    cl_int ret = clWaitForEvents(num_events, event_list);
-    openclutil::confirm_cl_status(ret, hash);
-  }
-
-
-  void cl_get_command_queue_info(cl_command_queue command_queue, cl_command_queue_info param_name, size_t param_value_size, void * param_value, size_t * param_value_size_ret, const std::string & hash){
-    cl_int ret = clGetCommandQueueInfo(command_queue, param_name, param_value_size, param_value, param_value_size_ret);
-    openclutil::confirm_cl_status(ret, hash);
-  }
-
-
-  cl_mem cl_create_buffer(cl_context context, cl_mem_flags flags, size_t size, void * host_ptr, const std::string & hash){
-    cl_int errcode_ret;
-    cl_mem toreturn = clCreateBuffer(context, flags, size, host_ptr, &errcode_ret);     
-    openclutil::confirm_cl_status(errcode_ret, hash);
-    return toreturn;
-  }
-   
-  void cl_enqueue_copy_buffer(cl_command_queue command_queue, cl_mem src_buffer, cl_mem dst_buffer, size_t src_offset, size_t dst_offset, size_t cb, cl_uint num_events_in_wait_list, const cl_event *event_wait_list, cl_event *event, const std::string & hash){
-    cl_int ret = clEnqueueCopyBuffer(command_queue, src_buffer, dst_buffer, src_offset, dst_offset, cb, num_events_in_wait_list, event_wait_list, event); 
-    openclutil::confirm_cl_status(ret, hash);
-  }
- 
-
-  void cl_release_mem_object(cl_mem memobj, const std::string & hash){
-    cl_int ret = clReleaseMemObject(memobj);
-    openclutil::confirm_cl_status(ret, hash);
-  }   
-  
-  void cl_enqueue_ndrange_kernel(cl_command_queue command_queue, cl_kernel kernel, cl_uint work_dim, const size_t * global_work_offset, const size_t * global_work_size, const size_t * local_work_size,cl_uint num_events_in_wait_list, const cl_event *event_wait_list,cl_event * event, const std::string & hash){
-    cl_int ret = clEnqueueNDRangeKernel(command_queue, kernel, work_dim, global_work_offset, global_work_size, local_work_size, num_events_in_wait_list, event_wait_list, event);
-   openclutil::confirm_cl_status(ret, hash);
-  }
    
    
    
@@ -187,7 +109,6 @@ private:
   /* vector times over all n_runs runs */
   std::vector<float> v_t_total_with_both, v_t_just_scaling, v_t_just_main;\
   std::string kernel_function_name;
-  cl_int ret;
   cl_program program = nullptr;
   cl_kernel kernel = nullptr;
   cl_program betac_program = nullptr;
@@ -196,6 +117,9 @@ private:
   cl_event event_main_kernel;
   cl_event event_betac_kernel;
   
+  
+
+  openclutil::SafeClProgAndKern safe_betac_prog_and_kern;
 
 public:
   OpenCLGemmEncapsulator(
@@ -221,36 +145,21 @@ public:
   m_alpha(alpha),
   m_beta(beta),
   mowri(verbose, outputfilename.compare("") != 0, outputfilename),
-  nobenching(nobenching)
+  nobenching(nobenching),
+  
+  
+  
+  safe_betac_prog_and_kern("SafeClProgAndKern of betac kernel")
   {
     set_floatsize();
     run_checks();
     if (nobenching == false){
       setup_betac_kernel(); 
+      safe_betac_prog_and_kern.clprog = betac_program;
+      safe_betac_prog_and_kern.clkern = betac_kernel;
     }
   }
- 
- 
- 
-  ~OpenCLGemmEncapsulator(){
-    if (nobenching == false){
-      release_betac_kernel_and_program();
-    }
-  }
-  
-  void release_betac_kernel_and_program(){
-    cl_release_kernel(betac_kernel, "weiu3newe[q[q[  qnwei34");
-    cl_release_program(betac_program, "dnflwk4fsl39ekdddasaer");
-  }
 
-
-  void release_main_kernel_and_program(){
-
-    cl_release_kernel(kernel, "sdrmjwldiomfmwo94me");    
-    cl_release_program(program, "sdmw4t w;omwet -w9jt sd;fin");
-
-  }
-  
   void run_checks(){
     if (c_gpu == a_gpu || c_gpu == b_gpu){
       throw tinygemm_error("c should be distinct from a and b for gemm, otherwise race condition arises (one thread writes its result to c before another one has finished reading from c)");
@@ -273,12 +182,16 @@ public:
     betac::set_betackernel_sizes(floattype, gg.isColMajor, gg.tC, gg.m, gg.n, dim_coal, dim_uncoal, betac_global_work_size, betac_local_work_size);
     mowri << "in setup_betac_kernel, global_work_size : " << betac_global_work_size << Endl; 
     
-    cl_set_kernel_arg(betac_kernel, 0, sizeof(unsigned), &dim_coal, "sdgo8jn343etvgbertuysspdd");
-    cl_set_kernel_arg(betac_kernel, 1, sizeof(unsigned), &dim_uncoal, "cmccmcmdmckdk,f;dldkdfffj");
-    cl_set_kernel_arg(betac_kernel, 2, sizeof(unsigned), &gg.ldc, "vvkvkwwwfqtrflhpeeejfr");
-    cl_set_kernel_arg(betac_kernel, 3, sizeof(unsigned), &gg.c_offset, "qppofhederiirigdfgkjtewa");
-    cl_set_kernel_arg(betac_kernel, 4, sizeof(cl_mem), (void *)&c_gpu, "poiutasdfasdlikfgjhnee");
-    cl_set_kernel_arg(betac_kernel, 5, floatsize, m_beta[floattype], "33jf85rf,cf91ffdse2390");
+    openclutil::cl_set_kernel_arg(betac_kernel, 0, sizeof(unsigned), &dim_coal, "parm 0 in setup_betac_kernel");
+    openclutil::cl_set_kernel_arg(betac_kernel, 1, sizeof(unsigned), &dim_uncoal, "parm 1 in setup_betac_kernel");
+    openclutil::cl_set_kernel_arg(betac_kernel, 2, sizeof(unsigned), &gg.ldc, "parm 2 in setup_betac_kernel");
+    openclutil::cl_set_kernel_arg(betac_kernel, 3, sizeof(unsigned), &gg.c_offset, "parm 3 in setup_betac_kernel");
+    openclutil::cl_set_kernel_arg(betac_kernel, 4, sizeof(cl_mem), (void *)&c_gpu, "parm 4 in setup_betac_kernel");
+    openclutil::cl_set_kernel_arg(betac_kernel, 5, floatsize, m_beta[floattype], "parm 5 in setup_betac_kernel");
+    
+
+    
+    
   }
 
 
@@ -306,30 +219,32 @@ public:
   void set_main_kernel_arguments(){
     
     /* set the alpha (alpha and beta) kernel parameters */
-    cl_set_kernel_arg(kernel, 0, sizeof(cl_mem), (void *)&c_gpu, "sdfosuidnfsdfouindsf");
-    cl_set_kernel_arg(kernel, 1, sizeof(cl_mem), (void *)&a_gpu, "sdfms dfliser0w49uj wer");
-    cl_set_kernel_arg(kernel, 2, sizeof(cl_mem), (void *)&b_gpu, "dfjsdlfiwfmwe89fmf ff");
-    cl_set_kernel_arg(kernel, 3, floatsize, m_alpha[floattype], "sdfonrwefs dfsdnfns-q3u s[049j4");
-    cl_set_kernel_arg(kernel, 4, floatsize, m_beta[floattype], "oopsjgsoe8h 455**");
-    cl_set_kernel_arg(kernel, 5, sizeof(unsigned), &gg.lda, "wfe34t9385yhng4eg45y8");
-    cl_set_kernel_arg(kernel, 6, sizeof(unsigned), &gg.ldb, "sdfsjdfjqqq12312345");
-    cl_set_kernel_arg(kernel, 7, sizeof(unsigned), &gg.ldc, "KgggtRhjU***ioiherber");
-    cl_set_kernel_arg(kernel, 8, sizeof(unsigned), &gg.m, "asdf qwernw r8234h rt5f");
-    cl_set_kernel_arg(kernel, 9, sizeof(unsigned), &gg.n, "upouyusdfnsdfhn34454_");
-    cl_set_kernel_arg(kernel, 10, sizeof(unsigned), &gg.k, "monwerwer  w349y$");
-    cl_set_kernel_arg(kernel, 11, sizeof(unsigned), &gg.a_offset, "+--__=_jI867WGE4");
-    cl_set_kernel_arg(kernel, 12, sizeof(unsigned), &gg.b_offset, "PHILERT 234BW W I7HB  wsw");
-    cl_set_kernel_arg(kernel, 13, sizeof(unsigned), &gg.c_offset, "rtd fgsdfgp987h egr5");
+    openclutil::cl_set_kernel_arg(kernel, 0, sizeof(cl_mem), (void *)&c_gpu, "parm-0-in-set_main_kernel_arguments");
+    openclutil::cl_set_kernel_arg(kernel, 1, sizeof(cl_mem), (void *)&a_gpu, "parm-1-in-set_main_kernel_arguments");
+    openclutil::cl_set_kernel_arg(kernel, 2, sizeof(cl_mem), (void *)&b_gpu, "parm-2-in-set_main_kernel_arguments");
+    openclutil::cl_set_kernel_arg(kernel, 3, floatsize, m_alpha[floattype], "parm-3-in-set_main_kernel_arguments");
+    openclutil::cl_set_kernel_arg(kernel, 4, floatsize, m_beta[floattype], "parm-4-in-set_main_kernel_arguments");
+    openclutil::cl_set_kernel_arg(kernel, 5, sizeof(unsigned), &gg.lda, "parm-5-in-set_main_kernel_arguments");
+    openclutil::cl_set_kernel_arg(kernel, 6, sizeof(unsigned), &gg.ldb, "parm-6-in-set_main_kernel_arguments");
+    openclutil::cl_set_kernel_arg(kernel, 7, sizeof(unsigned), &gg.ldc, "parm-7-in-set_main_kernel_arguments");
+    openclutil::cl_set_kernel_arg(kernel, 8, sizeof(unsigned), &gg.m, "parm-8-in-set_main_kernel_arguments");
+    openclutil::cl_set_kernel_arg(kernel, 9, sizeof(unsigned), &gg.n, "parm-9-in-set_main_kernel_arguments");
+    openclutil::cl_set_kernel_arg(kernel, 10, sizeof(unsigned), &gg.k, "parm-10-in-set_main_kernel_arguments");
+    openclutil::cl_set_kernel_arg(kernel, 11, sizeof(unsigned), &gg.a_offset, "parm-10-in-set_main_kernel_arguments");
+    openclutil::cl_set_kernel_arg(kernel, 12, sizeof(unsigned), &gg.b_offset, "parm-12-in-set_main_kernel_arguments");
+    openclutil::cl_set_kernel_arg(kernel, 13, sizeof(unsigned), &gg.c_offset, "parm-14-in-set_main_kernel_arguments");
   }
 
   void enqueue_betac_kernel(){
-    cl_enqueue_ndrange_kernel(command_queue, betac_kernel, 1, NULL, &betac_global_work_size, &betac_local_work_size, 0, NULL, &event_betac_kernel, "sdfk kjns22");
+    openclutil::cl_enqueue_ndrange_kernel(command_queue, betac_kernel, 1, NULL, &betac_global_work_size, &betac_local_work_size, 0, NULL, &event_betac_kernel, "in enqueue_betac_kernel");
   }
 
 
   
   int enqueue_main_kernel(){
     
+    cl_int ret;
+      
     if(does_betac_inc == 0){
       ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_work_size, &local_work_size, 1, &event_betac_kernel, &event_main_kernel);
     }
@@ -339,7 +254,7 @@ public:
     }
      
     if (ret != CL_OUT_OF_RESOURCES){
-      openclutil::confirm_cl_status(ret, "opre on sdgff b3047bASD");
+      openclutil::confirm_cl_status(ret, "in enqueue_main_kernel");
     }
   
     
@@ -423,7 +338,7 @@ public:
       int status = enqueue_main_kernel();
       
       /* I'm not really sure when to use cl Flush TODO : find out. */
-      cl_flush(command_queue, "sdfns 3nsdkudnh fnf");
+      openclutil::cl_flush(command_queue, "sdfns 3nsdkudnh fnf");
      
         
       
@@ -437,7 +352,7 @@ public:
       
       else if (status == CL_SUCCESS){
         /* Wait for kernels to complete */
-        cl_wait_for_events(1, &event_main_kernel, "sdfns  sws 11954623u.");
+        openclutil::cl_wait_for_events(1, &event_main_kernel, "following status == CL_SUCCESS in core gemm loops");
 
         /* Set the run time(s) and append to vectors */
         update_run_times();
@@ -467,6 +382,8 @@ public:
     mowri << "... done" << Endl;
     /* set kernel's arguments */
     set_main_kernel_arguments();
+    
+    
   }
 
 
@@ -478,12 +395,18 @@ public:
     }
     
     mowri << "INPUT_CALL   \t:" << gg.get_string() << Endl;
+
+    
+    
     full_kernel_setup_from_kernel_string(kernel_string);
+    openclutil::SafeClProgAndKern safe_main_prog_and_kern(program, kernel, "SafeClProgAndKern of main kernel");
+
+
     mowri << "Entering the core gemm loops" << Endl;
     core_gemm_loop(n_runs);
     
     
-    release_main_kernel_and_program();
+    //release_main_kernel_and_program();
     
   }
   
@@ -817,15 +740,6 @@ std::string logfile){
 
 
 
-class safe_cl_mem{
-  public:
-    cl_mem mem;
-    std::string hash = "1012sd3 sdfmsdim df";
-    ~safe_cl_mem(){
-      std::cout << "\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*\n*releasing !" << std::endl;
-      cl_release_mem_object(mem, hash);
-    }
-};
 
 tinygemm::TinyGemmSolution
 find(
@@ -845,22 +759,22 @@ std::string logfile){
   
   tinygemm::consistencychecks::check_ldx_mnk_consistent(gg);
   
-  std::unique_ptr<safe_cl_mem> c_copied;
+  openclutil::SafeClMem c_copied("sdfsmlimsemilmsfei");
   cl_event c_copy_event; 
   size_t n_c = gg.ldc * (gg.tC == gg.isColMajor ? gg.m : gg.n) + gg.c_offset;
   size_t c_memsize = get_floatsize(floattype)*n_c;
-    
-  // TODO : outsource this to openclutil.cpp
-  cl_context context;
-  cl_get_command_queue_info(command_queue, CL_QUEUE_CONTEXT, sizeof(cl_context), &context, nullptr, "101101110101034tiubergaa");
-  c_copied->mem = cl_create_buffer(context, CL_MEM_READ_WRITE, c_memsize, NULL, "{sh1asdfodfo<UhG{}}");        
-  cl_enqueue_copy_buffer(command_queue, c, c_copied->mem, 0, 0, c_memsize, 0, NULL, &c_copy_event, "sd s;un c09u zsd(( #O#)) sowad isfsfdh8338 dg");
-  cl_wait_for_events(1, &c_copy_event, "kfjfsdqpae9ut[4m dfg9h ,ldas;");
+  c_copied.clmem = openclutil::cl_create_buffer_from_command_queue(command_queue, CL_MEM_READ_WRITE, c_memsize, NULL, "in function find of tinygemm");
   
-  std::cout << "here in find" << std::endl;
-  auto soln =  nonconst_find(allotted_time, command_queue, a, b, c_copied->mem, enforce_deterministic, floattype, gg, alpha, beta, verbose, logfile);
+
   
-  //cl_release_mem_object(*c_copied, "1v8r--f09 =0 e2dflc3gcm6");
+  openclutil::cl_enqueue_copy_buffer(command_queue, c, c_copied.clmem, 0, 0, c_memsize, 0, NULL, &c_copy_event, "in function find of tinygemm");
+  openclutil::cl_wait_for_events(1, &c_copy_event, "in function find of tinygemm");
+  
+  
+  
+  auto soln =  nonconst_find(allotted_time, command_queue, a, b, c_copied.clmem, enforce_deterministic, floattype, gg, alpha, beta, verbose, logfile);
+  
+  //openclutil::cl_release_mem_object(*c_copied, "1v8r--f09 =0 e2dflc3gcm6");
   return soln;
 }
 
