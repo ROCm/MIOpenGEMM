@@ -465,28 +465,32 @@ public:
     
     //std::string default_tk_main.kernstr;
     tinygemm::kerngen::KernelStringSetStatus set_status = tinygemm::kerngen::set_kernel_string(
+    hp,
     tk_main.kernstr,
     generickernelname,
     floattype ==  'f' ? 32 : 64,
     all_int_parms.at("a_transposed"),
     all_int_parms.at("b_transposed"),
     all_int_parms.at("c_transposed"),
-    all_int_parms.at("is_col_major"),
-    all_int_parms.at("micro_tile_width"), 
-    all_int_parms.at("micro_tile_height"), 
-    all_int_parms.at("macro_tile_width"), 
-    all_int_parms.at("macro_tile_height"), 
-    all_int_parms.at("unroll"), 
-    all_int_parms.at("pad"), 
-    all_int_parms.at("group_allocation"), 
-    all_int_parms.at("work_item_load_a_pll_to_unroll"), 
-    all_int_parms.at("work_item_load_b_pll_to_unroll"), 
-    all_int_parms.at("unroll_pragma"), 
-    all_int_parms.at("load_to_lds_interwoven"), 
-    all_int_parms.at("c_micro_tiles_interwoven"), 
-    all_int_parms.at("n_work_items_per_c_elm"),
-    all_int_parms.at("unroll_for_offset"),
-    all_int_parms.at("n_target_active_workgroups"));
+    all_int_parms.at("is_col_major")
+    
+    //all_int_parms.at("micro_tile_width"), 
+    //all_int_parms.at("micro_tile_height"), 
+    //all_int_parms.at("macro_tile_width"), 
+    //all_int_parms.at("macro_tile_height"), 
+    //all_int_parms.at("unroll"), 
+    //all_int_parms.at("pad"), 
+    //all_int_parms.at("group_allocation"), 
+    //all_int_parms.at("work_item_load_a_pll_to_unroll"), 
+    //all_int_parms.at("work_item_load_b_pll_to_unroll"), 
+    //all_int_parms.at("unroll_pragma"), 
+    //all_int_parms.at("load_to_lds_interwoven"), 
+    //all_int_parms.at("c_micro_tiles_interwoven"), 
+    //all_int_parms.at("n_work_items_per_c_elm"),
+    //all_int_parms.at("unroll_for_offset"),
+    //all_int_parms.at("n_target_active_workgroups")
+    
+    );
     
     float median_time = std::numeric_limits<float>::max();
     float elapsed_seconds = 0.;
@@ -593,28 +597,31 @@ public:
             
             //
             tinygemm::kerngen::KernelStringSetStatus set_status = tinygemm::kerngen::set_kernel_string(
+            hp,
             tk_main.kernstr,
             generickernelname,
             floattype ==  'f' ? 32 : 64,
             all_int_parms.at("a_transposed"),
             all_int_parms.at("b_transposed"),
             all_int_parms.at("c_transposed"),
-            all_int_parms.at("is_col_major"),
-            all_int_parms.at("micro_tile_width"), 
-            all_int_parms.at("micro_tile_height"), 
-            all_int_parms.at("macro_tile_width"), 
-            all_int_parms.at("macro_tile_height"), 
-            all_int_parms.at("unroll"), 
-            all_int_parms.at("pad"), 
-            all_int_parms.at("group_allocation"), 
-            all_int_parms.at("work_item_load_a_pll_to_unroll"), 
-            all_int_parms.at("work_item_load_b_pll_to_unroll"), 
-            all_int_parms.at("unroll_pragma"), 
-            all_int_parms.at("load_to_lds_interwoven"), 
-            all_int_parms.at("c_micro_tiles_interwoven"), 
-            all_int_parms.at("n_work_items_per_c_elm"),
-            all_int_parms.at("unroll_for_offset"),
-            all_int_parms.at("n_target_active_workgroups"));
+            all_int_parms.at("is_col_major")
+
+            //all_int_parms.at("micro_tile_width"), 
+            //all_int_parms.at("micro_tile_height"), 
+            //all_int_parms.at("macro_tile_width"), 
+            //all_int_parms.at("macro_tile_height"), 
+            //all_int_parms.at("unroll"), 
+            //all_int_parms.at("pad"), 
+            //all_int_parms.at("group_allocation"), 
+            //all_int_parms.at("work_item_load_a_pll_to_unroll"), 
+            //all_int_parms.at("work_item_load_b_pll_to_unroll"), 
+            //all_int_parms.at("unroll_pragma"), 
+            //all_int_parms.at("load_to_lds_interwoven"), 
+            //all_int_parms.at("c_micro_tiles_interwoven"), 
+            //all_int_parms.at("n_work_items_per_c_elm"),
+            //all_int_parms.at("unroll_for_offset"),
+            //all_int_parms.at("n_target_active_workgroups")
+            );
             
             
             if (set_status.is_good() == true){

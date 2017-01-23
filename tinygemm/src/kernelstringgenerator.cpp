@@ -27,31 +27,6 @@ std::vector<unsigned> get_multiples(unsigned N){
 }
 
 
-/*given a macro tile TH x TW, 
-  and given a micro tile size of tS, 
-  find the tallest possible micro tile size (tH x tW)
-  to fit the macro tile. Example, macro tile is 6 x 4:
-  
-  * * * * 
-  * * * * 
-  * * * * 
-  * * * * 
-  * * * * 
-  * * * * 
-  
-  tS = 2 return [2, 1]
-  tS = 3 return [3, 1]
-  tS = 4 return [2, 2]
-  tS = 5 raise an error ((TH * TH) % tS != 0)
-  tS = 6 return [6, 1]
-  tS = 7 raise an error ((TH * TH) % tS != 0) 
-  tS = 8 return [2, 4]
-  tS = 9 raise an error ((TH * TH) % tS != 0)
-  tS = 10 raise an error ((TH * TH) % tS != 0)
-  tS = 11 raise an error ((TH * TH) % tS != 0)
-  tS = 12 return [6, 2]
-  tS = 13 .. 23 raise an error ((TH * TH) % tS != 0)
-  tS = 24 return [6, 4] */
 
 
 
@@ -77,6 +52,7 @@ class KernelString{
     std::string pragma_unroll_string;
     /* currently one of "float" and "double", set from float_size */
     std::string t_float;
+    
     unsigned split_on_k;
     unsigned does_alpha_c_inc;
     unsigned macro_tile_area;
@@ -103,7 +79,9 @@ class KernelString{
     unsigned use_edge_trick = 1;
 
   public:
-
+    
+    hyperparams::HyperParams hp;
+    
     std::string kernelname;
     
     unsigned float_size;
@@ -115,38 +93,13 @@ class KernelString{
     unsigned c_transposed;
     // CM
     unsigned is_col_major; 
-    // x
-    unsigned micro_tile_width; 
-    // y
-    unsigned micro_tile_height;
-    // X
-    unsigned macro_tile_width; 
-    // Y
-    unsigned macro_tile_height; 
-    // U
-    unsigned unroll;
-    // P
-    unsigned pad;
-    // GA
-    unsigned group_allocation;
-    // APLU
-    unsigned work_item_load_a_pll_to_unroll;
-    // BPLU
-    unsigned work_item_load_b_pll_to_unroll; 
-    // PU
-    unsigned unroll_pragma;
-    // LIW
-    unsigned load_to_lds_interwoven;
-    // MIW
-    unsigned c_micro_tiles_interwoven; 
-    // ICE
-    unsigned n_work_items_per_c_elm;
-    // UFO
-    unsigned unroll_for_offset;
-    // haven't optimised over this
-    unsigned n_target_active_workgroups;  
+    
   
   KernelString(
+  
+  /* hyper parameters */
+  const hyperparams::HyperParams & hp,
+  
   std::string kernelname = "",
   
   /* geometry parameters */
@@ -154,58 +107,33 @@ class KernelString{
   unsigned a_transposed = 1,
   unsigned b_transposed = 0,
   unsigned c_transposed = 0,
-  unsigned is_col_major = 1,
+  unsigned is_col_major = 1
   /* to add m,n,k, lda, ldb, ldc */
   
   
-  /* hyper parameters */
-  unsigned micro_tile_width = 3, 
-  unsigned micro_tile_height = 2, 
-  unsigned macro_tile_width = 48, 
-  unsigned macro_tile_height = 32, 
-  unsigned unroll = 16, 
-  unsigned pad = 1, 
-  unsigned group_allocation = 2, 
-  unsigned work_item_load_a_pll_to_unroll = 0, 
-  unsigned work_item_load_b_pll_to_unroll = 1, 
-  unsigned unroll_pragma = 1, 
-  unsigned load_to_lds_interwoven = 0, 
-  unsigned c_micro_tiles_interwoven = 1, 
-  unsigned n_work_items_per_c_elm = 3,
-  unsigned unroll_for_offset = 1,
-  unsigned n_target_active_workgroups = 64):
   
+  
+  
+  ):
+  
+  hp(hp),
   kernelname(kernelname),
   float_size(float_size),
   a_transposed(a_transposed), 
   b_transposed(b_transposed), 
   c_transposed(c_transposed), 
-  is_col_major(is_col_major), 
-  micro_tile_width(micro_tile_width), 
-  micro_tile_height(micro_tile_height), 
-  macro_tile_width(macro_tile_width), 
-  macro_tile_height(macro_tile_height), 
-  unroll(unroll), 
-  pad(pad), 
-  group_allocation(group_allocation), 
-  work_item_load_a_pll_to_unroll(work_item_load_a_pll_to_unroll), 
-  work_item_load_b_pll_to_unroll(work_item_load_b_pll_to_unroll), 
-  unroll_pragma(unroll_pragma), 
-  load_to_lds_interwoven(load_to_lds_interwoven), 
-  c_micro_tiles_interwoven(c_micro_tiles_interwoven), 
-  //use_edge_trick(use_edge_trick), 
-  n_work_items_per_c_elm(n_work_items_per_c_elm),
-  unroll_for_offset(unroll_for_offset), 
-  n_target_active_workgroups(n_target_active_workgroups){
+  is_col_major(is_col_major)
+  
+  
 
-    
-    
-    split_on_k = n_work_items_per_c_elm == 1 ? 0 : 1;
+  
+  {
+    split_on_k = hp.params.at("n_work_items_per_c_elm") == 1 ? 0 : 1;
     does_alpha_c_inc = split_on_k == 1 ? 0 : 1; 
-    strided_i_vertical = c_micro_tiles_interwoven == 0 ? "i" : "i*N_MICRO_TILES_VERTICALLY";
-    strided_i_horizontal = c_micro_tiles_interwoven == 0 ? "i" : "i*N_MICRO_TILES_HORIZONTALLY";
+    strided_i_vertical = hp.params.at("c_micro_tiles_interwoven") == 0 ? "i" : "i*N_MICRO_TILES_VERTICALLY";
+    strided_i_horizontal = hp.params.at("c_micro_tiles_interwoven") == 0 ? "i" : "i*N_MICRO_TILES_HORIZONTALLY";
     
-    if (n_work_items_per_c_elm == 1){
+    if (hp.params.at("n_work_items_per_c_elm") == 1){
       infa = "n_work_items_per_c_elm is 1, should not be using atomics";
       fati = "n_work_items_per_c_elm is 1, should not be using atomics";
     }
@@ -214,28 +142,47 @@ class KernelString{
       fati = float_size == 32 ? "atomic_cmpxchg" : "atom_cmpxchg";
     }
     
-    pragma_unroll_string = unroll_pragma == 1 ?  "#pragma unroll\n" : "" ;
+    pragma_unroll_string = hp.params.at("unroll_pragma") == 1 ?  "#pragma unroll\n" : "" ;
     
-    effective_k = unroll_for_offset == 0 ? "k" : "k_plus_offset";    
-    alpha_scaled = c_micro_tiles_interwoven == 0 ? "alpha*rC[row][col]" : "alpha*rC[row/N_MICRO_TILES_VERTICALLY][col/N_MICRO_TILES_HORIZONTALLY]";
+    effective_k = hp.params.at("unroll_for_offset") == 0 ? "k" : "k_plus_offset";    
+    alpha_scaled = hp.params.at("c_micro_tiles_interwoven") == 0 ? "alpha*rC[row][col]" : "alpha*rC[row/N_MICRO_TILES_VERTICALLY][col/N_MICRO_TILES_HORIZONTALLY]";
     t_float = float_size == 32 ? "float" : "double";
     
-    
-    
     test_parameters_prestringbuild();
-    
-      
-
-   
-
-     
-    
-    
   }
 
 
-  std::string set_tile_dimensions(unsigned & tH, unsigned & tW, unsigned TH, unsigned TW, unsigned tS){
 
+
+
+
+  /*given a macro tile TH x TW, 
+  and given a micro tile size of tS, 
+  find the tallest possible micro tile size (tH x tW)
+  to fit the macro tile. Example, macro tile is 6 x 4:
+  
+  * * * * 
+  * * * * 
+  * * * * 
+  * * * * 
+  * * * * 
+  * * * * 
+  
+  tS = 2 return [2, 1]
+  tS = 3 return [3, 1]
+  tS = 4 return [2, 2]
+  tS = 5 raise an error ((TH * TH) % tS != 0)
+  tS = 6 return [6, 1]
+  tS = 7 raise an error ((TH * TH) % tS != 0) 
+  tS = 8 return [2, 4]
+  tS = 9 raise an error ((TH * TH) % tS != 0)
+  tS = 10 raise an error ((TH * TH) % tS != 0)
+  tS = 11 raise an error ((TH * TH) % tS != 0)
+  tS = 12 return [6, 2]
+  tS = 13 .. 23 raise an error ((TH * TH) % tS != 0)
+  tS = 24 return [6, 4] */
+  
+  std::string set_tile_dimensions(unsigned & tH, unsigned & tW, unsigned TH, unsigned TW, unsigned tS){
 
     if (tS == 0){
       throw std::runtime_error("This is strange : tS in zero in set_tile_dimensions");
@@ -251,9 +198,6 @@ class KernelString{
       set_ds += err_ss.str();
       return set_ds;
     }
-    
-
-    
     
     for (auto & multiple_of_TH : get_multiples(TH)){
       if ((tS % multiple_of_TH == 0) && ((tS / multiple_of_TH) <= TW)){
@@ -284,12 +228,7 @@ class KernelString{
   
   
   std::string get_string(){
-    std::stringstream ss;
-    ss << "Y" << macro_tile_height <<  "_X" << macro_tile_width << "_y" << micro_tile_height << "_x" << micro_tile_width << "_U" << unroll << "_P" << pad << "_GA" << group_allocation << "_APLU" << work_item_load_a_pll_to_unroll << "_BPLU" << work_item_load_b_pll_to_unroll << "_PU" << unroll_pragma << "_LIW" << load_to_lds_interwoven << "_MIW" << c_micro_tiles_interwoven  << "_ET" << 1 << "_ICE" << n_work_items_per_c_elm << "_UFO" << "unroll_for_offset";
-    
-    return ss.str();
-    
-    
+    return hp.get_string();
   }
   
   
@@ -299,7 +238,7 @@ class KernelString{
   void test_parameters_prestringbuild(){
     
     std::stringstream errstream;
-    if (load_to_lds_interwoven != 0 && load_to_lds_interwoven != 1){
+    if (hp.params.at("load_to_lds_interwoven") != 0 && hp.params.at("load_to_lds_interwoven") != 1){
       errstream << "load_to_lds_interwoven is neither 0 nor 1 sdfaeff\n";
     }
     
@@ -307,16 +246,16 @@ class KernelString{
       errstream << "in get_inttype_for_atomics in make_kernel, and don't recognise the t_float, " <<  t_float << "\n";
     }
     
-    if (group_allocation != 1 && group_allocation != 2 && group_allocation != 3){
-      errstream << "Invalid group_allocation value, it should be in [1,2,3], not " << group_allocation << "\n";
+    if (hp.params.at("group_allocation") != 1 && hp.params.at("group_allocation") != 2 && hp.params.at("group_allocation") != 3){
+      errstream << "Invalid group_allocation value, it should be in [1,2,3], not " << hp.params.at("group_allocation") << "\n";
     }
 
-    if (work_item_load_a_pll_to_unroll != 0 && work_item_load_a_pll_to_unroll != 1){
-      errstream << "this is strange, not sure what to do with `work_item_load_a_pll_to_unroll = " << work_item_load_a_pll_to_unroll << " . It 'should be 0 (for false) or 1 (for true).";
+    if (hp.params.at("work_item_load_a_pll_to_unroll") != 0 && hp.params.at("work_item_load_a_pll_to_unroll") != 1){
+      errstream << "this is strange, not sure what to do with `work_item_load_a_pll_to_unroll = " << hp.params.at("work_item_load_a_pll_to_unroll") << " . It 'should be 0 (for false) or 1 (for true).";
     }
 
-    if (work_item_load_b_pll_to_unroll != 0 && work_item_load_b_pll_to_unroll != 1){
-      errstream << "this is strange, not sure what to do with `work_item_load_b_pll_to_unroll = " << work_item_load_b_pll_to_unroll << " . It 'should be 0 (for false) or 1 (for true).";
+    if (hp.params.at("work_item_load_b_pll_to_unroll") != 0 && hp.params.at("work_item_load_b_pll_to_unroll") != 1){
+      errstream << "this is strange, not sure what to do with `work_item_load_b_pll_to_unroll = " << hp.params.at("work_item_load_b_pll_to_unroll") << " . It 'should be 0 (for false) or 1 (for true).";
     }    
     
     auto errstring = errstream.str();
@@ -327,7 +266,7 @@ class KernelString{
   
     
   void append_group_allocation_string(std::stringstream & ss){
-    if (group_allocation == 1){
+    if (hp.params.at("group_allocation") == 1){
       ss << 
 R"(
 /* GROUP_ALLOCATION = 1 :  allocation is done column-by-column */
@@ -336,7 +275,7 @@ const unsigned group_id_horizontal = group_id_xy / n_groups_vertically;
 )";
     }
     
-    else if (group_allocation == 2){
+    else if (hp.params.at("group_allocation") == 2){
       ss << 
 R"(
 /* GROUP_ALLOCATION = 2 :  allocation is done row-by-row */
@@ -345,7 +284,7 @@ unsigned group_id_vertical = group_id_xy / n_groups_horizontally;
 )";
     }
     
-    else if (group_allocation == 3){
+    else if (hp.params.at("group_allocation") == 3){
       ss << 
   R"(
 /* GROUP_ALLOCATION = 3 : allocation examples
@@ -381,23 +320,23 @@ group_id_vertical = (group_id_xy  - (n_groups_horizontally - last_super_column_w
     
     else{
       std::stringstream err_ss;
-      err_ss << "Invalid group_allocation parameter : " << group_allocation << ". It should be one of 1/2/3.";
+      err_ss << "Invalid group_allocation parameter : " << hp.params.at("group_allocation") << ". It should be one of 1/2/3.";
       throw std::runtime_error(err_ss.str());
     }
   }
 
   void append_super_column_width_defn(std::stringstream & ss){
 
-    if (group_allocation == 3){
+    if (hp.params.at("group_allocation") == 3){
 
       unsigned super_column_width;
       if (split_on_k == 1){
         super_column_width = 
-        static_cast<unsigned>(std::floor(std::sqrt(static_cast<double>(n_target_active_workgroups) / static_cast<double>(n_work_items_per_c_elm))));
+        static_cast<unsigned>(std::floor(std::sqrt(static_cast<double>(hp.params.at("n_target_active_workgroups")) / static_cast<double>(hp.params.at("n_work_items_per_c_elm")))));
       }
       else if (split_on_k == 0){
         super_column_width = 
-        static_cast<unsigned>(std::floor(std::sqrt(static_cast<double>(n_target_active_workgroups))));
+        static_cast<unsigned>(std::floor(std::sqrt(static_cast<double>(hp.params.at("n_target_active_workgroups")))));
       }
       
       else{
@@ -424,32 +363,32 @@ TFLOAT previous_value; )" << "\n" << infa << " newVal;\n" << infa << " prevVal;"
   
   
   void append_a_load_for_perp(std::stringstream & ss){
-    std::string bound_string = load_to_lds_interwoven == 0 ? "MICRO_A_TILE_PERP_UNROLL" : "MACRO_TILE_HEIGHT";
-    std::string increment_string = load_to_lds_interwoven == 0 ? "++mu_perp_i" : "mu_perp_i += MACRO_TILE_HEIGHT/MICRO_A_TILE_PERP_UNROLL";
+    std::string bound_string = hp.params.at("load_to_lds_interwoven") == 0 ? "MICRO_A_TILE_PERP_UNROLL" : "MACRO_TILE_HEIGHT";
+    std::string increment_string = hp.params.at("load_to_lds_interwoven") == 0 ? "++mu_perp_i" : "mu_perp_i += MACRO_TILE_HEIGHT/MICRO_A_TILE_PERP_UNROLL";
     append_loop_var_bound_incr(ss, "mu_perp_i", bound_string, increment_string);
   }
   
   void append_a_load_for_pll(std::stringstream & ss){
-    std::string bound_string = load_to_lds_interwoven == 0 ? "MICRO_A_TILE_PLL_UNROLL" : "UNROLL";
-    std::string increment_string = load_to_lds_interwoven == 0 ? "++mu_pll_i" : "mu_pll_i += UNROLL/MICRO_A_TILE_PLL_UNROLL";
+    std::string bound_string = hp.params.at("load_to_lds_interwoven") == 0 ? "MICRO_A_TILE_PLL_UNROLL" : "UNROLL";
+    std::string increment_string = hp.params.at("load_to_lds_interwoven") == 0 ? "++mu_pll_i" : "mu_pll_i += UNROLL/MICRO_A_TILE_PLL_UNROLL";
     append_loop_var_bound_incr(ss, "mu_pll_i", bound_string, increment_string);
   }
 
   void append_b_load_for_perp(std::stringstream & ss){
-    std::string bound_string = load_to_lds_interwoven == 0 ? "MICRO_B_TILE_PERP_UNROLL" : "MACRO_TILE_WIDTH";
-    std::string increment_string = load_to_lds_interwoven == 0 ? "++mu_perp_i" : "mu_perp_i += MACRO_TILE_WIDTH/MICRO_B_TILE_PERP_UNROLL";
+    std::string bound_string = hp.params.at("load_to_lds_interwoven") == 0 ? "MICRO_B_TILE_PERP_UNROLL" : "MACRO_TILE_WIDTH";
+    std::string increment_string = hp.params.at("load_to_lds_interwoven") == 0 ? "++mu_perp_i" : "mu_perp_i += MACRO_TILE_WIDTH/MICRO_B_TILE_PERP_UNROLL";
     append_loop_var_bound_incr(ss, "mu_perp_i", bound_string, increment_string);
   }
 
   void append_b_load_for_pll(std::stringstream & ss){
-    std::string bound_string = load_to_lds_interwoven == 0 ? "MICRO_B_TILE_PLL_UNROLL" : "UNROLL";
-    std::string increment_string = load_to_lds_interwoven == 0 ? "++mu_pll_i" : "mu_pll_i += UNROLL/MICRO_B_TILE_PLL_UNROLL";
+    std::string bound_string = hp.params.at("load_to_lds_interwoven") == 0 ? "MICRO_B_TILE_PLL_UNROLL" : "UNROLL";
+    std::string increment_string = hp.params.at("load_to_lds_interwoven") == 0 ? "++mu_pll_i" : "mu_pll_i += UNROLL/MICRO_B_TILE_PLL_UNROLL";
     append_loop_var_bound_incr(ss, "mu_pll_i", bound_string, increment_string);
   }
 
   void append_mn_factor_string(std::stringstream & ss){
-    unsigned m_factor = use_edge_trick == 1 ? 1 : macro_tile_height;
-    unsigned n_factor = use_edge_trick == 1 ? 1 : macro_tile_width;
+    unsigned m_factor = use_edge_trick == 1 ? 1 : hp.params.at("macro_tile_height");
+    unsigned n_factor = use_edge_trick == 1 ? 1 : hp.params.at("macro_tile_width");
     ss << R"(/* We define values which must be factors of m and n. Again, these have no influence on the running of the kernel */
 /* If  use_edge_trick is true, these are just 1 (every m and n are permissible) otherwise they are macro-tile dimensions */
 /* They are used by host code during checks for compatibility (for kernels with use_edge_trick false) of tile size with m and n */)" << 
@@ -484,12 +423,12 @@ TFLOAT previous_value; )" << "\n" << infa << " newVal;\n" << infa << " prevVal;"
     
     ss << "\n/* loops for writing to c */\n" << pragma_unroll_string;
     append_loop_var_bound_incr(ss, "row", 
-    c_micro_tiles_interwoven == 0 ? "MICRO_TILE_HEIGHT" : "MACRO_TILE_HEIGHT", 
-    c_micro_tiles_interwoven == 0 ? "++row" : "row += N_MICRO_TILES_VERTICALLY");
+    hp.params.at("c_micro_tiles_interwoven") == 0 ? "MICRO_TILE_HEIGHT" : "MACRO_TILE_HEIGHT", 
+    hp.params.at("c_micro_tiles_interwoven") == 0 ? "++row" : "row += N_MICRO_TILES_VERTICALLY");
     ss << " {\n" << pragma_unroll_string;
     append_loop_var_bound_incr(ss, "col",
-    c_micro_tiles_interwoven == 0 ? "MICRO_TILE_WIDTH" : "MACRO_TILE_WIDTH", 
-    c_micro_tiles_interwoven == 0 ? "++col" : "col += N_MICRO_TILES_HORIZONTALLY");
+    hp.params.at("c_micro_tiles_interwoven") == 0 ? "MICRO_TILE_WIDTH" : "MACRO_TILE_WIDTH", 
+    hp.params.at("c_micro_tiles_interwoven") == 0 ? "++col" : "col += N_MICRO_TILES_HORIZONTALLY");
     ss << " {\n";
   }
     
@@ -584,8 +523,8 @@ write_start_row + row >= MACRO_TILE_HEIGHT*(n_groups_vertically - 1)
     }
     
     else if (special_first_unroll == 1){
-      a_value_to_get = "(a_offset_pll_unroll + mu_pll_i) >= unroll_offset ? a[mu_pll_i*col_stride_a + mu_perp_i*row_stride_a] : 0;";
-      b_value_to_get = "(b_offset_pll_unroll + mu_pll_i) >= unroll_offset ? b[mu_pll_i*row_stride_b + mu_perp_i*col_stride_b] : 0;";
+      a_value_to_get = "(a_offset_pll_unroll + mu_pll_i) >= UNROLL_offset ? a[mu_pll_i*col_stride_a + mu_perp_i*row_stride_a] : 0;";
+      b_value_to_get = "(b_offset_pll_unroll + mu_pll_i) >= UNROLL_offset ? b[mu_pll_i*row_stride_b + mu_perp_i*col_stride_b] : 0;";
       a_comment =  "/* load first bit of data from a into LDS, ignoring the prepended values (less than a full unroll)  */";
       b_comment =  "/* load first bit of data from b into LDS, ignoring the prepended values (less than a full unroll) */";
     }
@@ -628,12 +567,12 @@ write_start_row + row >= MACRO_TILE_HEIGHT*(n_groups_vertically - 1)
   }
   
   std::string get_c_work_item_vertical_next(){
-    return c_micro_tiles_interwoven != 0 ? "1" : "MICRO_TILE_HEIGHT";
+    return hp.params.at("c_micro_tiles_interwoven") != 0 ? "1" : "MICRO_TILE_HEIGHT";
   }
   
   
   std::string get_c_work_item_horizontal_next(){
-    return c_micro_tiles_interwoven != 0 ? "1" : "MICRO_TILE_WIDTH";
+    return hp.params.at("c_micro_tiles_interwoven") != 0 ? "1" : "MICRO_TILE_WIDTH";
   }
       
   void append_relocate_lAlB_string(std::stringstream & ss){ //, unsigned final_unroll){
@@ -643,8 +582,8 @@ write_start_row + row >= MACRO_TILE_HEIGHT*(n_groups_vertically - 1)
   }
   
   
-  /* We previously had a variable unroll_the_math_section = False. */
-  /* Experiments with unroll_the_math_section suggest that it's a bad idea. */
+  /* We previously had a variable UNROLL_the_math_section = False. */
+  /* Experiments with UNROLL_the_math_section suggest that it's a bad idea. */
   void append_math_section(std::stringstream & ss, unsigned use_k_remaining){
     
     std::string number_of_unrolls = use_k_remaining == 0 ? "UNROLL" : "k_remaining";
@@ -694,7 +633,7 @@ if (group_id_z == n_work_groups_with_1_more && k_remaining > 0){
   }
   
   void append_first_unroll_block(std::stringstream & ss){
-    if (unroll_for_offset != 0){
+    if (hp.params.at("unroll_for_offset") != 0){
       ss << "\n\n/* This is where the first unroll will be performed. Identical to what is in the main while, but with zero buffering.  */";
       if (split_on_k == 0){
         ss << "\n";
@@ -725,7 +664,7 @@ if (group_id_z == n_work_groups_with_1_more && k_remaining > 0){
     std::string str_b_n_pll("");
     std::string str_b_n_perp("");
     
-    if (load_to_lds_interwoven == 0){
+    if (hp.params.at("load_to_lds_interwoven") == 0){
       str_a_n_pll = "MICRO_A_TILE_PLL_UNROLL *";
       str_a_n_perp = "MICRO_A_TILE_PERP_UNROLL *";
       str_b_n_pll = "MICRO_B_TILE_PLL_UNROLL *";
@@ -782,11 +721,11 @@ macro_tile_start_row_in_c -= (MACRO_TILE_HEIGHT - preshift_bottommost_tile_heigh
   }
 
   void append_group_allocation_defn_string(std::stringstream & ss){
-    ss << "#define GROUP_ALLOCATION " << group_allocation;
-    if (group_allocation == 3){
+    ss << "#define GROUP_ALLOCATION " << hp.params.at("group_allocation");
+    if (hp.params.at("group_allocation") == 3){
       ss << "/* this variable is declared because we have GROUP_ALLOCATION type 3. */\n";
       ss << "/* It should define how many workgroups we expect to have active simulantaneuosly. */\n";
-      ss << "#define N_TARGET_ACTIVE_WORKGROUPS " << n_target_active_workgroups;
+      ss << "#define N_TARGET_ACTIVE_WORKGROUPS " << hp.params.at("n_target_active_workgroups");
     }
   }
   
@@ -840,14 +779,14 @@ b += UNROLL*group_id_z*row_stride_b;
   }
   
   void append_k_unroll_offset_initial_string(std::stringstream & ss){
-    if (unroll_for_offset != 0){
+    if (hp.params.at("unroll_for_offset") != 0){
       ss <<
 R"(
 /* this additional offset of a and b appears because UNROLL_FOR_OFFSET is 1 */
-unsigned unroll_offset = (3*group_id_vertical + 11*group_id_vertical)%UNROLL;
-unsigned k_plus_offset = k + unroll_offset;
-a -= unroll_offset*col_stride_a;
-b -= unroll_offset*row_stride_b;
+unsigned UNROLL_offset = (3*group_id_vertical + 11*group_id_vertical)%UNROLL;
+unsigned k_plus_offset = k + UNROLL_offset;
+a -= UNROLL_offset*col_stride_a;
+b -= UNROLL_offset*row_stride_b;
 )";
     }
   }
@@ -858,7 +797,7 @@ b -= unroll_offset*row_stride_b;
 R"(
 /* the cumulative unroll. */
 /* For the (standard) case of N_WORK_ITEMS_PER_C_ELM = 1, G_UNROLL would just be UNROLL*/
-#define G_UNROLL )" << n_work_items_per_c_elm*unroll << " // N_WORK_ITEMS_PER_C_ELM*UNROLL";
+#define G_UNROLL )" << hp.params.at("n_work_items_per_c_elm")*hp.params.at("unroll") << " // N_WORK_ITEMS_PER_C_ELM*UNROLL";
     }
   }
   
@@ -928,8 +867,8 @@ const unsigned group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
     
     
     
-    macro_tile_area = macro_tile_width * macro_tile_height;
-    micro_tile_area = micro_tile_width * micro_tile_height;
+    macro_tile_area = hp.params.at("macro_tile_width") * hp.params.at("macro_tile_height");
+    micro_tile_area = hp.params.at("micro_tile_width") * hp.params.at("micro_tile_height");
 
     //TODO: check that all tile dimensions are nonzero and multiples of each other in prestring build check.
     if (macro_tile_area % micro_tile_area != 0){
@@ -938,25 +877,25 @@ const unsigned group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
     
 
     n_workitems_per_workgroup = macro_tile_area / micro_tile_area;
-    macro_tile_height_and_pad = macro_tile_height + pad;
-    macro_tile_width_and_pad = macro_tile_width + pad;
-    n_elements_in_a_unroll = macro_tile_height * unroll;
-    n_elements_in_b_unroll = macro_tile_width * unroll;
-    n_elements_in_padded_a_unroll = macro_tile_height_and_pad * unroll;
-    n_elements_in_padded_b_unroll = macro_tile_width_and_pad * unroll;
-    n_micro_tiles_vertically = macro_tile_height / micro_tile_height;
-    n_micro_tiles_horizontally = macro_tile_width / micro_tile_width;
+    macro_tile_height_and_pad = hp.params.at("macro_tile_height") + hp.params.at("pad");
+    macro_tile_width_and_pad = hp.params.at("macro_tile_width") + hp.params.at("pad");
+    n_elements_in_a_unroll = hp.params.at("macro_tile_height") * hp.params.at("unroll");
+    n_elements_in_b_unroll = hp.params.at("macro_tile_width") * hp.params.at("unroll");
+    n_elements_in_padded_a_unroll = macro_tile_height_and_pad * hp.params.at("unroll");
+    n_elements_in_padded_b_unroll = macro_tile_width_and_pad * hp.params.at("unroll");
+    n_micro_tiles_vertically = hp.params.at("macro_tile_height") / hp.params.at("micro_tile_height");
+    n_micro_tiles_horizontally = hp.params.at("macro_tile_width") / hp.params.at("micro_tile_width");
 
 
     
     /* check 1 : n_workitems_per_workgroup divides n_elements_in_a_unroll and n_elements_in_b_unroll  */
     std::stringstream set_status_stream;
     if (n_elements_in_a_unroll % n_workitems_per_workgroup != 0){
-      set_status_stream << "this is not supported : n_workitems_per_workgroup (" << n_workitems_per_workgroup << ") is not a factor of n_elements_in_" <<  "a" << "_unroll (" << n_elements_in_a_unroll << "). Consider rounding unroll up. \n";
+      set_status_stream << "this is not supported : n_workitems_per_workgroup (" << n_workitems_per_workgroup << ") is not a factor of n_elements_in_" <<  "a" << "_UNROLL (" << n_elements_in_a_unroll << "). Consider rounding unroll up. \n";
     }
   
     if (n_elements_in_b_unroll % n_workitems_per_workgroup != 0){
-      set_status_stream << "this is not supported : n_workitems_per_workgroup (" << n_workitems_per_workgroup << ") is not a factor of n_elements_in_" <<  "b" << "_unroll (" << n_elements_in_b_unroll << "). Consider rounding unroll up. \n";
+      set_status_stream << "this is not supported : n_workitems_per_workgroup (" << n_workitems_per_workgroup << ") is not a factor of n_elements_in_" <<  "b" << "_UNROLL (" << n_elements_in_b_unroll << "). Consider rounding unroll up. \n";
     }
     
     std::string set_status_stream_string = set_status_stream.str();
@@ -969,18 +908,18 @@ const unsigned group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
 
     /* check 2 : */
     std::string set_dimensions_status("");
-    if (work_item_load_a_pll_to_unroll == 0){
-      set_dimensions_status += set_tile_dimensions(micro_a_tile_perp_unroll, micro_a_tile_pll_unroll, macro_tile_height, unroll, n_elements_of_a_to_load_per_workitem); 
+    if (hp.params.at("work_item_load_a_pll_to_unroll") == 0){
+      set_dimensions_status += set_tile_dimensions(micro_a_tile_perp_unroll, micro_a_tile_pll_unroll, hp.params.at("macro_tile_height"), hp.params.at("unroll"), n_elements_of_a_to_load_per_workitem); 
     }
     else{
-      set_dimensions_status += set_tile_dimensions(micro_a_tile_pll_unroll, micro_a_tile_perp_unroll, unroll, macro_tile_height, n_elements_of_a_to_load_per_workitem);
+      set_dimensions_status += set_tile_dimensions(micro_a_tile_pll_unroll, micro_a_tile_perp_unroll, hp.params.at("unroll"), hp.params.at("macro_tile_height"), n_elements_of_a_to_load_per_workitem);
     }
     
-    if (work_item_load_b_pll_to_unroll == 0){
-      set_dimensions_status += set_tile_dimensions(micro_b_tile_perp_unroll, micro_b_tile_pll_unroll, macro_tile_width, unroll, n_elements_of_b_to_load_per_workitem); 
+    if (hp.params.at("work_item_load_b_pll_to_unroll") == 0){
+      set_dimensions_status += set_tile_dimensions(micro_b_tile_perp_unroll, micro_b_tile_pll_unroll, hp.params.at("macro_tile_width"), hp.params.at("unroll"), n_elements_of_b_to_load_per_workitem); 
     }
     else{
-      set_dimensions_status += set_tile_dimensions(micro_b_tile_pll_unroll, micro_b_tile_perp_unroll, unroll, macro_tile_width, n_elements_of_b_to_load_per_workitem);
+      set_dimensions_status += set_tile_dimensions(micro_b_tile_pll_unroll, micro_b_tile_perp_unroll, hp.params.at("unroll"), hp.params.at("macro_tile_width"), n_elements_of_b_to_load_per_workitem);
     }
     
     if (set_dimensions_status != ""){
@@ -988,8 +927,8 @@ const unsigned group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
     }
 
      
-    n_micro_a_tiles_pll_unroll = unroll / micro_a_tile_pll_unroll;
-    n_micro_b_tiles_pll_unroll = unroll / micro_b_tile_pll_unroll;
+    n_micro_a_tiles_pll_unroll = hp.params.at("unroll") / micro_a_tile_pll_unroll;
+    n_micro_b_tiles_pll_unroll = hp.params.at("unroll") / micro_b_tile_pll_unroll;
   
   
       
@@ -1037,25 +976,25 @@ R"(
   
   
   
-  ss << "#define MICRO_TILE_WIDTH " << micro_tile_width<< "\n";
-  ss << "#define MICRO_TILE_HEIGHT " << micro_tile_height << "\n";
+  ss << "#define MICRO_TILE_WIDTH " << hp.params.at("micro_tile_width")<< "\n";
+  ss << "#define MICRO_TILE_HEIGHT " << hp.params.at("micro_tile_height") << "\n";
   ss << "/* Area of C which a workgroup will process. Recall that a workgroup is made of several threads which share LDS memory */\n";
-  ss << "#define MACRO_TILE_WIDTH " << macro_tile_width << "\n";
-  ss << "#define MACRO_TILE_HEIGHT " << macro_tile_height << "\n";
+  ss << "#define MACRO_TILE_WIDTH " << hp.params.at("macro_tile_width") << "\n";
+  ss << "#define MACRO_TILE_HEIGHT " << hp.params.at("macro_tile_height") << "\n";
   ss << "/* How much a workgroup load (global -> LDS) in the k-direction at each iteration of the outer-most loop */\n";
-  ss << "#define UNROLL " << unroll  << "\n";
+  ss << "#define UNROLL " << hp.params.at("unroll")  << "\n";
   ss << "/* padding in LDS to avoid bank conflicts*/\n";
-  ss << "#define PAD " << pad << "\n";
+  ss << "#define PAD " << hp.params.at("pad") << "\n";
   ss << "/* whether or not this kernel uses the edge trick (see documentation : (TODO, currently internal AMD document)) */\n";
   ss << "/* this precompiler defn has no direct influence on the running the kernel, implementation already done in make_kernel.py */\n";
   ss << "#define EDGETRICK " << use_edge_trick << "\n";
   ss << "/* the number of work items working on the same c element. if this is 1, there will be just one thread doing all k multiply-adds, */\n";
   ss << "/* otherwise if it is greater than 1, each thread will be computing ~ k / N_WORK_ITEMS_PER_C_ELM of the multiply adds, to be atomically added at the end */ \n";
-  ss << "#define N_WORK_ITEMS_PER_C_ELM " << n_work_items_per_c_elm << "\n";
+  ss << "#define N_WORK_ITEMS_PER_C_ELM " << hp.params.at("n_work_items_per_c_elm") << "\n";
   ss << "/* whether or not to shimmy the starting k, in an attempt to avoid cache line overuse for cases where lda/ldb are powers of 2 */\n";
   ss << "/* if 0, no shimmying. if 1, instead of starting at k = 0 workgroups start at some negative offset dependent on work group id */\n";
   ss << "/* in the same way as the final unroll populates LDS with zeros in k mod UNROLL != 0, the initial negative indices here populate with 0 */\n";
-  ss << "#define UNROLL_FOR_OFFSET " << unroll_for_offset << "\n";
+  ss << "#define UNROLL_FOR_OFFSET " << hp.params.at("unroll_for_offset") << "\n";
   
   ss << 
 R"(
@@ -1075,17 +1014,17 @@ R"(
 )";
 
 
-  ss << "#define WORK_ITEM_LOAD_A_PLL_TO_UNROLL " << work_item_load_a_pll_to_unroll << "\n"; 
-  ss << "#define WORK_ITEM_LOAD_B_PLL_TO_UNROLL " << work_item_load_b_pll_to_unroll << "\n";
+  ss << "#define WORK_ITEM_LOAD_A_PLL_TO_UNROLL " << hp.params.at("work_item_load_a_pll_to_unroll") << "\n"; 
+  ss << "#define WORK_ITEM_LOAD_B_PLL_TO_UNROLL " << hp.params.at("work_item_load_b_pll_to_unroll") << "\n";
   ss << "/* Whether the load tiles are interwoven (ala Cobalt, (1)) or if the load tiles are truly contiguous tiles of A/B (0) */\n";
   ss << "/* Included here for user, in practice it has no direct effect on this kernel, as the relevent implementation has been done in make_kernel.py */\n";
-  ss << "#define LOAD_TO_LDS_INTERWOVEN " << load_to_lds_interwoven << "\n";
+  ss << "#define LOAD_TO_LDS_INTERWOVEN " << hp.params.at("load_to_lds_interwoven") << "\n";
   ss << "/* Whether the micro tile being processed by a compute item is interwoven with other micro tiles (ala Cobalt, (1)) or if the micro tiles are contiguous in C */\n";
   ss << "/* Included here for user, in practice it has no direct effect on this kernel, as the relevent implementation has been done in make_kernel.py */\n";
-  ss << "#define C_MICRO_TILES_INTERWOVEN " << c_micro_tiles_interwoven << "\n";
+  ss << "#define C_MICRO_TILES_INTERWOVEN " << hp.params.at("c_micro_tiles_interwoven") << "\n";
   ss << "/* Whether to use the unroll pragma to encourage the compiler to unroll certain loops */\n";
   ss << "/* Included here for user, in practice it has no direct effect on this kernel, as the relevent implementation has been done in make_kernel.py */\n";
-  ss << "#define PRAGMA_UNROLL_FORLOOPS " << unroll_pragma << "\n";
+  ss << "#define PRAGMA_UNROLL_FORLOOPS " << hp.params.at("unroll_pragma") << "\n";
   ss << "/* (deprecated parameter, as of 17 Nov 2016, see git log) How many steps ahead are we reading into registers, as compared to doing the math. */\n";
   ss << "/* This should be the domain of the compiler, and currently (26/08/2016, Catalyst) it seems that leaving this as 0 is best.  */\n";
   ss << "#define N_PREFETCH_FOR_REGISTER_LOAD " << 0 << "\n";
@@ -1298,6 +1237,9 @@ void indentify(std::string & source){
 
 KernelStringSetStatus set_kernel_string(
 
+  /* hyper parameters */
+  const hyperparams::HyperParams & hp,
+  
   std::string & kernel_string,
   
   std::string kernelname, // = "",
@@ -1307,49 +1249,25 @@ KernelStringSetStatus set_kernel_string(
   unsigned a_transposed,
   unsigned b_transposed,
   unsigned c_transposed,
-  unsigned is_col_major,
+  unsigned is_col_major
   /* to add m,n,k, lda, ldb, ldc */
   
   
-  /* hyper parameters */
-  unsigned micro_tile_width, 
-  unsigned micro_tile_height, 
-  unsigned macro_tile_width, 
-  unsigned macro_tile_height, 
-  unsigned unroll, 
-  unsigned pad, 
-  unsigned group_allocation, 
-  unsigned work_item_load_a_pll_to_unroll, 
-  unsigned work_item_load_b_pll_to_unroll, 
-  unsigned unroll_pragma, 
-  unsigned load_to_lds_interwoven, 
-  unsigned c_micro_tiles_interwoven, 
-  unsigned n_work_items_per_c_elm,
-  unsigned unroll_for_offset,
-  unsigned n_target_active_workgroups){
+){
   
   KernelString kstring(
+  
+  hp,
+
   kernelname,
+
   float_size,
   a_transposed,
   b_transposed,
   c_transposed,
-  is_col_major,
-  micro_tile_width, 
-  micro_tile_height, 
-  macro_tile_width, 
-  macro_tile_height, 
-  unroll, 
-  pad, 
-  group_allocation, 
-  work_item_load_a_pll_to_unroll, 
-  work_item_load_b_pll_to_unroll, 
-  unroll_pragma, 
-  load_to_lds_interwoven, 
-  c_micro_tiles_interwoven, 
-  n_work_items_per_c_elm,
-  unroll_for_offset,
-  n_target_active_workgroups);
+  is_col_major
+  
+  );
   
   KernelStringSetStatus kernel_string_status = kstring.set_string(kernel_string);
   if (kernel_string_status.is_good()){

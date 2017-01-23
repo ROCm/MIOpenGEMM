@@ -164,26 +164,29 @@ class DevGemmTester{
       std::string kernel_string;
       
       tinygemm::kerngen::KernelStringSetStatus set_status = tinygemm::kerngen::set_kernel_string(
+      hyper_params,
       kernel_string,
      "somekernelname",
       32, //"float" ? 32 : 64,
       tA, 
-      tB, tC, isColMajor, 
-      hyper_params.at("micro_tile_width"), 
-      hyper_params.at("micro_tile_height"), 
-      hyper_params.at("macro_tile_width"), 
-      hyper_params.at("macro_tile_height"), 
-      hyper_params.at("unroll"), 
-      hyper_params.at("pad"), 
-      hyper_params.at("group_allocation"), 
-      hyper_params.at("work_item_load_a_pll_to_unroll"), 
-      hyper_params.at("work_item_load_b_pll_to_unroll"), 
-      hyper_params.at("unroll_pragma"), 
-      hyper_params.at("load_to_lds_interwoven"), 
-      hyper_params.at("c_micro_tiles_interwoven"), 
-      hyper_params.at("n_work_items_per_c_elm"),
-      hyper_params.at("unroll_for_offset"),
-      hyper_params.at("n_target_active_workgroups"));
+      tB, tC, isColMajor 
+      
+      //hyper_params.at("micro_tile_width"), 
+      //hyper_params.at("micro_tile_height"), 
+      //hyper_params.at("macro_tile_width"), 
+      //hyper_params.at("macro_tile_height"), 
+      //hyper_params.at("unroll"), 
+      //hyper_params.at("pad"), 
+      //hyper_params.at("group_allocation"), 
+      //hyper_params.at("work_item_load_a_pll_to_unroll"), 
+      //hyper_params.at("work_item_load_b_pll_to_unroll"), 
+      //hyper_params.at("unroll_pragma"), 
+      //hyper_params.at("load_to_lds_interwoven"), 
+      //hyper_params.at("c_micro_tiles_interwoven"), 
+      //hyper_params.at("n_work_items_per_c_elm"),
+      //hyper_params.at("unroll_for_offset"),
+      //hyper_params.at("n_target_active_workgroups")
+      );
       
       
       if (set_status.is_good() == false){
