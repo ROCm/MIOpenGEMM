@@ -135,13 +135,6 @@ class DevGemmTester{
      * tinygemm::mkkern::make_kernel_via_python(dir_name, t_float, all_int_parms, "somekernelname", true); */
     std::string get_a_kernel_string(){
       
-      
-      //Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ET1_ICE1_UFO0
-      
-      //Y80_X64_y5_x4_U24_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ET1_ICE2_UFO0
-      
-      //Y16_X16_y1_x1_U8_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ET1_ICE2_UFO0
-      
       std::map<std::string, unsigned> hyper_params;
       hyper_params["micro_tile_width"] = 1;
       hyper_params["micro_tile_height"] = 1;
@@ -169,23 +162,9 @@ class DevGemmTester{
      "somekernelname",
       32, //"float" ? 32 : 64,
       tA, 
-      tB, tC, isColMajor 
-      
-      //hyper_params.at("micro_tile_width"), 
-      //hyper_params.at("micro_tile_height"), 
-      //hyper_params.at("macro_tile_width"), 
-      //hyper_params.at("macro_tile_height"), 
-      //hyper_params.at("unroll"), 
-      //hyper_params.at("pad"), 
-      //hyper_params.at("group_allocation"), 
-      //hyper_params.at("work_item_load_a_pll_to_unroll"), 
-      //hyper_params.at("work_item_load_b_pll_to_unroll"), 
-      //hyper_params.at("unroll_pragma"), 
-      //hyper_params.at("load_to_lds_interwoven"), 
-      //hyper_params.at("c_micro_tiles_interwoven"), 
-      //hyper_params.at("n_work_items_per_c_elm"),
-      //hyper_params.at("unroll_for_offset"),
-      //hyper_params.at("n_target_active_workgroups")
+      tB, 
+      tC, 
+      isColMajor
       );
       
       

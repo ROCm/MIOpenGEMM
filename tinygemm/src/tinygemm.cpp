@@ -51,18 +51,18 @@ std::map<std::string, unsigned> get_bare_bones_int_parms(const tinygemm::TinyGem
 }
 
 
-size_t get_floatsize(char floattype){
-  size_t floatsize;
+size_t get_floatbytes(char floattype){
+  size_t floatbytes;
   if (floattype == 'f'){
-    floatsize = sizeof(float);
+    floatbytes = sizeof(float);
   }
   else if (floattype == 'd'){
-    floatsize = sizeof(double);
+    floatbytes = sizeof(double);
   }
   else{
     throw tinygemm_error("Unrecognised floattype char. Currently, only 'f' (single precision) and 'd' (double precision) are supported");
   }
-  return floatsize;
+  return floatbytes;
 }
 
 
@@ -142,10 +142,12 @@ public:
 
 
 private:
-  size_t floatsize;
+
+  size_t floatbytes;
   MultiFloatType m_alpha;
   MultiFloatType m_beta;
   outputwriting::OutputWriter mowri;
+  
   /* parameters which will be needed to determine number of work groups and work items */
   unsigned macro_tile_width, macro_tile_height, n_workitems_per_workgroup, n_work_items_per_c_elm;
  
@@ -203,7 +205,7 @@ public:
   
   tk_main(command_queue, "tk_main"),
   tk_betac(command_queue, "tk_betac"){
-    floatsize = get_floatsize(floattype);
+    floatbytes = get_floatbytes(floattype);
     run_checks();
   }
   
@@ -228,7 +230,7 @@ public:
       {sizeof(unsigned),    &gg.ldc},
       {sizeof(unsigned),    &gg.c_offset},
       {sizeof(cl_mem),      (void *)&c_gpu},
-      {floatsize,           m_beta[floattype]}    
+      {floatbytes,           m_beta[floattype]}    
     } );              
   }
   
@@ -255,8 +257,8 @@ public:
       {sizeof(cl_mem),      (void *)&c_gpu},
       {sizeof(cl_mem),      (void *)&a_gpu},
       {sizeof(cl_mem),      (void *)&b_gpu},
-      {floatsize,           m_alpha[floattype]},
-      {floatsize,           m_beta[floattype]},
+      {floatbytes,           m_alpha[floattype]},
+      {floatbytes,           m_beta[floattype]},
       {sizeof(unsigned),    &gg.lda},
       {sizeof(unsigned),    &gg.ldb},
       {sizeof(unsigned),    &gg.ldc},
@@ -457,43 +459,28 @@ public:
   const char floattype, 
   const tinygemm::TinyGemmGeometry & gg
   ){
-    //std::map<std::string, unsigned> all_int_parms = get_bare_bones_int_parms(gg);
-    hyperparams::HyperParams hp = hyperparams::get_default(gg, enforce_deterministic);
-    //for (auto & x : hp.params){
-      //all_int_parms[x.first] = x.second;
-    //}
     
-    //std::string default_tk_main.kernstr;
+    hyperparams::HyperParams hp = hyperparams::get_default(gg, enforce_deterministic);
+    
+    std::string soln_main_kernel_string;
     tinygemm::kerngen::KernelStringSetStatus set_status = tinygemm::kerngen::set_kernel_string(
     hp,
-    tk_main.kernstr,
+    soln_main_kernel_string,
     generickernelname,
     floattype ==  'f' ? 32 : 64,
-    gg.tA, 
-    gg.tB, 
-    gg.tC, 
+    gg.tA,
+    gg.tB,
+    gg.tC,
     gg.isColMajor);
     
-    //all_int_parms.at("a_transposed"),
-    //all_int_parms.at("b_transposed"),
-    //all_int_parms.at("c_transposed"),
-    //all_int_parms.at("is_col_major")
+    tinygemm::TinyGemmSolutionStatistics tgss(std::numeric_limits<float>::max(), 0, 0);    
+    std::string soln_betac_kernel_string = hp.params.at("n_work_items_per_c_elm") == 1 ?  ""  : betac::get_betac_kernel_string(floattype);
+    std::string soln_betac_kernel_function_name = hp.params.at("n_work_items_per_c_elm") == 1 ? "" : kernelutil::get_kernel_function_name(soln_betac_kernel_string);
+    std::string soln_main_kernel_function_name = kernelutil::get_kernel_function_name(soln_main_kernel_string);
     
-    
-    //);
-    
-    float median_time = std::numeric_limits<float>::max();
-    float elapsed_seconds = 0.;
-    float median_benchmark_gflops = 0.;                
-    tinygemm::TinyGemmSolutionStatistics tgss(median_time, median_benchmark_gflops, elapsed_seconds);
-    /* TODO : this can be more efficient. There is no need to generate the betac kernel twice.*/ 
-    std::string soln_betac_kernel = hp.params.at("n_work_items_per_c_elm") == 1 ?  ""  : betac::get_betac_kernel_string(floattype);
-    std::string soln___betac_kernel__function__name = hp.params.at("n_work_items_per_c_elm") == 1 ? "" : kernelutil::get_kernel_function_name(betac::get_betac_kernel_string(floattype));
-    std::string soln_main_kernel = tk_main.kernstr; 
-    std::string soln_main_kernel_function_name = kernelutil::get_kernel_function_name(tk_main.kernstr);                
-    tinygemm::TinyGemmSolution tgs(soln_betac_kernel, soln_main_kernel, soln___betac_kernel__function__name, soln_main_kernel_function_name, hp, gg, floattype, tgss);
+    return { soln_betac_kernel_string, soln_betac_kernel_function_name, soln_main_kernel_string, soln_main_kernel_function_name, hp, gg, floattype, tgss };
 
-    return tgs;
+
   }
   
   
@@ -574,20 +561,13 @@ public:
   
           /* We will now attempt to generate the kernel */
           else {
-            
-            //for (auto & x : hp.params){
-              //all_int_parms[x.first] = x.second;
-              ////std::cout <<  x.first  << "  " << all_int_parms[x.first] << "  " << x.second << std::endl;
-            //}
-            
-            
+
             /* attempt to generate the kernel. Certain `bad' kernels are only caught at this stage (set_status.is_good() == false)
              * with tests for hyper-parameter compatibilty in the python script which I don't want to recode here. The main compatibility 
              * issue caught here is that load sizes from global are multiples of the number of work items.  */
             
             mowri << "\n" << hp.get_string() << Endl;
             
-            //
             tinygemm::kerngen::KernelStringSetStatus set_status = tinygemm::kerngen::set_kernel_string(
             hp,
             tk_main.kernstr,
@@ -598,22 +578,11 @@ public:
             gg.tC, 
             gg.isColMajor);
             
-            //all_int_parms.at("a_transposed"),
-            //all_int_parms.at("b_transposed"),
-            //all_int_parms.at("c_transposed"),
-            //all_int_parms.at("is_col_major")
-
-            //);
-            
-            
             if (set_status.is_good() == true){
               /* the kernel was succesfully generated, we now compile and benchmark it */
-
               
               ++global_counter;
               mowri << "global gen-com-bench : " << global_counter  <<  "." << Endl;
-  
-              
               
               setup_tinykernels(tk_main.kernstr);    
               mowri << "(find) geometry  \t:" << gg.get_string()  << "\nEntering the core gemm loops" << Endl;
@@ -647,7 +616,9 @@ public:
                 elapsed_seconds = fp_ms.count();
   
                 float median_benchmark_gflops = (2. * gg.m * gg.n * gg.k) / (median_time * 10e5);                
+                
                 tinygemm::TinyGemmSolutionStatistics tgss(median_time, median_benchmark_gflops, elapsed_seconds);
+                
                 
                 //set kernel files
                 //TODO : should not be determining whether a kernel does betac or not based on this, find true parameter
@@ -656,7 +627,7 @@ public:
                 //TODO : this is redundant. clean up. 
                 std::string soln_main_kernel = tk_main.kernstr; //kernelutil::get_as_single_string(kernelfilename);
                 std::string soln_main_kernel_function_name = kernelutil::get_kernel_function_name(tk_main.kernstr);                
-                tinygemm::TinyGemmSolution tgs(soln_betac_kernel, soln_main_kernel, soln___betac_kernel__function__name, soln_main_kernel_function_name, hp, gg, floattype, tgss);
+                tinygemm::TinyGemmSolution tgs(soln_betac_kernel, soln___betac_kernel__function__name, soln_main_kernel, soln_main_kernel_function_name, hp, gg, floattype, tgss);
   
                 path_of_best_solns.push_back(tgs); 
               }
@@ -786,7 +757,7 @@ std::string logfile){
   openclutil::SafeClMem c_copied("c_copied, in (const)find .");
   cl_event c_copy_event; 
   size_t n_c = gg.ldc * (gg.tC == gg.isColMajor ? gg.m : gg.n) + gg.c_offset;
-  size_t c_memsize = get_floatsize(floattype)*n_c;
+  size_t c_memsize = get_floatbytes(floattype)*n_c;
   c_copied.clmem = openclutil::cl_create_buffer_from_command_queue(command_queue, CL_MEM_READ_WRITE, c_memsize, NULL, "in function find of tinygemm");
   openclutil::cl_enqueue_copy_buffer(command_queue, c, c_copied.clmem, 0, 0, c_memsize, 0, NULL, &c_copy_event, "in function find of tinygemm");
   openclutil::cl_wait_for_events(1, &c_copy_event, "in function find of tinygemm");
