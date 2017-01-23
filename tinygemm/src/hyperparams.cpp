@@ -543,10 +543,10 @@ std::vector<HyperParams> HyperParams::get_two_aways(const tinygemm::TinyGemmGeom
   
   
 /* TODO is this function ever used ? */
-std::string HyperParams::get_string(){
+std::string HyperParams::get_string() const{
 
   std::stringstream ss;
-  ss << "Y" << params["macro_tile_height"] <<  "_X" << params["macro_tile_width"] << "_y" << params["micro_tile_height"] << "_x" << params["micro_tile_width"] << "_U" << params["unroll"] << "_P" << params["pad"] << "_GA" << params["group_allocation"] << "_APLU" << params["work_item_load_a_pll_to_unroll"] << "_BPLU" << params["work_item_load_b_pll_to_unroll"] << "_PU" << params["unroll_pragma"] << "_LIW" << params["load_to_lds_interwoven"] << "_MIW" << params["c_micro_tiles_interwoven"]  << "_ICE" << params["n_work_items_per_c_elm"] << "_UFO" << params.at("unroll_for_offset");
+  ss << "Y" << params.at("macro_tile_height") <<  "_X" << params.at("macro_tile_width") << "_y" << params.at("micro_tile_height") << "_x" << params.at("micro_tile_width") << "_U" << params.at("unroll") << "_P" << params.at("pad") << "_GA" << params.at("group_allocation") << "_APLU" << params.at("work_item_load_a_pll_to_unroll") << "_BPLU" << params.at("work_item_load_b_pll_to_unroll") << "_PU" << params.at("unroll_pragma") << "_LIW" << params.at("load_to_lds_interwoven") << "_MIW" << params.at("c_micro_tiles_interwoven")  << "_ICE" << params.at("n_work_items_per_c_elm") << "_UFO" << params.at("unroll_for_offset");
   
   //<< "_ET" << 1
   

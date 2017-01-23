@@ -6,7 +6,9 @@
 #include <map>
 
 
-#include "tinygemmgeometry.hpp"
+#include <tinygemm/tinygemmgeometry.hpp>
+#include <tinygemm/hyperparams.hpp>
+
 namespace tinygemm{
 
 class TinyGemmSolutionStatistics{
@@ -14,11 +16,12 @@ class TinyGemmSolutionStatistics{
     /* the median time and flop/s recorded with the(se) kernel(s) on the specified benchmarked problem */
     float median_benchmark_time;
     float median_benchmark_gflops;
-    tinygemm::TinyGemmGeometry benchmarked_geometry; //, benchmarked_n, benchmared_k;
+
     /* the time in seconds at which this solution was discovered  */
     float solution_discovery_time;
     
-    TinyGemmSolutionStatistics(float median_benchmark_time, float median_benchmark_gflops, tinygemm::TinyGemmGeometry benchmarked_geometry, float solution_discovery_time):median_benchmark_time(median_benchmark_time), median_benchmark_gflops(median_benchmark_gflops), benchmarked_geometry(benchmarked_geometry), solution_discovery_time(solution_discovery_time) {}
+    TinyGemmSolutionStatistics(float median_benchmark_time, float median_benchmark_gflops, float solution_discovery_time): 
+    median_benchmark_time(median_benchmark_time), median_benchmark_gflops(median_benchmark_gflops), solution_discovery_time(solution_discovery_time) {}
   
 };
 
@@ -26,33 +29,36 @@ class TinyGemmSolution{
 
 public:
 
-
-
-  /* Either an empty string, or the kernel to perform the C <- beta C part of GEMM 
-  */
+  /* Either an empty string, or the kernel to perform the C <- beta C part of GEMM */
   std::string betac_kernel;
 
+  /* The name of the betac kernel, ie __kernel void THIS_STRING_HERE */
+  std::string betac_kernel_function_name;
 
   /* if betac_kernel (above) is empty, this is a full GEMM kernel which performs  
    * C <- C + alpha A*B + beta C. Otherwise, if betac_kernel is not empty, 
    * this is a kernel which just does C <- C + alpha A*B */  
   std::string main_kernel;
 
-  /* The names of the betac and main kernels, ie __kernel void THIS_STRING_HERE */
-  std::string betac_kernel_function_name;
+  /* The name of the main kernel, ie __kernel void THIS_STRING_HERE */
   std::string main_kernel_function_name;
 
+  /* all hyper-parameters (unroll, tile size, etc)
+   * these are also defined as preprocessor flags in main_kernel
+   * NOTE : these are NOT needed to run kernels, 
+   * just here to describle what the kernel does under the hood  */
+  hyperparams::HyperParams hp;
 
-  /* all hyper parameters (unroll, tile size, etc) and basic geometry parameters (tA, tB, tC, isColMajor)
-   * these are the same as the values defined as preprocessor flags in main_kernel.
-   * NOTE : these are NOT needed to run kernels, just here to describle what the kernel does under the hood  */
-  std::map<std::string, unsigned> allparams;
+  /* the geometry used in the benchmark */
+  tinygemm::TinyGemmGeometry geometry;
 
   /* currently 'f' or 'd' for single and double precision, respectively */
   char floattype;  
+  
   TinyGemmSolutionStatistics statistics;
 
-  TinyGemmSolution(std::string betac_kernel, std::string main_kernel, std::string betac_kernel_function_name, std::string main_kernel_function_name, std::map<std::string, unsigned> allparams, char floattype, TinyGemmSolutionStatistics tgss): betac_kernel(betac_kernel), main_kernel(main_kernel), betac_kernel_function_name(betac_kernel_function_name), main_kernel_function_name(main_kernel_function_name), allparams(allparams), floattype(floattype), statistics(tgss){}
+  
+  TinyGemmSolution(std::string betac_kernel, std::string betac_kernel_function_name,  std::string main_kernel, std::string main_kernel_function_name, const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & geometry, char floattype, TinyGemmSolutionStatistics tgss): betac_kernel(betac_kernel), betac_kernel_function_name(betac_kernel_function_name), main_kernel(main_kernel), main_kernel_function_name(main_kernel_function_name), hp(hp), geometry(geometry), floattype(floattype), statistics(tgss){}
 
   /* A TinyGemmSolution is only valid for a fixed basic geometry (tA, tB, etc) , but can be used for any size m,n,k, 
    * as long as the kernel macro tile size is not larger than m x n. This function should be used to determine
@@ -65,7 +71,6 @@ public:
 
   /* return a string summarising the TinyGemmGeometry, less offsets (a request from MLOpen) */
   std::string get_networkconfig_string() const;
-
 
   /* return a string describing the hyper parameters */
   std::string get_hyper_param_string() const;

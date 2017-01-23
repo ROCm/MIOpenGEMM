@@ -457,11 +457,11 @@ public:
   const char floattype, 
   const tinygemm::TinyGemmGeometry & gg
   ){
-    std::map<std::string, unsigned> all_int_parms = get_bare_bones_int_parms(gg);
+    //std::map<std::string, unsigned> all_int_parms = get_bare_bones_int_parms(gg);
     hyperparams::HyperParams hp = hyperparams::get_default(gg, enforce_deterministic);
-    for (auto & x : hp.params){
-      all_int_parms[x.first] = x.second;
-    }
+    //for (auto & x : hp.params){
+      //all_int_parms[x.first] = x.second;
+    //}
     
     //std::string default_tk_main.kernstr;
     tinygemm::kerngen::KernelStringSetStatus set_status = tinygemm::kerngen::set_kernel_string(
@@ -469,39 +469,29 @@ public:
     tk_main.kernstr,
     generickernelname,
     floattype ==  'f' ? 32 : 64,
-    all_int_parms.at("a_transposed"),
-    all_int_parms.at("b_transposed"),
-    all_int_parms.at("c_transposed"),
-    all_int_parms.at("is_col_major")
+    gg.tA, 
+    gg.tB, 
+    gg.tC, 
+    gg.isColMajor);
     
-    //all_int_parms.at("micro_tile_width"), 
-    //all_int_parms.at("micro_tile_height"), 
-    //all_int_parms.at("macro_tile_width"), 
-    //all_int_parms.at("macro_tile_height"), 
-    //all_int_parms.at("unroll"), 
-    //all_int_parms.at("pad"), 
-    //all_int_parms.at("group_allocation"), 
-    //all_int_parms.at("work_item_load_a_pll_to_unroll"), 
-    //all_int_parms.at("work_item_load_b_pll_to_unroll"), 
-    //all_int_parms.at("unroll_pragma"), 
-    //all_int_parms.at("load_to_lds_interwoven"), 
-    //all_int_parms.at("c_micro_tiles_interwoven"), 
-    //all_int_parms.at("n_work_items_per_c_elm"),
-    //all_int_parms.at("unroll_for_offset"),
-    //all_int_parms.at("n_target_active_workgroups")
+    //all_int_parms.at("a_transposed"),
+    //all_int_parms.at("b_transposed"),
+    //all_int_parms.at("c_transposed"),
+    //all_int_parms.at("is_col_major")
     
-    );
+    
+    //);
     
     float median_time = std::numeric_limits<float>::max();
     float elapsed_seconds = 0.;
     float median_benchmark_gflops = 0.;                
-    tinygemm::TinyGemmSolutionStatistics tgss(median_time, median_benchmark_gflops, gg, elapsed_seconds);
+    tinygemm::TinyGemmSolutionStatistics tgss(median_time, median_benchmark_gflops, elapsed_seconds);
     /* TODO : this can be more efficient. There is no need to generate the betac kernel twice.*/ 
-    std::string soln_betac_kernel = all_int_parms.at("n_work_items_per_c_elm") == 1 ?  ""  : betac::get_betac_kernel_string(floattype);
-    std::string soln___betac_kernel__function__name = all_int_parms.at("n_work_items_per_c_elm") == 1 ? "" : kernelutil::get_kernel_function_name(betac::get_betac_kernel_string(floattype));
+    std::string soln_betac_kernel = hp.params.at("n_work_items_per_c_elm") == 1 ?  ""  : betac::get_betac_kernel_string(floattype);
+    std::string soln___betac_kernel__function__name = hp.params.at("n_work_items_per_c_elm") == 1 ? "" : kernelutil::get_kernel_function_name(betac::get_betac_kernel_string(floattype));
     std::string soln_main_kernel = tk_main.kernstr; 
     std::string soln_main_kernel_function_name = kernelutil::get_kernel_function_name(tk_main.kernstr);                
-    tinygemm::TinyGemmSolution tgs(soln_betac_kernel, soln_main_kernel, soln___betac_kernel__function__name, soln_main_kernel_function_name, all_int_parms, floattype, tgss);
+    tinygemm::TinyGemmSolution tgs(soln_betac_kernel, soln_main_kernel, soln___betac_kernel__function__name, soln_main_kernel_function_name, hp, gg, floattype, tgss);
 
     return tgs;
   }
@@ -530,7 +520,7 @@ public:
     std::vector<hyperparams::HyperParams> hyper_front_history;
     
     /* we set some initial parameters: the ones which are not in HyperParam object but eventually needed by the python script to generate kernel */
-    std::map<std::string, unsigned> all_int_parms = get_bare_bones_int_parms(gg);
+    //std::map<std::string, unsigned> all_int_parms = get_bare_bones_int_parms(gg);
     
     /* while generating, compiling and benchmarking kernels, we will keep track of the fastest found thus far */
     float best_time = std::numeric_limits<float>::max();
@@ -585,10 +575,12 @@ public:
           /* We will now attempt to generate the kernel */
           else {
             
-            for (auto & x : hp.params){
-              all_int_parms[x.first] = x.second;
-              //std::cout <<  x.first  << "  " << all_int_parms[x.first] << "  " << x.second << std::endl;
-            }
+            //for (auto & x : hp.params){
+              //all_int_parms[x.first] = x.second;
+              ////std::cout <<  x.first  << "  " << all_int_parms[x.first] << "  " << x.second << std::endl;
+            //}
+            
+            
             /* attempt to generate the kernel. Certain `bad' kernels are only caught at this stage (set_status.is_good() == false)
              * with tests for hyper-parameter compatibilty in the python script which I don't want to recode here. The main compatibility 
              * issue caught here is that load sizes from global are multiples of the number of work items.  */
@@ -601,27 +593,17 @@ public:
             tk_main.kernstr,
             generickernelname,
             floattype ==  'f' ? 32 : 64,
-            all_int_parms.at("a_transposed"),
-            all_int_parms.at("b_transposed"),
-            all_int_parms.at("c_transposed"),
-            all_int_parms.at("is_col_major")
+            gg.tA,
+            gg.tB, 
+            gg.tC, 
+            gg.isColMajor);
+            
+            //all_int_parms.at("a_transposed"),
+            //all_int_parms.at("b_transposed"),
+            //all_int_parms.at("c_transposed"),
+            //all_int_parms.at("is_col_major")
 
-            //all_int_parms.at("micro_tile_width"), 
-            //all_int_parms.at("micro_tile_height"), 
-            //all_int_parms.at("macro_tile_width"), 
-            //all_int_parms.at("macro_tile_height"), 
-            //all_int_parms.at("unroll"), 
-            //all_int_parms.at("pad"), 
-            //all_int_parms.at("group_allocation"), 
-            //all_int_parms.at("work_item_load_a_pll_to_unroll"), 
-            //all_int_parms.at("work_item_load_b_pll_to_unroll"), 
-            //all_int_parms.at("unroll_pragma"), 
-            //all_int_parms.at("load_to_lds_interwoven"), 
-            //all_int_parms.at("c_micro_tiles_interwoven"), 
-            //all_int_parms.at("n_work_items_per_c_elm"),
-            //all_int_parms.at("unroll_for_offset"),
-            //all_int_parms.at("n_target_active_workgroups")
-            );
+            //);
             
             
             if (set_status.is_good() == true){
@@ -665,16 +647,16 @@ public:
                 elapsed_seconds = fp_ms.count();
   
                 float median_benchmark_gflops = (2. * gg.m * gg.n * gg.k) / (median_time * 10e5);                
-                tinygemm::TinyGemmSolutionStatistics tgss(median_time, median_benchmark_gflops, gg, elapsed_seconds);
+                tinygemm::TinyGemmSolutionStatistics tgss(median_time, median_benchmark_gflops, elapsed_seconds);
                 
                 //set kernel files
                 //TODO : should not be determining whether a kernel does betac or not based on this, find true parameter
-                std::string soln_betac_kernel = all_int_parms.at("n_work_items_per_c_elm") == 1 ?  ""  : betac::get_betac_kernel_string(floattype);
-                std::string soln___betac_kernel__function__name = all_int_parms.at("n_work_items_per_c_elm") == 1 ? "" : tk_betac.fname;
+                std::string soln_betac_kernel = hp.params.at("n_work_items_per_c_elm") == 1 ?  ""  : betac::get_betac_kernel_string(floattype);
+                std::string soln___betac_kernel__function__name = hp.params.at("n_work_items_per_c_elm") == 1 ? "" : tk_betac.fname;
                 //TODO : this is redundant. clean up. 
                 std::string soln_main_kernel = tk_main.kernstr; //kernelutil::get_as_single_string(kernelfilename);
                 std::string soln_main_kernel_function_name = kernelutil::get_kernel_function_name(tk_main.kernstr);                
-                tinygemm::TinyGemmSolution tgs(soln_betac_kernel, soln_main_kernel, soln___betac_kernel__function__name, soln_main_kernel_function_name, all_int_parms, floattype, tgss);
+                tinygemm::TinyGemmSolution tgs(soln_betac_kernel, soln_main_kernel, soln___betac_kernel__function__name, soln_main_kernel_function_name, hp, gg, floattype, tgss);
   
                 path_of_best_solns.push_back(tgs); 
               }

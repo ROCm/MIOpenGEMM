@@ -41,7 +41,7 @@ public:
   
   //check that it won't overflow by considering (m,n,tC).
   bool can_be_used_on(const tinygemm::TinyGemmGeometry & gg);  
-  std::string get_string();
+  std::string get_string() const;
 
 
 };  
