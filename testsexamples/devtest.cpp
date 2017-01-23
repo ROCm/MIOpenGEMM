@@ -140,15 +140,16 @@ class DevGemmTester{
       
       //Y80_X64_y5_x4_U24_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ET1_ICE2_UFO0
       
+      //Y16_X16_y1_x1_U8_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ET1_ICE2_UFO0
       
       std::map<std::string, unsigned> hyper_params;
-      hyper_params["micro_tile_width"] = 4;
-      hyper_params["micro_tile_height"] = 5;
-      hyper_params["macro_tile_width"] = 64;
-      hyper_params["macro_tile_height"] = 80; 
-      hyper_params["unroll"] = 24;
+      hyper_params["micro_tile_width"] = 1;
+      hyper_params["micro_tile_height"] = 1;
+      hyper_params["macro_tile_width"] = 16;
+      hyper_params["macro_tile_height"] = 16; 
+      hyper_params["unroll"] = 16;
       hyper_params["pad"] = 1;    
-      hyper_params["group_allocation"] = 2;
+      hyper_params["group_allocation"] = 1;
       hyper_params["work_item_load_a_pll_to_unroll"] = 0;
       hyper_params["work_item_load_b_pll_to_unroll"] = 1;
       hyper_params["unroll_pragma"] = 1;
@@ -199,7 +200,7 @@ int main (){
     
   DevGemmTester dgt;
   
-  bool test_benchmark = false;
+  bool test_benchmark = true;
   if (test_benchmark == true){
     dgt.call_benchgemm();
   }
@@ -210,7 +211,7 @@ int main (){
     std::cout << bla << std::endl;
   }
 
-  bool test_find = true;  
+  bool test_find = false;  
   if (test_find == true){
     dgt.call_find();  
   }

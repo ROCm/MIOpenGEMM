@@ -220,19 +220,6 @@ class KernelString{
     alpha_scaled = c_micro_tiles_interwoven == 0 ? "alpha*rC[row][col]" : "alpha*rC[row/N_MICRO_TILES_VERTICALLY][col/N_MICRO_TILES_HORIZONTALLY]";
     t_float = float_size == 32 ? "float" : "double";
     
-    macro_tile_area = macro_tile_width * macro_tile_height;
-    micro_tile_area = micro_tile_width * micro_tile_height;
-    n_workitems_per_workgroup = macro_tile_area / micro_tile_area;
-    macro_tile_height_and_pad = macro_tile_height + pad;
-    macro_tile_width_and_pad = macro_tile_width + pad;
-    n_elements_in_a_unroll = macro_tile_height * unroll;
-    n_elements_in_b_unroll = macro_tile_width * unroll;
-    n_elements_in_padded_a_unroll = macro_tile_height_and_pad * unroll;
-    n_elements_in_padded_b_unroll = macro_tile_width_and_pad * unroll;
-    n_elements_of_a_to_load_per_workitem = n_elements_in_a_unroll / n_workitems_per_workgroup;
-    n_elements_of_b_to_load_per_workitem = n_elements_in_b_unroll / n_workitems_per_workgroup;
-    n_micro_tiles_vertically = macro_tile_height / micro_tile_height;
-    n_micro_tiles_horizontally = macro_tile_width / micro_tile_width;
     
     
     test_parameters_prestringbuild();
@@ -240,25 +227,33 @@ class KernelString{
       
 
    
+
      
     
     
   }
 
 
-  std::string 
-  set_tile_dimensions(unsigned & tH, unsigned & tW, unsigned TH, unsigned TW, unsigned tS){
+  std::string set_tile_dimensions(unsigned & tH, unsigned & tW, unsigned TH, unsigned TW, unsigned tS){
 
-    std::string set_ds("");
-  
+
+    if (tS == 0){
+      throw std::runtime_error("This is strange : tS in zero in set_tile_dimensions");
+    }
+
+    std::string set_ds("");  
     std::stringstream err_ss;
     err_ss << get_string() << "\n" << "TH : " << TH << " TW : " << TW << " tS : " << tS;
+  
   
     if ((TH*TW) % tS  != 0){
       set_ds += "Areas of micro and macro tiles are incompatible : ";
       set_ds += err_ss.str();
       return set_ds;
     }
+    
+
+    
     
     for (auto & multiple_of_TH : get_multiples(TH)){
       if ((tS % multiple_of_TH == 0) && ((tS / multiple_of_TH) <= TW)){
@@ -930,9 +925,49 @@ const unsigned group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
 
   
   KernelStringSetStatus set_string(std::string & kernel_string){
+    
+    
+    
+    macro_tile_area = macro_tile_width * macro_tile_height;
+    micro_tile_area = micro_tile_width * micro_tile_height;
+
+    //TODO: check that all tile dimensions are nonzero and multiples of each other in prestring build check.
+    if (macro_tile_area % micro_tile_area != 0){
+      return KernelStringSetStatus("micro tile is not a multiple of macro tile");
+    }
+    
+
+    n_workitems_per_workgroup = macro_tile_area / micro_tile_area;
+    macro_tile_height_and_pad = macro_tile_height + pad;
+    macro_tile_width_and_pad = macro_tile_width + pad;
+    n_elements_in_a_unroll = macro_tile_height * unroll;
+    n_elements_in_b_unroll = macro_tile_width * unroll;
+    n_elements_in_padded_a_unroll = macro_tile_height_and_pad * unroll;
+    n_elements_in_padded_b_unroll = macro_tile_width_and_pad * unroll;
+    n_micro_tiles_vertically = macro_tile_height / micro_tile_height;
+    n_micro_tiles_horizontally = macro_tile_width / micro_tile_width;
 
 
+    
+    /* check 1 : n_workitems_per_workgroup divides n_elements_in_a_unroll and n_elements_in_b_unroll  */
+    std::stringstream set_status_stream;
+    if (n_elements_in_a_unroll % n_workitems_per_workgroup != 0){
+      set_status_stream << "this is not supported : n_workitems_per_workgroup (" << n_workitems_per_workgroup << ") is not a factor of n_elements_in_" <<  "a" << "_unroll (" << n_elements_in_a_unroll << "). Consider rounding unroll up. \n";
+    }
+  
+    if (n_elements_in_b_unroll % n_workitems_per_workgroup != 0){
+      set_status_stream << "this is not supported : n_workitems_per_workgroup (" << n_workitems_per_workgroup << ") is not a factor of n_elements_in_" <<  "b" << "_unroll (" << n_elements_in_b_unroll << "). Consider rounding unroll up. \n";
+    }
+    
+    std::string set_status_stream_string = set_status_stream.str();
+    if (set_status_stream_string != ""){
+      return KernelStringSetStatus(set_status_stream_string);
+    }
 
+    n_elements_of_a_to_load_per_workitem = n_elements_in_a_unroll / n_workitems_per_workgroup;
+    n_elements_of_b_to_load_per_workitem = n_elements_in_b_unroll / n_workitems_per_workgroup;
+
+    /* check 2 : */
     std::string set_dimensions_status("");
     if (work_item_load_a_pll_to_unroll == 0){
       set_dimensions_status += set_tile_dimensions(micro_a_tile_perp_unroll, micro_a_tile_pll_unroll, macro_tile_height, unroll, n_elements_of_a_to_load_per_workitem); 
@@ -940,8 +975,6 @@ const unsigned group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
     else{
       set_dimensions_status += set_tile_dimensions(micro_a_tile_pll_unroll, micro_a_tile_perp_unroll, unroll, macro_tile_height, n_elements_of_a_to_load_per_workitem);
     }
-    
-    
     
     if (work_item_load_b_pll_to_unroll == 0){
       set_dimensions_status += set_tile_dimensions(micro_b_tile_perp_unroll, micro_b_tile_pll_unroll, macro_tile_width, unroll, n_elements_of_b_to_load_per_workitem); 
@@ -954,26 +987,13 @@ const unsigned group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
       return KernelStringSetStatus(set_dimensions_status);
     }
 
+     
     n_micro_a_tiles_pll_unroll = unroll / micro_a_tile_pll_unroll;
     n_micro_b_tiles_pll_unroll = unroll / micro_b_tile_pll_unroll;
   
   
       
   
-  std::stringstream set_status_stream;
-  
-  if (n_elements_in_a_unroll % n_workitems_per_workgroup != 0){
-    set_status_stream << "this is not supported : n_workitems_per_workgroup (" << n_workitems_per_workgroup << ") is not a factor of n_elements_in_" <<  "a" << "_unroll (" << n_elements_in_a_unroll << "). Consider rounding unroll up. \n";
-  }
-
-  if (n_elements_in_b_unroll % n_workitems_per_workgroup != 0){
-    set_status_stream << "this is not supported : n_workitems_per_workgroup (" << n_workitems_per_workgroup << ") is not a factor of n_elements_in_" <<  "b" << "_unroll (" << n_elements_in_b_unroll << "). Consider rounding unroll up. \n";
-  }
-  
-  std::string set_status_stream_string = set_status_stream.str();
-  if (set_status_stream_string != ""){
-    return KernelStringSetStatus(set_status_stream_string);
-  }
   
   
     

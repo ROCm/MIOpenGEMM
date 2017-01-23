@@ -10,9 +10,9 @@ void basicexample(){
   bool tB = false;
   bool tC = false;
   
-  unsigned m = 4000;
-  unsigned n = 4000;
-  unsigned k = 4000;
+  unsigned m = 300;
+  unsigned n = 400;
+  unsigned k = 500;
 
   unsigned lda = ( tA == isColMajor ? k : m ) + 1;
   unsigned ldb = ( tB == isColMajor ? n : k ) + 2;

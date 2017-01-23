@@ -22,16 +22,7 @@
 #include <tinygemm/kernelstringgenerator.hpp>
 
 namespace tinygemm{
-
-
-
-
-
-   
-   
-   
-   
-   
+  
 static std::string generickernelname = "atinygemmkernel";
 
 class MultiFloatType{
@@ -74,6 +65,70 @@ size_t get_floatsize(char floattype){
   return floatsize;
 }
 
+
+class TinyGemmKernel{
+  
+  public:
+    //TODO : privatise:
+    cl_command_queue command_queue;
+    std::string kernstr;
+    std::string fname;
+  
+  private:
+    cl_program clprog;
+
+  public:
+    cl_kernel clkern;
+  
+  private:
+    std::string hash;
+
+  public:
+    
+    TinyGemmKernel(cl_command_queue command_queue, const std::string & hash): command_queue(command_queue), kernstr(""), fname(""), clprog(nullptr), clkern(nullptr), hash(hash) {}
+    
+    void try_release(){
+      if (clprog != nullptr){
+        openclutil::cl_release_program(clprog, "TinyGemmKernel Destructor");
+      }
+      if (clkern != nullptr){
+        openclutil::cl_release_kernel(clkern, "TinyGemmKernel Destructor");
+      }
+    }
+    
+    void update(const std::string & new_kernstr){
+      try_release();
+      kernstr = new_kernstr;      
+      openclutil::set_program_and_kernel(command_queue, clprog, clkern, fname, kernstr);
+    }
+    
+    ~TinyGemmKernel(){
+      try_release();
+    }
+    
+    bool is_set(){
+      return (clprog != nullptr && clkern != nullptr);
+    }
+
+    
+    void set_kernel_arg(cl_uint arg_index, size_t arg_size, const void *arg_value){
+      
+      if (clkern == nullptr){
+        throw tinygemm_error("Attempt to set kernel argument of uninitialised kernel");
+      }
+      openclutil::cl_set_kernel_arg(clkern, arg_index, arg_size, arg_value, "in set_kernel_arg of TinyGemmKernel, " + hash + " index : " + std::to_string(arg_index));
+    }
+    
+    void set_kernel_args(std::vector<std::pair<size_t, const void *> > arg_sizes_values){
+      for (cl_uint arg_index = 0; arg_index < arg_sizes_values.size(); ++arg_index){
+        set_kernel_arg(arg_index, arg_sizes_values[arg_index].first, arg_sizes_values[arg_index].second); 
+      }
+    }
+      
+
+};
+
+
 class OpenCLGemmEncapsulator{
 public: 
   /* references to constructor parameters */
@@ -93,33 +148,34 @@ private:
   outputwriting::OutputWriter mowri;
   /* parameters which will be needed to determine number of work groups and work items */
   unsigned macro_tile_width, macro_tile_height, n_workitems_per_workgroup, n_work_items_per_c_elm;
-  /* parameters relevent for the case(s) where the beta scaling is performed by a separate kernel (such as when splitting-in-k) */
+ 
+  /* parameters related to the main kernel */
   unsigned does_betac_inc;
-  size_t n_work_groups;
-  size_t local_work_size;
-  size_t global_work_size;
-  std::string betac_kernel_function_name;
-  /* parameters related to the scaling (beta C) kernel */
-  unsigned dim_coal, dim_uncoal;
-  size_t betac_global_work_size, betac_local_work_size;
-  bool nobenching;
+  size_t main_n_work_groups;
+  size_t main_local_work_size;
+  size_t main_global_work_size;
+  
+  /* parameters related to the scaling (betac) kernel */
+  unsigned dim_coal;
+  unsigned dim_uncoal;
+  size_t betac_global_work_size;
+  size_t betac_local_work_size;
+
   /* stores (the most recent of n_runs) execution time */
   size_t t_start_betac_kernel, t_end_betac_kernel, t_start_main_kernel, t_end_main_kernel;
-  float t_total_with_both, t_just_scaling, t_just_main;
-  /* vector times over all n_runs runs */
-  std::vector<float> v_t_total_with_both, v_t_just_scaling, v_t_just_main;\
-  std::string kernel_function_name;
-  cl_program program = nullptr;
-  cl_kernel kernel = nullptr;
-  cl_program betac_program = nullptr;
-  cl_kernel betac_kernel = nullptr;
+
+  /* vector of times over a set of runs on core loop */
+  std::vector<float> v_t_total_with_both, v_t_just_scaling, v_t_just_main;
+
   /* used for getting performance of main and (possibly) betac kernels */
   cl_event event_main_kernel;
   cl_event event_betac_kernel;
-  
-  
 
-  openclutil::SafeClProgAndKern safe_betac_prog_and_kern;
+
+  
+  TinyGemmKernel tk_main;
+  TinyGemmKernel tk_betac;
+  
 
 public:
   OpenCLGemmEncapsulator(
@@ -132,8 +188,7 @@ public:
   cl_mem b_gpu, 
   cl_mem c_gpu,
   std::string outputfilename,
-  bool verbose, 
-  bool nobenching):
+  bool verbose):
 
   command_queue(command_queue), 
   outputfilename(outputfilename),
@@ -145,20 +200,13 @@ public:
   m_alpha(alpha),
   m_beta(beta),
   mowri(verbose, outputfilename.compare("") != 0, outputfilename),
-  nobenching(nobenching),
   
-  
-  
-  safe_betac_prog_and_kern("SafeClProgAndKern of betac kernel")
-  {
-    set_floatsize();
+  tk_main(command_queue, "tk_main"),
+  tk_betac(command_queue, "tk_betac"){
+    floatsize = get_floatsize(floattype);
     run_checks();
-    if (nobenching == false){
-      setup_betac_kernel(); 
-      safe_betac_prog_and_kern.clprog = betac_program;
-      safe_betac_prog_and_kern.clkern = betac_kernel;
-    }
   }
+  
 
   void run_checks(){
     if (c_gpu == a_gpu || c_gpu == b_gpu){
@@ -170,133 +218,158 @@ public:
     if (floattype != 'd' and floattype != 'f'){
       throw tinygemm_error("floattype should be one of 'f' and 'd'");
     }
-  }
-
-
-  void setup_betac_kernel(){
-    /* jit compile the betackernel source  */
-    
-    std::string betac_kernel_string = betac::get_betac_kernel_string(floattype);
-    openclutil::set_program_and_kernel(command_queue, betac_program, betac_kernel, betac_kernel_function_name, betac_kernel_string);
-    
-    betac::set_betackernel_sizes(floattype, gg.isColMajor, gg.tC, gg.m, gg.n, dim_coal, dim_uncoal, betac_global_work_size, betac_local_work_size);
-    mowri << "in setup_betac_kernel, global_work_size : " << betac_global_work_size << Endl; 
-    
-    openclutil::cl_set_kernel_arg(betac_kernel, 0, sizeof(unsigned), &dim_coal, "parm 0 in setup_betac_kernel");
-    openclutil::cl_set_kernel_arg(betac_kernel, 1, sizeof(unsigned), &dim_uncoal, "parm 1 in setup_betac_kernel");
-    openclutil::cl_set_kernel_arg(betac_kernel, 2, sizeof(unsigned), &gg.ldc, "parm 2 in setup_betac_kernel");
-    openclutil::cl_set_kernel_arg(betac_kernel, 3, sizeof(unsigned), &gg.c_offset, "parm 3 in setup_betac_kernel");
-    openclutil::cl_set_kernel_arg(betac_kernel, 4, sizeof(cl_mem), (void *)&c_gpu, "parm 4 in setup_betac_kernel");
-    openclutil::cl_set_kernel_arg(betac_kernel, 5, floatsize, m_beta[floattype], "parm 5 in setup_betac_kernel");
-    
-
-    
-    
-  }
-
-
-
-  void set_floatsize(){
-    floatsize = get_floatsize(floattype);    
-  }
-
-  void check_and_set_from(const std::string & kernel_string){
-    
-    /* check that the parameters in kernel_string look reasonable */
-    kernelutil::check_gpu_kernel_preprocessor_parameters(kernel_string, gg.tA, gg.tB, gg.tC, gg.isColMajor, gg.m, gg.n, floattostring::get_float_string(floattype));
-    
-    /* extract the parameters which are needed to determine the number of work groups and work items to launch, directly from kernel string */
-    kernelutil::set_sizes_from_kernel_string(macro_tile_width, macro_tile_height, n_workitems_per_workgroup, n_work_items_per_c_elm, does_betac_inc, kernel_string);
-  }
-
+  }  
 
   
-  void set_workforce(){
-    sizingup::set_workforce(n_work_groups, local_work_size, global_work_size, gg.m, gg.n, n_work_items_per_c_elm, macro_tile_height, macro_tile_width, n_workitems_per_workgroup);
+  void set_betac_kernel_arguments(){
+    tk_betac.set_kernel_args( {
+      {sizeof(unsigned),    &dim_coal},
+      {sizeof(unsigned),    &dim_uncoal},
+      {sizeof(unsigned),    &gg.ldc},
+      {sizeof(unsigned),    &gg.c_offset},
+      {sizeof(cl_mem),      (void *)&c_gpu},
+      {floatsize,           m_beta[floattype]}    
+    } );              
   }
+  
+  void setup_betac_kernel(){
+    tk_betac.update(betac::get_betac_kernel_string(floattype));
+    betac::set_betackernel_sizes(floattype, gg.isColMajor, gg.tC, gg.m, gg.n, dim_coal, dim_uncoal, betac_global_work_size, betac_local_work_size);
+    mowri << "in setup_betac_kernel, betac_global_work_size : " << betac_global_work_size << Endl; 
+    set_betac_kernel_arguments();
+
+  }
+  
+  void enqueue_betac_kernel(){
+    openclutil::cl_enqueue_ndrange_kernel(command_queue, tk_betac.clkern, 1, NULL, &betac_global_work_size, &betac_local_work_size, 0, NULL, &event_betac_kernel, "in enqueue_betac_kernel");
+  }
+
+
+
+
 
 
   void set_main_kernel_arguments(){
-    
-    /* set the alpha (alpha and beta) kernel parameters */
-    openclutil::cl_set_kernel_arg(kernel, 0, sizeof(cl_mem), (void *)&c_gpu, "parm-0-in-set_main_kernel_arguments");
-    openclutil::cl_set_kernel_arg(kernel, 1, sizeof(cl_mem), (void *)&a_gpu, "parm-1-in-set_main_kernel_arguments");
-    openclutil::cl_set_kernel_arg(kernel, 2, sizeof(cl_mem), (void *)&b_gpu, "parm-2-in-set_main_kernel_arguments");
-    openclutil::cl_set_kernel_arg(kernel, 3, floatsize, m_alpha[floattype], "parm-3-in-set_main_kernel_arguments");
-    openclutil::cl_set_kernel_arg(kernel, 4, floatsize, m_beta[floattype], "parm-4-in-set_main_kernel_arguments");
-    openclutil::cl_set_kernel_arg(kernel, 5, sizeof(unsigned), &gg.lda, "parm-5-in-set_main_kernel_arguments");
-    openclutil::cl_set_kernel_arg(kernel, 6, sizeof(unsigned), &gg.ldb, "parm-6-in-set_main_kernel_arguments");
-    openclutil::cl_set_kernel_arg(kernel, 7, sizeof(unsigned), &gg.ldc, "parm-7-in-set_main_kernel_arguments");
-    openclutil::cl_set_kernel_arg(kernel, 8, sizeof(unsigned), &gg.m, "parm-8-in-set_main_kernel_arguments");
-    openclutil::cl_set_kernel_arg(kernel, 9, sizeof(unsigned), &gg.n, "parm-9-in-set_main_kernel_arguments");
-    openclutil::cl_set_kernel_arg(kernel, 10, sizeof(unsigned), &gg.k, "parm-10-in-set_main_kernel_arguments");
-    openclutil::cl_set_kernel_arg(kernel, 11, sizeof(unsigned), &gg.a_offset, "parm-10-in-set_main_kernel_arguments");
-    openclutil::cl_set_kernel_arg(kernel, 12, sizeof(unsigned), &gg.b_offset, "parm-12-in-set_main_kernel_arguments");
-    openclutil::cl_set_kernel_arg(kernel, 13, sizeof(unsigned), &gg.c_offset, "parm-14-in-set_main_kernel_arguments");
-  }
+    /* set the main kernel parameters */
+    tk_main.set_kernel_args( {
+      {sizeof(cl_mem),      (void *)&c_gpu},
+      {sizeof(cl_mem),      (void *)&a_gpu},
+      {sizeof(cl_mem),      (void *)&b_gpu},
+      {floatsize,           m_alpha[floattype]},
+      {floatsize,           m_beta[floattype]},
+      {sizeof(unsigned),    &gg.lda},
+      {sizeof(unsigned),    &gg.ldb},
+      {sizeof(unsigned),    &gg.ldc},
+      {sizeof(unsigned),    &gg.m},
+      {sizeof(unsigned),    &gg.n},
+      {sizeof(unsigned),    &gg.k},
+      {sizeof(unsigned),    &gg.a_offset},
+      {sizeof(unsigned),    &gg.b_offset},
+      {sizeof(unsigned),  &gg.c_offset} 
+    } ); 
 
-  void enqueue_betac_kernel(){
-    openclutil::cl_enqueue_ndrange_kernel(command_queue, betac_kernel, 1, NULL, &betac_global_work_size, &betac_local_work_size, 0, NULL, &event_betac_kernel, "in enqueue_betac_kernel");
   }
-
 
   
+  
+
+  void setup_main_kernel(const std::string & kernel_string){
+    /* check that the parameters in kernel_string look reasonable. This may be redundant now */
+    kernelutil::check_gpu_kernel_preprocessor_parameters(kernel_string, gg.tA, gg.tB, gg.tC, gg.isColMajor, gg.m, gg.n, floattostring::get_float_string(floattype));    
+    /* extract the parameters which are needed to determine the number of work groups and work items to launch, directly from kernel string : */
+    /* macro_tile_width, macro_tile_height, n_workitems_per_workgroup, n_work_items_per_c_elm, does_betac_inc */
+    kernelutil::set_sizes_from_kernel_string(macro_tile_width, macro_tile_height, n_workitems_per_workgroup, n_work_items_per_c_elm, does_betac_inc, kernel_string);
+    /* Here we set the numbers of work groups (main_n_work_groups) and work items (main_global_work_size) for the main kernel */  
+    sizingup::set_workforce(main_n_work_groups, main_local_work_size, main_global_work_size, gg.m, gg.n, n_work_items_per_c_elm, macro_tile_height, macro_tile_width, n_workitems_per_workgroup);
+    mowri << "main kernel global work size : " << main_global_work_size <<  " (recommended ~ 4*64*40*64 = 655360)" << Endl; 
+    tk_main.update(kernel_string);
+    /* set main kernel's arguments */
+    set_main_kernel_arguments();    
+  }
+
+
+  //int enqueue(bool throw_on_oor, const size_t * global_work_size, const size_t * local_work_size, cl_uint num_events_in_wait_list, const cl_event *event_wait_list){
+    //cl_int ret = clEnqueueNDRangeKernel(command_queue, clkern, 1, NULL, global_work_size, local_work_size, num_events_in_wait_list, event_wait_list, event);
+    //if (if throw_on_oor == true || ret != CL_OUT_OF_RESOURCES){
+      //openclutil::confirm_cl_status(ret, "in enqueue:  " + hash);
+    //}
+    //return ret;
+  //}
+
+  
+  
   int enqueue_main_kernel(){
-    
     cl_int ret;
-      
     if(does_betac_inc == 0){
-      ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_work_size, &local_work_size, 1, &event_betac_kernel, &event_main_kernel);
+      ret = clEnqueueNDRangeKernel(command_queue, tk_main.clkern, 1, NULL, &main_global_work_size, &main_local_work_size, 1, &event_betac_kernel, &event_main_kernel);
     }
-    
     else{
-      ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_work_size, &local_work_size, 0,NULL, &event_main_kernel);
+      ret = clEnqueueNDRangeKernel(command_queue, tk_main.clkern, 1, NULL, &main_global_work_size, &main_local_work_size, 0, NULL, &event_main_kernel);
     }
-     
     if (ret != CL_OUT_OF_RESOURCES){
       openclutil::confirm_cl_status(ret, "in enqueue_main_kernel");
     }
-  
-    
-    /* Either returning CL_SUCCESS or CL_OUT_OF_RESOURCES.  */
+    /* Either returning CL_SUCCESS or CL_OUT_OF_RESOURCES, anything has been thrown */
     return ret;
   }
 
+    
+
+
+  
+  
+  
+  
+  void setup_tinykernels(const std::string & kernstr){
+    
+    setup_main_kernel(kernstr);
+    
+    if (tk_betac.is_set() == false && does_betac_inc == false){
+      setup_betac_kernel();
+    }
+  }
+  
+
 
   void update_run_times(){
+    
     clGetEventProfilingInfo(event_main_kernel, CL_PROFILING_COMMAND_START, sizeof(size_t), &t_start_main_kernel, nullptr);
     clGetEventProfilingInfo(event_main_kernel, CL_PROFILING_COMMAND_END, sizeof(size_t), &t_end_main_kernel, nullptr);
-    t_just_main = 1e-6*(t_end_main_kernel-t_start_main_kernel);
+    float t_just_main = 1e-6*(t_end_main_kernel-t_start_main_kernel);
     v_t_just_main.push_back(t_just_main);
-    if (does_betac_inc == 0){
+    
+    
+    if (does_betac_inc != 0){
+      v_t_total_with_both.push_back(t_just_main);
+      v_t_just_scaling.push_back(0);
+    }
+      
+    else{
       clGetEventProfilingInfo(event_betac_kernel, CL_PROFILING_COMMAND_START, sizeof(size_t), &t_start_betac_kernel, nullptr);
       clGetEventProfilingInfo(event_betac_kernel, CL_PROFILING_COMMAND_END, sizeof(size_t), &t_end_betac_kernel, nullptr);
-      t_total_with_both = 1e-6*(t_end_main_kernel-t_start_betac_kernel);
-      t_just_scaling = 1e-6*(t_end_betac_kernel-t_start_betac_kernel);
-      v_t_total_with_both.push_back(t_total_with_both);
-      v_t_just_scaling.push_back(t_just_scaling);
+      v_t_total_with_both.push_back(1e-6*(t_end_main_kernel-t_start_betac_kernel));
+      v_t_just_scaling.push_back(1e-6*(t_end_betac_kernel-t_start_betac_kernel));
     }
-    else{
-      v_t_total_with_both.push_back(t_just_main);
-    }
+    
+
   }
   
   /* Will be used when a kernel failed to be enqueued, so just set the time really big */
   void update_run_times_really_bad(){
-    t_just_main = std::numeric_limits<float>::max();
+    v_t_just_main.push_back(std::numeric_limits<float>::max());
     v_t_total_with_both.push_back(std::numeric_limits<float>::max());
-    v_t_total_with_both.push_back(std::numeric_limits<float>::max());
+    v_t_just_scaling.push_back(std::numeric_limits<float>::max());
   }
 
   void print_run_times(){
     if (does_betac_inc == 0){
-      mowri << "elapsed time : " <<  t_total_with_both << "\t (scaling : " << t_just_scaling << "\t main : " <<  t_just_main << " [ms])  " << 
-      "\tGflops/s : " << 2.0 * gg.m * gg.n * gg.k / (t_total_with_both * 1e6) << Endl;
+      mowri << "elapsed time : " <<  v_t_total_with_both.back() << "\t (scaling : " << v_t_just_scaling.back() << "\t main : " <<  v_t_just_main.back() << " [ms])  " << 
+      "\tGflops/s : " << 2.0 * gg.m * gg.n * gg.k / (v_t_total_with_both.back() * 1e6) << Endl;
     }
   
     else{
-      mowri << "elapsed time : " <<  t_just_main << "    ";
-      mowri << "Gflops/s : " << 2.0 * gg.m * gg.n * gg.k / (t_just_main * 1e6) << Endl;
+      mowri << "elapsed time : " <<  v_t_just_main.back() << "    ";
+      mowri << "Gflops/s : " << 2.0 * gg.m * gg.n * gg.k / (v_t_just_main.back() * 1e6) << Endl;
     }
   }
 
@@ -309,27 +382,23 @@ public:
   
   void core_gemm_loop(size_t n_runs){
     
-    //auto core_loop_start = std::chrono::high_resolution_clock::now();
-
-
     reset_v_times();
+    
     for (size_t kqq = 0; kqq < n_runs; ++kqq){
 
       /* This pause should have zero effect, but mysteriously it smooths out the run times between runs when working with certain gpu drivers
-       * It has something to do with overheating.  */        
+       * something to do with overheating  */        
       if (n_runs > 1){
         std::this_thread::sleep_for(std::chrono::milliseconds(0));
       }
   
       /* ***************************************************************************************
-       *  Note on timing : the same results have been obtained whth timespec and std::chrono.  *
+       *  Note on timing : the same results have been obtained whth timespec and std::chrono   *
        *  **************************************************************************************/
-
       /* Enqueue the beta c kernel if nec */
       if (does_betac_inc == 0){
         enqueue_betac_kernel();
       }
-
 
       /* At this point, the main kernel has been succesfully compiled, 
        * but it is still possible that the resources necessary (LDS etc) are
@@ -338,21 +407,18 @@ public:
       int status = enqueue_main_kernel();
       
       /* I'm not really sure when to use cl Flush TODO : find out. */
-      openclutil::cl_flush(command_queue, "sdfns 3nsdkudnh fnf");
-     
-        
+      openclutil::cl_flush(command_queue, "cl flushing in core gemm loop");
       
       if (status == CL_OUT_OF_RESOURCES){
-        
         /* Set the run time(s) and append to vectors */
-        mowri << "This kernel could not be enqueued. the status returned from clEnqueueNDRangeKernel was CL_OUT_OF_RESOURCES (=-5). So just setting time to be as large as possible, and moving along " << Endl;
-        update_run_times_really_bad();      
+        mowri << "kernel could not be enqueued, status returned from clEnqueueNDRangeKernel was CL_OUT_OF_RESOURCES, setting time to be x-large and moving on " << Endl;
+        update_run_times_really_bad();
         print_run_times();
       }
       
       else if (status == CL_SUCCESS){
         /* Wait for kernels to complete */
-        openclutil::cl_wait_for_events(1, &event_main_kernel, "following status == CL_SUCCESS in core gemm loops");
+        openclutil::cl_wait_for_events(1, &event_main_kernel, "with status == CL_SUCCESS in core gemm loops");
 
         /* Set the run time(s) and append to vectors */
         update_run_times();
@@ -366,47 +432,19 @@ public:
   }
 
 
-  void full_kernel_setup_from_kernel_string(const std::string & kernel_string){
 
-    /* set 5 parameters from given file: 
-     * macro_tile_width, macro_tile_height, n_workitems_per_workgroup, n_work_items_per_c_elm, does_betac_inc */
-    check_and_set_from(kernel_string);
 
-    /* Here we set the numbers of work groups (n_work_groups) and work items (global_work_size) for the alpha (alpha and beta) aka main kernel */  
-    set_workforce();
-    mowri << "main kernel global work size : " << global_work_size <<  " (recommended ~ 4*64*40*64 = 655360)" << Endl; 
-    mowri << "Entering setting of program and kernel, compiling ..." << Flush;
-    /* jit compile the cl source to get `kernel' (and `program') */
-    openclutil::set_program_and_kernel(command_queue, program, kernel, kernel_function_name, kernel_string); //context, , device_id_to_use
-    
-    mowri << "... done" << Endl;
-    /* set kernel's arguments */
-    set_main_kernel_arguments();
-    
-    
-  }
 
 
   /* try-wrapped in gemini (?) */
   void benchgemm(const std::string & kernel_string, unsigned n_runs){
-
     if (n_runs == 0){
       throw tinygemm_error("n_runs to benchgemm should be a positive integer");
     }
     
-    mowri << "INPUT_CALL   \t:" << gg.get_string() << Endl;
-
-    
-    
-    full_kernel_setup_from_kernel_string(kernel_string);
-    openclutil::SafeClProgAndKern safe_main_prog_and_kern(program, kernel, "SafeClProgAndKern of main kernel");
-
-
-    mowri << "Entering the core gemm loops" << Endl;
+    setup_tinykernels(kernel_string);    
+    mowri << "(benchgemm) geometery  \t:" << gg.get_string()  << "\nEntering the core gemm loops" << Endl;
     core_gemm_loop(n_runs);
-    
-    
-    //release_main_kernel_and_program();
     
   }
   
@@ -425,9 +463,9 @@ public:
       all_int_parms[x.first] = x.second;
     }
     
-    std::string default_main_kernel_string;
+    //std::string default_tk_main.kernstr;
     tinygemm::kerngen::KernelStringSetStatus set_status = tinygemm::kerngen::set_kernel_string(
-    default_main_kernel_string,
+    tk_main.kernstr,
     generickernelname,
     floattype ==  'f' ? 32 : 64,
     all_int_parms.at("a_transposed"),
@@ -456,24 +494,17 @@ public:
     tinygemm::TinyGemmSolutionStatistics tgss(median_time, median_benchmark_gflops, gg, elapsed_seconds);
     /* TODO : this can be more efficient. There is no need to generate the betac kernel twice.*/ 
     std::string soln_betac_kernel = all_int_parms.at("n_work_items_per_c_elm") == 1 ?  ""  : betac::get_betac_kernel_string(floattype);
-    std::string soln_betac_kernel_function_name = all_int_parms.at("n_work_items_per_c_elm") == 1 ? "" : kernelutil::get_kernel_function_name(betac::get_betac_kernel_string(floattype));
-    std::string soln_main_kernel = default_main_kernel_string; 
-    std::string soln_main_kernel_function_name = kernelutil::get_kernel_function_name(default_main_kernel_string);                
-    tinygemm::TinyGemmSolution tgs(soln_betac_kernel, soln_main_kernel, soln_betac_kernel_function_name, soln_main_kernel_function_name, all_int_parms, floattype, tgss);
+    std::string soln___betac_kernel__function__name = all_int_parms.at("n_work_items_per_c_elm") == 1 ? "" : kernelutil::get_kernel_function_name(betac::get_betac_kernel_string(floattype));
+    std::string soln_main_kernel = tk_main.kernstr; 
+    std::string soln_main_kernel_function_name = kernelutil::get_kernel_function_name(tk_main.kernstr);                
+    tinygemm::TinyGemmSolution tgs(soln_betac_kernel, soln_main_kernel, soln___betac_kernel__function__name, soln_main_kernel_function_name, all_int_parms, floattype, tgss);
 
     return tgs;
   }
   
   
-  tinygemm::TinyGemmSolution find(float allotted_time, bool enforce_deterministic, unsigned n_runs_in_find_per_kernel){
+  tinygemm::TinyGemmSolution find(float allotted_time, bool enforce_deterministic, unsigned n_runs_per_kernel){
     
-    if (allotted_time > 0 && nobenching == true){
-      throw tinygemm_error("allotted_time > 0 and nobencking == false, which does not make sense. Algo problem, come fix ");
-    }
-    
-    else if (allotted_time <= 0 && nobenching == false){
-      throw tinygemm_error("allotted_time <= 0 and nobenching == false. This makes no sense : algo problem, come fix ");
-    }
     
     if (allotted_time <= 0){
       mowri << "Allotted time insufficient for benchmarking, returning default TinyGemmSolution" << Endl;
@@ -560,9 +591,9 @@ public:
             
             mowri << "\n" << hp.get_string() << Endl;
             
-            std::string main_kernel_string;
+            //
             tinygemm::kerngen::KernelStringSetStatus set_status = tinygemm::kerngen::set_kernel_string(
-            main_kernel_string,
+            tk_main.kernstr,
             generickernelname,
             floattype ==  'f' ? 32 : 64,
             all_int_parms.at("a_transposed"),
@@ -593,7 +624,12 @@ public:
               ++global_counter;
               mowri << "global gen-com-bench : " << global_counter  <<  "." << Endl;
   
-              benchgemm(main_kernel_string, n_runs_in_find_per_kernel);
+              
+              
+              setup_tinykernels(tk_main.kernstr);    
+              mowri << "(find) geometry  \t:" << gg.get_string()  << "\nEntering the core gemm loops" << Endl;
+              core_gemm_loop(n_runs_per_kernel);
+  
               std::sort(v_t_total_with_both.begin(), v_t_total_with_both.end());
   
               /* Taking the fastest or median? */ 
@@ -627,11 +663,11 @@ public:
                 //set kernel files
                 //TODO : should not be determining whether a kernel does betac or not based on this, find true parameter
                 std::string soln_betac_kernel = all_int_parms.at("n_work_items_per_c_elm") == 1 ?  ""  : betac::get_betac_kernel_string(floattype);
-                std::string soln_betac_kernel_function_name = all_int_parms.at("n_work_items_per_c_elm") == 1 ? "" : betac_kernel_function_name;
+                std::string soln___betac_kernel__function__name = all_int_parms.at("n_work_items_per_c_elm") == 1 ? "" : tk_betac.fname;
                 //TODO : this is redundant. clean up. 
-                std::string soln_main_kernel = main_kernel_string; //kernelutil::get_as_single_string(kernelfilename);
-                std::string soln_main_kernel_function_name = kernelutil::get_kernel_function_name(main_kernel_string);                
-                tinygemm::TinyGemmSolution tgs(soln_betac_kernel, soln_main_kernel, soln_betac_kernel_function_name, soln_main_kernel_function_name, all_int_parms, floattype, tgss);
+                std::string soln_main_kernel = tk_main.kernstr; //kernelutil::get_as_single_string(kernelfilename);
+                std::string soln_main_kernel_function_name = kernelutil::get_kernel_function_name(tk_main.kernstr);                
+                tinygemm::TinyGemmSolution tgs(soln_betac_kernel, soln_main_kernel, soln___betac_kernel__function__name, soln_main_kernel_function_name, all_int_parms, floattype, tgss);
   
                 path_of_best_solns.push_back(tgs); 
               }
@@ -729,11 +765,11 @@ bool verbose,
 std::string logfile){
   /* The number of times each kernel is run in find. 
    * consider adding this parameter to user API. */
-  unsigned n_runs_in_find_per_kernel = 3;
-  bool nobenching = allotted_time <= 0 ?  true : false;
-  OpenCLGemmEncapsulator oger(command_queue, floattype, gg, alpha, beta, a, b, c, logfile, verbose, nobenching);
+  unsigned n_runs_per_kernel = 3;
+  //bool nobenching = allotted_time <= 0 ?  true : false;
+  OpenCLGemmEncapsulator oger(command_queue, floattype, gg, alpha, beta, a, b, c, logfile, verbose);//, nobenching);
   
-  return oger.find(allotted_time, enforce_deterministic, n_runs_in_find_per_kernel);
+  return oger.find(allotted_time, enforce_deterministic, n_runs_per_kernel);
   
   
 }
@@ -756,25 +792,18 @@ const double beta,
 bool verbose, 
 std::string logfile){
   
-  
   tinygemm::consistencychecks::check_ldx_mnk_consistent(gg);
   
-  openclutil::SafeClMem c_copied("sdfsmlimsemilmsfei");
+  openclutil::SafeClMem c_copied("c_copied, in (const)find .");
   cl_event c_copy_event; 
   size_t n_c = gg.ldc * (gg.tC == gg.isColMajor ? gg.m : gg.n) + gg.c_offset;
   size_t c_memsize = get_floatsize(floattype)*n_c;
   c_copied.clmem = openclutil::cl_create_buffer_from_command_queue(command_queue, CL_MEM_READ_WRITE, c_memsize, NULL, "in function find of tinygemm");
-  
-
-  
   openclutil::cl_enqueue_copy_buffer(command_queue, c, c_copied.clmem, 0, 0, c_memsize, 0, NULL, &c_copy_event, "in function find of tinygemm");
   openclutil::cl_wait_for_events(1, &c_copy_event, "in function find of tinygemm");
   
-  
-  
   auto soln =  nonconst_find(allotted_time, command_queue, a, b, c_copied.clmem, enforce_deterministic, floattype, gg, alpha, beta, verbose, logfile);
   
-  //openclutil::cl_release_mem_object(*c_copied, "1v8r--f09 =0 e2dflc3gcm6");
   return soln;
 }
 
@@ -795,8 +824,8 @@ void benchgemm(
   bool verbose,
   std::string logfile){
     
-  bool nobenching = false;
-  OpenCLGemmEncapsulator oger(command_queue, floattype, gg, alpha, beta, a_gpu, b_gpu, c_gpu, logfile, verbose, nobenching);
+  //bool nobenching = false;
+  OpenCLGemmEncapsulator oger(command_queue, floattype, gg, alpha, beta, a_gpu, b_gpu, c_gpu, logfile, verbose);//, nobenching);
   oger.benchgemm(kernel_string, n_runs);
   
 }

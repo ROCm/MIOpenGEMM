@@ -67,28 +67,30 @@ class SafeClMem{
     }
 };
 
-class SafeClProgAndKern{
+//class SafeClProgAndKern{
 
-    //safe_main_prog_and_kern.clkern = kernel;
-    //safe_main_prog_and_kern.clprog = program;
+    ////safe_main_prog_and_kern.clkern = kernel;
+    ////safe_main_prog_and_kern.clprog = program;
 
 
-public:
-    cl_program clprog;
-    cl_kernel clkern;
-    std::string hash;
+//public:
+    //cl_program clprog;
+    //cl_kernel clkern;
+    //std::string hash;
 
-    SafeClProgAndKern(const std::string & hash): clprog(nullptr), clkern(nullptr), hash(hash) {};
-    SafeClProgAndKern(cl_program clprog, cl_kernel clkern, const std::string & hash): clprog(clprog), clkern(clkern), hash(hash) {};
-    ~SafeClProgAndKern(){
-      if (clprog != nullptr){
-        openclutil::cl_release_program(clprog, hash);
-      }
-      if (clkern != nullptr){
-        openclutil::cl_release_kernel(clkern, hash);
-      }
-    }
-};
+    //SafeClProgAndKern(const std::string & hash): clprog(nullptr), clkern(nullptr), hash(hash) {};
+    //SafeClProgAndKern(cl_program clprog, cl_kernel clkern, const std::string & hash): clprog(clprog), clkern(clkern), hash(hash) {};
+    //~SafeClProgAndKern(){
+      //std::cout << "safea" << std::flush;
+      //if (clprog != nullptr){
+        //openclutil::cl_release_program(clprog, hash);
+      //}
+      //if (clkern != nullptr){
+        //openclutil::cl_release_kernel(clkern, hash);
+      //}
+      //std::cout << "safem" << std::flush;
+    //}
+//};
   
 
 
