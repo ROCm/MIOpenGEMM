@@ -1,5 +1,3 @@
-#include <tinygemm/tinygemmerror.hpp>
-
 #include <thread>
 #include <sstream>
 #include <limits>
@@ -7,6 +5,7 @@
 #include <limits>
 #include <vector> 
 
+#include <tinygemm/tinygemmerror.hpp>
 #include <tinygemm/tinygemm.hpp>
 #include <tinygemm/consistencychecks.hpp>
 #include <tinygemm/redirection.hpp>
@@ -39,17 +38,6 @@ class MultiFloatType{
 };
 
 
-/* Return the int parameters required by make_kernel, other than the hyper parameters */
-std::map<std::string, unsigned> get_bare_bones_int_parms(const tinygemm::TinyGemmGeometry & gg){
-  std::map<std::string, unsigned> all_int_parms;
-  all_int_parms["is_col_major"] = gg.isColMajor;
-  all_int_parms["a_transposed"] = gg.tA;
-  all_int_parms["b_transposed"] = gg.tB;
-  all_int_parms["c_transposed"] = gg.tC;
-  all_int_parms["use_edge_trick"] = 1;
-  return all_int_parms;
-}
-
 
 size_t get_floatbytes(char floattype){
   size_t floatbytes;
@@ -69,7 +57,7 @@ size_t get_floatbytes(char floattype){
 class TinyGemmKernel{
   
   public:
-    //TODO : privatise:
+    //TODO : try to privatise.
     cl_command_queue command_queue;
     std::string kernstr;
     std::string fname;
@@ -314,18 +302,13 @@ public:
     /* Either returning CL_SUCCESS or CL_OUT_OF_RESOURCES, anything has been thrown */
     return ret;
   }
-
-    
-
-
   
   
   
   
   void setup_tinykernels(const std::string & kernstr){
     
-    setup_main_kernel(kernstr);
-    
+    setup_main_kernel(kernstr);    
     if (tk_betac.is_set() == false && does_betac_inc == false){
       setup_betac_kernel();
     }
@@ -505,10 +488,7 @@ public:
     
     /* In here, we will store all previously considered HyperParams, used to check and ensure that we do not consider a HyperParam more than once */
     std::vector<hyperparams::HyperParams> hyper_front_history;
-    
-    /* we set some initial parameters: the ones which are not in HyperParam object but eventually needed by the python script to generate kernel */
-    //std::map<std::string, unsigned> all_int_parms = get_bare_bones_int_parms(gg);
-    
+        
     /* while generating, compiling and benchmarking kernels, we will keep track of the fastest found thus far */
     float best_time = std::numeric_limits<float>::max();
     hyperparams::HyperParams best_hyper_params;
@@ -726,11 +706,8 @@ std::string logfile){
   /* The number of times each kernel is run in find. 
    * consider adding this parameter to user API. */
   unsigned n_runs_per_kernel = 3;
-  //bool nobenching = allotted_time <= 0 ?  true : false;
-  OpenCLGemmEncapsulator oger(command_queue, floattype, gg, alpha, beta, a, b, c, logfile, verbose);//, nobenching);
-  
+  OpenCLGemmEncapsulator oger(command_queue, floattype, gg, alpha, beta, a, b, c, logfile, verbose);
   return oger.find(allotted_time, enforce_deterministic, n_runs_per_kernel);
-  
   
 }
 
@@ -784,8 +761,7 @@ void benchgemm(
   bool verbose,
   std::string logfile){
     
-  //bool nobenching = false;
-  OpenCLGemmEncapsulator oger(command_queue, floattype, gg, alpha, beta, a_gpu, b_gpu, c_gpu, logfile, verbose);//, nobenching);
+  OpenCLGemmEncapsulator oger(command_queue, floattype, gg, alpha, beta, a_gpu, b_gpu, c_gpu, logfile, verbose);
   oger.benchgemm(kernel_string, n_runs);
   
 }

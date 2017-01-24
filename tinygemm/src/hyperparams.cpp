@@ -79,7 +79,7 @@ HyperParams get_default(const tinygemm::TinyGemmGeometry & gg, bool enforce_dete
 
   /* The case  of  (gg.m < 8 || gg.n < 8) */  
   if (gg.m < 8 || gg.n < 8) {
-    throw tinygemm_error("Currently, we do not support matrices which are skinnier (m or n) than 16. This can easily be fixed... please contanct me via git ");
+    throw tinygemm_error("Currently, we do not support matrices which are skinnier (m or n) than 8. This can easily be fixed... please contact me via git ");
   }
   
   tinygemm::TinyGemmGeometry nearestgeometry;

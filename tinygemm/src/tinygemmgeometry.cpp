@@ -29,10 +29,9 @@ std::string TinyGemmGeometry::get_networkconfig_string() const{
 
 
 float TinyGemmGeometry::get_distance(const TinyGemmGeometry & gg) const{
-  //problems which are "larger" are infinitely far away (their tile might not fit...)
+  /* problems which are "larger" are infinitely far away (as their tile might not fit) */
   
   float distance;
-  
   
   if (tA != gg.tA || tB != gg.tB || isColMajor != gg.isColMajor || (m < std::min<unsigned>(600, gg.m)) || n < std::min<unsigned>(600, gg.n)){
     distance = std::numeric_limits<float>::max();

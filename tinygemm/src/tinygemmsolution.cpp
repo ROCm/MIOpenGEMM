@@ -10,13 +10,6 @@
 
 namespace tinygemm{
 
-std::string get_errm(std::string x){
-  std::string errm("\nThis error is being thrown while trying to set the kernel work size. It appears that the parameter `");
-  errm += x;
-  errm += "' is not available in the member map, integral_hyperparams. This is unexpected, and requires further investigation.\n"; 
-  return errm;
-}
-
 
 std::map<std::string, size_t> TinyGemmSolution::get_main_kernel_worksize_params(unsigned m, unsigned n){
 
@@ -24,16 +17,19 @@ std::map<std::string, size_t> TinyGemmSolution::get_main_kernel_worksize_params(
   std::map<std::string, size_t> worksize_params;
   
   /* performing a check for map keys */
-  std::vector<std::string> integral_params_needed {"n_work_items_per_c_elm", "macro_tile_height", "macro_tile_width", "micro_tile_height", "micro_tile_width"}; //, "n_workitems_per_workgroup"};
+  std::vector<std::string> integral_params_needed {"n_work_items_per_c_elm", "macro_tile_height", "macro_tile_width", "micro_tile_height", "micro_tile_width"}; 
+  
   for (auto & x : integral_params_needed){
     if (hp.params.count(x) == 0){
-      throw tinygemm_error(get_errm(x));
+      std::string errm("\nThis error is being thrown while trying to set the kernel work size. It appears that the parameter `");
+      errm += x;
+      errm += "' is not available in hp.params. This is unexpected, and requires further investigation.\n"; 
+      throw tinygemm_error(errm);
     }
   }
   
   unsigned n_workitems_per_workgroup = (hp.params.at("macro_tile_height")*hp.params.at("macro_tile_width") ) / ( hp.params.at("micro_tile_height")*hp.params.at("micro_tile_width") );
-  
-  
+    
   /* outsource the calculation */
   size_t n_work_groups, local_work_size, global_work_size;
   sizingup::set_workforce(n_work_groups, local_work_size, global_work_size, m, n, hp.params.at("n_work_items_per_c_elm"), hp.params.at("macro_tile_height"), hp.params.at("macro_tile_width"), n_workitems_per_workgroup);
@@ -51,7 +47,6 @@ std::map<std::string, size_t> TinyGemmSolution::get_main_kernel_worksize_params(
 std::map<std::string, size_t> TinyGemmSolution::get_betac_kernel_worksize_params(unsigned m, unsigned n){
 
   std::map<std::string, size_t> betac_worksize_params;
-  
 
   unsigned dim_coal, dim_uncoal;
   size_t betac_global_work_size, betac_local_work_size;
