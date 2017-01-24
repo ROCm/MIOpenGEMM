@@ -45,7 +45,7 @@ void set_platform_etc(cl_platform_id & platform, cl_uint & num_platforms, cl_con
   /* Go through the devices and see how many compute units each has, storing the best along the way */
   cl_uint max_max_compute_units = 0;
   char bestDeviceName[100];
-  cl_device_id bestDeviceId; 
+  cl_device_id bestDeviceId = 0; 
   
   std::string device_compute_unit_count_string = "The following devices were detected: \n";
 

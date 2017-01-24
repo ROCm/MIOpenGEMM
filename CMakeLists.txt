@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
+
 project(tinygemm)
 
 set(${PROJECT_NAME}_VERSION 0.1)
@@ -8,6 +9,7 @@ set(${PROJECT_NAME}_VERSION_MINOR 1)
 #Where to find FindOpenCL.cmake (etc)
 list( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
 
+set( CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." )
 ##Use FindOpenCL.cmake to find library and header file
 find_package( OpenCL REQUIRED )
 
