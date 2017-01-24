@@ -20,8 +20,8 @@ tinygemm::hyperparams::HyperParams get_hp(){
   std::map<std::string, unsigned> hp_map;
   hp_map["micro_tile_width"] = 1;
   hp_map["micro_tile_height"] = 1;
-  hp_map["macro_tile_width"] = 16;
-  hp_map["macro_tile_height"] = 16; 
+  hp_map["macro_tile_width"] = 1;
+  hp_map["macro_tile_height"] = 1; 
   hp_map["unroll"] = 16;
   
   hp_map["pad"] = 1;    
@@ -106,6 +106,8 @@ int main(){
   const tfloat * c_true_bla = nullptr; 
   
   tinygemm::dev::accuracy_test(hp, gg, alpha, beta, v_a.data(), v_b.data(), v_c.data(), c_true_bla, true, "");
+
+  //tinygemm::dev::benchgemm({hp}, 5, gg, alpha, beta, v_a.data(), v_b.data(), v_c.data(), true, "");
 
   return 0;
 }

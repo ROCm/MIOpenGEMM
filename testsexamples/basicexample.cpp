@@ -10,7 +10,7 @@ void basicexample(){
   bool tB = false;
   bool tC = false;
   
-  unsigned m = 300;
+  unsigned m = 3;
   unsigned n = 400;
   unsigned k = 500;
 

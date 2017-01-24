@@ -493,6 +493,11 @@ public:
   
   tinygemm::TinyGemmSolution find(float allotted_time, bool enforce_deterministic, unsigned n_runs_per_kernel){
     
+    if (gg.m < 8 || gg.n < 8){
+      mowri << "really skinny/thin matrix, returning a default kernel (to be improved) " << Endl;
+      return get_default(enforce_deterministic, floattype, gg);
+    }
+      
     
     if (allotted_time <= 0){
       mowri << "Allotted time insufficient for benchmarking, returning default TinyGemmSolution" << Endl;
@@ -536,7 +541,7 @@ public:
       mowri << "\nnew hyper front size : " << hyper_front.size() << Endl;
 
       unsigned hfi = 0;
-      while (hfi < hyper_front.size() && improvement_found_on_front == false && elapsed_seconds < allotted_time){        
+      while (hfi < hyper_front.size() && improvement_found_on_front == false && elapsed_seconds < allotted_time){
         hyperparams::HyperParams hp = hyper_front[hfi];
         /* certain kernels will not be generated, for diverse reasons */
         /* reason 0 : it's already been considered */
