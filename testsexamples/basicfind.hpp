@@ -1,5 +1,4 @@
 #ifndef BASICFIND_HPP
-
 #define BASICFIND_HPP
 
 #include <vector>
@@ -19,7 +18,7 @@
 /* The following two header files define functions which help with opencl boilerplating on my systems, they are not necessary */
 #include <tinygemm/outputwriter.hpp>
 #include <tinygemm/openclutil.hpp>
-
+#include <tinygemm/accuracytests.hpp>
 
 #include <tinygemm/slowcpugemm.hpp>
 
@@ -190,6 +189,8 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
     }
     
     /* Enqueue the main kernel */
+    //std::cout << "\n---------------\n" << main_kernel_worksize_params.at("global_work_size") << "  " << main_kernel_worksize_params.at("local_work_size") << std::endl;
+
     ret = clEnqueueNDRangeKernel(command_queue, main_kernel, 1, NULL, &main_kernel_worksize_params.at("global_work_size"), &main_kernel_worksize_params.at("local_work_size"), 0,NULL, &event_main_kernel);  
     clWaitForEvents(1, &event_main_kernel);
     if (ret != CL_SUCCESS){
@@ -211,22 +212,27 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
       }
       
       clWaitForEvents(1, &event_read_c_back);
-  
-      float max_relerr = 0;
-      for (unsigned i = 0; i < v_c.size(); ++i){
-        float absdifference = std::abs(c_copied_from_gpu[i] - c_cpu_final[i]);
-        float sumabs = std::abs(c_copied_from_gpu[i]) + std::abs(c_cpu_final[i]);
-        float relerr = absdifference / std::max<float>(1e-9, sumabs);
-        max_relerr = std::max(max_relerr, relerr);
+      
+      bool old_to_terminal = mowri.to_terminal;
+      mowri.to_terminal = true;
+      tinygemm::accuracytests::elementwise_compare<TFloat>(v_c.data(), beta, c_copied_from_gpu.data(), c_cpu_final.data(), v_c.size(), mowri);
+      mowri.to_terminal = old_to_terminal;
+      
+      //float max_relerr = 0;
+      //for (unsigned i = 0; i < v_c.size(); ++i){
+        //float absdifference = std::abs(c_copied_from_gpu[i] - c_cpu_final[i]);
+        //float sumabs = std::abs(c_copied_from_gpu[i]) + std::abs(c_cpu_final[i]);
+        //float relerr = absdifference / std::max<float>(1e-9, sumabs);
+        //max_relerr = std::max(max_relerr, relerr);
         
-        if (max_relerr > 0.01){
-          std::stringstream ss;
-          ss << "\nmax_relerr is above threshold, in basicfind.hpp. "; 
-          ss << "\nIndex in c : " << i << ".nValue before gemm call : " << v_c[i] << "    .\nValue after call from gpu : "  << c_copied_from_gpu[i] << ".  \nValue after call from cpu : " << c_cpu_final[i] << "  \nrelerr : " << relerr << std::endl;
-          throw tinygemm::tinygemm_error(ss.str());
-        }
-      }
-      std::cout << "max_relerr=" << max_relerr << std::endl;
+        //if (max_relerr > 0.01){
+          //std::stringstream ss;
+          //ss << "\nmax_relerr is above threshold, in basicfind.hpp. "; 
+          //ss << "\nIndex in c : " << i << ".nValue before gemm call : " << v_c[i] << "    .\nValue after call from gpu : "  << c_copied_from_gpu[i] << ".  \nValue after call from cpu : " << c_cpu_final[i] << "  \nrelerr : " << relerr << std::endl;
+          //throw tinygemm::tinygemm_error(ss.str());
+        //}
+      //}
+      //std::cout << "max_relerr=" << max_relerr << std::endl;
     }
 
     /* That's all you need to know, and don't forget the clReleases! */

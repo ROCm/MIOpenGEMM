@@ -20,6 +20,10 @@ void set_program_and_kernel(const cl_command_queue & command_queue, cl_program &
   
 void cl_release_kernel(cl_kernel kernel, const std::string & hash);
 
+void cl_release_context(cl_context context, const std::string & hash);  
+
+void cl_release_command_queue(cl_command_queue command_queue, const std::string & hash);
+    
 void cl_release_program(cl_program program, const std::string & hash);
 
 void cl_set_kernel_arg(cl_kernel & kernel, cl_uint arg_index, size_t arg_size, const void * arg_value, const std::string & hash);
@@ -54,43 +58,29 @@ void cl_get_program_info(cl_program program, cl_program_info param_name, size_t 
 
 cl_mem cl_create_buffer_from_command_queue(cl_command_queue command_queue, cl_mem_flags flags, size_t size, void * host_ptr, const std::string & hash);    
 
-/* TODO : move defn to cpp*/
+cl_command_queue auto_get_command_queue(outputwriting::OutputWriter & mowri,  cl_command_queue_properties properties = CL_QUEUE_PROFILING_ENABLE);
+
+void cl_enqueue_write_buffer(cl_command_queue command_queue, cl_mem buffer, cl_bool blocking_write, size_t offset, size_t size, const void * ptr, cl_uint num_events_in_wait_list, const cl_event * event_wait_list, cl_event * event, const std::string & hash);
+
+void cl_enqueue_read_buffer(cl_command_queue command_queue,cl_mem buffer,cl_bool blocking_read,size_t offset,size_t cb,void *ptr,cl_uint num_events_in_wait_list,
+const cl_event *event_wait_list,cl_event *event, const std::string & hash);
+
 class SafeClMem{
   public:
     cl_mem clmem;
     std::string hash;
-    SafeClMem(const std::string & hash):clmem(nullptr),hash(hash) {};
-    ~SafeClMem(){
-      if (clmem != nullptr){
-        openclutil::cl_release_mem_object(clmem, hash);
-      }
-    }
+    SafeClMem(const std::string & hash); 
+    ~SafeClMem();
 };
 
-//class SafeClProgAndKern{
-
-    ////safe_main_prog_and_kern.clkern = kernel;
-    ////safe_main_prog_and_kern.clprog = program;
-
-
-//public:
-    //cl_program clprog;
-    //cl_kernel clkern;
-    //std::string hash;
-
-    //SafeClProgAndKern(const std::string & hash): clprog(nullptr), clkern(nullptr), hash(hash) {};
-    //SafeClProgAndKern(cl_program clprog, cl_kernel clkern, const std::string & hash): clprog(clprog), clkern(clkern), hash(hash) {};
-    //~SafeClProgAndKern(){
-      //std::cout << "safea" << std::flush;
-      //if (clprog != nullptr){
-        //openclutil::cl_release_program(clprog, hash);
-      //}
-      //if (clkern != nullptr){
-        //openclutil::cl_release_kernel(clkern, hash);
-      //}
-      //std::cout << "safem" << std::flush;
-    //}
-//};
+class TinyGemmCommandQueueInContext{
+  public:
+    cl_command_queue command_queue;
+    std::string hash;  
+    TinyGemmCommandQueueInContext(outputwriting::OutputWriter & mowri, const std::string & hash);
+    ~TinyGemmCommandQueueInContext();
+    
+};
   
 
 

@@ -1,13 +1,28 @@
 #ifndef ACCURACYTESTS_HPP
 #define ACCURACYTESTS_HPP
 
-#include <algorithm>
 
+#include <algorithm>
+#include <sstream>
+
+#include <tinygemm/tinygemmerror.hpp>
+#include <tinygemm/outputwriter.hpp>
 
 namespace tinygemm {
 
 namespace accuracytests {
 
+
+
+template <typename TFloat>
+void elementwise_compare(const TFloat * c_before, double beta, const TFloat * c_cpu, const TFloat * c_gpu, unsigned nels, tinygemm::outputwriting::OutputWriter & mowri);
+
+
+
+
+
+
+/* An older and more informative version of testing, used in python dev code. Consider using its good parts elsewhere */
 template <typename TFloat>
 void accuracy_test(bool isColMajor, bool tC, unsigned m, unsigned n, unsigned ldc, const TFloat * c_true, const TFloat * c_computed, unsigned c_offset, outputwriting::OutputWriter & mowri, double l1_rel_err_tol){
    
@@ -25,6 +40,7 @@ void accuracy_test(bool isColMajor, bool tC, unsigned m, unsigned n, unsigned ld
     
   
   c_computed += c_offset;
+  //c_true += c_offset;
   
   /* The different cases of tC, isColMajor are handled in this block */
   if (isColMajor == false){

@@ -39,34 +39,16 @@ const char floattype,
 const tinygemm::TinyGemmGeometry & gg,
 const double alpha,
 const double beta, 
-bool verbose = false,   
-std::string logfile = "");
-
-
-/* like find, but c will be corrupted. */
-tinygemm::TinyGemmSolution
-nonconst_find(
-float allotted_time, 
-cl_command_queue command_queue,
-cl_mem a,   
-cl_mem b,
-cl_mem c,
-const bool enforce_deterministic,
-const char floattype,
-const tinygemm::TinyGemmGeometry & gg,
-const double alpha,
-const double beta, 
-bool verbose = false,   
-std::string logfile = "");
-
-
-
+bool verbose = false,
+std::string logfile = "", 
+/* if c_is_const, the c will be corrupted */
+bool c_is_const = true);
 
 
 
 void benchgemm(
 cl_command_queue command_queue, 
-const std::string & kernel_string,         
+const std::vector<hyperparams::HyperParams> & hps,         
 unsigned n_runs,
 const char floattype, 
 const tinygemm::TinyGemmGeometry & gg,
@@ -76,7 +58,8 @@ cl_mem a,
 cl_mem b, 
 cl_mem c,
 bool verbose = true,
-std::string logfile = "");
+std::string logfile = "",
+bool c_is_const = false);
 
 
 /* (experimental) I have a rough idea what I want this to do : it will check that strictly smaller problems that MNK always at least as fast as MNK. If they're not, they should be using MNK's kernel, update this in the cache table. Of course, should check that MNK's tile is smaller than the matrix C being updated. TODO */

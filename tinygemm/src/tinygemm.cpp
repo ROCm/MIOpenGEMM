@@ -418,19 +418,46 @@ public:
 
 
 
+  tinygemm::kerngen::KernelStringSetStatus set_ks(const hyperparams::HyperParams & hp, std::string & kernel_string){
+    
+    tinygemm::kerngen::KernelStringSetStatus set_status = tinygemm::kerngen::set_kernel_string(
+    hp,
+    kernel_string,
+    generickernelname,
+    floattype ==  'f' ? 32 : 64,
+    gg.tA,
+    gg.tB,
+    gg.tC,
+    gg.isColMajor);
+    
+    return set_status;
+    
+  }
+
+  void benchgemm(const std::vector<hyperparams::HyperParams> & hps, unsigned n_runs){
 
 
-
-  /* try-wrapped in gemini (?) */
-  void benchgemm(const std::string & kernel_string, unsigned n_runs){
     if (n_runs == 0){
       throw tinygemm_error("n_runs to benchgemm should be a positive integer");
     }
-    
-    setup_tinykernels(kernel_string);    
-    mowri << "(benchgemm) geometery  \t:" << gg.get_string()  << "\nEntering the core gemm loops" << Endl;
-    core_gemm_loop(n_runs);
-    
+
+    //unsigned n_kernels_processed = 0;
+    for ( unsigned i = 0; i < hps.size(); ++i){ //auto & hp : hps){
+      
+      mowri << "\nSource kernel " << "(" << i + 1 << "/" << hps.size() << ") "  << Endl;      
+            
+      std::string kernel_string;    
+      auto set_status = set_ks(hps[i], kernel_string);
+      
+      if (set_status.is_good() != true){
+        throw tinygemm_error("the hyper parameters in benchgemm are not consistent, specifically : \n" + set_status.message);
+      }
+      
+  
+      setup_tinykernels(kernel_string);    
+      mowri << "(benchgemm) geometry  \t:" << gg.get_string()  << "\nEntering the core gemm loops" << Endl;
+      core_gemm_loop(n_runs);
+    }
   }
   
   
@@ -446,15 +473,12 @@ public:
     hyperparams::HyperParams hp = hyperparams::get_default(gg, enforce_deterministic);
     
     std::string soln_main_kernel_string;
-    tinygemm::kerngen::KernelStringSetStatus set_status = tinygemm::kerngen::set_kernel_string(
-    hp,
-    soln_main_kernel_string,
-    generickernelname,
-    floattype ==  'f' ? 32 : 64,
-    gg.tA,
-    gg.tB,
-    gg.tC,
-    gg.isColMajor);
+    
+    auto set_status = set_ks(hp, soln_main_kernel_string);
+    if (set_status.is_good() != true){
+      throw tinygemm_error("the hyper parameters in get_default are not consistent, specifically : \n" + set_status.message);
+    }
+    
     
     tinygemm::TinyGemmSolutionStatistics tgss(std::numeric_limits<float>::max(), 0, 0);    
     std::string soln_betac_kernel_string = hp.params.at("n_work_items_per_c_elm") == 1 ?  ""  : betac::get_betac_kernel_string(floattype);
@@ -548,15 +572,8 @@ public:
             
             mowri << "\n" << hp.get_string() << Endl;
             
-            tinygemm::kerngen::KernelStringSetStatus set_status = tinygemm::kerngen::set_kernel_string(
-            hp,
-            tk_main.kernstr,
-            generickernelname,
-            floattype ==  'f' ? 32 : 64,
-            gg.tA,
-            gg.tB, 
-            gg.tC, 
-            gg.isColMajor);
+            
+            auto set_status = set_ks(hp, tk_main.kernstr);
             
             if (set_status.is_good() == true){
               /* the kernel was succesfully generated, we now compile and benchmark it */
@@ -688,28 +705,42 @@ public:
   }
 }; 
 
-/* functions for the end-user */ 
-tinygemm::TinyGemmSolution
-nonconst_find(
-float allotted_time,
+openclutil::SafeClMem get_copy(
 cl_command_queue command_queue,
-cl_mem a,   
-cl_mem b,
-cl_mem c,
-const bool enforce_deterministic,
+cl_mem c,   
 const char floattype, 
 const tinygemm::TinyGemmGeometry & gg,
-const double alpha,
-const double beta,
-bool verbose, 
-std::string logfile){
-  /* The number of times each kernel is run in find. 
-   * consider adding this parameter to user API. */
-  unsigned n_runs_per_kernel = 3;
-  OpenCLGemmEncapsulator oger(command_queue, floattype, gg, alpha, beta, a, b, c, logfile, verbose);
-  return oger.find(allotted_time, enforce_deterministic, n_runs_per_kernel);
-  
+const std::string & hash
+){
+  openclutil::SafeClMem c_copied(hash);
+  cl_event c_copy_event; 
+  size_t n_c = gg.ldc * (gg.tC == gg.isColMajor ? gg.m : gg.n) + gg.c_offset;
+  size_t c_memsize = get_floatbytes(floattype)*n_c;
+  c_copied.clmem = openclutil::cl_create_buffer_from_command_queue(command_queue, CL_MEM_READ_WRITE, c_memsize, NULL, hash + ", in function get_copy of tinygemm");
+  openclutil::cl_enqueue_copy_buffer(command_queue, c, c_copied.clmem, 0, 0, c_memsize, 0, NULL, &c_copy_event, hash + ", in function get_copy of tinygemm");
+  openclutil::cl_wait_for_events(1, &c_copy_event, "in function find of tinygemm");
+  return c_copied;
 }
+
+
+/////* functions for the end-user */ 
+////tinygemm::TinyGemmSolution
+////nonconst_find(
+////float allotted_time,
+////cl_command_queue command_queue,
+////cl_mem a,   
+////cl_mem b,
+////cl_mem c,
+////const bool enforce_deterministic,
+////const char floattype, 
+////const tinygemm::TinyGemmGeometry & gg,
+////const double alpha,
+////const double beta,
+////bool verbose, 
+////std::string logfile){
+
+  
+////}
 
 
 
@@ -727,21 +758,32 @@ const tinygemm::TinyGemmGeometry & gg,
 const double alpha,
 const double beta,
 bool verbose, 
-std::string logfile){
+std::string logfile, 
+bool c_is_const){
   
-  tinygemm::consistencychecks::check_ldx_mnk_consistent(gg);
   
-  openclutil::SafeClMem c_copied("c_copied, in (const)find .");
-  cl_event c_copy_event; 
-  size_t n_c = gg.ldc * (gg.tC == gg.isColMajor ? gg.m : gg.n) + gg.c_offset;
-  size_t c_memsize = get_floatbytes(floattype)*n_c;
-  c_copied.clmem = openclutil::cl_create_buffer_from_command_queue(command_queue, CL_MEM_READ_WRITE, c_memsize, NULL, "in function find of tinygemm");
-  openclutil::cl_enqueue_copy_buffer(command_queue, c, c_copied.clmem, 0, 0, c_memsize, 0, NULL, &c_copy_event, "in function find of tinygemm");
-  openclutil::cl_wait_for_events(1, &c_copy_event, "in function find of tinygemm");
+  /* The number of times each kernel is run in find. 
+   * consider adding this parameter to user API. */
+  unsigned n_runs_per_kernel = 3;
+
+  tinygemm::consistencychecks::check_ldx_mnk_consistent(gg);  
+
+  if (c_is_const == true){
   
-  auto soln =  nonconst_find(allotted_time, command_queue, a, b, c_copied.clmem, enforce_deterministic, floattype, gg, alpha, beta, verbose, logfile);
+    openclutil::SafeClMem c_copied = get_copy(command_queue, c, floattype, gg, "copy of c in find");
+    OpenCLGemmEncapsulator oger(command_queue, floattype, gg, alpha, beta, a, b, c_copied.clmem, logfile, verbose);
+    return oger.find(allotted_time, enforce_deterministic, n_runs_per_kernel);
+  }
   
-  return soln;
+  else{
+    OpenCLGemmEncapsulator oger(command_queue, floattype, gg, alpha, beta, a, b, c, logfile, verbose);
+    return oger.find(allotted_time, enforce_deterministic, n_runs_per_kernel);
+  }
+  
+  
+  
+  
+  
 }
 
 
@@ -749,7 +791,7 @@ std::string logfile){
 
 void benchgemm(
   cl_command_queue command_queue,
-  const std::string & kernel_string,
+  const std::vector<hyperparams::HyperParams> & hps,
   unsigned n_runs,
   const char floattype, 
   const tinygemm::TinyGemmGeometry & gg,
@@ -759,14 +801,24 @@ void benchgemm(
   cl_mem b_gpu, 
   cl_mem c_gpu,
   bool verbose,
-  std::string logfile){
+  std::string logfile,
+  bool c_is_const){
     
-  OpenCLGemmEncapsulator oger(command_queue, floattype, gg, alpha, beta, a_gpu, b_gpu, c_gpu, logfile, verbose);
-  oger.benchgemm(kernel_string, n_runs);
+  tinygemm::consistencychecks::check_ldx_mnk_consistent(gg);
+  if (c_is_const == true){
+    openclutil::SafeClMem c_copied = get_copy(command_queue, c_gpu, floattype, gg, "copy of c in benchgemm");
+    OpenCLGemmEncapsulator oger(command_queue, floattype, gg, alpha, beta, a_gpu, b_gpu, c_copied.clmem, logfile, verbose);
+    oger.benchgemm(hps, n_runs);
+  }
   
+  else{
+    OpenCLGemmEncapsulator oger(command_queue, floattype, gg, alpha, beta, a_gpu, b_gpu, c_gpu, logfile, verbose);
+    oger.benchgemm(hps, n_runs);
+  }
 }
   
 } //namespace
+
 
 
 

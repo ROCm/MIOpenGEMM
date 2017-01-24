@@ -33,6 +33,19 @@ void confirm_cl_status(cl_int ret, const std::string & hash, const std::string &
     confirm_cl_status(ret, hash, "cl_release_kernel");
   }
   
+
+  void cl_release_context(cl_context context, const std::string & hash){
+    cl_int ret = clReleaseContext(context);
+    confirm_cl_status(ret, hash, "cl_release_context");
+  }  
+  
+
+  void cl_release_command_queue(cl_command_queue command_queue, const std::string & hash){
+    cl_int ret = clReleaseCommandQueue(command_queue);
+    confirm_cl_status(ret, hash, "cl_release_command_queue");
+  }
+      
+  
   void cl_release_program(cl_program program, const std::string & hash){
     cl_int ret = clReleaseProgram(program);
     confirm_cl_status(ret, hash, "cl_release_program");
@@ -176,6 +189,22 @@ void cl_get_program_info(cl_program program, cl_program_info param_name, size_t 
 
 
 
+void cl_enqueue_write_buffer(cl_command_queue command_queue, cl_mem buffer, cl_bool blocking_write, size_t offset, size_t size, const void * ptr, cl_uint num_events_in_wait_list, const cl_event * event_wait_list, cl_event * event, const std::string & hash){
+  cl_int ret = clEnqueueWriteBuffer(command_queue, buffer, blocking_write, offset, size, ptr, num_events_in_wait_list, event_wait_list, event);
+  confirm_cl_status(ret, hash, "cl_enqueue_write_buffer");
+}
+  
+  
+
+void cl_enqueue_read_buffer(cl_command_queue command_queue,cl_mem buffer,cl_bool blocking_read,size_t offset,size_t cb,void *ptr,cl_uint num_events_in_wait_list,
+const cl_event *event_wait_list,cl_event *event, const std::string & hash){
+  cl_int ret = clEnqueueReadBuffer(command_queue,buffer,blocking_read,offset,cb,ptr,num_events_in_wait_list,event_wait_list,event);
+  confirm_cl_status(ret, hash, "cl_enqueue_read_buffer");
+}
+  
+  
+
+
 
 
 
@@ -305,6 +334,47 @@ void set_program_and_kernel(const cl_command_queue & command_queue, cl_program &
   
   
   kernel = cl_create_kernel(program, kernel_function_name.c_str(), "getting kernel in set_program_and_kernel");  
+}
+  
+
+
+SafeClMem::SafeClMem(const std::string & hash):clmem(nullptr),hash(hash) {};
+
+SafeClMem::~SafeClMem(){
+  if (clmem != nullptr){
+    openclutil::cl_release_mem_object(clmem, hash);
+  }
+}
+
+
+
+  /* properties = CL_QUEUE_PROFILING_ENABLE : 
+   * create an inorder command queue with profiling enabled. Profiling is enabled so that we can get start and end times for kernels*/
+cl_command_queue auto_get_command_queue(outputwriting::OutputWriter & mowri, 	cl_command_queue_properties properties){
+  
+  cl_int locret;
+  
+  cl_platform_id platform = nullptr;
+  cl_uint num_platforms;
+  cl_context context;
+  cl_device_id device_id_to_use;
+  
+  openclutil::set_platform_etc(platform, num_platforms, context, device_id_to_use, mowri);
+
+
+  return clCreateCommandQueue(context, device_id_to_use, properties, &locret);
+}
+
+  
+TinyGemmCommandQueueInContext::TinyGemmCommandQueueInContext(outputwriting::OutputWriter & mowri, const std::string & hash):command_queue(auto_get_command_queue(mowri)), hash(hash) {}
+
+TinyGemmCommandQueueInContext::~TinyGemmCommandQueueInContext(){
+  if (command_queue != nullptr){
+    cl_context context;
+    cl_get_command_queue_info(command_queue, CL_QUEUE_CONTEXT, sizeof(cl_context), &context, nullptr, hash + " + (TinyGemmCommandQueueInContext destuctor)");
+    cl_release_context(context, "in destructor of TinyGemmCommandQueueInContext" );
+    cl_release_command_queue(command_queue, "in destructor of TinyGemmCommandQueueInContext");
+  }
 }
   
 

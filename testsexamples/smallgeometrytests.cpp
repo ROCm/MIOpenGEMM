@@ -16,7 +16,6 @@ void geometrytest(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsign
   /* These must be double, irrespective of the float type of the matrices */
   double alpha = 0.1231321231243234523425;
   double beta = 1.45343453456345344445346;
-  char floattype = (sizeof(TFloat) == 4) ? 'f' : 'd';
   float allotted_time = 0.0001;
   /* set verbose to true if you want output to terminal */
   bool verbose = false;
