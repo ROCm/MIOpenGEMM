@@ -10,13 +10,8 @@ namespace betac{
   
 void set_betackernel_sizes(char fchar, bool isColMajor, bool tC, unsigned m, unsigned n, unsigned & dim_coal, unsigned & dim_uncoal, size_t & betac_global_work_size, size_t & betac_local_work_size);
 
-
 std::string get_betac_kernel_string(char fchar);
 
-//extern const std::string cl_file_f32_path;
-//extern const std::string cl_file_f64_path;
-
-//std::string get_cl_file_path(char fchar);
 }
 }  // namespaces
 

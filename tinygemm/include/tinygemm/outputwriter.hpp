@@ -34,8 +34,7 @@ public:
   OutputWriter(bool to_terminal, bool to_file, std::string filename = "");
   void operator() (std::string);
   
-  
-  
+    
   template <typename T>
   OutputWriter & operator<< (T t){
     
@@ -46,7 +45,6 @@ public:
     if (to_file){
       file << t;
     }
-    
     return *this;
   }
   

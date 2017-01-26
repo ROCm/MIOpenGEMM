@@ -19,9 +19,6 @@ void elementwise_compare(const TFloat * c_before, double beta, const TFloat * c_
 
 
 
-
-
-
 /* An older and more informative version of testing, used in python dev code. Consider using its good parts elsewhere */
 template <typename TFloat>
 void accuracy_test(bool isColMajor, bool tC, unsigned m, unsigned n, unsigned ldc, const TFloat * c_true, const TFloat * c_computed, unsigned c_offset, outputwriting::OutputWriter & mowri, double l1_rel_err_tol){

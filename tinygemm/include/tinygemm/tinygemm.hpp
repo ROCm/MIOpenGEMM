@@ -29,7 +29,7 @@ cl_mem a,
 cl_mem b,
 cl_mem c,
 const bool enforce_deterministic,
-/* floattype
+/* floattype :
  * 'f' : 32-bit single precision
  * 'd' : 64-bit double precision 
  * the user must guarantee that a, b and c are in agreement with floattype, 
@@ -41,7 +41,7 @@ const double alpha,
 const double beta, 
 bool verbose = false,
 std::string logfile = "", 
-/* if c_is_const, the c will be corrupted */
+/* if c_is_const == false, then c will be corrupted */
 bool c_is_const = true);
 
 
