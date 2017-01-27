@@ -6,8 +6,13 @@ set( INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_INCLUDEDIR} )
 set( DATA_INSTALL_DIR ${CMAKE_INSTALL_FULL_DATAROOTDIR}/tinygemm )
 set( CONFIG_PACKAGE_INSTALL_DIR ${LIB_INSTALL_DIR}/cmake/tinygemm )
 
+option(BUILD_DEV OFF)
+
+if(BUILD_DEV)
 configure_file(config.hpp.dev dev_include/tinygemm/config.hpp)
-configure_file(config.hpp.install install_include/config.hpp)
+else()
+configure_file(config.hpp.install dev_include/tinygemm/config.hpp)
+endif()
 
 file(GLOB_RECURSE source_files src/*.cpp)
 
