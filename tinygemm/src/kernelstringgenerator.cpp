@@ -398,11 +398,10 @@ TFLOAT previous_value; )" << "\n" << infa << " newVal;\n" << infa << " prevVal;"
     ss << "\nindex = row_stride_c*(write_start_row + row) + col_stride_c*(write_start_col + col);\n";
     /* beta string */
     ss << (with_beta_scaling == 0 ? "" : "c[index] *= beta;\n");
-
     if (with_alpha_increment != 0){
       ss << "\n";
       if (atomic_increment == 0){
-        ss << "c[index] += " + alpha_scaled + ";\n";
+        ss << "c[index] += " + alpha_scaled + ";\n"; 
       }
       
       else{
@@ -648,8 +647,7 @@ if (group_id_z == n_work_groups_with_1_more && k_remaining > 0){
   
   void append_compute_string(std::stringstream & ss){
     ss << pragma_unroll_string << "for (unsigned row = 0; row < MICRO_TILE_HEIGHT; ++row){\n" << pragma_unroll_string << "for (unsigned col = 0; col < MICRO_TILE_WIDTH; ++col){" << "\nrC[row][col] += rA[row]*rB[col]; // rA[row]*rB[col];  //mad(rA[row],rB[col],rC[row][col]);\n}\n}\n";
-  }
-  
+  } 
   /* This returns the section which makes the within work-group adjust to a, b to
    * put a work item in the correct position to load its first element from global
    * if the load tiles are interlaced (ala cobalt), this final offset is just 1

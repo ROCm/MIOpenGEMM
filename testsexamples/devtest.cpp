@@ -86,6 +86,25 @@ void set_abc(std::vector<TFloat> & v_a, std::vector<TFloat> & v_b, std::vector<T
   }
 }
 
+
+void print_kernel(){
+
+  std::string kernel_string;
+  auto hp = get_hp();
+  auto gg = get_geometry();
+  
+  tinygemm::kerngen::set_kernel_string(
+  hp,  
+  kernel_string,
+  "belziboob",
+  32,
+  gg.tA, gg.tB, gg.tC, gg.isColMajor);
+  
+  std::cout << kernel_string;
+}
+  
+
+
 int main(){
   
   typedef float tfloat;
@@ -105,7 +124,8 @@ int main(){
   
   const tfloat * c_true_bla = nullptr; 
   
-  tinygemm::dev::accuracy_test(hp, gg, alpha, beta, v_a.data(), v_b.data(), v_c.data(), c_true_bla, true, "");
+  print_kernel();
+  //tinygemm::dev::accuracy_test(hp, gg, alpha, beta, v_a.data(), v_b.data(), v_c.data(), c_true_bla, true, "");
 
   //tinygemm::dev::benchgemm({hp}, 5, gg, alpha, beta, v_a.data(), v_b.data(), v_c.data(), true, "");
 
