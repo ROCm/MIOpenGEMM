@@ -19,8 +19,8 @@ get_kernel_function_name(const std::string & kernel_string);
 void
 set_sizes_from_kernel_string(unsigned & macro_tile_width, unsigned & macro_tile_height, unsigned & n_workitems_per_workgroup, unsigned & n_work_items_per_c_elm, unsigned & does_beta_c_inc, const std::string & kernel_string);
 
-std::string
-get_as_single_string(std::string filename);
+//std::string
+//get_as_single_string(std::string filename);
 
 } //namespace
 }

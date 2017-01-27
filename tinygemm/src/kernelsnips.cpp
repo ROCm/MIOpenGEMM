@@ -16,18 +16,18 @@
 namespace tinygemm{
 namespace kernelutil{
 
-  std::string
-  get_as_single_string(std::string filename){
-    std::ifstream input(filename);
-    if(!input.good()){
-      throw tinygemm_error( "Error attempting to open '" + filename + "', in kernelutil : :ge t_as_single_string.  ");
-    }
+  //std::string
+  //get_as_single_string(std::string filename){
+    //std::ifstream input(filename);
+    //if(!input.good()){
+      //throw tinygemm_error( "Error attempting to open '" + filename + "', in kernelutil : :ge t_as_single_string.  ");
+    //}
     
-    std::ifstream t(filename);
-    std::stringstream buffer;
-    buffer << t.rdbuf();
-    return buffer.str();
-  }
+    //std::ifstream t(filename);
+    //std::stringstream buffer;
+    //buffer << t.rdbuf();
+    //return buffer.str();
+  //}
   
   std::pair<std::map<std::string, unsigned>, std::map<std::string, std::string>> 
   get_all_preprocessor_parameters(const std::string & kernel_string){

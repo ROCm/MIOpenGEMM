@@ -26,7 +26,6 @@
 #include <tinygemm/stringutilbase.hpp>
 #include <tinygemm/redirection.hpp>
 #include <tinygemm/outputwriter.hpp>
-#include <tinygemm/kernelchecks.hpp>
 #include <tinygemm/kernelsnips.hpp>
 #include <tinygemm/floattostring.hpp>
 #include <tinygemm/consistencychecks.hpp>

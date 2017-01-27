@@ -33,7 +33,7 @@ std::vector<unsigned> get_multiples(unsigned N){
 class KernelString{
 
   private:
-    /* to be set in constructor based on passed in parameters */
+    /* to be set in constructor based on parameters provided */
     
 
     /* */
@@ -75,7 +75,7 @@ class KernelString{
     unsigned micro_b_tile_perp_unroll;
     unsigned n_micro_b_tiles_pll_unroll;
     
-    /* set here as we do not want the user to choose (although will not break kernel) */
+    /* set here as we do not want the user to choose (although would not break kernel) */
     unsigned use_edge_trick = 1;
 
   public:
@@ -102,17 +102,15 @@ class KernelString{
   
   std::string kernelname = "",
   
+
+  
   /* geometry parameters */
   unsigned float_size = 32,
   unsigned a_transposed = 1,
   unsigned b_transposed = 0,
   unsigned c_transposed = 0,
   unsigned is_col_major = 1
-  /* to add m,n,k, lda, ldb, ldc */
-  
-  
-  
-  
+  /* to add m,n,k, lda, ldb, ldc */  
   
   ):
   
@@ -156,33 +154,33 @@ class KernelString{
 
 
 
-  /*given a macro tile TH x TW, 
-  and given a micro tile size of tS, 
-  find the tallest possible micro tile size (tH x tW)
-  to fit the macro tile. Example, macro tile is 6 x 4:
-  
-  * * * * 
-  * * * * 
-  * * * * 
-  * * * * 
-  * * * * 
-  * * * * 
-  
-  tS = 2 return [2, 1]
-  tS = 3 return [3, 1]
-  tS = 4 return [2, 2]
-  tS = 5 raise an error ((TH * TH) % tS != 0)
-  tS = 6 return [6, 1]
-  tS = 7 raise an error ((TH * TH) % tS != 0) 
-  tS = 8 return [2, 4]
-  tS = 9 raise an error ((TH * TH) % tS != 0)
-  tS = 10 raise an error ((TH * TH) % tS != 0)
-  tS = 11 raise an error ((TH * TH) % tS != 0)
-  tS = 12 return [6, 2]
-  tS = 13 .. 23 raise an error ((TH * TH) % tS != 0)
-  tS = 24 return [6, 4] */
-  
+
   std::string set_tile_dimensions(unsigned & tH, unsigned & tW, unsigned TH, unsigned TW, unsigned tS){
+    /*given a macro tile TH x TW, 
+    and given a micro tile size of tS, 
+    find the tallest possible micro tile size (tH x tW)
+    to fit the macro tile. Example, macro tile is 6 x 4:
+    
+    * * * * 
+    * * * * 
+    * * * * 
+    * * * * 
+    * * * * 
+    * * * * 
+    
+    tS = 2 return [2, 1]
+    tS = 3 return [3, 1]
+    tS = 4 return [2, 2]
+    tS = 5 raise an error ((TH * TH) % tS != 0)
+    tS = 6 return [6, 1]
+    tS = 7 raise an error ((TH * TH) % tS != 0) 
+    tS = 8 return [2, 4]
+    tS = 9 raise an error ((TH * TH) % tS != 0)
+    tS = 10 raise an error ((TH * TH) % tS != 0)
+    tS = 11 raise an error ((TH * TH) % tS != 0)
+    tS = 12 return [6, 2]
+    tS = 13 .. 23 raise an error ((TH * TH) % tS != 0)
+    tS = 24 return [6, 4] */
 
     if (tS == 0){
       throw std::runtime_error("This is strange : tS in zero in set_tile_dimensions");

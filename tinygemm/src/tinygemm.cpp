@@ -12,7 +12,6 @@
 #include <tinygemm/outputwriter.hpp>
 #include <tinygemm/sizingup.hpp>
 #include <tinygemm/kernelsnips.hpp>
-#include <tinygemm/kernelchecks.hpp>
 #include <tinygemm/openclutil.hpp>
 #include <tinygemm/betackernelutil.hpp>
 #include <tinygemm/floattostring.hpp>
@@ -264,8 +263,10 @@ public:
   
 
   void setup_main_kernel(const std::string & kernel_string){
-    /* check that the parameters in kernel_string look reasonable. This may be redundant now */
-    kernelutil::check_gpu_kernel_preprocessor_parameters(kernel_string, gg.tA, gg.tB, gg.tC, gg.isColMajor, gg.m, gg.n, floattostring::get_float_string(floattype));    
+    
+    ///* check that the parameters in kernel_string look reasonable. This may be redundant now */
+    //kernelutil::check_gpu_kernel_preprocessor_parameters(kernel_string, gg.tA, gg.tB, gg.tC, gg.isColMajor, gg.m, gg.n, floattostring::get_float_string(floattype));
+        
     /* extract the parameters which are needed to determine the number of work groups and work items to launch, directly from kernel string : */
     /* macro_tile_width, macro_tile_height, n_workitems_per_workgroup, n_work_items_per_c_elm, does_betac_inc */
     kernelutil::set_sizes_from_kernel_string(macro_tile_width, macro_tile_height, n_workitems_per_workgroup, n_work_items_per_c_elm, does_betac_inc, kernel_string);
@@ -625,11 +626,9 @@ public:
                 //set kernel files
                 //TODO : should not be determining whether a kernel does betac or not based on this, find true parameter
                 std::string soln_betac_kernel = hp.params.at("n_work_items_per_c_elm") == 1 ?  ""  : betac::get_betac_kernel_string(floattype);
-                std::string soln___betac_kernel__function__name = hp.params.at("n_work_items_per_c_elm") == 1 ? "" : tk_betac.fname;
-                //TODO : this is redundant. clean up. 
-                std::string soln_main_kernel = tk_main.kernstr; //kernelutil::get_as_single_string(kernelfilename);
+                std::string soln_betac_kernel_function_name = hp.params.at("n_work_items_per_c_elm") == 1 ? "" : tk_betac.fname;
                 std::string soln_main_kernel_function_name = kernelutil::get_kernel_function_name(tk_main.kernstr);                
-                tinygemm::TinyGemmSolution tgs(soln_betac_kernel, soln___betac_kernel__function__name, soln_main_kernel, soln_main_kernel_function_name, hp, gg, floattype, tgss);
+                tinygemm::TinyGemmSolution tgs(soln_betac_kernel, soln_betac_kernel_function_name, tk_main.kernstr, soln_main_kernel_function_name, hp, gg, floattype, tgss);
   
                 path_of_best_solns.push_back(tgs); 
               }
