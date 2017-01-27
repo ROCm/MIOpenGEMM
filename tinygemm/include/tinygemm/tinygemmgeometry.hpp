@@ -26,6 +26,8 @@ class TinyGemmGeometry{
     TinyGemmGeometry(bool isColMajor, bool tA, bool tB, bool tC, unsigned lda, unsigned ldb, unsigned ldc, unsigned m, unsigned n, unsigned k, unsigned a_offset, unsigned b_offset, unsigned c_offset);
     
     TinyGemmGeometry (const TinyGemmGeometry & ) = default;
+    
+    TinyGemmGeometry & operator= (const TinyGemmGeometry & ) = default;
 
     TinyGemmGeometry() = default;
     

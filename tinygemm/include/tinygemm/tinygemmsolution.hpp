@@ -20,9 +20,8 @@ class TinyGemmSolutionStatistics{
     /* the time in seconds at which this solution was discovered  */
     float solution_discovery_time;
     
-    TinyGemmSolutionStatistics(float median_benchmark_time, float median_benchmark_gflops, float solution_discovery_time): 
-    median_benchmark_time(median_benchmark_time), median_benchmark_gflops(median_benchmark_gflops), solution_discovery_time(solution_discovery_time) {}
-  
+    TinyGemmSolutionStatistics(float median_benchmark_time, float median_benchmark_gflops, float solution_discovery_time);
+     
 };
 
 class TinyGemmSolution{
@@ -58,8 +57,9 @@ public:
   TinyGemmSolutionStatistics statistics;
 
   
-  TinyGemmSolution(std::string betac_kernel, std::string betac_kernel_function_name,  std::string main_kernel, std::string main_kernel_function_name, const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & geometry, char floattype, TinyGemmSolutionStatistics tgss): betac_kernel(betac_kernel), betac_kernel_function_name(betac_kernel_function_name), main_kernel(main_kernel), main_kernel_function_name(main_kernel_function_name), hp(hp), geometry(geometry), floattype(floattype), statistics(tgss){}
-
+  TinyGemmSolution(std::string betac_kernel, std::string betac_kernel_function_name,  std::string main_kernel, std::string main_kernel_function_name, const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & geometry, char floattype, TinyGemmSolutionStatistics tgss);
+  
+  
   /* A TinyGemmSolution is only valid for a fixed basic geometry (tA, tB, etc) , but can be used for any size m,n,k, 
    * as long as the kernel macro tile size is not larger than m x n. This function should be used to determine
    * n_work_groups, local_work_size and global_work_size, which are needed when enqueueing main_kernel. See example TODO.
