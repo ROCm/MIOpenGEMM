@@ -72,8 +72,8 @@ private:
   
 public:
   
-  Gemini(tinygemm::TinyGemmGeometry gg, const TFloat * a, const TFloat * b, const TFloat * c, bool verbose, TFloat alpha, TFloat beta, std::string outputfilename):
-  gg(gg), a(a), b(b), c(c), alpha(alpha), beta(beta), outputfilename(outputfilename), mowri(verbose, outputfilename.compare("") != 0, outputfilename), tgcq(mowri, "tiny gemm command queue in devtinygemm"),  a_gpu_safemem("a_gpu_safemem, of Gemini"), b_gpu_safemem("b_gpu_safemem, of Gemini"), c_gpu_safemem("c_gpu_safemem, of Gemini")
+  Gemini(tinygemm::TinyGemmGeometry gg_, const TFloat * a_, const TFloat * b_, const TFloat * c_, bool verbose_, TFloat alpha_, TFloat beta_, std::string outputfilename_):
+  gg(gg_), a(a_), b(b_), c(c_), alpha(alpha_), beta(beta_), outputfilename(outputfilename_), mowri(verbose_, outputfilename_.compare("") != 0, outputfilename_), tgcq(mowri, "tiny gemm command queue in devtinygemm"),  a_gpu_safemem("a_gpu_safemem, of Gemini"), b_gpu_safemem("b_gpu_safemem, of Gemini"), c_gpu_safemem("c_gpu_safemem, of Gemini")
   
   {
     consistencychecks::check_ldx_mnk_consistent(gg);

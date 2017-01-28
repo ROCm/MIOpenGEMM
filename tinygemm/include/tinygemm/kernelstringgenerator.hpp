@@ -10,7 +10,7 @@ namespace kerngen{
 class KernelStringSetStatus{
   public:
   
-    KernelStringSetStatus(std::string message):message(message) {}
+    KernelStringSetStatus(std::string message_):message(message_) {}
     
     std::string message;
     bool is_good(){

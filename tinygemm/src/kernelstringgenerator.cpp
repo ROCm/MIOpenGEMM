@@ -1,4 +1,5 @@
-#include "tinygemm/kernelstringgenerator.hpp"
+#include <tinygemm/kernelstringgenerator.hpp>
+#include <tinygemm/tinygemmerror.hpp>
 
 
 #include <string>
@@ -15,7 +16,6 @@ namespace tinygemm{
 namespace kerngen{
 
 
-
 std::vector<unsigned> get_multiples(unsigned N){
   std::vector<unsigned> multiples;
   for (unsigned k = N; k > 0; --k){
@@ -25,7 +25,6 @@ std::vector<unsigned> get_multiples(unsigned N){
   }
   return multiples;
 }
-
 
 
 
@@ -98,29 +97,29 @@ class KernelString{
   KernelString(
   
   /* hyper parameters */
-  const hyperparams::HyperParams & hp,
+  const hyperparams::HyperParams & hp_,
   
-  std::string kernelname = "",
+  std::string kernelname_ = "",
   
 
   
   /* geometry parameters */
-  unsigned float_size = 32,
-  unsigned a_transposed = 1,
-  unsigned b_transposed = 0,
-  unsigned c_transposed = 0,
-  unsigned is_col_major = 1
+  unsigned float_size_ = 32,
+  unsigned a_transposed_ = 1,
+  unsigned b_transposed_ = 0,
+  unsigned c_transposed_ = 0,
+  unsigned is_col_major_ = 1
   /* to add m,n,k, lda, ldb, ldc */  
   
   ):
   
-  hp(hp),
-  kernelname(kernelname),
-  float_size(float_size),
-  a_transposed(a_transposed), 
-  b_transposed(b_transposed), 
-  c_transposed(c_transposed), 
-  is_col_major(is_col_major)
+  hp(hp_),
+  kernelname(kernelname_),
+  float_size(float_size_),
+  a_transposed(a_transposed_), 
+  b_transposed(b_transposed_), 
+  c_transposed(c_transposed_), 
+  is_col_major(is_col_major_)
   
   
 

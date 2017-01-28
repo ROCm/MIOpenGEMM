@@ -11,11 +11,11 @@
 namespace tinygemm{
 
 
-TinyGemmSolutionStatistics::TinyGemmSolutionStatistics(float median_benchmark_time, float median_benchmark_gflops, float solution_discovery_time): 
-  median_benchmark_time(median_benchmark_time), median_benchmark_gflops(median_benchmark_gflops), solution_discovery_time(solution_discovery_time) {}
+TinyGemmSolutionStatistics::TinyGemmSolutionStatistics(float median_benchmark_time_, float median_benchmark_gflops_, float solution_discovery_time_): 
+  median_benchmark_time(median_benchmark_time_), median_benchmark_gflops(median_benchmark_gflops_), solution_discovery_time(solution_discovery_time_) {}
     
-TinyGemmSolution::TinyGemmSolution(std::string betac_kernel, std::string betac_kernel_function_name,  std::string main_kernel, std::string main_kernel_function_name, const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & geometry, char floattype, TinyGemmSolutionStatistics tgss): 
-betac_kernel(betac_kernel), betac_kernel_function_name(betac_kernel_function_name), main_kernel(main_kernel), main_kernel_function_name(main_kernel_function_name), hp(hp), geometry(geometry), floattype(floattype), statistics(tgss){}
+TinyGemmSolution::TinyGemmSolution(std::string betac_kernel_, std::string betac_kernel_function_name_,  std::string main_kernel_, std::string main_kernel_function_name_, const hyperparams::HyperParams & hp_, const tinygemm::TinyGemmGeometry & geometry_, char floattype_, TinyGemmSolutionStatistics tgss_): 
+betac_kernel(betac_kernel_), betac_kernel_function_name(betac_kernel_function_name_), main_kernel(main_kernel_), main_kernel_function_name(main_kernel_function_name_), hp(hp_), geometry(geometry_), floattype(floattype_), statistics(tgss_){}
   
 std::map<std::string, size_t> TinyGemmSolution::get_main_kernel_worksize_params(unsigned m, unsigned n){
 

@@ -317,21 +317,21 @@ void set_program_and_kernel(const cl_command_queue & command_queue, cl_program &
   
   
   /* writing binary : from http://www.cs.bris.ac.uk/home/simonm/montblanc/AdvancedOpenCL_full.pdf */
-  if (false){
+  //if (false){
     /* TODOEVENTUALLY This will break if more than one device used */
-    size_t size; 
-    /* the size of the binary is ridiculous. 60 MB!! */
-    cl_get_program_info(program, CL_PROGRAM_BINARY_SIZES, 0, &size, NULL,  "getting CL_PROGRAM_BINARY_SIZES ");
-    std::vector<unsigned char> v_binary (size + 10);
-    cl_get_program_info(program, CL_PROGRAM_BINARIES, size, v_binary.data(), NULL, "getting CL_PROGRAM_BINARIES "); 
-    //std::string filename_bin(filename);
-    std::string filename_bin = "bladibla_bin";
-    FILE *filebinary = fopen(filename_bin.c_str(), "w");
-    fwrite(v_binary.data(), 1, size, filebinary);
-    /* the binary file has been written to filename_bin */ 
-    throw tinygemm_error("go look at created binary file!");
+    //size_t size; 
+    ///* the size of the binary is ridiculous. 60 MB!! */
+    //cl_get_program_info(program, CL_PROGRAM_BINARY_SIZES, 0, &size, NULL,  "getting CL_PROGRAM_BINARY_SIZES ");
+    //std::vector<unsigned char> v_binary (size + 10);
+    //cl_get_program_info(program, CL_PROGRAM_BINARIES, size, v_binary.data(), NULL, "getting CL_PROGRAM_BINARIES "); 
+    ////std::string filename_bin(filename);
+    //std::string filename_bin = "bladibla_bin";
+    //FILE *filebinary = fopen(filename_bin.c_str(), "w");
+    //fwrite(v_binary.data(), 1, size, filebinary);
+    ///* the binary file has been written to filename_bin */ 
+    //throw tinygemm_error("go look at created binary file!");
     /* done */
-  }
+  //}
   
   
   kernel = cl_create_kernel(program, kernel_function_name.c_str(), "getting kernel in set_program_and_kernel");  
@@ -339,7 +339,7 @@ void set_program_and_kernel(const cl_command_queue & command_queue, cl_program &
   
 
 
-SafeClMem::SafeClMem(const std::string & hash):clmem(nullptr),hash(hash) {};
+SafeClMem::SafeClMem(const std::string & hash_):clmem(nullptr),hash(hash_) {};
 
 SafeClMem::~SafeClMem(){
   if (clmem != nullptr){
@@ -367,7 +367,7 @@ cl_command_queue auto_get_command_queue(outputwriting::OutputWriter & mowri, 	cl
 }
 
   
-TinyGemmCommandQueueInContext::TinyGemmCommandQueueInContext(outputwriting::OutputWriter & mowri, const std::string & hash):command_queue(auto_get_command_queue(mowri)), hash(hash) {}
+TinyGemmCommandQueueInContext::TinyGemmCommandQueueInContext(outputwriting::OutputWriter & mowri, const std::string & hash_):command_queue(auto_get_command_queue(mowri)), hash(hash_) {}
 
 TinyGemmCommandQueueInContext::~TinyGemmCommandQueueInContext(){
   if (command_queue != nullptr){

@@ -21,6 +21,8 @@ find_package(PythonInterp REQUIRED)
 
 option(BUILD_SHARED_LIBS "Build shared library" ON)
 
+include(EnableCompilerWarnings)
+
 add_subdirectory(tinygemm)
 add_subdirectory(testsexamples)
 

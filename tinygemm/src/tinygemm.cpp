@@ -72,7 +72,7 @@ class TinyGemmKernel{
 
   public:
     
-    TinyGemmKernel(cl_command_queue command_queue, const std::string & hash): command_queue(command_queue), kernstr(""), fname(""), clprog(nullptr), clkern(nullptr), hash(hash) {}
+    TinyGemmKernel(cl_command_queue command_queue_, const std::string & hash_): command_queue(command_queue_), kernstr(""), fname(""), clprog(nullptr), clkern(nullptr), hash(hash_) {}
     
     void try_release(){
       if (clprog != nullptr){
@@ -168,27 +168,27 @@ private:
 
 public:
   OpenCLGemmEncapsulator(
-  cl_command_queue command_queue, 
-  const char floattype,
-  const tinygemm::TinyGemmGeometry gg,  
-  const double alpha,
-  const double beta,  
-  cl_mem a_gpu,
-  cl_mem b_gpu, 
-  cl_mem c_gpu,
-  std::string outputfilename,
-  bool verbose):
+  cl_command_queue command_queue_, 
+  const char floattype_,
+  const tinygemm::TinyGemmGeometry gg_,  
+  const double alpha_,
+  const double beta_,  
+  cl_mem a_gpu_,
+  cl_mem b_gpu_, 
+  cl_mem c_gpu_,
+  std::string outputfilename_,
+  bool verbose_):
 
-  command_queue(command_queue), 
-  outputfilename(outputfilename),
-  floattype(floattype), 
-  gg(gg),
-  a_gpu(a_gpu),
-  b_gpu(b_gpu), 
-  c_gpu(c_gpu),
-  m_alpha(alpha),
-  m_beta(beta),
-  mowri(verbose, outputfilename.compare("") != 0, outputfilename),
+  command_queue(command_queue_), 
+  outputfilename(outputfilename_),
+  floattype(floattype_), 
+  gg(gg_),
+  a_gpu(a_gpu_),
+  b_gpu(b_gpu_), 
+  c_gpu(c_gpu_),
+  m_alpha(alpha_),
+  m_beta(beta_),
+  mowri(verbose_, outputfilename.compare("") != 0, outputfilename_),
   
   tk_main(command_queue, "tk_main"),
   tk_betac(command_queue, "tk_betac"){
@@ -466,9 +466,9 @@ public:
   /* I can get through about 5 benchmarks per second, that is 1 every 0.2 seconds, so the python script is something to be concerned about... */
   tinygemm::TinyGemmSolution
   get_default(
-  const bool enforce_deterministic, 
-  const char floattype, 
-  const tinygemm::TinyGemmGeometry & gg
+  const bool enforce_deterministic
+//  const char floattype, 
+//  const tinygemm::TinyGemmGeometry & gg
   ){
     
     hyperparams::HyperParams hp = hyperparams::get_default(gg, enforce_deterministic);
@@ -496,13 +496,13 @@ public:
     
     if (gg.m < 8 || gg.n < 8){
       mowri << "really skinny/thin matrix, returning a default kernel (to be improved) " << Endl;
-      return get_default(enforce_deterministic, floattype, gg);
+      return get_default(enforce_deterministic);//, gg); //floattype, gg);
     }
       
     
     if (allotted_time <= 0){
       mowri << "Allotted time insufficient for benchmarking, returning default TinyGemmSolution" << Endl;
-      return get_default(enforce_deterministic, floattype, gg);      
+      return get_default(enforce_deterministic);//, gg);//floattype, gg);      
     }
     
     auto start = std::chrono::high_resolution_clock::now();

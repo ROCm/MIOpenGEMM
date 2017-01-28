@@ -13,7 +13,7 @@
 #include <tinygemm/hyperparams.hpp>
 #include <tinygemm/tinygemmerror.hpp>
 #include <tinygemm/stringutilbase.hpp>
-
+#include <tinygemm/mapkeycheck.hpp>
 
 
 namespace tinygemm{
@@ -128,7 +128,7 @@ HyperParams get_default(const tinygemm::TinyGemmGeometry & gg, bool enforce_dete
 
   
   /* No near matches, this means that there are no tiles which are smaller in both dimensions */
-  if (min_distance == start_min_distance){
+  if (min_distance >= start_min_distance){
     best_hp = default_hp;
   }
 
@@ -143,31 +143,36 @@ HyperParams get_default(const tinygemm::TinyGemmGeometry & gg, bool enforce_dete
 
 
 
-HyperParams::HyperParams(std::map<std::string, unsigned> params):params(params){
+
+HyperParams::HyperParams(std::map<std::string, unsigned> params_):params(params_){
   do_checks();
 }
 
 
 void HyperParams::do_checks(){
-  for (auto & x : all_hyper_param_names){
-    if (params.count(x) == 0){
-      std::string errm("The parameter `");
-      errm += x;
-      errm += "', should appear as a hyper-parameter but appears not to. It must be included\n";
-      throw tinygemm_error(errm);
-    }
-  }
-  
-  for (auto & x : params){
-    auto blip = std::find(all_hyper_param_names.cbegin(), all_hyper_param_names.cend(), x.first);
-    if (blip == all_hyper_param_names.cend()) {
-      std::string errm("The parameter `");
-      errm += x.first;
-      errm += "', which appears in the user-defined list of hyper-parameter, is not recognised\n";
-      throw tinygemm_error(errm);
-    }
-  }
+  mapkeycheck::check_map_keys(params, all_hyper_param_names, "HyperParams, params against all_hyper_param_names");
 }
+  
+  
+  //for (auto & x : all_hyper_param_names){
+    //if (params.count(x) == 0){
+      //std::string errm("The parameter `");
+      //errm += x;
+      //errm += "', should appear as a hyper-parameter but appears not to. It must be included\n";
+      //throw tinygemm_error(errm);
+    //}
+  //}
+  
+  //for (auto & x : params){
+    //auto blip = std::find(all_hyper_param_names.cbegin(), all_hyper_param_names.cend(), x.first);
+    //if (blip == all_hyper_param_names.cend()) {
+      //std::string errm("The parameter `");
+      //errm += x.first;
+      //errm += "', which appears in the user-defined list of hyper-parameter, is not recognised\n";
+      //throw tinygemm_error(errm);
+    //}
+  //}
+//}
 
 unsigned HyperParams::get_workgroup_size(){
   return (params.at("macro_tile_height")*params.at("macro_tile_width")) / (params.at("micro_tile_height")*params.at("micro_tile_width"));

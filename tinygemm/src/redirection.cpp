@@ -41,7 +41,7 @@ class MatrixBundle{
     const TFloat * x;
     unsigned ldx;
     unsigned x_offset;
-    MatrixBundle(const TFloat * x, unsigned ldx, unsigned x_offset):x(x), ldx(ldx), x_offset(x_offset) {}
+    MatrixBundle(const TFloat * x_, unsigned ldx_, unsigned x_offset_):x(x_), ldx(ldx_), x_offset(x_offset_) {}
 };
 
 template <typename TFloat>
