@@ -192,6 +192,8 @@ public:
   
   tk_main(command_queue, "tk_main"),
   tk_betac(command_queue, "tk_betac"){
+    
+    
     floatbytes = get_floatbytes(floattype);
     run_checks();
   }
@@ -486,6 +488,8 @@ public:
     std::string soln_betac_kernel_function_name = hp.n_work_items_per_c_elm == 1 ? "" : kernelutil::get_kernel_function_name(soln_betac_kernel_string);
     std::string soln_main_kernel_function_name = kernelutil::get_kernel_function_name(soln_main_kernel_string);
     
+    
+    
     return { soln_betac_kernel_string, soln_betac_kernel_function_name, soln_main_kernel_string, soln_main_kernel_function_name, hp, gg, floattype, tgss };
 
 
@@ -493,6 +497,8 @@ public:
   
   
   tinygemm::TinyGemmSolution find(float allotted_time, bool enforce_deterministic, unsigned n_runs_per_kernel){
+    
+    
     
     if (gg.m < 8 || gg.n < 8){
       mowri << "really skinny/thin matrix, returning a default kernel (to be improved) " << Endl;
@@ -521,13 +527,20 @@ public:
         
     /* while generating, compiling and benchmarking kernels, we will keep track of the fastest found thus far */
     float best_time = std::numeric_limits<float>::max();
-    hyperparams::HyperParams best_hyper_params = hyperparams::get_default(gg, enforce_deterministic);
+    
+    hyperparams::HyperParams best_hp = hyperparams::get_default(gg, enforce_deterministic);
+    
+    
     
 
-    /* we initialise the `hyper-front' with a single HyperParams, selected based on problem dimensions (TODO : should be based on cache table look-up) */
-    std::vector<hyperparams::HyperParams> hyper_front = { hyperparams::get_default(gg, enforce_deterministic) };    
-    auto hyper_param_start = hyper_front[0];
 
+
+    /* we initialise the `hyper-front' with a single HyperParams, selected based on problem dimensions (TODO : should be based on cache table look-up) */
+    std::vector<hyperparams::HyperParams> hyper_front = { hyperparams::get_default(gg, enforce_deterministic) };
+    
+        
+    auto hyper_param_start = hyper_front[0];
+ 
     bool improvement_found_on_front = true;
     
     /* a hyper front consists of all kernels within a certain "distance of the current best. We start with a front
@@ -543,7 +556,11 @@ public:
 
       unsigned hfi = 0;
       while (hfi < hyper_front.size() && improvement_found_on_front == false && elapsed_seconds < allotted_time){
+        
         hyperparams::HyperParams hp = hyper_front[hfi];
+        
+        
+        
         /* certain kernels will not be generated, for diverse reasons */
         /* reason 0 : it's already been considered */
         if (std::find(hyper_front_history.begin(), hyper_front_history.end(), hp) != hyper_front_history.end()){
@@ -582,6 +599,8 @@ public:
             auto set_status = set_ks(hp, tk_main.kernstr);
             
             if (set_status.is_good() == true){
+              
+                            
               /* the kernel was succesfully generated, we now compile and benchmark it */
               
               ++global_counter;
@@ -609,9 +628,10 @@ public:
       
               /* A new best kernel !!! we're only interested in an improvement if it's 0.5% or more */
               if (median_time < 0.995*best_time){
+                
                 improvement_found_on_front = true;
                 best_time = median_time;
-                best_hyper_params = hp;
+                best_hp = hp;
                 mowri << "---------- NEW BEST TIME FOUND --------- : " << best_time << Endl << "breaking from current hyper front, creating new hyper front " << Endl;
   
                 end = std::chrono::high_resolution_clock::now();
@@ -628,11 +648,16 @@ public:
                 std::string soln_betac_kernel = hp.n_work_items_per_c_elm == 1 ?  ""  : betac::get_betac_kernel_string(floattype);
                 std::string soln_betac_kernel_function_name = hp.n_work_items_per_c_elm == 1 ? "" : tk_betac.fname;
                 std::string soln_main_kernel_function_name = kernelutil::get_kernel_function_name(tk_main.kernstr);                
-                tinygemm::TinyGemmSolution tgs(soln_betac_kernel, soln_betac_kernel_function_name, tk_main.kernstr, soln_main_kernel_function_name, hp, gg, floattype, tgss);
-  
-                path_of_best_solns.push_back(tgs); 
+                
+                //tinygemm::TinyGemmSolution tgs(soln_betac_kernel, soln_betac_kernel_function_name, tk_main.kernstr, soln_main_kernel_function_name, best_hp, gg, floattype, tgss);
+                //path_of_best_solns.push_back(tgs); 
+
+
+                path_of_best_solns.emplace_back (soln_betac_kernel, soln_betac_kernel_function_name, tk_main.kernstr, soln_main_kernel_function_name, best_hp, gg, floattype, tgss); 
+
+                
               }
-            
+           
             }
           
             else{
@@ -649,13 +674,16 @@ public:
         elapsed_seconds = fp_ms.count();
         
       }
-
+      
+  
       /* TODO: maybe. add another level of loop here. get_one_aways, then get_two_aways, etc. 
        * what we will have here is that `one' is just rough tile shape, important stuff.*/
       if (improvement_found_on_front == true && front_search_horizon == 1){        
         /* getting all `one-away's */
-        hyper_front = best_hyper_params.get_one_aways(gg);
+        hyper_front = best_hp.get_one_aways(gg);
       }
+
+
       
       if (improvement_found_on_front == false && front_search_horizon == 1 && elapsed_seconds < allotted_time){
         ++front_search_horizon;
@@ -670,7 +698,7 @@ public:
       
       if (improvement_found_on_front == true && front_search_horizon == 2){        
         /* getting all `two-aways' */
-        hyper_front = best_hyper_params.get_two_aways(gg);
+        hyper_front = best_hp.get_two_aways(gg);
       }
       
       if (improvement_found_on_front == false && front_search_horizon == 2){
@@ -695,7 +723,7 @@ public:
     }
   
     mowri << "best time : " << best_time << Endl;
-    mowri << "best kernel : " << best_hyper_params.get_string() << Endl;
+    mowri << "best kernel : " << best_hp.get_string() << Endl;
     mowri << "start kernel : " << hyper_param_start.get_string() << Endl;
     mowri << "the kernels along the path the final solution :  " << Endl; 
     mowri << "hyper parameter string                                     \t time when found\t median gflop/s" << Endl;

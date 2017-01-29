@@ -57,7 +57,7 @@ public:
   TinyGemmSolutionStatistics statistics;
 
   
-  TinyGemmSolution(std::string betac_kernel, std::string betac_kernel_function_name,  std::string main_kernel, std::string main_kernel_function_name, const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & geometry, char floattype, TinyGemmSolutionStatistics tgss);
+  TinyGemmSolution(const std::string & betac_kernel, const std::string & betac_kernel_function_name,  const std::string &  main_kernel, const std::string & main_kernel_function_name, const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & geometry, char floattype, TinyGemmSolutionStatistics tgss);
   
   
   /* A TinyGemmSolution is only valid for a fixed basic geometry (tA, tB, etc) , but can be used for any size m,n,k, 

@@ -22,35 +22,63 @@ namespace hyperparams{
 
 HyperParamList::HyperParamList() {
 
+  map_shortkey_to_key =  {
 
-shortkeys = {"Y", "X", "y", "x", "U", "P", "GA", "APLU", "BPLU", "PU", "LIW", "MIW", "ICE", "NAW", "UFO"};
-
-map_shortkey_to_key =  {
-
-  {"Y",  "macro_tile_height"}, 
-  {"X",  "macro_tile_width"},
-  {"y",  "micro_tile_height"},
-  {"x",  "micro_tile_width"},
-  {"U",  "unroll"},  
-  {"P",  "pad"},
-  {"GA",  "group_allocation"},
-  {"APLU",  "work_item_load_a_pll_to_unroll"},
-  {"BPLU",  "work_item_load_b_pll_to_unroll"},
-  {"PU",  "unroll_pragma"},
-  {"LIW",  "load_to_lds_interwoven"},
-  {"MIW",  "c_micro_tiles_interwoven"},
-  {"ICE",  "n_work_items_per_c_elm"},
-  {"NAW",  "n_target_active_workgroups"},
-  {"UFO",  "unroll_for_offset"}
+    {"Y",  "macro_tile_height"}, 
+    {"X",  "macro_tile_width"},
+    {"y",  "micro_tile_height"},
+    {"x",  "micro_tile_width"},
+    {"U",  "unroll"},  
   
+    {"P",  "pad"},
+    {"GA",  "group_allocation"},
+    {"APLU",  "work_item_load_a_pll_to_unroll"},
+    {"BPLU",  "work_item_load_b_pll_to_unroll"},
+    {"PU",  "unroll_pragma"},
+  
+    {"LIW",  "load_to_lds_interwoven"},
+    {"MIW",  "c_micro_tiles_interwoven"},
+    {"ICE",  "n_work_items_per_c_elm"},
+    {"NAW",  "n_target_active_workgroups"},
+    {"UFO",  "unroll_for_offset"}
+    
   };
 
-  for(auto const & v: shortkeys){
-    keys.push_back(map_shortkey_to_key.at(v));
+  for(auto const & v: map_shortkey_to_key){
+    keys.push_back(v.second);
+    shortkeys.push_back(v.first);
   }
 }
 
 HyperParamList hpl;
+
+
+std::string HyperParams::get_string() const{
+
+  std::stringstream ss;
+  
+  ss << 
+  "Y" << macro_tile_height << "_" <<  
+  "X" << macro_tile_width << "_" << 
+  "y" << micro_tile_height << "_" << 
+  "x" << micro_tile_width << "_" << 
+  "U" << unroll << "_" <<   
+
+  "P" << pad << "_" << 
+  "GA" << group_allocation << "_" << 
+  "APLU" << work_item_load_a_pll_to_unroll << "_" << 
+  "BPLU" << work_item_load_b_pll_to_unroll << "_" << 
+  "PU" << unroll_pragma << "_" << 
+
+  "LIW" << load_to_lds_interwoven << "_" << 
+  "MIW" << c_micro_tiles_interwoven << "_" << 
+  "ICE" << n_work_items_per_c_elm << "_" << 
+  "NAW" << n_target_active_workgroups << "_" << 
+  "UFO" << unroll_for_offset;
+  
+  return ss.str();
+
+}
 
 
 std::string HyperParamList::get_key_from_shortkey(const std::string & shortkey){
@@ -62,89 +90,40 @@ std::string HyperParamList::get_key_from_shortkey(const std::string & shortkey){
   
   else{
     return hpl.map_shortkey_to_key.at(shortkey);
-  } 
-}
-
-unsigned HyperParams::get_val_from_shortkey(const std::string & shortkey) const{
-  auto key = hpl.get_key_from_shortkey(shortkey);
-  return *(pval_from_key.at(key));
+  }
 }
 
 
-/* take in hyper-parameter string and get a HyperParam object from it */
-HyperParams get_hp(const std::string & hyperstring){
+/* take in hyper-parameter string and a map */
+std::map<std::string, unsigned> get_params(const std::string & hyperstring){
  
   auto frags = stringutil::split(hyperstring, "_");
 
-  std::map<std::string, unsigned> hpdict;
+  std::map<std::string, unsigned> params;
   std::string shortkey;
   unsigned val;
 
   for (auto & x : frags){
     std::tie(shortkey, val) = stringutil::splitnumeric(x);
-    hpdict[hpl.get_key_from_shortkey(shortkey)] = val;
+    params[hpl.get_key_from_shortkey(shortkey)] = val;
   }
   
-  auto newhp = HyperParams(hpdict);
   
-  return newhp;
+  return params;
 }
-
-
-
-    
-
 
 
 
 HyperParams get_default_small(bool enforce_deterministic){
   
-  std::map<std::string, unsigned> params;
-  
-  params["micro_tile_width"] = 1;
-  params["micro_tile_height"] = 1;
-  params["macro_tile_width"] = 8;
-  params["macro_tile_height"] = 8; 
-  params["unroll"] = 16;
-
-  params["pad"] = 1;    
-  params["group_allocation"] = 1;
-  params["work_item_load_a_pll_to_unroll"] = 0;
-  params["work_item_load_b_pll_to_unroll"] = 1;
-  params["unroll_pragma"] = 1;
-
-  params["load_to_lds_interwoven"] = 0;
-  params["c_micro_tiles_interwoven"] = 1;
-  params["n_work_items_per_c_elm"] = (enforce_deterministic == false) ? 3 : 1;
-  params["n_target_active_workgroups"] = 64;
-  params["unroll_for_offset"] = 0;
-
-  return HyperParams(params);
+  std::string ice = std::to_string(enforce_deterministic == false ? 3 : 1);
+  return "Y8_X8_y1_x1_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE" +  ice + "_NAW64_UFO0";
 }
 
 HyperParams get_default_tiniest(bool enforce_deterministic){
   
-  std::map<std::string, unsigned> params;
-
-  params["micro_tile_width"] = 1;
-  params["micro_tile_height"] = 1;
-  params["macro_tile_width"] = 1;
-  params["macro_tile_height"] = 1; 
-  params["unroll"] = 16;
-
-  params["pad"] = 1;    
-  params["group_allocation"] = 1;
-  params["work_item_load_a_pll_to_unroll"] = 0;
-  params["work_item_load_b_pll_to_unroll"] = 1;
-  params["unroll_pragma"] = 1;
-
-  params["load_to_lds_interwoven"] = 0;
-  params["c_micro_tiles_interwoven"] = 1;
-  params["n_work_items_per_c_elm"] = (enforce_deterministic == false) ? 3 : 1;
-  params["n_target_active_workgroups"] = 64;
-  params["unroll_for_offset"] = 0;
-
-  return HyperParams(params);  
+  std::string ice = std::to_string(enforce_deterministic == false ? 3 : 1);
+  return "Y1_X1_y1_x1_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE" +  ice + "_NAW64_UFO0";
 }
 
 
@@ -154,22 +133,17 @@ HyperParams get_default(const tinygemm::TinyGemmGeometry & gg, bool enforce_dete
   
   
   
-
+  
 
   /* The case  of  (gg.m < 8 || gg.n < 8) */  
   if (gg.m < 8 || gg.n < 8) {
     return get_default_tiniest(enforce_deterministic);
   }
-  
-  
-  
-  
+    
   tinygemm::TinyGemmGeometry nearestgeometry;
   HyperParams best_hp = get_default_small(enforce_deterministic);
-  
 
   float min_distance = std::numeric_limits<float>::max();
-  
   tinygemm::TinyGemmGeometry geo;
   std::string hpstring;
   
@@ -179,7 +153,7 @@ HyperParams get_default(const tinygemm::TinyGemmGeometry & gg, bool enforce_dete
     float new_distance = gg.get_distance(geo);
     if (new_distance < min_distance){
       nearestgeometry = geo;
-      best_hp = get_hp(hpstring);
+      best_hp = HyperParams(hpstring);
       min_distance = new_distance;
     }
   }
@@ -187,62 +161,59 @@ HyperParams get_default(const tinygemm::TinyGemmGeometry & gg, bool enforce_dete
   if (enforce_deterministic == true){
     best_hp.n_work_items_per_c_elm = 1;
   }
-    
+
+      
   return best_hp;
-}
-
-
-
-void HyperParams::add_parameter_in_constructor(unsigned & up, const std::string & sp, const std::map<std::string, unsigned> & params){
-  up = params.at(sp);
-  pval_from_key[sp] = &up;
-
-
 }
   
 
 
 HyperParams::HyperParams(const std::map<std::string, unsigned> & params){
 
-
   mapkeycheck::check_map_keys(params, hpl.keys, "HyperParams constructor, params against keys");
 
-  add_parameter_in_constructor(micro_tile_width, "micro_tile_width", params);
-  
-  //std::cout << "(constructor) " << this << "   " << &micro_tile_width << "  " << pval_from_key["micro_tile_width"] << "  " << *pval_from_key["micro_tile_width"] << std::endl;
-  
-  add_parameter_in_constructor(micro_tile_height, "micro_tile_height", params);
-  add_parameter_in_constructor(macro_tile_width, "macro_tile_width", params);
-  add_parameter_in_constructor(macro_tile_height, "macro_tile_height", params); 
-  add_parameter_in_constructor(unroll, "unroll", params);
-  add_parameter_in_constructor(pad, "pad", params);
-  add_parameter_in_constructor(group_allocation, "group_allocation", params);
-  add_parameter_in_constructor(work_item_load_a_pll_to_unroll, "work_item_load_a_pll_to_unroll", params);
-  add_parameter_in_constructor(work_item_load_b_pll_to_unroll, "work_item_load_b_pll_to_unroll", params);
-  add_parameter_in_constructor(unroll_pragma, "unroll_pragma", params);
-  add_parameter_in_constructor(load_to_lds_interwoven, "load_to_lds_interwoven", params);
-  add_parameter_in_constructor(c_micro_tiles_interwoven, "c_micro_tiles_interwoven", params);
-  add_parameter_in_constructor(n_work_items_per_c_elm, "n_work_items_per_c_elm", params);
-  add_parameter_in_constructor(n_target_active_workgroups, "n_target_active_workgroups", params);
-  add_parameter_in_constructor(unroll_for_offset, "unroll_for_offset", params);
+  micro_tile_width = params.at("micro_tile_width");
+  micro_tile_height = params.at("micro_tile_height");
+  macro_tile_width = params.at("macro_tile_width");
+  macro_tile_height = params.at("macro_tile_height"); 
+  unroll = params.at("unroll");
+  pad = params.at("pad");
+  group_allocation = params.at("group_allocation");
+  work_item_load_a_pll_to_unroll = params.at("work_item_load_a_pll_to_unroll");
+  work_item_load_b_pll_to_unroll = params.at("work_item_load_b_pll_to_unroll");
+  unroll_pragma = params.at("unroll_pragma");
+  load_to_lds_interwoven = params.at("load_to_lds_interwoven");
+  c_micro_tiles_interwoven = params.at("c_micro_tiles_interwoven");
+  n_work_items_per_c_elm = params.at("n_work_items_per_c_elm");
+  n_target_active_workgroups = params.at("n_target_active_workgroups");
+  unroll_for_offset = params.at("unroll_for_offset");
 
 }
 
+
+HyperParams::HyperParams(const std::string & hyperstring):HyperParams(get_params(hyperstring)){}
+  
 std::map<std::string, unsigned> HyperParams::get_map(){
-  std::map<std::string, unsigned> params;
+  return  {
+  {"micro_tile_width", micro_tile_width}, 
+  {"micro_tile_height", micro_tile_height},
+  {"macro_tile_width", macro_tile_width},
+  {"macro_tile_height", macro_tile_height},
+  {"unroll", unroll},
   
-  //std::cout << "\n\n" << std::endl;
+  {"pad", pad},
+  {"group_allocation", group_allocation},
+  {"work_item_load_a_pll_to_unroll", work_item_load_a_pll_to_unroll},
+  {"work_item_load_b_pll_to_unroll", work_item_load_b_pll_to_unroll},
+  {"unroll_pragma", unroll_pragma},
   
-  //std::cout << "(constructor) " << this << "   " << &micro_tile_width << "  " << pval_from_key["micro_tile_width"] << "  " << *pval_from_key["micro_tile_width"] << std::endl;
-    
-  //std::cout << &pad << std::endl;
-  for (auto & x : hpl.keys){
-    params[x] = *(pval_from_key.at(x));
-    //std::cout << "" << x << " --------------- " << pval_from_key.at(x) << "   " << params[x] << std::endl;
-  }
-  
-  //std::abort();
-  return params;
+  {"load_to_lds_interwoven", load_to_lds_interwoven},
+  {"c_micro_tiles_interwoven", c_micro_tiles_interwoven},
+  {"n_work_items_per_c_elm", n_work_items_per_c_elm},
+  {"n_target_active_workgroups", n_target_active_workgroups},
+  {"unroll_for_offset", unroll_for_offset}
+  };
+
 }
 
 
@@ -267,12 +238,14 @@ bool HyperParams::operator == (const HyperParams & hpr){
 }
   
     
-void HyperParams::add_hyperparam(const std::string & hyperstring, std::vector<HyperParams> & one_aways){
-  one_aways.push_back(get_hp(hyperstring));
+void add_hyperparam(const std::string & hyperstring, std::vector<HyperParams> & one_aways){
+  one_aways.push_back(HyperParams(hyperstring));
 }
-    
+
   
 std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeometry & gg){
+  
+  
   
   if (gg.m < 8 || gg.n < 8){
     throw tinygemm_error("Currently, if matrix C has a dimension less that 16, it is not supported. If you are seeing this, please remind to fix it via github ");
@@ -535,7 +508,7 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
      * This is the place to add some edges experience shows can tunnel out of local minima, or
      * lead to some kernels which have found to be good on some problems  */
     
-    auto add_hps = [this, & one_aways](std::string hparamstring){
+    auto add_hps = [& one_aways](std::string hparamstring){
       add_hyperparam(hparamstring, one_aways); //*this, 
     };
     
@@ -613,6 +586,9 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
   std::random_device rd;
   std::default_random_engine default_engine(rd());
   std::shuffle(one_aways.begin(), one_aways.end(), default_engine);
+
+
+
   return one_aways;
 
 
@@ -643,36 +619,9 @@ std::vector<HyperParams> HyperParams::get_two_aways(const tinygemm::TinyGemmGeom
 
 
   
-/* TODO is this function ever used ? */
-std::string HyperParams::get_string() const{
-
-  std::stringstream ss;
-  
-  unsigned i_key;
-  
-  for (i_key = 0; i_key < hpl.shortkeys.size()  - 1; ++i_key){
-    ss << hpl.shortkeys[i_key] << get_val_from_shortkey(hpl.shortkeys[i_key]) << "_";
-  }
-  ss << hpl.shortkeys[i_key] << get_val_from_shortkey(hpl.shortkeys[i_key]);
-  return ss.str();
-}
 
 
-bool HyperParams::can_be_used_on(const tinygemm::TinyGemmGeometry & gg){
-  unsigned m = gg.m;
-  unsigned n = gg.n;
-  bool tC = gg.tC;
-  
-  if (macro_tile_height < tC ? n : m){
-    return false;
-  }
-  
-  if (macro_tile_width < tC ? n : m){
-    return false;
-  }
-  
-  return true;
-}
+
 
 
 
