@@ -22,6 +22,7 @@ namespace hyperparams{
 
 /* take in hyper-parameter string, and some default hyper parameters, and combine them*/
 HyperParams get_hyperparam(const HyperParams & default_hp, std::string hyperstring){
+ 
   auto frags = stringutil::split(hyperstring, "_");
   std::map<std::string, unsigned> stripped;
   std::string key;
@@ -53,41 +54,52 @@ HyperParams get_hyperparam(const HyperParams & default_hp, std::string hyperstri
 
 
 HyperParams get_default_small(bool enforce_deterministic){
+  
   std::map<std::string, unsigned> params;
-  params["micro_tile_width"] = 1;//2;  
-  params["micro_tile_height"] = 1;//2;
-  params["macro_tile_width"] = 8;//16;
-  params["macro_tile_height"] = 8;//16; 
+  
+  params["micro_tile_width"] = 1;
+  params["micro_tile_height"] = 1;
+  params["macro_tile_width"] = 8;
+  params["macro_tile_height"] = 8; 
   params["unroll"] = 16;
+
   params["pad"] = 1;    
   params["group_allocation"] = 1;
   params["work_item_load_a_pll_to_unroll"] = 0;
   params["work_item_load_b_pll_to_unroll"] = 1;
   params["unroll_pragma"] = 1;
+
   params["load_to_lds_interwoven"] = 0;
   params["c_micro_tiles_interwoven"] = 1;
   params["n_work_items_per_c_elm"] = (enforce_deterministic == false) ? 3 : 1;
   params["n_target_active_workgroups"] = 64;
   params["unroll_for_offset"] = 0;
+
   return HyperParams(params);
 }
 
-HyperParams get_default_tiniest(bool enforce_deterministic){  std::map<std::string, unsigned> params;
-  params["micro_tile_width"] = 1;//2;  
-  params["micro_tile_height"] = 1;//2;
-  params["macro_tile_width"] = 1;//16;
-  params["macro_tile_height"] = 1;//16; 
+HyperParams get_default_tiniest(bool enforce_deterministic){  
+  
+  std::map<std::string, unsigned> params;
+
+  params["micro_tile_width"] = 1;
+  params["micro_tile_height"] = 1;
+  params["macro_tile_width"] = 1;
+  params["macro_tile_height"] = 1; 
   params["unroll"] = 16;
+
   params["pad"] = 1;    
   params["group_allocation"] = 1;
   params["work_item_load_a_pll_to_unroll"] = 0;
   params["work_item_load_b_pll_to_unroll"] = 1;
   params["unroll_pragma"] = 1;
+
   params["load_to_lds_interwoven"] = 0;
   params["c_micro_tiles_interwoven"] = 1;
   params["n_work_items_per_c_elm"] = (enforce_deterministic == false) ? 3 : 1;
   params["n_target_active_workgroups"] = 64;
   params["unroll_for_offset"] = 0;
+
   return HyperParams(params);  
 }
 

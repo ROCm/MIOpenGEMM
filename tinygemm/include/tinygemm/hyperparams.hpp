@@ -34,6 +34,7 @@ class HyperParams{
 
 public:
   std::map<std::string, unsigned> params;
+  //TODO : kernel_cache is not valid, needs geomtric parameters too! That is, non-modifyable kernel parameters (tA, etc)
   static std::vector<std::tuple<tinygemm::TinyGemmGeometry, std::string>> kernel_cache;
   
   
