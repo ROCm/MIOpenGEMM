@@ -482,8 +482,8 @@ public:
     
     
     tinygemm::TinyGemmSolutionStatistics tgss(std::numeric_limits<float>::max(), 0, 0);    
-    std::string soln_betac_kernel_string = hp.params.at("n_work_items_per_c_elm") == 1 ?  ""  : betac::get_betac_kernel_string(floattype);
-    std::string soln_betac_kernel_function_name = hp.params.at("n_work_items_per_c_elm") == 1 ? "" : kernelutil::get_kernel_function_name(soln_betac_kernel_string);
+    std::string soln_betac_kernel_string = hp.n_work_items_per_c_elm == 1 ?  ""  : betac::get_betac_kernel_string(floattype);
+    std::string soln_betac_kernel_function_name = hp.n_work_items_per_c_elm == 1 ? "" : kernelutil::get_kernel_function_name(soln_betac_kernel_string);
     std::string soln_main_kernel_function_name = kernelutil::get_kernel_function_name(soln_main_kernel_string);
     
     return { soln_betac_kernel_string, soln_betac_kernel_function_name, soln_main_kernel_string, soln_main_kernel_function_name, hp, gg, floattype, tgss };
@@ -521,7 +521,7 @@ public:
         
     /* while generating, compiling and benchmarking kernels, we will keep track of the fastest found thus far */
     float best_time = std::numeric_limits<float>::max();
-    hyperparams::HyperParams best_hyper_params;
+    hyperparams::HyperParams best_hyper_params = hyperparams::get_default(gg, enforce_deterministic);
     
 
     /* we initialise the `hyper-front' with a single HyperParams, selected based on problem dimensions (TODO : should be based on cache table look-up) */
@@ -554,17 +554,17 @@ public:
           hyper_front_history.push_back(hp);
         
           /* reason 1 : the macro tile is too tall */
-          if (gg.m < hp.params.at("macro_tile_height")){
+          if (gg.m < hp.macro_tile_height){
             mowri << "m < macro_tile_height, not considering this kernel" << Endl;
           }
           
           /* reason 2 : the macro tile is too wide */
-          else if (gg.n < hp.params.at("macro_tile_width")){
+          else if (gg.n < hp.macro_tile_width){
             mowri << "m < macro_tile_width, not considering this kernel" << Endl;
           }
           
           /* reason 3 : the user requests a deterministic kernel, which cannot be guaranteed */
-          else if (enforce_deterministic == true && hp.params.at("n_work_items_per_c_elm") != 1){
+          else if (enforce_deterministic == true && hp.n_work_items_per_c_elm != 1){
             mowri << "not considering kernels which may be non-deterministic" << Endl;
           }
           /* ************************************************************************ */
@@ -625,8 +625,8 @@ public:
                 
                 //set kernel files
                 //TODO : should not be determining whether a kernel does betac or not based on this, find true parameter
-                std::string soln_betac_kernel = hp.params.at("n_work_items_per_c_elm") == 1 ?  ""  : betac::get_betac_kernel_string(floattype);
-                std::string soln_betac_kernel_function_name = hp.params.at("n_work_items_per_c_elm") == 1 ? "" : tk_betac.fname;
+                std::string soln_betac_kernel = hp.n_work_items_per_c_elm == 1 ?  ""  : betac::get_betac_kernel_string(floattype);
+                std::string soln_betac_kernel_function_name = hp.n_work_items_per_c_elm == 1 ? "" : tk_betac.fname;
                 std::string soln_main_kernel_function_name = kernelutil::get_kernel_function_name(tk_main.kernstr);                
                 tinygemm::TinyGemmSolution tgs(soln_betac_kernel, soln_betac_kernel_function_name, tk_main.kernstr, soln_main_kernel_function_name, hp, gg, floattype, tgss);
   
