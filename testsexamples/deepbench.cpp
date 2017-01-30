@@ -151,7 +151,8 @@ int main(){
       std::tie(m, n, k, tA, tB) = problem;
       
       end = std::chrono::high_resolution_clock::now();
-      std::chrono::duration<float> fp_ms = end - start;
+      //std::chrono::duration<float> 
+      fp_ms = end - start;
       elapsed_seconds = fp_ms.count();
       
       std::cout << (prob_i + 1) <<  "/" <<  problems.size() << " \t m:" << m << " \t n:" << n << " \t k:" << k << " \t tA:" << tA << " \t tB:" << m << "  \t  elapsed time : " << elapsed_seconds << " [s]" << std::endl;    

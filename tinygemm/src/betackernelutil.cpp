@@ -45,7 +45,7 @@ void set_betackernel_sizes(char fchar, bool isColMajor, bool tC, unsigned m, uns
   }
   
     
-  auto betac_parms = kernelutil::get_integer_preprocessor_parameters(get_betac_kernel_string(fchar));       
+  auto betac_parms = kernelutil::get_integer_preprocessor_parameters(get_betac_kernel_string(fchar, "blabla"));       
   
   if (betac_parms.count("N_WORK_ITEMS_PER_GROUP") + betac_parms.count("WORK_PER_THREAD") != 2){
     throw tinygemm_error("It is required that both N_WORK_ITEMS_PER_GROUP and WORK_PER_THREAD are defined in the scaling kernel, something looks weird here.");
@@ -76,7 +76,7 @@ void set_betackernel_sizes(char fchar, bool isColMajor, bool tC, unsigned m, uns
 
 
 
-std::string get_betac_kernel_string(char fchar){
+std::string get_betac_kernel_string(char fchar, const std::string & kernelname){
   
   
   std::stringstream ss;
@@ -120,7 +120,7 @@ R"(
 R"(
 
 __attribute__((reqd_work_group_size(N_WORK_ITEMS_PER_GROUP,1,1)))
-__kernel void heeltemal(const unsigned dim_coal, const unsigned dim_uncoal, const unsigned ldc, const unsigned c_offset, __global TFLOAT * c, TFLOAT beta){
+__kernel void )"  << kernelname << R"((const unsigned dim_coal, const unsigned dim_uncoal, const unsigned ldc, const unsigned c_offset, __global TFLOAT * c, TFLOAT beta){
 /* n_work_groups : number of work groups (determined by host from dimensions of the problem)
  * dim_coal : less than or equal to ldc, this is size in the contiguous direction (m for c matrix if col contiguous and not transposed) 
  * dim_uncol : the other dimension of the matrix */

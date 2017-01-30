@@ -8,6 +8,7 @@
 
 #include <tinygemm/tinygemmgeometry.hpp>
 #include <tinygemm/hyperparams.hpp>
+#include <tinygemm/derivedparams.hpp>
 
 namespace tinygemm{
 
@@ -48,6 +49,9 @@ public:
    * just here to describle what the kernel does under the hood  */
   hyperparams::HyperParams hp;
 
+  /* all derived parameters (derived from hyper-parameters) */
+  derivedparams::DerivedParams dp;
+  
   /* the geometry used in the benchmark */
   tinygemm::TinyGemmGeometry geometry;
 
@@ -57,7 +61,7 @@ public:
   TinyGemmSolutionStatistics statistics;
 
   
-  TinyGemmSolution(const std::string & betac_kernel, const std::string & betac_kernel_function_name,  const std::string &  main_kernel, const std::string & main_kernel_function_name, const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & geometry, char floattype, TinyGemmSolutionStatistics tgss);
+  TinyGemmSolution(const std::string & betac_kernel, const std::string & betac_kernel_function_name,  const std::string &  main_kernel, const std::string & main_kernel_function_name, const hyperparams::HyperParams & hp, const derivedparams::DerivedParams & dp, const tinygemm::TinyGemmGeometry & geometry, char floattype, TinyGemmSolutionStatistics tgss);
   
   
   /* A TinyGemmSolution is only valid for a fixed basic geometry (tA, tB, etc) , but can be used for any size m,n,k, 

@@ -1,5 +1,6 @@
 #include <string>
 #include <sstream>
+#include <vector>
 #include <tinygemm/tinygemmerror.hpp>
 #include <tinygemm/kernelsnips.hpp>
 #include <tinygemm/outputwriter.hpp>
@@ -14,6 +15,13 @@ namespace openclutil{
 
 
 
+
+cl_command_queue cl_create_command_queue(cl_context context, cl_device_id device, cl_command_queue_properties properties, const std::string & hash){
+ 	cl_int errcode_ret;
+  cl_command_queue cq = clCreateCommandQueue(context, device, properties, &errcode_ret);
+  confirm_cl_status(errcode_ret, hash, "cl_create_command_queue");
+  return cq;
+}
 
 
 
@@ -366,6 +374,12 @@ cl_command_queue auto_get_command_queue(outputwriting::OutputWriter & mowri, 	cl
   return clCreateCommandQueue(context, device_id_to_use, properties, &locret);
 }
 
+
+
+
+
+
+  
   
 TinyGemmCommandQueueInContext::TinyGemmCommandQueueInContext(outputwriting::OutputWriter & mowri, const std::string & hash_):command_queue(auto_get_command_queue(mowri)), hash(hash_) {}
 

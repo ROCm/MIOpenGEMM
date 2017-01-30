@@ -17,6 +17,7 @@ class HyperParamList{
   
     /* enumerating the hyper parameters */ 
     std::map<std::string, std::string> map_shortkey_to_key;
+    std::map<std::string, std::string> map_key_to_shortkey;
     std::vector<std::string> keys;
     std::vector<std::string> shortkeys;
 
@@ -36,6 +37,16 @@ private:
 
 public:
 
+  void bool_check(const std::string & key, unsigned v);
+  
+  void positive_check(const std::string & key, unsigned v);
+  
+  void mod_test(const std::string & key1, unsigned v1, const std::string & key2, unsigned v2);
+  
+  void checks();
+  
+    
+  
   static std::vector<std::tuple<tinygemm::TinyGemmGeometry, std::string>> kernel_cache;  
   
   /* the hyper parameters */
@@ -76,7 +87,7 @@ public:
   bool operator == (const HyperParams & hpr);
   std::vector<HyperParams> get_one_aways(const tinygemm::TinyGemmGeometry & gg);
   std::vector<HyperParams> get_two_aways(const tinygemm::TinyGemmGeometry & gg);  
-  std::map<std::string, unsigned> get_map();
+  std::map<std::string, unsigned> get_params();
   
   
   std::string get_string() const;

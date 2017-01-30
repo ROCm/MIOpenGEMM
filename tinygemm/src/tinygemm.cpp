@@ -4,6 +4,7 @@
 #include <chrono>
 #include <limits>
 #include <vector> 
+#include <algorithm>
 
 #include <tinygemm/tinygemmerror.hpp>
 #include <tinygemm/tinygemm.hpp>
@@ -11,7 +12,7 @@
 #include <tinygemm/redirection.hpp>
 #include <tinygemm/outputwriter.hpp>
 #include <tinygemm/sizingup.hpp>
-#include <tinygemm/kernelsnips.hpp>
+//#include <tinygemm/kernelsnips.hpp>
 #include <tinygemm/openclutil.hpp>
 #include <tinygemm/betackernelutil.hpp>
 #include <tinygemm/floattostring.hpp>
@@ -21,7 +22,9 @@
 
 namespace tinygemm{
   
-static std::string generickernelname = "atinygemmkernel";
+static const std::string generickernelname = "atinygemmkernel";
+static const std::string betackernelname = "heeltemal";
+
 
 class MultiFloatType{
 
@@ -134,10 +137,7 @@ private:
   MultiFloatType m_alpha;
   MultiFloatType m_beta;
   outputwriting::OutputWriter mowri;
-  
-  /* parameters which will be needed to determine number of work groups and work items */
-  unsigned macro_tile_width, macro_tile_height, n_workitems_per_workgroup, n_work_items_per_c_elm;
- 
+   
   /* parameters related to the main kernel */
   unsigned does_betac_inc;
   size_t main_n_work_groups;
@@ -164,6 +164,8 @@ private:
   
   TinyGemmKernel tk_main;
   TinyGemmKernel tk_betac;
+  
+
   
 
 public:
@@ -224,7 +226,7 @@ public:
   }
   
   void setup_betac_kernel(){
-    tk_betac.update(betac::get_betac_kernel_string(floattype));
+    tk_betac.update(betac::get_betac_kernel_string(floattype, betackernelname));
     betac::set_betackernel_sizes(floattype, gg.isColMajor, gg.tC, gg.m, gg.n, dim_coal, dim_uncoal, betac_global_work_size, betac_local_work_size);
     mowri << "in setup_betac_kernel, betac_global_work_size : " << betac_global_work_size << Endl; 
     set_betac_kernel_arguments();
@@ -264,16 +266,32 @@ public:
   
   
 
-  void setup_main_kernel(const std::string & kernel_string){
+  void setup_main_kernel(const std::string & kernel_string, const hyperparams::HyperParams & hp, const derivedparams::DerivedParams & dp){
     
     ///* check that the parameters in kernel_string look reasonable. This may be redundant now */
     //kernelutil::check_gpu_kernel_preprocessor_parameters(kernel_string, gg.tA, gg.tB, gg.tC, gg.isColMajor, gg.m, gg.n, floattostring::get_float_string(floattype));
         
     /* extract the parameters which are needed to determine the number of work groups and work items to launch, directly from kernel string : */
     /* macro_tile_width, macro_tile_height, n_workitems_per_workgroup, n_work_items_per_c_elm, does_betac_inc */
-    kernelutil::set_sizes_from_kernel_string(macro_tile_width, macro_tile_height, n_workitems_per_workgroup, n_work_items_per_c_elm, does_betac_inc, kernel_string);
+    
+    //kernelutil::set_sizes_from_kernel_string(macro_tile_width, macro_tile_height, n_workitems_per_workgroup, n_work_items_per_c_elm, does_betac_inc, kernel_string);
+    //sizingup::set_workforce(main_n_work_groups, main_local_work_size, main_global_work_size, gg.m, gg.n, n_work_items_per_c_elm, macro_tile_height, macro_tile_width, n_workitems_per_workgroup);
+
+    
+    does_betac_inc = dp.split_on_k == 0;
+    
     /* Here we set the numbers of work groups (main_n_work_groups) and work items (main_global_work_size) for the main kernel */  
-    sizingup::set_workforce(main_n_work_groups, main_local_work_size, main_global_work_size, gg.m, gg.n, n_work_items_per_c_elm, macro_tile_height, macro_tile_width, n_workitems_per_workgroup);
+    sizingup::set_workforce(main_n_work_groups, main_local_work_size, main_global_work_size, gg.m, gg.n, hp.n_work_items_per_c_elm, hp.macro_tile_height, hp.macro_tile_width, dp.n_workitems_per_workgroup);
+    
+    
+    //std::cout << 
+    //"\n" << macro_tile_height << " " << hp.macro_tile_height << 
+    //"\n" << macro_tile_width << " " << hp.macro_tile_width << 
+    //"\n" << n_work_items_per_c_elm << " " << hp.n_work_items_per_c_elm << 
+    //"\n" << n_workitems_per_workgroup << " " << dp.n_workitems_per_workgroup << std::endl;
+
+    //std::abort();
+    
     mowri << "main kernel global work size : " << main_global_work_size <<  " (recommended ~ 4*64*40*64 = 655360)" << Endl; 
     tk_main.update(kernel_string);
     /* set main kernel's arguments */
@@ -309,9 +327,9 @@ public:
   
   
   
-  void setup_tinykernels(const std::string & kernstr){
+  void setup_tinykernels(const std::string & kernstr, const hyperparams::HyperParams & hp, const derivedparams::DerivedParams & dp){
     
-    setup_main_kernel(kernstr);    
+    setup_main_kernel(kernstr, hp, dp);    
     if (tk_betac.is_set() == false && does_betac_inc == false){
       setup_betac_kernel();
     }
@@ -421,11 +439,13 @@ public:
 
 
 
-  tinygemm::kerngen::KernelStringSetStatus set_ks(const hyperparams::HyperParams & hp, std::string & kernel_string){
+  tinygemm::kerngen::KernelStringBundle get_ksb(const hyperparams::HyperParams & hp){ //, std::string & kernel_string){
     
-    tinygemm::kerngen::KernelStringSetStatus set_status = tinygemm::kerngen::set_kernel_string(
+    //tinygemm::kerngen::KernelStringBundle bundle =
+    
+    return  tinygemm::kerngen::get_kernel_string_bundle(
     hp,
-    kernel_string,
+    //kernel_string,
     generickernelname,
     floattype ==  'f' ? 32 : 64,
     gg.tA,
@@ -433,7 +453,9 @@ public:
     gg.tC,
     gg.isColMajor);
     
-    return set_status;
+    //kernel_string = std::move(bundle.kernel_string)
+    
+    //return set_status;
     
   }
 
@@ -449,15 +471,15 @@ public:
       
       mowri << "\nSource kernel " << "(" << i + 1 << "/" << hps.size() << ") "  << Endl;      
             
-      std::string kernel_string;    
-      auto set_status = set_ks(hps[i], kernel_string);
+
+      auto bundle = get_ksb(hps[i]);
       
-      if (set_status.is_good() != true){
-        throw tinygemm_error("the hyper parameters in benchgemm are not consistent, specifically : \n" + set_status.message);
+      if (bundle.set_status.is_good() != true){
+        throw tinygemm_error("the hyper parameters in benchgemm are not consistent, specifically : \n" + bundle.set_status.message);
       }
       
   
-      setup_tinykernels(kernel_string);    
+      setup_tinykernels(bundle.kernel_string, hps[i], bundle.dp);    
       mowri << "(benchgemm) geometry  \t:" << gg.get_string()  << "\nEntering the core gemm loops" << Endl;
       core_gemm_loop(n_runs);
     }
@@ -477,20 +499,20 @@ public:
     
     std::string soln_main_kernel_string;
     
-    auto set_status = set_ks(hp, soln_main_kernel_string);
-    if (set_status.is_good() != true){
-      throw tinygemm_error("the hyper parameters in get_default are not consistent, specifically : \n" + set_status.message);
+    auto bundle = get_ksb(hp);//, soln_main_kernel_string);
+    if (bundle.set_status.is_good() != true){
+      throw tinygemm_error("the hyper parameters in get_default are not consistent, specifically : \n" + bundle.set_status.message);
     }
     
     
     tinygemm::TinyGemmSolutionStatistics tgss(std::numeric_limits<float>::max(), 0, 0);    
-    std::string soln_betac_kernel_string = hp.n_work_items_per_c_elm == 1 ?  ""  : betac::get_betac_kernel_string(floattype);
-    std::string soln_betac_kernel_function_name = hp.n_work_items_per_c_elm == 1 ? "" : kernelutil::get_kernel_function_name(soln_betac_kernel_string);
-    std::string soln_main_kernel_function_name = kernelutil::get_kernel_function_name(soln_main_kernel_string);
+    std::string soln_betac_kernel_string = hp.n_work_items_per_c_elm == 1 ?  ""  : betac::get_betac_kernel_string(floattype, betackernelname);
+    std::string soln_betac_kernel_function_name = hp.n_work_items_per_c_elm == 1 ? "" : betackernelname; //kernelutil::get_kernel_function_name(soln_betac_kernel_string);
+    std::string soln_main_kernel_function_name = bundle.kernel_function_name;
     
     
     
-    return { soln_betac_kernel_string, soln_betac_kernel_function_name, soln_main_kernel_string, soln_main_kernel_function_name, hp, gg, floattype, tgss };
+    return { soln_betac_kernel_string, soln_betac_kernel_function_name, bundle.kernel_string, soln_main_kernel_function_name, hp, bundle.dp, gg, floattype, tgss };
 
 
   }
@@ -596,9 +618,10 @@ public:
             mowri << "\n" << hp.get_string() << Endl;
             
             
-            auto set_status = set_ks(hp, tk_main.kernstr);
+            auto bundle = get_ksb(hp);
+            tk_main.kernstr = std::move(bundle.kernel_string);
             
-            if (set_status.is_good() == true){
+            if (bundle.set_status.is_good() == true){
               
                             
               /* the kernel was succesfully generated, we now compile and benchmark it */
@@ -606,7 +629,7 @@ public:
               ++global_counter;
               mowri << "global gen-com-bench : " << global_counter  <<  "." << Endl;
               
-              setup_tinykernels(tk_main.kernstr);    
+              setup_tinykernels(tk_main.kernstr, hp, bundle.dp);    
               mowri << "(find) geometry  \t:" << gg.get_string()  << "\nEntering the core gemm loops" << Endl;
               core_gemm_loop(n_runs_per_kernel);
   
@@ -645,15 +668,13 @@ public:
                 
                 //set kernel files
                 //TODO : should not be determining whether a kernel does betac or not based on this, find true parameter
-                std::string soln_betac_kernel = hp.n_work_items_per_c_elm == 1 ?  ""  : betac::get_betac_kernel_string(floattype);
+                std::string soln_betac_kernel = hp.n_work_items_per_c_elm == 1 ?  ""  : betac::get_betac_kernel_string(floattype, betackernelname);
                 std::string soln_betac_kernel_function_name = hp.n_work_items_per_c_elm == 1 ? "" : tk_betac.fname;
-                std::string soln_main_kernel_function_name = kernelutil::get_kernel_function_name(tk_main.kernstr);                
+                std::string soln_main_kernel_function_name = bundle.kernel_function_name; //kernelutil::get_kernel_function_name(tk_main.kernstr);                
                 
-                //tinygemm::TinyGemmSolution tgs(soln_betac_kernel, soln_betac_kernel_function_name, tk_main.kernstr, soln_main_kernel_function_name, best_hp, gg, floattype, tgss);
-                //path_of_best_solns.push_back(tgs); 
-
-
-                path_of_best_solns.emplace_back (soln_betac_kernel, soln_betac_kernel_function_name, tk_main.kernstr, soln_main_kernel_function_name, best_hp, gg, floattype, tgss); 
+                
+                
+                path_of_best_solns.emplace_back (soln_betac_kernel, soln_betac_kernel_function_name, tk_main.kernstr, soln_main_kernel_function_name, hp, bundle.dp, gg, floattype, tgss); 
 
                 
               }
@@ -662,7 +683,7 @@ public:
           
             else{
               mowri << "\nSkipping this kernel, hyper-parameters incompatible. " << Endl;
-              mowri << "Specifically, the message from the kernel string setting function was --- " << set_status.message << "\n";
+              mowri << "Specifically, the message from the kernel string setting function was --- " << bundle.set_status.message << "\n";
             }
           }
         }

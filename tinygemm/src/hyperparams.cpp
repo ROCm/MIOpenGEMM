@@ -44,9 +44,11 @@ HyperParamList::HyperParamList() {
     
   };
 
+  
   for(auto const & v: map_shortkey_to_key){
     keys.push_back(v.second);
     shortkeys.push_back(v.first);
+    map_key_to_shortkey[v.second] = v.first;
   }
 }
 
@@ -95,7 +97,7 @@ std::string HyperParamList::get_key_from_shortkey(const std::string & shortkey){
 
 
 /* take in hyper-parameter string and a map */
-std::map<std::string, unsigned> get_params(const std::string & hyperstring){
+std::map<std::string, unsigned> get_params_from_string(const std::string & hyperstring){
  
   auto frags = stringutil::split(hyperstring, "_");
 
@@ -113,6 +115,61 @@ std::map<std::string, unsigned> get_params(const std::string & hyperstring){
 }
 
 
+
+void HyperParams::bool_check(const std::string & key, unsigned v){
+  if (v != 0 && v != 1){
+    throw tinygemm::tinygemm_error("`"+ key + "' (" + hpl.map_key_to_shortkey.at(key) + ") should be 0/1, not " + std::to_string(v) + ".");
+  }
+}
+
+void HyperParams::positive_check(const std::string & key, unsigned v){
+  if (v == 0){
+    throw tinygemm::tinygemm_error("`" + key + "' (" + hpl.map_key_to_shortkey.at(key) + ") should be strictly positive.");
+  }
+}
+
+void HyperParams::mod_test(const std::string & key1, unsigned v1, const std::string & key2, unsigned v2){
+  positive_check(key1, v1);
+  positive_check(key2, v2);
+  if ((v1 % v2) != 0){
+    throw tinygemm::tinygemm_error(
+    key1 + " % " + key2 +  
+    " (" + hpl.map_key_to_shortkey.at(key1) + " % " + hpl.map_key_to_shortkey.at(key2) + ") " +
+    " should be 0, not " + std::to_string(v1 % v2));
+  }
+}
+
+
+
+void HyperParams::checks(){
+
+  bool_check("work_item_load_a_pll_to_unroll", work_item_load_a_pll_to_unroll); 
+  bool_check("work_item_load_b_pll_to_unroll", work_item_load_b_pll_to_unroll);
+  bool_check("unroll_pragma", unroll_pragma);
+  bool_check("load_to_lds_interwoven", load_to_lds_interwoven);
+  bool_check("c_micro_tiles_interwoven", c_micro_tiles_interwoven);
+  bool_check("unroll_for_offset", unroll_for_offset);
+  
+  positive_check("micro_tile_width", micro_tile_width);
+  positive_check("micro_tile_height", micro_tile_height);
+  positive_check("macro_tile_width", macro_tile_width);
+  positive_check("macro_tile_height", macro_tile_height);
+  positive_check("unroll", macro_tile_height);
+  positive_check("n_target_active_workgroups", n_target_active_workgroups);
+  positive_check("n_work_items_per_c_elm", n_work_items_per_c_elm);
+
+  mod_test("macro_tile_height", macro_tile_height, "micro_tile_height", micro_tile_height);
+  mod_test("macro_tile_width", macro_tile_width, "micro_tile_width", micro_tile_width);
+  
+  
+  if (group_allocation != 1 && group_allocation != 2 && group_allocation != 3){
+    throw tinygemm::tinygemm_error("Invalid group_allocation (GA) value, it should be in [1,2,3], not " + std::to_string(group_allocation) + "\n");
+  }
+
+  
+}
+    
+    
 
 HyperParams get_default_small(bool enforce_deterministic){
   
@@ -191,10 +248,11 @@ HyperParams::HyperParams(const std::map<std::string, unsigned> & params){
 }
 
 
-HyperParams::HyperParams(const std::string & hyperstring):HyperParams(get_params(hyperstring)){}
+HyperParams::HyperParams(const std::string & hyperstring):HyperParams(get_params_from_string(hyperstring)){}
   
-std::map<std::string, unsigned> HyperParams::get_map(){
-  return  {
+std::map<std::string, unsigned> HyperParams::get_params(){
+  std::map<std::string, unsigned> params = 
+  {
   {"micro_tile_width", micro_tile_width}, 
   {"micro_tile_height", micro_tile_height},
   {"macro_tile_width", macro_tile_width},
@@ -213,6 +271,10 @@ std::map<std::string, unsigned> HyperParams::get_map(){
   {"n_target_active_workgroups", n_target_active_workgroups},
   {"unroll_for_offset", unroll_for_offset}
   };
+  
+  mapkeycheck::check_map_keys(params, hpl.keys, "HyperParams::get_params, params against keys");
+  
+  return params;
 
 }
 
@@ -333,7 +395,7 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
     }
     
     for (auto k_split : k_splits_to_consider){
-      HyperParams hp(get_map());
+      HyperParams hp(*this);
       hp.micro_tile_height = micro_h;
       hp.micro_tile_width = micro_w;
       hp.macro_tile_height = micro_h*n_h0;
@@ -359,7 +421,7 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
     int old_k_split = static_cast<int>(n_work_items_per_c_elm);
     int new_k_split =  old_k_split + dx;
     if (new_k_split > 0 &&  (new_k_split / old_k_split <= 2)){
-      HyperParams hp(get_map());
+      HyperParams hp(*this);
       hp.n_work_items_per_c_elm = new_k_split;
       /* Observations suggest that k-split > 1 does not work very well with ufo. */
       if (new_k_split > 1){
@@ -376,7 +438,7 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
   /* The standard 8x8 and 16x16 tiling schemes. *********************************/
   std::vector<unsigned> wg_hw_s = {8, 16};
   for (auto & wg_hw : wg_hw_s){
-    HyperParams hp(get_map());
+    HyperParams hp(*this);
     hp.macro_tile_height = wg_hw*hp.micro_tile_height;
     hp.macro_tile_width = wg_hw*hp.micro_tile_width;          
     one_aways.push_back(hp);
@@ -390,7 +452,7 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
     int old_unroll = unroll;
     int new_unroll = old_unroll + d_unroll;
     if (new_unroll > 0 && new_unroll <= 60){
-      HyperParams hp(get_map());
+      HyperParams hp(*this);
       hp.unroll = new_unroll;
       /* (weak) observations suggest that unroll > 8 does not work well with ufo. */
       if (new_unroll > 8){
@@ -403,7 +465,7 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
   
   
   if (n_work_items_per_c_elm >= 4){ //if n_work_items_per_c_elm is 4,5,6,7,8,9,10 ... consider making it 2,2,2,2,4,4,4,4 ... with an "increase" in unroll_map
-    HyperParams hp_2(get_map());
+    HyperParams hp_2(*this);
     hp_2.unroll = 16*(hp_2.unroll/16 + 1); //= unroll_map.at(unroll).back();
     hp_2.n_work_items_per_c_elm = 2*(n_work_items_per_c_elm/4);
     //hp_2.unroll_for_offset = 0; /* this is a mere whim */
@@ -416,7 +478,7 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
    * */
   std::vector<unsigned> pads = {1}; //2
   for (auto & pad_ : pads){
-    HyperParams hp(get_map());
+    HyperParams hp(*this);
     hp.pad = pad_;
     one_aways.push_back(hp);
   }
@@ -428,7 +490,7 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
    * */
   std::vector<unsigned> group_allocations = {1,2,3};
   for (auto & group_allocation_ : group_allocations){
-    HyperParams hp(get_map());
+    HyperParams hp(*this);
     hp.group_allocation = group_allocation_;
     one_aways.push_back(hp);
   }
@@ -438,7 +500,7 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
   */
   std::vector<unsigned> work_item_load_a_pll_to_unrolls = {0,1};
   for (auto & work_item_load_a_pll_to_unroll_ : work_item_load_a_pll_to_unrolls){
-    HyperParams hp(get_map());
+    HyperParams hp(*this);
     hp.work_item_load_a_pll_to_unroll = work_item_load_a_pll_to_unroll_;
     one_aways.push_back(hp);
   }
@@ -447,7 +509,7 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
   */
   std::vector<unsigned> work_item_load_b_pll_to_unrolls = {0,1};    
   for (auto & work_item_load_b_pll_to_unroll_ : work_item_load_b_pll_to_unrolls){
-    HyperParams hp(get_map());  
+    HyperParams hp(*this);  
     hp.work_item_load_b_pll_to_unroll = work_item_load_b_pll_to_unroll_;
     one_aways.push_back(hp);
   }
@@ -459,7 +521,7 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
   */
   std::vector<unsigned> unroll_pragmas = {0,1};
   for (auto & unroll_pragma_ : unroll_pragmas){
-    HyperParams hp(get_map());
+    HyperParams hp(*this);
     hp.unroll_pragma = unroll_pragma_;
     one_aways.push_back(hp);
   }
@@ -470,7 +532,7 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
    * */    
   std::vector<unsigned> load_to_lds_interwovens = {0,1};
   for (auto & load_to_lds_interwoven_ : load_to_lds_interwovens){
-    HyperParams hp(get_map());
+    HyperParams hp(*this);
     hp.load_to_lds_interwoven = load_to_lds_interwoven_;
     one_aways.push_back(hp);
   }
@@ -481,7 +543,7 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
    * */
   std::vector<unsigned> c_micro_tiles_interwovens = {0,1};
   for (auto & c_micro_tiles_interwoven_ : c_micro_tiles_interwovens){
-    HyperParams hp(get_map());
+    HyperParams hp(*this);
     hp.c_micro_tiles_interwoven = c_micro_tiles_interwoven_;
     one_aways.push_back(hp);
   }
@@ -494,7 +556,7 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
    * */
   std::vector<unsigned> unroll_for_offsets = {0,1};
   for (auto & unroll_for_offset_ : unroll_for_offsets){
-    HyperParams hp2(get_map());
+    HyperParams hp2(*this);
     hp2.unroll_for_offset = unroll_for_offset_;
     hp2.unroll_pragma = true;
     one_aways.push_back(hp2);

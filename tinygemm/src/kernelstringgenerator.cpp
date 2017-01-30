@@ -88,6 +88,9 @@ class KernelString{
 
   
   {
+    
+    hp.checks();
+    
     dp.split_on_k = hp.n_work_items_per_c_elm == 1 ? 0 : 1;
     dp.does_alpha_c_inc = dp.split_on_k == 1 ? 0 : 1; 
     dp.strided_i_vertical = hp.c_micro_tiles_interwoven == 0 ? "i" : "i*N_MICRO_TILES_VERTICALLY";
@@ -108,7 +111,6 @@ class KernelString{
     dp.alpha_scaled = hp.c_micro_tiles_interwoven == 0 ? "alpha*rC[row][col]" : "alpha*rC[row/N_MICRO_TILES_VERTICALLY][col/N_MICRO_TILES_HORIZONTALLY]";
     dp.t_float = float_size == 32 ? "float" : "double";
     
-    test_parameters_prestringbuild();
   }
 
 
@@ -192,37 +194,6 @@ class KernelString{
   }
   
   
-  
-  /* TODO : streamline this, so that all parameters which should be 0 or 1 are processed in a for loop. */
-  /* TODO : gather all errors and put them here */
-  void test_parameters_prestringbuild(){
-    
-    std::stringstream errstream;
-    if (hp.load_to_lds_interwoven != 0 && hp.load_to_lds_interwoven != 1){
-      errstream << "load_to_lds_interwoven is neither 0 nor 1 sdfaeff\n";
-    }
-    
-    if (dp.t_float != "float" && dp.t_float != "double"){
-      errstream << "in get_inttype_for_atomics in make_kernel, and don't recognise the dp.t_float, " <<  dp.t_float << "\n";
-    }
-    
-    if (hp.group_allocation != 1 && hp.group_allocation != 2 && hp.group_allocation != 3){
-      errstream << "Invalid group_allocation value, it should be in [1,2,3], not " << hp.group_allocation << "\n";
-    }
-
-    if (hp.work_item_load_a_pll_to_unroll != 0 && hp.work_item_load_a_pll_to_unroll != 1){
-      errstream << "this is strange, not sure what to do with `work_item_load_a_pll_to_unroll = " << hp.work_item_load_a_pll_to_unroll << " . It 'should be 0 (for false) or 1 (for true).";
-    }
-
-    if (hp.work_item_load_b_pll_to_unroll != 0 && hp.work_item_load_b_pll_to_unroll != 1){
-      errstream << "this is strange, not sure what to do with `work_item_load_b_pll_to_unroll = " << hp.work_item_load_b_pll_to_unroll << " . It 'should be 0 (for false) or 1 (for true).";
-    }    
-    
-    auto errstring = errstream.str();
-    if (errstring.compare("") != 0){
-      throw std::runtime_error(errstring);
-    }
-  }
   
     
   void append_group_allocation_string(std::stringstream & ss){
@@ -817,11 +788,11 @@ const unsigned group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
   }
   
   void append_kernel_name(std::stringstream & ss){
-    ss << "TODO";
+    ss << kernelname;
   }
 
   
-  KernelStringSetStatus set_string(std::string & kernel_string){
+  KernelStringBundle get_kernel_string_bundle(){
     
     
     
@@ -830,7 +801,7 @@ const unsigned group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
 
     //TODO: check that all tile dimensions are nonzero and multiples of each other in prestring build check.
     if (dp.macro_tile_area % dp.micro_tile_area != 0){
-      return KernelStringSetStatus("micro tile is not a multiple of macro tile");
+      return {"micro tile is not a multiple of macro tile", "this is not a kernel string", std::move(dp), "this is not a kernel function name"};
     }
     
 
@@ -858,7 +829,7 @@ const unsigned group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
     
     std::string set_status_stream_string = set_status_stream.str();
     if (set_status_stream_string != ""){
-      return KernelStringSetStatus(set_status_stream_string);
+      return {std::move(set_status_stream_string), "this is not a kernel string", std::move(dp), "this is not a kernel function name"};
     }
 
     dp.n_elements_of_a_to_load_per_workitem = dp.n_elements_in_a_unroll / dp.n_workitems_per_workgroup;
@@ -881,7 +852,7 @@ const unsigned group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
     }
     
     if (set_dimensions_status != ""){
-      return KernelStringSetStatus(set_dimensions_status);
+      return {std::move(set_dimensions_status), "this is not a kernel string", std::move(dp), "this is not a kernel function name"};
     }
 
      
@@ -1038,7 +1009,7 @@ R"(
   append_super_column_width_defn(ss);
   
   ss << "\n\n\n__attribute__((reqd_work_group_size(" << dp.n_workitems_per_workgroup << ",1, 1)))\n";
-  ss << "__kernel void gpu_";
+  ss << "__kernel void ";
   append_kernel_name(ss);
   
   ss << 
@@ -1147,9 +1118,8 @@ __local const TFLOAT * lB;
   append_final_write_all(ss);
   ss << "\n}\n";
   
-  kernel_string = std::move(ss.str());
   
-  return KernelStringSetStatus("");
+  return { "", std::move(ss.str()), std::move(dp), kernelname };
 
 }
   
@@ -1193,13 +1163,11 @@ void indentify(std::string & source){
 }
 
 
-KernelStringSetStatus set_kernel_string(
+KernelStringBundle get_kernel_string_bundle(
 
   /* hyper parameters */
   const hyperparams::HyperParams & hp,
-  
-  std::string & kernel_string,
-  
+    
   std::string kernelname, // = "",
   
   /* geometry parameters */
@@ -1227,11 +1195,11 @@ KernelStringSetStatus set_kernel_string(
   
   );
   
-  KernelStringSetStatus kernel_string_status = kstring.set_string(kernel_string);
-  if (kernel_string_status.is_good()){
-    indentify(kernel_string); /* make it prettier */
+  KernelStringBundle kernel_string_bundle = kstring.get_kernel_string_bundle();
+  if (kernel_string_bundle.set_status.is_good()){
+    indentify(kernel_string_bundle.kernel_string); /* make it prettier */
   }
-  return kernel_string_status;
+  return kernel_string_bundle;
 }
 
 

@@ -8,7 +8,7 @@ struct ExampleGeometry{
   bool isColMajor, tA, tB, tC;
   unsigned m, n;
   std::string a, b; 
-  ExampleGeometry(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned n, std::string a, std::string b):isColMajor(isColMajor), tA(tA), tB(tB), tC(tC), m(m), n(n), a(a), b(b) {}
+  ExampleGeometry(bool isColMajor_, bool tA_, bool tB_, bool tC_, unsigned m_, unsigned n_, std::string a_, std::string b_):isColMajor(isColMajor_), tA(tA_), tB(tB_), tC(tC_), m(m_), n(n_), a(a_), b(b_) {}
   ExampleGeometry(const ExampleGeometry & eg) = default;
   
 };

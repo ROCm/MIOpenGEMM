@@ -39,8 +39,8 @@ void basicexample(){
   /* enforce that the kernel is deterministic, or not. Note that 
    * for small problems, non-deterministic kernels are significantly (2x) faster */
   bool enforce_deterministic = false;
-  unsigned n_postfind_runs = 5;//4;
-  bool do_cpu_test = false;  
+  unsigned n_postfind_runs = 5; //4;
+  bool do_cpu_test = true;  
   basicfind<TFloat>(isColMajor, tA, tB, tC, m, n, k, lda, ldb, ldc, a_offset, b_offset, c_offset, alpha, beta, allotted_time, verbose, logfile, enforce_deterministic, n_postfind_runs, do_cpu_test);
 }
 

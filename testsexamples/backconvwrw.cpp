@@ -66,7 +66,7 @@ std::make_tuple(20800, 128, 49, 49, 49, 20800, true, false),
   bool tC = false;
   double alpha = 1.43235342345;
   double beta = 0.45348379373;
-  float allotted_time = 120.; 
+  float allotted_time = 2.; 
   bool verbose = false;
   bool enforce_deterministic = false;
   
@@ -85,15 +85,17 @@ std::make_tuple(20800, 128, 49, 49, 49, 20800, true, false),
     std::tie(m, n, k, lda, ldb, ldc, tA, tB) = problem;
     
     end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<float> fp_ms = end - start;
+    fp_ms = end - start;
     elapsed_seconds = fp_ms.count();
     
     std::cout << (prob_i + 1) <<  "/" <<  problems.size() << " \t m:" << m << " \t n:" << n << " \t k:" << k << " \t tA:" << tA << " \t tB:" << m << "  \t  elapsed time : " << elapsed_seconds << " [s]" << std::endl;    
     
+    //#define DIR_FOR_WRITING /home/idiap/tinygemmout;
     std::stringstream ss_logfile;
-#ifdef DIR_FOR_WRITING
+    #ifdef DIR_FOR_WRITING
     ss_logfile << DIR_FOR_WRITING << "/backconvwrw/" << "at" << int(allotted_time) << "_m" << m  << "_n" << n  << "_k" << k  << "_tA" << tA  << "_tB" << tB << ".txt";   
-#endif
+    #endif
+
     unsigned a_offset = 0;
     unsigned b_offset = 0;
     unsigned c_offset = 0;    
@@ -101,6 +103,9 @@ std::make_tuple(20800, 128, 49, 49, 49, 20800, true, false),
     
     bool do_cpu_test = false;
     
+    
+    
+     
     basicfind<float>(isColMajor, tA, tB, tC, m, n, k, lda, ldb, ldc, a_offset, b_offset, c_offset, alpha, beta, allotted_time, verbose, ss_logfile.str(), enforce_deterministic, n_postfind_runs, do_cpu_test);    
   }
   

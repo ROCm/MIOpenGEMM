@@ -14,6 +14,7 @@ namespace openclutil{
 /* hash can be any string to help locate the problem (exception) should one arise */
 void confirm_cl_status(cl_int ret, const std::string & hash = "", const std::string & function = "unknown");
 
+
 void set_platform_etc(cl_platform_id & platform, cl_uint & num_platforms, cl_context & context, cl_device_id & device_id_to_use, outputwriting::OutputWriter & mowri);
 
 void set_program_and_kernel(const cl_command_queue & command_queue, cl_program & program, cl_kernel & kernel, std::string & kernel_function_name, const std::string & kernel_string);  
@@ -21,6 +22,8 @@ void set_program_and_kernel(const cl_command_queue & command_queue, cl_program &
 void cl_release_kernel(cl_kernel kernel, const std::string & hash);
 
 void cl_release_context(cl_context context, const std::string & hash);  
+
+cl_command_queue cl_create_command_queue(cl_context context, cl_device_id device, cl_command_queue_properties properties, const std::string & hash);
 
 void cl_release_command_queue(cl_command_queue command_queue, const std::string & hash);
     
@@ -64,6 +67,9 @@ void cl_enqueue_write_buffer(cl_command_queue command_queue, cl_mem buffer, cl_b
 
 void cl_enqueue_read_buffer(cl_command_queue command_queue,cl_mem buffer,cl_bool blocking_read,size_t offset,size_t cb,void *ptr,cl_uint num_events_in_wait_list,
 const cl_event *event_wait_list,cl_event *event, const std::string & hash);
+
+
+void cl_build_program(cl_program program,cl_uint num_devices,const cl_device_id *device_list,const char *options,void (*pfn_notify)(cl_program, void *user_data),void *user_data, const std::string & hash);
 
 class SafeClMem{
   public:

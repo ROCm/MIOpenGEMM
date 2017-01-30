@@ -83,13 +83,6 @@ public:
     opencl_memory_initialise();
   }
 
-  //void benchgemm_cpu(std::vector<std::string> cpu_algs, TFloat * c_on_cpu){
-    //if (false){
-      //slowcpugemm::gemms_cpu<TFloat>(gg, a, b, c_on_cpu, alpha, beta, cpu_algs, mowri);  
-    //}
-  //}
-
-
   size_t get_c_memsize(){
     auto c_memsize = sizingup::get_n_elements_padded(gg.m, gg.n, gg.ldc, gg.isColMajor, gg.tC, gg.c_offset)*sizeof(TFloat);
     return c_memsize;
@@ -119,12 +112,14 @@ public:
     
   }
 
-  /* dev code's placenta to the outside world */  
+    
   void benchgemm(const std::vector<hyperparams::HyperParams> & hps, size_t number_of_runs){
+    /* dev code's connection to tinygemm */
     tinygemm::benchgemm(tgcq.command_queue, hps, number_of_runs, floattostring::get_float_char<TFloat>(), gg, alpha, beta, a_gpu_safemem.clmem, b_gpu_safemem.clmem, c_gpu_safemem.clmem, true, mowri.filename, false);
   }
   
   tinygemm::TinyGemmSolution find(float allotted_time, bool enforce_deterministic){
+    /* dev code's connection to tinygemm */
     tinygemm::TinyGemmSolution tgs = tinygemm::find(
       allotted_time, tgcq.command_queue, a_gpu_safemem.clmem, b_gpu_safemem.clmem, c_gpu_safemem.clmem, enforce_deterministic, floattostring::get_float_char<TFloat>(), gg, alpha, beta, 
       true, // yes, write to terminal (may be captured further upstream)
@@ -133,41 +128,21 @@ public:
    return tgs;
   }
   
-
-
-
-
-
   void accuracy_test(const hyperparams::HyperParams & hp, const TFloat * c_true_for_test){
-    mowri << "in accuracy_test of devtinygemm" << Endl;
-    mowri << "writing the initial c to c-gpu" << Endl;
     clEnqueueWriteBuffer(tgcq.command_queue, c_gpu_safemem.clmem, CL_TRUE, 0, get_c_memsize(), c, 0, NULL, NULL);
-    mowri << "running benchgemm, with c_is_const = false " << Endl;
     benchgemm({ hp }, 1);
-    mowri << "reading c-gpu to c_copy" << Endl;
     cl_event event_read_c_back;
     openclutil::cl_enqueue_read_buffer(tgcq.command_queue, c_gpu_safemem.clmem, CL_TRUE, 0, get_c_memsize(), c_copy.data(), 0, NULL, &event_read_c_back, "enqueue read to c, in base_basegemm_with_accuracy_test");
     
     if (c_true_for_test == nullptr){
-      mowri << "obtaining c_true_for_test (as passed in was a nullptr) with a cpu gemm" << Endl;
       c_for_cpu_compute.resize(get_c_memsize()/sizeof(TFloat));
       std::memcpy(c_for_cpu_compute.data(), c, get_c_memsize());
       slowcpugemm::gemms_cpu<TFloat>(gg, a, b, c_for_cpu_compute.data(), alpha, beta, {"3fors"}, mowri);
       c_true_for_test = c_for_cpu_compute.data();
     }
     
-    mowri << "waiting for read back to complete" << Endl;
     openclutil::cl_wait_for_events(1, &event_read_c_back, "waiting un accuracy test, dev tiny gemm");
-
-
-      
-    
-    mowri << "running accuract test : c_copy vs c_true_for_test" << Endl;
     accuracytests::elementwise_compare(c, beta, c_true_for_test, c_copy.data(), c_copy.size(), mowri);
-    
-    
-    
-    //accuracytests::accuracy_test(gg.isColMajor, gg.tC, gg.m, gg.n, gg.ldc, c_true_for_test, c_copy.data(), gg.c_offset, mowri, 1e-6);
   }
 };
 
@@ -179,12 +154,12 @@ unsigned n_runs, const tinygemm::TinyGemmGeometry & gg, const double alpha, cons
   
   Gemini <TFloat> gem(gg, a, b, c, verbose, alpha, beta, logfile);
   gem.benchgemm(hps, n_runs);
-
 }
-
 template void benchgemm(const std::vector<hyperparams::HyperParams> & hps, unsigned n_runs, const tinygemm::TinyGemmGeometry & gg,const double alpha, const double beta, const float * a, const float * b, const float * c, bool verbose, std::string logfile);
 
 template void benchgemm(const std::vector<hyperparams::HyperParams> & hps, unsigned n_runs, const tinygemm::TinyGemmGeometry & gg,const double alpha, const double beta, const double * a, const double * b, const double * c, bool verbose, std::string logfile);
+
+
 
 template <typename TFloat>
 void accuracy_test(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg, const double alpha, const double beta, const TFloat * a, const TFloat * b,
@@ -192,12 +167,24 @@ const TFloat * c, const TFloat * c_true_for_test, bool verbose, std::string logf
   
   Gemini <TFloat> gem(gg, a, b, c, verbose, alpha, beta, logfile);
   gem.accuracy_test(hp, c_true_for_test);
-
 }
-
 template void accuracy_test(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg, const double alpha, const double beta, const float * a, const float * b, const float * c, const float * c_true_for_test, bool verbose, std::string logfile);
 
 template void accuracy_test(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg, const double alpha, const double beta, const double * a, const double * b, const double * c, const double * c_true_for_test, bool verbose, std::string logfile);
+
+
+
+
+template <typename TFloat>
+tinygemm::TinyGemmSolution find(float allotted_time, const TFloat * a, const TFloat * b, const TFloat * c, bool enforce_deterministic, const tinygemm::TinyGemmGeometry & gg, const double alpha, const double beta, bool verbose, std::string logfile){
+  
+  Gemini <TFloat> gem(gg, a, b, c, verbose, alpha, beta, logfile);
+  return gem.find(allotted_time, enforce_deterministic);
+}
+template tinygemm::TinyGemmSolution find(float allotted_time, const double * a, const double * b, const double * c, bool enforce_deterministic, const tinygemm::TinyGemmGeometry & gg, const double alpha, const double beta, bool verbose, std::string logfile);
+
+template tinygemm::TinyGemmSolution find(float allotted_time, const float * a, const float * b, const float * c, bool enforce_deterministic, const tinygemm::TinyGemmGeometry & gg, const double alpha, const double beta, bool verbose, std::string logfile);
+
 
 
 
