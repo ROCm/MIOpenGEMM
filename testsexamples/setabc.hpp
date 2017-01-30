@@ -5,8 +5,7 @@ namespace setabc{
 
 template <typename TFloat>     
 void set_abc(std::vector<TFloat> & v_a, std::vector<TFloat> & v_b, std::vector<TFloat> & v_c, const tinygemm::TinyGemmGeometry & gg){
-  
-  
+    
   size_t n_a = gg.lda * (gg.tA == gg.isColMajor ? gg.m : gg.k) + gg.a_offset;
   size_t n_b = gg.ldb * (gg.tB == gg.isColMajor ? gg.k : gg.n) + gg.b_offset;
   size_t n_c = gg.ldc * (gg.tC == gg.isColMajor ? gg.m : gg.n) + gg.c_offset; 

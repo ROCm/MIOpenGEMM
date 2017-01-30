@@ -117,14 +117,14 @@ namespace kernelutil{
   }
 
 
- void set_sizes_from_kernel_string(unsigned & macro_tile_width, unsigned & macro_tile_height, unsigned & n_workitems_per_workgroup, unsigned & n_work_items_per_c_elm, unsigned & does_beta_c_inc, const std::string & kernel_string){
-    auto ipp = kernelutil::get_integer_preprocessor_parameters(kernel_string);
-    macro_tile_width = ipp["MACRO_TILE_WIDTH"];
-    macro_tile_height = ipp["MACRO_TILE_HEIGHT"];
-    n_workitems_per_workgroup = ipp["N_WORK_ITEMS_PER_WORKGROUP"]; 
-    n_work_items_per_c_elm = ipp["N_WORK_ITEMS_PER_C_ELM"];
-    does_beta_c_inc = ipp["DOES_ALPHA_C_INC"]; //TODO : `ALPHA' in kernel headers should be BETA. 
-  }
+ //void set_sizes_from_kernel_string(unsigned & macro_tile_width, unsigned & macro_tile_height, unsigned & n_workitems_per_workgroup, unsigned & n_work_items_per_c_elm, unsigned & does_beta_c_inc, const std::string & kernel_string){
+    //auto ipp = kernelutil::get_integer_preprocessor_parameters(kernel_string);
+    //macro_tile_width = ipp["MACRO_TILE_WIDTH"];
+    //macro_tile_height = ipp["MACRO_TILE_HEIGHT"];
+    //n_workitems_per_workgroup = ipp["N_WORK_ITEMS_PER_WORKGROUP"]; 
+    //n_work_items_per_c_elm = ipp["N_WORK_ITEMS_PER_C_ELM"];
+    //does_beta_c_inc = ipp["DOES_ALPHA_C_INC"]; //TODO : `ALPHA' in kernel headers should be BETA. 
+  //}
 
 
 }} //namespace

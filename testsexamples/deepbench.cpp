@@ -122,10 +122,9 @@ int main(){
   std::vector<std::tuple<bool, unsigned>> run_settings = {
     std::make_tuple(false,1), 
     std::make_tuple(false,0), 
-  //  std::make_tuple(true,0) 
   }; 
   
-  /* We're just tracking the overall run time with these TODO */
+  /* We're just tracking the overall run time with these */
   auto start = std::chrono::high_resolution_clock::now();
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<float> fp_ms = end - start;
@@ -144,14 +143,12 @@ int main(){
     
     
     for (unsigned prob_i = 0; prob_i < problems.size(); ++prob_i){
-      //for (unsigned prob_i = 5; prob_i < 7; ++prob_i){
       auto problem = problems[prob_i];
       int m, n, k;
       bool tA, tB;
       std::tie(m, n, k, tA, tB) = problem;
       
       end = std::chrono::high_resolution_clock::now();
-      //std::chrono::duration<float> 
       fp_ms = end - start;
       elapsed_seconds = fp_ms.count();
       

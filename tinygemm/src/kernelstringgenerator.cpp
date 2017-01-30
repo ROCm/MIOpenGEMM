@@ -92,7 +92,7 @@ class KernelString{
     hp.checks();
     
     dp.split_on_k = hp.n_work_items_per_c_elm == 1 ? 0 : 1;
-    dp.does_alpha_c_inc = dp.split_on_k == 1 ? 0 : 1; 
+    dp.does_beta_c_inc = dp.split_on_k == 1 ? 0 : 1; 
     dp.strided_i_vertical = hp.c_micro_tiles_interwoven == 0 ? "i" : "i*N_MICRO_TILES_VERTICALLY";
     dp.strided_i_horizontal = hp.c_micro_tiles_interwoven == 0 ? "i" : "i*N_MICRO_TILES_HORIZONTALLY";
     
@@ -885,10 +885,10 @@ R"(/* ***********************************************
   
   ss << 
 R"(/* certain kernels can only do one or the other of the terms in c <- alpha a*b + beta c. */
-/* TODO : if DOES_ALPHA_C_INC is 0, then alpha should not appear as a kernel parameter */
+/* TODO : if DOES_BETA_C_INC is 0, then alpha should not appear as a kernel parameter */
 )";
-  ss << "#define DOES_ALPHA_C_INC " << dp.does_alpha_c_inc << "\n";
-  ss << "#define DOES_BETA_A_B_INC 1" << "\n";
+  ss << "#define DOES_BETA_C_INC " << dp.does_beta_c_inc << "\n";
+  ss << "#define DOES_ALPHA_A_B_INC 1" << "\n";
   
   ss << 
 R"(

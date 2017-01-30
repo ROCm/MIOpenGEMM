@@ -12,7 +12,6 @@
 #include <tinygemm/redirection.hpp>
 #include <tinygemm/outputwriter.hpp>
 #include <tinygemm/sizingup.hpp>
-//#include <tinygemm/kernelsnips.hpp>
 #include <tinygemm/openclutil.hpp>
 #include <tinygemm/betackernelutil.hpp>
 #include <tinygemm/floattostring.hpp>
@@ -59,7 +58,6 @@ size_t get_floatbytes(char floattype){
 class TinyGemmKernel{
   
   public:
-    //TODO : try to privatise.
     cl_command_queue command_queue;
     std::string kernstr;
     std::string fname;
@@ -268,29 +266,8 @@ public:
 
   void setup_main_kernel(const std::string & kernel_string, const hyperparams::HyperParams & hp, const derivedparams::DerivedParams & dp){
     
-    ///* check that the parameters in kernel_string look reasonable. This may be redundant now */
-    //kernelutil::check_gpu_kernel_preprocessor_parameters(kernel_string, gg.tA, gg.tB, gg.tC, gg.isColMajor, gg.m, gg.n, floattostring::get_float_string(floattype));
-        
-    /* extract the parameters which are needed to determine the number of work groups and work items to launch, directly from kernel string : */
-    /* macro_tile_width, macro_tile_height, n_workitems_per_workgroup, n_work_items_per_c_elm, does_betac_inc */
-    
-    //kernelutil::set_sizes_from_kernel_string(macro_tile_width, macro_tile_height, n_workitems_per_workgroup, n_work_items_per_c_elm, does_betac_inc, kernel_string);
-    //sizingup::set_workforce(main_n_work_groups, main_local_work_size, main_global_work_size, gg.m, gg.n, n_work_items_per_c_elm, macro_tile_height, macro_tile_width, n_workitems_per_workgroup);
-
-    
-    does_betac_inc = dp.split_on_k == 0;
-    
-    /* Here we set the numbers of work groups (main_n_work_groups) and work items (main_global_work_size) for the main kernel */  
+     /* Here we set the numbers of work groups (main_n_work_groups) and work items (main_global_work_size) for the main kernel */  
     sizingup::set_workforce(main_n_work_groups, main_local_work_size, main_global_work_size, gg.m, gg.n, hp.n_work_items_per_c_elm, hp.macro_tile_height, hp.macro_tile_width, dp.n_workitems_per_workgroup);
-    
-    
-    //std::cout << 
-    //"\n" << macro_tile_height << " " << hp.macro_tile_height << 
-    //"\n" << macro_tile_width << " " << hp.macro_tile_width << 
-    //"\n" << n_work_items_per_c_elm << " " << hp.n_work_items_per_c_elm << 
-    //"\n" << n_workitems_per_workgroup << " " << dp.n_workitems_per_workgroup << std::endl;
-
-    //std::abort();
     
     mowri << "main kernel global work size : " << main_global_work_size <<  " (recommended ~ 4*64*40*64 = 655360)" << Endl; 
     tk_main.update(kernel_string);
@@ -328,6 +305,8 @@ public:
   
   
   void setup_tinykernels(const std::string & kernstr, const hyperparams::HyperParams & hp, const derivedparams::DerivedParams & dp){
+    
+    does_betac_inc = dp.does_beta_c_inc;
     
     setup_main_kernel(kernstr, hp, dp);    
     if (tk_betac.is_set() == false && does_betac_inc == false){
@@ -557,7 +536,7 @@ public:
 
 
 
-    /* we initialise the `hyper-front' with a single HyperParams, selected based on problem dimensions (TODO : should be based on cache table look-up) */
+    /* we initialise the `hyper-front' with a single HyperParams, selected based on problem dimensions  */
     std::vector<hyperparams::HyperParams> hyper_front = { hyperparams::get_default(gg, enforce_deterministic) };
     
         
@@ -666,14 +645,11 @@ public:
                 tinygemm::TinyGemmSolutionStatistics tgss(median_time, median_benchmark_gflops, elapsed_seconds);
                 
                 
-                //set kernel files
-                //TODO : should not be determining whether a kernel does betac or not based on this, find true parameter
-                std::string soln_betac_kernel = hp.n_work_items_per_c_elm == 1 ?  ""  : betac::get_betac_kernel_string(floattype, betackernelname);
-                std::string soln_betac_kernel_function_name = hp.n_work_items_per_c_elm == 1 ? "" : tk_betac.fname;
-                std::string soln_main_kernel_function_name = bundle.kernel_function_name; //kernelutil::get_kernel_function_name(tk_main.kernstr);                
-                
-                
-                
+                /* set kernel files */
+                std::string soln_betac_kernel = does_betac_inc == 1 ?  ""  : betac::get_betac_kernel_string(floattype, betackernelname);
+                std::string soln_betac_kernel_function_name = does_betac_inc == 1 ? "" : tk_betac.fname;
+                std::string soln_main_kernel_function_name = bundle.kernel_function_name;                 
+                                
                 path_of_best_solns.emplace_back (soln_betac_kernel, soln_betac_kernel_function_name, tk_main.kernstr, soln_main_kernel_function_name, hp, bundle.dp, gg, floattype, tgss); 
 
                 

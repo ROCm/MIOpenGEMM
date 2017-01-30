@@ -23,7 +23,7 @@ class DerivedParams{
     
     
     unsigned split_on_k = uninitialised_unsigned;
-    unsigned does_alpha_c_inc = uninitialised_unsigned;
+    unsigned does_beta_c_inc = uninitialised_unsigned;
     unsigned macro_tile_area = uninitialised_unsigned;
     unsigned micro_tile_area = uninitialised_unsigned;
     unsigned n_workitems_per_workgroup = uninitialised_unsigned;
