@@ -47,42 +47,43 @@ class KernelString{
     std::string kernelname;
     
     unsigned float_size;
-    // tA  
-    unsigned a_transposed;
-    // tB
-    unsigned b_transposed; 
-    // tC
-    unsigned c_transposed;
-    // CM
-    unsigned is_col_major; 
+    
+    tinygemm::TinyGemmGeometry gg;
+    
+    //// tA  
+    //unsigned gg.tA;
+    //// tB
+    //unsigned gg.tB; 
+    //// tC
+    //unsigned gg.tC;
+    //// CM
+    //unsigned gg.isColMajor; 
     
   
   KernelString(
   
+
   /* hyper parameters */
   const hyperparams::HyperParams & hp_,
   
-  std::string kernelname_ = "",
+  std::string kernelname_,// = "",
   
+  unsigned float_size_, // = 32
 
-  
-  /* geometry parameters */
-  unsigned float_size_ = 32,
-  unsigned a_transposed_ = 1,
-  unsigned b_transposed_ = 0,
-  unsigned c_transposed_ = 0,
-  unsigned is_col_major_ = 1
-  /* to add m,n,k, lda, ldb, ldc */  
+  const tinygemm::TinyGemmGeometry & gg_  
+
   
   ):
   
   hp(hp_),
   kernelname(kernelname_),
   float_size(float_size_),
-  a_transposed(a_transposed_), 
-  b_transposed(b_transposed_), 
-  c_transposed(c_transposed_), 
-  is_col_major(is_col_major_)
+  
+  gg(gg_)
+  //gg.tA(gg.tA_), 
+  //gg.tB(gg.tB_), 
+  //gg.tC(gg.tC_), 
+  //gg.isColMajor(gg.isColMajor_)
   
   
 
@@ -107,10 +108,19 @@ class KernelString{
     
     dp.pragma_unroll_string = hp.unroll_pragma == 1 ?  "#pragma unroll\n" : "" ;
     
-    dp.effective_k = hp.unroll_for_offset == 0 ? "k" : "k_plus_offset";    
+    dp.effective_k = hp.unroll_for_offset == 0 ? "K__" : "k_plus_offset";    
     dp.alpha_scaled = hp.c_micro_tiles_interwoven == 0 ? "alpha*rC[row][col]" : "alpha*rC[row/N_MICRO_TILES_VERTICALLY][col/N_MICRO_TILES_HORIZONTALLY]";
     dp.t_float = float_size == 32 ? "float" : "double";
     
+    
+    dp.preshift_bottommost_tile_height = 1 + (gg.m - 1) % hp.macro_tile_height;
+    dp.preshift_rightmost_tile_width = 1 + (gg.n - 1) % hp.macro_tile_width;
+
+    dp.n_groups_vertically = gg.m / hp.macro_tile_height + (dp.preshift_bottommost_tile_height != hp.macro_tile_height);
+    dp.n_groups_horizontally = gg.n / hp.macro_tile_width + (dp.preshift_rightmost_tile_width != hp.macro_tile_width);
+      
+      
+
   }
 
 
@@ -201,8 +211,8 @@ class KernelString{
       ss << 
 R"(
 /* GROUP_ALLOCATION = 1 :  allocation is done column-by-column */
-const unsigned group_id_vertical = group_id_xy % n_groups_vertically;
-const unsigned group_id_horizontal = group_id_xy / n_groups_vertically;
+const unsigned group_id_vertical = group_id_xy % N_GROUPS_VERTICALLY;
+const unsigned group_id_horizontal = group_id_xy / N_GROUPS_VERTICALLY;
 )";
     }
     
@@ -210,8 +220,8 @@ const unsigned group_id_horizontal = group_id_xy / n_groups_vertically;
       ss << 
 R"(
 /* GROUP_ALLOCATION = 2 :  allocation is done row-by-row */
-unsigned group_id_horizontal = group_id_xy % n_groups_horizontally;
-unsigned group_id_vertical = group_id_xy / n_groups_horizontally;
+unsigned group_id_horizontal = group_id_xy % N_GROUPS_HORIZONTALLY;
+unsigned group_id_vertical = group_id_xy / N_GROUPS_HORIZONTALLY;
 )";
     }
     
@@ -234,16 +244,16 @@ unsigned group_id_vertical = group_id_xy / n_groups_horizontally;
  * */  
 unsigned group_id_horizontal;
 unsigned group_id_vertical;
-unsigned wg_super_column = group_id_xy / (SUPER_COLUMN_WIDTH*n_groups_vertically);
-unsigned last_super_column_width = n_groups_horizontally % SUPER_COLUMN_WIDTH;
+unsigned wg_super_column = group_id_xy / (SUPER_COLUMN_WIDTH*N_GROUPS_VERTICALLY);
+
     
-if (group_id_xy < (n_groups_horizontally - last_super_column_width)*n_groups_vertically){
+if (group_id_xy < (N_GROUPS_HORIZONTALLY - LAST_SUPER_COLUMN_WIDTH)*N_GROUPS_VERTICALLY){
 group_id_horizontal = wg_super_column * SUPER_COLUMN_WIDTH + group_id_xy % SUPER_COLUMN_WIDTH;
-group_id_vertical = (group_id_xy / SUPER_COLUMN_WIDTH) % n_groups_vertically;
+group_id_vertical = (group_id_xy / SUPER_COLUMN_WIDTH) % N_GROUPS_VERTICALLY;
 }
 else{
-group_id_horizontal = wg_super_column * SUPER_COLUMN_WIDTH + group_id_xy % last_super_column_width;
-group_id_vertical = (group_id_xy  - (n_groups_horizontally - last_super_column_width)*n_groups_vertically) / last_super_column_width;
+group_id_horizontal = wg_super_column * SUPER_COLUMN_WIDTH + group_id_xy % LAST_SUPER_COLUMN_WIDTH;
+group_id_vertical = (group_id_xy  - (N_GROUPS_HORIZONTALLY - LAST_SUPER_COLUMN_WIDTH)*N_GROUPS_VERTICALLY) / LAST_SUPER_COLUMN_WIDTH;
 }
 )";
   
@@ -260,13 +270,13 @@ group_id_vertical = (group_id_xy  - (n_groups_horizontally - last_super_column_w
 
     if (hp.group_allocation == 3){
 
-      unsigned super_column_width;
+      //unsigned super_column_width;
       if (dp.split_on_k == 1){
-        super_column_width = 
+        dp.ga3.super_column_width = 
         static_cast<unsigned>(std::floor(std::sqrt(static_cast<double>(hp.n_target_active_workgroups) / static_cast<double>(hp.n_work_items_per_c_elm))));
       }
       else if (dp.split_on_k == 0){
-        super_column_width = 
+        dp.ga3.super_column_width = 
         static_cast<unsigned>(std::floor(std::sqrt(static_cast<double>(hp.n_target_active_workgroups))));
       }
       
@@ -274,7 +284,15 @@ group_id_vertical = (group_id_xy  - (n_groups_horizontally - last_super_column_w
         throw std::runtime_error("dp.split_on_k is neither 0 nor 1, how can this be? Logic error in append_super_column_width_defn");
       }
       
-      ss <<  "\n" << "/* This variable defines the width of super-columns (we have GROUP_ALLOCATION 3). It is ~ sqrt (N_TARGET_ACTIVE_WORKGROUPS / N_WORK_ITEMS_PER_C_ELM) */\n" << "#define SUPER_COLUMN_WIDTH " << super_column_width;
+      ss <<  "\n\n" << "/* This variable defines the width of super-columns (we have GROUP_ALLOCATION 3). It is ~ sqrt (N_TARGET_ACTIVE_WORKGROUPS / N_WORK_ITEMS_PER_C_ELM) */\n" << "#define SUPER_COLUMN_WIDTH " << dp.ga3.super_column_width;   
+      
+      dp.ga3.last_super_column_width = dp.n_groups_horizontally % dp.ga3.super_column_width;
+      
+      ss << "\n/* LAST_SUPER_COLUMN_WIDTH : N_GROUPS_HORIZONTALLY % SUPER_COLUMN_WIDTH  */";
+      ss << "\n#define LAST_SUPER_COLUMN_WIDTH " << dp.ga3.last_super_column_width;
+      
+      //unsigned last_super_column_width = n_groups_horizontally % SUPER_COLUMN_WIDTH;
+      //zzzzzz
     }
   }
   
@@ -328,7 +346,7 @@ TFLOAT previous_value; )" << "\n" << dp.infa << " newVal;\n" << dp.infa << " pre
   
   void append_final_write_element(std::stringstream & ss, unsigned atomic_increment, unsigned with_beta_scaling, unsigned with_alpha_increment){
     
-    ss << "\nindex = row_stride_c*(write_start_row + row) + col_stride_c*(write_start_col + col);\n";
+    ss << "\nindex = ROW_STRIDE_C*(write_start_row + row) + COL_STRIDE_C*(write_start_col + col);\n";
     /* beta string */
     ss << (with_beta_scaling == 0 ? "" : "c[index] *= beta;\n");
     if (with_alpha_increment != 0){
@@ -371,13 +389,13 @@ TFLOAT previous_value; )" << "\n" << dp.infa << " newVal;\n" << dp.infa << " pre
 R"(
 /* catching the write cases for lower(l), right(r) and lr-corner tiles */
 if (
-((write_start_col + col >= MACRO_TILE_WIDTH*(n_groups_horizontally - 1)) && group_id_vertical   != (n_groups_vertically   - 1 )) ||
-((write_start_row + row >= MACRO_TILE_HEIGHT*(n_groups_vertically - 1 )) && group_id_horizontal != (n_groups_horizontally - 1 )) ||
+((write_start_col + col >= MACRO_TILE_WIDTH*(N_GROUPS_HORIZONTALLY - 1)) && group_id_vertical   != (N_GROUPS_VERTICALLY   - 1 )) ||
+((write_start_row + row >= MACRO_TILE_HEIGHT*(N_GROUPS_VERTICALLY - 1 )) && group_id_horizontal != (N_GROUPS_HORIZONTALLY - 1 )) ||
 (
-group_id_vertical == (n_groups_vertically-1)     && 
-group_id_horizontal == (n_groups_horizontally-1) && 
-write_start_col + col >= MACRO_TILE_WIDTH*(n_groups_horizontally - 1) && 
-write_start_row + row >= MACRO_TILE_HEIGHT*(n_groups_vertically - 1)
+group_id_vertical == (N_GROUPS_VERTICALLY-1)     && 
+group_id_horizontal == (N_GROUPS_HORIZONTALLY-1) && 
+write_start_col + col >= MACRO_TILE_WIDTH*(N_GROUPS_HORIZONTALLY - 1) && 
+write_start_row + row >= MACRO_TILE_HEIGHT*(N_GROUPS_VERTICALLY - 1)
 )){
 )";
 
@@ -429,7 +447,7 @@ write_start_row + row >= MACRO_TILE_HEIGHT*(n_groups_vertically - 1)
   void append_worktime_increment_ab(std::stringstream & ss, unsigned final_unroll){
     if (final_unroll == 0){
       std::string n_jumps_string = dp.split_on_k == 0 ? "UNROLL" : "G_UNROLL";
-      ss << "a += col_stride_a*" << n_jumps_string << ";\nb += row_stride_b*" << n_jumps_string << ";\n";
+      ss << "a += COL_STRIDE_A*" << n_jumps_string << ";\nb += ROW_STRIDE_B*" << n_jumps_string << ";\n";
     }
   }
   
@@ -446,22 +464,22 @@ write_start_row + row >= MACRO_TILE_HEIGHT*(n_groups_vertically - 1)
     std::string b_comment;
     
     if (final_unroll == 1){
-      a_value_to_get = "(a_offset_pll_unroll + mu_pll_i) < k_remaining ? a[mu_pll_i*col_stride_a + mu_perp_i*row_stride_a] : 0;";
-      b_value_to_get = "(b_offset_pll_unroll + mu_pll_i) < k_remaining ? b[mu_pll_i*row_stride_b + mu_perp_i*col_stride_b] : 0;";
+      a_value_to_get = "(a_offset_pll_unroll + mu_pll_i) < k_remaining ? a[mu_pll_i*COL_STRIDE_A + mu_perp_i*ROW_STRIDE_A] : 0;";
+      b_value_to_get = "(b_offset_pll_unroll + mu_pll_i) < k_remaining ? b[mu_pll_i*ROW_STRIDE_B + mu_perp_i*COL_STRIDE_B] : 0;";
       a_comment =  "/* load final bit of data from a into LDS, less than a full unroll */";
       b_comment =  "/* load final bit of data from b into LDS, less than a full unroll */";
     }
     
     else if (special_first_unroll == 1){
-      a_value_to_get = "(a_offset_pll_unroll + mu_pll_i) >= UNROLL_offset ? a[mu_pll_i*col_stride_a + mu_perp_i*row_stride_a] : 0;";
-      b_value_to_get = "(b_offset_pll_unroll + mu_pll_i) >= UNROLL_offset ? b[mu_pll_i*row_stride_b + mu_perp_i*col_stride_b] : 0;";
+      a_value_to_get = "(a_offset_pll_unroll + mu_pll_i) >= unroll_offset ? a[mu_pll_i*COL_STRIDE_A + mu_perp_i*ROW_STRIDE_A] : 0;";
+      b_value_to_get = "(b_offset_pll_unroll + mu_pll_i) >= unroll_offset ? b[mu_pll_i*ROW_STRIDE_B + mu_perp_i*COL_STRIDE_B] : 0;";
       a_comment =  "/* load first bit of data from a into LDS, ignoring the prepended values (less than a full unroll)  */";
       b_comment =  "/* load first bit of data from b into LDS, ignoring the prepended values (less than a full unroll) */";
     }
     
     else{
-      a_value_to_get = "a[mu_pll_i*col_stride_a + mu_perp_i*row_stride_a];";
-      b_value_to_get = "b[mu_pll_i*row_stride_b + mu_perp_i*col_stride_b];";
+      a_value_to_get = "a[mu_pll_i*COL_STRIDE_A + mu_perp_i*ROW_STRIDE_A];";
+      b_value_to_get = "b[mu_pll_i*ROW_STRIDE_B + mu_perp_i*COL_STRIDE_B];";
       a_comment =  "/* load data from a into LDS */";
       b_comment =  "/* load data from b into LDS */";
     }
@@ -603,12 +621,12 @@ if (group_id_z == n_work_groups_with_1_more && k_remaining > 0){
     ss << "\n/* make the micro adjustments (A) for the thread, getting ready to load */\n";
     ss << "const unsigned a_offset_pll_unroll = " << str_a_n_pll << " pll_unroll_a_load_id;\n";
     ss <<  "const unsigned a_offset_perp_unroll = " << str_a_n_perp <<  " perp_unroll_a_load_id;\n";
-    ss << "a += col_stride_a * a_offset_pll_unroll;\na += row_stride_a * a_offset_perp_unroll;\n\n";
+    ss << "a += COL_STRIDE_A * a_offset_pll_unroll;\na += ROW_STRIDE_A * a_offset_perp_unroll;\n\n";
 
     ss << "/* make the micro adjustments (B) for the thread, getting ready to load */\n";
     ss << "const unsigned b_offset_pll_unroll = " << str_b_n_pll << " pll_unroll_b_load_id;\n";
     ss << "const unsigned b_offset_perp_unroll = " << str_b_n_perp << " perp_unroll_b_load_id;\n";
-    ss << "b += row_stride_b * b_offset_pll_unroll;\nb += col_stride_b * b_offset_perp_unroll;\n";
+    ss << "b += ROW_STRIDE_B * b_offset_pll_unroll;\nb += COL_STRIDE_B * b_offset_perp_unroll;\n";
   }
   
   void append_load_load_string(std::stringstream & ss){
@@ -625,10 +643,19 @@ if (group_id_z == n_work_groups_with_1_more && k_remaining > 0){
   
   void append_preshift_defns(std::stringstream & ss){
     
+    
     if (use_edge_trick != 0){
-      ss << "\nconst unsigned preshift_bottommost_tile_height = 1 + (m - 1) % MACRO_TILE_HEIGHT; // 1 ... MACRO_TILE_HEIGHT\n";
-      ss << "const unsigned preshift_rightmost_tile_width = 1 + (n - 1) % MACRO_TILE_WIDTH; // 1 ... MACRO_TILE_WIDTH\n";
+      ss << "\n" << 
+      "/* 1 + (M__ - 1) % MACRO_TILE_HEIGHT  */ \n" << 
+      "#define PRESHIFT_BOTTOMMOST_TILE_HEIGHT " << dp.preshift_bottommost_tile_height << " // somewhere in 1 ... MACRO_TILE_HEIGHT\n" << 
+      "/* 1 + (N__ - 1) % MACRO_TILE_WIDTH */ \n" << 
+      "#define PRESHIFT_RIGHTMOST_TILE_WIDTH " << dp.preshift_rightmost_tile_width << " // somewhere in 1 ... MACRO_TILE_WIDTH\n";
     }
+    
+    //if (use_edge_trick != 0){
+      //ss << "\nconst unsigned preshift_bottommost_tile_height = 1 + (M__ - 1) % MACRO_TILE_HEIGHT; // 1 ... MACRO_TILE_HEIGHT\n";
+      //ss << "const unsigned preshift_rightmost_tile_width = 1 + (N__ - 1) % MACRO_TILE_WIDTH; // 1 ... MACRO_TILE_WIDTH\n";
+    //}
   }
   
   void append_special_case_edge_trick_string(std::stringstream & ss){
@@ -636,13 +663,13 @@ if (group_id_z == n_work_groups_with_1_more && k_remaining > 0){
     if (use_edge_trick != 0){
       ss <<
 R"(/* Special case of the tile being on far right : pull the tile to the left just enough so that it doesn't overflow C */
-if (group_id_horizontal == n_groups_horizontally - 1){
-macro_tile_start_col_in_c -= (MACRO_TILE_WIDTH - preshift_rightmost_tile_width);
+if (group_id_horizontal == N_GROUPS_HORIZONTALLY - 1){
+macro_tile_start_col_in_c -= (MACRO_TILE_WIDTH - PRESHIFT_RIGHTMOST_TILE_WIDTH);
 }
   
 /* Special case of the tile being on the bottom : pull the tile up just enough so that it doesn't overflow C */    
-if (group_id_vertical == n_groups_vertically - 1){
-macro_tile_start_row_in_c -= (MACRO_TILE_HEIGHT - preshift_bottommost_tile_height);
+if (group_id_vertical == N_GROUPS_VERTICALLY - 1){
+macro_tile_start_row_in_c -= (MACRO_TILE_HEIGHT - PRESHIFT_BOTTOMMOST_TILE_HEIGHT);
 }
 )";
 
@@ -659,17 +686,35 @@ macro_tile_start_row_in_c -= (MACRO_TILE_HEIGHT - preshift_bottommost_tile_heigh
   }
   
   void append_ngroups_grid_string(std::stringstream & ss){
-    ss << "\n/* the number of work groups vertically and horizontally. */\n/* note that this ignores n_work_items_per_c_elm, so that only one workgroup per c cell is considered */ ";
-  
-    if (use_edge_trick == 1){
-      ss << "\nconst unsigned n_groups_vertically = m / MACRO_TILE_HEIGHT + (preshift_bottommost_tile_height != MACRO_TILE_HEIGHT);";
-      ss << "\nconst unsigned n_groups_horizontally = n / MACRO_TILE_WIDTH + (preshift_rightmost_tile_width != MACRO_TILE_WIDTH);\n";
-    }
+    ss << "\n/* the number of work groups vertically and horizontally. */\n/* note that this ignores n_work_items_per_c_elm, so that only one workgroup per c cell is used in computing this */ ";
     
-    else{
-      ss << "\nconst unsigned n_groups_vertically = m / MACRO_TILE_HEIGHT;";
-      ss << "\nconst unsigned n_groups_horizontally = n / MACRO_TILE_WIDTH;\n";
+    
+    
+    //if (use_edge_trick == 1){
+      //ss << "\nconst unsigned n_groups_vertically = M__ / MACRO_TILE_HEIGHT + (preshift_bottommost_tile_height != MACRO_TILE_HEIGHT);";
+      //ss << "\nconst unsigned n_groups_horizontally = N__ / MACRO_TILE_WIDTH + (preshift_rightmost_tile_width != MACRO_TILE_WIDTH);\n";
+    //}
+    
+    //else{
+      //ss << "\nconst unsigned n_groups_vertically = M__ / MACRO_TILE_HEIGHT;";
+      //ss << "\nconst unsigned n_groups_horizontally = N__ / MACRO_TILE_WIDTH;\n";
+    //}
+    
+    
+    ss << "\n"
+    << "/* number of groups vertically : M__ / MACRO_TILE_HEIGHT";
+    if (use_edge_trick == 1){
+      ss << " + (PRESHIFT_BOTTOMMOST_TILE_HEIGHT != MACRO_TILE_HEIGHT)";
+    } 
+    ss << " */" << "\n"
+    << "#define N_GROUPS_VERTICALLY " <<  dp.n_groups_vertically << "\n"
+    << "/* number of groups horizontally : N__ / MACRO_TILE_WIDTH";
+    if (use_edge_trick == 1){
+      ss << " + (PRESHIFT_RIGHTMOST_TILE_WIDTH != MACRO_TILE_WIDTH)";
     }
+    ss << "*/" << "\n"
+    << "#define N_GROUPS_HORIZONTALLY " <<  dp.n_groups_horizontally << "\n";
+
   }
   
   
@@ -684,8 +729,8 @@ macro_tile_start_row_in_c -= (MACRO_TILE_HEIGHT - preshift_bottommost_tile_heigh
       ss << 
 R"(
 /* the case where this is not an edge tile : will write to all cells */
-if ((group_id_horizontal != n_groups_horizontally - 1 || preshift_rightmost_tile_width == MACRO_TILE_WIDTH) 
-&& (group_id_vertical != n_groups_vertically - 1 || preshift_bottommost_tile_height == MACRO_TILE_HEIGHT)){
+if ((group_id_horizontal != N_GROUPS_HORIZONTALLY - 1 || PRESHIFT_RIGHTMOST_TILE_WIDTH == MACRO_TILE_WIDTH) 
+&& (group_id_vertical != N_GROUPS_VERTICALLY - 1 || PRESHIFT_BOTTOMMOST_TILE_HEIGHT == MACRO_TILE_HEIGHT)){
 )";
       append_final_write_loops_no_check(ss);
       ss << "\n}\n\nelse{";
@@ -701,8 +746,8 @@ if ((group_id_horizontal != n_groups_horizontally - 1 || preshift_rightmost_tile
 R"(
 /* a,b are pointing to the top left of the region required by the macro tile, but this work group  */
 /* might not process the whole of a and b. We now turn 90 and shift pointers a,b to the start for this wg */
-a += UNROLL*group_id_z*col_stride_a;
-b += UNROLL*group_id_z*row_stride_b;
+a += UNROLL*group_id_z*COL_STRIDE_A;
+b += UNROLL*group_id_z*ROW_STRIDE_B;
 )";
     }
   }
@@ -712,10 +757,10 @@ b += UNROLL*group_id_z*row_stride_b;
       ss <<
 R"(
 /* this additional offset of a and b appears because UNROLL_FOR_OFFSET is 1 */
-unsigned UNROLL_offset = (3*group_id_vertical + 11*group_id_vertical)%UNROLL;
-unsigned k_plus_offset = k + UNROLL_offset;
-a -= UNROLL_offset*col_stride_a;
-b -= UNROLL_offset*row_stride_b;
+unsigned unroll_offset = (3*group_id_vertical + 11*group_id_vertical)%UNROLL;
+unsigned k_plus_offset = K__ + unroll_offset;
+a -= unroll_offset*COL_STRIDE_A;
+b -= unroll_offset*ROW_STRIDE_B;
 )";
     }
   }
@@ -745,21 +790,37 @@ const unsigned group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
     }
   }
   
-  void append_stride_defn(std::stringstream & ss, char LETTER, char letter, std::string ldx,  unsigned transposed){
+  //void append_stride_defn(std::stringstream & ss, char LETTER, char letter, std::string ldx,  unsigned transposed){
     
-    unsigned transposed_xor_is_col_major = (transposed + is_col_major) % 2;
+  void append_stride_defn(std::stringstream & ss, char LETTER, unsigned ldx,  unsigned transposed){ //, char letter
     
-    ss << "\n/* To move from " << LETTER << "[row][col] to " << LETTER << "[row+1][col], how much should the pointer increment? As we have " << LETTER << "_TRANSPOSED = " << transposed << " and IS_COL_MAJOR = " << is_col_major << ", this is */\nconst unsigned row_stride_" << letter << " = " << (transposed_xor_is_col_major == 1 ? "1" : ldx) << ";\n";
+    unsigned transposed_xor_is_col_major = (transposed + gg.isColMajor) % 2;
     
-    ss << "/* To move from " << LETTER << "[row][col] to " << LETTER << "[row][col+1], how much should the pointer increment? As we have " << LETTER << "_TRANSPOSED = " << transposed << " and IS_COL_MAJOR = " << is_col_major << ", this is */\nconst unsigned col_stride_" << letter << " = " << (transposed_xor_is_col_major == 1 ? ldx : "1") << ";\n";
+    //ss << "\n/* To move from " << LETTER << "[row][col] to " << LETTER << "[row+1][col], how much should the pointer increment? As we have " << LETTER << "_TRANSPOSED = " << transposed << " and IS_COL_MAJOR = " << gg.isColMajor << ", this is */\nconst unsigned row_stride_" << letter << " = " << (transposed_xor_is_col_major == 1 ? "1" : ldx) << ";\n";
+    
+    //ss << "/* To move from " << LETTER << "[row][col] to " << LETTER << "[row][col+1], how much should the pointer increment? As we have " << LETTER << "_TRANSPOSED = " << transposed << " and IS_COL_MAJOR = " << gg.isColMajor << ", this is */\nconst unsigned col_stride_" << letter << " = " << (transposed_xor_is_col_major == 1 ? ldx : "1") << ";\n";
+    
+    std::stringstream ldx_string_ss;
+    ldx_string_ss << "LD" << LETTER;
+    std::string ldx_string = ldx_string_ss.str();
+    
+    
+    ss << "\n/* To move from " << LETTER << "[row][col] to " << LETTER << "[row+1][col], how much should the pointer increment? As we have " << LETTER << "_TRANSPOSED = " << transposed << " and IS_COL_MAJOR = " << gg.isColMajor << ", this is " << (transposed_xor_is_col_major == 1 ? "1" : ldx_string) << " */\n#define ROW_STRIDE_" << LETTER << " " << (transposed_xor_is_col_major == 1 ? 1 : ldx) << "\n";
+    
+    ss << "/* To move from " << LETTER << "[row][col] to " << LETTER << "[row][col+1], how much should the pointer increment? As we have " << LETTER << "_TRANSPOSED = " << transposed << " and IS_COL_MAJOR = " << gg.isColMajor << ", this is " << (transposed_xor_is_col_major == 1 ? ldx_string : "1") << " */\n#define COL_STRIDE_" << LETTER << " " << (transposed_xor_is_col_major == 1 ? ldx : 1) << "\n";
     
   }
   
   void append_stride_defns(std::stringstream & ss){
-    ss << "\n/*a performance note : moving these (row_stride_x, col_stride_x) definitions to precompiler does not improve memory use or speed. */\n";
-    append_stride_defn(ss, 'A', 'a', "lda", a_transposed);
-    append_stride_defn(ss, 'B', 'b', "ldb", b_transposed);
-    append_stride_defn(ss, 'C', 'c', "ldc", c_transposed);
+    //ss << "\n/*a performance note : moving these (row_stride_x, col_stride_x) definitions to precompiler does not improve memory use or speed. */\n";
+    //append_stride_defn(ss, 'A', 'a', "lda", gg.tA);
+    //append_stride_defn(ss, 'B', 'b', "ldb", gg.tB);
+    //append_stride_defn(ss, 'C', 'c', "ldc", gg.tC);
+    
+    append_stride_defn(ss, 'A', gg.lda, gg.tA);
+    append_stride_defn(ss, 'B', gg.ldb, gg.tB);
+    append_stride_defn(ss, 'C', gg.ldc, gg.tC);
+    
   }
   
   void append_rA_rB_decl_string(std::stringstream & ss){
@@ -776,7 +837,8 @@ const unsigned group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
     }
     
     else{
-      ss << "\nconst int n_work_groups_with_1_more = (" << k_effective_mod_G_UNROLL << ") / UNROLL; //JN_NEW\n";
+      ss << "\n/* a certain number of work groups process one more unroll. Note that with UFO = 1, this depends on column */";
+      ss << "\nconst int n_work_groups_with_1_more = (" << k_effective_mod_G_UNROLL << ") / UNROLL; \n";
       ss << "\n// branching between work groups : some wgs have 1 more unroll to process.\nint n_unrolls_remaining = (" << k_effective_div_G_UNROLL;
       ss << ") +  (group_id_z < n_work_groups_with_1_more);";
        
@@ -784,7 +846,7 @@ const unsigned group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
   }
   
   void append_what_string(std::stringstream & ss){
-    ss << "A:" << a_transposed << "B" << b_transposed << "C" << c_transposed << "f" << float_size;
+    ss << "A:" << gg.tA << "B" << gg.tB << "C" << gg.tC << "f" << float_size;
   }
   
   void append_kernel_name(std::stringstream & ss){
@@ -877,10 +939,16 @@ R"(/* ***********************************************
 * *********************************************** */
 )";
 
-  ss << "#define IS_COL_MAJOR " << is_col_major << "\n";
-  ss << "#define A_TRANSPOSED " << a_transposed << "\n";
-  ss << "#define B_TRANSPOSED " << b_transposed <<  "\n";
-  ss << "#define C_TRANSPOSED " << c_transposed <<  "\n";
+  ss << "#define M__ " << gg.m << "\n";
+  ss << "#define N__ " << gg.n << "\n";
+  ss << "#define K__ " << gg.k << "\n";
+  ss << "#define LDA__ " << gg.lda << "\n";
+  ss << "#define LDB__ " << gg.ldb << "\n";
+  ss << "#define LDC__ " << gg.ldc << "\n";
+  ss << "#define IS_COL_MAJOR " << gg.isColMajor << "\n";
+  ss << "#define A_TRANSPOSED " << gg.tA << "\n";
+  ss << "#define B_TRANSPOSED " << gg.tB <<  "\n";
+  ss << "#define C_TRANSPOSED " << gg.tC <<  "\n";
   ss << "#define TFLOAT  "  << dp.t_float << "\n";
   
   ss << 
@@ -1004,7 +1072,11 @@ R"(
   ss << "#define MICRO_B_TILE_PERP_UNROLL " << dp.micro_b_tile_perp_unroll << "\n";
   ss << "#define N_MICRO_B_TILES_PLL_UNROLL " << dp.n_micro_b_tiles_pll_unroll << " // UNROLL / MICRO_B_TILE_PLL_UNROLL\n";
   
-  append_mn_factor_string(ss);
+  ss << "\n";
+  append_stride_defns(ss);
+  append_preshift_defns(ss);
+  append_ngroups_grid_string(ss);
+  //append_mn_factor_string(ss);
   append_split_on_k_defns_string(ss);
   append_super_column_width_defn(ss);
   
@@ -1019,17 +1091,24 @@ __global const TFLOAT * restrict a,
 __global const TFLOAT * restrict b,
 const TFLOAT alpha,
 const TFLOAT beta,
-const unsigned lda,
-const unsigned ldb,
-const unsigned ldc,
-const unsigned m,
-const unsigned n,
-const unsigned k,
+unsigned lda,
+unsigned ldb,
+unsigned ldc,
+unsigned m,
+unsigned n,
+unsigned k,
 const unsigned a_offset,
 const unsigned b_offset,
 const unsigned c_offset  
 )
 {
+
+lda = 111110;
+ldb = 111110;
+ldc = 111110;
+m = 0;
+n = 0;
+k = 0;
 
 /* In OpenCL, host code does not have access to raw data pointers. */
 /* Host code works with cl_mem objects, which encapsulate and hide raw points. */
@@ -1043,11 +1122,11 @@ c += c_offset;
 
 )";
 
-  append_stride_defns(ss);
+  //append_stride_defns(ss);
   append_group_id_defns(ss);
   ss << "const unsigned local_id = get_local_id(0);\n";
-  append_preshift_defns(ss);
-  append_ngroups_grid_string(ss);
+  //append_preshift_defns(ss);
+  //append_ngroups_grid_string(ss);
   append_group_allocation_string(ss);
     
   ss << 
@@ -1062,8 +1141,8 @@ unsigned macro_tile_start_col_in_c = group_id_horizontal*MACRO_TILE_WIDTH;
   ss << 
 R"(
 /* move to the top left corner of a (top left corner of b) of region required by the macro tile */
-a += macro_tile_start_row_in_c*row_stride_a;   
-b += macro_tile_start_col_in_c*col_stride_b;
+a += macro_tile_start_row_in_c*ROW_STRIDE_A;   
+b += macro_tile_start_col_in_c*COL_STRIDE_B;
 )";
 
   append_split_on_k_ab_offset_adjustment_string(ss);
@@ -1165,6 +1244,7 @@ void indentify(std::string & source){
 
 KernelStringBundle get_kernel_string_bundle(
 
+  
   /* hyper parameters */
   const hyperparams::HyperParams & hp,
     
@@ -1172,11 +1252,9 @@ KernelStringBundle get_kernel_string_bundle(
   
   /* geometry parameters */
   unsigned float_size,
-  unsigned a_transposed,
-  unsigned b_transposed,
-  unsigned c_transposed,
-  unsigned is_col_major
-  /* to add m,n,k, lda, ldb, ldc */
+  
+  const tinygemm::TinyGemmGeometry & gg
+
   
   
 ){
@@ -1188,10 +1266,7 @@ KernelStringBundle get_kernel_string_bundle(
   kernelname,
 
   float_size,
-  a_transposed,
-  b_transposed,
-  c_transposed,
-  is_col_major
+  gg  
   
   );
   

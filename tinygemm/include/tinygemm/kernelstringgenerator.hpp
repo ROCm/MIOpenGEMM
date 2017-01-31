@@ -4,6 +4,7 @@
 #include <tinygemm/hyperparams.hpp>
 #include <string>
 #include <tinygemm/derivedparams.hpp>
+#include <tinygemm/tinygemmgeometry.hpp>
 
 namespace tinygemm{
 namespace kerngen{
@@ -35,17 +36,14 @@ class KernelStringBundle{
 KernelStringBundle get_kernel_string_bundle(
   /* hyper parameters */
   const hyperparams::HyperParams & hp,
-  
-  //std::string & kernel_string,
-  
-  std::string kernelname = "",
+
+  std::string kernelname,// = "",
+
+  unsigned float_size, // = 32
+
   /* geometry parameters */
-  unsigned float_size = 32,
-  unsigned a_transposed = 1,
-  unsigned b_transposed = 0,
-  unsigned c_transposed = 0,
-  unsigned is_col_major = 1
-  /* to add m,n,k, lda, ldb, ldc */
+  const tinygemm::TinyGemmGeometry & gg
+
   );
 
 

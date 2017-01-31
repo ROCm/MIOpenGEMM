@@ -20,7 +20,7 @@
 tinygemm::hyperparams::HyperParams get_hp(std::string hyperstring = ""){
 
   if (hyperstring.compare("") == 0){
-    hyperstring = "Y16_X8_y2_x1_U16_P1_GA1_APLU0_BPLU1_PU0_LIW1_MIW1_ICE1_NAW64_UFO0";
+    hyperstring = "Y16_X8_y2_x1_U16_P1_GA3_APLU0_BPLU1_PU0_LIW1_MIW1_ICE4_NAW64_UFO1";
   }
   
   return hyperstring;
@@ -60,19 +60,26 @@ void print_kernel(){
 //  kernel_string,
   "bolziberb",
   32,
-  gg.tA, gg.tB, gg.tC, gg.isColMajor);
+  gg
+  
+  );
   
   std::cout << bundle.kernel_string;
+  
+  std::ofstream floper ("/home/idiap/akernel.cl", std::ios::out); 
+  floper << bundle.kernel_string;
+  
+  floper.close();
 }
   
 
 
 int main(){
   
-  std::string test = "accuracy_test";
+  std::string test = "print";
   typedef float tfloat;
   srand(time(NULL));
-  tinygemm::hyperparams::HyperParams hp = get_hp("Y8_X8_y1_x1_U8_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO0");
+  tinygemm::hyperparams::HyperParams hp = get_hp();//"Y8_X8_y1_x1_U8_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO0");
   
   tinygemm::TinyGemmGeometry gg = get_geometry();
 

@@ -427,10 +427,9 @@ public:
     //kernel_string,
     generickernelname,
     floattype ==  'f' ? 32 : 64,
-    gg.tA,
-    gg.tB,
-    gg.tC,
-    gg.isColMajor);
+    gg
+    
+    );
     
     
   }
