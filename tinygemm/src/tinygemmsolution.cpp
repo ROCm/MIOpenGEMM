@@ -63,7 +63,8 @@ std::map<std::string, size_t> TinyGemmSolution::get_betac_kernel_worksize_params
   std::map<std::string, size_t> betac_worksize_params;
 
   unsigned dim_coal, dim_uncoal;
-  size_t betac_global_work_size, betac_local_work_size;
+  size_t betac_global_work_size;
+  size_t betac_local_work_size = betac::n_work_items_per_group;
 
   if (floattype != 'd' && floattype != 'f'){
     std::string errm("Just checking that floattype is either 'd' or 'f' in get_betac_kernel_worksize_params in tinygemmsolution.cpp, and it is not, it is `");
@@ -72,7 +73,9 @@ std::map<std::string, size_t> TinyGemmSolution::get_betac_kernel_worksize_params
     throw tinygemm_error(errm);
   }
   
-  betac::set_betackernel_sizes(floattype, geometry.isColMajor, geometry.tC, m, n, dim_coal, dim_uncoal, betac_global_work_size, betac_local_work_size);  
+  betac::set_betackernel_sizes(geometry.isColMajor, geometry.tC, m, n, dim_coal, dim_uncoal, betac_global_work_size);//
+  
+//  , betac_local_work_size);  
 
   betac_worksize_params["dim_coal"] = dim_coal;
   betac_worksize_params["dim_uncoal"] = dim_uncoal;

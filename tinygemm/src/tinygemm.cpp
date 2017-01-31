@@ -146,7 +146,7 @@ private:
   unsigned dim_coal;
   unsigned dim_uncoal;
   size_t betac_global_work_size;
-  size_t betac_local_work_size;
+  //size_t betac_local_work_size = betac::n_work_items_per_group;
 
   /* stores (the most recent of n_runs) execution time */
   size_t t_start_betac_kernel, t_end_betac_kernel, t_start_main_kernel, t_end_main_kernel;
@@ -225,14 +225,14 @@ public:
   
   void setup_betac_kernel(){
     tk_betac.update(betac::get_betac_kernel_string(floattype, betackernelname));
-    betac::set_betackernel_sizes(floattype, gg.isColMajor, gg.tC, gg.m, gg.n, dim_coal, dim_uncoal, betac_global_work_size, betac_local_work_size);
+    betac::set_betackernel_sizes(gg.isColMajor, gg.tC, gg.m, gg.n, dim_coal, dim_uncoal, betac_global_work_size);//, betac_local_work_size);
     mowri << "in setup_betac_kernel, betac_global_work_size : " << betac_global_work_size << Endl; 
     set_betac_kernel_arguments();
 
   }
   
   void enqueue_betac_kernel(){
-    openclutil::cl_enqueue_ndrange_kernel(command_queue, tk_betac.clkern, 1, NULL, &betac_global_work_size, &betac_local_work_size, 0, NULL, &event_betac_kernel, "in enqueue_betac_kernel");
+    openclutil::cl_enqueue_ndrange_kernel(command_queue, tk_betac.clkern, 1, NULL, &betac_global_work_size, &betac::n_work_items_per_group, 0, NULL, &event_betac_kernel, "in enqueue_betac_kernel");
   }
 
 
@@ -476,24 +476,18 @@ public:
     
     hyperparams::HyperParams hp = hyperparams::get_default(gg, enforce_deterministic);
     
-    std::string soln_main_kernel_string;
     
     auto bundle = get_ksb(hp);//, soln_main_kernel_string);
     if (bundle.set_status.is_good() != true){
       throw tinygemm_error("the hyper parameters in get_default are not consistent, specifically : \n" + bundle.set_status.message);
     }
     
-    
     tinygemm::TinyGemmSolutionStatistics tgss(std::numeric_limits<float>::max(), 0, 0);    
+    
     std::string soln_betac_kernel_string = hp.n_work_items_per_c_elm == 1 ?  ""  : betac::get_betac_kernel_string(floattype, betackernelname);
-    std::string soln_betac_kernel_function_name = hp.n_work_items_per_c_elm == 1 ? "" : betackernelname; //kernelutil::get_kernel_function_name(soln_betac_kernel_string);
-    std::string soln_main_kernel_function_name = bundle.kernel_function_name;
+    std::string soln_betac_kernel_function_name = hp.n_work_items_per_c_elm == 1 ? "" : betackernelname;
     
-    
-    
-    return { soln_betac_kernel_string, soln_betac_kernel_function_name, bundle.kernel_string, soln_main_kernel_function_name, hp, bundle.dp, gg, floattype, tgss };
-
-
+    return { soln_betac_kernel_string, soln_betac_kernel_function_name, bundle.kernel_string, bundle.kernel_function_name, hp, bundle.dp, gg, floattype, tgss };
   }
   
   
@@ -646,7 +640,7 @@ public:
                 
                 
                 /* set kernel files */
-                std::string soln_betac_kernel = does_betac_inc == 1 ?  ""  : betac::get_betac_kernel_string(floattype, betackernelname);
+                std::string soln_betac_kernel = does_betac_inc == 1 ?  ""  : tk_betac.kernstr;
                 std::string soln_betac_kernel_function_name = does_betac_inc == 1 ? "" : tk_betac.fname;
                 std::string soln_main_kernel_function_name = bundle.kernel_function_name;                 
                                 
