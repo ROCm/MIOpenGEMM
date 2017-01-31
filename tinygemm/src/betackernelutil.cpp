@@ -2,7 +2,6 @@
 #include <sstream>
 
 #include <tinygemm/betackernelutil.hpp>
-//#include <tinygemm/kernelsnips.hpp>
 #include <tinygemm/tinygemmerror.hpp>
 #include <tinygemm/config.hpp>
 

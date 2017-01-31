@@ -2,7 +2,6 @@
 #include <sstream>
 #include <vector>
 #include <tinygemm/tinygemmerror.hpp>
-#include <tinygemm/kernelsnips.hpp>
 #include <tinygemm/outputwriter.hpp>
 #include <tinygemm/openclutil.hpp>
 #include  <CL/cl.h>
@@ -299,8 +298,9 @@ void set_platform_etc(cl_platform_id & platform, cl_uint & num_platforms, cl_con
 
 
 
-void set_program_and_kernel(const cl_command_queue & command_queue, cl_program & program, cl_kernel & kernel, std::string & kernel_function_name, const std::string & kernel_string){
+void set_program_and_kernel(const cl_command_queue & command_queue, const std::string & kernel_string, const std::string & kernel_function_name, cl_program & program, cl_kernel & kernel){
   
+  //std::string & kernel_function_name, 
   
   
   cl_context context;
@@ -309,7 +309,7 @@ void set_program_and_kernel(const cl_command_queue & command_queue, cl_program &
   cl_device_id device_id_to_use;
   cl_get_command_queue_info(command_queue, CL_QUEUE_DEVICE, sizeof(cl_device_id), &device_id_to_use, NULL, "hashIDbla101");
         
-  kernel_function_name = kernelutil::get_kernel_function_name(kernel_string);
+//  kernel_function_name = kernelutil::get_kernel_function_name(kernel_string);
   
   
   

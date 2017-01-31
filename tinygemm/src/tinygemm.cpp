@@ -84,10 +84,11 @@ class TinyGemmKernel{
       }
     }
     
-    void update(const std::string & new_kernstr){
+    void update(std::string && new_kernstr, const std::string & kern_func_name){
       try_release();
       kernstr = new_kernstr;      
-      openclutil::set_program_and_kernel(command_queue, clprog, clkern, fname, kernstr);
+      fname = kern_func_name;
+      openclutil::set_program_and_kernel(command_queue, kernstr, kern_func_name, clprog, clkern);
     }
     
     ~TinyGemmKernel(){
@@ -224,11 +225,10 @@ public:
   }
   
   void setup_betac_kernel(){
-    tk_betac.update(betac::get_betac_kernel_string(floattype, betackernelname));
-    betac::set_betackernel_sizes(gg.isColMajor, gg.tC, gg.m, gg.n, dim_coal, dim_uncoal, betac_global_work_size);//, betac_local_work_size);
+    tk_betac.update(betac::get_betac_kernel_string(floattype, betackernelname), betackernelname);
+    betac::set_betackernel_sizes(gg.isColMajor, gg.tC, gg.m, gg.n, dim_coal, dim_uncoal, betac_global_work_size);
     mowri << "in setup_betac_kernel, betac_global_work_size : " << betac_global_work_size << Endl; 
     set_betac_kernel_arguments();
-
   }
   
   void enqueue_betac_kernel(){
@@ -264,13 +264,13 @@ public:
   
   
 
-  void setup_main_kernel(const std::string & kernel_string, const hyperparams::HyperParams & hp, const derivedparams::DerivedParams & dp){
+  void setup_main_kernel(std::string && kernel_string, const hyperparams::HyperParams & hp, const derivedparams::DerivedParams & dp, const std::string & kern_func_name){
     
      /* Here we set the numbers of work groups (main_n_work_groups) and work items (main_global_work_size) for the main kernel */  
     sizingup::set_workforce(main_n_work_groups, main_local_work_size, main_global_work_size, gg.m, gg.n, hp.n_work_items_per_c_elm, hp.macro_tile_height, hp.macro_tile_width, dp.n_workitems_per_workgroup);
     
     mowri << "main kernel global work size : " << main_global_work_size <<  " (recommended ~ 4*64*40*64 = 655360)" << Endl; 
-    tk_main.update(kernel_string);
+    tk_main.update(std::move(kernel_string), kern_func_name);
     /* set main kernel's arguments */
     set_main_kernel_arguments();    
   }
@@ -304,11 +304,11 @@ public:
   
   
   
-  void setup_tinykernels(const std::string & kernstr, const hyperparams::HyperParams & hp, const derivedparams::DerivedParams & dp){
+  void setup_tinykernels(std::string && kernstr, const hyperparams::HyperParams & hp, const derivedparams::DerivedParams & dp, const std::string & kern_func_name){
     
     does_betac_inc = dp.does_beta_c_inc;
     
-    setup_main_kernel(kernstr, hp, dp);    
+    setup_main_kernel(std::move(kernstr), hp, dp, kern_func_name);    
     if (tk_betac.is_set() == false && does_betac_inc == false){
       setup_betac_kernel();
     }
@@ -432,9 +432,6 @@ public:
     gg.tC,
     gg.isColMajor);
     
-    //kernel_string = std::move(bundle.kernel_string)
-    
-    //return set_status;
     
   }
 
@@ -457,8 +454,9 @@ public:
         throw tinygemm_error("the hyper parameters in benchgemm are not consistent, specifically : \n" + bundle.set_status.message);
       }
       
+
   
-      setup_tinykernels(bundle.kernel_string, hps[i], bundle.dp);    
+      setup_tinykernels(std::move(bundle.kernel_string), hps[i], bundle.dp, bundle.kernel_function_name);    
       mowri << "(benchgemm) geometry  \t:" << gg.get_string()  << "\nEntering the core gemm loops" << Endl;
       core_gemm_loop(n_runs);
     }
@@ -592,7 +590,7 @@ public:
             
             
             auto bundle = get_ksb(hp);
-            tk_main.kernstr = std::move(bundle.kernel_string);
+            //tk_main.kernstr = std::move(bundle.kernel_string);
             
             if (bundle.set_status.is_good() == true){
               
@@ -602,7 +600,7 @@ public:
               ++global_counter;
               mowri << "global gen-com-bench : " << global_counter  <<  "." << Endl;
               
-              setup_tinykernels(tk_main.kernstr, hp, bundle.dp);    
+              setup_tinykernels(std::move(bundle.kernel_string), hp, bundle.dp, bundle.kernel_function_name);    
               mowri << "(find) geometry  \t:" << gg.get_string()  << "\nEntering the core gemm loops" << Endl;
               core_gemm_loop(n_runs_per_kernel);
   
