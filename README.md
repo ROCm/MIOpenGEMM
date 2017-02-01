@@ -16,26 +16,32 @@ For a given GEMM problem, tinygemm performs a non-exhaustive search through the 
 
 
 ## Configuring
-mkdir build
-cd build
-cmake ..
+
+`mkdir build`
+
+`cd build`
+
+`cmake ..`
+
 (if this fails, you may to need to set OpenCL_INCLUDE_DIR and OpenCL_LIBRARIES in CMakeCache.txt and cmake again)
 
 
 ## Building
-make
+`make`
 
 ## Installing
-make install
+`make install`
 
 
 ## Usage
-
+make tests examples
+Example use is presented in basicexample.cpp and devtest.cpp
 
 ## GEMM problem parameters
-
+`isColMaj, tA, tB, tC, m, n, k, lda, ldb` and `ldc`
 
 ## Hyperparameters 
-
+`Y128_X96_y8_x6_U8_P1_GA3_APLU0_BPLU1_PU1_LIW1_MIW1_ICE2_NAW64_UFO1`
 
 ## Heuristic graph search
+
