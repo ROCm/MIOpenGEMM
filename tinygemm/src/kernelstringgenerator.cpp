@@ -572,7 +572,7 @@ if (group_id_z == n_work_groups_with_1_more && k_remaining > 0){
   }
   
   void append_compute_string(std::stringstream & ss){
-    ss << dp.pragma_unroll_string << "for (unsigned row = 0; row < MICRO_TILE_HEIGHT; ++row){\n" << dp.pragma_unroll_string << "for (unsigned col = 0; col < MICRO_TILE_WIDTH; ++col){" << "\nrC[row][col] += rA[row]*rB[col]; // rA[row]*rB[col];  //mad(rA[row],rB[col],rC[row][col]); also, can the compiler change these unsigneds to shorts? if not, I should try.\n}\n}\n";
+    ss << dp.pragma_unroll_string << "for (unsigned row = 0; row < MICRO_TILE_HEIGHT; ++row){\n" << dp.pragma_unroll_string << "for (unsigned col = 0; col < MICRO_TILE_WIDTH; ++col){" << "\n//mad(rA[row],rB[col],rC[row][col]); \n//can the compiler change these unsigneds to chars? if not, maybe try. \n//That said, it's going to be unrolled anyway, so not worth it." << "\nrC[row][col] += rA[row]*rB[col];   \n}\n}\n";
   } 
   /* This returns the section which makes the within work-group adjust to a, b to
    * put a work item in the correct position to load its first element from global
@@ -830,7 +830,7 @@ const unsigned group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
 
 
     
-    /* check 1 : dp.n_work_items_per_workgroup divides dp.n_elements_in_a_unroll and dp.n_elements_in_b_unroll  */
+    /* check 1 : n_work_items_per_workgroup divides n_elements_in_a_unroll and n_elements_in_b_unroll  */
     std::stringstream set_status_stream;
     if (dp.n_elements_in_a_unroll % dp.n_work_items_per_workgroup != 0){
       set_status_stream << "this is not supported : dp.n_work_items_per_workgroup (" << dp.n_work_items_per_workgroup << ") is not a factor of n_elements_in_" <<  "a" << "_UNROLL (" << dp.n_elements_in_a_unroll << "). Consider rounding unroll up. \n";
@@ -848,7 +848,7 @@ const unsigned group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
     dp.n_elements_of_a_to_load_per_workitem = dp.n_elements_in_a_unroll / dp.n_work_items_per_workgroup;
     dp.n_elements_of_b_to_load_per_workitem = dp.n_elements_in_b_unroll / dp.n_work_items_per_workgroup;
 
-    /* check 2 : */
+    /* check 2 : tilability */
     std::string set_dimensions_status("");
     if (hp.work_item_load_a_pll_to_unroll == 0){
       set_dimensions_status += set_tile_dimensions(dp.micro_a_tile_perp_unroll, dp.micro_a_tile_pll_unroll, hp.macro_tile_height, hp.unroll, dp.n_elements_of_a_to_load_per_workitem); 
@@ -867,11 +867,21 @@ const unsigned group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
     if (set_dimensions_status != ""){
       return {std::move(set_dimensions_status), "this is not a kernel string", std::move(dp), "this is not a kernel function name"};
     }
-
-     
+    
     dp.n_micro_a_tiles_pll_unroll = hp.unroll / dp.micro_a_tile_pll_unroll;
     dp.n_micro_b_tiles_pll_unroll = hp.unroll / dp.micro_b_tile_pll_unroll;
   
+    /* check 3 : macro tile not too large */
+    if (gg.m < hp.macro_tile_height){
+      set_dimensions_status += "m < macro_tile_height, not considering this kernel\n";
+    }    
+    if (gg.n < hp.macro_tile_width){
+      set_dimensions_status += "m < macro_tile_width,  not considering this kernel\n";
+    }
+
+    if (set_dimensions_status != ""){
+      return {std::move(set_dimensions_status), "this is not a kernel string", std::move(dp), "this is not a kernel function name"};
+    }
   
       
   

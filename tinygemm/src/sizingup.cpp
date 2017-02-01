@@ -33,7 +33,7 @@ void check_sizes_ok_for_unsigned(const tinygemm::TinyGemmGeometry & gg){
 
 void check_sizes_ok_for_unsigned(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned n, unsigned k, unsigned lda, unsigned ldb, unsigned ldc, unsigned a_offset, unsigned b_offset, unsigned c_offset){
   
-  size_t max_size = std::pow(2, 8*sizeof(unsigned));
+  size_t max_size = std::pow(2, 8*sizeof(unsigned)) - 1;
 
   std::string base_frag("is too large : unsigned will wrap in address space. Code needs modification. \n");
   std::string errm = "";
