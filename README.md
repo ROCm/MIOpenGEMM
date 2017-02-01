@@ -41,7 +41,10 @@ Example use is presented in basicexample.cpp and devtest.cpp
 `isColMaj, tA, tB, tC, m, n, k, lda, ldb` and `ldc`
 
 ## Hyperparameters 
-`Y128_X96_y8_x6_U8_P1_GA3_APLU0_BPLU1_PU1_LIW1_MIW1_ICE2_NAW64_UFO1`
+To view what kernel described by 15 hyper-parameters looks, a string such as `Y128_X96_y8_x6_U8_P1_GA3_APLU0_BPLU1_PU1_LIW1_MIW1_ICE2_NAW64_UFO1` can be passed to a kernel string constructor (see for example devtest.cpp). The 15 parameters are (very briefly)
+`Y` : macro-tile height
+`X` : macro-tile width
+...
 
 ## Heuristic graph search
-
+TODO
