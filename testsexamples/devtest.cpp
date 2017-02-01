@@ -20,7 +20,8 @@
 tinygemm::hyperparams::HyperParams get_hp(std::string hyperstring = ""){
 
   if (hyperstring.compare("") == 0){
-    hyperstring = "Y128_X128_y8_x8_U8_P1_GA3_APLU0_BPLU1_PU0_LIW1_MIW1_ICE1_NAW64_UFO0";
+    //hyperstring = "Y128_X128_y8_x8_U8_P1_GA3_APLU0_BPLU1_PU0_LIW1_MIW1_ICE1_NAW64_UFO0";
+    hyperstring = "Y128_X96_y8_x6_U8_P1_GA3_APLU0_BPLU1_PU1_LIW1_MIW1_ICE2_NAW64_UFO1";
   }
   
   return hyperstring;
@@ -33,15 +34,15 @@ tinygemm::TinyGemmGeometry get_geometry(){
   bool tA = false;
   bool tB = false;
   bool tC = false;
-  unsigned m = 5000;    
-  unsigned n = 5000;
-  unsigned k = 5000;
-  unsigned lda = ( tA == isColMajor ? k : m ) + 1;
-  unsigned ldb = ( tB == isColMajor ? n : k ) + 2;
-  unsigned ldc = ( tC == isColMajor ? n : m ) + 3;
-  unsigned a_offset = 5;
-  unsigned b_offset = 7;
-  unsigned c_offset = 11;
+  unsigned m = 1234;    
+  unsigned n = 2345;
+  unsigned k = 3456;
+  unsigned lda = ( tA == isColMajor ? k : m ) + 11;
+  unsigned ldb = ( tB == isColMajor ? n : k ) + 22;
+  unsigned ldc = ( tC == isColMajor ? n : m ) + 33;
+  unsigned a_offset = 51;
+  unsigned b_offset = 71;
+  unsigned c_offset = 91;
 
   return { isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, a_offset, b_offset, c_offset };
     
@@ -66,7 +67,8 @@ void print_kernel(){
   
   std::cout << bundle.kernel_string;
   
-  std::ofstream floper ("/home/idiap/akernel.cl", std::ios::out); 
+  //std::ofstream floper ("/home/idiap/tinygemm/examplekernels/example1.cl", std::ios::out); 
+    std::ofstream floper ("/home/idiap/akernel.cl", std::ios::out); 
   floper << bundle.kernel_string;
   
   floper.close();
@@ -77,8 +79,8 @@ void print_kernel(){
 int main(){
   
 
-  bool test_print = false;
-  bool test_benchgemm = true;
+  bool test_print = true;
+  bool test_benchgemm = false;
   bool test_find = false;
   bool test_accuracy = false;
   

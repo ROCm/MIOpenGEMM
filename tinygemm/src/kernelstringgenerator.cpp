@@ -10,7 +10,8 @@
 #include <cmath>
 #include <tuple>
 #include <fstream>
-
+#include <chrono>
+#include <ctime>
 
 namespace tinygemm{
 namespace kerngen{
@@ -886,8 +887,8 @@ const unsigned group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
       
   
   
-  
-    
+    std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+    std::time_t generation_time = std::chrono::system_clock::to_time_t(now);
     
   
   std::stringstream ss;
@@ -895,7 +896,11 @@ const unsigned group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
   
   
   ss << 
-R"(/* ***********************************************
+  R"(/* ******************************************************************
+* This gemm kernel string was generated at )" << std::ctime(&generation_time) << 
+R"(****************************************************************** */
+
+/* ***********************************************
 * These parameters define WHAT this kernel does *
 * *********************************************** */
 )";
