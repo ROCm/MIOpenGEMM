@@ -2,9 +2,13 @@
 
 tinygemm is a tool for generating OpenCL matrix multiplication (GEMM) kernels. The project is inspired by, and very similar to, [Tensile](https://github.com/RadeonOpenCompute/Tensile), a general purpose tool for tensor problems.
 
+## Background
+
 A GEMM problem,  `c.tC = alpha * a.tA * b.tB + beta * c.tC`, is defined by the dimensions and memory layout of matrices a,b and c: isColMaj, tA, tB, tC, m, n, k, lda, ldb, and ldc. These 10 parameters are described later.
 
-There are several *hyper-parameters* in GEMM kernels, describing *how* a kernel does GEMM. Specifically, hyper-parameters describe where threads read and write between the different memory levels.  
+The standard algorithm requires `2mnk` floating point operations to solve a GEMM problem is. A device with with `t` threads of clock-speed `f` *should* solve a GEMM problem in time `2mnk/(ft)`.  
+
+There are several *hyper-parameters* in GEMM kernels, describing *how* a kernel does GEMM. Specifically, hyper-parameters describe where threads read and write between the different memory levels. 
 
 There is an exponentially large number of ways (kernels) for doing matrix multiplication on a gpu, and the best way (kernel) depends on the dimensions (m,n,k) and memory layout of the matrices. For a given GEMM problem, tinygemm performs a non-exhaustive search through the kernels, and returns the best (fastest) that it finds in an allotted user-defined time. The goal of tinygemm is to rapidly find a reasonable kernel, and then if given enough time, to find an exceptional kernel.
 
