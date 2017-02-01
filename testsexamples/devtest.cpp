@@ -13,7 +13,7 @@
 
 #include "setabc.hpp"
 /* Note that currently (13/11/2016) most testing is done through dev/python scripts */
-/* Update (30/01/2017) this is the preffered place for doing testing */
+/* Update (30/01/2017) this is the prefered place for doing testing */
 
 
 
@@ -76,10 +76,15 @@ void print_kernel(){
 
 int main(){
   
-  std::string test = "print";
+
+  bool test_print = true;
+  bool test_benchgemm = false;
+  bool test_find = false;
+  bool test_accuracy = true;
+  
   typedef float tfloat;
   srand(time(NULL));
-  tinygemm::hyperparams::HyperParams hp = get_hp();//"Y8_X8_y1_x1_U8_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO0");
+  tinygemm::hyperparams::HyperParams hp = get_hp();
   
   tinygemm::TinyGemmGeometry gg = get_geometry();
 
@@ -90,31 +95,28 @@ int main(){
 
   setabc::set_abc<tfloat>(v_a, v_b, v_c, gg);
   
-  double alpha = 1.3; //1.1;
-  double beta = 1.7;//1.1;
+  double alpha = 1.3; 
+  double beta = 1.7;
   
   const tfloat * c_true_bla = nullptr; 
   
-  if (test.compare("print") == 0){
+  if (test_print){
     print_kernel();
   }
   
-  else if (test.compare("accuracy_test") == 0){
+  if (test_accuracy){
     tinygemm::dev::accuracy_test(hp, gg, alpha, beta, v_a.data(), v_b.data(), v_c.data(), c_true_bla, true, "");
   }
 
-  else if (test.compare("benchgemm") == 0){
+  if (test_benchgemm){
     tinygemm::dev::benchgemm({hp}, 5, gg, alpha, beta, v_a.data(), v_b.data(), v_c.data(), true, "");
   }
   
-  else if (test.compare("find") == 0){
+  if (test_find){
     float allotted_time = 5.;
     tinygemm::dev::find(allotted_time, v_a.data(), v_b.data(), v_c.data(), false, gg, alpha, beta, true, "");
   }
   
-  else{
-    throw tinygemm::tinygemm_error("unrecognised test string, `" + test + "'.");
-  }
   return 0;
 }
 

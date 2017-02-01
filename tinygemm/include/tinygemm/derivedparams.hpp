@@ -9,18 +9,21 @@
 namespace tinygemm{
 namespace derivedparams{
 
+/* GA 3 specific derived parameters */
 class GA3Params{
 private: 
   unsigned uninitialised_unsigned = std::numeric_limits<unsigned>::max();
   
 public:
-  //GA 3 specific.
+
   unsigned super_column_width = uninitialised_unsigned;
   unsigned last_super_column_width = uninitialised_unsigned;
 
 
 };
 
+
+/* all derived parameters */
 class DerivedParams{
 
 private: 
@@ -31,14 +34,11 @@ public:
 
 
 /* TODO : write descriptions */
-
-
-
   unsigned split_on_k = uninitialised_unsigned;
   unsigned does_beta_c_inc = uninitialised_unsigned;
   unsigned macro_tile_area = uninitialised_unsigned;
   unsigned micro_tile_area = uninitialised_unsigned;
-  unsigned n_workitems_per_workgroup = uninitialised_unsigned;
+  unsigned n_work_items_per_workgroup = uninitialised_unsigned;
   unsigned macro_tile_height_and_pad = uninitialised_unsigned;
   unsigned macro_tile_width_and_pad = uninitialised_unsigned;
   unsigned n_elements_in_a_unroll = uninitialised_unsigned;
@@ -59,7 +59,9 @@ public:
   unsigned preshift_rightmost_tile_width = uninitialised_unsigned;
   unsigned n_groups_vertically = uninitialised_unsigned;
   unsigned n_groups_horizontally = uninitialised_unsigned;
-  
+  unsigned n_work_groups = uninitialised_unsigned;
+  unsigned global_work_size = uninitialised_unsigned; 
+
   GA3Params ga3;
 
 

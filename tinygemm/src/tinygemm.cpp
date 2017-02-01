@@ -144,11 +144,9 @@ private:
   size_t main_global_work_size;
   
   /* parameters related to the scaling (betac) kernel */
-  unsigned dim_coal;
-  unsigned dim_uncoal;
   size_t betac_global_work_size;
-  //size_t betac_local_work_size = betac::n_work_items_per_group;
-
+  
+  
   /* stores (the most recent of n_runs) execution time */
   size_t t_start_betac_kernel, t_end_betac_kernel, t_start_main_kernel, t_end_main_kernel;
 
@@ -215,8 +213,8 @@ public:
   
   void set_betac_kernel_arguments(){
     tk_betac.set_kernel_args( {
-      {sizeof(unsigned),    &dim_coal},
-      {sizeof(unsigned),    &dim_uncoal},
+      {sizeof(unsigned),    &gg.derived.dim_c_coal},
+      {sizeof(unsigned),    &gg.derived.dim_c_uncoal},
       {sizeof(unsigned),    &gg.ldc},
       {sizeof(unsigned),    &gg.c_offset},
       {sizeof(cl_mem),      (void *)&c_gpu},
@@ -226,7 +224,7 @@ public:
   
   void setup_betac_kernel(){
     tk_betac.update(betac::get_betac_kernel_string(floattype, betackernelname), betackernelname);
-    betac::set_betackernel_sizes(gg.isColMajor, gg.tC, gg.m, gg.n, dim_coal, dim_uncoal, betac_global_work_size);
+    betac_global_work_size = betac::get_global_work_size(gg);
     mowri << "in setup_betac_kernel, betac_global_work_size : " << betac_global_work_size << Endl; 
     set_betac_kernel_arguments();
   }
@@ -248,12 +246,6 @@ public:
       {sizeof(cl_mem),      (void *)&b_gpu},
       {floatbytes,           m_alpha[floattype]},
       {floatbytes,           m_beta[floattype]},
-      {sizeof(unsigned),    &gg.lda},
-      {sizeof(unsigned),    &gg.ldb},
-      {sizeof(unsigned),    &gg.ldc},
-      {sizeof(unsigned),    &gg.m},
-      {sizeof(unsigned),    &gg.n},
-      {sizeof(unsigned),    &gg.k},
       {sizeof(unsigned),    &gg.a_offset},
       {sizeof(unsigned),    &gg.b_offset},
       {sizeof(unsigned),  &gg.c_offset} 
@@ -267,7 +259,7 @@ public:
   void setup_main_kernel(std::string && kernel_string, const hyperparams::HyperParams & hp, const derivedparams::DerivedParams & dp, const std::string & kern_func_name){
     
      /* Here we set the numbers of work groups (main_n_work_groups) and work items (main_global_work_size) for the main kernel */  
-    sizingup::set_workforce(main_n_work_groups, main_local_work_size, main_global_work_size, gg.m, gg.n, hp.n_work_items_per_c_elm, hp.macro_tile_height, hp.macro_tile_width, dp.n_workitems_per_workgroup);
+    sizingup::set_workforce(main_n_work_groups, main_local_work_size, main_global_work_size, gg.m, gg.n, hp.n_work_items_per_c_elm, hp.macro_tile_height, hp.macro_tile_width, dp.n_work_items_per_workgroup);
     
     mowri << "main kernel global work size : " << main_global_work_size <<  " (recommended ~ 4*64*40*64 = 655360)" << Endl; 
     tk_main.update(std::move(kernel_string), kern_func_name);

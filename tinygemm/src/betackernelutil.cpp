@@ -9,16 +9,18 @@ namespace tinygemm{
 namespace betac{
 
 
-void set_betackernel_sizes(bool isColMajor, bool tC, unsigned m, unsigned n, unsigned & dim_coal, unsigned & dim_uncoal, size_t & betac_global_work_size){
-  
-  dim_coal = tC == isColMajor ? n : m;
-  dim_uncoal = tC == isColMajor ? m : n;
+
+
+
+size_t get_global_work_size(const tinygemm::TinyGemmGeometry & gg){
     
-  size_t n_betac_threads = dim_uncoal*(dim_coal/work_per_thread + ((dim_coal%work_per_thread) != 0));
+  size_t n_betac_threads = gg.derived.dim_c_uncoal*(gg.derived.dim_c_coal/work_per_thread + ((gg.derived.dim_c_coal%work_per_thread) != 0));
   size_t number_of_betac_work_groups = (n_betac_threads / n_work_items_per_group) + ((n_betac_threads % n_work_items_per_group) != 0) ; 
   
-  betac_global_work_size = number_of_betac_work_groups*n_work_items_per_group;
-
+  size_t betac_global_work_size = number_of_betac_work_groups*n_work_items_per_group;
+                                                       
+  return betac_global_work_size;
+  
 }
 
 

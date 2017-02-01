@@ -10,7 +10,13 @@ namespace tinygemm{
 
 
 TinyGemmGeometry::TinyGemmGeometry(bool isColMajor_, bool tA_, bool tB_, bool tC_, unsigned lda_, unsigned ldb_, unsigned ldc_, unsigned m_, unsigned n_, unsigned k_, unsigned a_offset_, unsigned b_offset_, unsigned c_offset_):isColMajor(isColMajor_), tA(tA_), tB(tB_), tC(tC_), lda(lda_), ldb(ldb_), ldc(ldc_), m(m_), n(n_), k(k_), a_offset(a_offset_), b_offset(b_offset_), c_offset(c_offset_) {
+
   consistencychecks::check_ldx_mnk_consistent(isColMajor,  tA,  tB,  tC,  lda,  ldb,  ldc,  m,  n,  k); //, a_offset, b_offset, c_offset
+  
+  derived.dim_c_coal = tC == isColMajor ? n : m;
+  derived.dim_c_uncoal = tC == isColMajor ? m : n;
+
+
 }
 
 std::string TinyGemmGeometry::get_string() const{

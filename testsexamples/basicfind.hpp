@@ -105,9 +105,9 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
      * We use the kernel on the same problem as benchmarked. 
      * I expect this will be the standard workflow with tinygemm.  */
     
-    std::map<std::string, size_t> betac_kernel_worksize_params;    
-    std::map<std::string, size_t> main_kernel_worksize_params;
-    main_kernel_worksize_params = soln.get_main_kernel_worksize_params(m,n);
+    //std::map<std::string, size_t> betac_kernel_worksize_params;    
+    //std::map<std::string, size_t> main_kernel_worksize_params;
+    //main_kernel_worksize_params = soln.get_main_kernel_worksize_params(m,n);
     
     /* Note that the alpha and beta used in the `find' step are always double, even if the data type is float.  
      * This above design choice was made to reduce the amount of object code. 
@@ -131,9 +131,14 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
       tinygemm::openclutil::cl_build_program(betac_program, 1, &device_id_to_use, buildOptions, NULL, NULL, "soln.betac_kernel is not empty string (in basicfind.hpp)");     
       auto betac_kernel_function_name_cstr = soln.betac_kernel_function_name.c_str();            
       betac_kernel = tinygemm::openclutil::cl_create_kernel(betac_program, betac_kernel_function_name_cstr, "creating betac_kernel in basicfind.hpp");
-      betac_kernel_worksize_params = soln.get_betac_kernel_worksize_params(m,n);
-      tinygemm::openclutil::cl_set_kernel_arg(betac_kernel, 0, sizeof(unsigned), &betac_kernel_worksize_params.at("dim_coal"), "betac 0");
-      tinygemm::openclutil::cl_set_kernel_arg(betac_kernel, 1, sizeof(unsigned), &betac_kernel_worksize_params.at("dim_uncoal"), "betac 1");
+      
+      //betac_kernel_worksize_params = soln.get_betac_kernel_worksize_params(m,n);
+      //tinygemm::openclutil::cl_set_kernel_arg(betac_kernel, 0, sizeof(unsigned), &betac_kernel_worksize_params.at("dim_coal"), "betac 0");
+      //tinygemm::openclutil::cl_set_kernel_arg(betac_kernel, 1, sizeof(unsigned), &betac_kernel_worksize_params.at("dim_uncoal"), "betac 1");
+
+      tinygemm::openclutil::cl_set_kernel_arg(betac_kernel, 0, sizeof(unsigned), &geometry.derived.dim_c_coal, "betac 0");
+      tinygemm::openclutil::cl_set_kernel_arg(betac_kernel, 1, sizeof(unsigned), &geometry.derived.dim_c_uncoal, "betac 1");
+            
       tinygemm::openclutil::cl_set_kernel_arg(betac_kernel, 2, sizeof(unsigned), &ldc, "betac 2");
       tinygemm::openclutil::cl_set_kernel_arg(betac_kernel, 3, sizeof(unsigned), &c_offset, "betac 3");
       tinygemm::openclutil::cl_set_kernel_arg(betac_kernel, 4, sizeof(cl_mem), (void *)&c_gpu, "betac 4");
@@ -147,32 +152,31 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
     tinygemm::openclutil::cl_build_program(main_program, 1, &device_id_to_use, buildOptions, NULL, NULL, "basicfind.hpp, building main_program");     
     auto main_kernel_function_name_cstr = soln.main_kernel_function_name.c_str();
     main_kernel = tinygemm::openclutil::cl_create_kernel(main_program, main_kernel_function_name_cstr, "main kernel, in basicfind.hpp");      
-    tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 0, sizeof(cl_mem), (void *)&c_gpu, "main kernel 1 (basicfind.hpp)");
+    tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 0, sizeof(cl_mem), (void *)&c_gpu, "main kernel 0 (basicfind.hpp)");
     tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 1, sizeof(cl_mem), (void *)&a_gpu, "main kernel 1 (basicfind.hpp)");
-    tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 2, sizeof(cl_mem), (void *)&b_gpu, "main kernel 1 (basicfind.hpp)");
-    tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 3, sizeof(TFloat), &alpha_true_type, "main kernel 1 (basicfind.hpp)");
-    tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 4, sizeof(TFloat), &beta_true_type, "main kernel 1 (basicfind.hpp)");
-    tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 5, sizeof(unsigned), &lda, "main kernel 1 (basicfind.hpp)");
-    tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 6, sizeof(unsigned), &ldb, "main kernel 1 (basicfind.hpp)");
-    tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 7, sizeof(unsigned), &ldc, "main kernel 1 (basicfind.hpp)");
-    tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 8, sizeof(unsigned), &m, "main kernel 1 (basicfind.hpp)");
-    tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 9, sizeof(unsigned), &n, "main kernel 1 (basicfind.hpp)");
-    tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 10, sizeof(unsigned), &k, "main kernel 1 (basicfind.hpp)");
-    tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 11, sizeof(unsigned), &a_offset, "main kernel 1 (basicfind.hpp)");
-    tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 12, sizeof(unsigned), &b_offset, "main kernel 1 (basicfind.hpp)");
-    tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 13, sizeof(unsigned), &c_offset, "main kernel 1 (basicfind.hpp)");  
+    tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 2, sizeof(cl_mem), (void *)&b_gpu, "main kernel 2 (basicfind.hpp)");
+    tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 3, sizeof(TFloat), &alpha_true_type, "main kernel 3 (basicfind.hpp)");
+    tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 4, sizeof(TFloat), &beta_true_type, "main kernel 4 (basicfind.hpp)");
+    tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 5, sizeof(unsigned), &a_offset, "main kernel 5 (basicfind.hpp)");
+    tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 6, sizeof(unsigned), &b_offset, "main kernel 6 (basicfind.hpp)");
+    tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 7, sizeof(unsigned), &c_offset, "main kernel 7 (basicfind.hpp)");  
     
     
     /* Enqueueing the kernel(s) */
     
     /* Enqueue the betac kernel if necessary */
     if (soln.betac_kernel.compare("") != 0){
-      tinygemm::openclutil::cl_enqueue_ndrange_kernel(command_queue, betac_kernel, 1, NULL, &betac_kernel_worksize_params.at("global_work_size"), &betac_kernel_worksize_params.at("local_work_size"), 0, NULL, NULL, "Error in basicfind.hpp (betac kernel enqueueing)");
+      //tinygemm::openclutil::cl_enqueue_ndrange_kernel(command_queue, betac_kernel, 1, NULL, &betac_kernel_worksize_params.at("global_work_size"), &betac_kernel_worksize_params.at("local_work_size"), 0, NULL, NULL, "Error in basicfind.hpp (betac kernel enqueueing)");
+      
+      tinygemm::openclutil::cl_enqueue_ndrange_kernel(command_queue, betac_kernel, 1, NULL, &soln.betac_global_work_size, &soln.betac_local_work_size, 0, NULL, NULL, "Error in basicfind.hpp (betac kernel enqueueing)");
     }
     
     /* Enqueue the main kernel */
     cl_event event_main_kernel;
-    tinygemm::openclutil::cl_enqueue_ndrange_kernel(command_queue, main_kernel, 1, NULL, &main_kernel_worksize_params.at("global_work_size"), &main_kernel_worksize_params.at("local_work_size"), 0,NULL, &event_main_kernel, "enqueueing main kernel (basicfind.hpp)");  
+    //tinygemm::openclutil::cl_enqueue_ndrange_kernel(command_queue, main_kernel, 1, NULL, &main_kernel_worksize_params.at("global_work_size"), &main_kernel_worksize_params.at("local_work_size"), 0,NULL, &event_main_kernel, "enqueueing main kernel (basicfind.hpp)");  
+    
+    tinygemm::openclutil::cl_enqueue_ndrange_kernel(command_queue, main_kernel, 1, NULL, &soln.main_kernel_global_work_size, &soln.main_kernel_local_work_size, 0,NULL, &event_main_kernel, "enqueueing main kernel (basicfind.hpp)"); 
+     
     tinygemm::openclutil::cl_wait_for_events(1, &event_main_kernel, "waiting for main kernel in basicfind.hpp");
 
     
@@ -208,9 +212,15 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
         auto start = std::chrono::high_resolution_clock::now();
         for (unsigned pfr = 0; pfr < npr; ++pfr){
           if (soln.betac_kernel.compare("") != 0){
-            tinygemm::openclutil::cl_enqueue_ndrange_kernel(command_queue, betac_kernel, 1, NULL, &betac_kernel_worksize_params.at("global_work_size"), &betac_kernel_worksize_params.at("local_work_size"), 0, NULL, NULL, "in n_positive_runs > 1 loop, betac");
+            //tinygemm::openclutil::cl_enqueue_ndrange_kernel(command_queue, betac_kernel, 1, NULL, &betac_kernel_worksize_params.at("global_work_size"), &betac_kernel_worksize_params.at("local_work_size"), 0, NULL, NULL, "in n_positive_runs > 1 loop, betac");
+            
+            tinygemm::openclutil::cl_enqueue_ndrange_kernel(command_queue, betac_kernel, 1, NULL, &soln.betac_global_work_size, &soln.betac_local_work_size, 0, NULL, NULL, "in n_positive_runs > 1 loop, betac");
+            
           }
-          tinygemm::openclutil::cl_enqueue_ndrange_kernel(command_queue, main_kernel, 1, NULL, &main_kernel_worksize_params.at("global_work_size"), &main_kernel_worksize_params.at("local_work_size"), 0,NULL, &event_main_kernel, "in n_positive_runs > 1 loop, main ");  
+          //tinygemm::openclutil::cl_enqueue_ndrange_kernel(command_queue, main_kernel, 1, NULL, &main_kernel_worksize_params.at("global_work_size"), &main_kernel_worksize_params.at("local_work_size"), 0,NULL, &event_main_kernel, "in n_positive_runs > 1 loop, main "); 
+          
+          tinygemm::openclutil::cl_enqueue_ndrange_kernel(command_queue, main_kernel, 1, NULL, &soln.main_kernel_global_work_size, &soln.main_kernel_local_work_size, 0,NULL, &event_main_kernel, "in n_positive_runs > 1 loop, main "); 
+           
         }
         /* Wait for the final kernel to complete, then record the elapsed time */
         tinygemm::openclutil::cl_wait_for_events(1, &event_main_kernel, "waiting for event_main_kernel");

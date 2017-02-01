@@ -50,15 +50,6 @@ class KernelString{
     
     tinygemm::TinyGemmGeometry gg;
     
-    //// tA  
-    //unsigned gg.tA;
-    //// tB
-    //unsigned gg.tB; 
-    //// tC
-    //unsigned gg.tC;
-    //// CM
-    //unsigned gg.isColMajor; 
-    
   
   KernelString(
   
@@ -78,16 +69,8 @@ class KernelString{
   hp(hp_),
   kernelname(kernelname_),
   float_size(float_size_),
-  
   gg(gg_)
-  //gg.tA(gg.tA_), 
-  //gg.tB(gg.tB_), 
-  //gg.tC(gg.tC_), 
-  //gg.isColMajor(gg.isColMajor_)
-  
-  
 
-  
   {
     
     hp.checks();
@@ -108,7 +91,7 @@ class KernelString{
     
     dp.pragma_unroll_string = hp.unroll_pragma == 1 ?  "#pragma unroll\n" : "" ;
     
-    dp.effective_k = hp.unroll_for_offset == 0 ? "K__" : "k_plus_offset";    
+    dp.effective_k = hp.unroll_for_offset == 0 ? "__K__" : "k_plus_offset";    
     dp.alpha_scaled = hp.c_micro_tiles_interwoven == 0 ? "alpha*rC[row][col]" : "alpha*rC[row/N_MICRO_TILES_VERTICALLY][col/N_MICRO_TILES_HORIZONTALLY]";
     dp.t_float = float_size == 32 ? "float" : "double";
     
@@ -118,14 +101,9 @@ class KernelString{
 
     dp.n_groups_vertically = gg.m / hp.macro_tile_height + (dp.preshift_bottommost_tile_height != hp.macro_tile_height);
     dp.n_groups_horizontally = gg.n / hp.macro_tile_width + (dp.preshift_rightmost_tile_width != hp.macro_tile_width);
-      
-      
+
 
   }
-
-
-
-
 
 
 
@@ -270,7 +248,6 @@ group_id_vertical = (group_id_xy  - (N_GROUPS_HORIZONTALLY - LAST_SUPER_COLUMN_W
 
     if (hp.group_allocation == 3){
 
-      //unsigned super_column_width;
       if (dp.split_on_k == 1){
         dp.ga3.super_column_width = 
         static_cast<unsigned>(std::floor(std::sqrt(static_cast<double>(hp.n_target_active_workgroups) / static_cast<double>(hp.n_work_items_per_c_elm))));
@@ -291,8 +268,6 @@ group_id_vertical = (group_id_xy  - (N_GROUPS_HORIZONTALLY - LAST_SUPER_COLUMN_W
       ss << "\n/* LAST_SUPER_COLUMN_WIDTH : N_GROUPS_HORIZONTALLY % SUPER_COLUMN_WIDTH  */";
       ss << "\n#define LAST_SUPER_COLUMN_WIDTH " << dp.ga3.last_super_column_width;
       
-      //unsigned last_super_column_width = n_groups_horizontally % SUPER_COLUMN_WIDTH;
-      //zzzzzz
     }
   }
   
@@ -597,7 +572,7 @@ if (group_id_z == n_work_groups_with_1_more && k_remaining > 0){
   }
   
   void append_compute_string(std::stringstream & ss){
-    ss << dp.pragma_unroll_string << "for (unsigned row = 0; row < MICRO_TILE_HEIGHT; ++row){\n" << dp.pragma_unroll_string << "for (unsigned col = 0; col < MICRO_TILE_WIDTH; ++col){" << "\nrC[row][col] += rA[row]*rB[col]; // rA[row]*rB[col];  //mad(rA[row],rB[col],rC[row][col]);\n}\n}\n";
+    ss << dp.pragma_unroll_string << "for (unsigned row = 0; row < MICRO_TILE_HEIGHT; ++row){\n" << dp.pragma_unroll_string << "for (unsigned col = 0; col < MICRO_TILE_WIDTH; ++col){" << "\nrC[row][col] += rA[row]*rB[col]; // rA[row]*rB[col];  //mad(rA[row],rB[col],rC[row][col]); also, can the compiler change these unsigneds to shorts? if not, I should try.\n}\n}\n";
   } 
   /* This returns the section which makes the within work-group adjust to a, b to
    * put a work item in the correct position to load its first element from global
@@ -646,16 +621,11 @@ if (group_id_z == n_work_groups_with_1_more && k_remaining > 0){
     
     if (use_edge_trick != 0){
       ss << "\n" << 
-      "/* 1 + (M__ - 1) % MACRO_TILE_HEIGHT  */ \n" << 
+      "/* 1 + (__M__ - 1) % MACRO_TILE_HEIGHT  */ \n" << 
       "#define PRESHIFT_BOTTOMMOST_TILE_HEIGHT " << dp.preshift_bottommost_tile_height << " // somewhere in 1 ... MACRO_TILE_HEIGHT\n" << 
-      "/* 1 + (N__ - 1) % MACRO_TILE_WIDTH */ \n" << 
+      "/* 1 + (__N__ - 1) % MACRO_TILE_WIDTH */ \n" << 
       "#define PRESHIFT_RIGHTMOST_TILE_WIDTH " << dp.preshift_rightmost_tile_width << " // somewhere in 1 ... MACRO_TILE_WIDTH\n";
     }
-    
-    //if (use_edge_trick != 0){
-      //ss << "\nconst unsigned preshift_bottommost_tile_height = 1 + (M__ - 1) % MACRO_TILE_HEIGHT; // 1 ... MACRO_TILE_HEIGHT\n";
-      //ss << "const unsigned preshift_rightmost_tile_width = 1 + (N__ - 1) % MACRO_TILE_WIDTH; // 1 ... MACRO_TILE_WIDTH\n";
-    //}
   }
   
   void append_special_case_edge_trick_string(std::stringstream & ss){
@@ -688,27 +658,14 @@ macro_tile_start_row_in_c -= (MACRO_TILE_HEIGHT - PRESHIFT_BOTTOMMOST_TILE_HEIGH
   void append_ngroups_grid_string(std::stringstream & ss){
     ss << "\n/* the number of work groups vertically and horizontally. */\n/* note that this ignores n_work_items_per_c_elm, so that only one workgroup per c cell is used in computing this */ ";
     
-    
-    
-    //if (use_edge_trick == 1){
-      //ss << "\nconst unsigned n_groups_vertically = M__ / MACRO_TILE_HEIGHT + (preshift_bottommost_tile_height != MACRO_TILE_HEIGHT);";
-      //ss << "\nconst unsigned n_groups_horizontally = N__ / MACRO_TILE_WIDTH + (preshift_rightmost_tile_width != MACRO_TILE_WIDTH);\n";
-    //}
-    
-    //else{
-      //ss << "\nconst unsigned n_groups_vertically = M__ / MACRO_TILE_HEIGHT;";
-      //ss << "\nconst unsigned n_groups_horizontally = N__ / MACRO_TILE_WIDTH;\n";
-    //}
-    
-    
     ss << "\n"
-    << "/* number of groups vertically : M__ / MACRO_TILE_HEIGHT";
+    << "/* number of groups vertically : __M__ / MACRO_TILE_HEIGHT";
     if (use_edge_trick == 1){
       ss << " + (PRESHIFT_BOTTOMMOST_TILE_HEIGHT != MACRO_TILE_HEIGHT)";
     } 
     ss << " */" << "\n"
     << "#define N_GROUPS_VERTICALLY " <<  dp.n_groups_vertically << "\n"
-    << "/* number of groups horizontally : N__ / MACRO_TILE_WIDTH";
+    << "/* number of groups horizontally : __N__ / MACRO_TILE_WIDTH";
     if (use_edge_trick == 1){
       ss << " + (PRESHIFT_RIGHTMOST_TILE_WIDTH != MACRO_TILE_WIDTH)";
     }
@@ -758,7 +715,7 @@ b += UNROLL*group_id_z*ROW_STRIDE_B;
 R"(
 /* this additional offset of a and b appears because UNROLL_FOR_OFFSET is 1 */
 unsigned unroll_offset = (3*group_id_vertical + 11*group_id_vertical)%UNROLL;
-unsigned k_plus_offset = K__ + unroll_offset;
+unsigned k_plus_offset = __K__ + unroll_offset;
 a -= unroll_offset*COL_STRIDE_A;
 b -= unroll_offset*ROW_STRIDE_B;
 )";
@@ -790,15 +747,10 @@ const unsigned group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
     }
   }
   
-  //void append_stride_defn(std::stringstream & ss, char LETTER, char letter, std::string ldx,  unsigned transposed){
     
-  void append_stride_defn(std::stringstream & ss, char LETTER, unsigned ldx,  unsigned transposed){ //, char letter
+  void append_stride_defn(std::stringstream & ss, char LETTER, unsigned ldx,  unsigned transposed){
     
     unsigned transposed_xor_is_col_major = (transposed + gg.isColMajor) % 2;
-    
-    //ss << "\n/* To move from " << LETTER << "[row][col] to " << LETTER << "[row+1][col], how much should the pointer increment? As we have " << LETTER << "_TRANSPOSED = " << transposed << " and IS_COL_MAJOR = " << gg.isColMajor << ", this is */\nconst unsigned row_stride_" << letter << " = " << (transposed_xor_is_col_major == 1 ? "1" : ldx) << ";\n";
-    
-    //ss << "/* To move from " << LETTER << "[row][col] to " << LETTER << "[row][col+1], how much should the pointer increment? As we have " << LETTER << "_TRANSPOSED = " << transposed << " and IS_COL_MAJOR = " << gg.isColMajor << ", this is */\nconst unsigned col_stride_" << letter << " = " << (transposed_xor_is_col_major == 1 ? ldx : "1") << ";\n";
     
     std::stringstream ldx_string_ss;
     ldx_string_ss << "LD" << LETTER;
@@ -812,11 +764,7 @@ const unsigned group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
   }
   
   void append_stride_defns(std::stringstream & ss){
-    //ss << "\n/*a performance note : moving these (row_stride_x, col_stride_x) definitions to precompiler does not improve memory use or speed. */\n";
-    //append_stride_defn(ss, 'A', 'a', "lda", gg.tA);
-    //append_stride_defn(ss, 'B', 'b', "ldb", gg.tB);
-    //append_stride_defn(ss, 'C', 'c', "ldc", gg.tC);
-    
+        
     append_stride_defn(ss, 'A', gg.lda, gg.tA);
     append_stride_defn(ss, 'B', gg.ldb, gg.tB);
     append_stride_defn(ss, 'C', gg.ldc, gg.tC);
@@ -867,7 +815,7 @@ const unsigned group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
     }
     
 
-    dp.n_workitems_per_workgroup = dp.macro_tile_area / dp.micro_tile_area;
+    dp.n_work_items_per_workgroup = dp.macro_tile_area / dp.micro_tile_area;
     dp.macro_tile_height_and_pad = hp.macro_tile_height + hp.pad;
     dp.macro_tile_width_and_pad = hp.macro_tile_width + hp.pad;
     dp.n_elements_in_a_unroll = hp.macro_tile_height * hp.unroll;
@@ -876,17 +824,20 @@ const unsigned group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
     dp.n_elements_in_padded_b_unroll = dp.macro_tile_width_and_pad * hp.unroll;
     dp.n_micro_tiles_vertically = hp.macro_tile_height / hp.micro_tile_height;
     dp.n_micro_tiles_horizontally = hp.macro_tile_width / hp.micro_tile_width ;
+    
+    dp.n_work_groups = hp.n_work_items_per_c_elm * ((gg.m/hp.macro_tile_height) + (gg.m%hp.macro_tile_height != 0)) * ((gg.n/hp.macro_tile_width) + (gg.n%hp.macro_tile_width != 0));
+    dp.global_work_size = dp.n_work_groups * dp.n_work_items_per_workgroup;
 
 
     
-    /* check 1 : dp.n_workitems_per_workgroup divides dp.n_elements_in_a_unroll and dp.n_elements_in_b_unroll  */
+    /* check 1 : dp.n_work_items_per_workgroup divides dp.n_elements_in_a_unroll and dp.n_elements_in_b_unroll  */
     std::stringstream set_status_stream;
-    if (dp.n_elements_in_a_unroll % dp.n_workitems_per_workgroup != 0){
-      set_status_stream << "this is not supported : dp.n_workitems_per_workgroup (" << dp.n_workitems_per_workgroup << ") is not a factor of n_elements_in_" <<  "a" << "_UNROLL (" << dp.n_elements_in_a_unroll << "). Consider rounding unroll up. \n";
+    if (dp.n_elements_in_a_unroll % dp.n_work_items_per_workgroup != 0){
+      set_status_stream << "this is not supported : dp.n_work_items_per_workgroup (" << dp.n_work_items_per_workgroup << ") is not a factor of n_elements_in_" <<  "a" << "_UNROLL (" << dp.n_elements_in_a_unroll << "). Consider rounding unroll up. \n";
     }
   
-    if (dp.n_elements_in_b_unroll % dp.n_workitems_per_workgroup != 0){
-      set_status_stream << "this is not supported : dp.n_workitems_per_workgroup (" << dp.n_workitems_per_workgroup << ") is not a factor of n_elements_in_" <<  "b" << "_UNROLL (" << dp.n_elements_in_b_unroll << "). Consider rounding unroll up. \n";
+    if (dp.n_elements_in_b_unroll % dp.n_work_items_per_workgroup != 0){
+      set_status_stream << "this is not supported : dp.n_work_items_per_workgroup (" << dp.n_work_items_per_workgroup << ") is not a factor of n_elements_in_" <<  "b" << "_UNROLL (" << dp.n_elements_in_b_unroll << "). Consider rounding unroll up. \n";
     }
     
     std::string set_status_stream_string = set_status_stream.str();
@@ -894,8 +845,8 @@ const unsigned group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
       return {std::move(set_status_stream_string), "this is not a kernel string", std::move(dp), "this is not a kernel function name"};
     }
 
-    dp.n_elements_of_a_to_load_per_workitem = dp.n_elements_in_a_unroll / dp.n_workitems_per_workgroup;
-    dp.n_elements_of_b_to_load_per_workitem = dp.n_elements_in_b_unroll / dp.n_workitems_per_workgroup;
+    dp.n_elements_of_a_to_load_per_workitem = dp.n_elements_in_a_unroll / dp.n_work_items_per_workgroup;
+    dp.n_elements_of_b_to_load_per_workitem = dp.n_elements_in_b_unroll / dp.n_work_items_per_workgroup;
 
     /* check 2 : */
     std::string set_dimensions_status("");
@@ -939,12 +890,12 @@ R"(/* ***********************************************
 * *********************************************** */
 )";
 
-  ss << "#define M__ " << gg.m << "\n";
-  ss << "#define N__ " << gg.n << "\n";
-  ss << "#define K__ " << gg.k << "\n";
-  ss << "#define LDA__ " << gg.lda << "\n";
-  ss << "#define LDB__ " << gg.ldb << "\n";
-  ss << "#define LDC__ " << gg.ldc << "\n";
+  ss << "#define __M__ " << gg.m << "\n";
+  ss << "#define __N__ " << gg.n << "\n";
+  ss << "#define __K__ " << gg.k << "\n";
+  ss << "#define __LDA__ " << gg.lda << "\n";
+  ss << "#define __LDB__ " << gg.ldb << "\n";
+  ss << "#define __LDC__ " << gg.ldc << "\n";
   ss << "#define IS_COL_MAJOR " << gg.isColMajor << "\n";
   ss << "#define A_TRANSPOSED " << gg.tA << "\n";
   ss << "#define B_TRANSPOSED " << gg.tB <<  "\n";
@@ -1048,7 +999,7 @@ R"(
 
   ss << "\n#define MACRO_TILE_AREA "<< dp.macro_tile_area <<"  // MACRO_TILE_WIDTH*MACRO_TILE_HEIGHT\n";
   ss << "#define MICRO_TILE_AREA "<< dp.micro_tile_area <<" // MICRO_TILE_WIDTH * MICRO_TILE_HEIGHT\n";
-  ss << "#define N_WORK_ITEMS_PER_WORKGROUP  "<< dp.n_workitems_per_workgroup <<" // MACRO_TILE_AREA / MICRO_TILE_AREA\n";
+  ss << "#define N_WORK_ITEMS_PER_WORKGROUP  "<< dp.n_work_items_per_workgroup <<" // MACRO_TILE_AREA / MICRO_TILE_AREA\n";
   ss << "#define MACRO_TILE_HEIGHT_AND_PAD "<< dp.macro_tile_height_and_pad <<" // MACRO_TILE_HEIGHT + PAD\n";
   ss << "#define MACRO_TILE_WIDTH_AND_PAD "<< dp.macro_tile_width_and_pad <<" // MACRO_TILE_WIDTH + PAD\n";
   ss << "#define N_ELEMENTS_IN_A_UNROLL "<< dp.n_elements_in_a_unroll <<" // MACRO_TILE_HEIGHT * UNROLL\n";
@@ -1072,6 +1023,19 @@ R"(
   ss << "#define MICRO_B_TILE_PERP_UNROLL " << dp.micro_b_tile_perp_unroll << "\n";
   ss << "#define N_MICRO_B_TILES_PLL_UNROLL " << dp.n_micro_b_tiles_pll_unroll << " // UNROLL / MICRO_B_TILE_PLL_UNROLL\n";
   
+
+  ss << "#define N_MICRO_B_TILES_PLL_UNROLL " << dp.n_micro_b_tiles_pll_unroll << " // UNROLL / MICRO_B_TILE_PLL_UNROLL\n";
+
+  ss << "\n/* two more parameters, which do dot have an effect the running of this kernel (used in enqueuing) */\n";
+  ss << "/* the total number of work groups this kernel will use (recall m,n,k are fixed) */ \n";
+  ss << "/* N_WORK_ITEMS_PER_C_ELM * ((__M__/MACRO_TILE_HEIGHT) + (__M__%MACRO_TILE_HEIGHT != 0)) * ((__M__/MACRO_TILE_WIDTH) + (__N__%MACRO_TILE_WIDTH != 0)) */ \n";
+  ss << "#define N_WORK_GROUPS " << dp.n_work_groups << "\n";
+
+  ss << "/* the global work size, ie the total mumber of work items (threads) which will run */ \n";
+  ss << "/* N_WORK_GROUPS * N_WORK_ITEMS_PER_WORKGROUP */ \n";
+  ss << "#define GLOBAL_WORK_SIZE " << dp.global_work_size << "\n";
+  
+    
   ss << "\n";
   append_stride_defns(ss);
   append_preshift_defns(ss);
@@ -1080,7 +1044,7 @@ R"(
   append_split_on_k_defns_string(ss);
   append_super_column_width_defn(ss);
   
-  ss << "\n\n\n__attribute__((reqd_work_group_size(" << dp.n_workitems_per_workgroup << ",1, 1)))\n";
+  ss << "\n\n\n__attribute__((reqd_work_group_size(" << dp.n_work_items_per_workgroup << ",1, 1)))\n";
   ss << "__kernel void ";
   append_kernel_name(ss);
   
@@ -1091,24 +1055,12 @@ __global const TFLOAT * restrict a,
 __global const TFLOAT * restrict b,
 const TFLOAT alpha,
 const TFLOAT beta,
-unsigned lda,
-unsigned ldb,
-unsigned ldc,
-unsigned m,
-unsigned n,
-unsigned k,
 const unsigned a_offset,
 const unsigned b_offset,
 const unsigned c_offset  
 )
 {
 
-lda = 111110;
-ldb = 111110;
-ldc = 111110;
-m = 0;
-n = 0;
-k = 0;
 
 /* In OpenCL, host code does not have access to raw data pointers. */
 /* Host code works with cl_mem objects, which encapsulate and hide raw points. */
@@ -1122,11 +1074,8 @@ c += c_offset;
 
 )";
 
-  //append_stride_defns(ss);
   append_group_id_defns(ss);
   ss << "const unsigned local_id = get_local_id(0);\n";
-  //append_preshift_defns(ss);
-  //append_ngroups_grid_string(ss);
   append_group_allocation_string(ss);
     
   ss << 
@@ -1272,7 +1221,8 @@ KernelStringBundle get_kernel_string_bundle(
   
   KernelStringBundle kernel_string_bundle = kstring.get_kernel_string_bundle();
   if (kernel_string_bundle.set_status.is_good()){
-    indentify(kernel_string_bundle.kernel_string); /* make it prettier */
+    /* make it prettier by adding indents */
+    indentify(kernel_string_bundle.kernel_string); 
   }
   return kernel_string_bundle;
 }
