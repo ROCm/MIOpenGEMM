@@ -6,7 +6,8 @@ tinygemm is a tool for generating OpenCL matrix multiplication (GEMM) kernels. T
 
 A GEMM problem,  `c.tC = alpha * a.tA * b.tB + beta * c.tC`, is defined by the dimensions and memory layout of matrices a,b and c: isColMaj, tA, tB, tC, m, n, k, lda, ldb, and ldc. These 10 parameters are described later.
 
-The standard algorithm requires `2mnk` floating point operations to solve a GEMM problem is. A device with with `t` threads of clock-speed `f` *should* solve a GEMM problem in time `2mnk/(ft)`.  
+The standard algorithm requires `2mnk` floating point operations to solve a GEMM problem is. A device with `t` threads of clock-speed `f` *should* solve a GEMM problem in time `2mnk/(ft)`.  On an ideal device where all data is accessible in a single cycle, obtaining this lower bound would be trivial, but in practice moving data to a register ready for computing and then back takes *thousands* of cycles. A good GEMM kernel is one which can hide such *latency*.
+
 
 There are several *hyper-parameters* in GEMM kernels, describing *how* a kernel does GEMM. Specifically, hyper-parameters describe where threads read and write between the different memory levels. 
 
