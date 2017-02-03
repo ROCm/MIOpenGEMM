@@ -45,6 +45,13 @@ std::string logfile = "",
 bool c_is_const = true);
 
 
+tinygemm::TinyGemmSolution
+get_default(
+const bool enforce_deterministic,
+const char floattype, 
+const tinygemm::TinyGemmGeometry & gg,
+bool verbose, 
+std::string logfile);
 
 void benchgemm(
 cl_command_queue command_queue, 

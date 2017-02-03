@@ -21,8 +21,8 @@
 
 namespace tinygemm{
   
-static const std::string generickernelname = "atinygemmkernel";
-static const std::string betackernelname = "heeltemal";
+static const std::string generickernelname = "tg_generated_gemm";
+static const std::string betackernelname = "tg_betac";
 
 
 class MultiFloatType{
@@ -744,26 +744,6 @@ const std::string & hash
 }
 
 
-/////* functions for the end-user */ 
-////tinygemm::TinyGemmSolution
-////nonconst_find(
-////float allotted_time,
-////cl_command_queue command_queue,
-////cl_mem a,   
-////cl_mem b,
-////cl_mem c,
-////const bool enforce_deterministic,
-////const char floattype, 
-////const tinygemm::TinyGemmGeometry & gg,
-////const double alpha,
-////const double beta,
-////bool verbose, 
-////std::string logfile){
-
-  
-////}
-
-
 
 
 tinygemm::TinyGemmSolution
@@ -800,13 +780,31 @@ bool c_is_const){
     OpenCLGemmEncapsulator oger(command_queue, floattype, gg, alpha, beta, a, b, c, logfile, verbose);
     return oger.find(allotted_time, enforce_deterministic, n_runs_per_kernel);
   }
-  
-  
-  
-  
-  
 }
 
+tinygemm::TinyGemmSolution
+get_default(
+const bool enforce_deterministic,
+const char floattype, 
+const tinygemm::TinyGemmGeometry & gg,
+bool verbose, 
+std::string logfile){
+ 
+  /* passing a negative allotted time to find, which means find does no compilation, just returns the default */
+  return find(-3.14,
+cl_command_queue {}, cl_mem {}, cl_mem {}, cl_mem {},
+enforce_deterministic,
+floattype, 
+gg,
+3.14,
+3.14,
+verbose, 
+logfile, 
+false);
+ 
+}
+  
+  
 
 
 
