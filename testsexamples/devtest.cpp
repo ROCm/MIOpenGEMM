@@ -79,10 +79,11 @@ void print_kernel(){
 int main(){
   
 
-  bool test_print = true;
+  bool test_print = false;
   bool test_benchgemm = false;
   bool test_find = false;
   bool test_accuracy = false;
+  bool test_default = true;
   
   typedef float tfloat;
   srand(time(NULL));
@@ -117,6 +118,10 @@ int main(){
   if (test_find){
     float allotted_time = 5.;
     tinygemm::dev::find(allotted_time, v_a.data(), v_b.data(), v_c.data(), false, gg, alpha, beta, true, "");
+  }
+  
+  if (test_default){
+    tinygemm::get_default(false, 'd', get_geometry(), true, "");
   }
   
   return 0;
