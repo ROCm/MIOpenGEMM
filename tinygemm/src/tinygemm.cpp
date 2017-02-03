@@ -70,6 +70,11 @@ class TinyGemmKernel{
   
   private:
     std::string hash;
+    
+    
+  private:
+
+
 
   public:
     
@@ -165,7 +170,30 @@ private:
   TinyGemmKernel tk_betac;
   
 
+private:
+
+
+  void address_check_valid(){
   
+    if (c_gpu == a_gpu || c_gpu == b_gpu){
+      throw tinygemm_error("c should be distinct from a and b for gemm, otherwise race condition arises (one thread writes its result to c before another one has finished reading from c)");
+    }
+    
+    if (c_gpu == nullptr){
+      throw tinygemm_error("c should not be nullptr");
+    }
+  }
+  
+  
+  void address_check_valid_and_reliable(){
+    
+    address_check_valid();
+    
+    if (a_gpu == b_gpu){
+      throw tinygemm_error( "a and b are the same. this will effect kernel run time, not sure if this should be allowed so throwing"); 
+    }
+  }
+
 
 public:
   OpenCLGemmEncapsulator(
@@ -201,7 +229,7 @@ public:
   
 
   void run_checks(){
-    if (c_gpu == a_gpu || c_gpu == b_gpu){
+    if ((c_gpu == a_gpu || c_gpu == b_gpu ) && c_gpu != nullptr){ //the last check is a hack for get_default
       throw tinygemm_error("c should be distinct from a and b for gemm, otherwise race condition arises (one thread writes its result to c before another one has finished reading from c)");
     }
     /* Confirm that the input parameters make sense */
@@ -437,6 +465,7 @@ public:
 
   void benchgemm(const std::vector<hyperparams::HyperParams> & hps, unsigned n_runs){
 
+    address_check_valid();
 
     if (n_runs == 0){
       throw tinygemm_error("n_runs to benchgemm should be a positive integer");
@@ -463,13 +492,9 @@ public:
   }
   
   
-  /* takes 0.05 seconds. 0.035 of this is spent in python script generating kernel and writing it, the rest is spent finding default. */
-  /* I can get through about 5 benchmarks per second, that is 1 every 0.2 seconds, so the python script is something to be concerned about... */
   tinygemm::TinyGemmSolution
   get_default(
-  const bool enforce_deterministic
-//  const char floattype, 
-//  const tinygemm::TinyGemmGeometry & gg
+    const bool enforce_deterministic
   ){
     
     hyperparams::HyperParams hp = hyperparams::get_default(gg, enforce_deterministic);
@@ -492,6 +517,7 @@ public:
   tinygemm::TinyGemmSolution find(float allotted_time, bool enforce_deterministic, unsigned n_runs_per_kernel){
     
     
+
     
     if (gg.m < 8 || gg.n < 8){
       mowri << "really skinny/thin matrix, returning a default kernel (to be improved) " << Endl;
@@ -503,7 +529,9 @@ public:
       mowri << "Allotted time insufficient for benchmarking, returning default TinyGemmSolution" << Endl;
       return get_default(enforce_deterministic);//, gg);//floattype, gg);      
     }
-    
+
+    address_check_valid_and_reliable();
+        
     auto start = std::chrono::high_resolution_clock::now();
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<float> fp_ms = end - start;
@@ -746,6 +774,9 @@ const std::string & hash
 
 
 
+
+
+
 tinygemm::TinyGemmSolution
 find(
 float allotted_time,
@@ -762,6 +793,7 @@ bool verbose,
 std::string logfile, 
 bool c_is_const){
   
+  //address_check_valid_and_reliable(a, b, c);
   
   /* The number of times each kernel is run in find. 
    * consider adding this parameter to user API. */
@@ -789,18 +821,10 @@ const char floattype,
 const tinygemm::TinyGemmGeometry & gg,
 bool verbose, 
 std::string logfile){
+  
  
-  /* passing a negative allotted time to find, which means find does no compilation, just returns the default */
-  return find(-3.14,
-cl_command_queue {}, cl_mem {}, cl_mem {}, cl_mem {},
-enforce_deterministic,
-floattype, 
-gg,
-3.14,
-3.14,
-verbose, 
-logfile, 
-false);
+  OpenCLGemmEncapsulator oger({}, floattype, gg, 3.14, 3.14, {}, {}, {}, logfile, verbose);
+  return oger.get_default(enforce_deterministic);
  
 }
   
@@ -822,7 +846,9 @@ void benchgemm(
   bool verbose,
   std::string logfile,
   bool c_is_const){
-    
+   
+  //address_check_valid(a, b, c);
+  
   tinygemm::consistencychecks::check_ldx_mnk_consistent(gg);
   if (c_is_const == true){
     openclutil::SafeClMem c_copied = get_copy(command_queue, c_gpu, floattype, gg, "copy of c in benchgemm");
