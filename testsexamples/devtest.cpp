@@ -121,7 +121,8 @@ int main(){
   }
   
   if (test_default){
-    tinygemm::get_default(false, 'd', get_geometry(), true, "");
+    auto bla = tinygemm::get_default(false, 'd', get_geometry(), true, "");
+    std::cout << bla.main_kernel;
   }
   
   return 0;
