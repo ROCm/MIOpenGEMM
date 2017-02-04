@@ -39,7 +39,6 @@ KernelStringBundle get_kernel_string_bundle(
 
   std::string kernelname,// = "",
 
-  unsigned float_size, // = 32
 
   /* geometry parameters */
   const tinygemm::TinyGemmGeometry & gg

@@ -5,10 +5,24 @@
 
 namespace tinygemm{
 
+class TinyGemmOffsets{
+  public:
+    unsigned oa;
+    unsigned ob;
+    unsigned oc;
+    unsigned oworkspace;
+    
+    TinyGemmOffsets(unsigned oa, unsigned ob, unsigned oc, unsigned oworkspace);
+};
+
 class TinyGemmGeometryDerived{
 public:
   unsigned dim_c_coal;
   unsigned dim_c_uncoal;
+  unsigned float_size_bits;
+  unsigned float_size_bytes;
+  
+  void reset(bool tC, bool isColMajor, unsigned n, unsigned m, char floattype);
   
 };
 
@@ -25,21 +39,25 @@ public:
   unsigned m;
   unsigned n;
   unsigned k; 
-  unsigned a_offset;
-  unsigned b_offset;
-  unsigned c_offset; 
-  
+  unsigned workspace_size;
+//* 'f' : 32-bit single precision
+//* 'd' : 64-bit double precision 
+//* the user must guarantee that a, b and c are in agreement with floattype, 
+//* TODO is there a way to check float type from a,b,c? If so, floattype is not nec. */
+//const char floattype,
+  char floattype;
   /* */
   TinyGemmGeometryDerived derived;
   
 
-  TinyGemmGeometry(bool isColMajor, bool tA, bool tB, bool tC, unsigned lda, unsigned ldb, unsigned ldc, unsigned m, unsigned n, unsigned k, unsigned a_offset, unsigned b_offset, unsigned c_offset);
+  TinyGemmGeometry(bool isColMajor, bool tA, bool tB, bool tC, unsigned lda, unsigned ldb, unsigned ldc, unsigned m, unsigned n, unsigned k, unsigned workspace_size, char floattype);
   
   TinyGemmGeometry (const TinyGemmGeometry & ) = default;
   
   TinyGemmGeometry & operator= (const TinyGemmGeometry & ) = default;
   
-  TinyGemmGeometry() = default;
+  //TODO : is this used? dangerous.
+  //TinyGemmGeometry() = default;
   
   std::string get_string() const;
   

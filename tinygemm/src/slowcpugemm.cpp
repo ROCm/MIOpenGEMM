@@ -52,15 +52,15 @@ class TNInner{
 
 //unsigned m, unsigned n, unsigned k, unsigned lda, unsigned ldb, unsigned ldc
 template <typename TFloat, class FInner>
-void gemm_3fors_generic_cpu(const tinygemm::TinyGemmGeometry & gg, const TFloat * a, const TFloat * b, TFloat * c, TFloat alpha, TFloat beta){
+void gemm_3fors_generic_cpu(const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, const TFloat * a, const TFloat * b, TFloat * c, TFloat alpha, TFloat beta){
   /* at this point, must be column contiguous (ala fortran)
  * this is a generic slow matrix multiplier for NN, TN, NT. 
  * NN, TN, NT will have different FInner template parameters
  * TT should have have been redirected to NN at this point*/
    
-  a += gg.a_offset;
-  b += gg.b_offset;
-  c += gg.c_offset;
+  a += toff.oa;
+  b += toff.ob;
+  c += toff.oc;
   
   FInner finner;
   
@@ -86,7 +86,7 @@ void gemm_3fors_generic_cpu(const tinygemm::TinyGemmGeometry & gg, const TFloat 
 
 //bool tA, bool tB, bool tC, unsigned m, unsigned n, unsigned k, unsigned lda, unsigned ldb, unsigned ldc
 template <typename TFloat>
-void gemm_3fors_cpu(const tinygemm::TinyGemmGeometry & gg, const TFloat * a, const TFloat * b, TFloat * c, TFloat alpha, TFloat beta){
+void gemm_3fors_cpu(const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, const TFloat * a, const TFloat * b, TFloat * c, TFloat alpha, TFloat beta){
   
   
   
@@ -101,7 +101,7 @@ void gemm_3fors_cpu(const tinygemm::TinyGemmGeometry & gg, const TFloat * a, con
     
   //m, n, k, lda, ldb, ldc
   else if (gg.tA == false && gg.tB == false){
-    gemm_3fors_generic_cpu<TFloat, NNInner<TFloat> > (gg, a, b, c, alpha, beta); //tC, m, n, k, alpha, a, lda, b, ldb,  beta, c, ldc);
+    gemm_3fors_generic_cpu<TFloat, NNInner<TFloat> > (gg, toff, a, b, c, alpha, beta); //tC, m, n, k, alpha, a, lda, b, ldb,  beta, c, ldc);
   }
   
   
@@ -111,11 +111,11 @@ void gemm_3fors_cpu(const tinygemm::TinyGemmGeometry & gg, const TFloat * a, con
     }
   
     if (gg.tA == false && gg.tB == true){
-      gemm_3fors_generic_cpu<TFloat, NTInner<TFloat>>(gg, a, b, c, alpha, beta); //tC, m, n, k, alpha, a, lda, b, ldb,  beta, c, ldc);
+      gemm_3fors_generic_cpu<TFloat, NTInner<TFloat>>(gg, toff, a, b, c, alpha, beta); //tC, m, n, k, alpha, a, lda, b, ldb,  beta, c, ldc);
     }
     
     else if (gg.tA == true && gg.tB == false){
-      gemm_3fors_generic_cpu<TFloat, TNInner<TFloat>>(gg, a, b, c, alpha, beta); //tC, m, n, k, alpha, a, lda, b, ldb,  beta, c, ldc);
+      gemm_3fors_generic_cpu<TFloat, TNInner<TFloat>>(gg, toff, a, b, c, alpha, beta); //tC, m, n, k, alpha, a, lda, b, ldb,  beta, c, ldc);
     }
     
     else{
@@ -151,9 +151,9 @@ void check_cpu_algs(std::vector<std::string> cpu_algs){
   //bool isColMajor, bool tA, bool tB, bool tC, unsigned lda, unsigned ldb, unsigned ldc, unsigned m, unsigned n, unsigned k
   
   template <typename TFloat>
-  void gemms_cpu(tinygemm::TinyGemmGeometry gg, const TFloat * a, const TFloat * b, TFloat * c, TFloat alpha, TFloat beta, std::vector<std::string> algs, outputwriting::OutputWriter & mowri){
+  void gemms_cpu(tinygemm::TinyGemmGeometry gg, tinygemm::TinyGemmOffsets toff, const TFloat * a, const TFloat * b, TFloat * c, TFloat alpha, TFloat beta, std::vector<std::string> algs, outputwriting::OutputWriter & mowri){
     check_cpu_algs(algs);        
-    redirection::redirect(gg.isColMajor, gg.tA, gg.tB, gg.tC, gg.m, gg.n, gg.lda, gg.ldb, gg.a_offset, gg.b_offset, a, b);
+    redirection::redirect(gg.isColMajor, gg.tA, gg.tB, gg.tC, gg.m, gg.n, gg.lda, gg.ldb, toff.oa, toff.ob, a, b);
     redirection::confirm_redirection(gg.isColMajor, gg.tA, gg.tB, gg.m, gg.n);
     tinygemm::consistencychecks::check_ldx_mnk_consistent(gg);
     
@@ -161,7 +161,7 @@ void check_cpu_algs(std::vector<std::string> cpu_algs){
       mowri << "launching cpu algorithm : " << alg << Endl;      
       auto t0 = std::chrono::high_resolution_clock::now();
       if (alg.compare("3fors") == 0){
-        gemm_3fors_cpu(gg, a, b, c, alpha, beta);
+        gemm_3fors_cpu(gg, toff, a, b, c, alpha, beta);
       }
       
       
@@ -172,10 +172,10 @@ void check_cpu_algs(std::vector<std::string> cpu_algs){
   }
   
   //bool isColMajor, bool tA, bool tB, bool tC, unsigned lda, unsigned ldb, unsigned ldc, unsigned a_offset, unsigned b_offset, unsigned c_offset, unsigned m, unsigned n, unsigned k,
-  template void gemms_cpu(tinygemm::TinyGemmGeometry gg, const float * a, const float * b, float * c, float alpha, float beta, std::vector<std::string> algs, outputwriting::OutputWriter & mowri);
+  template void gemms_cpu(tinygemm::TinyGemmGeometry gg, tinygemm::TinyGemmOffsets toff,  const float * a, const float * b, float * c, float alpha, float beta, std::vector<std::string> algs, outputwriting::OutputWriter & mowri);
 
   //bool isColMajor, bool tA, bool tB, bool tC, unsigned lda, unsigned ldb, unsigned ldc, unsigned m, unsigned n, unsigned k
-  template void gemms_cpu(tinygemm::TinyGemmGeometry gg, const double * a, const double * b, double * c, double alpha, double beta, std::vector<std::string> algs, outputwriting::OutputWriter & mowri);  
+  template void gemms_cpu(tinygemm::TinyGemmGeometry gg, tinygemm::TinyGemmOffsets toff,  const double * a, const double * b, double * c, double alpha, double beta, std::vector<std::string> algs, outputwriting::OutputWriter & mowri);  
   
 }
 } //namespace

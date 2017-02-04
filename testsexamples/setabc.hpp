@@ -4,11 +4,11 @@
 namespace setabc{
 
 template <typename TFloat>     
-void set_abc(std::vector<TFloat> & v_a, std::vector<TFloat> & v_b, std::vector<TFloat> & v_c, const tinygemm::TinyGemmGeometry & gg){
+void set_abc(std::vector<TFloat> & v_a, std::vector<TFloat> & v_b, std::vector<TFloat> & v_c, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff){
     
-  size_t n_a = gg.lda * (gg.tA == gg.isColMajor ? gg.m : gg.k) + gg.a_offset;
-  size_t n_b = gg.ldb * (gg.tB == gg.isColMajor ? gg.k : gg.n) + gg.b_offset;
-  size_t n_c = gg.ldc * (gg.tC == gg.isColMajor ? gg.m : gg.n) + gg.c_offset; 
+  size_t n_a = gg.lda * (gg.tA == gg.isColMajor ? gg.m : gg.k) + toff.oa;
+  size_t n_b = gg.ldb * (gg.tB == gg.isColMajor ? gg.k : gg.n) + toff.ob;
+  size_t n_c = gg.ldc * (gg.tC == gg.isColMajor ? gg.m : gg.n) + toff.oc; 
   
   /* fill matrices with random floats. It is important to fill them with random floats, 
    * as if they're integers, the kernel can, and does, cheat! (runs faster) */

@@ -27,11 +27,14 @@ size_t get_n_elements_padded(unsigned h, unsigned w, unsigned ldx, bool isColMaj
 }
 
 
-void check_sizes_ok_for_unsigned(const tinygemm::TinyGemmGeometry & gg){
-  check_sizes_ok_for_unsigned(gg.isColMajor, gg.tA, gg.tB, gg.tC, gg.m, gg.n, gg.k, gg.lda, gg.ldb, gg.ldc, gg.a_offset, gg.b_offset, gg.c_offset);
+void check_sizes_ok_for_unsigned(const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff){
+  
+  
+  check_sizes_ok_for_unsigned(gg.isColMajor, gg.tA, gg.tB, gg.tC, gg.m, gg.n, gg.k, gg.lda, gg.ldb, gg.ldc, gg.workspace_size, toff.oa, toff.ob, toff.oc, toff.oworkspace);
+  
 }
 
-void check_sizes_ok_for_unsigned(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned n, unsigned k, unsigned lda, unsigned ldb, unsigned ldc, unsigned a_offset, unsigned b_offset, unsigned c_offset){
+void check_sizes_ok_for_unsigned(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned n, unsigned k, unsigned lda, unsigned ldb, unsigned ldc, unsigned workspace_size, unsigned a_offset, unsigned b_offset, unsigned c_offset, unsigned workspace_offset){
   
   size_t max_size = std::pow(2, 8*sizeof(unsigned)) - 1;
 
@@ -53,7 +56,14 @@ void check_sizes_ok_for_unsigned(bool isColMajor, bool tA, bool tB, bool tC, uns
     errm += base_frag;
   }
   
+  if (workspace_size + workspace_offset >= max_size){
+    errm += "(workspace_size + workspace_offset)";
+    errm += base_frag;
+    errm += "\nperhaps a smaller workspace_size can be provided?\n";
+  }
+  
   if (errm.compare("") != 0){
+    errm += "\nthis error is easy to fix, just need to change some unsigneds to size_ts in the kernel. TODO. please report this bug"; 
     throw tinygemm_error(errm);
   }
 }

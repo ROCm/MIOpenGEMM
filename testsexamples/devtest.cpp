@@ -34,20 +34,28 @@ tinygemm::TinyGemmGeometry get_geometry(){
   bool tA = false;
   bool tB = false;
   bool tC = false;
-  unsigned m = 1234;    
-  unsigned n = 2345;
-  unsigned k = 3456;
+  unsigned m = 234;    
+  unsigned n = 345;
+  unsigned k = 456;
   unsigned lda = ( tA == isColMajor ? k : m ) + 11;
   unsigned ldb = ( tB == isColMajor ? n : k ) + 22;
   unsigned ldc = ( tC == isColMajor ? n : m ) + 33;
+  unsigned workspace_size = 15;
+  char floattype = 'f';
+
+  return { isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype};
+    
+}
+
+tinygemm::TinyGemmOffsets get_offsets(){
+
   unsigned a_offset = 51;
   unsigned b_offset = 71;
   unsigned c_offset = 91;
+  unsigned workspace_offset = 13;
+  return { a_offset, b_offset, c_offset, workspace_offset };
 
-  return { isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, a_offset, b_offset, c_offset };
-    
 }
-      
 
 
 void print_kernel(){
@@ -58,9 +66,7 @@ void print_kernel(){
   
   auto bundle = tinygemm::kerngen::get_kernel_string_bundle(
   hp,  
-//  kernel_string,
-  "bolziberb",
-  32,
+  "tgkern",
   gg
   
   );
@@ -79,10 +85,10 @@ void print_kernel(){
 int main(){
   
 
-  bool test_print = true;
-  bool test_benchgemm = false;
-  bool test_find = false;
-  bool test_accuracy = false;
+  bool test_print = false;
+  bool test_benchgemm = true;
+  bool test_find = true;
+  bool test_accuracy = true;
   bool test_default = false;
   
   typedef float tfloat;
@@ -90,16 +96,17 @@ int main(){
   tinygemm::hyperparams::HyperParams hp = get_hp();
   
   tinygemm::TinyGemmGeometry gg = get_geometry();
+  tinygemm::TinyGemmOffsets toff = get_offsets();
 
   std::vector<tfloat> v_a;
   std::vector<tfloat> v_b;
   std::vector<tfloat> v_c;
 
 
-  setabc::set_abc<tfloat>(v_a, v_b, v_c, gg);
+  setabc::set_abc<tfloat>(v_a, v_b, v_c, gg, toff);
   
-  double alpha = 1.3; 
-  double beta = 1.7;
+  //double alpha = 1.3; 
+  //double beta = 1.7;
   
   const tfloat * c_true_bla = nullptr; 
   
@@ -108,20 +115,20 @@ int main(){
   }
   
   if (test_accuracy){
-    tinygemm::dev::accuracy_test(hp, gg, alpha, beta, v_a.data(), v_b.data(), v_c.data(), c_true_bla, true, "");
+    tinygemm::dev::accuracy_test(hp, gg, toff, v_a.data(), v_b.data(), v_c.data(), c_true_bla, true, "");
   }
 
   if (test_benchgemm){
-    tinygemm::dev::benchgemm({hp}, 5, gg, alpha, beta, v_a.data(), v_b.data(), v_c.data(), true, "");
+    tinygemm::dev::benchgemm({hp}, 5, gg, toff, v_a.data(), v_b.data(), v_c.data(), true, "");
   }
   
   if (test_find){
     float allotted_time = 5.;
-    tinygemm::dev::find(allotted_time, v_a.data(), v_b.data(), v_c.data(), false, gg, alpha, beta, true, "");
+    tinygemm::dev::find(allotted_time, v_a.data(), v_b.data(), v_c.data(), false, gg, toff, true, "");
   }
   
   if (test_default){
-    auto bla = tinygemm::get_default(false, 'd', get_geometry(), true, "");
+    auto bla = tinygemm::get_default(false, get_geometry(), true, "");
     std::cout << bla.main_kernel;
   }
   

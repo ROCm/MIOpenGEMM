@@ -12,12 +12,16 @@
 
 namespace tinygemm{
 
-tinygemm::TinyGemmSolution
-get_default(
-const bool enforce_deterministic, 
-const char floattype, 
-const tinygemm::TinyGemmGeometry & gg
-);
+
+static const double default_alpha = 0.415693029182345929;
+static const double default_beta = 0.273539340934809345;
+
+
+//tinygemm::TinyGemmSolution
+//get_default(
+//const bool enforce_deterministic, 
+//const tinygemm::TinyGemmGeometry & gg
+//);
 
 
 tinygemm::TinyGemmSolution
@@ -28,17 +32,12 @@ cl_command_queue command_queue,
 cl_mem a,   
 cl_mem b,
 cl_mem c,
+cl_mem workspace,
 const bool enforce_deterministic,
-/* floattype :
- * 'f' : 32-bit single precision
- * 'd' : 64-bit double precision 
- * the user must guarantee that a, b and c are in agreement with floattype, 
- * TODO is there a way to check float type from a,b,c? If so, floattype is not nec. */
-const char floattype,
+
 /* see tinygemm/include/tinygemmgeometry.hpp for TinyGemmGeometry parameters */
 const tinygemm::TinyGemmGeometry & gg,
-const double alpha,
-const double beta, 
+const tinygemm::TinyGemmOffsets & toff,
 bool verbose = false,
 std::string logfile = "", 
 /* if c_is_const == false, then c will be corrupted */
@@ -48,7 +47,6 @@ bool c_is_const = true);
 tinygemm::TinyGemmSolution
 get_default(
 const bool enforce_deterministic,
-const char floattype, 
 const tinygemm::TinyGemmGeometry & gg,
 bool verbose, 
 std::string logfile);
@@ -57,13 +55,13 @@ void benchgemm(
 cl_command_queue command_queue, 
 const std::vector<hyperparams::HyperParams> & hps,         
 unsigned n_runs,
-const char floattype, 
+
 const tinygemm::TinyGemmGeometry & gg,
-const double alpha,                 
-const double beta,
-cl_mem a,                           
-cl_mem b, 
+const tinygemm::TinyGemmOffsets & toff,
+cl_mem a,
+cl_mem b,
 cl_mem c,
+cl_mem workspace,
 bool verbose = true,
 std::string logfile = "",
 bool c_is_const = false);

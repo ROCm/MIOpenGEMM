@@ -47,8 +47,6 @@ class KernelString{
     
     std::string kernelname;
     
-    unsigned float_size;
-    
     tinygemm::TinyGemmGeometry gg;
     
   
@@ -60,7 +58,6 @@ class KernelString{
   
   std::string kernelname_,// = "",
   
-  unsigned float_size_, // = 32
 
   const tinygemm::TinyGemmGeometry & gg_  
 
@@ -69,7 +66,6 @@ class KernelString{
   
   hp(hp_),
   kernelname(kernelname_),
-  float_size(float_size_),
   gg(gg_)
 
   {
@@ -86,15 +82,15 @@ class KernelString{
       dp.fati = "n_work_items_per_c_elm is 1, should not be using atomics";
     }
     else{
-      dp.infa = float_size == 32 ? "uint" : "ulong";
-      dp.fati = float_size == 32 ? "atomic_cmpxchg" : "atom_cmpxchg";
+      dp.infa = gg.derived.float_size_bits == 32 ? "uint" : "ulong";
+      dp.fati = gg.derived.float_size_bits == 32 ? "atomic_cmpxchg" : "atom_cmpxchg";
     }
     
     dp.pragma_unroll_string = hp.unroll_pragma == 1 ?  "#pragma unroll\n" : "" ;
     
     dp.effective_k = hp.unroll_for_offset == 0 ? "__K__" : "k_plus_offset";    
     dp.alpha_scaled = hp.c_micro_tiles_interwoven == 0 ? "alpha*rC[row][col]" : "alpha*rC[row/N_MICRO_TILES_VERTICALLY][col/N_MICRO_TILES_HORIZONTALLY]";
-    dp.t_float = float_size == 32 ? "float" : "double";
+    dp.t_float = gg.derived.float_size_bits == 32 ? "float" : "double";
     
     
     dp.preshift_bottommost_tile_height = 1 + (gg.m - 1) % hp.macro_tile_height;
@@ -795,7 +791,7 @@ const unsigned group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
   }
   
   void append_what_string(std::stringstream & ss){
-    ss << "A:" << gg.tA << "B" << gg.tB << "C" << gg.tC << "f" << float_size;
+    ss << "A:" << gg.tA << "B" << gg.tB << "C" << gg.tC << "f" << gg.derived.float_size_bits;
   }
   
   void append_kernel_name(std::stringstream & ss){
@@ -1225,7 +1221,6 @@ KernelStringBundle get_kernel_string_bundle(
   std::string kernelname, // = "",
   
   /* geometry parameters */
-  unsigned float_size,
   
   const tinygemm::TinyGemmGeometry & gg
 
@@ -1239,7 +1234,6 @@ KernelStringBundle get_kernel_string_bundle(
 
   kernelname,
 
-  float_size,
   gg  
   
   );

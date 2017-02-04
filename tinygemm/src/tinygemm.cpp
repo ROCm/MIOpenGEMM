@@ -25,6 +25,7 @@ static const std::string generickernelname = "tg_generated_gemm";
 static const std::string betackernelname = "tg_betac";
 
 
+
 class MultiFloatType{
 
   private:
@@ -33,26 +34,16 @@ class MultiFloatType{
     
   public:
     MultiFloatType(double v): v_d(v), v_f(static_cast<float>(v)) {}
-    void * operator [] (char floattype){
+    void * operator [] (char floattype) const{
       return floattype == 'd' ? (void *)(& v_d) : (void * )(& v_f);
     }
 };
 
 
 
-size_t get_floatbytes(char floattype){
-  size_t floatbytes;
-  if (floattype == 'f'){
-    floatbytes = sizeof(float);
-  }
-  else if (floattype == 'd'){
-    floatbytes = sizeof(double);
-  }
-  else{
-    throw tinygemm_error("Unrecognised floattype char. Currently, only 'f' (single precision) and 'd' (double precision) are supported");
-  }
-  return floatbytes;
-}
+static const MultiFloatType m_alpha(default_alpha);
+static const MultiFloatType m_beta(default_beta);
+  
 
 
 class TinyGemmKernel{
@@ -118,7 +109,6 @@ class TinyGemmKernel{
         set_kernel_arg(arg_index, arg_sizes_values[arg_index].first, arg_sizes_values[arg_index].second); 
       }
     }
-      
 
 };
 
@@ -128,18 +118,18 @@ public:
   /* references to constructor parameters */
   cl_command_queue command_queue;
   std::string outputfilename;
-  const char floattype; 
+
   const tinygemm::TinyGemmGeometry gg;
+  const tinygemm::TinyGemmOffsets toff;
+  
   cl_mem a_gpu;
   cl_mem b_gpu; 
   cl_mem c_gpu;
+  cl_mem workspace_gpu;
 
 
 private:
 
-  size_t floatbytes;
-  MultiFloatType m_alpha;
-  MultiFloatType m_beta;
   outputwriting::OutputWriter mowri;
    
   /* parameters related to the main kernel */
@@ -151,7 +141,6 @@ private:
   /* parameters related to the scaling (betac) kernel */
   size_t betac_global_work_size;
   
-  
   /* stores (the most recent of n_runs) execution time */
   size_t t_start_betac_kernel, t_end_betac_kernel, t_start_main_kernel, t_end_main_kernel;
 
@@ -161,8 +150,6 @@ private:
   /* used for getting performance of main and (possibly) betac kernels */
   cl_event event_main_kernel;
   cl_event event_betac_kernel;
-
-
   
   TinyGemmKernel tk_main;
   TinyGemmKernel tk_betac;
@@ -180,6 +167,19 @@ private:
     if (c_gpu == nullptr){
       throw tinygemm_error("c should not be nullptr");
     }
+    
+    if (workspace_gpu == nullptr && gg.workspace_size != 0){
+      throw tinygemm_error("pointer to workspace memory is the nullptr, but workspace_size is not zero");
+    }
+    
+    if (workspace_gpu != nullptr && gg.workspace_size == 0){
+      throw tinygemm_error("pointer to workspace memory is not the nullptr, but workspace_size is zero. if workspace_size is zero please set workspace_gpu to the nullptr to make super clear that there will be no workspace used ");
+      
+    }
+    
+    if (workspace_gpu != nullptr && (workspace_gpu == a_gpu || workspace_gpu == b_gpu || workspace_gpu == c_gpu ) ){
+      throw tinygemm_error("pointer to workspace memory is not the nullptr, and it is the same as one of the a,b,c pointers ");
+    }
   }
   
   
@@ -196,62 +196,59 @@ private:
 public:
   OpenCLGemmEncapsulator(
   cl_command_queue command_queue_, 
-  const char floattype_,
-  const tinygemm::TinyGemmGeometry gg_,  
-  const double alpha_,
-  const double beta_,  
+
+  const tinygemm::TinyGemmGeometry gg_,
+  const tinygemm::TinyGemmOffsets toff_,
+
   cl_mem a_gpu_,
   cl_mem b_gpu_, 
   cl_mem c_gpu_,
+  cl_mem workspace_gpu_,
   std::string outputfilename_,
   bool verbose_):
 
   command_queue(command_queue_), 
   outputfilename(outputfilename_),
-  floattype(floattype_), 
+  //floattype(floattype_), 
   gg(gg_),
+  toff(toff_),
   a_gpu(a_gpu_),
   b_gpu(b_gpu_), 
   c_gpu(c_gpu_),
-  m_alpha(alpha_),
-  m_beta(beta_),
+  workspace_gpu(workspace_gpu_),
+  
   mowri(verbose_, outputfilename.compare("") != 0, outputfilename_),
   
   tk_main(command_queue, "tk_main"),
   tk_betac(command_queue, "tk_betac"){
     
-    
-    floatbytes = get_floatbytes(floattype);
     run_checks();
   }
   
 
   void run_checks(){
-    if ((c_gpu == a_gpu || c_gpu == b_gpu ) && c_gpu != nullptr){ //the last check is a hack for get_default
-      throw tinygemm_error("c should be distinct from a and b for gemm, otherwise race condition arises (one thread writes its result to c before another one has finished reading from c)");
-    }
-    /* Confirm that the input parameters make sense */
-    consistencychecks::check_ldx_mnk_consistent(gg);
-    sizingup::check_sizes_ok_for_unsigned(gg);
-    if (floattype != 'd' and floattype != 'f'){
-      throw tinygemm_error("floattype should be one of 'f' and 'd'");
-    }
+        
+    /* Confirm that the input parameters make sense (done in constructor? TODO confirm) */
+    //consistencychecks::check_ldx_mnk_consistent(gg);
+    
+    sizingup::check_sizes_ok_for_unsigned(gg, toff);
+  
   }  
 
   
   void set_betac_kernel_arguments(){
     tk_betac.set_kernel_args( {
-      {sizeof(unsigned),    &gg.derived.dim_c_coal},
-      {sizeof(unsigned),    &gg.derived.dim_c_uncoal},
-      {sizeof(unsigned),    &gg.ldc},
-      {sizeof(unsigned),    &gg.c_offset},
-      {sizeof(cl_mem),      (void *)&c_gpu},
-      {floatbytes,           m_beta[floattype]}    
+      {sizeof(unsigned),                      &gg.derived.dim_c_coal},
+      {sizeof(unsigned),                      &gg.derived.dim_c_uncoal},
+      {sizeof(unsigned),                      &gg.ldc},
+      {sizeof(unsigned),                      &toff.oc},
+      {sizeof(cl_mem),                        (void *)&c_gpu},
+      {gg.derived.float_size_bytes,           m_beta[gg.floattype]}    
     } );              
   }
   
   void setup_betac_kernel(){
-    tk_betac.update(betac::get_betac_kernel_string(floattype, betackernelname), betackernelname);
+    tk_betac.update(betac::get_betac_kernel_string(gg.floattype, betackernelname), betackernelname);
     betac_global_work_size = betac::get_global_work_size(gg);
     mowri << "in setup_betac_kernel, betac_global_work_size : " << betac_global_work_size << Endl; 
     set_betac_kernel_arguments();
@@ -269,14 +266,14 @@ public:
   void set_main_kernel_arguments(){
     /* set the main kernel parameters */
     tk_main.set_kernel_args( {
-      {sizeof(cl_mem),      (void *)&c_gpu},
-      {sizeof(cl_mem),      (void *)&a_gpu},
-      {sizeof(cl_mem),      (void *)&b_gpu},
-      {floatbytes,           m_alpha[floattype]},
-      {floatbytes,           m_beta[floattype]},
-      {sizeof(unsigned),    &gg.a_offset},
-      {sizeof(unsigned),    &gg.b_offset},
-      {sizeof(unsigned),  &gg.c_offset} 
+      {sizeof(cl_mem),                        (void *)&c_gpu},
+      {sizeof(cl_mem),                        (void *)&a_gpu},
+      {sizeof(cl_mem),                        (void *)&b_gpu},
+      {gg.derived.float_size_bytes,           m_alpha[gg.floattype]},
+      {gg.derived.float_size_bytes,           m_beta[gg.floattype]},
+      {sizeof(unsigned),                      &toff.oa},
+      {sizeof(unsigned),                      &toff.ob},
+      {sizeof(unsigned),                      &toff.oc} 
     } ); 
 
   }
@@ -295,16 +292,6 @@ public:
     set_main_kernel_arguments();    
   }
 
-
-  //int enqueue(bool throw_on_oor, const size_t * global_work_size, const size_t * local_work_size, cl_uint num_events_in_wait_list, const cl_event *event_wait_list){
-    //cl_int ret = clEnqueueNDRangeKernel(command_queue, clkern, 1, NULL, global_work_size, local_work_size, num_events_in_wait_list, event_wait_list, event);
-    //if (if throw_on_oor == true || ret != CL_OUT_OF_RESOURCES){
-      //openclutil::confirm_cl_status(ret, "in enqueue:  " + hash);
-    //}
-    //return ret;
-  //}
-
-  
   
   int enqueue_main_kernel(){
     cl_int ret;
@@ -438,15 +425,11 @@ public:
 
 
 
-  tinygemm::kerngen::KernelStringBundle get_ksb(const hyperparams::HyperParams & hp){ //, std::string & kernel_string){
-    
-    //tinygemm::kerngen::KernelStringBundle bundle =
+  tinygemm::kerngen::KernelStringBundle get_ksb(const hyperparams::HyperParams & hp){
     
     return  tinygemm::kerngen::get_kernel_string_bundle(
     hp,
-    //kernel_string,
     generickernelname,
-    floattype ==  'f' ? 32 : 64,
     gg
     
     );
@@ -484,9 +467,7 @@ public:
   
   
   tinygemm::TinyGemmSolution
-  get_default(
-    const bool enforce_deterministic
-  ){
+  get_default(const bool enforce_deterministic){
     
     hyperparams::HyperParams hp = hyperparams::get_default(gg, enforce_deterministic);
     
@@ -498,10 +479,10 @@ public:
     
     tinygemm::TinyGemmSolutionStatistics tgss(std::numeric_limits<float>::max(), 0, 0);    
     
-    std::string soln_betac_kernel_string = hp.n_work_items_per_c_elm == 1 ?  ""  : betac::get_betac_kernel_string(floattype, betackernelname);
+    std::string soln_betac_kernel_string = hp.n_work_items_per_c_elm == 1 ?  ""  : betac::get_betac_kernel_string(gg.floattype, betackernelname);
     std::string soln_betac_kernel_function_name = hp.n_work_items_per_c_elm == 1 ? "" : betackernelname;
     
-    return { soln_betac_kernel_string, soln_betac_kernel_function_name, bundle.kernel_string, bundle.kernel_function_name, hp, bundle.dp, gg, floattype, tgss };
+    return { soln_betac_kernel_string, soln_betac_kernel_function_name, bundle.kernel_string, bundle.kernel_function_name, hp, bundle.dp, gg, gg.floattype, tgss };
   }
   
   
@@ -512,13 +493,13 @@ public:
     
     if (gg.m < 8 || gg.n < 8){
       mowri << "really skinny/thin matrix, returning a default kernel (to be improved) " << Endl;
-      return get_default(enforce_deterministic);//, gg); //floattype, gg);
+      return get_default(enforce_deterministic);
     }
       
     
     if (allotted_time <= 0){
       mowri << "Allotted time insufficient for benchmarking, returning default TinyGemmSolution" << Endl;
-      return get_default(enforce_deterministic);//, gg);//floattype, gg);      
+      return get_default(enforce_deterministic);      
     }
 
     address_check_valid_and_reliable();
@@ -660,8 +641,10 @@ public:
                 std::string soln_betac_kernel = does_betac_inc == 1 ?  ""  : tk_betac.kernstr;
                 std::string soln_betac_kernel_function_name = does_betac_inc == 1 ? "" : tk_betac.fname;
                 std::string soln_main_kernel_function_name = bundle.kernel_function_name;                 
-                                
-                path_of_best_solns.emplace_back (soln_betac_kernel, soln_betac_kernel_function_name, tk_main.kernstr, soln_main_kernel_function_name, hp, bundle.dp, gg, floattype, tgss); 
+                
+                
+                //TODO : TinyGemmSolution should not take gg.floattype as a parameter. 
+                path_of_best_solns.emplace_back (soln_betac_kernel, soln_betac_kernel_function_name, tk_main.kernstr, soln_main_kernel_function_name, hp, bundle.dp, gg, gg.floattype, tgss); 
 
                 
               }
@@ -748,14 +731,14 @@ public:
 openclutil::SafeClMem get_copy(
 cl_command_queue command_queue,
 cl_mem c,   
-const char floattype, 
 const tinygemm::TinyGemmGeometry & gg,
+const tinygemm::TinyGemmOffsets & toff,
 const std::string & hash
 ){
   openclutil::SafeClMem c_copied(hash);
   cl_event c_copy_event; 
-  size_t n_c = gg.ldc * (gg.tC == gg.isColMajor ? gg.m : gg.n) + gg.c_offset;
-  size_t c_memsize = get_floatbytes(floattype)*n_c;
+  size_t n_c = gg.ldc * (gg.tC == gg.isColMajor ? gg.m : gg.n) + toff.oc;
+  size_t c_memsize = gg.derived.float_size_bytes*n_c;////get_floatbytes(floattype)*n_c;
   c_copied.clmem = openclutil::cl_create_buffer_from_command_queue(command_queue, CL_MEM_READ_WRITE, c_memsize, NULL, hash + ", in function get_copy of tinygemm");
   openclutil::cl_enqueue_copy_buffer(command_queue, c, c_copied.clmem, 0, 0, c_memsize, 0, NULL, &c_copy_event, hash + ", in function get_copy of tinygemm");
   openclutil::cl_wait_for_events(1, &c_copy_event, "in function find of tinygemm");
@@ -775,16 +758,17 @@ cl_command_queue command_queue,
 cl_mem a,   
 cl_mem b,
 cl_mem c,
+cl_mem workspace,
 const bool enforce_deterministic,
-const char floattype, 
+//const char floattype, 
 const tinygemm::TinyGemmGeometry & gg,
-const double alpha,
-const double beta,
+const tinygemm::TinyGemmOffsets & toff,
+//const double alpha,
+//const double beta,
 bool verbose, 
 std::string logfile, 
 bool c_is_const){
   
-  //address_check_valid_and_reliable(a, b, c);
   
   /* The number of times each kernel is run in find. 
    * consider adding this parameter to user API. */
@@ -794,13 +778,13 @@ bool c_is_const){
 
   if (c_is_const == true){
   
-    openclutil::SafeClMem c_copied = get_copy(command_queue, c, floattype, gg, "copy of c in find");
-    OpenCLGemmEncapsulator oger(command_queue, floattype, gg, alpha, beta, a, b, c_copied.clmem, logfile, verbose);
+    openclutil::SafeClMem c_copied = get_copy(command_queue, c, gg, toff, "copy of c in find");
+    OpenCLGemmEncapsulator oger(command_queue, gg, toff, a, b, c_copied.clmem, workspace, logfile, verbose); //floattype, alpha, beta, 
     return oger.find(allotted_time, enforce_deterministic, n_runs_per_kernel);
   }
   
   else{
-    OpenCLGemmEncapsulator oger(command_queue, floattype, gg, alpha, beta, a, b, c, logfile, verbose);
+    OpenCLGemmEncapsulator oger(command_queue, gg, toff, a, b, c, workspace, logfile, verbose); //floattype,  alpha, beta, 
     return oger.find(allotted_time, enforce_deterministic, n_runs_per_kernel);
   }
 }
@@ -808,13 +792,12 @@ bool c_is_const){
 tinygemm::TinyGemmSolution
 get_default(
 const bool enforce_deterministic,
-const char floattype, 
 const tinygemm::TinyGemmGeometry & gg,
 bool verbose, 
 std::string logfile){
   
  
-  OpenCLGemmEncapsulator oger({}, floattype, gg, 3.14, 3.14, {}, {}, {}, logfile, verbose);
+  OpenCLGemmEncapsulator oger({}, gg, {0,0,0,0}, {}, {}, {}, {}, logfile, verbose);  //3.14, 3.14, floattype, 
   return oger.get_default(enforce_deterministic);
  
 }
@@ -827,28 +810,26 @@ void benchgemm(
   cl_command_queue command_queue,
   const std::vector<hyperparams::HyperParams> & hps,
   unsigned n_runs,
-  const char floattype, 
   const tinygemm::TinyGemmGeometry & gg,
-  const double alpha,
-  const double beta,
+  const tinygemm::TinyGemmOffsets & toff, 
   cl_mem a_gpu,
   cl_mem b_gpu, 
   cl_mem c_gpu,
+  cl_mem workspace_gpu,  
   bool verbose,
   std::string logfile,
   bool c_is_const){
    
-  //address_check_valid(a, b, c);
   
   tinygemm::consistencychecks::check_ldx_mnk_consistent(gg);
   if (c_is_const == true){
-    openclutil::SafeClMem c_copied = get_copy(command_queue, c_gpu, floattype, gg, "copy of c in benchgemm");
-    OpenCLGemmEncapsulator oger(command_queue, floattype, gg, alpha, beta, a_gpu, b_gpu, c_copied.clmem, logfile, verbose);
+    openclutil::SafeClMem c_copied = get_copy(command_queue, c_gpu, gg, toff, "copy of c in benchgemm");
+    OpenCLGemmEncapsulator oger(command_queue, gg, toff, a_gpu, b_gpu, c_copied.clmem, workspace_gpu, logfile, verbose);
     oger.benchgemm(hps, n_runs);
   }
   
   else{
-    OpenCLGemmEncapsulator oger(command_queue, floattype, gg, alpha, beta, a_gpu, b_gpu, c_gpu, logfile, verbose);
+    OpenCLGemmEncapsulator oger(command_queue, gg, toff, a_gpu, b_gpu, c_gpu, workspace_gpu, logfile, verbose);
     oger.benchgemm(hps, n_runs);
   }
 }
