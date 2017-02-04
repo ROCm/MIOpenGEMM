@@ -53,7 +53,7 @@ public:
   /* all derived parameters (derived from hyper-parameters and geometry) */
   derivedparams::DerivedParams dp;
   
-  /* the geometry on which this solution can be used */
+  /* the geometry on which this solution was obtained */
   tinygemm::TinyGemmGeometry geometry;
 
 
