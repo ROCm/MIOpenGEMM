@@ -79,11 +79,11 @@ void print_kernel(){
 int main(){
   
 
-  bool test_print = false;
+  bool test_print = true;
   bool test_benchgemm = false;
   bool test_find = false;
   bool test_accuracy = false;
-  bool test_default = true;
+  bool test_default = false;
   
   typedef float tfloat;
   srand(time(NULL));

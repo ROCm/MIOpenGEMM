@@ -897,7 +897,7 @@ const unsigned group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
   
   ss << 
   R"(/* ******************************************************************
-* This gemm kernel string was generated at )" << std::ctime(&generation_time) << 
+* This gemm kernel string was generated on )" << std::ctime(&generation_time) << 
 R"(****************************************************************** */
 
 /* ***********************************************
@@ -919,11 +919,21 @@ R"(****************************************************************** */
   
   ss << 
 R"(/* certain kernels can only do one or the other of the terms in c <- alpha a*b + beta c. */
+
 /* TODO : if DOES_BETA_C_INC is 0, then alpha should not appear as a kernel parameter */
 )";
   ss << "#define DOES_BETA_C_INC " << dp.does_beta_c_inc << "\n";
   ss << "#define DOES_ALPHA_A_B_INC 1" << "\n";
   
+  ss << 
+  R"(
+/* A note on how transposes IS_COL_MAJOR, A_TRANSPOSED, B_TRANSPOSED and C_TRANSPOSED effect the kernel generated: */
+/* very little. The only way they effect the kernel is through ROW_STRIDE_X, COL_STRIDE_X, for X in {A,B,C}. */
+/* ROW_STRIDE_X and COL_STRIDE_X are either 1 of ldx, depending on xor(IS_COL_MAJOR, X_TRANSPOSED) */ 
+/* the notation and comments which follow assume transposes are false, technically ROW_STRIDE_A should be ROW_STRIDE_OPA */
+/* in short, to understand tinygemm kernels, it is enough to understand the non-transpose case, all other cases are minor modifications */
+)";
+
   ss << 
 R"(
 /* TODO : remove final barrier, not nec. Check performance is not mysteriously hit! */
@@ -1043,7 +1053,7 @@ R"(
 
   ss << "\n/* two more parameters, which do dot have an effect the running of this kernel (used in enqueuing) */\n";
   ss << "/* the total number of work groups this kernel will use (recall m,n,k are fixed) */ \n";
-  ss << "/* N_WORK_ITEMS_PER_C_ELM * ((__M__/MACRO_TILE_HEIGHT) + (__M__%MACRO_TILE_HEIGHT != 0)) * ((__M__/MACRO_TILE_WIDTH) + (__N__%MACRO_TILE_WIDTH != 0)) */ \n";
+  ss << "/* N_WORK_ITEMS_PER_C_ELM * ((__M__/MACRO_TILE_HEIGHT) + (__M__%MACRO_TILE_HEIGHT != 0)) * ((__N__/MACRO_TILE_WIDTH) + (__N__%MACRO_TILE_WIDTH != 0)) */ \n";
   ss << "#define N_WORK_GROUPS " << dp.n_work_groups << "\n";
 
   ss << "/* the global work size, ie the total mumber of work items (threads) which will run */ \n";
