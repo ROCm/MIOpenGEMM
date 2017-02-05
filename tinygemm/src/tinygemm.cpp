@@ -325,6 +325,7 @@ public:
 
   void update_run_times(){
     
+    //TODO : wrap clGetEventProfilingInfo in safety layer
     clGetEventProfilingInfo(event_main_kernel, CL_PROFILING_COMMAND_START, sizeof(size_t), &t_start_main_kernel, nullptr);
     clGetEventProfilingInfo(event_main_kernel, CL_PROFILING_COMMAND_END, sizeof(size_t), &t_end_main_kernel, nullptr);
     float t_just_main = 1e-6*(t_end_main_kernel-t_start_main_kernel);
@@ -482,7 +483,7 @@ public:
     std::string soln_betac_kernel_string = hp.n_work_items_per_c_elm == 1 ?  ""  : betac::get_betac_kernel_string(gg.floattype, betackernelname);
     std::string soln_betac_kernel_function_name = hp.n_work_items_per_c_elm == 1 ? "" : betackernelname;
     
-    return { soln_betac_kernel_string, soln_betac_kernel_function_name, bundle.kernel_string, bundle.kernel_function_name, hp, bundle.dp, gg, gg.floattype, tgss };
+    return { soln_betac_kernel_string, soln_betac_kernel_function_name, bundle.kernel_string, bundle.kernel_function_name, hp, bundle.dp, gg, tgss };
   }
   
   
@@ -601,7 +602,7 @@ public:
               mowri << "global gen-com-bench : " << global_counter  <<  "." << Endl;
               
               setup_tinykernels(std::move(bundle.kernel_string), hp, bundle.dp, bundle.kernel_function_name);    
-              mowri << "(find) geometry  \t:" << gg.get_string()  << "\nEntering the core gemm loops" << Endl;
+              mowri << "(find) geometry : " << gg.get_string()  << "\nEntering the core gemm loops" << Endl; 
               core_gemm_loop(n_runs_per_kernel);
   
               std::sort(v_t_total_with_both.begin(), v_t_total_with_both.end());
@@ -643,8 +644,7 @@ public:
                 std::string soln_main_kernel_function_name = bundle.kernel_function_name;                 
                 
                 
-                //TODO : TinyGemmSolution should not take gg.floattype as a parameter. 
-                path_of_best_solns.emplace_back (soln_betac_kernel, soln_betac_kernel_function_name, tk_main.kernstr, soln_main_kernel_function_name, hp, bundle.dp, gg, gg.floattype, tgss); 
+                path_of_best_solns.emplace_back (soln_betac_kernel, soln_betac_kernel_function_name, tk_main.kernstr, soln_main_kernel_function_name, hp, bundle.dp, gg, tgss); 
 
                 
               }
@@ -652,8 +652,8 @@ public:
             }
           
             else{
-              mowri << "\nSkipping this kernel, hyper-parameters incompatible. " << Endl;
-              mowri << "Specifically, the message from the kernel string setting function was --- " << bundle.set_status.message << "\n";
+              mowri << "Skipping this kernel, hyper-parameters incompatible. " << Endl;
+              mowri << "Specifically, the message from the kernel string setting function was \n`````\n" << bundle.set_status.message << "'''''\n";
             }
           }
         }
@@ -713,11 +713,12 @@ public:
       throw tinygemm_error("\nUser should never see this error, this is an internal problem. Possibly, there were no solutions found. Which is strange, as at least the initial kernel (the initial hyper front) should have been a solution. Either, the initial kernel was not valid (which should not happen unless my filters are broken) or for whatever reason the kernel was not generated or did not compile. Maybe there is some preceding warning printed which sheds light on this? Another possibility is that there was an error in the kernel string generation which I did not think of. ");
     }
   
-    mowri << "best time : " << best_time << Endl;
-    mowri << "best kernel : " << best_hp.get_string() << Endl;
-    mowri << "start kernel : " << hyper_param_start.get_string() << Endl;
-    mowri << "the kernels along the path the final solution :  " << Endl; 
-    mowri << "hyper parameter string                                     \t time when found\t median gflop/s" << Endl;
+    //mowri << "best time : " << best_time << Endl;
+    mowri << "\nstart kernel : " << hyper_param_start.get_string() << Endl;
+    mowri << "best kernel  : " << best_hp.get_string() << Endl;
+
+    mowri << "the kernels along the path the final solution:  " << Endl; 
+    mowri << "hyper parameter string                                          \t time when found\t median gflop/s" << Endl;
 
     for (auto & x : path_of_best_solns){
       mowri <<  x.get_hyper_param_string() << "\t " << x.statistics.solution_discovery_time << "\t\t " << x.statistics.median_benchmark_gflops  << Endl;

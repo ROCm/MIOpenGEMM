@@ -23,8 +23,8 @@ void basicexample(){
   unsigned c_offset = 3;
  
   /* These must be double, irrespective of the float type of the matrices */
-  double alpha = 0.123;
-  double beta = 0.456;//0.3;
+  //double alpha = 0.123;
+  //double beta = 0.456;//0.3;
   /* floattype should be 
    * 'f' for single-precision, 32-bit floats and 
    * 'd' for double-precision, 64-bit doubles */
@@ -41,7 +41,19 @@ void basicexample(){
   bool enforce_deterministic = false;
   unsigned n_postfind_runs = 5; //4;
   bool do_cpu_test = true;  
-  basicfind<TFloat>(isColMajor, tA, tB, tC, m, n, k, lda, ldb, ldc, a_offset, b_offset, c_offset, alpha, beta, allotted_time, verbose, logfile, enforce_deterministic, n_postfind_runs, do_cpu_test);
+  //basicfind<TFloat>(isColMajor, tA, tB, tC, m, n, k, lda, ldb, ldc, a_offset, b_offset, c_offset, alpha, beta, allotted_time, verbose, logfile, enforce_deterministic, n_postfind_runs, do_cpu_test);
+  
+
+
+  unsigned workspace_size = 3;
+  unsigned workspace_offset = 4;      
+  char floattype = 'f';
+  tinygemm::TinyGemmGeometry gg (isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype);
+  tinygemm::TinyGemmOffsets offsets (a_offset, b_offset, c_offset, workspace_offset);    
+  basicfind<float>(gg, offsets, allotted_time, verbose, logfile, enforce_deterministic, n_postfind_runs, do_cpu_test);    
+  
+  
+    
 }
 
 int main(){

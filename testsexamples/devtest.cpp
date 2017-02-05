@@ -11,7 +11,7 @@
 #include <tinygemm/hyperparams.hpp>
 #include <tinygemm/tinygemmgeometry.hpp>
 
-#include "setabc.hpp"
+#include "setabcw.hpp"
 /* Note that currently (13/11/2016) most testing is done through dev/python scripts */
 /* Update (30/01/2017) this is the prefered place for doing testing */
 
@@ -101,13 +101,10 @@ int main(){
   std::vector<tfloat> v_a;
   std::vector<tfloat> v_b;
   std::vector<tfloat> v_c;
-
-
-  setabc::set_abc<tfloat>(v_a, v_b, v_c, gg, toff);
   
-  //double alpha = 1.3; 
-  //double beta = 1.7;
-  
+
+  setabcw::set_abc<tfloat>(v_a, v_b, v_c, gg, toff);
+    
   const tfloat * c_true_bla = nullptr; 
   
   if (test_print){

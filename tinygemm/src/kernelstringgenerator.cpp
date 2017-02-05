@@ -830,11 +830,11 @@ const unsigned group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
     /* check 1 : n_work_items_per_workgroup divides n_elements_in_a_unroll and n_elements_in_b_unroll  */
     std::stringstream set_status_stream;
     if (dp.n_elements_in_a_unroll % dp.n_work_items_per_workgroup != 0){
-      set_status_stream << "this is not supported : dp.n_work_items_per_workgroup (" << dp.n_work_items_per_workgroup << ") is not a factor of n_elements_in_" <<  "a" << "_UNROLL (" << dp.n_elements_in_a_unroll << "). Consider rounding unroll up. \n";
+      set_status_stream << "this is not supported:\ndp.n_work_items_per_workgroup (" << dp.n_work_items_per_workgroup << ") is not a factor of n_elements_in_" <<  "a" << "_UNROLL (" << dp.n_elements_in_a_unroll << "). \nConsider rounding unroll up. \n";
     }
   
     if (dp.n_elements_in_b_unroll % dp.n_work_items_per_workgroup != 0){
-      set_status_stream << "this is not supported : dp.n_work_items_per_workgroup (" << dp.n_work_items_per_workgroup << ") is not a factor of n_elements_in_" <<  "b" << "_UNROLL (" << dp.n_elements_in_b_unroll << "). Consider rounding unroll up. \n";
+      set_status_stream << "this is not supported:\ndp.n_work_items_per_workgroup (" << dp.n_work_items_per_workgroup << ") is not a factor of n_elements_in_" <<  "b" << "_UNROLL (" << dp.n_elements_in_b_unroll << "). \nConsider rounding unroll up. \n";
     }
     
     std::string set_status_stream_string = set_status_stream.str();

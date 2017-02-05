@@ -113,8 +113,8 @@ int main(){
   
   bool isColMajor = true;
   bool tC = false;
-  double alpha = 1.43235342345;
-  double beta = 0.45348379373;
+  //double alpha = 1.43235342345;
+  //double beta = 0.45348379373;
   float allotted_time = .003; 
   bool verbose = false;
   
@@ -171,7 +171,13 @@ int main(){
       unsigned n_postfind_runs = 11;
       bool do_cpu_test = false;
       
-      basicfind<float>(isColMajor, tA, tB, tC, m, n, k, lda, ldb, ldc, a_offset, b_offset, c_offset, alpha, beta, allotted_time, verbose, ss_logfile.str(), enforce_deterministic, n_postfind_runs, do_cpu_test);    
+      unsigned workspace_size = 3;
+      unsigned workspace_offset = 4;      
+      char floattype = 'f';
+      tinygemm::TinyGemmGeometry gg (isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype);
+      tinygemm::TinyGemmOffsets offsets (a_offset, b_offset, c_offset, workspace_offset);
+
+      basicfind<float>(gg, offsets, allotted_time, verbose, ss_logfile.str(), enforce_deterministic, n_postfind_runs, do_cpu_test);    
     }
   }
   

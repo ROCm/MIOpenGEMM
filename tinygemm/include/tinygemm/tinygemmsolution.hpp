@@ -25,7 +25,7 @@ class TinyGemmSolutionStatistics{
      
 };
 
-/* Note 01/feb/2017: A TinyGemmSolution is only valid for a fixed geometry */
+/* Note 01 feb 2017: A TinyGemmSolution is only valid for a fixed geometry */
 class TinyGemmSolution{
 
 public:
@@ -36,6 +36,10 @@ public:
   /* The name of the betac kernel, ie __kernel void THIS_STRING_HERE */
   std::string betac_kernel_function_name;
 
+  const size_t betac_local_work_size;
+  const size_t betac_global_work_size;
+
+
   /* if betac_kernel (above) is empty, this is a full GEMM kernel which performs  
    * C <- C + alpha A*B + beta C. Otherwise, if betac_kernel is not empty, 
    * this is a kernel which just does C <- C + alpha A*B */  
@@ -43,6 +47,11 @@ public:
 
   /* The name of the main kernel, ie __kernel void THIS_STRING_HERE */
   std::string main_kernel_function_name;
+
+  const size_t main_kernel_local_work_size;
+  const size_t main_kernel_global_work_size;
+
+
 
   /* all hyper-parameters (unroll, tile size, etc)
    * these are also defined as preprocessor flags in main_kernel
@@ -55,25 +64,12 @@ public:
   
   /* the geometry on which this solution was obtained */
   tinygemm::TinyGemmGeometry geometry;
-
-
-  /* currently 'f' or 'd' for single and double precision, respectively */
-  char floattype;  
   
   TinyGemmSolutionStatistics statistics;
 
-  const size_t main_kernel_n_work_groups;
-  const size_t main_kernel_local_work_size;
-  const size_t main_kernel_global_work_size;
-
-  //const unsigned betac_dim_coal;
-  //const unsigned betac_dim_uncoal;
-  const size_t betac_global_work_size;
-  const size_t betac_local_work_size;
-
 
   /* TODO : move betac_kernel and main_kernel into constructor */
-  TinyGemmSolution(const std::string & betac_kernel, const std::string & betac_kernel_function_name,  const std::string &  main_kernel, const std::string & main_kernel_function_name, const hyperparams::HyperParams & hp, const derivedparams::DerivedParams & dp, const tinygemm::TinyGemmGeometry & geometry, char floattype, TinyGemmSolutionStatistics tgss);
+  TinyGemmSolution(const std::string & betac_kernel, const std::string & betac_kernel_function_name,  const std::string &  main_kernel, const std::string & main_kernel_function_name, const hyperparams::HyperParams & hp, const derivedparams::DerivedParams & dp, const tinygemm::TinyGemmGeometry & geometry, TinyGemmSolutionStatistics tgss);
   
   
 

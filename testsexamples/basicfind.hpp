@@ -24,26 +24,32 @@
 #include <tinygemm/slowcpugemm.hpp>
 
 /* used to populate data with random values */
-#include "setabc.hpp"
+#include "setabcw.hpp"
   
 template <typename TFloat> 
-void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned n, unsigned k, unsigned lda, unsigned ldb, unsigned ldc, unsigned a_offset, unsigned b_offset, unsigned c_offset, double alpha, double beta, float allotted_time, bool verbose, std::string logfile, bool enforce_deterministic, unsigned n_postfind_runs, bool do_cpu_test){
 
+void basicfind(const tinygemm::TinyGemmGeometry & geometry, const tinygemm::TinyGemmOffsets & toff, float allotted_time, bool verbose, std::string logfile, bool enforce_deterministic, unsigned n_postfind_runs, bool do_cpu_test){
+  
+  /* just checking that geometry floattype is correct */
+  if (!((geometry.floattype == 'f' && sizeof(TFloat) == 4) || (geometry.floattype == 'd' && sizeof(TFloat) == 8))) {
+    throw tinygemm::tinygemm_error("disagreement between geometry.floattype and sizeof(TFloat) in basicfind.hpp");
+  }
 
-  tinygemm::TinyGemmGeometry geometry(isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, a_offset, b_offset, c_offset);
+  double alpha = tinygemm::default_alpha;
+  double beta = tinygemm::default_beta;
   
-  char floattype = sizeof(TFloat) == 4 ? 'f' : 'd';
-  
+  /* generating cpu copies of data */
   std::vector<TFloat> v_a;
   std::vector<TFloat> v_b;
   std::vector<TFloat> v_c;
-  
-  setabc::set_abc(v_a, v_b, v_c, geometry);
+  std::vector<TFloat> v_workspace;
+  setabcw::set_abcw(v_a, v_b, v_c, v_workspace, geometry, toff);
   
   size_t n_a = v_a.size();
   size_t n_b = v_b.size();  
-  size_t n_c = v_c.size();    
-
+  size_t n_c = v_c.size(); 
+  size_t n_w = v_workspace.size();
+  
   
   /* On OpenCL boilerplate. 
    * This might be different depending on your system. 
@@ -59,9 +65,6 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
   cl_context context;
   cl_device_id device_id_to_use;
   cl_command_queue command_queue;
-  cl_mem a_gpu = NULL;
-  cl_mem b_gpu = NULL;
-  cl_mem c_gpu = NULL;
 
   cl_platform_id platform = nullptr;
   cl_uint num_platforms;
@@ -72,22 +75,26 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
   command_queue = tinygemm::openclutil::cl_create_command_queue(context, device_id_to_use, CL_QUEUE_PROFILING_ENABLE, "in basicfind.hpp");  
   
   /* writing cpu arrays to gpu */
-  a_gpu = tinygemm::openclutil::cl_create_buffer(context, CL_MEM_READ_ONLY,  sizeof(TFloat)*n_a, NULL, "a_gpu in basicfind.hpp");
-  b_gpu = tinygemm::openclutil::cl_create_buffer(context, CL_MEM_READ_ONLY,  sizeof(TFloat)*n_b, NULL, "b_gpu in basicfind.hpp");
-  c_gpu = tinygemm::openclutil::cl_create_buffer(context, CL_MEM_READ_WRITE, sizeof(TFloat)*n_c, NULL, "c_gpu in basicfind.hpp");      
+  cl_mem a_gpu = tinygemm::openclutil::cl_create_buffer(context, CL_MEM_READ_ONLY,  sizeof(TFloat)*n_a, NULL, "a_gpu in basicfind.hpp");
+  cl_mem b_gpu = tinygemm::openclutil::cl_create_buffer(context, CL_MEM_READ_ONLY,  sizeof(TFloat)*n_b, NULL, "b_gpu in basicfind.hpp");
+  cl_mem c_gpu = tinygemm::openclutil::cl_create_buffer(context, CL_MEM_READ_WRITE, sizeof(TFloat)*n_c, NULL, "c_gpu in basicfind.hpp");      
+  cl_mem workspace_gpu = tinygemm::openclutil::cl_create_buffer(context, CL_MEM_READ_WRITE, sizeof(TFloat)*n_w, NULL, "workspace_gpu in basicfind.hpp");
+
   tinygemm::openclutil::cl_enqueue_write_buffer(command_queue, a_gpu, CL_TRUE, 0, sizeof(TFloat)*n_a, v_a.data(), 0, NULL, NULL, "a_gpu in basicfind.hpp");
   tinygemm::openclutil::cl_enqueue_write_buffer(command_queue, b_gpu, CL_TRUE, 0, sizeof(TFloat)*n_b, v_b.data(), 0, NULL, NULL, "b_gpu in basicfind.hpp");
   tinygemm::openclutil::cl_enqueue_write_buffer(command_queue, c_gpu, CL_TRUE, 0, sizeof(TFloat)*n_c, v_c.data(), 0, NULL, NULL, "c_gpu in basicfind.hpp");
+  tinygemm::openclutil::cl_enqueue_write_buffer(command_queue, workspace_gpu, CL_TRUE, 0, sizeof(TFloat)*n_w, v_workspace.data(), 0, NULL, NULL, "workspace_gpu in basicfind.hpp");
+
   /* ******************************************************************
   * ******************************************************************
   * ******************************************************************/
   
   
 
-  /* ***************
-   * Find a kernel *
-   * ***************/
-  tinygemm::TinyGemmSolution soln = tinygemm::find(allotted_time, command_queue, a_gpu, b_gpu, c_gpu, enforce_deterministic, floattype,  geometry, alpha, beta, verbose, logfile);
+  /* *****************
+   * Find a solution *
+   * *****************/
+  tinygemm::TinyGemmSolution soln = tinygemm::find(allotted_time, command_queue, a_gpu, b_gpu, c_gpu, workspace_gpu, enforce_deterministic, geometry, toff, verbose, logfile);
   
     
   if (do_cpu_test == true && n_postfind_runs < 1){
@@ -104,11 +111,7 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
      * Otherwise, both betac and main kernels need to be used.
      * We use the kernel on the same problem as benchmarked. 
      * I expect this will be the standard workflow with tinygemm.  */
-    
-    //std::map<std::string, size_t> betac_kernel_worksize_params;    
-    //std::map<std::string, size_t> main_kernel_worksize_params;
-    //main_kernel_worksize_params = soln.get_main_kernel_worksize_params(m,n);
-    
+        
     /* Note that the alpha and beta used in the `find' step are always double, even if the data type is float.  
      * This above design choice was made to reduce the amount of object code. 
      * However, when the kernel is to be used, alpha and beta must corrspond the type of the data. */
@@ -132,15 +135,10 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
       auto betac_kernel_function_name_cstr = soln.betac_kernel_function_name.c_str();            
       betac_kernel = tinygemm::openclutil::cl_create_kernel(betac_program, betac_kernel_function_name_cstr, "creating betac_kernel in basicfind.hpp");
       
-      //betac_kernel_worksize_params = soln.get_betac_kernel_worksize_params(m,n);
-      //tinygemm::openclutil::cl_set_kernel_arg(betac_kernel, 0, sizeof(unsigned), &betac_kernel_worksize_params.at("dim_coal"), "betac 0");
-      //tinygemm::openclutil::cl_set_kernel_arg(betac_kernel, 1, sizeof(unsigned), &betac_kernel_worksize_params.at("dim_uncoal"), "betac 1");
-
       tinygemm::openclutil::cl_set_kernel_arg(betac_kernel, 0, sizeof(unsigned), &geometry.derived.dim_c_coal, "betac 0");
       tinygemm::openclutil::cl_set_kernel_arg(betac_kernel, 1, sizeof(unsigned), &geometry.derived.dim_c_uncoal, "betac 1");
-            
-      tinygemm::openclutil::cl_set_kernel_arg(betac_kernel, 2, sizeof(unsigned), &ldc, "betac 2");
-      tinygemm::openclutil::cl_set_kernel_arg(betac_kernel, 3, sizeof(unsigned), &c_offset, "betac 3");
+      tinygemm::openclutil::cl_set_kernel_arg(betac_kernel, 2, sizeof(unsigned), &geometry.ldc, "betac 2");
+      tinygemm::openclutil::cl_set_kernel_arg(betac_kernel, 3, sizeof(unsigned), &toff.oc, "betac 3");
       tinygemm::openclutil::cl_set_kernel_arg(betac_kernel, 4, sizeof(cl_mem), (void *)&c_gpu, "betac 4");
       tinygemm::openclutil::cl_set_kernel_arg(betac_kernel, 5, sizeof(TFloat), &beta_true_type, "betac 5"); 
     }
@@ -152,31 +150,27 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
     tinygemm::openclutil::cl_build_program(main_program, 1, &device_id_to_use, buildOptions, NULL, NULL, "basicfind.hpp, building main_program");     
     auto main_kernel_function_name_cstr = soln.main_kernel_function_name.c_str();
     main_kernel = tinygemm::openclutil::cl_create_kernel(main_program, main_kernel_function_name_cstr, "main kernel, in basicfind.hpp");      
+    
     tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 0, sizeof(cl_mem), (void *)&c_gpu, "main kernel 0 (basicfind.hpp)");
     tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 1, sizeof(cl_mem), (void *)&a_gpu, "main kernel 1 (basicfind.hpp)");
     tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 2, sizeof(cl_mem), (void *)&b_gpu, "main kernel 2 (basicfind.hpp)");
     tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 3, sizeof(TFloat), &alpha_true_type, "main kernel 3 (basicfind.hpp)");
     tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 4, sizeof(TFloat), &beta_true_type, "main kernel 4 (basicfind.hpp)");
-    tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 5, sizeof(unsigned), &a_offset, "main kernel 5 (basicfind.hpp)");
-    tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 6, sizeof(unsigned), &b_offset, "main kernel 6 (basicfind.hpp)");
-    tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 7, sizeof(unsigned), &c_offset, "main kernel 7 (basicfind.hpp)");  
+    tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 5, sizeof(unsigned), &toff.oa, "main kernel 5 (basicfind.hpp)");
+    tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 6, sizeof(unsigned), &toff.ob, "main kernel 6 (basicfind.hpp)");
+    tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 7, sizeof(unsigned), &toff.oc, "main kernel 7 (basicfind.hpp)");  
     
     
     /* Enqueueing the kernel(s) */
     
     /* Enqueue the betac kernel if necessary */
     if (soln.betac_kernel.compare("") != 0){
-      //tinygemm::openclutil::cl_enqueue_ndrange_kernel(command_queue, betac_kernel, 1, NULL, &betac_kernel_worksize_params.at("global_work_size"), &betac_kernel_worksize_params.at("local_work_size"), 0, NULL, NULL, "Error in basicfind.hpp (betac kernel enqueueing)");
-      
       tinygemm::openclutil::cl_enqueue_ndrange_kernel(command_queue, betac_kernel, 1, NULL, &soln.betac_global_work_size, &soln.betac_local_work_size, 0, NULL, NULL, "Error in basicfind.hpp (betac kernel enqueueing)");
     }
     
     /* Enqueue the main kernel */
     cl_event event_main_kernel;
-    //tinygemm::openclutil::cl_enqueue_ndrange_kernel(command_queue, main_kernel, 1, NULL, &main_kernel_worksize_params.at("global_work_size"), &main_kernel_worksize_params.at("local_work_size"), 0,NULL, &event_main_kernel, "enqueueing main kernel (basicfind.hpp)");  
-    
     tinygemm::openclutil::cl_enqueue_ndrange_kernel(command_queue, main_kernel, 1, NULL, &soln.main_kernel_global_work_size, &soln.main_kernel_local_work_size, 0,NULL, &event_main_kernel, "enqueueing main kernel (basicfind.hpp)"); 
-     
     tinygemm::openclutil::cl_wait_for_events(1, &event_main_kernel, "waiting for main kernel in basicfind.hpp");
 
     
@@ -184,7 +178,7 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
       /* We do a check with cpu */
       std::vector<std::string> algs {"3fors"};
       auto c_cpu_final = v_c;
-      tinygemm::slowcpugemm::gemms_cpu<TFloat>(geometry, v_a.data(), v_b.data(), c_cpu_final.data(), alpha, beta, algs, mowri);
+      tinygemm::slowcpugemm::gemms_cpu<TFloat>(geometry, toff, v_a.data(), v_b.data(), c_cpu_final.data(), alpha, beta, algs, mowri);
       auto c_copied_from_gpu = std::vector<TFloat>(v_c.size(), 0);
       cl_event event_read_c_back;
   
@@ -211,13 +205,9 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
         
         auto start = std::chrono::high_resolution_clock::now();
         for (unsigned pfr = 0; pfr < npr; ++pfr){
-          if (soln.betac_kernel.compare("") != 0){
-            //tinygemm::openclutil::cl_enqueue_ndrange_kernel(command_queue, betac_kernel, 1, NULL, &betac_kernel_worksize_params.at("global_work_size"), &betac_kernel_worksize_params.at("local_work_size"), 0, NULL, NULL, "in n_positive_runs > 1 loop, betac");
-            
-            tinygemm::openclutil::cl_enqueue_ndrange_kernel(command_queue, betac_kernel, 1, NULL, &soln.betac_global_work_size, &soln.betac_local_work_size, 0, NULL, NULL, "in n_positive_runs > 1 loop, betac");
-            
+          if (soln.betac_kernel.compare("") != 0){            
+            tinygemm::openclutil::cl_enqueue_ndrange_kernel(command_queue, betac_kernel, 1, NULL, &soln.betac_global_work_size, &soln.betac_local_work_size, 0, NULL, NULL, "in n_positive_runs > 1 loop, betac");            
           }
-          //tinygemm::openclutil::cl_enqueue_ndrange_kernel(command_queue, main_kernel, 1, NULL, &main_kernel_worksize_params.at("global_work_size"), &main_kernel_worksize_params.at("local_work_size"), 0,NULL, &event_main_kernel, "in n_positive_runs > 1 loop, main "); 
           
           tinygemm::openclutil::cl_enqueue_ndrange_kernel(command_queue, main_kernel, 1, NULL, &soln.main_kernel_global_work_size, &soln.main_kernel_local_work_size, 0,NULL, &event_main_kernel, "in n_positive_runs > 1 loop, main "); 
            
@@ -228,10 +218,10 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
         std::chrono::duration<float> fp_ms = end - start;
         float elapsed_seconds = fp_ms.count();
         host_times[npr] = elapsed_seconds;  
-        std::cout << "Time to complete " << npr << " run(s) : " << elapsed_seconds << " [s]." << " This corresponds to " << 1e-9*(2.*m*n*k*npr) / elapsed_seconds << " gflop/s. " << std::endl;
+        std::cout << "Time to complete " << npr << " run(s) : " << elapsed_seconds << " [s]." << " This corresponds to " << 1e-9*(2.*geometry.m*geometry.n*geometry.k*npr) / elapsed_seconds << " gflop/s. " << std::endl;
       }
       float difference_in_times = host_times[n_postfind_runs + 1] - host_times[1];
-      std::cout << "Difference in times : " << difference_in_times << " [s]. This corresponds to  " << 1e-9*(2.*m*n*k*n_postfind_runs) / difference_in_times << " gflop/s. " << std::endl;
+      std::cout << "Difference in times : " << difference_in_times << " [s]. This corresponds to  " << 1e-9*(2.*geometry.m*geometry.n*geometry.k*n_postfind_runs) / difference_in_times << " gflop/s. " << std::endl;
       /* std::cout << "Note to self and MLOpeners : we need to decide how to proceed with the DeepBench benchmarking, baidu's approach  (run 10 times after warm-up, no subtraction as above) *might* underestimate cudnn performance. For many problems (generally the large ones), tinygemm and host times are the same. Occasionally (for small problems it seems), the host time is 20% slower." << std::endl; */
       std::cout << soln.get_hyper_param_string() << std::endl;
     }
@@ -241,6 +231,8 @@ void basicfind(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned 
   tinygemm::openclutil::cl_release_mem_object(c_gpu, "c_gpu in basicfind.hpp");
   tinygemm::openclutil::cl_release_mem_object(a_gpu, "a_gpu in basicfind.hpp");
   tinygemm::openclutil::cl_release_mem_object(b_gpu, "b_gpu  in basicfind.hpp");
+  tinygemm::openclutil::cl_release_mem_object(workspace_gpu, "workspace_gpu  in basicfind.hpp");
+
   tinygemm::openclutil::cl_release_command_queue(command_queue, "command queue in basicfind.hpp");
   tinygemm::openclutil::cl_release_context(context, "context in basicfind.hpp");
   

@@ -14,9 +14,7 @@ void geometrytest(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsign
 
    
   /* These must be double, irrespective of the float type of the matrices */
-  double alpha = 0.1231321231243234523425;
-  double beta = 1.45343453456345344445346;
-  float allotted_time = 0.0001;
+  float allotted_time = 0.001;
   /* set verbose to true if you want output to terminal */
   bool verbose = false;
   /* set logfile if you want output forked to file */
@@ -24,8 +22,16 @@ void geometrytest(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsign
   bool enforce_deterministic = false;
   unsigned n_postfind_runs = 1;
   bool do_cpu_test = true;
-    
-  basicfind<TFloat>(isColMajor, tA, tB, tC, m, n, k, lda, ldb, ldc, a_offset, b_offset, c_offset, alpha, beta, allotted_time, verbose, logfile, enforce_deterministic, n_postfind_runs, do_cpu_test);
+
+
+
+
+  unsigned workspace_size = 3;
+  unsigned workspace_offset = 4;      
+  char floattype = sizeof(TFloat) == 4 ? 'f' : 'd';
+  tinygemm::TinyGemmGeometry gg (isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype);
+  tinygemm::TinyGemmOffsets offsets (a_offset, b_offset, c_offset, workspace_offset);    
+  basicfind<TFloat>(gg, offsets, allotted_time, verbose, logfile, enforce_deterministic, n_postfind_runs, do_cpu_test);
 }
 
 int main(){

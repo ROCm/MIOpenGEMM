@@ -39,9 +39,11 @@ TinyGemmGeometry::TinyGemmGeometry(bool isColMajor_, bool tA_, bool tB_, bool tC
 }
 
 std::string TinyGemmGeometry::get_string() const{
-  std::stringstream geometry_stringstream;
-  geometry_stringstream << " tC:" << tC << " tA:" << tA << " tB:" << tB << " colMaj:" << isColMajor << " m:" << m << " n:" << n << " k:" << k << " lda:" << lda << " ldb:" << ldb << " ldc:" << ldc  << " workspace_size:" << workspace_size << " floattype:" << floattype;
-  return geometry_stringstream.str();
+  
+  return get_networkconfig_string();
+  //std::stringstream geometry_stringstream;
+  //geometry_stringstream << " tC:" << tC << " tA:" << tA << " tB:" << tB << " colMaj:" << isColMajor << " m:" << m << " n:" << n << " k:" << k << " lda:" << lda << " ldb:" << ldb << " ldc:" << ldc  << " workspace_size:" << workspace_size << " floattype:" << floattype;
+  //return geometry_stringstream.str();
 }
 // " a_offset:" << a_offset << " b_offset:" << b_offset << " c_offset:" << c_offset << " workspace_offset:" << workspace_offset
 
