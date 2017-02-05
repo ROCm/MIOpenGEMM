@@ -18,6 +18,7 @@
 #include <tinygemm/tinygemmsolution.hpp>
 #include <tinygemm/hyperparams.hpp>
 #include <tinygemm/kernelstringgenerator.hpp>
+#include <tinygemm/tinygemmkernel.hpp>
 
 namespace tinygemm{
   
@@ -44,74 +45,6 @@ class MultiFloatType{
 static const MultiFloatType m_alpha(default_alpha);
 static const MultiFloatType m_beta(default_beta);
   
-
-
-class TinyGemmKernel{
-  
-  public:
-    cl_command_queue command_queue;
-    std::string kernstr;
-    std::string fname;
-  
-  private:
-    cl_program clprog;
-
-  public:
-    cl_kernel clkern;
-  
-  private:
-    std::string hash;
-    
-    
-  private:
-
-
-
-  public:
-    
-    TinyGemmKernel(cl_command_queue command_queue_, const std::string & hash_): command_queue(command_queue_), kernstr(""), fname(""), clprog(nullptr), clkern(nullptr), hash(hash_) {}
-    
-    void try_release(){
-      if (clprog != nullptr){
-        openclutil::cl_release_program(clprog, "TinyGemmKernel Destructor");
-      }
-      if (clkern != nullptr){
-        openclutil::cl_release_kernel(clkern, "TinyGemmKernel Destructor");
-      }
-    }
-    
-    void update(std::string && new_kernstr, const std::string & kern_func_name){
-      try_release();
-      kernstr = new_kernstr;      
-      fname = kern_func_name;
-      openclutil::set_program_and_kernel(command_queue, kernstr, kern_func_name, clprog, clkern);
-    }
-    
-    ~TinyGemmKernel(){
-      try_release();
-    }
-    
-    bool is_set(){
-      return (clprog != nullptr && clkern != nullptr);
-    }
-
-    
-    void set_kernel_arg(cl_uint arg_index, size_t arg_size, const void *arg_value){
-      
-      if (clkern == nullptr){
-        throw tinygemm_error("Attempt to set kernel argument of uninitialised kernel");
-      }
-      openclutil::cl_set_kernel_arg(clkern, arg_index, arg_size, arg_value, "in set_kernel_arg of TinyGemmKernel, " + hash + " index : " + std::to_string(arg_index));
-    }
-    
-    void set_kernel_args(std::vector<std::pair<size_t, const void *> > arg_sizes_values){
-      for (cl_uint arg_index = 0; arg_index < arg_sizes_values.size(); ++arg_index){
-        set_kernel_arg(arg_index, arg_sizes_values[arg_index].first, arg_sizes_values[arg_index].second); 
-      }
-    }
-
-};
-
 
 class OpenCLGemmEncapsulator{
 public: 
@@ -587,7 +520,7 @@ public:
             
             
             auto bundle = get_ksb(hp);
-            //tk_main.kernstr = std::move(bundle.kernel_string);
+            //tk_main.tgk_strings.kernstr = std::move(bundle.kernel_string);
             
             if (bundle.set_status.is_good() == true){
               
@@ -635,12 +568,12 @@ public:
                 
                 
                 /* set kernel files */
-                std::string soln_betac_kernel = does_betac_inc == 1 ?  ""  : tk_betac.kernstr;
-                std::string soln_betac_kernel_function_name = does_betac_inc == 1 ? "" : tk_betac.fname;
+                std::string soln_betac_kernel = does_betac_inc == 1 ?  ""  : tk_betac.tgk_strings.kernstr;
+                std::string soln_betac_kernel_function_name = does_betac_inc == 1 ? "" : tk_betac.tgk_strings.fname;
                 std::string soln_main_kernel_function_name = bundle.kernel_function_name;                 
                 
                 
-                path_of_best_solns.emplace_back (soln_betac_kernel, soln_betac_kernel_function_name, tk_main.kernstr, soln_main_kernel_function_name, hp, bundle.dp, gg, tgss); 
+                path_of_best_solns.emplace_back (soln_betac_kernel, soln_betac_kernel_function_name, tk_main.tgk_strings.kernstr, soln_main_kernel_function_name, hp, bundle.dp, gg, tgss); 
 
                 
               }

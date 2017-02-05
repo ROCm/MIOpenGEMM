@@ -40,15 +40,12 @@ class KernelString{
     
     /* set here as we do not want the user to choose (although would not break kernel) */
     unsigned use_edge_trick = 1;
-
     std::string kernelname = generickernelname;
 
 
   public:
     
     hyperparams::HyperParams hp;
-    
-    
     tinygemm::TinyGemmGeometry gg;
     
   
