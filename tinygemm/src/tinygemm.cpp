@@ -21,7 +21,7 @@
 
 namespace tinygemm{
   
-static const std::string generickernelname = "tg_generated_gemm";
+
 static const std::string betackernelname = "tg_betac";
 
 
@@ -429,11 +429,7 @@ public:
   tinygemm::kerngen::KernelStringBundle get_ksb(const hyperparams::HyperParams & hp){
     
     return  tinygemm::kerngen::get_kernel_string_bundle(
-    hp,
-    generickernelname,
-    gg
-    
-    );
+    hp,gg);
     
     
   }

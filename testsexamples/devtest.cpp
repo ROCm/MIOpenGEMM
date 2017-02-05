@@ -64,12 +64,7 @@ void print_kernel(){
   auto hp = get_hp();
   auto gg = get_geometry();
   
-  auto bundle = tinygemm::kerngen::get_kernel_string_bundle(
-  hp,  
-  "tgkern",
-  gg
-  
-  );
+  auto bundle = tinygemm::kerngen::get_kernel_string_bundle(hp, gg);
   
   std::cout << bundle.kernel_string;
   

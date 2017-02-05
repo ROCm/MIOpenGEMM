@@ -9,6 +9,8 @@
 namespace tinygemm{
 namespace kerngen{
 
+static const std::string generickernelname = "tg_generated_gemm";
+
 class KernelStringSetStatus{
   public:
   
@@ -36,15 +38,8 @@ class KernelStringBundle{
 KernelStringBundle get_kernel_string_bundle(
   /* hyper parameters */
   const hyperparams::HyperParams & hp,
-
-  std::string kernelname,// = "",
-
-
   /* geometry parameters */
-  const tinygemm::TinyGemmGeometry & gg
-
-  );
-
+  const tinygemm::TinyGemmGeometry & gg);
 
 }
 }

@@ -41,11 +41,13 @@ class KernelString{
     /* set here as we do not want the user to choose (although would not break kernel) */
     unsigned use_edge_trick = 1;
 
+    std::string kernelname = generickernelname;
+
+
   public:
     
     hyperparams::HyperParams hp;
     
-    std::string kernelname;
     
     tinygemm::TinyGemmGeometry gg;
     
@@ -56,8 +58,6 @@ class KernelString{
   /* hyper parameters */
   const hyperparams::HyperParams & hp_,
   
-  std::string kernelname_,// = "",
-  
 
   const tinygemm::TinyGemmGeometry & gg_  
 
@@ -65,7 +65,6 @@ class KernelString{
   ):
   
   hp(hp_),
-  kernelname(kernelname_),
   gg(gg_)
 
   {
@@ -1216,12 +1215,8 @@ KernelStringBundle get_kernel_string_bundle(
 
   
   /* hyper parameters */
-  const hyperparams::HyperParams & hp,
-    
-  std::string kernelname, // = "",
-  
+  const hyperparams::HyperParams & hp,    
   /* geometry parameters */
-  
   const tinygemm::TinyGemmGeometry & gg
 
   
@@ -1229,14 +1224,7 @@ KernelStringBundle get_kernel_string_bundle(
 ){
   
   KernelString kstring(
-  
-  hp,
-
-  kernelname,
-
-  gg  
-  
-  );
+  hp, gg );
   
   KernelStringBundle kernel_string_bundle = kstring.get_kernel_string_bundle();
   if (kernel_string_bundle.set_status.is_good()){

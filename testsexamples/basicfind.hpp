@@ -165,6 +165,7 @@ void basicfind(const tinygemm::TinyGemmGeometry & geometry, const tinygemm::Tiny
     
     /* Enqueue the betac kernel if necessary */
     if (soln.betac_kernel.compare("") != 0){
+
       tinygemm::openclutil::cl_enqueue_ndrange_kernel(command_queue, betac_kernel, 1, NULL, &soln.betac_global_work_size, &soln.betac_local_work_size, 0, NULL, NULL, "Error in basicfind.hpp (betac kernel enqueueing)");
     }
     

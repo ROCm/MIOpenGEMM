@@ -27,7 +27,7 @@ TinyGemmSolutionStatistics tgss_):
 betac_kernel(betac_kernel_), 
 betac_kernel_function_name(betac_kernel_function_name_), 
 betac_local_work_size(betac::n_work_items_per_group),
-betac_global_work_size(betac::get_global_work_size(geometry)),
+betac_global_work_size(betac::get_global_work_size(geometry_)),
 
 main_kernel(main_kernel_), 
 main_kernel_function_name(main_kernel_function_name_),  
@@ -44,6 +44,7 @@ statistics(tgss_)
 
 
 {
+  
   
 }
   
