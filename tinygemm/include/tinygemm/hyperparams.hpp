@@ -37,13 +37,15 @@ private:
 
 public:
 
-  void bool_check(const std::string & key, unsigned v);
+  void bool_check(const std::string & key, unsigned v) const;
   
-  void positive_check(const std::string & key, unsigned v);
+  void positive_check(const std::string & key, unsigned v) const;
   
-  void mod_test(const std::string & key1, unsigned v1, const std::string & key2, unsigned v2);
+  void mod_check(const std::string & key1, unsigned v1, const std::string & key2, unsigned v2) const;
   
-  void checks();
+  void ga_check() const;
+  
+  void checks() const;
   
     
   

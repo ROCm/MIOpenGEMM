@@ -19,11 +19,12 @@
 #include <tinygemm/hyperparams.hpp>
 #include <tinygemm/kernelstringgenerator.hpp>
 #include <tinygemm/tinygemmkernel.hpp>
+#include <tinygemm/derivedparams.hpp>
 
 namespace tinygemm{
   
 
-static const std::string betackernelname = "tg_betac";
+
 
 
 
@@ -68,25 +69,15 @@ private:
   /* parameters related to the main kernel */
   unsigned does_betac_inc;
   size_t main_n_work_groups;
-  size_t main_local_work_size;
-  size_t main_global_work_size;
   
-  /* parameters related to the scaling (betac) kernel */
-  size_t betac_global_work_size;
-  
-  /* stores (the most recent of n_runs) execution time */
-  size_t t_start_betac_kernel, t_end_betac_kernel, t_start_main_kernel, t_end_main_kernel;
-
   /* vector of times over a set of runs on core loop */
-  std::vector<float> v_t_total_with_both, v_t_just_scaling, v_t_just_main;
+  std::vector<float> v_t_total_with_both;
 
-  /* used for getting performance of main and (possibly) betac kernels */
-  cl_event event_main_kernel;
-  cl_event event_betac_kernel;
   
   TinyGemmKernel tk_main;
   TinyGemmKernel tk_betac;
   
+  std::vector <TinyGemmKernel *> ptr_tk_kernels;
 
 private:
 
@@ -142,7 +133,7 @@ public:
 
   command_queue(command_queue_), 
   outputfilename(outputfilename_),
-  //floattype(floattype_), 
+
   gg(gg_),
   toff(toff_),
   a_gpu(a_gpu_),
@@ -169,31 +160,12 @@ public:
   }  
 
   
-  void set_betac_kernel_arguments(){
-    tk_betac.set_kernel_args( {
-      {sizeof(unsigned),                      &gg.derived.dim_c_coal},
-      {sizeof(unsigned),                      &gg.derived.dim_c_uncoal},
-      {sizeof(unsigned),                      &gg.ldc},
-      {sizeof(unsigned),                      &toff.oc},
-      {sizeof(cl_mem),                        (void *)&c_gpu},
-      {gg.derived.float_size_bytes,           m_beta[gg.floattype]}    
-    } );              
-  }
   
-  void setup_betac_kernel(){
-    tk_betac.update(betac::get_betac_kernel_string(gg.floattype, betackernelname), betackernelname);
-    betac_global_work_size = betac::get_global_work_size(gg);
-    mowri << "in setup_betac_kernel, betac_global_work_size : " << betac_global_work_size << Endl; 
-    set_betac_kernel_arguments();
-  }
   
-  void enqueue_betac_kernel(){
-    openclutil::cl_enqueue_ndrange_kernel(command_queue, tk_betac.clkern, 1, NULL, &betac_global_work_size, &betac::n_work_items_per_group, 0, NULL, &event_betac_kernel, "in enqueue_betac_kernel");
-  }
+  
+ 
 
-
-
-
+  
 
 
   void set_main_kernel_arguments(){
@@ -207,104 +179,128 @@ public:
       {sizeof(unsigned),                      &toff.oa},
       {sizeof(unsigned),                      &toff.ob},
       {sizeof(unsigned),                      &toff.oc} 
-    } ); 
-
+    } );
+  }
+  
+  void set_betac_kernel_arguments(){
+    /* set the betac kernel parameters */
+    tk_betac.set_kernel_args( {
+      {sizeof(unsigned),                      &gg.derived.dim_c_coal},
+      {sizeof(unsigned),                      &gg.derived.dim_c_uncoal},
+      {sizeof(unsigned),                      &gg.ldc},
+      {sizeof(unsigned),                      &toff.oc},
+      {sizeof(cl_mem),                        (void *)&c_gpu},
+      {gg.derived.float_size_bytes,           m_beta[gg.floattype]}    
+    } );              
   }
 
+
+
+  
+  void setup_betac_kernel(std::string && kernel_string, const hyperparams::HyperParams & hp, const derivedparams::DerivedParams & dp, const std::string & kern_func_name){
+    
+    //TODO: (1) check hyper parameters to see if needed (2) check to see if changed. if so, set. 
+    
+    if (tk_betac.is_set() == false && does_betac_inc == 0){
+    
+      tk_betac.update(
+      betac::get_betac_kernel_string(gg.floattype, betac::genericbetackernelname), 
+      betac::genericbetackernelname,
+      betac::get_global_work_size(gg),
+      betac::get_local_work_size(gg)
+      );
+  
+      //mowri << "in setup_betac_kernel, tk_betac.global_work_size : " << tk_betac.global_work_size << Endl; 
+      set_betac_kernel_arguments();
+    }
+  }
   
   
 
-  void setup_main_kernel(std::string && kernel_string, const hyperparams::HyperParams & hp, const derivedparams::DerivedParams & dp, const std::string & kern_func_name){
+  //TODO : move kernel_string in 
+  void setup_main_kernel(const std::string & kernel_string, const hyperparams::HyperParams & hp, const derivedparams::DerivedParams & dp, const std::string & kern_func_name){
+ 
+    size_t gws;
+    size_t lws;
+     /* Here we set the numbers of work groups (main_n_work_groups) and work items (tk_main.global_work_size) for the main kernel */  
+    sizingup::set_workforce(main_n_work_groups, lws, gws, gg.m, gg.n, hp.n_work_items_per_c_elm, hp.macro_tile_height, hp.macro_tile_width, dp.n_work_items_per_workgroup);
     
-     /* Here we set the numbers of work groups (main_n_work_groups) and work items (main_global_work_size) for the main kernel */  
-    sizingup::set_workforce(main_n_work_groups, main_local_work_size, main_global_work_size, gg.m, gg.n, hp.n_work_items_per_c_elm, hp.macro_tile_height, hp.macro_tile_width, dp.n_work_items_per_workgroup);
+    //mowri << "main kernel global work size : " << tk_main.global_work_size <<  " (recommended ~ 4*64*40*64 = 655360)" << Endl; 
+    tk_main.update(
+    kernel_string, 
+    kern_func_name, 
+    gws, 
+    lws);
     
-    mowri << "main kernel global work size : " << main_global_work_size <<  " (recommended ~ 4*64*40*64 = 655360)" << Endl; 
-    tk_main.update(std::move(kernel_string), kern_func_name);
     /* set main kernel's arguments */
     set_main_kernel_arguments();    
   }
 
-  
-  int enqueue_main_kernel(){
-    cl_int ret;
-    if(does_betac_inc == 0){
-      ret = clEnqueueNDRangeKernel(command_queue, tk_main.clkern, 1, NULL, &main_global_work_size, &main_local_work_size, 1, &event_betac_kernel, &event_main_kernel);
+    
+  void reset_tk_kernel_vector(){
+    if (does_betac_inc != 0){
+      ptr_tk_kernels = {&tk_main};
     }
+    
     else{
-      ret = clEnqueueNDRangeKernel(command_queue, tk_main.clkern, 1, NULL, &main_global_work_size, &main_local_work_size, 0, NULL, &event_main_kernel);
+      ptr_tk_kernels = {&tk_betac, &tk_main};
     }
-    if (ret != CL_OUT_OF_RESOURCES){
-      openclutil::confirm_cl_status(ret, "in enqueue_main_kernel");
-    }
-    /* Either returning CL_SUCCESS or CL_OUT_OF_RESOURCES, anything has been thrown */
-    return ret;
   }
-  
-  
-  
-  
-  void setup_tinykernels(std::string && kernstr, const hyperparams::HyperParams & hp, const derivedparams::DerivedParams & dp, const std::string & kern_func_name){
+
+  //TODO : move kernstr in (rvalue ref)
+  void setup_tinykernels(const std::string & kernstr, const hyperparams::HyperParams & hp, const derivedparams::DerivedParams & dp, const std::string & kern_func_name){
     
     does_betac_inc = dp.does_beta_c_inc;
     
-    setup_main_kernel(std::move(kernstr), hp, dp, kern_func_name);    
-    if (tk_betac.is_set() == false && does_betac_inc == false){
-      setup_betac_kernel();
-    }
+    setup_main_kernel(kernstr, hp, dp, kern_func_name);
+    setup_betac_kernel("not used at present", hp, dp, "not used at present");
+
+    
+    reset_tk_kernel_vector();
   }
   
 
 
-  void update_run_times(){
+  void update_run_times(cl_int status){
     
-    //TODO : wrap clGetEventProfilingInfo in safety layer
-    clGetEventProfilingInfo(event_main_kernel, CL_PROFILING_COMMAND_START, sizeof(size_t), &t_start_main_kernel, nullptr);
-    clGetEventProfilingInfo(event_main_kernel, CL_PROFILING_COMMAND_END, sizeof(size_t), &t_end_main_kernel, nullptr);
-    float t_just_main = 1e-6*(t_end_main_kernel-t_start_main_kernel);
-    v_t_just_main.push_back(t_just_main);
-    
-    
-    if (does_betac_inc != 0){
-      v_t_total_with_both.push_back(t_just_main);
-      v_t_just_scaling.push_back(0);
-    }
+    if (status == CL_SUCCESS){
       
-    else{
-      clGetEventProfilingInfo(event_betac_kernel, CL_PROFILING_COMMAND_START, sizeof(size_t), &t_start_betac_kernel, nullptr);
-      clGetEventProfilingInfo(event_betac_kernel, CL_PROFILING_COMMAND_END, sizeof(size_t), &t_end_betac_kernel, nullptr);
-      v_t_total_with_both.push_back(1e-6*(t_end_main_kernel-t_start_betac_kernel));
-      v_t_just_scaling.push_back(1e-6*(t_end_betac_kernel-t_start_betac_kernel));
+      for (auto & ptr_tk_kernel : ptr_tk_kernels){
+        ptr_tk_kernel->update_times();
+      }
+      /* end time of last kernel - start time of first kernel */
+      v_t_total_with_both.push_back(1e-6*(ptr_tk_kernels.back()->t_end - ptr_tk_kernels[0]->t_start));
     }
     
-
-  }
-  
-  /* Will be used when a kernel failed to be enqueued, so just set the time really big */
-  void update_run_times_really_bad(){
-    v_t_just_main.push_back(std::numeric_limits<float>::max());
-    v_t_total_with_both.push_back(std::numeric_limits<float>::max());
-    v_t_just_scaling.push_back(std::numeric_limits<float>::max());
-  }
-
-  void print_run_times(){
-    if (does_betac_inc == 0){
-      mowri << "elapsed time : " <<  v_t_total_with_both.back() << "\t (scaling : " << v_t_just_scaling.back() << "\t main : " <<  v_t_just_main.back() << " [ms])  " << 
-      "\tGflops/s : " << 2.0 * gg.m * gg.n * gg.k / (v_t_total_with_both.back() * 1e6) << Endl;
-    }
-  
     else{
-      mowri << "elapsed time : " <<  v_t_just_main.back() << "    ";
-      mowri << "Gflops/s : " << 2.0 * gg.m * gg.n * gg.k / (v_t_just_main.back() * 1e6) << Endl;
+      v_t_total_with_both.push_back(std::numeric_limits<float>::max());
+    }
+  }
+  
+  void print_run_times(cl_int status){
+    
+    if (status == CL_SUCCESS){
+      mowri << "total time : " <<  v_t_total_with_both.back() << "\t (";
+      for (unsigned k_ind = 0; k_ind < ptr_tk_kernels.size(); ++k_ind){
+        mowri << " k" << k_ind << ": " << ptr_tk_kernels[k_ind]->v_times.back() << " ";
+      }
+      mowri << ") " << "\tGflops/s : " << 2.0 * gg.m * gg.n * gg.k / (v_t_total_with_both.back() * 1e6) << Endl;
+    }
+
+    else{
+      mowri << "elapsed time : " <<  " (max float) \n";
     }
   }
 
 
   void reset_v_times(){
     v_t_total_with_both.resize(0);
-    v_t_just_main.resize(0);
-    v_t_just_scaling.resize(0);
+    
+    for (auto & ptr_tk_kernel : ptr_tk_kernels){
+      ptr_tk_kernel->reset_times();
+    }
   }
+  
   
   void core_gemm_loop(size_t n_runs){
     
@@ -321,50 +317,56 @@ public:
       /* ***************************************************************************************
        *  Note on timing : the same results have been obtained whth timespec and std::chrono   *
        *  **************************************************************************************/
-      /* Enqueue the beta c kernel if nec */
-      if (does_betac_inc == 0){
-        enqueue_betac_kernel();
-      }
+      
+      int status = 10111; 
+      for (unsigned k_ind = 0; k_ind < ptr_tk_kernels.size(); ++k_ind){
 
-      /* At this point, the main kernel has been succesfully compiled, 
+      /* At this point, the kernel has been succesfully compiled, 
        * but it is still possible that the resources necessary (LDS etc) are
-       * not sufficient on this machine. We catch this case here. */
-      /* Attempt to enqueue the main kernel */      
-      int status = enqueue_main_kernel();
+       * not sufficient on this machine. We catch this case here. */        
+        if (k_ind == 0){
+          status = ptr_tk_kernels[k_ind]->enqueue();
+        }
+        
+        else{
+          status = ptr_tk_kernels[k_ind]->enqueue(1, &(ptr_tk_kernels[k_ind - 1]->clevent));
+        }
+
+        if (status == CL_OUT_OF_RESOURCES){
+          /* Set the run time(s) and append to vectors */
+          mowri << "kernel could not be enqueued, status returned from clEnqueueNDRangeKernel was CL_OUT_OF_RESOURCES (" <<ptr_tk_kernels[k_ind]->hash << ")" << Endl;
+          break;
+        }
+      }
       
       /* I'm not really sure when to use cl Flush TODO : find out. */
-      openclutil::cl_flush(command_queue, "cl flushing in core gemm loop");
+      openclutil::cl_flush(command_queue, "cl flushing in core gemm loop");      
       
-      if (status == CL_OUT_OF_RESOURCES){
-        /* Set the run time(s) and append to vectors */
-        mowri << "kernel could not be enqueued, status returned from clEnqueueNDRangeKernel was CL_OUT_OF_RESOURCES, setting time to be x-large and moving on " << Endl;
-        update_run_times_really_bad();
-        print_run_times();
-      }
       
-      else if (status == CL_SUCCESS){
+      
+      if (status == CL_SUCCESS){
         /* Wait for kernels to complete */
-        openclutil::cl_wait_for_events(1, &event_main_kernel, "with status == CL_SUCCESS in core gemm loops");
+        openclutil::cl_wait_for_events(1, &(ptr_tk_kernels.back()->clevent), "with status == CL_SUCCESS in core gemm loops");
+      }
 
-        /* Set the run time(s) and append to vectors */
-        update_run_times();
-        print_run_times();
+      else if (status == CL_OUT_OF_RESOURCES){
+        //
       }
       
       else{
-        throw std::logic_error("How can this not be CL_SUCCESS or CL_OUT_OF_RESOURCES? Algo prob, come fix");
+        throw std::logic_error("How can this not be CL_SUCCESS or CL_OUT_OF_RESOURCES? Algo prob, come fix. Is status 10111? Maybe there are no kernels?");
       }
+      
+      update_run_times(status);
+      print_run_times(status);
     }
   }
 
-
-
-  tinygemm::kerngen::KernelStringBundle get_ksb(const hyperparams::HyperParams & hp){
-    
-    return  tinygemm::kerngen::get_kernel_string_bundle(
-    hp,gg);
-    
-    
+  void deriveability_test(const hyperparams::HyperParams & hp, const std::string & hash){
+    auto deriveability = derivedparams::get_deriveability(hp, gg);      
+    if (std::get<0>(deriveability) == false){
+      throw tinygemm_error(hash + ": the hyper parameters in benchgemm are not consistent, specifically, from get_deriveability \n" + std::get<1>(deriveability));
+    }
   }
 
   void benchgemm(const std::vector<hyperparams::HyperParams> & hps, unsigned n_runs){
@@ -375,21 +377,16 @@ public:
       throw tinygemm_error("n_runs to benchgemm should be a positive integer");
     }
 
-    //unsigned n_kernels_processed = 0;
-    for ( unsigned i = 0; i < hps.size(); ++i){ //auto & hp : hps){
+    for ( unsigned i = 0; i < hps.size(); ++i) {
       
       mowri << "\nSource kernel " << "(" << i + 1 << "/" << hps.size() << ") "  << Endl;      
-            
-
-      auto bundle = get_ksb(hps[i]);
       
-      if (bundle.set_status.is_good() != true){
-        throw tinygemm_error("the hyper parameters in benchgemm are not consistent, specifically : \n" + bundle.set_status.message);
-      }
+      deriveability_test(hps[i], "in benchgemm");
       
-
-  
-      setup_tinykernels(std::move(bundle.kernel_string), hps[i], bundle.dp, bundle.kernel_function_name);    
+      auto bundle = tinygemm::kerngen::get_kernel_string_bundle(hps[i],gg); //get_ksb(hps[i]);
+      //TODO : this is temporary hack, moving off the back.
+      setup_tinykernels(bundle.v_tgks.back().kernstr, hps[i], bundle.dp, bundle.v_tgks.back().fname);    
+      
       mowri << "(benchgemm) geometry  \t:" << gg.get_string()  << "\nEntering the core gemm loops" << Endl;
       core_gemm_loop(n_runs);
     }
@@ -402,17 +399,20 @@ public:
     hyperparams::HyperParams hp = hyperparams::get_default(gg, enforce_deterministic);
     
     
-    auto bundle = get_ksb(hp);//, soln_main_kernel_string);
-    if (bundle.set_status.is_good() != true){
-      throw tinygemm_error("the hyper parameters in get_default are not consistent, specifically : \n" + bundle.set_status.message);
-    }
+    deriveability_test(hp, "in get_default");
+    
+    auto bundle = tinygemm::kerngen::get_kernel_string_bundle(hp,gg); //get_ksb(hp);//, soln_main_kernel_string);
+    //if (bundle.set_status.is_good() != true){
+      //throw tinygemm_error("the hyper parameters in get_default are not consistent, specifically : \n" + bundle.set_status.message);
+    //}
     
     tinygemm::TinyGemmSolutionStatistics tgss(std::numeric_limits<float>::max(), 0, 0);    
     
-    std::string soln_betac_kernel_string = hp.n_work_items_per_c_elm == 1 ?  ""  : betac::get_betac_kernel_string(gg.floattype, betackernelname);
-    std::string soln_betac_kernel_function_name = hp.n_work_items_per_c_elm == 1 ? "" : betackernelname;
-    
-    return { soln_betac_kernel_string, soln_betac_kernel_function_name, bundle.kernel_string, bundle.kernel_function_name, hp, bundle.dp, gg, tgss };
+    std::string soln_betac_kernel_string = hp.n_work_items_per_c_elm == 1 ?  ""  : betac::get_betac_kernel_string(gg.floattype, betac::genericbetackernelname);
+    std::string soln_betac_kernel_function_name = hp.n_work_items_per_c_elm == 1 ? "" : betac::genericbetackernelname;
+
+    //TODO : temp hack off back
+    return { soln_betac_kernel_string, soln_betac_kernel_function_name, bundle.v_tgks.back().kernstr, bundle.v_tgks.back().fname, hp, bundle.dp, gg, tgss };
   }
   
   
@@ -519,18 +519,22 @@ public:
             mowri << "\n" << hp.get_string() << Endl;
             
             
-            auto bundle = get_ksb(hp);
-            //tk_main.tgk_strings.kernstr = std::move(bundle.kernel_string);
             
-            if (bundle.set_status.is_good() == true){
-              
+            auto deriveability = derivedparams::get_deriveability(hp, gg);
+            
+            
+            
+            if (std::get<0>(deriveability) == true){
+            
+              auto bundle = tinygemm::kerngen::get_kernel_string_bundle(hp,gg);  
                             
               /* the kernel was succesfully generated, we now compile and benchmark it */
               
               ++global_counter;
               mowri << "global gen-com-bench : " << global_counter  <<  "." << Endl;
               
-              setup_tinykernels(std::move(bundle.kernel_string), hp, bundle.dp, bundle.kernel_function_name);    
+              //TODO: temp hack off back
+              setup_tinykernels(bundle.v_tgks.back().kernstr, hp, bundle.dp, bundle.v_tgks.back().fname);    
               mowri << "(find) geometry : " << gg.get_string()  << "\nEntering the core gemm loops" << Endl; 
               core_gemm_loop(n_runs_per_kernel);
   
@@ -566,14 +570,20 @@ public:
                 
                 tinygemm::TinyGemmSolutionStatistics tgss(median_time, median_benchmark_gflops, elapsed_seconds);
                 
-                
+           
+                //TODO : WORK ON SOLN STRUCTURE. 
+               
                 /* set kernel files */
+                
                 std::string soln_betac_kernel = does_betac_inc == 1 ?  ""  : tk_betac.tgk_strings.kernstr;
                 std::string soln_betac_kernel_function_name = does_betac_inc == 1 ? "" : tk_betac.tgk_strings.fname;
-                std::string soln_main_kernel_function_name = bundle.kernel_function_name;                 
+                std::string soln_main_kernel_function_name = tk_main.tgk_strings.fname;  //bundle.kernel_function_name;                 
                 
                 
-                path_of_best_solns.emplace_back (soln_betac_kernel, soln_betac_kernel_function_name, tk_main.tgk_strings.kernstr, soln_main_kernel_function_name, hp, bundle.dp, gg, tgss); 
+                path_of_best_solns.emplace_back (
+                soln_betac_kernel, soln_betac_kernel_function_name, 
+                tk_main.tgk_strings.kernstr, soln_main_kernel_function_name, 
+                hp, bundle.dp, gg, tgss ); 
 
                 
               }
@@ -582,7 +592,7 @@ public:
           
             else{
               mowri << "Skipping this kernel, hyper-parameters incompatible. " << Endl;
-              mowri << "Specifically, the message from the kernel string setting function was \n`````\n" << bundle.set_status.message << "'''''\n";
+              mowri << "Specifically, the message from the kernel string setting function was \n`````\n" << std::get<1>(deriveability) << "'''''\n";
             }
           }
         }
@@ -726,7 +736,6 @@ const tinygemm::TinyGemmGeometry & gg,
 bool verbose, 
 std::string logfile){
   
- 
   OpenCLGemmEncapsulator oger({}, gg, {0,0,0,0}, {}, {}, {}, {}, logfile, verbose);  //3.14, 3.14, floattype, 
   return oger.get_default(enforce_deterministic);
  
@@ -749,7 +758,6 @@ void benchgemm(
   bool verbose,
   std::string logfile,
   bool c_is_const){
-   
   
   tinygemm::consistencychecks::check_ldx_mnk_consistent(gg);
   if (c_is_const == true){

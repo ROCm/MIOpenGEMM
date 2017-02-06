@@ -1,6 +1,7 @@
 #include <tinygemm/kernelstringgenerator.hpp>
 #include <tinygemm/tinygemmerror.hpp>
 #include <tinygemm/derivedparams.hpp>
+#include <tinygemm/betackernelutil.hpp>
 
 #include <string>
 #include <iostream>
@@ -17,158 +18,65 @@ namespace tinygemm{
 namespace kerngen{
 
 
-std::vector<unsigned> get_multiples(unsigned N){
-  std::vector<unsigned> multiples;
-  for (unsigned k = N; k > 0; --k){
-    if (N%k == 0){
-      multiples.push_back(k);
+
+void indentify(std::string & source){
+  std::string newsource;
+  newsource.reserve(source.length());
+  std::string::size_type last_lend = source.find("\n", 0);  
+  std::string::size_type next_lend = source.find("\n", last_lend + 1);
+  std::string::size_type next_open = source.find("{", 0);
+  std::string::size_type next_close = source.find("}", 0);  
+  newsource.append(source, 0, last_lend);
+  int indent_level = 0;
+
+  while (std::string::npos != next_lend){
+
+    if (next_open < last_lend){
+      indent_level += 1;
+      next_open = source.find("{", next_open + 1);
+    }
+    else if (next_close < next_lend){
+      indent_level -= 1;
+      next_close = source.find("}", next_close + 1);
+    }
+    
+    else{
+      newsource.append("\n");
+      for (int i = 0; i < indent_level; ++i){
+        newsource.append("  ");
+      }
+      newsource.append(source, last_lend + 1, next_lend - last_lend - 1);
+      last_lend = next_lend;
+      next_lend = source.find("\n", next_lend + 1);
     }
   }
-  return multiples;
+  
+  newsource += source.substr(last_lend);
+  source.swap(newsource);
 }
 
 
 
+class KernelStringBundleGenerator{
 
-class KernelString{
+private:
 
-  private:
-    /* to be set in constructor based on parameters provided */
-    
+  const hyperparams::HyperParams hp;
+  const tinygemm::TinyGemmGeometry gg;
 
-    derivedparams::DerivedParams dp;
-    
-    /* set here as we do not want the user to choose (although would not break kernel) */
-    unsigned use_edge_trick = 1;
-    std::string kernelname = generickernelname;
-
-
-  public:
-    
-    hyperparams::HyperParams hp;
-    tinygemm::TinyGemmGeometry gg;
-    
+  /* to be set in constructor based on parameters provided */
+  const derivedparams::DerivedParams dp;
   
-  KernelString(
-  
-
-  /* hyper parameters */
-  const hyperparams::HyperParams & hp_,
-  
-
-  const tinygemm::TinyGemmGeometry & gg_  
-
-  
-  ):
-  
-  hp(hp_),
-  gg(gg_)
-
-  {
-    
-    hp.checks();
-    
-    dp.split_on_k = hp.n_work_items_per_c_elm == 1 ? 0 : 1;
-    dp.does_beta_c_inc = dp.split_on_k == 1 ? 0 : 1; 
-    dp.strided_i_vertical = hp.c_micro_tiles_interwoven == 0 ? "i" : "i*N_MICRO_TILES_VERTICALLY";
-    dp.strided_i_horizontal = hp.c_micro_tiles_interwoven == 0 ? "i" : "i*N_MICRO_TILES_HORIZONTALLY";
-    
-    if (hp.n_work_items_per_c_elm == 1){
-      dp.infa = "n_work_items_per_c_elm is 1, should not be using atomics";
-      dp.fati = "n_work_items_per_c_elm is 1, should not be using atomics";
-    }
-    else{
-      dp.infa = gg.derived.float_size_bits == 32 ? "uint" : "ulong";
-      dp.fati = gg.derived.float_size_bits == 32 ? "atomic_cmpxchg" : "atom_cmpxchg";
-    }
-    
-    dp.pragma_unroll_string = hp.unroll_pragma == 1 ?  "#pragma unroll\n" : "" ;
-    
-    dp.effective_k = hp.unroll_for_offset == 0 ? "__K__" : "k_plus_offset";    
-    dp.alpha_scaled = hp.c_micro_tiles_interwoven == 0 ? "alpha*rC[row][col]" : "alpha*rC[row/N_MICRO_TILES_VERTICALLY][col/N_MICRO_TILES_HORIZONTALLY]";
-    dp.t_float = gg.derived.float_size_bits == 32 ? "float" : "double";
-    
-    
-    dp.preshift_bottommost_tile_height = 1 + (gg.m - 1) % hp.macro_tile_height;
-    dp.preshift_rightmost_tile_width = 1 + (gg.n - 1) % hp.macro_tile_width;
-
-    dp.n_groups_vertically = gg.m / hp.macro_tile_height + (dp.preshift_bottommost_tile_height != hp.macro_tile_height);
-    dp.n_groups_horizontally = gg.n / hp.macro_tile_width + (dp.preshift_rightmost_tile_width != hp.macro_tile_width);
+  /* set here as we do not want the user to choose (although would not break kernel) */
+  unsigned use_edge_trick = 1;
+  std::string kernelname = generickernelname;
 
 
+public:
+  KernelStringBundleGenerator(const hyperparams::HyperParams & hp_, const tinygemm::TinyGemmGeometry & gg_): hp(hp_), gg(gg_), dp(hp, gg){
+    //this is misplaced.
+    hp.checks();    
   }
-
-
-
-  std::string set_tile_dimensions(unsigned & tH, unsigned & tW, unsigned TH, unsigned TW, unsigned tS){
-    /*given a macro tile TH x TW, 
-    and given a micro tile size of tS, 
-    find the tallest possible micro tile size (tH x tW)
-    to fit the macro tile. Example, macro tile is 6 x 4:
-    
-    * * * * 
-    * * * * 
-    * * * * 
-    * * * * 
-    * * * * 
-    * * * * 
-    
-    tS = 2 return [2, 1]
-    tS = 3 return [3, 1]
-    tS = 4 return [2, 2]
-    tS = 5 raise an error ((TH * TH) % tS != 0)
-    tS = 6 return [6, 1]
-    tS = 7 raise an error ((TH * TH) % tS != 0) 
-    tS = 8 return [2, 4]
-    tS = 9 raise an error ((TH * TH) % tS != 0)
-    tS = 10 raise an error ((TH * TH) % tS != 0)
-    tS = 11 raise an error ((TH * TH) % tS != 0)
-    tS = 12 return [6, 2]
-    tS = 13 .. 23 raise an error ((TH * TH) % tS != 0)
-    tS = 24 return [6, 4] */
-
-    if (tS == 0){
-      throw std::runtime_error("This is strange : tS in zero in set_tile_dimensions");
-    }
-
-    std::string set_ds("");  
-    std::stringstream err_ss;
-    err_ss << get_string() << "\n" << "TH : " << TH << " TW : " << TW << " tS : " << tS;
-  
-  
-    if ((TH*TW) % tS  != 0){
-      set_ds += "Areas of micro and macro tiles are incompatible : ";
-      set_ds += err_ss.str();
-      return set_ds;
-    }
-    
-    for (auto & multiple_of_TH : get_multiples(TH)){
-      if ((tS % multiple_of_TH == 0) && ((tS / multiple_of_TH) <= TW)){
-        tH = multiple_of_TH;
-        tW = tS / tH;
-        break;
-      }
-    }
-    
-    if (tH == 0){
-      set_ds += "Impossible tiling problem in get_tile_dimensions : ";
-      set_ds += err_ss.str();
-      return set_ds;
-    }
-    
-    err_ss << " tH : " << tH << " tW  " << tW;
-  
-    if (tW  > tH){
-      //throw std::runtime_error("this is a pedantic error, can remove when confirmed no prob: no `tall' tile. best `wide' one " + err_ss.str());
-    }
-    
-    if (TW % tW != 0 || TH % TH != 0 || tW*tH != tS){
-      throw std::runtime_error("This is strange : the found micro tile size is not consistent with the macro tile : "  + err_ss.str());
-    }
-    
-    return set_ds; 
-  }
-  
   
   std::string get_string(){
     return hp.get_string();
@@ -233,30 +141,17 @@ group_id_vertical = (group_id_xy  - (N_GROUPS_HORIZONTALLY - LAST_SUPER_COLUMN_W
     else{
       std::stringstream err_ss;
       err_ss << "Invalid group_allocation parameter : " << hp.group_allocation << ". It should be one of 1/2/3.";
-      throw std::runtime_error(err_ss.str());
+      throw tinygemm_error(err_ss.str());
     }
   }
 
   void append_super_column_width_defn(std::stringstream & ss){
 
-    if (hp.group_allocation == 3){
 
-      if (dp.split_on_k == 1){
-        dp.ga3.super_column_width = 
-        static_cast<unsigned>(std::floor(std::sqrt(static_cast<double>(hp.n_target_active_workgroups) / static_cast<double>(hp.n_work_items_per_c_elm))));
-      }
-      else if (dp.split_on_k == 0){
-        dp.ga3.super_column_width = 
-        static_cast<unsigned>(std::floor(std::sqrt(static_cast<double>(hp.n_target_active_workgroups))));
-      }
-      
-      else{
-        throw std::runtime_error("dp.split_on_k is neither 0 nor 1, how can this be? Logic error in append_super_column_width_defn");
-      }
-      
+
+    if (hp.group_allocation == 3){
+    
       ss <<  "\n\n" << "/* This variable defines the width of super-columns (we have GROUP_ALLOCATION 3). It is ~ sqrt (N_TARGET_ACTIVE_WORKGROUPS / N_WORK_ITEMS_PER_C_ELM) */\n" << "#define SUPER_COLUMN_WIDTH " << dp.ga3.super_column_width;   
-      
-      dp.ga3.last_super_column_width = dp.n_groups_horizontally % dp.ga3.super_column_width;
       
       ss << "\n/* LAST_SUPER_COLUMN_WIDTH : N_GROUPS_HORIZONTALLY % SUPER_COLUMN_WIDTH  */";
       ss << "\n#define LAST_SUPER_COLUMN_WIDTH " << dp.ga3.last_super_column_width;
@@ -423,7 +318,7 @@ write_start_row + row >= MACRO_TILE_HEIGHT*(N_GROUPS_VERTICALLY - 1)
   void append_load_ab_into_LDS_string(std::stringstream & ss, unsigned final_unroll, unsigned special_first_unroll){
     
     if (final_unroll != 0 && special_first_unroll != 0){
-      throw std::runtime_error("From get_load_ab_into_LDS_string > It is not possible for this to be both a `special_first_unroll' and a `final_unroll'. This is a logic error, broken alg, come and sort it out");
+      throw tinygemm_error("From get_load_ab_into_LDS_string > It is not possible for this to be both a `special_first_unroll' and a `final_unroll'. This is a logic error, broken alg, come and sort it out");
     }
 
     std::string a_value_to_get;
@@ -491,7 +386,7 @@ write_start_row + row >= MACRO_TILE_HEIGHT*(N_GROUPS_VERTICALLY - 1)
     return hp.c_micro_tiles_interwoven != 0 ? "1" : "MICRO_TILE_WIDTH";
   }
       
-  void append_relocate_lAlB_string(std::stringstream & ss){ //, unsigned final_unroll){
+  void append_relocate_lAlB_string(std::stringstream & ss){ 
     ss << 
     "\n" << "lA = localA + micro_id_vertical*" << get_c_work_item_vertical_next() << ";" <<  
     "\n" << "lB = localB + micro_id_horizontal*" << get_c_work_item_horizontal_next() << ";" << "\n";
@@ -512,7 +407,7 @@ write_start_row + row >= MACRO_TILE_HEIGHT*(N_GROUPS_VERTICALLY - 1)
   
   void append_relocate_load_math_string(std::stringstream & ss, unsigned final_unroll, unsigned special_first_unroll){
     if (final_unroll != 0 && special_first_unroll != 0){
-      throw std::runtime_error("From get_relocate_load_math_string : It is not possible for this to be both a `special_first_unroll' and a `final_unroll'. This is a logic error, broken alg, come and sort it out");
+      throw tinygemm_error("From get_relocate_load_math_string : It is not possible for this to be both a `special_first_unroll' and a `final_unroll'. This is a logic error, broken alg, come and sort it out");
     }
 
     append_load_ab_into_LDS_string(ss, final_unroll, special_first_unroll);
@@ -521,7 +416,7 @@ R"(
 /* make sure all loads from LDS memory have completed */
 barrier(CLK_LOCAL_MEM_FENCE); )";
 
-    append_relocate_lAlB_string(ss);//, final_unroll);
+    append_relocate_lAlB_string(ss);
     append_math_section(ss, final_unroll);
     ss << 
 R"(
@@ -795,97 +690,13 @@ const unsigned group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
   }
 
   
-  KernelStringBundle get_kernel_string_bundle(){
-    
-    
-    
-    dp.macro_tile_area = hp.macro_tile_width * hp.macro_tile_height;
-    dp.micro_tile_area = hp.micro_tile_width  * hp.micro_tile_height;
+  KernelStringBundle generate(){
 
-    //TODO: check that all tile dimensions are nonzero and multiples of each other in prestring build check.
-    if (dp.macro_tile_area % dp.micro_tile_area != 0){
-      return {"micro tile is not a multiple of macro tile", "this is not a kernel string", std::move(dp), "this is not a kernel function name"};
-    }
+  std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+  std::time_t generation_time = std::chrono::system_clock::to_time_t(now);
     
-
-    dp.n_work_items_per_workgroup = dp.macro_tile_area / dp.micro_tile_area;
-    dp.macro_tile_height_and_pad = hp.macro_tile_height + hp.pad;
-    dp.macro_tile_width_and_pad = hp.macro_tile_width + hp.pad;
-    dp.n_elements_in_a_unroll = hp.macro_tile_height * hp.unroll;
-    dp.n_elements_in_b_unroll = hp.macro_tile_width * hp.unroll;
-    dp.n_elements_in_padded_a_unroll = dp.macro_tile_height_and_pad * hp.unroll;
-    dp.n_elements_in_padded_b_unroll = dp.macro_tile_width_and_pad * hp.unroll;
-    dp.n_micro_tiles_vertically = hp.macro_tile_height / hp.micro_tile_height;
-    dp.n_micro_tiles_horizontally = hp.macro_tile_width / hp.micro_tile_width ;
-    
-    dp.n_work_groups = hp.n_work_items_per_c_elm * ((gg.m/hp.macro_tile_height) + (gg.m%hp.macro_tile_height != 0)) * ((gg.n/hp.macro_tile_width) + (gg.n%hp.macro_tile_width != 0));
-    dp.global_work_size = dp.n_work_groups * dp.n_work_items_per_workgroup;
-
-
-    
-    /* check 1 : n_work_items_per_workgroup divides n_elements_in_a_unroll and n_elements_in_b_unroll  */
-    std::stringstream set_status_stream;
-    if (dp.n_elements_in_a_unroll % dp.n_work_items_per_workgroup != 0){
-      set_status_stream << "this is not supported:\ndp.n_work_items_per_workgroup (" << dp.n_work_items_per_workgroup << ") is not a factor of n_elements_in_" <<  "a" << "_UNROLL (" << dp.n_elements_in_a_unroll << "). \nConsider rounding unroll up. \n";
-    }
-  
-    if (dp.n_elements_in_b_unroll % dp.n_work_items_per_workgroup != 0){
-      set_status_stream << "this is not supported:\ndp.n_work_items_per_workgroup (" << dp.n_work_items_per_workgroup << ") is not a factor of n_elements_in_" <<  "b" << "_UNROLL (" << dp.n_elements_in_b_unroll << "). \nConsider rounding unroll up. \n";
-    }
-    
-    std::string set_status_stream_string = set_status_stream.str();
-    if (set_status_stream_string != ""){
-      return {std::move(set_status_stream_string), "this is not a kernel string", std::move(dp), "this is not a kernel function name"};
-    }
-
-    dp.n_elements_of_a_to_load_per_workitem = dp.n_elements_in_a_unroll / dp.n_work_items_per_workgroup;
-    dp.n_elements_of_b_to_load_per_workitem = dp.n_elements_in_b_unroll / dp.n_work_items_per_workgroup;
-
-    /* check 2 : tilability */
-    std::string set_dimensions_status("");
-    if (hp.work_item_load_a_pll_to_unroll == 0){
-      set_dimensions_status += set_tile_dimensions(dp.micro_a_tile_perp_unroll, dp.micro_a_tile_pll_unroll, hp.macro_tile_height, hp.unroll, dp.n_elements_of_a_to_load_per_workitem); 
-    }
-    else{
-      set_dimensions_status += set_tile_dimensions(dp.micro_a_tile_pll_unroll, dp.micro_a_tile_perp_unroll, hp.unroll, hp.macro_tile_height, dp.n_elements_of_a_to_load_per_workitem);
-    }
-    
-    if (hp.work_item_load_b_pll_to_unroll == 0){
-      set_dimensions_status += set_tile_dimensions(dp.micro_b_tile_perp_unroll, dp.micro_b_tile_pll_unroll, hp.macro_tile_width, hp.unroll, dp.n_elements_of_b_to_load_per_workitem); 
-    }
-    else{
-      set_dimensions_status += set_tile_dimensions(dp.micro_b_tile_pll_unroll, dp.micro_b_tile_perp_unroll, hp.unroll, hp.macro_tile_width, dp.n_elements_of_b_to_load_per_workitem);
-    }
-    
-    if (set_dimensions_status != ""){
-      return {std::move(set_dimensions_status), "this is not a kernel string", std::move(dp), "this is not a kernel function name"};
-    }
-    
-    dp.n_micro_a_tiles_pll_unroll = hp.unroll / dp.micro_a_tile_pll_unroll;
-    dp.n_micro_b_tiles_pll_unroll = hp.unroll / dp.micro_b_tile_pll_unroll;
-  
-    /* check 3 : macro tile not too large */
-    if (gg.m < hp.macro_tile_height){
-      set_dimensions_status += "m < macro_tile_height, not considering this kernel\n";
-    }    
-    if (gg.n < hp.macro_tile_width){
-      set_dimensions_status += "m < macro_tile_width,  not considering this kernel\n";
-    }
-
-    if (set_dimensions_status != ""){
-      return {std::move(set_dimensions_status), "this is not a kernel string", std::move(dp), "this is not a kernel function name"};
-    }
-  
-      
-  
-  
-    std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
-    std::time_t generation_time = std::chrono::system_clock::to_time_t(now);
-    
-  
+  /* the "main" kernel */
   std::stringstream ss;
-    
-  
   
   ss << 
   R"(/* ******************************************************************
@@ -1164,72 +975,35 @@ __local const TFLOAT * lB;
   ss << "\n}\n";
   
   
-  return { "", std::move(ss.str()), std::move(dp), kernelname };
+  std::vector<TinyGemmKernelStrings> tgks;
+  
+  if (dp.does_beta_c_inc == 0){
+    tgks.emplace_back(  "betac", betac::get_betac_kernel_string(gg.floattype, tinygemm::betac::genericbetackernelname), tinygemm::betac::genericbetackernelname );
+  }
+  
+  tgks.emplace_back(  "main", ss.str(), kernelname  );
+  
+    
+
+  for (auto & x : tgks){
+    indentify(x.kernstr);
+  }
+  
+  
+  return { std::move(tgks), std::move(dp) };
 
 }
   
 };
 
 
-void indentify(std::string & source){
-  std::string newsource;
-  newsource.reserve(source.length());
-  std::string::size_type last_lend = source.find("\n", 0);  
-  std::string::size_type next_lend = source.find("\n", last_lend + 1);
-  std::string::size_type next_open = source.find("{", 0);
-  std::string::size_type next_close = source.find("}", 0);  
-  newsource.append(source, 0, last_lend);
-  int indent_level = 0;
 
-  while (std::string::npos != next_lend){
 
-    if (next_open < last_lend){
-      indent_level += 1;
-      next_open = source.find("{", next_open + 1);
-    }
-    else if (next_close < next_lend){
-      indent_level -= 1;
-      next_close = source.find("}", next_close + 1);
-    }
-    
-    else{
-      newsource.append("\n");
-      for (int i = 0; i < indent_level; ++i){
-        newsource.append("  ");
-      }
-      newsource.append(source, last_lend + 1, next_lend - last_lend - 1);
-      last_lend = next_lend;
-      next_lend = source.find("\n", next_lend + 1);
-    }
-  }
-  
-  newsource += source.substr(last_lend);
-  source.swap(newsource);
+KernelStringBundle get_kernel_string_bundle(const hyperparams::HyperParams & hp,  const tinygemm::TinyGemmGeometry & gg){  
+  KernelStringBundleGenerator ksbg(hp, gg);
+  return ksbg.generate();
 }
 
-
-KernelStringBundle get_kernel_string_bundle(
-
-  
-  /* hyper parameters */
-  const hyperparams::HyperParams & hp,    
-  /* geometry parameters */
-  const tinygemm::TinyGemmGeometry & gg
-
-  
-  
-){
-  
-  KernelString kstring(
-  hp, gg );
-  
-  KernelStringBundle kernel_string_bundle = kstring.get_kernel_string_bundle();
-  if (kernel_string_bundle.set_status.is_good()){
-    /* make it prettier by adding indents */
-    indentify(kernel_string_bundle.kernel_string); 
-  }
-  return kernel_string_bundle;
-}
 
 
 }

@@ -149,6 +149,7 @@ void basicfind(const tinygemm::TinyGemmGeometry & geometry, const tinygemm::Tiny
     main_program = tinygemm::openclutil::cl_create_program_with_source(context, 1, &main_kernel_cstr, &main_source_size, "basicfind.hpp, getting main_program");
     tinygemm::openclutil::cl_build_program(main_program, 1, &device_id_to_use, buildOptions, NULL, NULL, "basicfind.hpp, building main_program");     
     auto main_kernel_function_name_cstr = soln.main_kernel_function_name.c_str();
+    
     main_kernel = tinygemm::openclutil::cl_create_kernel(main_program, main_kernel_function_name_cstr, "main kernel, in basicfind.hpp");      
     
     tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 0, sizeof(cl_mem), (void *)&c_gpu, "main kernel 0 (basicfind.hpp)");

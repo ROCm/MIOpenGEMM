@@ -116,19 +116,19 @@ std::map<std::string, unsigned> get_params_from_string(const std::string & hyper
 
 
 
-void HyperParams::bool_check(const std::string & key, unsigned v){
+void HyperParams::bool_check(const std::string & key, unsigned v) const{
   if (v != 0 && v != 1){
     throw tinygemm::tinygemm_error("`"+ key + "' (" + hpl.map_key_to_shortkey.at(key) + ") should be 0/1, not " + std::to_string(v) + ".");
   }
 }
 
-void HyperParams::positive_check(const std::string & key, unsigned v){
+void HyperParams::positive_check(const std::string & key, unsigned v) const{
   if (v == 0){
     throw tinygemm::tinygemm_error("`" + key + "' (" + hpl.map_key_to_shortkey.at(key) + ") should be strictly positive.");
   }
 }
 
-void HyperParams::mod_test(const std::string & key1, unsigned v1, const std::string & key2, unsigned v2){
+void HyperParams::mod_check(const std::string & key1, unsigned v1, const std::string & key2, unsigned v2) const{
   positive_check(key1, v1);
   positive_check(key2, v2);
   if ((v1 % v2) != 0){
@@ -139,9 +139,14 @@ void HyperParams::mod_test(const std::string & key1, unsigned v1, const std::str
   }
 }
 
+void HyperParams::ga_check() const{
+  if (group_allocation != 1 && group_allocation != 2 && group_allocation != 3){
+    throw tinygemm::tinygemm_error("Invalid group_allocation (GA) value, it should be in [1,2,3], not " + std::to_string(group_allocation) + "\n");
+  }  
+}
 
 
-void HyperParams::checks(){
+void HyperParams::checks() const{
 
   bool_check("work_item_load_a_pll_to_unroll", work_item_load_a_pll_to_unroll); 
   bool_check("work_item_load_b_pll_to_unroll", work_item_load_b_pll_to_unroll);
@@ -158,15 +163,10 @@ void HyperParams::checks(){
   positive_check("n_target_active_workgroups", n_target_active_workgroups);
   positive_check("n_work_items_per_c_elm", n_work_items_per_c_elm);
 
-  mod_test("macro_tile_height", macro_tile_height, "micro_tile_height", micro_tile_height);
-  mod_test("macro_tile_width", macro_tile_width, "micro_tile_width", micro_tile_width);
+  mod_check("macro_tile_height", macro_tile_height, "micro_tile_height", micro_tile_height);
+  mod_check("macro_tile_width", macro_tile_width, "micro_tile_width", micro_tile_width);
   
-  
-  if (group_allocation != 1 && group_allocation != 2 && group_allocation != 3){
-    throw tinygemm::tinygemm_error("Invalid group_allocation (GA) value, it should be in [1,2,3], not " + std::to_string(group_allocation) + "\n");
-  }
-
-  
+  ga_check();
 }
     
     
@@ -188,22 +188,20 @@ HyperParams get_default_tiniest(bool enforce_deterministic){
 /* Find the nearest geometry in the cache, and take its hyper params */
 HyperParams get_default(const tinygemm::TinyGemmGeometry & gg, bool enforce_deterministic){
   
+  //return std::string("Y128_X128_y8_x8_U32_P1_GA3_APLU0_BPLU1_PU1_LIW1_MIW1_ICE2_NAW64_UFO1");
   
-  
-  
-
   /* The case  of  (gg.m < 8 || gg.n < 8) */  
   if (gg.m < 8 || gg.n < 8) {
     return get_default_tiniest(enforce_deterministic);
   }
-    
+
   //tinygemm::TinyGemmGeometry nearestgeometry;
   HyperParams best_hp = get_default_small(enforce_deterministic);
 
   float min_distance = std::numeric_limits<float>::max();
 
-  
-  
+
+
   for (auto geohyp : HyperParams::kernel_cache){
     //std::tie(geoparms, hpstring) = geohyp; 
     

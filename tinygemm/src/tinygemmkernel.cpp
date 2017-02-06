@@ -5,7 +5,6 @@
 
 namespace tinygemm{
   
-TinyGemmKernelStrings::TinyGemmKernelStrings(): type(""), kernstr(""), fname("") {}
 
 TinyGemmKernel::TinyGemmKernel(cl_command_queue command_queue_, const std::string & hash_): command_queue(command_queue_), clprog(nullptr), clkern(nullptr), hash(hash_) {}
     
@@ -18,11 +17,13 @@ void TinyGemmKernel::try_release(){
   }
 }
 
-//TODO : why is second string passed by const &, and not as rval?
-void TinyGemmKernel::update(std::string && new_kernstr, const std::string & kern_func_name){
+//TODO : why is second string passed by const &, and not as rval? pass new_kernstr with move.
+void TinyGemmKernel::update(const std::string & new_kernstr, const std::string & kern_func_name, size_t global_work_size_, size_t local_work_size_){
   try_release();
   tgk_strings.kernstr = new_kernstr;      
   tgk_strings.fname = kern_func_name;
+  global_work_size = global_work_size_;
+  local_work_size = local_work_size_;
   openclutil::set_program_and_kernel(command_queue, tgk_strings.kernstr, kern_func_name, clprog, clkern);
 }
 
@@ -48,5 +49,36 @@ void TinyGemmKernel::set_kernel_args(std::vector<std::pair<size_t, const void *>
     set_kernel_arg(arg_index, arg_sizes_values[arg_index].first, arg_sizes_values[arg_index].second); 
   }
 }
+
+
+int TinyGemmKernel::enqueue(cl_uint num_events_in_wait_list, const cl_event *event_wait_list){
+  cl_int ret;
+  ret = clEnqueueNDRangeKernel(command_queue, clkern, 1, NULL, &global_work_size, &local_work_size, num_events_in_wait_list, event_wait_list, &clevent);
+  
+  if (ret != CL_OUT_OF_RESOURCES){
+    openclutil::confirm_cl_status(ret, "in enqueue of of TinyGemmKernel " + hash);
+  }
+  /* Either returning CL_SUCCESS or CL_OUT_OF_RESOURCES, any other bad result results in a throwd */
+  return ret;
+}
+
+int TinyGemmKernel::enqueue(){
+  return enqueue(0, nullptr);
+}
+
+
+void TinyGemmKernel::update_times(){
+  //TODO : wrap clGetEventProfilingInfo in safety layer
+  clGetEventProfilingInfo(clevent, CL_PROFILING_COMMAND_START, sizeof(size_t), &t_start, nullptr);
+  clGetEventProfilingInfo(clevent, CL_PROFILING_COMMAND_END, sizeof(size_t), &t_end, nullptr);
+  v_times.push_back(1e-6*(t_end-t_start));    
+}
+
+void TinyGemmKernel::reset_times(){
+  t_start = 0;
+  t_end = 0;
+  v_times.resize(0);
+}
+
 
 }

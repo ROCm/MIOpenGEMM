@@ -10,6 +10,9 @@ namespace betac{
 
 
 
+size_t get_local_work_size(const tinygemm::TinyGemmGeometry & gg){
+  return n_work_items_per_group;
+}
 
 
 size_t get_global_work_size(const tinygemm::TinyGemmGeometry & gg){
