@@ -11,11 +11,11 @@ namespace sizingup{
 
 
 
-void set_workforce(size_t & n_work_groups, size_t & local_work_size, size_t & global_work_size, unsigned m, unsigned n, unsigned n_work_items_per_c_elm, unsigned macro_tile_height, unsigned macro_tile_width, unsigned n_work_items_per_workgroup){    
-  n_work_groups = n_work_items_per_c_elm * ((m/macro_tile_height) + (m%macro_tile_height != 0)) * ((n/macro_tile_width) + (n%macro_tile_width != 0));
-  local_work_size = n_work_items_per_workgroup;
-  global_work_size = n_work_groups * local_work_size;
-}
+//void set_workforce(size_t & n_work_groups, size_t & local_work_size, size_t & global_work_size, unsigned m, unsigned n, unsigned n_work_items_per_c_elm, unsigned macro_tile_height, unsigned macro_tile_width, unsigned n_work_items_per_workgroup){    
+  //n_work_groups = n_work_items_per_c_elm * ((m/macro_tile_height) + (m%macro_tile_height != 0)) * ((n/macro_tile_width) + (n%macro_tile_width != 0));
+  //local_work_size = n_work_items_per_workgroup;
+  //global_work_size = n_work_groups * local_work_size;
+//}
 
 
 size_t get_n_elements_padded(unsigned h, unsigned w, unsigned ldx, bool isColMajor, bool tX, unsigned offset){

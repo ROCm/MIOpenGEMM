@@ -5,6 +5,7 @@
 #include <limits>
 #include <vector> 
 #include <algorithm>
+#include <map>
 
 #include <tinygemm/tinygemmerror.hpp>
 #include <tinygemm/tinygemm.hpp>
@@ -64,7 +65,6 @@ private:
    
   /* parameters related to the main kernel */
   unsigned does_betac_inc;
-  size_t main_n_work_groups;
   
   /* vector of times over a set of runs on core loop */
   std::vector<float> v_t_total_with_both;
@@ -74,6 +74,7 @@ private:
   TinyGemmKernel tk_betac;
   
   std::vector <TinyGemmKernel *> ptr_tk_kernels;
+  std::map<std::string, TinyGemmKernel *> tk_kernel_map;
 
 private:
 
@@ -140,9 +141,18 @@ public:
   mowri(verbose_, outputfilename.compare("") != 0, outputfilename_),
   
   tk_main(command_queue, "tk_main"),
-  tk_betac(command_queue, "tk_betac"){
+  tk_betac(command_queue, "tk_betac")
+  
+  
+
+  {
+    
+    
     
     run_checks();
+    
+    tk_kernel_map["alphaonso"] = &tk_main;
+    tk_kernel_map["betac"] = &tk_betac;
   }
   
 
@@ -192,86 +202,69 @@ public:
 
 
 
-  
-  void setup_betac_kernel(std::string && kernel_string, const hyperparams::HyperParams & hp, const derivedparams::DerivedParams & dp, const std::string & kern_func_name){
-    
-    //TODO: (1) check hyper parameters to see if needed (2) check to see if changed. if so, set. 
-    
-    if (tk_betac.is_set() == false && does_betac_inc == 0){
-    
-      tk_betac.update(
-      betac::get_betac_kernel_string(gg.floattype, betac::genericbetackernelname), 
-      betac::genericbetackernelname,
-      betac::get_global_work_size(gg),
-      betac::get_local_work_size(gg)
-      );
-  
-      //mowri << "in setup_betac_kernel, tk_betac.global_work_size : " << tk_betac.global_work_size << Endl; 
-      set_betac_kernel_arguments();
+  bool refresh_needed(const std::string & type, const hyperparams::HyperParams & new_hp ){
+
+    //TODO here : check hyper parameters to see if needed a new 
+        
+    if (type.compare("betac") == 0){
+       if (tk_betac.is_set() == false && does_betac_inc == 0){
+         return true;
+       }
+       else{
+         return false;
+       }
     }
+    
+    else if (type.compare("main") == 0 ||  type.compare("alphaonso") == 0){
+      return true;
+    }
+    
   }
   
-  
+  void refresh_kernel(const KernelString & ks, const hyperparams::HyperParams & hp, const derivedparams::DerivedParams & dp){
+    
+    if (refresh_needed(ks.type, hp) == true){
+    
+      if (ks.type.compare("betac") == 0){
+        
+        tk_betac.update(
+        betac::get_betac_kernel_string(gg.floattype, betac::genericbetackernelname), 
+        betac::genericbetackernelname,
+        betac::get_global_work_size(gg),
+        betac::get_local_work_size(gg) );
+      
+        set_betac_kernel_arguments();
+      }
+      
+      else if (ks.type.compare("main") == 0 ||  ks.type.compare("alphaonso") == 0){
+        tk_main.update(
+        ks.kernstr, 
+        ks.fname,  
+        dp.global_work_size,
+        dp.n_work_items_per_workgroup);
+        
+        /* set main kernel's arguments */
+        set_main_kernel_arguments();    
+      }
+      
+      else{
+        throw tinygemm_error("what is the type of this kernel? Don't recognise " + ks.type);
+      }
+    }
+  }
 
-  //TODO : move kernel_string in 
-  void setup_main_kernel(const std::string & kernel_string, const hyperparams::HyperParams & hp, const derivedparams::DerivedParams & dp, const std::string & kern_func_name){
-
+    
  
-    size_t gws;
-    size_t lws;
-     /* Here we set the numbers of work groups (main_n_work_groups) and work items (tk_main.global_work_size) for the main kernel */  
-    sizingup::set_workforce(main_n_work_groups, lws, gws, gg.m, gg.n, hp.n_work_items_per_c_elm, hp.macro_tile_height, hp.macro_tile_width, dp.n_work_items_per_workgroup);
-    
-
-    
-    
-    //mowri << "main kernel global work size : " << tk_main.global_work_size <<  " (recommended ~ 4*64*40*64 = 655360)" << Endl; 
-    tk_main.update(
-    kernel_string, 
-    kern_func_name, 
-    gws, 
-    lws);
-
-    
-    /* set main kernel's arguments */
-    set_main_kernel_arguments();    
-    
-    
-
-  }
-
-    
-  void reset_tk_kernel_vector(){
-    if (does_betac_inc != 0){
-      ptr_tk_kernels = {&tk_main};
-    }
-    
-    else{
-      ptr_tk_kernels = {&tk_betac, &tk_main};
-    }
-  }
-
   //TODO : move kernstr in (rvalue ref)
-  void setup_tinykernels(const std::string & kernstr, const hyperparams::HyperParams & hp, const derivedparams::DerivedParams & dp, const std::string & kern_func_name){
-
+  void setup_tinykernels(const hyperparams::HyperParams & hp, const kerngen::Bundle & bundle ){
     
-    does_betac_inc = dp.does_beta_c_inc;
-
-
+    does_betac_inc = bundle.dp.does_beta_c_inc;    
     
-    setup_main_kernel(kernstr, hp, dp, kern_func_name);
-
-
-
-    setup_betac_kernel("not used at present", hp, dp, "not used at present");
-
-
-    
-    reset_tk_kernel_vector();
-    
-    
-
-
+    ptr_tk_kernels.resize(0);
+    for (auto & ks : bundle.v_tgks){
+      refresh_kernel(ks, hp, bundle.dp);
+      ptr_tk_kernels.push_back(tk_kernel_map.at(ks.type));
+    }
   }
   
 
@@ -402,9 +395,8 @@ public:
       auto bundle = tinygemm::kerngen::get_bundle(hps[i],gg); //get_ksb(hps[i]);
 
 
-      //TODO : this is temporary hack, moving off the back.
 
-      setup_tinykernels(bundle.v_tgks.back().kernstr, hps[i], bundle.dp, bundle.v_tgks.back().fname);    
+      setup_tinykernels(hps[i], bundle); //bundle.v_tgks.back().kernstr, hps[i], bundle.dp, bundle.v_tgks.back().fname);    
       
       mowri << "(benchgemm) geometry  \t:" << gg.get_string()  << "\nEntering the core gemm loops" << Endl;
       core_gemm_loop(n_runs);
@@ -420,18 +412,14 @@ public:
     
     deriveability_test(hp, "in get_default");
     
-    auto bundle = tinygemm::kerngen::get_bundle(hp,gg); //get_ksb(hp);//, soln_main_kernel_string);
-    //if (bundle.set_status.is_good() != true){
-      //throw tinygemm_error("the hyper parameters in get_default are not consistent, specifically : \n" + bundle.set_status.message);
-    //}
-    
+    auto bundle = tinygemm::kerngen::get_bundle(hp,gg); 
     tinygemm::TinyGemmSolutionStatistics tgss(std::numeric_limits<float>::max(), 0, 0);    
     
-    std::string soln_betac_kernel_string = hp.n_work_items_per_c_elm == 1 ?  ""  : betac::get_betac_kernel_string(gg.floattype, betac::genericbetackernelname);
-    std::string soln_betac_kernel_function_name = hp.n_work_items_per_c_elm == 1 ? "" : betac::genericbetackernelname;
-
-    //TODO : temp hack off back
-    return { soln_betac_kernel_string, soln_betac_kernel_function_name, bundle.v_tgks.back().kernstr, bundle.v_tgks.back().fname, hp, bundle.dp, gg, tgss };
+    return { hp, gg, bundle.dp, tgss, bundle.v_tgks };
+    
+    //std::string soln_betac_kernel_string = hp.n_work_items_per_c_elm == 1 ?  ""  : betac::get_betac_kernel_string(gg.floattype, betac::genericbetackernelname);
+    //std::string soln_betac_kernel_function_name = hp.n_work_items_per_c_elm == 1 ? "" : betac::genericbetackernelname;
+    //return { soln_betac_kernel_string, soln_betac_kernel_function_name, bundle.v_tgks.back().kernstr, bundle.v_tgks.back().fname, hp, bundle.dp, gg, tgss };
   }
   
   
@@ -552,8 +540,7 @@ public:
               ++global_counter;
               mowri << "global gen-com-bench : " << global_counter  <<  "." << Endl;
               
-              //TODO: temp hack off back
-              setup_tinykernels(bundle.v_tgks.back().kernstr, hp, bundle.dp, bundle.v_tgks.back().fname);    
+              setup_tinykernels(hp, bundle); //(bundle.v_tgks.back().kernstr, hp, bundle.dp, bundle.v_tgks.back().fname);    
               mowri << "(find) geometry : " << gg.get_string()  << "\nEntering the core gemm loops" << Endl; 
               core_gemm_loop(n_runs_per_kernel);
   
@@ -589,20 +576,24 @@ public:
                 
                 tinygemm::TinyGemmSolutionStatistics tgss(median_time, median_benchmark_gflops, elapsed_seconds);
                 
-           
+ 
+     //return { hp, gg, bundle.dp, tgss, bundle.v_tgks };
+     
+                path_of_best_solns.emplace_back( hp, gg, bundle.dp, tgss, bundle.v_tgks  );
+                
                 //TODO : WORK ON SOLN STRUCTURE. 
                
                 /* set kernel files */
                 
-                std::string soln_betac_kernel = does_betac_inc == 1 ?  ""  : tk_betac.tgk_strings.kernstr;
-                std::string soln_betac_kernel_function_name = does_betac_inc == 1 ? "" : tk_betac.tgk_strings.fname;
-                std::string soln_main_kernel_function_name = tk_main.tgk_strings.fname;  //bundle.kernel_function_name;                 
+                //std::string soln_betac_kernel = does_betac_inc == 1 ?  ""  : tk_betac.tgk_strings.kernstr;
+                //std::string soln_betac_kernel_function_name = does_betac_inc == 1 ? "" : tk_betac.tgk_strings.fname;
+                //std::string soln_main_kernel_function_name = tk_main.tgk_strings.fname;  //bundle.kernel_function_name;                 
                 
                 
-                path_of_best_solns.emplace_back (
-                soln_betac_kernel, soln_betac_kernel_function_name, 
-                tk_main.tgk_strings.kernstr, soln_main_kernel_function_name, 
-                hp, bundle.dp, gg, tgss ); 
+                //path_of_best_solns.emplace_back (
+                //soln_betac_kernel, soln_betac_kernel_function_name, 
+                //tk_main.tgk_strings.kernstr, soln_main_kernel_function_name, 
+                //hp, bundle.dp, gg, tgss ); 
 
                 
               }

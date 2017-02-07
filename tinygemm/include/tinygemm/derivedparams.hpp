@@ -42,6 +42,7 @@ public:
   /* TODO : write descriptions */
   unsigned macro_tile_area = uninitialised_unsigned;
   unsigned micro_tile_area = uninitialised_unsigned;
+  //TODO : rename to reflect alpha kernel
   unsigned n_work_items_per_workgroup = uninitialised_unsigned;
   unsigned n_elements_in_a_unroll = uninitialised_unsigned;
   unsigned n_elements_in_b_unroll = uninitialised_unsigned;
@@ -65,8 +66,11 @@ public:
   unsigned preshift_rightmost_tile_width = uninitialised_unsigned;
   unsigned n_groups_vertically = uninitialised_unsigned;
   unsigned n_groups_horizontally = uninitialised_unsigned;
+  //TODO : rename to reflect alpha kernel
   unsigned n_work_groups = uninitialised_unsigned;
+  //TODO : rename to reflect alpha kernel
   unsigned global_work_size = uninitialised_unsigned; 
+
   GA3Params ga3;
   /* */
   std::string strided_i_vertical;

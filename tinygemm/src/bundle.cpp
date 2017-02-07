@@ -19,15 +19,6 @@
 namespace tinygemm{
 namespace kerngen{
 
-
-
-
-
-
-
-
-
-
 class BundleGenerator{
 
 private:

@@ -9,6 +9,7 @@
 #include <tinygemm/tinygemmgeometry.hpp>
 #include <tinygemm/hyperparams.hpp>
 #include <tinygemm/derivedparams.hpp>
+#include <tinygemm/kernelstring.hpp>
 
 namespace tinygemm{
 
@@ -71,6 +72,16 @@ public:
   /* TODO : move betac_kernel and main_kernel into constructor */
   TinyGemmSolution(const std::string & betac_kernel, const std::string & betac_kernel_function_name,  const std::string &  main_kernel, const std::string & main_kernel_function_name, const hyperparams::HyperParams & hp, const derivedparams::DerivedParams & dp, const tinygemm::TinyGemmGeometry & geometry, TinyGemmSolutionStatistics tgss);
   
+  
+  /* TODO : hack for now */
+
+
+ //hp, gg, bundle.dp, tgss, bundle.v_tgks
+ 
+ //TinyGemmSolution(const std::string & betac_kernel, const std::string & betac_kernel_function_name,  const std::string &  main_kernel, const std::string & main_kernel_function_name, 
+ 
+ TinyGemmSolution(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & geometry, const derivedparams::DerivedParams & dp, TinyGemmSolutionStatistics tgss, const std::vector<KernelString> & v_tgks);
+
   
 
   /* return a string summarising the TinyGemmGeometry, less offsets (a request from MLOpen) */
