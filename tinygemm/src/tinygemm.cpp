@@ -332,7 +332,9 @@ public:
       /* At this point, the kernel has been succesfully compiled, 
        * but it is still possible that the resources necessary (LDS etc) are
        * not sufficient on this machine. We catch this case here. */        
-        if (k_ind == 0){
+        
+        
+        if (k_ind == 0){  //(k_ind < ptr_tk_kernels.size()){ 
           status = ptr_tk_kernels[k_ind]->enqueue();
         }
         

@@ -107,7 +107,9 @@ void basicfind(const tinygemm::TinyGemmGeometry & geometry, const tinygemm::Tiny
   if (n_postfind_runs > 0){
 
     /* We now show how to use the kernel(s) in soln.
-     * if soln.betac_kernel is an empty string, then soln.main_kernel does GEMM all by itself. 
+     * (OLD) 
+     * if soln.betac_kernel is an empty string, 
+     * then soln.main_kernel does GEMM all by itself. 
      * Otherwise, both betac and main kernels need to be used.
      * We use the kernel on the same problem as benchmarked. 
      * I expect this will be the standard workflow with tinygemm.  */
@@ -117,49 +119,94 @@ void basicfind(const tinygemm::TinyGemmGeometry & geometry, const tinygemm::Tiny
      * However, when the kernel is to be used, alpha and beta must corrspond the type of the data. */
     TFloat beta_true_type = static_cast<TFloat>(beta);
     TFloat alpha_true_type = static_cast<TFloat>(alpha);
-    
-    cl_program betac_program = NULL;
-    cl_kernel betac_kernel = NULL;
-    cl_program main_program = NULL;
-    cl_kernel main_kernel = NULL;    
-  
-    std::string buildOptions_11 = "-cl-std=CL2.0";
+
+    std::string buildOptions_11 = "-cl-std=CL2.0 -Werror";
     auto buildOptions = buildOptions_11.c_str();
     
-    /* setting up betac_kernel if it is needed */
-    if (soln.betac_kernel.compare("") != 0){
-      auto betac_kernel_cstr = soln.betac_kernel.c_str();
-      size_t betac_source_size = soln.betac_kernel.size();
-      betac_program = tinygemm::openclutil::cl_create_program_with_source(context, 1, &betac_kernel_cstr, &betac_source_size, "building betac program (in basicfind.hpp)");
-      tinygemm::openclutil::cl_build_program(betac_program, 1, &device_id_to_use, buildOptions, NULL, NULL, "soln.betac_kernel is not empty string (in basicfind.hpp)");     
-      auto betac_kernel_function_name_cstr = soln.betac_kernel_function_name.c_str();            
-      betac_kernel = tinygemm::openclutil::cl_create_kernel(betac_program, betac_kernel_function_name_cstr, "creating betac_kernel in basicfind.hpp");
+    
+    std::vector<cl_program> clprograms;
+    std::vector<cl_kernel> clkernels;
+
+    for (auto & ks : soln.v_tgks){
+            
+      auto kernel_cstr = ks.kernstr.c_str();
+      size_t source_size = ks.kernstr.size();
+
+      clprograms.emplace_back { 
+        tinygemm::openclutil::cl_create_program_with_source(context, 1, &kernel_cstr, &source_size, ks.type + ": creating program (in basicfind.hpp)")
+      };
       
-      tinygemm::openclutil::cl_set_kernel_arg(betac_kernel, 0, sizeof(unsigned), &geometry.derived.dim_c_coal, "betac 0");
-      tinygemm::openclutil::cl_set_kernel_arg(betac_kernel, 1, sizeof(unsigned), &geometry.derived.dim_c_uncoal, "betac 1");
-      tinygemm::openclutil::cl_set_kernel_arg(betac_kernel, 2, sizeof(unsigned), &geometry.ldc, "betac 2");
-      tinygemm::openclutil::cl_set_kernel_arg(betac_kernel, 3, sizeof(unsigned), &toff.oc, "betac 3");
-      tinygemm::openclutil::cl_set_kernel_arg(betac_kernel, 4, sizeof(cl_mem), (void *)&c_gpu, "betac 4");
-      tinygemm::openclutil::cl_set_kernel_arg(betac_kernel, 5, sizeof(TFloat), &beta_true_type, "betac 5"); 
+      tinygemm::openclutil::cl_build_program(clprograms.back(), 1, &device_id_to_use, buildOptions, NULL, NULL, ks.type + ": building program (in basicfind.hpp)");     
+      
+      clkernels.emplace_back {
+        tinygemm::openclutil::cl_create_kernel(clprograms.back(), ks.fname, ks.type + "creating kernel (in basicfind.hpp)")
+      };
+      
+      
+      if (ks.type.compare("betac") == 0){
+        tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 0, sizeof(unsigned), &geometry.derived.dim_c_coal, "betac 0");
+        tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 1, sizeof(unsigned), &geometry.derived.dim_c_uncoal, "betac 1");
+        tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 2, sizeof(unsigned), &geometry.ldc, "betac 2");
+        tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 3, sizeof(unsigned), &toff.oc, "betac 3");
+        tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 4, sizeof(cl_mem), (void *)&c_gpu, "betac 4");
+        tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 5, sizeof(TFloat), &beta_true_type, "betac 5"); 
+      }
+      
+      else if (ks.type.compare("alphaonso") == 0){
+        
+        tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 0, sizeof(cl_mem), (void *)&c_gpu, "main kernel 0 (basicfind.hpp)");
+        tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 1, sizeof(cl_mem), (void *)&a_gpu, "main kernel 1 (basicfind.hpp)");
+        tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 2, sizeof(cl_mem), (void *)&b_gpu, "main kernel 2 (basicfind.hpp)");
+        tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 3, sizeof(TFloat), &alpha_true_type, "main kernel 3 (basicfind.hpp)");
+        tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 4, sizeof(TFloat), &beta_true_type, "main kernel 4 (basicfind.hpp)");
+        tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 5, sizeof(unsigned), &toff.oa, "main kernel 5 (basicfind.hpp)");
+        tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 6, sizeof(unsigned), &toff.ob, "main kernel 6 (basicfind.hpp)");
+        tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 7, sizeof(unsigned), &toff.oc, "main kernel 7 (basicfind.hpp)");  
+        
+      }
+      
     }
     
-    /* setting up main_kernel */
-    auto main_kernel_cstr = soln.main_kernel.c_str();
-    size_t main_source_size = soln.main_kernel.size();
-    main_program = tinygemm::openclutil::cl_create_program_with_source(context, 1, &main_kernel_cstr, &main_source_size, "basicfind.hpp, getting main_program");
-    tinygemm::openclutil::cl_build_program(main_program, 1, &device_id_to_use, buildOptions, NULL, NULL, "basicfind.hpp, building main_program");     
-    auto main_kernel_function_name_cstr = soln.main_kernel_function_name.c_str();
+    //cl_program betac_program = NULL;
+    //cl_kernel betac_kernel = NULL;
+    //cl_program main_program = NULL;
+    //cl_kernel main_kernel = NULL;    
+  
     
-    main_kernel = tinygemm::openclutil::cl_create_kernel(main_program, main_kernel_function_name_cstr, "main kernel, in basicfind.hpp");      
+    ///* setting up betac_kernel if it is needed */
+    //if (soln.betac_kernel.compare("") != 0){
+      
+      //auto betac_kernel_cstr = soln.betac_kernel.c_str();
+      //size_t betac_source_size = soln.betac_kernel.size();
+      //betac_program = tinygemm::openclutil::cl_create_program_with_source(context, 1, &betac_kernel_cstr, &betac_source_size, "building betac program (in basicfind.hpp)");
+      //tinygemm::openclutil::cl_build_program(betac_program, 1, &device_id_to_use, buildOptions, NULL, NULL, "soln.betac_kernel is not empty string (in basicfind.hpp)");     
+      //auto betac_kernel_function_name_cstr = soln.betac_kernel_function_name.c_str();            
+      //betac_kernel = tinygemm::openclutil::cl_create_kernel(betac_program, betac_kernel_function_name_cstr, "creating betac_kernel in basicfind.hpp");
+      
+      //tinygemm::openclutil::cl_set_kernel_arg(betac_kernel, 0, sizeof(unsigned), &geometry.derived.dim_c_coal, "betac 0");
+      //tinygemm::openclutil::cl_set_kernel_arg(betac_kernel, 1, sizeof(unsigned), &geometry.derived.dim_c_uncoal, "betac 1");
+      //tinygemm::openclutil::cl_set_kernel_arg(betac_kernel, 2, sizeof(unsigned), &geometry.ldc, "betac 2");
+      //tinygemm::openclutil::cl_set_kernel_arg(betac_kernel, 3, sizeof(unsigned), &toff.oc, "betac 3");
+      //tinygemm::openclutil::cl_set_kernel_arg(betac_kernel, 4, sizeof(cl_mem), (void *)&c_gpu, "betac 4");
+      //tinygemm::openclutil::cl_set_kernel_arg(betac_kernel, 5, sizeof(TFloat), &beta_true_type, "betac 5"); 
+    //}
     
-    tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 0, sizeof(cl_mem), (void *)&c_gpu, "main kernel 0 (basicfind.hpp)");
-    tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 1, sizeof(cl_mem), (void *)&a_gpu, "main kernel 1 (basicfind.hpp)");
-    tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 2, sizeof(cl_mem), (void *)&b_gpu, "main kernel 2 (basicfind.hpp)");
-    tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 3, sizeof(TFloat), &alpha_true_type, "main kernel 3 (basicfind.hpp)");
-    tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 4, sizeof(TFloat), &beta_true_type, "main kernel 4 (basicfind.hpp)");
-    tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 5, sizeof(unsigned), &toff.oa, "main kernel 5 (basicfind.hpp)");
-    tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 6, sizeof(unsigned), &toff.ob, "main kernel 6 (basicfind.hpp)");
-    tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 7, sizeof(unsigned), &toff.oc, "main kernel 7 (basicfind.hpp)");  
+    ///* setting up main_kernel */
+    //auto main_kernel_cstr = soln.main_kernel.c_str();
+    //size_t main_source_size = soln.main_kernel.size();
+    //main_program = tinygemm::openclutil::cl_create_program_with_source(context, 1, &main_kernel_cstr, &main_source_size, "basicfind.hpp, getting main_program");
+    //tinygemm::openclutil::cl_build_program(main_program, 1, &device_id_to_use, buildOptions, NULL, NULL, "basicfind.hpp, building main_program");     
+    //auto main_kernel_function_name_cstr = soln.main_kernel_function_name.c_str();
+    //main_kernel = tinygemm::openclutil::cl_create_kernel(main_program, main_kernel_function_name_cstr, "main kernel, in basicfind.hpp");      
+    
+    //tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 0, sizeof(cl_mem), (void *)&c_gpu, "main kernel 0 (basicfind.hpp)");
+    //tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 1, sizeof(cl_mem), (void *)&a_gpu, "main kernel 1 (basicfind.hpp)");
+    //tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 2, sizeof(cl_mem), (void *)&b_gpu, "main kernel 2 (basicfind.hpp)");
+    //tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 3, sizeof(TFloat), &alpha_true_type, "main kernel 3 (basicfind.hpp)");
+    //tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 4, sizeof(TFloat), &beta_true_type, "main kernel 4 (basicfind.hpp)");
+    //tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 5, sizeof(unsigned), &toff.oa, "main kernel 5 (basicfind.hpp)");
+    //tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 6, sizeof(unsigned), &toff.ob, "main kernel 6 (basicfind.hpp)");
+    //tinygemm::openclutil::cl_set_kernel_arg(main_kernel, 7, sizeof(unsigned), &toff.oc, "main kernel 7 (basicfind.hpp)");  
     
     
     /* Enqueueing the kernel(s) */
