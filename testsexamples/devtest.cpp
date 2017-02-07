@@ -66,11 +66,11 @@ void print_kernel(){
   
   auto bundle = tinygemm::kerngen::get_kernel_string_bundle(hp, gg);
   
-  std::cout << bundle.kernel_string;
+  std::cout << bundle.v_tgks.back().kernstr;
   
   //std::ofstream floper ("/home/idiap/tinygemm/examplekernels/example1.cl", std::ios::out); 
     std::ofstream floper ("/home/idiap/akernel.cl", std::ios::out); 
-  floper << bundle.kernel_string;
+  floper << bundle.v_tgks.back().kernstr;
   
   floper.close();
 }

@@ -24,7 +24,9 @@ void TinyGemmKernel::update(const std::string & new_kernstr, const std::string &
   tgk_strings.fname = kern_func_name;
   global_work_size = global_work_size_;
   local_work_size = local_work_size_;
-  openclutil::set_program_and_kernel(command_queue, tgk_strings.kernstr, kern_func_name, clprog, clkern);
+  
+  
+  openclutil::set_program_and_kernel(command_queue, tgk_strings.kernstr, tgk_strings.fname, clprog, clkern);
 }
 
 TinyGemmKernel::~TinyGemmKernel(){

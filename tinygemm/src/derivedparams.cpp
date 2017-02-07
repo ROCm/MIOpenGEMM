@@ -16,7 +16,7 @@ get_deriveability(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmG
 }
 
 DerivedParams::DerivedParams(std::string s){
-  if (s.compare("uninitialised") == 0){
+  if (s.compare("uninitialised") != 0){
     throw tinygemm_error("the only string with which a DerivedParams object can be initialised is `uninitialised'");
   }
 }

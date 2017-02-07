@@ -175,10 +175,16 @@ cl_program cl_create_program_with_source(cl_context context, cl_uint count, cons
 
 
 void cl_build_program(cl_program program,cl_uint num_devices,const cl_device_id *device_list,const char *options,void (*pfn_notify)(cl_program, void *user_data),void *user_data, const std::string & hash){
+
+  std::cout << "entering clBuildProgram ... " << std::flush;
+
   cl_int ret = clBuildProgram(program, num_devices, device_list, options, pfn_notify, user_data);
+
+  std::cout << "done." << std::endl;
   
   
   if (ret != CL_SUCCESS){
+    
     char buffer[10240];
     clGetProgramBuildInfo(program, device_list[0], CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer, NULL);
     fprintf(stderr, "CL Compilation failed:\n%s", buffer);
@@ -304,22 +310,30 @@ void set_program_and_kernel(const cl_command_queue & command_queue, const std::s
   
   
   cl_context context;
-  cl_get_command_queue_info(command_queue, CL_QUEUE_CONTEXT, sizeof(cl_context), &context, NULL, "hashIDbla102");
+  cl_get_command_queue_info(command_queue, CL_QUEUE_CONTEXT, sizeof(cl_context), &context, NULL, "getting context from queue in set_program_and_kernel");
   
   cl_device_id device_id_to_use;
-  cl_get_command_queue_info(command_queue, CL_QUEUE_DEVICE, sizeof(cl_device_id), &device_id_to_use, NULL, "hashIDbla101");
+  cl_get_command_queue_info(command_queue, CL_QUEUE_DEVICE, sizeof(cl_device_id), &device_id_to_use, NULL, "getting device id from queue in set_program_and_kernel");
         
 //  kernel_function_name = kernelutil::get_kernel_function_name(kernel_string);
   
   
   
   auto kernel_cstr = kernel_string.c_str();
-  auto kernel_string_size =  kernel_string.size();
+  
+  auto kernel_string_size = kernel_string.size();
+  
+  std::cout << kernel_string;
+  
   program = cl_create_program_with_source(context, 1, &kernel_cstr, &kernel_string_size , "creating program in set_program_and_kernel");
   
   /* To generate isa code, you'll need to add something like :   ``` -save-temps= + "/some/path/"  '''    to the following string  */
-  std::string buildOptions_11 = "-cl-std=CL2.0";
+  std::string buildOptions_11 = "-cl-std=CL2.0  -Werror";
   auto buildOptions = buildOptions_11.c_str();
+
+
+
+
   cl_build_program(program, 1, &device_id_to_use, buildOptions, NULL, NULL, "building program in set_program_and_kernel"); 
   
   
@@ -341,6 +355,7 @@ void set_program_and_kernel(const cl_command_queue & command_queue, const std::s
     /* done */
   //}
   
+
   
   kernel = cl_create_kernel(program, kernel_function_name.c_str(), "getting kernel in set_program_and_kernel");  
 }

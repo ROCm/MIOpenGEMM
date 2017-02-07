@@ -22,10 +22,6 @@
 #include <tinygemm/derivedparams.hpp>
 
 namespace tinygemm{
-  
-
-
-
 
 
 class MultiFloatType{
@@ -49,7 +45,7 @@ static const MultiFloatType m_beta(default_beta);
 
 class OpenCLGemmEncapsulator{
 public: 
-  /* references to constructor parameters */
+
   cl_command_queue command_queue;
   std::string outputfilename;
 
@@ -219,11 +215,20 @@ public:
 
   //TODO : move kernel_string in 
   void setup_main_kernel(const std::string & kernel_string, const hyperparams::HyperParams & hp, const derivedparams::DerivedParams & dp, const std::string & kern_func_name){
+
+
+    std::cout << "just entered setup_main_kernel ... " << std::flush;      
+
  
     size_t gws;
     size_t lws;
      /* Here we set the numbers of work groups (main_n_work_groups) and work items (tk_main.global_work_size) for the main kernel */  
     sizingup::set_workforce(main_n_work_groups, lws, gws, gg.m, gg.n, hp.n_work_items_per_c_elm, hp.macro_tile_height, hp.macro_tile_width, dp.n_work_items_per_workgroup);
+    
+
+    std::cout << kernel_string << std::endl;
+    std::abort();
+    
     
     //mowri << "main kernel global work size : " << tk_main.global_work_size <<  " (recommended ~ 4*64*40*64 = 655360)" << Endl; 
     tk_main.update(
@@ -231,9 +236,13 @@ public:
     kern_func_name, 
     gws, 
     lws);
+
     
     /* set main kernel's arguments */
     set_main_kernel_arguments();    
+    
+    
+
   }
 
     
@@ -249,14 +258,25 @@ public:
 
   //TODO : move kernstr in (rvalue ref)
   void setup_tinykernels(const std::string & kernstr, const hyperparams::HyperParams & hp, const derivedparams::DerivedParams & dp, const std::string & kern_func_name){
+
     
     does_betac_inc = dp.does_beta_c_inc;
+
+
     
     setup_main_kernel(kernstr, hp, dp, kern_func_name);
+
+
+
     setup_betac_kernel("not used at present", hp, dp, "not used at present");
+
 
     
     reset_tk_kernel_vector();
+    
+    
+
+
   }
   
 
@@ -381,10 +401,14 @@ public:
       
       mowri << "\nSource kernel " << "(" << i + 1 << "/" << hps.size() << ") "  << Endl;      
       
+
       deriveability_test(hps[i], "in benchgemm");
-      
+
       auto bundle = tinygemm::kerngen::get_kernel_string_bundle(hps[i],gg); //get_ksb(hps[i]);
+
+
       //TODO : this is temporary hack, moving off the back.
+
       setup_tinykernels(bundle.v_tgks.back().kernstr, hps[i], bundle.dp, bundle.v_tgks.back().fname);    
       
       mowri << "(benchgemm) geometry  \t:" << gg.get_string()  << "\nEntering the core gemm loops" << Endl;
