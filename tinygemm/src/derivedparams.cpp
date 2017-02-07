@@ -21,20 +21,18 @@ DerivedParams::DerivedParams(std::string s){
   }
 }
 
-void DerivedParams::set_fragile_no_checks(const hyperparams::HyperParams & hp){
+
+std::tuple<bool, std::string>
+DerivedParams::set_fragile(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg){
+
   macro_tile_area = hp.macro_tile_width * hp.macro_tile_height;
   micro_tile_area = hp.micro_tile_width * hp.micro_tile_height;
   n_work_items_per_workgroup = macro_tile_area / micro_tile_area;
   n_elements_in_a_unroll = hp.macro_tile_height * hp.unroll;
   n_elements_in_b_unroll = hp.macro_tile_width * hp.unroll;
   n_elements_of_a_to_load_per_workitem = n_elements_in_a_unroll / n_work_items_per_workgroup;
-  n_elements_of_b_to_load_per_workitem = n_elements_in_b_unroll / n_work_items_per_workgroup;
-}
-
-std::tuple<bool, std::string>
-DerivedParams::set_fragile(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg){
-
-  set_fragile_no_checks(hp);
+  n_elements_of_b_to_load_per_workitem = n_elements_in_b_unroll / n_work_items_per_workgroup;  
+  
   std::stringstream set_status_ss;  
   /* check 0 : macro tile not too large */
   if (gg.m < hp.macro_tile_height){
@@ -73,7 +71,7 @@ DerivedParams::set_fragile(const hyperparams::HyperParams & hp, const tinygemm::
     }
   }
   
-  /* ran the gauntlet */
+  /* ran the gauntlet, returning deriveable is true */
   return std::make_tuple(true, "");
 }
 
@@ -81,9 +79,26 @@ DerivedParams::set_fragile(const hyperparams::HyperParams & hp, const tinygemm::
 DerivedParams::DerivedParams(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg){
 
   auto tup = set_fragile(hp, gg);
+
   if (std::get<0>(tup) == false){
     throw tinygemm_error("Failure to construct DerivedParams. Problem caught in set_fragile. It is recommended to run use function derivable to check that a valid DerivedParams can be constructed. The message returned in set_fragile is :  " + std::get<1>(tup));
   }
+  
+  /* do the tiling */
+  if (hp.work_item_load_a_pll_to_unroll == 0){
+    tiling::set_tile_dimensions(micro_a_tile_perp_unroll, micro_a_tile_pll_unroll, hp.macro_tile_height, hp.unroll, n_elements_of_a_to_load_per_workitem); 
+  }
+  else{
+    tiling::set_tile_dimensions(micro_a_tile_pll_unroll, micro_a_tile_perp_unroll, hp.unroll, hp.macro_tile_height, n_elements_of_a_to_load_per_workitem);
+  }
+  
+  if (hp.work_item_load_b_pll_to_unroll == 0){
+    tiling::set_tile_dimensions(micro_b_tile_perp_unroll, micro_b_tile_pll_unroll, hp.macro_tile_width, hp.unroll, n_elements_of_b_to_load_per_workitem); 
+  }
+  else{
+    tiling::set_tile_dimensions(micro_b_tile_pll_unroll, micro_b_tile_perp_unroll, hp.unroll, hp.macro_tile_width, n_elements_of_b_to_load_per_workitem);
+  }
+    
     
   split_on_k = hp.n_work_items_per_c_elm == 1 ? 0 : 1;
   does_beta_c_inc = split_on_k == 1 ? 0 : 1; 

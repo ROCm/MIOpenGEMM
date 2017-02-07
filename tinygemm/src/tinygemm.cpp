@@ -17,7 +17,7 @@
 #include <tinygemm/floattostring.hpp>
 #include <tinygemm/tinygemmsolution.hpp>
 #include <tinygemm/hyperparams.hpp>
-#include <tinygemm/kernelstringgenerator.hpp>
+#include <tinygemm/bundle.hpp>
 #include <tinygemm/tinygemmkernel.hpp>
 #include <tinygemm/derivedparams.hpp>
 
@@ -216,9 +216,6 @@ public:
   //TODO : move kernel_string in 
   void setup_main_kernel(const std::string & kernel_string, const hyperparams::HyperParams & hp, const derivedparams::DerivedParams & dp, const std::string & kern_func_name){
 
-
-    std::cout << "just entered setup_main_kernel ... " << std::flush;      
-
  
     size_t gws;
     size_t lws;
@@ -226,8 +223,6 @@ public:
     sizingup::set_workforce(main_n_work_groups, lws, gws, gg.m, gg.n, hp.n_work_items_per_c_elm, hp.macro_tile_height, hp.macro_tile_width, dp.n_work_items_per_workgroup);
     
 
-    std::cout << kernel_string << std::endl;
-    std::abort();
     
     
     //mowri << "main kernel global work size : " << tk_main.global_work_size <<  " (recommended ~ 4*64*40*64 = 655360)" << Endl; 
@@ -404,7 +399,7 @@ public:
 
       deriveability_test(hps[i], "in benchgemm");
 
-      auto bundle = tinygemm::kerngen::get_kernel_string_bundle(hps[i],gg); //get_ksb(hps[i]);
+      auto bundle = tinygemm::kerngen::get_bundle(hps[i],gg); //get_ksb(hps[i]);
 
 
       //TODO : this is temporary hack, moving off the back.
@@ -425,7 +420,7 @@ public:
     
     deriveability_test(hp, "in get_default");
     
-    auto bundle = tinygemm::kerngen::get_kernel_string_bundle(hp,gg); //get_ksb(hp);//, soln_main_kernel_string);
+    auto bundle = tinygemm::kerngen::get_bundle(hp,gg); //get_ksb(hp);//, soln_main_kernel_string);
     //if (bundle.set_status.is_good() != true){
       //throw tinygemm_error("the hyper parameters in get_default are not consistent, specifically : \n" + bundle.set_status.message);
     //}
@@ -550,7 +545,7 @@ public:
             
             if (std::get<0>(deriveability) == true){
             
-              auto bundle = tinygemm::kerngen::get_kernel_string_bundle(hp,gg);  
+              auto bundle = tinygemm::kerngen::get_bundle(hp,gg);  
                             
               /* the kernel was succesfully generated, we now compile and benchmark it */
               

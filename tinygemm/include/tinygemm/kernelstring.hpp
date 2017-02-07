@@ -5,15 +5,15 @@
 
 namespace tinygemm{
 
-class TinyGemmKernelStrings{
+class KernelString{
 public:
   /*type : betac_alphab, betac_workspace, etc.*/
   std::string type;  
   std::string kernstr;
   std::string fname;
-  TinyGemmKernelStrings(std::string && type_, std::string && kernstr_, const std::string & fname_  ):type(type_), kernstr(kernstr_), fname(fname_) {}
+  KernelString(std::string && type_, std::string && kernstr_, const std::string & fname_  ):type(type_), kernstr(kernstr_), fname(fname_) {}
 
-  TinyGemmKernelStrings() = default;
+  KernelString() = default;
 
 };
 

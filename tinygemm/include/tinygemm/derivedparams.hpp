@@ -36,10 +36,7 @@ public:
   
   DerivedParams(std::string s);
   
-  /* perform the initialisation of parameters which might not be compatible  */
-  void set_fragile_no_checks(const hyperparams::HyperParams & hp);
-  
-  /* set_fragile_no_checks followed the compatibitily checks */
+  /* does the minimum setting to confirm compatibitily. called by get_deriveability */
   std::tuple<bool, std::string> set_fragile(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg);
   
   /* TODO : write descriptions */

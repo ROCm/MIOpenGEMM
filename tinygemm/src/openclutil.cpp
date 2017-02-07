@@ -11,18 +11,12 @@
 namespace tinygemm{
 namespace openclutil{
 
-
-
-
-
 cl_command_queue cl_create_command_queue(cl_context context, cl_device_id device, cl_command_queue_properties properties, const std::string & hash){
  	cl_int errcode_ret;
   cl_command_queue cq = clCreateCommandQueue(context, device, properties, &errcode_ret);
   confirm_cl_status(errcode_ret, hash, "cl_create_command_queue");
   return cq;
 }
-
-
 
 void confirm_cl_status(cl_int ret, const std::string & hash, const std::string & function){
   if (ret != CL_SUCCESS){
@@ -33,137 +27,129 @@ void confirm_cl_status(cl_int ret, const std::string & hash, const std::string &
 }
 
 
+void cl_release_kernel(cl_kernel kernel, const std::string & hash){
+  cl_int ret = clReleaseKernel(kernel);
+  confirm_cl_status(ret, hash, "cl_release_kernel");
+}
 
 
+void cl_release_context(cl_context context, const std::string & hash){
+  cl_int ret = clReleaseContext(context);
+  confirm_cl_status(ret, hash, "cl_release_context");
+}  
 
-  void cl_release_kernel(cl_kernel kernel, const std::string & hash){
-    cl_int ret = clReleaseKernel(kernel);
-    confirm_cl_status(ret, hash, "cl_release_kernel");
-  }
-  
 
-  void cl_release_context(cl_context context, const std::string & hash){
-    cl_int ret = clReleaseContext(context);
-    confirm_cl_status(ret, hash, "cl_release_context");
-  }  
-  
+void cl_release_command_queue(cl_command_queue command_queue, const std::string & hash){
+  cl_int ret = clReleaseCommandQueue(command_queue);
+  confirm_cl_status(ret, hash, "cl_release_command_queue");
+}
+    
 
-  void cl_release_command_queue(cl_command_queue command_queue, const std::string & hash){
-    cl_int ret = clReleaseCommandQueue(command_queue);
-    confirm_cl_status(ret, hash, "cl_release_command_queue");
-  }
-      
-  
-  void cl_release_program(cl_program program, const std::string & hash){
-    cl_int ret = clReleaseProgram(program);
-    confirm_cl_status(ret, hash, "cl_release_program");
-  }
+void cl_release_program(cl_program program, const std::string & hash){
+  cl_int ret = clReleaseProgram(program);
+  confirm_cl_status(ret, hash, "cl_release_program");
+}
+
+
+void cl_set_kernel_arg(cl_kernel & kernel, cl_uint arg_index, size_t arg_size, const void * arg_value, const std::string & hash){
+  cl_int ret = clSetKernelArg(kernel, arg_index, arg_size, arg_value);
+  confirm_cl_status(ret, hash, "cl_set_kernel_arg");
+}
+
+
+void cl_flush(cl_command_queue command_queue, const std::string & hash){
+  cl_int ret = clFlush(command_queue);
+  confirm_cl_status(ret, hash, "cl_flush"); 
+}
+
+void cl_wait_for_events(cl_uint num_events, const cl_event * event_list, const std::string & hash){
+  cl_int ret = clWaitForEvents(num_events, event_list);
+  confirm_cl_status(ret, hash, "cl_wait_for_events");
+}
+
+
+void cl_get_command_queue_info(cl_command_queue command_queue, cl_command_queue_info param_name, size_t param_value_size, void * param_value, size_t * param_value_size_ret, const std::string & hash){
+  cl_int ret = clGetCommandQueueInfo(command_queue, param_name, param_value_size, param_value, param_value_size_ret);
+  confirm_cl_status(ret, hash, "cl_get_command_queue_info");
+}
+
+
+cl_mem cl_create_buffer(cl_context context, cl_mem_flags flags, size_t size, void * host_ptr, const std::string & hash){
+  cl_int errcode_ret;
+  cl_mem toreturn = clCreateBuffer(context, flags, size, host_ptr, &errcode_ret);
+  confirm_cl_status(errcode_ret, hash, "cl_create_buffer");
+  return toreturn;
+}
  
+void cl_enqueue_copy_buffer(cl_command_queue command_queue, cl_mem src_buffer, cl_mem dst_buffer, size_t src_offset, size_t dst_offset, size_t cb, cl_uint num_events_in_wait_list, const cl_event *event_wait_list, cl_event *event, const std::string & hash){
+  cl_int ret = clEnqueueCopyBuffer(command_queue, src_buffer, dst_buffer, src_offset, dst_offset, cb, num_events_in_wait_list, event_wait_list, event); 
+  confirm_cl_status(ret, hash, "cl_enqueue_copy_buffer");
+}
+
+
+void cl_release_mem_object(cl_mem memobj, const std::string & hash){
+  cl_int ret = clReleaseMemObject(memobj);
+  confirm_cl_status(ret, hash, "cl_release_mem_object");
+}   
+
+void cl_enqueue_ndrange_kernel(cl_command_queue command_queue, cl_kernel kernel, cl_uint work_dim, const size_t * global_work_offset, const size_t * global_work_size, const size_t * local_work_size,cl_uint num_events_in_wait_list, const cl_event *event_wait_list,cl_event * event, const std::string & hash){
+  cl_int ret = clEnqueueNDRangeKernel(command_queue, kernel, work_dim, global_work_offset, global_work_size, local_work_size, num_events_in_wait_list, event_wait_list, event);
+ confirm_cl_status(ret, hash, "cl_enqueue_ndrange_kernel");
+}
+
+
+cl_mem cl_create_buffer_from_command_queue(cl_command_queue command_queue, cl_mem_flags flags, size_t size, void * host_ptr, const std::string & hash){
+  cl_context context;
+  cl_get_command_queue_info(command_queue, CL_QUEUE_CONTEXT, sizeof(cl_context), &context, nullptr, hash + " + (cl_create_buffer_from_command_queue)");
+  return cl_create_buffer(context, flags, size, host_ptr, hash + "+ (cl_create_buffer_from_command_queue)");
+}
+
+void cl_get_platform_ids(cl_uint num_entries, cl_platform_id * platforms, cl_uint * num_platforms, const std::string & hash){
+  cl_int ret = clGetPlatformIDs(num_entries, platforms, num_platforms);
+  confirm_cl_status(ret, hash, "cl_get_platform_ids");
+}
+
+
+cl_context cl_create_context_from_type(cl_context_properties * properties, cl_device_type  device_type, void  (*pfn_notify) (const char *errinfo, const void  *private_info, size_t  cb, void  *user_data), void  *user_data, const std::string & hash){
+  cl_int errcode;
+  cl_context context = clCreateContextFromType(properties, device_type, pfn_notify, user_data, & errcode);
+  confirm_cl_status(errcode, hash, "cl_create_context_from_type");
+  return context;
+}
+
+
+
+
+void  cl_get_context_info(cl_context context, cl_context_info param_name, size_t param_value_size, void * param_value, size_t * param_value_size_ret, const std::string & hash){
+  cl_int ret = clGetContextInfo(context, param_name, param_value_size, param_value, param_value_size_ret);
+  confirm_cl_status(ret, hash, "cl_get_context_info");
+}
+
+
+void cl_get_device_info(cl_device_id device, cl_device_info param_name, size_t param_value_size, void *param_value, size_t *param_value_size_ret, const std::string & hash){
+  cl_int ret = clGetDeviceInfo(device, param_name, param_value_size, param_value, param_value_size_ret);
+  confirm_cl_status(ret, hash, "cl_get_device_info");
+}
+  
+
+
+cl_kernel cl_create_kernel(cl_program program, const char *kernel_name, const std::string & hash){
+  cl_int errcode_ret;
+  cl_kernel kernel = clCreateKernel(program, kernel_name, & errcode_ret);
+  
+  /* proof that release should be called once, even if copies have been made */
+  //std::cout << "in create kernel" << std::endl;
+  //cl_kernel kernel2 = kernel;
+  //cl_release_kernel(kernel2, "bla bla");
+  //std::cout << "boom" << std::endl;
  
-  void cl_set_kernel_arg(cl_kernel & kernel, cl_uint arg_index, size_t arg_size, const void * arg_value, const std::string & hash){
-    cl_int ret = clSetKernelArg(kernel, arg_index, arg_size, arg_value);
-    confirm_cl_status(ret, hash, "cl_set_kernel_arg");
-  }
-
-
-  void cl_flush(cl_command_queue command_queue, const std::string & hash){
-    cl_int ret = clFlush(command_queue);
-    confirm_cl_status(ret, hash, "cl_flush"); 
-  }
-  
-  void cl_wait_for_events(cl_uint num_events, const cl_event * event_list, const std::string & hash){
-    cl_int ret = clWaitForEvents(num_events, event_list);
-    confirm_cl_status(ret, hash, "cl_wait_for_events");
-  }
-
-
-  void cl_get_command_queue_info(cl_command_queue command_queue, cl_command_queue_info param_name, size_t param_value_size, void * param_value, size_t * param_value_size_ret, const std::string & hash){
-    cl_int ret = clGetCommandQueueInfo(command_queue, param_name, param_value_size, param_value, param_value_size_ret);
-    confirm_cl_status(ret, hash, "cl_get_command_queue_info");
-  }
-
-
-  cl_mem cl_create_buffer(cl_context context, cl_mem_flags flags, size_t size, void * host_ptr, const std::string & hash){
-    cl_int errcode_ret;
-    cl_mem toreturn = clCreateBuffer(context, flags, size, host_ptr, &errcode_ret);
-    confirm_cl_status(errcode_ret, hash, "cl_create_buffer");
-    return toreturn;
-  }
-   
-  void cl_enqueue_copy_buffer(cl_command_queue command_queue, cl_mem src_buffer, cl_mem dst_buffer, size_t src_offset, size_t dst_offset, size_t cb, cl_uint num_events_in_wait_list, const cl_event *event_wait_list, cl_event *event, const std::string & hash){
-    cl_int ret = clEnqueueCopyBuffer(command_queue, src_buffer, dst_buffer, src_offset, dst_offset, cb, num_events_in_wait_list, event_wait_list, event); 
-    confirm_cl_status(ret, hash, "cl_enqueue_copy_buffer");
-  }
- 
-
-  void cl_release_mem_object(cl_mem memobj, const std::string & hash){
-    cl_int ret = clReleaseMemObject(memobj);
-    confirm_cl_status(ret, hash, "cl_release_mem_object");
-  }   
-  
-  void cl_enqueue_ndrange_kernel(cl_command_queue command_queue, cl_kernel kernel, cl_uint work_dim, const size_t * global_work_offset, const size_t * global_work_size, const size_t * local_work_size,cl_uint num_events_in_wait_list, const cl_event *event_wait_list,cl_event * event, const std::string & hash){
-    cl_int ret = clEnqueueNDRangeKernel(command_queue, kernel, work_dim, global_work_offset, global_work_size, local_work_size, num_events_in_wait_list, event_wait_list, event);
-   confirm_cl_status(ret, hash, "cl_enqueue_ndrange_kernel");
-  }
-  
-
-  cl_mem cl_create_buffer_from_command_queue(cl_command_queue command_queue, cl_mem_flags flags, size_t size, void * host_ptr, const std::string & hash){
-    cl_context context;
-    cl_get_command_queue_info(command_queue, CL_QUEUE_CONTEXT, sizeof(cl_context), &context, nullptr, hash + " + (cl_create_buffer_from_command_queue)");
-    return cl_create_buffer(context, flags, size, host_ptr, hash + "+ (cl_create_buffer_from_command_queue)");
-  }
-
-  void cl_get_platform_ids(cl_uint num_entries, cl_platform_id * platforms, cl_uint * num_platforms, const std::string & hash){
-    cl_int ret = clGetPlatformIDs(num_entries, platforms, num_platforms);
-    confirm_cl_status(ret, hash, "cl_get_platform_ids");
-  }
-  
-
-  cl_context cl_create_context_from_type(cl_context_properties * properties, cl_device_type  device_type, void  (*pfn_notify) (const char *errinfo, const void  *private_info, size_t  cb, void  *user_data), void  *user_data, const std::string & hash){
-    cl_int errcode;
-    cl_context context = clCreateContextFromType(properties, device_type, pfn_notify, user_data, & errcode);
-    confirm_cl_status(errcode, hash, "cl_create_context_from_type");
-    return context;
-  }
-
-
-
-
-  void  cl_get_context_info(cl_context context, cl_context_info param_name, size_t param_value_size, void * param_value, size_t * param_value_size_ret, const std::string & hash){
-    cl_int ret = clGetContextInfo(context, param_name, param_value_size, param_value, param_value_size_ret);
-    confirm_cl_status(ret, hash, "cl_get_context_info");
-  }
+  //SafeClMem mem2("mem2");
+  //cl_release_mem_object(mem2, "bla bla");
   
   
-  void cl_get_device_info(cl_device_id device, cl_device_info param_name, size_t param_value_size, void *param_value, size_t *param_value_size_ret, const std::string & hash){
-    cl_int ret = clGetDeviceInfo(device, param_name, param_value_size, param_value, param_value_size_ret);
-    confirm_cl_status(ret, hash, "cl_get_device_info");
-  }
-    
-
-
-  cl_kernel cl_create_kernel(cl_program program, const char *kernel_name, const std::string & hash){
-    cl_int errcode_ret;
-    cl_kernel kernel = clCreateKernel(program, kernel_name, & errcode_ret);
-    
-    /* proof that release should be called once, even if copies have been made */
-    //std::cout << "in create kernel" << std::endl;
-    //cl_kernel kernel2 = kernel;
-    //cl_release_kernel(kernel2, "bla bla");
-    //std::cout << "boom" << std::endl;
-   
-    //SafeClMem mem2("mem2");
-    //cl_release_mem_object(mem2, "bla bla");
-    
-    
-    confirm_cl_status(errcode_ret, hash, "cl_create_kernel");
-    return kernel;
-  }
-  
-
-
-
-
+  confirm_cl_status(errcode_ret, hash, "cl_create_kernel");
+  return kernel;
+}
 
 
 cl_program cl_create_program_with_source(cl_context context, cl_uint count, const char **strings, const size_t *lengths, const std::string & hash){  
@@ -175,14 +161,9 @@ cl_program cl_create_program_with_source(cl_context context, cl_uint count, cons
 
 
 void cl_build_program(cl_program program,cl_uint num_devices,const cl_device_id *device_list,const char *options,void (*pfn_notify)(cl_program, void *user_data),void *user_data, const std::string & hash){
-
-  std::cout << "entering clBuildProgram ... " << std::flush;
-
+  
   cl_int ret = clBuildProgram(program, num_devices, device_list, options, pfn_notify, user_data);
 
-  std::cout << "done." << std::endl;
-  
-  
   if (ret != CL_SUCCESS){
     
     char buffer[10240];
@@ -231,25 +212,18 @@ void set_platform_etc(cl_platform_id & platform, cl_uint & num_platforms, cl_con
   
   /* Get the platform(s) */
   cl_get_platform_ids(1, &platform, &num_platforms, "in set_platform_etc");
-  //cl_int status;
   
   /* Create context */
   cl_context_properties cps[3] = { CL_CONTEXT_PLATFORM, reinterpret_cast<cl_context_properties>(platform), 0 };
   cl_context_properties* cprops = (nullptr == platform) ? nullptr : cps;
   context = cl_create_context_from_type(cprops, CL_DEVICE_TYPE_GPU, nullptr, nullptr, "in set_platform_etc...");
-  //if (status != CL_SUCCESS){
-    //std::string errm("There's been an error in set_platform_etc in openclutil.cpp: the return status of clCreateContextFromType is not CL_SUCCESS. The status returned is ");
-    //errm += status;
-    //errm + ". ";
-    //throw tinygemm_error(errm);
-  //}
   
   /* Query the number of devices */
   int deviceListSize;
   cl_get_context_info(context, CL_CONTEXT_NUM_DEVICES, sizeof(int), &deviceListSize, nullptr, "getting deviceListSize");
   
   if (deviceListSize == 0){
-    throw tinygemm_error("There are no devices detected. \nSpecifically, using clGetContextInfo with CL_CONTEX_NUM_DEVICES as the flag returns 0. \nThis error is being thrown from set_platform_etc in openclutil.cpp. Please have a look...");
+    throw tinygemm_error("There are no devices detected. \nSpecifically, using clGetContextInfo with CL_CONTEX_NUM_DEVICES as the flag returns 0. \nThis error is being thrown from set_platform_etc in openclutil.cpp. Please have a look, it seems tinygemm can't figure out your setup.");
   }
 
   
@@ -323,7 +297,6 @@ void set_program_and_kernel(const cl_command_queue & command_queue, const std::s
   
   auto kernel_string_size = kernel_string.size();
   
-  std::cout << kernel_string;
   
   program = cl_create_program_with_source(context, 1, &kernel_cstr, &kernel_string_size , "creating program in set_program_and_kernel");
   

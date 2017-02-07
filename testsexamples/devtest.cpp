@@ -6,7 +6,7 @@
 #include <tinygemm/tinygemmerror.hpp>
 #include <tinygemm/tinygemm.hpp>
 #include <tinygemm/devtinygemm.hpp>
-#include <tinygemm/kernelstringgenerator.hpp>
+#include <tinygemm/bundle.hpp>
 #include <tinygemm/stringutilbase.hpp>
 #include <tinygemm/hyperparams.hpp>
 #include <tinygemm/tinygemmgeometry.hpp>
@@ -64,7 +64,7 @@ void print_kernel(){
   auto hp = get_hp();
   auto gg = get_geometry();
   
-  auto bundle = tinygemm::kerngen::get_kernel_string_bundle(hp, gg);
+  auto bundle = tinygemm::kerngen::get_bundle(hp, gg);
   
   std::cout << bundle.v_tgks.back().kernstr;
   

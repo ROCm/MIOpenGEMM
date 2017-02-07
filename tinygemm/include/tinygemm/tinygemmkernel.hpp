@@ -5,7 +5,7 @@
 #include <algorithm>
 
 #include <CL/cl.h>
-#include <tinygemm/tinygemmkernelstrings.hpp>
+#include <tinygemm/kernelstring.hpp>
 
 namespace tinygemm{
   
@@ -14,7 +14,7 @@ class TinyGemmKernel{
   
   public:
     cl_command_queue command_queue;    
-    TinyGemmKernelStrings tgk_strings;
+    KernelString tgk_strings;
   
     /* used for getting performance of kernel */
     cl_event clevent;
