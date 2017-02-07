@@ -6,6 +6,47 @@
 
 namespace tinygemm{
 namespace stringutil{
+
+
+
+void indentify(std::string & source){
+  std::string newsource;
+  newsource.reserve(source.length());
+  std::string::size_type last_lend = source.find("\n", 0);  
+  std::string::size_type next_lend = source.find("\n", last_lend + 1);
+  std::string::size_type next_open = source.find("{", 0);
+  std::string::size_type next_close = source.find("}", 0);  
+  newsource.append(source, 0, last_lend);
+  int indent_level = 0;
+
+  while (std::string::npos != next_lend){
+
+    if (next_open < last_lend){
+      indent_level += 1;
+      next_open = source.find("{", next_open + 1);
+    }
+    else if (next_close < next_lend){
+      indent_level -= 1;
+      next_close = source.find("}", next_close + 1);
+    }
+    
+    else{
+      newsource.append("\n");
+      for (int i = 0; i < indent_level; ++i){
+        newsource.append("  ");
+      }
+      newsource.append(source, last_lend + 1, next_lend - last_lend - 1);
+      last_lend = next_lend;
+      next_lend = source.find("\n", next_lend + 1);
+    }
+  }
+  
+  newsource += source.substr(last_lend);
+  source.swap(newsource);
+}
+
+
+
 //split the string tosplit by delim. With x appearances of delim in tosplit, the returned vector will have length x + 1 (even if appearances at the start, end, contiguous.
 std::vector<std::string> split(const std::string & tosplit, const std::string & delim){
 	
