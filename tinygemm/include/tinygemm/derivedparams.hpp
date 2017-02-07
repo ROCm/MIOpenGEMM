@@ -49,6 +49,7 @@ public:
   unsigned n_elements_of_a_to_load_per_workitem = uninitialised_unsigned;
   unsigned n_elements_of_b_to_load_per_workitem = uninitialised_unsigned;
   unsigned split_on_k = uninitialised_unsigned;
+  //TODO : rename to reflect alpha kernel
   unsigned does_beta_c_inc = uninitialised_unsigned;
   unsigned macro_tile_height_and_pad = uninitialised_unsigned;
   unsigned macro_tile_width_and_pad = uninitialised_unsigned;

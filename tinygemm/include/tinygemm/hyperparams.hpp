@@ -72,7 +72,7 @@ public:
 
   std::string get_key_from_shortkey(const std::string & shortkey);
   
-  unsigned get_workgroup_size();
+  //unsigned get_workgroup_size();
   unsigned get_nwitems_h();
   unsigned get_nwitems_w();
   

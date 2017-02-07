@@ -284,9 +284,9 @@ std::map<std::string, unsigned> HyperParams::get_params(){
 
   
 
-unsigned HyperParams::get_workgroup_size(){
-  return (macro_tile_height * macro_tile_width) / (micro_tile_height * micro_tile_width);
-}
+//unsigned HyperParams::get_workgroup_size(){
+  //return (macro_tile_height * macro_tile_width) / (micro_tile_height * micro_tile_width);
+//}
 
 unsigned HyperParams::get_nwitems_h(){
   return macro_tile_height / micro_tile_height;

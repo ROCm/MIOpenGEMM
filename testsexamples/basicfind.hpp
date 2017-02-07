@@ -113,6 +113,7 @@ void basicfind(const tinygemm::TinyGemmGeometry & geometry, const tinygemm::Tiny
     /* Note that the alpha and beta used in the `find' step are always double, even if the data type is float.  
      * This above design choice was made to reduce the amount of object code. 
      * However, when the kernel is to be used, alpha and beta must corrspond the type of the data. */
+    
     TFloat beta_true_type = static_cast<TFloat>(beta);
     TFloat alpha_true_type = static_cast<TFloat>(alpha);
 

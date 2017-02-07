@@ -32,7 +32,6 @@
 #include <tinygemm/sizingup.hpp>
 #include <tinygemm/openclutil.hpp>
 #include <tinygemm/tinygemm.hpp>
-#include <tinygemm/betackernelutil.hpp>
 #include <tinygemm/accuracytests.hpp>
 #include <tinygemm/devtinygemm.hpp>
 #include <tinygemm/tinygemmgeometry.hpp>

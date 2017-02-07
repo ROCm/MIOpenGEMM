@@ -1,8 +1,7 @@
 #include <thread>
-#include <sstream>
 #include <limits>
 #include <chrono>
-#include <limits>
+#include <sstream>
 #include <vector> 
 #include <algorithm>
 #include <map>
@@ -10,12 +9,9 @@
 #include <tinygemm/tinygemmerror.hpp>
 #include <tinygemm/tinygemm.hpp>
 #include <tinygemm/consistencychecks.hpp>
-#include <tinygemm/redirection.hpp>
 #include <tinygemm/outputwriter.hpp>
 #include <tinygemm/sizingup.hpp>
 #include <tinygemm/openclutil.hpp>
-#include <tinygemm/betackernelutil.hpp>
-#include <tinygemm/floattostring.hpp>
 #include <tinygemm/tinygemmsolution.hpp>
 #include <tinygemm/hyperparams.hpp>
 #include <tinygemm/bundle.hpp>
@@ -27,96 +23,51 @@ namespace tinygemm{
 
 class MultiFloatType{
 
-  private:
-    double v_d;
-    float v_f;  
-    
-  public:
-    MultiFloatType(double v): v_d(v), v_f(static_cast<float>(v)) {}
-    void * operator [] (char floattype) const{
-      return floattype == 'd' ? (void *)(& v_d) : (void * )(& v_f);
-    }
+private:
+  double v_d;
+  float v_f;  
+  
+public:
+  MultiFloatType(double v): v_d(v), v_f(static_cast<float>(v)) {}
+  void * operator [] (char floattype) const{
+    return floattype == 'd' ? (void *)(& v_d) : (void * )(& v_f);
+  }
+  
 };
-
-
 
 static const MultiFloatType m_alpha(default_alpha);
 static const MultiFloatType m_beta(default_beta);
   
 
 class OpenCLGemmEncapsulator{
-public: 
 
+public:   
   cl_command_queue command_queue;
   std::string outputfilename;
-
   const tinygemm::TinyGemmGeometry gg;
   const tinygemm::TinyGemmOffsets toff;
-  
   cl_mem a_gpu;
-  cl_mem b_gpu; 
+  cl_mem b_gpu;
   cl_mem c_gpu;
   cl_mem workspace_gpu;
 
 
 private:
-
   outputwriting::OutputWriter mowri;
-   
   /* vector of times over a set of runs on core loop */
-  std::vector<float> v_t_total_with_both;
+  std::vector<float> v_t_total;
 
   TinyGemmKernel tk_main;
   TinyGemmKernel tk_betac;
-  
   std::vector <TinyGemmKernel *> ptr_tk_kernels;
   std::map<std::string, TinyGemmKernel *> tk_kernel_map;
-
-private:
-
-
-  void address_check_valid(){
-  
-    if (c_gpu == a_gpu || c_gpu == b_gpu){
-      throw tinygemm_error("c should be distinct from a and b for gemm, otherwise race condition arises (one thread writes its result to c before another one has finished reading from c)");
-    }
-    
-    if (c_gpu == nullptr){
-      throw tinygemm_error("c should not be nullptr");
-    }
-    
-    if (workspace_gpu == nullptr && gg.workspace_size != 0){
-      throw tinygemm_error("pointer to workspace memory is the nullptr, but workspace_size is not zero");
-    }
-    
-    if (workspace_gpu != nullptr && gg.workspace_size == 0){
-      throw tinygemm_error("pointer to workspace memory is not the nullptr, but workspace_size is zero. if workspace_size is zero please set workspace_gpu to the nullptr to make super clear that there will be no workspace used ");
-      
-    }
-    
-    if (workspace_gpu != nullptr && (workspace_gpu == a_gpu || workspace_gpu == b_gpu || workspace_gpu == c_gpu ) ){
-      throw tinygemm_error("pointer to workspace memory is not the nullptr, and it is the same as one of the a,b,c pointers ");
-    }
-  }
-  
-  
-  void address_check_valid_and_reliable(){
-    
-    address_check_valid();
-    
-    if (a_gpu == b_gpu){
-      throw tinygemm_error( "a and b are the same. this will effect kernel run time, not sure if this should be allowed so throwing"); 
-    }
-  }
 
 
 public:
   OpenCLGemmEncapsulator(
   cl_command_queue command_queue_, 
-
   const tinygemm::TinyGemmGeometry gg_,
   const tinygemm::TinyGemmOffsets toff_,
-
   cl_mem a_gpu_,
   cl_mem b_gpu_, 
   cl_mem c_gpu_,
@@ -135,13 +86,43 @@ public:
   mowri(verbose_, outputfilename.compare("") != 0, outputfilename_),
   tk_main(command_queue, "tk_main"),
   tk_betac(command_queue, "tk_betac")
-  
   {
     run_checks();    
     tk_kernel_map["alphaonso"] = &tk_main;
     tk_kernel_map["betac"] = &tk_betac;
   }
   
+private:
+  void address_check_valid(){
+    if (c_gpu == a_gpu || c_gpu == b_gpu){
+      throw tinygemm_error("c should be distinct from a and b for gemm, otherwise race condition arises (one thread writes its result to c before another one has finished reading from c)");
+    }
+    
+    if (c_gpu == nullptr){
+      throw tinygemm_error("c should not be nullptr");
+    }
+    
+    if (workspace_gpu == nullptr && gg.workspace_size != 0){
+      throw tinygemm_error("pointer to workspace memory is the nullptr, but workspace_size is not zero");
+    }
+    
+    if (workspace_gpu != nullptr && gg.workspace_size == 0){
+      throw tinygemm_error("pointer to workspace memory is not the nullptr, but workspace_size is zero. if workspace_size is zero please set workspace_gpu to the nullptr to make super clear that there will be no workspace used ");      
+    }
+    
+    if (workspace_gpu != nullptr && (workspace_gpu == a_gpu || workspace_gpu == b_gpu || workspace_gpu == c_gpu ) ){
+      throw tinygemm_error("pointer to workspace memory is not the nullptr, and it is the same as one of the a,b,c pointers ");
+    }
+  }
+  
+  void address_check_valid_and_reliable(){
+    address_check_valid();
+    if (a_gpu == b_gpu){
+      throw tinygemm_error( "a and b are the same. this will effect kernel run time, not sure if this should be allowed so throwing"); 
+    }
+  }
+
+
   void run_checks(){    
     sizingup::check_sizes_ok_for_unsigned(gg, toff);
   }  
@@ -237,22 +218,22 @@ public:
         ptr_tk_kernel->update_times();
       }
       /* end time of last kernel - start time of first kernel */
-      v_t_total_with_both.push_back(1e-6*(ptr_tk_kernels.back()->t_end - ptr_tk_kernels[0]->t_start));
+      v_t_total.push_back(1e-6*(ptr_tk_kernels.back()->t_end - ptr_tk_kernels[0]->t_start));
     }
     
     else{
-      v_t_total_with_both.push_back(std::numeric_limits<float>::max());
+      v_t_total.push_back(std::numeric_limits<float>::max());
     }
   }
   
   void print_run_times(cl_int status){
     
     if (status == CL_SUCCESS){
-      mowri << "total time : " <<  v_t_total_with_both.back() << "\t (";
+      mowri << "total time : " <<  v_t_total.back() << "\t (";
       for (unsigned k_ind = 0; k_ind < ptr_tk_kernels.size(); ++k_ind){
         mowri << " k" << k_ind << ": " << ptr_tk_kernels[k_ind]->v_times.back() << " ";
       }
-      mowri << ") " << "\tGflops/s : " << 2.0 * gg.m * gg.n * gg.k / (v_t_total_with_both.back() * 1e6) << Endl;
+      mowri << ") " << "\tGflops/s : " << 2.0 * gg.m * gg.n * gg.k / (v_t_total.back() * 1e6) << Endl;
     }
 
     else{
@@ -262,7 +243,7 @@ public:
 
 
   void reset_v_times(){
-    v_t_total_with_both.resize(0);
+    v_t_total.resize(0);
     
     for (auto & ptr_tk_kernel : ptr_tk_kernels){
       ptr_tk_kernel->reset_times();
@@ -339,6 +320,7 @@ public:
     }
   }
 
+public:
   void benchgemm(const std::vector<hyperparams::HyperParams> & hps, unsigned n_runs){
 
     address_check_valid();
@@ -501,12 +483,12 @@ public:
               mowri << "(find) geometry : " << gg.get_string()  << "\nEntering the core gemm loops" << Endl; 
               core_gemm_loop(n_runs_per_kernel);
   
-              std::sort(v_t_total_with_both.begin(), v_t_total_with_both.end());
+              std::sort(v_t_total.begin(), v_t_total.end());
   
               /* Taking the fastest or median? */ 
-              float median_time = v_t_total_with_both[v_t_total_with_both.size()/2]; 
+              float median_time = v_t_total[v_t_total.size()/2]; 
               
-              if (std::abs(v_t_total_with_both.back() - median_time) / median_time > 0.2) {
+              if (std::abs(v_t_total.back() - median_time) / median_time > 0.2) {
                 mowri << "tinygemm_warning: large variance in times. " <<  Endl;
               }
               
