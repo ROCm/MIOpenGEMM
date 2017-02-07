@@ -34,7 +34,13 @@ Bundle generate(){
   std::vector<KernelString> tgks;  
   
   if (dp.does_beta_c_inc == 0){
-    tgks.emplace_back(  "betac", betac::get_betac_kernel_string(gg.floattype, tinygemm::betac::genericbetackernelname), tinygemm::betac::genericbetackernelname );
+    tgks.emplace_back (
+    "betac", 
+    betac::get_betac_kernel_string(gg.floattype, tinygemm::betac::genericbetackernelname), 
+    tinygemm::betac::genericbetackernelname, 
+    betac::get_global_work_size(gg),
+    betac::get_local_work_size(gg) 
+    );
   }
   
   tgks.emplace_back( alphagen::get_alpha_kernelstring(hp, gg, dp) );

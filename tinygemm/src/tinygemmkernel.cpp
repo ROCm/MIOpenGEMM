@@ -18,12 +18,16 @@ void TinyGemmKernel::try_release(){
 }
 
 //TODO : why is second string passed by const &, and not as rval? pass new_kernstr with move.
-void TinyGemmKernel::update(const std::string & new_kernstr, const std::string & kern_func_name, size_t global_work_size_, size_t local_work_size_){
+void TinyGemmKernel::update(const KernelString & ks){//const std::string & new_kernstr, const std::string & kern_func_name, size_t global_work_size_, size_t local_work_size_){
   try_release();
-  tgk_strings.kernstr = new_kernstr;      
-  tgk_strings.fname = kern_func_name;
-  global_work_size = global_work_size_;
-  local_work_size = local_work_size_;
+  
+  tgk_strings = ks;
+  
+  //tgk_strings.kernstr = new_kernstr;      
+  //tgk_strings.fname = kern_func_name;
+  
+  //global_work_size = global_work_size_;
+  //local_work_size = local_work_size_;
   
   
   openclutil::set_program_and_kernel(command_queue, tgk_strings.kernstr, tgk_strings.fname, clprog, clkern);
@@ -55,7 +59,7 @@ void TinyGemmKernel::set_kernel_args(std::vector<std::pair<size_t, const void *>
 
 int TinyGemmKernel::enqueue(cl_uint num_events_in_wait_list, const cl_event *event_wait_list){
   cl_int ret;
-  ret = clEnqueueNDRangeKernel(command_queue, clkern, 1, NULL, &global_work_size, &local_work_size, num_events_in_wait_list, event_wait_list, &clevent);
+  ret = clEnqueueNDRangeKernel(command_queue, clkern, 1, NULL, &tgk_strings.global_work_size, &tgk_strings.local_work_size, num_events_in_wait_list, event_wait_list, &clevent);
   
   if (ret != CL_OUT_OF_RESOURCES){
     openclutil::confirm_cl_status(ret, "in enqueue of of TinyGemmKernel " + hash);

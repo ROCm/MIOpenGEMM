@@ -121,7 +121,9 @@ int main(){
   
   if (test_default){
     auto bla = tinygemm::get_default(false, get_geometry(), true, "");
-    std::cout << bla.main_kernel;
+    for (auto & x : bla.v_tgks){
+      std::cout << x.kernstr << std::endl;
+    }
   }
   
   return 0;

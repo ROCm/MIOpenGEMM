@@ -922,7 +922,7 @@ __local const TFLOAT * lB;
   append_final_write_all(ss);
   ss << "\n}\n";
 
-  return {"alphaonso", ss.str(), kernelname};
+  return {"alphaonso", ss.str(), kernelname, dp.global_work_size, dp.n_work_items_per_workgroup};
 
 }
 

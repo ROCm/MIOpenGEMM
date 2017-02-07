@@ -63,13 +63,9 @@ private:
 
   outputwriting::OutputWriter mowri;
    
-  /* parameters related to the main kernel */
-  unsigned does_betac_inc;
-  
   /* vector of times over a set of runs on core loop */
   std::vector<float> v_t_total_with_both;
 
-  
   TinyGemmKernel tk_main;
   TinyGemmKernel tk_betac;
   
@@ -127,52 +123,28 @@ public:
   cl_mem workspace_gpu_,
   std::string outputfilename_,
   bool verbose_):
-
+  
   command_queue(command_queue_), 
   outputfilename(outputfilename_),
-
   gg(gg_),
   toff(toff_),
   a_gpu(a_gpu_),
   b_gpu(b_gpu_), 
   c_gpu(c_gpu_),
   workspace_gpu(workspace_gpu_),
-  
   mowri(verbose_, outputfilename.compare("") != 0, outputfilename_),
-  
   tk_main(command_queue, "tk_main"),
   tk_betac(command_queue, "tk_betac")
   
-  
-
   {
-    
-    
-    
-    run_checks();
-    
+    run_checks();    
     tk_kernel_map["alphaonso"] = &tk_main;
     tk_kernel_map["betac"] = &tk_betac;
   }
   
-
-  void run_checks(){
-        
-    /* Confirm that the input parameters make sense (done in constructor? TODO confirm) */
-    //consistencychecks::check_ldx_mnk_consistent(gg);
-    
+  void run_checks(){    
     sizingup::check_sizes_ok_for_unsigned(gg, toff);
-  
   }  
-
-  
-  
-  
-  
- 
-
-  
-
 
   void set_main_kernel_arguments(){
     /* set the main kernel parameters */
@@ -200,14 +172,12 @@ public:
     } );              
   }
 
-
-
-  bool refresh_needed(const std::string & type, const hyperparams::HyperParams & new_hp ){
-
+  bool refresh_needed(const std::string & type, const hyperparams::HyperParams & new_hp, const derivedparams::DerivedParams & new_dp){
+    
     //TODO here : check hyper parameters to see if needed a new 
-        
+            
     if (type.compare("betac") == 0){
-       if (tk_betac.is_set() == false && does_betac_inc == 0){
+       if (tk_betac.is_set() == false && new_dp.does_beta_c_inc == 0){
          return true;
        }
        else{
@@ -219,32 +189,24 @@ public:
       return true;
     }
     
+    else{
+       throw tinygemm_error("what is the type of this kernel? Don't recognise " + type);
+    }
+    
   }
   
   void refresh_kernel(const KernelString & ks, const hyperparams::HyperParams & hp, const derivedparams::DerivedParams & dp){
     
-    if (refresh_needed(ks.type, hp) == true){
+    if (refresh_needed(ks.type, hp, dp) == true){
     
       if (ks.type.compare("betac") == 0){
-        
-        tk_betac.update(
-        betac::get_betac_kernel_string(gg.floattype, betac::genericbetackernelname), 
-        betac::genericbetackernelname,
-        betac::get_global_work_size(gg),
-        betac::get_local_work_size(gg) );
-      
-        set_betac_kernel_arguments();
+        tk_betac.update(ks);
+        set_betac_kernel_arguments();      
       }
       
       else if (ks.type.compare("main") == 0 ||  ks.type.compare("alphaonso") == 0){
-        tk_main.update(
-        ks.kernstr, 
-        ks.fname,  
-        dp.global_work_size,
-        dp.n_work_items_per_workgroup);
-        
-        /* set main kernel's arguments */
-        set_main_kernel_arguments();    
+        tk_main.update(ks);
+        set_main_kernel_arguments();
       }
       
       else{
@@ -257,8 +219,6 @@ public:
  
   //TODO : move kernstr in (rvalue ref)
   void setup_tinykernels(const hyperparams::HyperParams & hp, const kerngen::Bundle & bundle ){
-    
-    does_betac_inc = bundle.dp.does_beta_c_inc;    
     
     ptr_tk_kernels.resize(0);
     for (auto & ks : bundle.v_tgks){
@@ -334,7 +294,7 @@ public:
        * not sufficient on this machine. We catch this case here. */        
         
         
-        if (k_ind == 0){  //(k_ind < ptr_tk_kernels.size()){ 
+        if (k_ind == 0){ 
           status = ptr_tk_kernels[k_ind]->enqueue();
         }
         
@@ -394,11 +354,9 @@ public:
 
       deriveability_test(hps[i], "in benchgemm");
 
-      auto bundle = tinygemm::kerngen::get_bundle(hps[i],gg); //get_ksb(hps[i]);
+      auto bundle = tinygemm::kerngen::get_bundle(hps[i],gg); 
 
-
-
-      setup_tinykernels(hps[i], bundle); //bundle.v_tgks.back().kernstr, hps[i], bundle.dp, bundle.v_tgks.back().fname);    
+      setup_tinykernels(hps[i], bundle); 
       
       mowri << "(benchgemm) geometry  \t:" << gg.get_string()  << "\nEntering the core gemm loops" << Endl;
       core_gemm_loop(n_runs);
@@ -419,9 +377,6 @@ public:
     
     return { hp, gg, bundle.dp, tgss, bundle.v_tgks };
     
-    //std::string soln_betac_kernel_string = hp.n_work_items_per_c_elm == 1 ?  ""  : betac::get_betac_kernel_string(gg.floattype, betac::genericbetackernelname);
-    //std::string soln_betac_kernel_function_name = hp.n_work_items_per_c_elm == 1 ? "" : betac::genericbetackernelname;
-    //return { soln_betac_kernel_string, soln_betac_kernel_function_name, bundle.v_tgks.back().kernstr, bundle.v_tgks.back().fname, hp, bundle.dp, gg, tgss };
   }
   
   
@@ -542,14 +497,14 @@ public:
               ++global_counter;
               mowri << "global gen-com-bench : " << global_counter  <<  "." << Endl;
               
-              setup_tinykernels(hp, bundle); //(bundle.v_tgks.back().kernstr, hp, bundle.dp, bundle.v_tgks.back().fname);    
+              setup_tinykernels(hp, bundle);  
               mowri << "(find) geometry : " << gg.get_string()  << "\nEntering the core gemm loops" << Endl; 
               core_gemm_loop(n_runs_per_kernel);
   
               std::sort(v_t_total_with_both.begin(), v_t_total_with_both.end());
   
               /* Taking the fastest or median? */ 
-              float median_time = v_t_total_with_both[v_t_total_with_both.size()/2]; //[0]; 
+              float median_time = v_t_total_with_both[v_t_total_with_both.size()/2]; 
               
               if (std::abs(v_t_total_with_both.back() - median_time) / median_time > 0.2) {
                 mowri << "tinygemm_warning: large variance in times. " <<  Endl;
@@ -577,27 +532,9 @@ public:
                 float median_benchmark_gflops = (2. * gg.m * gg.n * gg.k) / (median_time * 10e5);                
                 
                 tinygemm::TinyGemmSolutionStatistics tgss(median_time, median_benchmark_gflops, elapsed_seconds);
-                
- 
-     //return { hp, gg, bundle.dp, tgss, bundle.v_tgks };
-     
+                     
                 path_of_best_solns.emplace_back( hp, gg, bundle.dp, tgss, bundle.v_tgks  );
-                
-                //TODO : WORK ON SOLN STRUCTURE. 
-               
-                /* set kernel files */
-                
-                //std::string soln_betac_kernel = does_betac_inc == 1 ?  ""  : tk_betac.tgk_strings.kernstr;
-                //std::string soln_betac_kernel_function_name = does_betac_inc == 1 ? "" : tk_betac.tgk_strings.fname;
-                //std::string soln_main_kernel_function_name = tk_main.tgk_strings.fname;  //bundle.kernel_function_name;                 
-                
-                
-                //path_of_best_solns.emplace_back (
-                //soln_betac_kernel, soln_betac_kernel_function_name, 
-                //tk_main.tgk_strings.kernstr, soln_main_kernel_function_name, 
-                //hp, bundle.dp, gg, tgss ); 
 
-                
               }
            
             }
@@ -664,7 +601,6 @@ public:
       throw tinygemm_error("\nUser should never see this error, this is an internal problem. Possibly, there were no solutions found. Which is strange, as at least the initial kernel (the initial hyper front) should have been a solution. Either, the initial kernel was not valid (which should not happen unless my filters are broken) or for whatever reason the kernel was not generated or did not compile. Maybe there is some preceding warning printed which sheds light on this? Another possibility is that there was an error in the kernel string generation which I did not think of. ");
     }
   
-    //mowri << "best time : " << best_time << Endl;
     mowri << "\nstart kernel : " << hyper_param_start.get_string() << Endl;
     mowri << "best kernel  : " << best_hp.get_string() << Endl;
 
@@ -690,7 +626,7 @@ const std::string & hash
   openclutil::SafeClMem c_copied(hash);
   cl_event c_copy_event; 
   size_t n_c = gg.ldc * (gg.tC == gg.isColMajor ? gg.m : gg.n) + toff.oc;
-  size_t c_memsize = gg.derived.float_size_bytes*n_c;////get_floatbytes(floattype)*n_c;
+  size_t c_memsize = gg.derived.float_size_bytes*n_c;
   c_copied.clmem = openclutil::cl_create_buffer_from_command_queue(command_queue, CL_MEM_READ_WRITE, c_memsize, NULL, hash + ", in function get_copy of tinygemm");
   openclutil::cl_enqueue_copy_buffer(command_queue, c, c_copied.clmem, 0, 0, c_memsize, 0, NULL, &c_copy_event, hash + ", in function get_copy of tinygemm");
   openclutil::cl_wait_for_events(1, &c_copy_event, "in function find of tinygemm");
@@ -712,11 +648,8 @@ cl_mem b,
 cl_mem c,
 cl_mem workspace,
 const bool enforce_deterministic,
-//const char floattype, 
 const tinygemm::TinyGemmGeometry & gg,
 const tinygemm::TinyGemmOffsets & toff,
-//const double alpha,
-//const double beta,
 bool verbose, 
 std::string logfile, 
 bool c_is_const){
@@ -731,12 +664,12 @@ bool c_is_const){
   if (c_is_const == true){
   
     openclutil::SafeClMem c_copied = get_copy(command_queue, c, gg, toff, "copy of c in find");
-    OpenCLGemmEncapsulator oger(command_queue, gg, toff, a, b, c_copied.clmem, workspace, logfile, verbose); //floattype, alpha, beta, 
+    OpenCLGemmEncapsulator oger(command_queue, gg, toff, a, b, c_copied.clmem, workspace, logfile, verbose); 
     return oger.find(allotted_time, enforce_deterministic, n_runs_per_kernel);
   }
   
   else{
-    OpenCLGemmEncapsulator oger(command_queue, gg, toff, a, b, c, workspace, logfile, verbose); //floattype,  alpha, beta, 
+    OpenCLGemmEncapsulator oger(command_queue, gg, toff, a, b, c, workspace, logfile, verbose); 
     return oger.find(allotted_time, enforce_deterministic, n_runs_per_kernel);
   }
 }
@@ -748,7 +681,7 @@ const tinygemm::TinyGemmGeometry & gg,
 bool verbose, 
 std::string logfile){
   
-  OpenCLGemmEncapsulator oger({}, gg, {0,0,0,0}, {}, {}, {}, {}, logfile, verbose);  //3.14, 3.14, floattype, 
+  OpenCLGemmEncapsulator oger({}, gg, {0,0,0,0}, {}, {}, {}, {}, logfile, verbose); 
   return oger.get_default(enforce_deterministic);
  
 }
