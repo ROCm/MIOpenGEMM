@@ -18,17 +18,15 @@ const unsigned uninitialised_unsigned = std::numeric_limits<unsigned>::max();
 std::tuple<bool, std::string>
 get_deriveability(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg);
 
-/* GA 3 specific derived parameters */
-class GA3Params{
-public:
-  unsigned super_column_width = uninitialised_unsigned;
-  unsigned last_super_column_width = uninitialised_unsigned;
-};
-
 
 /* all derived parameters */
 class DerivedParams{
 
+private:
+  void reset_ga3_params(const hyperparams::HyperParams & hp);
+  void reset_acw1_params(const tinygemm::TinyGemmGeometry & gg);
+  void reset_bcw1_params(const tinygemm::TinyGemmGeometry & gg);  
+    
 public:
   
   /* initiate all parameters, throwing an error if there is an incompatibility */
@@ -71,8 +69,6 @@ public:
   unsigned n_work_groups = uninitialised_unsigned;
   //TODO : rename to reflect alpha kernel
   unsigned global_work_size = uninitialised_unsigned; 
-
-  GA3Params ga3;
   /* */
   std::string strided_i_vertical;
   /* */
@@ -89,6 +85,20 @@ public:
   std::string pragma_unroll_string;
   /* currently one of "float" and "double", set from float_size */
   std::string t_float;
+
+  /* GA 3 specific derived parameters */
+  unsigned ga3_super_column_width = uninitialised_unsigned;
+  unsigned ga3_last_super_column_width = uninitialised_unsigned;
+  
+  /* ACW1 specific derived parameters */
+  unsigned acw1_smallest_possible_lda = uninitialised_unsigned; // ( tA == isColMajor ? k : m )
+  /* smallest x s.t. x >= acw1_smallest_possible_lda and x = n*16 + 3. */ 
+  unsigned acw1_target_lda = uninitialised_unsigned; //  16* ( ( acw1_smallest_possible_lda  - 3 ) / 16 ) + 3
+  
+  /* BCW1 specific derived parameters */
+  unsigned bcw1_smallest_possible_ldb = uninitialised_unsigned; // ( tB == isColMajor ? n : k )
+  /* smallest x s.t. x >= acw1_smallest_possible_lda and x = n*16 + 11. */ 
+  unsigned bcw1_target_lda = uninitialised_unsigned; //  16* ( ( acw1_smallest_possible_lda  - 11 ) / 16 ) + 11  
 
 
 

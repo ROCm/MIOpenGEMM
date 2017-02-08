@@ -17,6 +17,7 @@
 #include <tinygemm/bundle.hpp>
 #include <tinygemm/tinygemmkernel.hpp>
 #include <tinygemm/derivedparams.hpp>
+#include <tinygemm/architests.hpp>
 
 namespace tinygemm{
 
@@ -35,6 +36,16 @@ public:
   
 };
 
+
+/* TODO : this is exactly like that example from Scott Meyers ! */
+
+//template <typename K, typename T>
+//safe_at(const std::map<K,V> && m, const K && k){
+  //if (m.count(k) == 0){
+    //throw tinygemm_error("unrecognised key, " + std::to_string(k));
+  //}
+//}
+
 static const MultiFloatType m_alpha(default_alpha);
 static const MultiFloatType m_beta(default_beta);
   
@@ -51,6 +62,7 @@ public:
   cl_mem c_gpu;
   cl_mem workspace_gpu;
 
+  std::vector<std::string> possible_kernel_types = {"alphaab", "betac", "betac_alphaab"};
 
 private:
   outputwriting::OutputWriter mowri;
@@ -85,7 +97,7 @@ public:
   mowri(verbose_, outputfilename.compare("") != 0, outputfilename_)
   {
     
-    for (std::string x : {"alphaab", "betac", "alphaab_betac"}){
+    for (auto & x : possible_kernel_types){
       tk_kernels_map[x] = TinyGemmKernel(command_queue, x);
     }
     
@@ -130,6 +142,9 @@ private:
   //void set_betac_alphaab_kern_args(){
     
   void set_kern_args(const std::string & type){
+
+
+
     
     if (type.compare("betac_alphaab") == 0){
       tk_kernels_map.at(type).set_kernel_args( {
@@ -143,6 +158,7 @@ private:
         {sizeof(unsigned),                      &toff.oc} 
       } );
     }
+    
     
     else if (type.compare("alphaab") == 0){
       tk_kernels_map.at(type).set_kernel_args( {
@@ -158,18 +174,30 @@ private:
     
     else if (type.compare("betac") == 0){
       tk_kernels_map.at(type).set_kernel_args( {
-        {sizeof(unsigned),                      &gg.derived.dim_c_coal},
-        {sizeof(unsigned),                      &gg.derived.dim_c_uncoal},
-        {sizeof(unsigned),                      &gg.ldc},
         {sizeof(unsigned),                      &toff.oc},
         {sizeof(cl_mem),                        (void *)&c_gpu},
         {gg.derived.float_size_bytes,           m_beta[gg.floattype]}    
       } );              
     }
+
+    else if (type.compare("betac_alphaab_fromworkspace") == 0){
+      tk_kernels_map.at(type).set_kernel_args( {
+        {sizeof(cl_mem),                        (void *)&c_gpu},
+        {sizeof(cl_mem),                        (void *)&workspace_gpu},
+        {gg.derived.float_size_bytes,           m_alpha[gg.floattype]},
+        {gg.derived.float_size_bytes,           m_beta[gg.floattype]},
+        {sizeof(unsigned),                      &toff.oworkspace},
+        {sizeof(unsigned),                      &toff.oc} 
+      } );
+    }
+        
     
     else{
       throw tinygemm_error("what is the type of this kernel? Don't recognise " + type);
     }
+    
+
+
   }
     
     
@@ -198,7 +226,8 @@ private:
   }
   
   void refresh_kernel(const KernelString & ks, const hyperparams::HyperParams & hp, const derivedparams::DerivedParams & dp){
-    
+
+
     if (refresh_needed(ks.type, hp, dp) == true){
       tk_kernels_map.at(ks.type).update(ks);
       set_kern_args(ks.type);
@@ -339,13 +368,19 @@ public:
     }
 
     for ( unsigned i = 0; i < hps.size(); ++i) {
+
       
-      mowri << "\nSource kernel " << "(" << i + 1 << "/" << hps.size() << ") "  << Endl;      
+      mowri << "\nSource kernel " << "(" << i + 1 << "/" << hps.size() << ") "  << hps[i].get_string() << Endl;      
       
 
       deriveability_test(hps[i], "in benchgemm");
 
       auto bundle = tinygemm::kerngen::get_bundle(hps[i],gg); 
+
+      auto atr = architests::architecture_specific_tests(command_queue, hps[i], bundle.dp);
+      if (std::get<0>(atr) == false){
+        throw tinygemm_error(std::get<1>(atr));
+      }
 
       setup_tinykernels(hps[i], bundle); 
       

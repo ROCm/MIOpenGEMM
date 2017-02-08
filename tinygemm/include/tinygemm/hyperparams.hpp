@@ -47,8 +47,6 @@ public:
   
   void checks() const;
   
-    
-  
   static std::vector<std::tuple<tinygemm::TinyGemmGeometry, std::string>> kernel_cache;  
   
   /* the hyper parameters */
@@ -69,6 +67,9 @@ public:
   unsigned n_work_items_per_c_elm;  
   unsigned n_target_active_workgroups; 
   unsigned unroll_for_offset;
+  
+  unsigned a_copy_workspace;
+  unsigned b_copy_workspace;
 
   std::string get_key_from_shortkey(const std::string & shortkey);
   

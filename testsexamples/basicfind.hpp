@@ -37,8 +37,11 @@ void basicfind(const tinygemm::TinyGemmGeometry & geometry, const tinygemm::Tiny
 
   double alpha = tinygemm::default_alpha;
   double beta = tinygemm::default_beta;
+
+  tinygemm::outputwriting::OutputWriter mowri(verbose, logfile.compare("") != 0, logfile);
   
   /* generating cpu copies of data */
+  mowri << "generating cpu data ... " << tinygemm::Flush;
   std::vector<TFloat> v_a;
   std::vector<TFloat> v_b;
   std::vector<TFloat> v_c;
@@ -48,8 +51,8 @@ void basicfind(const tinygemm::TinyGemmGeometry & geometry, const tinygemm::Tiny
   size_t n_a = v_a.size();
   size_t n_b = v_b.size();  
   size_t n_c = v_c.size(); 
-  size_t n_w = v_workspace.size();
-  
+  size_t n_w = v_workspace.size();  
+  mowri << "done." << tinygemm::Endl;
   
   /* On OpenCL boilerplate. 
    * This might be different depending on your system. 
@@ -68,7 +71,6 @@ void basicfind(const tinygemm::TinyGemmGeometry & geometry, const tinygemm::Tiny
 
   cl_platform_id platform = nullptr;
   cl_uint num_platforms;
-  tinygemm::outputwriting::OutputWriter mowri(verbose, logfile.compare("") != 0, logfile);
   tinygemm::openclutil::set_platform_etc(platform, num_platforms, context, device_id_to_use, mowri);
   
   /* we use are own version of clCreateCommandQueue (and other opencl functions), which has an added layer of error detection */
@@ -89,6 +91,7 @@ void basicfind(const tinygemm::TinyGemmGeometry & geometry, const tinygemm::Tiny
   * ******************************************************************
   * ******************************************************************/
   
+
   
 
   /* *****************
@@ -144,12 +147,12 @@ void basicfind(const tinygemm::TinyGemmGeometry & geometry, const tinygemm::Tiny
       clevents.emplace_back ();
       
       if (ks.type.compare("betac") == 0){
-        tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 0, sizeof(unsigned), &geometry.derived.dim_c_coal, "betac 0");
-        tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 1, sizeof(unsigned), &geometry.derived.dim_c_uncoal, "betac 1");
-        tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 2, sizeof(unsigned), &geometry.ldc, "betac 2");
-        tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 3, sizeof(unsigned), &toff.oc, "betac 3");
-        tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 4, sizeof(cl_mem), (void *)&c_gpu, "betac 4");
-        tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 5, sizeof(TFloat), &beta_true_type, "betac 5"); 
+        //tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 0, sizeof(unsigned), &geometry.derived.dim_c_coal, "betac 0");
+        //tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 1, sizeof(unsigned), &geometry.derived.dim_c_uncoal, "betac 1");
+        //tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 2, sizeof(unsigned), &geometry.ldc, "betac 2");
+        tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 0, sizeof(unsigned), &toff.oc, "betac 0");
+        tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 1, sizeof(cl_mem), (void *)&c_gpu, "betac 1");
+        tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 2, sizeof(TFloat), &beta_true_type, "betac 2"); 
       }
       
       else if (ks.type.compare("alphaab_betac") == 0){

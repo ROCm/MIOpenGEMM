@@ -104,6 +104,9 @@ cl_mem cl_create_buffer_from_command_queue(cl_command_queue command_queue, cl_me
   return cl_create_buffer(context, flags, size, host_ptr, hash + "+ (cl_create_buffer_from_command_queue)");
 }
 
+
+
+
 void cl_get_platform_ids(cl_uint num_entries, cl_platform_id * platforms, cl_uint * num_platforms, const std::string & hash){
   cl_int ret = clGetPlatformIDs(num_entries, platforms, num_platforms);
   confirm_cl_status(ret, hash, "cl_get_platform_ids");
@@ -130,7 +133,13 @@ void cl_get_device_info(cl_device_id device, cl_device_info param_name, size_t p
   cl_int ret = clGetDeviceInfo(device, param_name, param_value_size, param_value, param_value_size_ret);
   confirm_cl_status(ret, hash, "cl_get_device_info");
 }
-  
+
+
+void get_device_info_from_command_queue(cl_command_queue command_queue, cl_device_info param_name, size_t param_value_size, void *param_value, size_t *param_value_size_ret, const std::string & hash){
+  cl_device_id device;
+  cl_get_command_queue_info(command_queue, CL_QUEUE_DEVICE, sizeof(cl_device_id), &device, nullptr, hash + " + (in get_device_info_from_command_queue)");
+  cl_get_device_info(device, param_name, param_value_size, param_value, param_value_size_ret, hash + " + (in get_device_info_from_command_queue)");
+}
 
 
 cl_kernel cl_create_kernel(cl_program program, const char *kernel_name, const std::string & hash){
@@ -209,6 +218,7 @@ const cl_event *event_wait_list,cl_event *event, const std::string & hash){
 
 /* TODO : get rid of these of these raw calls to cl_* */
 void set_platform_etc(cl_platform_id & platform, cl_uint & num_platforms, cl_context & context, cl_device_id & device_id_to_use, outputwriting::OutputWriter & mowri){
+  
   
   /* Get the platform(s) */
   cl_get_platform_ids(1, &platform, &num_platforms, "in set_platform_etc");

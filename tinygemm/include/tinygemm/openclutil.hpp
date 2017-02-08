@@ -55,6 +55,8 @@ void  cl_get_context_info(cl_context context, cl_context_info param_name, size_t
 
 void cl_get_device_info(cl_device_id device, cl_device_info param_name, size_t param_value_size, void *param_value, size_t *param_value_size_ret, const std::string & hash);
 
+void get_device_info_from_command_queue(cl_command_queue command_queue, cl_device_info param_name, size_t param_value_size, void *param_value, size_t *param_value_size_ret, const std::string & hash);
+
 cl_program cl_create_program_with_source(cl_context context, cl_uint count, const char **strings, const size_t *lengths, const std::string & hash);
 
 cl_kernel cl_create_kernel(cl_program program, const char *kernel_name, const std::string & hash);

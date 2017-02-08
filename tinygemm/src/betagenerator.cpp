@@ -47,10 +47,16 @@ R"(
 #define WORK_PER_THREAD  )" << work_per_thread  << R"(
 
 /* TODO : does nvidia support this? will Vega support this? */
-#define N_WORK_ITEMS_PER_GROUP )" << n_work_items_per_group << R"(
+#define N_WORK_ITEMS_PER_GROUP )" << n_work_items_per_group << "\n" <<
+"#define DIM_COAL " << gg.derived.dim_c_coal << "\n" <<
+"#define DIM_UNCOAL " << gg.derived.dim_c_uncoal << "\n" <<
+"#define LDC " << gg.ldc << "\n" << R"(
 
 
 )";
+  
+  
+  //const unsigned dim_coal, const unsigned dim_uncoal, const unsigned ldc, 
   
   if (gg.floattype == 'd'){
     ss << "#define TFLOAT double";
@@ -66,15 +72,17 @@ R"(
     throw tinygemm_error(errss.str());
   }
   
+  
+  
   ss <<
   
 R"(
 
 __attribute__((reqd_work_group_size(N_WORK_ITEMS_PER_GROUP,1,1)))
-__kernel void )"  << genericbetackernelname << R"((const unsigned dim_coal, const unsigned dim_uncoal, const unsigned ldc, const unsigned c_offset, __global TFLOAT * c, TFLOAT beta){
+__kernel void )"  << genericbetackernelname << R"((const unsigned c_offset, __global TFLOAT * c, TFLOAT beta){
 /* n_work_groups : number of work groups (determined by host from dimensions of the problem)
  * dim_coal : less than or equal to ldc, this is size in the contiguous direction (m for c matrix if col contiguous and not transposed) 
- * dim_uncol : the other dimension of the matrix */
+ * dim_uncoal : the other dimension of the matrix */
 
 
   c += c_offset;
@@ -83,11 +91,11 @@ __kernel void )"  << genericbetackernelname << R"((const unsigned dim_coal, cons
   unsigned local_id = get_local_id(0);
   unsigned global_id = group_id*N_WORK_ITEMS_PER_GROUP + local_id; 
   
-  unsigned n_full_work_items_per_line = dim_coal / WORK_PER_THREAD;
-  unsigned n_work_items_per_line = n_full_work_items_per_line + (dim_coal % WORK_PER_THREAD != 0);
+  unsigned n_full_work_items_per_line = DIM_COAL / WORK_PER_THREAD;
+  unsigned n_work_items_per_line = n_full_work_items_per_line + (DIM_COAL % WORK_PER_THREAD != 0);
   
-  unsigned n_full_work_items = n_full_work_items_per_line*dim_uncoal;
-  unsigned n_work_items = n_work_items_per_line*dim_uncoal;
+  unsigned n_full_work_items = n_full_work_items_per_line*DIM_UNCOAL;
+  unsigned n_work_items = n_work_items_per_line*DIM_UNCOAL;
   
   unsigned start_uncoal = 0;
   unsigned start_coal = 0;
@@ -99,11 +107,11 @@ __kernel void )"  << genericbetackernelname << R"((const unsigned dim_coal, cons
   }
   
   else if (global_id < n_work_items){
-    start_uncoal = (global_id - n_full_work_items)% dim_uncoal;
+    start_uncoal = (global_id - n_full_work_items)% DIM_UNCOAL;
     start_coal = WORK_PER_THREAD*n_full_work_items_per_line;
   }
 
-  c += start_uncoal * ldc;
+  c += start_uncoal * LDC;
   c += start_coal;
 
   if (is_in_full_zone){
@@ -114,7 +122,7 @@ __kernel void )"  << genericbetackernelname << R"((const unsigned dim_coal, cons
   }
   
   else if (global_id < n_work_items){
-    for (unsigned i = 0; i < (dim_coal % WORK_PER_THREAD); ++i){
+    for (unsigned i = 0; i < (DIM_COAL % WORK_PER_THREAD); ++i){
       c[i] *= beta;
     }
   }

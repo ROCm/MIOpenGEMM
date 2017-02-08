@@ -40,7 +40,11 @@ HyperParamList::HyperParamList() {
     {"MIW",  "c_micro_tiles_interwoven"},
     {"ICE",  "n_work_items_per_c_elm"},
     {"NAW",  "n_target_active_workgroups"},
-    {"UFO",  "unroll_for_offset"}
+    {"UFO",  "unroll_for_offset"},
+    
+    {"ACW",  "a_copy_workspace"},
+    {"BCW",  "b_copy_workspace"},
+    
     
   };
 
@@ -76,7 +80,11 @@ std::string HyperParams::get_string() const{
   "MIW" << c_micro_tiles_interwoven << "_" << 
   "ICE" << n_work_items_per_c_elm << "_" << 
   "NAW" << n_target_active_workgroups << "_" << 
-  "UFO" << unroll_for_offset;
+  "UFO" << unroll_for_offset << "_" <<
+  
+  "ACW" << a_copy_workspace << "_" << 
+  "BCW" << b_copy_workspace;
+  
   
   return ss.str();
 
@@ -154,6 +162,8 @@ void HyperParams::checks() const{
   bool_check("load_to_lds_interwoven", load_to_lds_interwoven);
   bool_check("c_micro_tiles_interwoven", c_micro_tiles_interwoven);
   bool_check("unroll_for_offset", unroll_for_offset);
+  bool_check("a_copy_workspace", a_copy_workspace);
+  bool_check("b_copy_workspace", b_copy_workspace);
   
   positive_check("micro_tile_width", micro_tile_width);
   positive_check("micro_tile_height", micro_tile_height);
@@ -169,18 +179,85 @@ void HyperParams::checks() const{
   ga_check();
 }
     
+
+
+
+HyperParams::HyperParams(const std::map<std::string, unsigned> & params){
+
+  mapkeycheck::check_map_keys(params, hpl.keys, "HyperParams constructor, params against keys");
+
+  micro_tile_width = params.at("micro_tile_width");
+  micro_tile_height = params.at("micro_tile_height");
+  macro_tile_width = params.at("macro_tile_width");
+  macro_tile_height = params.at("macro_tile_height"); 
+  unroll = params.at("unroll");
+
+  pad = params.at("pad");
+  group_allocation = params.at("group_allocation");
+  work_item_load_a_pll_to_unroll = params.at("work_item_load_a_pll_to_unroll");
+  work_item_load_b_pll_to_unroll = params.at("work_item_load_b_pll_to_unroll");
+  unroll_pragma = params.at("unroll_pragma");
+
+  load_to_lds_interwoven = params.at("load_to_lds_interwoven");
+  c_micro_tiles_interwoven = params.at("c_micro_tiles_interwoven");
+  n_work_items_per_c_elm = params.at("n_work_items_per_c_elm");
+  n_target_active_workgroups = params.at("n_target_active_workgroups");
+  unroll_for_offset = params.at("unroll_for_offset");
+
+  a_copy_workspace = params.at("a_copy_workspace");
+  b_copy_workspace = params.at("b_copy_workspace");
+
+  checks();
+}
+
+
+HyperParams::HyperParams(const std::string & hyperstring):HyperParams(get_params_from_string(hyperstring)){}
+  
+std::map<std::string, unsigned> HyperParams::get_params(){
+  std::map<std::string, unsigned> params = 
+  {
+  {"micro_tile_width", micro_tile_width}, 
+  {"micro_tile_height", micro_tile_height},
+  {"macro_tile_width", macro_tile_width},
+  {"macro_tile_height", macro_tile_height},
+  {"unroll", unroll},
+  
+  {"pad", pad},
+  {"group_allocation", group_allocation},
+  {"work_item_load_a_pll_to_unroll", work_item_load_a_pll_to_unroll},
+  {"work_item_load_b_pll_to_unroll", work_item_load_b_pll_to_unroll},
+  {"unroll_pragma", unroll_pragma},
+  
+  {"load_to_lds_interwoven", load_to_lds_interwoven},
+  {"c_micro_tiles_interwoven", c_micro_tiles_interwoven},
+  {"n_work_items_per_c_elm", n_work_items_per_c_elm},
+  {"n_target_active_workgroups", n_target_active_workgroups},
+  {"unroll_for_offset", unroll_for_offset},
+  
+  {"a_copy_workspace", a_copy_workspace},
+  {"b_copy_workspace", b_copy_workspace},
+  
+  };
+  
+  mapkeycheck::check_map_keys(params, hpl.keys, "HyperParams::get_params, params against keys");
+  
+  return params;
+
+}
+
+
     
 
 HyperParams get_default_small(bool enforce_deterministic){
   
   std::string ice = std::to_string(enforce_deterministic == false ? 3 : 1);
-  return "Y8_X8_y1_x1_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE" +  ice + "_NAW64_UFO0";
+  return "Y8_X8_y1_x1_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE" +  ice + "_NAW64_UFO0_ACW0_BCW0";
 }
 
 HyperParams get_default_tiniest(bool enforce_deterministic){
   
   std::string ice = std::to_string(enforce_deterministic == false ? 3 : 1);
-  return "Y1_X1_y1_x1_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE" +  ice + "_NAW64_UFO0";
+  return "Y1_X1_y1_x1_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE" +  ice + "_NAW64_UFO0_ACW0_BCW0";
 }
 
 
@@ -188,7 +265,7 @@ HyperParams get_default_tiniest(bool enforce_deterministic){
 /* Find the nearest geometry in the cache, and take its hyper params */
 HyperParams get_default(const tinygemm::TinyGemmGeometry & gg, bool enforce_deterministic){
   
-  //return std::string("Y128_X128_y8_x8_U32_P1_GA3_APLU0_BPLU1_PU1_LIW1_MIW1_ICE2_NAW64_UFO1");
+  //return std::string("Y128_X128_y8_x8_U32_P1_GA3_APLU0_BPLU1_PU1_LIW1_MIW1_ICE2__NAW64_UFO1_ACW0_BCW0");
   
   /* The case  of  (gg.m < 8 || gg.n < 8) */  
   if (gg.m < 8 || gg.n < 8) {
@@ -224,61 +301,6 @@ HyperParams get_default(const tinygemm::TinyGemmGeometry & gg, bool enforce_dete
   return best_hp;
 }
   
-
-
-HyperParams::HyperParams(const std::map<std::string, unsigned> & params){
-
-  mapkeycheck::check_map_keys(params, hpl.keys, "HyperParams constructor, params against keys");
-
-  micro_tile_width = params.at("micro_tile_width");
-  micro_tile_height = params.at("micro_tile_height");
-  macro_tile_width = params.at("macro_tile_width");
-  macro_tile_height = params.at("macro_tile_height"); 
-  unroll = params.at("unroll");
-  pad = params.at("pad");
-  group_allocation = params.at("group_allocation");
-  work_item_load_a_pll_to_unroll = params.at("work_item_load_a_pll_to_unroll");
-  work_item_load_b_pll_to_unroll = params.at("work_item_load_b_pll_to_unroll");
-  unroll_pragma = params.at("unroll_pragma");
-  load_to_lds_interwoven = params.at("load_to_lds_interwoven");
-  c_micro_tiles_interwoven = params.at("c_micro_tiles_interwoven");
-  n_work_items_per_c_elm = params.at("n_work_items_per_c_elm");
-  n_target_active_workgroups = params.at("n_target_active_workgroups");
-  unroll_for_offset = params.at("unroll_for_offset");
-
-}
-
-
-HyperParams::HyperParams(const std::string & hyperstring):HyperParams(get_params_from_string(hyperstring)){}
-  
-std::map<std::string, unsigned> HyperParams::get_params(){
-  std::map<std::string, unsigned> params = 
-  {
-  {"micro_tile_width", micro_tile_width}, 
-  {"micro_tile_height", micro_tile_height},
-  {"macro_tile_width", macro_tile_width},
-  {"macro_tile_height", macro_tile_height},
-  {"unroll", unroll},
-  
-  {"pad", pad},
-  {"group_allocation", group_allocation},
-  {"work_item_load_a_pll_to_unroll", work_item_load_a_pll_to_unroll},
-  {"work_item_load_b_pll_to_unroll", work_item_load_b_pll_to_unroll},
-  {"unroll_pragma", unroll_pragma},
-  
-  {"load_to_lds_interwoven", load_to_lds_interwoven},
-  {"c_micro_tiles_interwoven", c_micro_tiles_interwoven},
-  {"n_work_items_per_c_elm", n_work_items_per_c_elm},
-  {"n_target_active_workgroups", n_target_active_workgroups},
-  {"unroll_for_offset", unroll_for_offset}
-  };
-  
-  mapkeycheck::check_map_keys(params, hpl.keys, "HyperParams::get_params, params against keys");
-  
-  return params;
-
-}
-
 
 
 
@@ -576,66 +598,66 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
     };
     
     if (micro_tile_height*micro_tile_width <=4 ){
-      add_hps("Y16_X16_y2_x2_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE6_NAW64_UFO0");
+      add_hps("Y16_X16_y2_x2_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE6_NAW64_UFO0_ACW0_BCW0");
     }
 
     if (micro_tile_height*micro_tile_width <=16 ){
-      add_hps("Y48_X32_y3_x2_U16_P1_GA2_APLU1_BPLU0_PU0_LIW0_MIW1_ICE5_NAW64_UFO0");
+      add_hps("Y48_X32_y3_x2_U16_P1_GA2_APLU1_BPLU0_PU0_LIW0_MIW1_ICE5_NAW64_UFO0_ACW0_BCW0");
     }
 
     if (micro_tile_height*micro_tile_width <=20 ){
-      add_hps("Y64_X64_y4_x4_U16_P1_GA2_APLU0_BPLU0_PU0_LIW1_MIW1_ICE4_NAW64_UFO0");
+      add_hps("Y64_X64_y4_x4_U16_P1_GA2_APLU0_BPLU0_PU0_LIW1_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0");
     }
     
     if (micro_tile_height*micro_tile_width >=16 ){
-      add_hps("Y128_X128_y8_x8_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO0");
+      add_hps("Y128_X128_y8_x8_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0");
     }
     
     if (micro_tile_height*micro_tile_width >=8 ){
-      add_hps("Y80_X64_y5_x4_U16_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE2_NAW64_UFO0");
+      add_hps("Y80_X64_y5_x4_U16_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE2_NAW64_UFO0_ACW0_BCW0");
     }
 
     if (micro_tile_height >= micro_tile_width &&  micro_tile_height*micro_tile_width >=10){
-      add_hps("Y96_X64_y6_x4_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0");
+      add_hps("Y96_X64_y6_x4_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0");
     }
 
     if ((micro_tile_height == 8 || micro_tile_height == 4) && micro_tile_width ==  4){
-      add_hps("Y128_X64_y8_x4_U16_P1_GA2_APLU0_BPLU1_PU0_LIW0_MIW1_ICE3_NAW64_UFO0");
+      add_hps("Y128_X64_y8_x4_U16_P1_GA2_APLU0_BPLU1_PU0_LIW0_MIW1_ICE3_NAW64_UFO0_ACW0_BCW0");
     }
     
     if ((micro_tile_height == 8 || micro_tile_height == 4) && micro_tile_width ==  4){    
-      add_hps("Y64_X64_y4_x4_U16_P1_GA3_APLU0_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO0");
+      add_hps("Y64_X64_y4_x4_U16_P1_GA3_APLU0_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0");
     }
     
     if ((micro_tile_height*micro_tile_height == 24) && n_work_items_per_c_elm >  1){    
-      add_hps("Y48_X64_y3_x4_U16_P1_GA2_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0");
+      add_hps("Y48_X64_y3_x4_U16_P1_GA2_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0");
     }
   
     if (micro_tile_height == 3 && micro_tile_height < micro_tile_width){    
-      add_hps("Y24_X40_y3_x5_U16_P1_GA1_APLU1_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0");
+      add_hps("Y24_X40_y3_x5_U16_P1_GA1_APLU1_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0");
     }
 
     if (micro_tile_height*micro_tile_width > 5 && micro_tile_height*micro_tile_width < 48 && n_work_items_per_c_elm >  1){    
-      add_hps("Y64_X64_y4_x4_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO0");
+      add_hps("Y64_X64_y4_x4_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0");
     }
 
     if (gg.m*gg.n < 64*64 && gg.k > 20000){    
-      add_hps("Y16_X32_y1_x2_U48_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE32_NAW64_UFO0");
+      add_hps("Y16_X32_y1_x2_U48_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE32_NAW64_UFO0_ACW0_BCW0");
     }
     
     if (gg.m*gg.n > 2000*2000){
-      add_hps("Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0");
+      add_hps("Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0");
     }    
     
     
     if (gg.tA == gg.isColMajor && gg.tB != gg.isColMajor && micro_tile_height*micro_tile_height == 64){
-      add_hps("Y128_X128_y8_x8_U8_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO1");
-      add_hps("Y128_X128_y8_x8_U8_P1_GA2_APLU1_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO1");
+      add_hps("Y128_X128_y8_x8_U8_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE1__NAW64_UFO1_ACW0_BCW0");
+      add_hps("Y128_X128_y8_x8_U8_P1_GA2_APLU1_BPLU1_PU1_LIW0_MIW1_ICE1__NAW64_UFO1_ACW0_BCW0");
     }
 
     else if (gg.tA != gg.isColMajor && gg.tB == gg.isColMajor && micro_tile_height*micro_tile_height == 64){
-      add_hps("Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE1_NAW64_UFO1");
-      add_hps("Y128_X128_y8_x8_U8_P1_GA2_APLU0_BPLU0_PU1_LIW0_MIW1_ICE1_NAW64_UFO1");
+      add_hps("Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE1__NAW64_UFO1_ACW0_BCW0");
+      add_hps("Y128_X128_y8_x8_U8_P1_GA2_APLU0_BPLU0_PU1_LIW0_MIW1_ICE1__NAW64_UFO1_ACW0_BCW0");
     }
     
     
@@ -703,222 +725,222 @@ HyperParams::kernel_cache = {                             /* colMaj tA    tB    
     
     
   std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 3072, 3072, 1024, 1024, 128, 3072, 0, 'f'},  
-  "Y96_X64_y6_x4_U16_P1_GA2_APLU0_BPLU0_PU1_LIW1_MIW1_ICE5_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1760, 1760, 1760, 1760, 128, 1760, 0, 'f'},  "Y64_X64_y4_x4_U32_P1_GA2_APLU0_BPLU0_PU1_LIW1_MIW1_ICE2_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 4096, 4096, 4096, 4096, 32, 4096, 0, 'f'},  "Y64_X32_y4_x2_U16_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE3_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 4096, 4096, 4096, 4096, 7000, 4096, 0, 'f'},  "Y128_X128_y8_x8_U16_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 3072, 1024, 3072, 3072, 32, 1024, 0, 'f'},  "Y32_X16_y4_x2_U16_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE2_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 7680, 7680, 2560, 2560, 16, 7680, 0, 'f'},  "Y16_X16_y2_x2_U32_P1_GA1_APLU1_BPLU1_PU0_LIW0_MIW0_ICE3_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 5124, 2560, 5124, 5124, 9124, 2560, 0, 'f'},  "Y128_X96_y8_x6_U16_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2048, 2048, 2048, 2048, 64, 2048, 0, 'f'},  "Y64_X64_y4_x4_U16_P1_GA2_APLU1_BPLU0_PU0_LIW1_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2048, 2048, 2048, 2048, 128, 2048, 0, 'f'},  "Y64_X64_y4_x4_U16_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE2_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2048, 2048, 2048, 2048, 32, 2048, 0, 'f'},  "Y32_X32_y2_x2_U16_P1_GA2_APLU0_BPLU0_PU0_LIW1_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, true, false, 2560, 7133, 2560, 2560, 7133, 2560, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE1_NAW64_UFO1" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2048, 2048, 2048, 2048, 16, 2048, 0, 'f'},  "Y8_X16_y1_x2_U32_P1_GA2_APLU0_BPLU0_PU0_LIW0_MIW1_ICE7_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2560, 2560, 2560, 2560, 64, 2560, 0, 'f'},  "Y24_X32_y3_x4_U16_P1_GA2_APLU1_BPLU1_PU1_LIW0_MIW1_ICE2_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 35, 35, 2560, 2560, 8457, 35, 0, 'f'},  "Y48_X48_y3_x3_U16_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 4096, 4096, 4096, 4096, 16, 4096, 0, 'f'},  "Y16_X16_y2_x2_U8_P1_GA2_APLU0_BPLU1_PU1_LIW1_MIW1_ICE3_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, true, false, 7680, 5481, 7680, 7680, 5481, 2560, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE1_NAW64_UFO1" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 35, 35, 2048, 2048, 8457, 35, 0, 'f'},  "Y64_X32_y4_x2_U16_P1_GA1_APLU1_BPLU1_PU0_LIW1_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 5124, 5124, 1760, 1760, 9124, 5124, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO1" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 35, 2048, 35, 35, 8457, 2048, 0, 'f'},  "Y24_X24_y3_x3_U16_P1_GA1_APLU1_BPLU1_PU0_LIW0_MIW1_ICE7_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 5124, 4096, 5124, 5124, 9124, 4096, 0, 'f'},  "Y128_X96_y8_x6_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 1760, 1760, 1760, 1760, 32, 1760, 0, 'f'},  "Y48_X32_y3_x2_U16_P1_GA2_APLU1_BPLU0_PU1_LIW1_MIW1_ICE5_NAW64_UFO1" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 35, 2560, 35, 35, 8457, 2560, 0, 'f'},  "Y24_X40_y3_x5_U32_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 7680, 7680, 2560, 2560, 32, 7680, 0, 'f'},  "Y48_X32_y3_x2_U32_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE7_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 5124, 5124, 4096, 4096, 9124, 5124, 0, 'f'},  "Y128_X128_y8_x8_U16_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2560, 2560, 2560, 2560, 128, 2560, 0, 'f'},  "Y80_X64_y5_x4_U16_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE2_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1760, 1760, 1760, 1760, 64, 1760, 0, 'f'},  "Y64_X64_y4_x4_U32_P1_GA2_APLU1_BPLU0_PU0_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, true, false, 1760, 7133, 1760, 1760, 7133, 1760, 0, 'f'},  "Y128_X128_y8_x8_U16_P1_GA1_APLU0_BPLU0_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, true, false, 4096, 7133, 4096, 4096, 7133, 4096, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE1_NAW64_UFO1" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1760, 1760, 5124, 5124, 9124, 1760, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA3_APLU1_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO1" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1024, 1024, 3072, 3072, 128, 1024, 0, 'f'},  "Y32_X64_y2_x4_U48_P1_GA2_APLU0_BPLU0_PU1_LIW0_MIW1_ICE3_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1760, 1760, 1760, 1760, 7000, 1760, 0, 'f'},  "Y128_X128_y8_x8_U16_P1_GA1_APLU0_BPLU0_PU0_LIW1_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 4096, 4096, 4096, 4096, 64, 4096, 0, 'f'},  "Y32_X32_y2_x2_U32_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 4096, 4096, 4096, 4096, 7000, 4096, 0, 'f'},  "Y128_X128_y8_x8_U16_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE2_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2560, 2560, 7680, 7680, 64, 2560, 0, 'f'},  "Y96_X64_y6_x4_U32_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE3_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 3072, 1024, 3072, 3072, 128, 1024, 0, 'f'},  "Y96_X32_y6_x2_U16_P1_GA2_APLU0_BPLU0_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 3072, 3072, 1024, 1024, 64, 3072, 0, 'f'},  "Y32_X64_y2_x4_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE5_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2560, 2560, 35, 35, 8457, 2560, 0, 'f'},  "Y24_X24_y3_x3_U32_P1_GA1_APLU1_BPLU1_PU0_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 7680, 2560, 7680, 7680, 32, 2560, 0, 'f'},  "Y64_X32_y4_x2_U16_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 4096, 4096, 4096, 4096, 64, 4096, 0, 'f'},  "Y128_X64_y8_x4_U16_P1_GA2_APLU1_BPLU1_PU0_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2048, 2048, 2048, 2048, 64, 2048, 0, 'f'},  "Y48_X32_y3_x2_U16_P1_GA2_APLU1_BPLU0_PU1_LIW1_MIW1_ICE9_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1760, 1760, 1760, 1760, 16, 1760, 0, 'f'},  "Y32_X16_y2_x1_U16_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE2_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 35, 4096, 35, 35, 8457, 4096, 0, 'f'},  "Y24_X32_y3_x4_U32_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE6_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1024, 1024, 3072, 3072, 32, 1024, 0, 'f'},  "Y32_X32_y2_x2_U32_P1_GA2_APLU0_BPLU0_PU0_LIW0_MIW1_ICE5_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 35, 1760, 35, 35, 8457, 1760, 0, 'f'},  "Y24_X48_y3_x6_U32_P1_GA2_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 1760, 1760, 1760, 1760, 128, 1760, 0, 'f'},  "Y64_X64_y4_x4_U16_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE2_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2560, 2560, 7680, 7680, 128, 2560, 0, 'f'},  "Y80_X64_y5_x4_U16_P1_GA2_APLU1_BPLU0_PU1_LIW0_MIW1_ICE2_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 35, 35, 4096, 4096, 8457, 35, 0, 'f'},  "Y32_X48_y2_x3_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2560, 2560, 2560, 2560, 16, 2560, 0, 'f'},  "Y32_X16_y4_x2_U16_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 1760, 1760, 1760, 1760, 64, 1760, 0, 'f'},  "Y64_X64_y4_x4_U16_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2048, 2048, 2048, 2048, 32, 2048, 0, 'f'},  "Y48_X32_y3_x2_U64_P1_GA3_APLU0_BPLU1_PU1_LIW0_MIW1_ICE8_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 4096, 4096, 35, 35, 8457, 4096, 0, 'f'},  "Y24_X24_y3_x3_U32_P1_GA1_APLU1_BPLU0_PU1_LIW0_MIW1_ICE7_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2048, 2048, 2048, 2048, 7000, 2048, 0, 'f'},  "Y128_X96_y8_x6_U16_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2048, 2048, 2048, 2048, 16, 2048, 0, 'f'},  "Y16_X16_y2_x2_U16_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 7680, 2560, 7680, 7680, 64, 2560, 0, 'f'},  "Y128_X64_y8_x4_U16_P1_GA3_APLU0_BPLU1_PU0_LIW0_MIW1_ICE3_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2560, 2560, 2560, 2560, 32, 2560, 0, 'f'},  "Y64_X32_y4_x2_U32_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE3_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2048, 2048, 2048, 2048, 128, 2048, 0, 'f'},  "Y64_X32_y4_x2_U32_P1_GA2_APLU0_BPLU1_PU0_LIW0_MIW1_ICE3_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 3072, 1024, 3072, 3072, 16, 1024, 0, 'f'},  "Y24_X16_y3_x2_U16_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2560, 2560, 2560, 2560, 16, 2560, 0, 'f'},  "Y16_X16_y2_x2_U32_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE9_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2560, 2560, 5124, 5124, 9124, 2560, 0, 'f'},  "Y128_X96_y8_x6_U16_P1_GA2_APLU1_BPLU0_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 1760, 1760, 1760, 1760, 16, 1760, 0, 'f'},  "Y24_X16_y3_x2_U16_P1_GA2_APLU0_BPLU1_PU0_LIW0_MIW1_ICE5_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2048, 2048, 35, 35, 8457, 2048, 0, 'f'},  "Y24_X16_y3_x2_U32_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE5_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 5124, 5124, 2560, 2560, 9124, 5124, 0, 'f'},  "Y128_X128_y8_x8_U16_P1_GA1_APLU0_BPLU0_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 3072, 3072, 1024, 1024, 16, 3072, 0, 'f'},  "Y16_X16_y2_x2_U32_P1_GA2_APLU0_BPLU1_PU0_LIW0_MIW0_ICE9_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 4096, 4096, 4096, 4096, 128, 4096, 0, 'f'},  "Y64_X64_y4_x4_U16_P1_GA2_APLU0_BPLU1_PU0_LIW0_MIW1_ICE5_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 5124, 5124, 2048, 2048, 9124, 5124, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO1" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1024, 1024, 3072, 3072, 16, 1024, 0, 'f'},  "Y48_X16_y3_x1_U32_P1_GA1_APLU0_BPLU1_PU1_LIW1_MIW1_ICE7_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, true, false, 3072, 7435, 3072, 3072, 7435, 1024, 0, 'f'},  "Y96_X96_y6_x6_U16_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2560, 2560, 2560, 2560, 128, 2560, 0, 'f'},  "Y80_X64_y5_x4_U16_P1_GA2_APLU0_BPLU0_PU1_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 1760, 1760, 1760, 1760, 7000, 1760, 0, 'f'},  "Y128_X128_y8_x8_U16_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 7680, 7680, 2560, 2560, 64, 7680, 0, 'f'},  "Y80_X32_y5_x2_U32_P1_GA2_APLU1_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2560, 2560, 2560, 2560, 32, 2560, 0, 'f'},  "Y24_X32_y3_x4_U32_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE9_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 35, 35, 1760, 1760, 8457, 35, 0, 'f'},  "Y80_X80_y5_x5_U16_P1_GA1_APLU0_BPLU1_PU0_LIW1_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 7680, 2560, 7680, 7680, 128, 2560, 0, 'f'},  "Y128_X64_y8_x4_U16_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE3_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2048, 2048, 5124, 5124, 9124, 2048, 0, 'f'},  "Y128_X128_y8_x8_U16_P1_GA3_APLU0_BPLU0_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1024, 1024, 3072, 3072, 64, 1024, 0, 'f'},  "Y32_X32_y2_x2_U48_P1_GA2_APLU1_BPLU0_PU0_LIW0_MIW1_ICE5_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 3072, 3072, 1024, 1024, 32, 3072, 0, 'f'},  "Y64_X32_y4_x2_U32_P1_GA2_APLU1_BPLU0_PU1_LIW0_MIW1_ICE7_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2560, 2560, 2560, 2560, 7000, 2560, 0, 'f'},  "Y128_X96_y8_x6_U16_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2560, 2560, 7680, 7680, 16, 2560, 0, 'f'},  "Y16_X16_y2_x2_U32_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE8_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 4096, 4096, 4096, 4096, 128, 4096, 0, 'f'},  "Y64_X64_y4_x4_U16_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE2_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 4096, 4096, 4096, 4096, 16, 4096, 0, 'f'},  "Y16_X16_y2_x2_U32_P1_GA1_APLU1_BPLU0_PU1_LIW0_MIW1_ICE7_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 4096, 4096, 5124, 5124, 9124, 4096, 0, 'f'},  "Y128_X128_y8_x8_U16_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2560, 2560, 2560, 2560, 7000, 2560, 0, 'f'},  "Y128_X128_y8_x8_U16_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1760, 1760, 1760, 1760, 32, 1760, 0, 'f'},  "Y32_X32_y2_x2_U32_P1_GA2_APLU1_BPLU1_PU1_LIW0_MIW1_ICE7_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 4096, 4096, 4096, 4096, 32, 4096, 0, 'f'},  "Y16_X32_y2_x4_U32_P1_GA1_APLU0_BPLU0_PU0_LIW0_MIW1_ICE8_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 7680, 2560, 7680, 7680, 16, 2560, 0, 'f'},  "Y40_X16_y5_x2_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE2_NAW64_UFO1" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2048, 2048, 2048, 2048, 7000, 2048, 0, 'f'},  "Y128_X96_y8_x6_U32_P1_GA1_APLU0_BPLU0_PU0_LIW1_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 5124, 1760, 5124, 5124, 9124, 1760, 0, 'f'},  "Y128_X128_y8_x8_U16_P1_GA1_APLU0_BPLU0_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2560, 2560, 7680, 7680, 32, 2560, 0, 'f'},  "Y32_X32_y2_x2_U32_P1_GA1_APLU1_BPLU1_PU0_LIW0_MIW1_ICE5_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, true, false, 2048, 7133, 2048, 2048, 7133, 2048, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU0_PU0_LIW0_MIW1_ICE1_NAW64_UFO1" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1760, 1760, 35, 35, 8457, 1760, 0, 'f'},  "Y24_X40_y3_x5_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 3072, 1024, 3072, 3072, 64, 1024, 0, 'f'},  "Y32_X16_y4_x2_U16_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 7680, 7680, 2560, 2560, 128, 7680, 0, 'f'},  "Y80_X64_y5_x4_U16_P1_GA2_APLU0_BPLU0_PU0_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2560, 2560, 2560, 2560, 64, 2560, 0, 'f'},  "Y64_X32_y4_x2_U32_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE7_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 5124, 2048, 5124, 5124, 9124, 2048, 0, 'f'},  "Y128_X96_y8_x6_U16_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 3077, 3079, 1037, 1024, 128, 3072, 0, 'f'},  "Y64_X64_y4_x4_U16_P1_GA2_APLU0_BPLU0_PU0_LIW1_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1765, 1767, 1773, 1760, 128, 1760, 0, 'f'},  "Y64_X64_y4_x4_U32_P1_GA2_APLU0_BPLU1_PU0_LIW0_MIW1_ICE2_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 4101, 4103, 4109, 4096, 32, 4096, 0, 'f'},  "Y64_X32_y4_x2_U32_P1_GA2_APLU1_BPLU1_PU1_LIW0_MIW1_ICE8_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 4101, 4103, 4109, 4096, 7000, 4096, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 3077, 1031, 3085, 3072, 32, 1024, 0, 'f'},  "Y32_X32_y4_x4_U16_P1_GA2_APLU0_BPLU1_PU0_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 7685, 7687, 2573, 2560, 16, 7680, 0, 'f'},  "Y24_X16_y3_x2_U64_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW0_ICE6_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 5129, 2567, 5137, 5124, 9124, 2560, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2053, 2055, 2061, 2048, 64, 2048, 0, 'f'},  "Y64_X64_y4_x4_U16_P1_GA2_APLU0_BPLU0_PU1_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2053, 2055, 2061, 2048, 128, 2048, 0, 'f'},  "Y64_X64_y4_x4_U16_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE2_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2053, 2055, 2061, 2048, 32, 2048, 0, 'f'},  "Y32_X32_y4_x4_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, true, false, 2565, 7140, 2573, 2560, 7133, 2560, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE1_NAW64_UFO1" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2053, 2055, 2061, 2048, 16, 2048, 0, 'f'},  "Y16_X16_y2_x2_U16_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2565, 2567, 2573, 2560, 64, 2560, 0, 'f'},  "Y64_X64_y4_x4_U32_P1_GA2_APLU0_BPLU0_PU0_LIW0_MIW1_ICE6_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 40, 42, 2573, 2560, 8457, 35, 0, 'f'},  "Y64_X32_y4_x2_U8_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 4101, 4103, 4109, 4096, 16, 4096, 0, 'f'},  "Y32_X16_y4_x2_U32_P1_GA3_APLU0_BPLU0_PU0_LIW0_MIW1_ICE2_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, true, false, 7685, 5488, 7693, 7680, 5481, 2560, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE1_NAW64_UFO1" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 40, 42, 2061, 2048, 8457, 35, 0, 'f'},  "Y32_X48_y2_x3_U16_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 5129, 5131, 1773, 1760, 9124, 5124, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO1" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 40, 2055, 48, 35, 8457, 2048, 0, 'f'},  "Y24_X40_y3_x5_U16_P1_GA1_APLU1_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 5129, 4103, 5137, 5124, 9124, 4096, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 1765, 1767, 1773, 1760, 32, 1760, 0, 'f'},  "Y64_X32_y4_x2_U16_P1_GA2_APLU0_BPLU0_PU0_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 40, 2567, 48, 35, 8457, 2560, 0, 'f'},  "Y24_X40_y3_x5_U16_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 7685, 7687, 2573, 2560, 32, 7680, 0, 'f'},  "Y32_X32_y4_x4_U16_P1_GA2_APLU1_BPLU1_PU0_LIW0_MIW1_ICE3_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 5129, 5131, 4109, 4096, 9124, 5124, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2565, 2567, 2573, 2560, 128, 2560, 0, 'f'},  "Y80_X64_y5_x4_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE2_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1765, 1767, 1773, 1760, 64, 1760, 0, 'f'},  "Y64_X64_y4_x4_U8_P1_GA2_APLU0_BPLU0_PU1_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, true, false, 1765, 7140, 1773, 1760, 7133, 1760, 0, 'f'},  "Y128_X128_y8_x8_U16_P1_GA1_APLU0_BPLU0_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, true, false, 4101, 7140, 4109, 4096, 7133, 4096, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU0_PU0_LIW0_MIW1_ICE1_NAW64_UFO1" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1765, 1767, 5137, 5124, 9124, 1760, 0, 'f'},  "Y128_X128_y8_x8_U16_P1_GA3_APLU0_BPLU0_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1029, 1031, 3085, 3072, 128, 1024, 0, 'f'},  "Y48_X64_y3_x4_U16_P1_GA2_APLU1_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1765, 1767, 1773, 1760, 7000, 1760, 0, 'f'},  "Y128_X128_y8_x8_U16_P1_GA1_APLU0_BPLU0_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 4101, 4103, 4109, 4096, 64, 4096, 0, 'f'},  "Y64_X64_y4_x4_U16_P1_GA2_APLU0_BPLU1_PU0_LIW1_MIW1_ICE2_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 4101, 4103, 4109, 4096, 7000, 4096, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO1" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2565, 2567, 7693, 7680, 64, 2560, 0, 'f'},  "Y96_X64_y6_x4_U16_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 3077, 1031, 3085, 3072, 128, 1024, 0, 'f'},  "Y96_X64_y6_x4_U8_P1_GA2_APLU0_BPLU1_PU0_LIW0_MIW1_ICE2_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 3077, 3079, 1037, 1024, 64, 3072, 0, 'f'},  "Y32_X64_y2_x4_U16_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2565, 2567, 48, 35, 8457, 2560, 0, 'f'},  "Y24_X32_y3_x4_U32_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 7685, 2567, 7693, 7680, 32, 2560, 0, 'f'},  "Y32_X32_y4_x4_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 4101, 4103, 4109, 4096, 64, 4096, 0, 'f'},  "Y64_X64_y4_x4_U16_P1_GA2_APLU0_BPLU0_PU0_LIW0_MIW1_ICE2_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2053, 2055, 2061, 2048, 64, 2048, 0, 'f'},  "Y64_X64_y4_x4_U16_P1_GA2_APLU0_BPLU0_PU0_LIW1_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1765, 1767, 1773, 1760, 16, 1760, 0, 'f'},  "Y8_X16_y1_x2_U32_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW0_ICE2_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2565, 2567, 7693, 7680, 128, 2560, 0, 'f'},  "Y80_X64_y5_x4_U16_P1_GA3_APLU0_BPLU1_PU1_LIW0_MIW1_ICE2_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1029, 1031, 3085, 3072, 32, 1024, 0, 'f'},  "Y64_X32_y4_x2_U16_P1_GA2_APLU0_BPLU0_PU0_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 40, 1767, 48, 35, 8457, 1760, 0, 'f'},  "Y24_X40_y3_x5_U8_P1_GA1_APLU1_BPLU1_PU1_LIW1_MIW0_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 1765, 1767, 1773, 1760, 128, 1760, 0, 'f'},  "Y64_X64_y4_x4_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE2_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 40, 4103, 48, 35, 8457, 4096, 0, 'f'},  "Y24_X40_y3_x5_U16_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 7685, 2567, 7693, 7680, 128, 2560, 0, 'f'},  "Y128_X64_y8_x4_U16_P1_GA2_APLU0_BPLU1_PU0_LIW0_MIW1_ICE3_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2565, 2567, 2573, 2560, 16, 2560, 0, 'f'},  "Y32_X16_y4_x2_U16_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 1765, 1767, 1773, 1760, 64, 1760, 0, 'f'},  "Y64_X64_y4_x4_U16_P1_GA2_APLU0_BPLU1_PU0_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2053, 2055, 2061, 2048, 32, 2048, 0, 'f'},  "Y32_X32_y4_x4_U16_P1_GA2_APLU1_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 4101, 4103, 48, 35, 8457, 4096, 0, 'f'},  "Y24_X24_y3_x3_U32_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2053, 2055, 2061, 2048, 7000, 2048, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2053, 2055, 2061, 2048, 16, 2048, 0, 'f'},  "Y16_X16_y2_x2_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 7685, 2567, 7693, 7680, 64, 2560, 0, 'f'},  "Y128_X64_y8_x4_U16_P1_GA2_APLU0_BPLU1_PU0_LIW0_MIW1_ICE3_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2565, 2567, 2573, 2560, 32, 2560, 0, 'f'},  "Y64_X32_y4_x2_U32_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE3_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2053, 2055, 2061, 2048, 128, 2048, 0, 'f'},  "Y64_X64_y4_x4_U16_P1_GA3_APLU0_BPLU0_PU0_LIW1_MIW1_ICE2_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 3077, 1031, 3085, 3072, 16, 1024, 0, 'f'},  "Y24_X16_y3_x2_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2565, 2567, 2573, 2560, 16, 2560, 0, 'f'},  "Y16_X16_y2_x2_U32_P1_GA2_APLU1_BPLU1_PU0_LIW0_MIW0_ICE2_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2565, 2567, 5137, 5124, 9124, 2560, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA3_APLU1_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 1765, 1767, 1773, 1760, 16, 1760, 0, 'f'},  "Y16_X16_y2_x2_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2053, 2055, 48, 35, 8457, 2048, 0, 'f'},  "Y24_X40_y3_x5_U16_P1_GA1_APLU1_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 5129, 5131, 2573, 2560, 9124, 5124, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU1_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 3077, 3079, 1037, 1024, 16, 3072, 0, 'f'},  "Y32_X16_y2_x1_U32_P1_GA2_APLU1_BPLU1_PU1_LIW0_MIW1_ICE6_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 4101, 4103, 4109, 4096, 128, 4096, 0, 'f'},  "Y128_X64_y8_x4_U16_P1_GA2_APLU0_BPLU0_PU0_LIW0_MIW1_ICE2_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 5129, 5131, 2061, 2048, 9124, 5124, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA3_APLU1_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO1" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1029, 1031, 3085, 3072, 16, 1024, 0, 'f'},  "Y16_X16_y2_x2_U16_P1_GA2_APLU0_BPLU1_PU0_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, true, false, 3077, 7442, 3085, 3072, 7435, 1024, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE1_NAW64_UFO1" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2565, 2567, 2573, 2560, 128, 2560, 0, 'f'},  "Y80_X64_y5_x4_U16_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE2_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 1765, 1767, 1773, 1760, 7000, 1760, 0, 'f'},  "Y128_X96_y8_x6_U16_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 7685, 7687, 2573, 2560, 64, 7680, 0, 'f'},  "Y128_X64_y8_x4_U32_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE6_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2565, 2567, 2573, 2560, 32, 2560, 0, 'f'},  "Y32_X32_y2_x2_U32_P1_GA2_APLU1_BPLU1_PU0_LIW0_MIW1_ICE7_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1765, 1767, 48, 35, 8457, 1760, 0, 'f'},  "Y24_X40_y3_x5_U16_P1_GA1_APLU1_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 40, 42, 4109, 4096, 8457, 35, 0, 'f'},  "Y64_X32_y4_x2_U8_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2053, 2055, 5137, 5124, 9124, 2048, 0, 'f'},  "Y96_X128_y6_x8_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1029, 1031, 3085, 3072, 64, 1024, 0, 'f'},  "Y96_X64_y6_x4_U16_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 3077, 3079, 1037, 1024, 32, 3072, 0, 'f'},  "Y32_X32_y2_x2_U32_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2565, 2567, 2573, 2560, 7000, 2560, 0, 'f'},  "Y128_X128_y8_x8_U16_P1_GA1_APLU0_BPLU0_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2565, 2567, 7693, 7680, 16, 2560, 0, 'f'},  "Y48_X16_y3_x1_U48_P1_GA2_APLU1_BPLU1_PU1_LIW0_MIW1_ICE8_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 4101, 4103, 4109, 4096, 128, 4096, 0, 'f'},  "Y64_X64_y4_x4_U16_P1_GA3_APLU0_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO1" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 4101, 4103, 4109, 4096, 16, 4096, 0, 'f'},  "Y24_X16_y3_x2_U48_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW0_ICE2_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 4101, 4103, 5137, 5124, 9124, 4096, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA3_APLU1_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2565, 2567, 2573, 2560, 7000, 2560, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO1" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1765, 1767, 1773, 1760, 32, 1760, 0, 'f'},  "Y64_X32_y4_x2_U16_P1_GA2_APLU1_BPLU0_PU0_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 4101, 4103, 4109, 4096, 32, 4096, 0, 'f'},  "Y24_X32_y3_x4_U32_P1_GA1_APLU1_BPLU1_PU0_LIW0_MIW1_ICE2_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 7685, 2567, 7693, 7680, 16, 2560, 0, 'f'},  "Y40_X16_y5_x2_U8_P1_GA1_APLU1_BPLU0_PU0_LIW1_MIW1_ICE2_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2053, 2055, 2061, 2048, 7000, 2048, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO1" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 5129, 1767, 5137, 5124, 9124, 1760, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2565, 2567, 7693, 7680, 32, 2560, 0, 'f'},  "Y48_X32_y3_x2_U32_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, true, false, 2053, 7140, 2061, 2048, 7133, 2048, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU0_PU0_LIW0_MIW1_ICE1_NAW64_UFO1" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 40, 42, 1773, 1760, 8457, 35, 0, 'f'},  "Y32_X48_y2_x3_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 3077, 1031, 3085, 3072, 64, 1024, 0, 'f'},  "Y96_X64_y6_x4_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 7685, 7687, 2573, 2560, 128, 7680, 0, 'f'},  "Y80_X64_y5_x4_U16_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2565, 2567, 2573, 2560, 64, 2560, 0, 'f'},  "Y80_X64_y5_x4_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 5129, 2055, 5137, 5124, 9124, 2048, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
+  "Y96_X64_y6_x4_U16_P1_GA2_APLU0_BPLU0_PU1_LIW1_MIW1_ICE5_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1760, 1760, 1760, 1760, 128, 1760, 0, 'f'},  "Y64_X64_y4_x4_U32_P1_GA2_APLU0_BPLU0_PU1_LIW1_MIW1_ICE2_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 4096, 4096, 4096, 4096, 32, 4096, 0, 'f'},  "Y64_X32_y4_x2_U16_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE3_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 4096, 4096, 4096, 4096, 7000, 4096, 0, 'f'},  "Y128_X128_y8_x8_U16_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 3072, 1024, 3072, 3072, 32, 1024, 0, 'f'},  "Y32_X16_y4_x2_U16_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE2_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 7680, 7680, 2560, 2560, 16, 7680, 0, 'f'},  "Y16_X16_y2_x2_U32_P1_GA1_APLU1_BPLU1_PU0_LIW0_MIW0_ICE3_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 5124, 2560, 5124, 5124, 9124, 2560, 0, 'f'},  "Y128_X96_y8_x6_U16_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2048, 2048, 2048, 2048, 64, 2048, 0, 'f'},  "Y64_X64_y4_x4_U16_P1_GA2_APLU1_BPLU0_PU0_LIW1_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2048, 2048, 2048, 2048, 128, 2048, 0, 'f'},  "Y64_X64_y4_x4_U16_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE2_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2048, 2048, 2048, 2048, 32, 2048, 0, 'f'},  "Y32_X32_y2_x2_U16_P1_GA2_APLU0_BPLU0_PU0_LIW1_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, true, false, 2560, 7133, 2560, 2560, 7133, 2560, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE1_NAW64_UFO1_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2048, 2048, 2048, 2048, 16, 2048, 0, 'f'},  "Y8_X16_y1_x2_U32_P1_GA2_APLU0_BPLU0_PU0_LIW0_MIW1_ICE7_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2560, 2560, 2560, 2560, 64, 2560, 0, 'f'},  "Y24_X32_y3_x4_U16_P1_GA2_APLU1_BPLU1_PU1_LIW0_MIW1_ICE2_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 35, 35, 2560, 2560, 8457, 35, 0, 'f'},  "Y48_X48_y3_x3_U16_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 4096, 4096, 4096, 4096, 16, 4096, 0, 'f'},  "Y16_X16_y2_x2_U8_P1_GA2_APLU0_BPLU1_PU1_LIW1_MIW1_ICE3_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, true, false, 7680, 5481, 7680, 7680, 5481, 2560, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE1_NAW64_UFO1_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 35, 35, 2048, 2048, 8457, 35, 0, 'f'},  "Y64_X32_y4_x2_U16_P1_GA1_APLU1_BPLU1_PU0_LIW1_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 5124, 5124, 1760, 1760, 9124, 5124, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO1_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 35, 2048, 35, 35, 8457, 2048, 0, 'f'},  "Y24_X24_y3_x3_U16_P1_GA1_APLU1_BPLU1_PU0_LIW0_MIW1_ICE7_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 5124, 4096, 5124, 5124, 9124, 4096, 0, 'f'},  "Y128_X96_y8_x6_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 1760, 1760, 1760, 1760, 32, 1760, 0, 'f'},  "Y48_X32_y3_x2_U16_P1_GA2_APLU1_BPLU0_PU1_LIW1_MIW1_ICE5_NAW64_UFO1_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 35, 2560, 35, 35, 8457, 2560, 0, 'f'},  "Y24_X40_y3_x5_U32_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 7680, 7680, 2560, 2560, 32, 7680, 0, 'f'},  "Y48_X32_y3_x2_U32_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE7_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 5124, 5124, 4096, 4096, 9124, 5124, 0, 'f'},  "Y128_X128_y8_x8_U16_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2560, 2560, 2560, 2560, 128, 2560, 0, 'f'},  "Y80_X64_y5_x4_U16_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE2_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1760, 1760, 1760, 1760, 64, 1760, 0, 'f'},  "Y64_X64_y4_x4_U32_P1_GA2_APLU1_BPLU0_PU0_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, true, false, 1760, 7133, 1760, 1760, 7133, 1760, 0, 'f'},  "Y128_X128_y8_x8_U16_P1_GA1_APLU0_BPLU0_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, true, false, 4096, 7133, 4096, 4096, 7133, 4096, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE1_NAW64_UFO1_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1760, 1760, 5124, 5124, 9124, 1760, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA3_APLU1_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO1_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1024, 1024, 3072, 3072, 128, 1024, 0, 'f'},  "Y32_X64_y2_x4_U48_P1_GA2_APLU0_BPLU0_PU1_LIW0_MIW1_ICE3_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1760, 1760, 1760, 1760, 7000, 1760, 0, 'f'},  "Y128_X128_y8_x8_U16_P1_GA1_APLU0_BPLU0_PU0_LIW1_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 4096, 4096, 4096, 4096, 64, 4096, 0, 'f'},  "Y32_X32_y2_x2_U32_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 4096, 4096, 4096, 4096, 7000, 4096, 0, 'f'},  "Y128_X128_y8_x8_U16_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE2_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2560, 2560, 7680, 7680, 64, 2560, 0, 'f'},  "Y96_X64_y6_x4_U32_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE3_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 3072, 1024, 3072, 3072, 128, 1024, 0, 'f'},  "Y96_X32_y6_x2_U16_P1_GA2_APLU0_BPLU0_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 3072, 3072, 1024, 1024, 64, 3072, 0, 'f'},  "Y32_X64_y2_x4_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE5_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2560, 2560, 35, 35, 8457, 2560, 0, 'f'},  "Y24_X24_y3_x3_U32_P1_GA1_APLU1_BPLU1_PU0_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 7680, 2560, 7680, 7680, 32, 2560, 0, 'f'},  "Y64_X32_y4_x2_U16_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 4096, 4096, 4096, 4096, 64, 4096, 0, 'f'},  "Y128_X64_y8_x4_U16_P1_GA2_APLU1_BPLU1_PU0_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2048, 2048, 2048, 2048, 64, 2048, 0, 'f'},  "Y48_X32_y3_x2_U16_P1_GA2_APLU1_BPLU0_PU1_LIW1_MIW1_ICE9_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1760, 1760, 1760, 1760, 16, 1760, 0, 'f'},  "Y32_X16_y2_x1_U16_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE2_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 35, 4096, 35, 35, 8457, 4096, 0, 'f'},  "Y24_X32_y3_x4_U32_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE6_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1024, 1024, 3072, 3072, 32, 1024, 0, 'f'},  "Y32_X32_y2_x2_U32_P1_GA2_APLU0_BPLU0_PU0_LIW0_MIW1_ICE5_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 35, 1760, 35, 35, 8457, 1760, 0, 'f'},  "Y24_X48_y3_x6_U32_P1_GA2_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 1760, 1760, 1760, 1760, 128, 1760, 0, 'f'},  "Y64_X64_y4_x4_U16_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE2_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2560, 2560, 7680, 7680, 128, 2560, 0, 'f'},  "Y80_X64_y5_x4_U16_P1_GA2_APLU1_BPLU0_PU1_LIW0_MIW1_ICE2_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 35, 35, 4096, 4096, 8457, 35, 0, 'f'},  "Y32_X48_y2_x3_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2560, 2560, 2560, 2560, 16, 2560, 0, 'f'},  "Y32_X16_y4_x2_U16_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 1760, 1760, 1760, 1760, 64, 1760, 0, 'f'},  "Y64_X64_y4_x4_U16_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2048, 2048, 2048, 2048, 32, 2048, 0, 'f'},  "Y48_X32_y3_x2_U64_P1_GA3_APLU0_BPLU1_PU1_LIW0_MIW1_ICE8_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 4096, 4096, 35, 35, 8457, 4096, 0, 'f'},  "Y24_X24_y3_x3_U32_P1_GA1_APLU1_BPLU0_PU1_LIW0_MIW1_ICE7_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2048, 2048, 2048, 2048, 7000, 2048, 0, 'f'},  "Y128_X96_y8_x6_U16_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2048, 2048, 2048, 2048, 16, 2048, 0, 'f'},  "Y16_X16_y2_x2_U16_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 7680, 2560, 7680, 7680, 64, 2560, 0, 'f'},  "Y128_X64_y8_x4_U16_P1_GA3_APLU0_BPLU1_PU0_LIW0_MIW1_ICE3_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2560, 2560, 2560, 2560, 32, 2560, 0, 'f'},  "Y64_X32_y4_x2_U32_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE3_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2048, 2048, 2048, 2048, 128, 2048, 0, 'f'},  "Y64_X32_y4_x2_U32_P1_GA2_APLU0_BPLU1_PU0_LIW0_MIW1_ICE3_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 3072, 1024, 3072, 3072, 16, 1024, 0, 'f'},  "Y24_X16_y3_x2_U16_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2560, 2560, 2560, 2560, 16, 2560, 0, 'f'},  "Y16_X16_y2_x2_U32_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE9_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2560, 2560, 5124, 5124, 9124, 2560, 0, 'f'},  "Y128_X96_y8_x6_U16_P1_GA2_APLU1_BPLU0_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 1760, 1760, 1760, 1760, 16, 1760, 0, 'f'},  "Y24_X16_y3_x2_U16_P1_GA2_APLU0_BPLU1_PU0_LIW0_MIW1_ICE5_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2048, 2048, 35, 35, 8457, 2048, 0, 'f'},  "Y24_X16_y3_x2_U32_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE5_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 5124, 5124, 2560, 2560, 9124, 5124, 0, 'f'},  "Y128_X128_y8_x8_U16_P1_GA1_APLU0_BPLU0_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 3072, 3072, 1024, 1024, 16, 3072, 0, 'f'},  "Y16_X16_y2_x2_U32_P1_GA2_APLU0_BPLU1_PU0_LIW0_MIW0_ICE9_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 4096, 4096, 4096, 4096, 128, 4096, 0, 'f'},  "Y64_X64_y4_x4_U16_P1_GA2_APLU0_BPLU1_PU0_LIW0_MIW1_ICE5_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 5124, 5124, 2048, 2048, 9124, 5124, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO1_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1024, 1024, 3072, 3072, 16, 1024, 0, 'f'},  "Y48_X16_y3_x1_U32_P1_GA1_APLU0_BPLU1_PU1_LIW1_MIW1_ICE7_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, true, false, 3072, 7435, 3072, 3072, 7435, 1024, 0, 'f'},  "Y96_X96_y6_x6_U16_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2560, 2560, 2560, 2560, 128, 2560, 0, 'f'},  "Y80_X64_y5_x4_U16_P1_GA2_APLU0_BPLU0_PU1_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 1760, 1760, 1760, 1760, 7000, 1760, 0, 'f'},  "Y128_X128_y8_x8_U16_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 7680, 7680, 2560, 2560, 64, 7680, 0, 'f'},  "Y80_X32_y5_x2_U32_P1_GA2_APLU1_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2560, 2560, 2560, 2560, 32, 2560, 0, 'f'},  "Y24_X32_y3_x4_U32_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE9_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 35, 35, 1760, 1760, 8457, 35, 0, 'f'},  "Y80_X80_y5_x5_U16_P1_GA1_APLU0_BPLU1_PU0_LIW1_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 7680, 2560, 7680, 7680, 128, 2560, 0, 'f'},  "Y128_X64_y8_x4_U16_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE3_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2048, 2048, 5124, 5124, 9124, 2048, 0, 'f'},  "Y128_X128_y8_x8_U16_P1_GA3_APLU0_BPLU0_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1024, 1024, 3072, 3072, 64, 1024, 0, 'f'},  "Y32_X32_y2_x2_U48_P1_GA2_APLU1_BPLU0_PU0_LIW0_MIW1_ICE5_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 3072, 3072, 1024, 1024, 32, 3072, 0, 'f'},  "Y64_X32_y4_x2_U32_P1_GA2_APLU1_BPLU0_PU1_LIW0_MIW1_ICE7_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2560, 2560, 2560, 2560, 7000, 2560, 0, 'f'},  "Y128_X96_y8_x6_U16_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2560, 2560, 7680, 7680, 16, 2560, 0, 'f'},  "Y16_X16_y2_x2_U32_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE8_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 4096, 4096, 4096, 4096, 128, 4096, 0, 'f'},  "Y64_X64_y4_x4_U16_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE2_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 4096, 4096, 4096, 4096, 16, 4096, 0, 'f'},  "Y16_X16_y2_x2_U32_P1_GA1_APLU1_BPLU0_PU1_LIW0_MIW1_ICE7_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 4096, 4096, 5124, 5124, 9124, 4096, 0, 'f'},  "Y128_X128_y8_x8_U16_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2560, 2560, 2560, 2560, 7000, 2560, 0, 'f'},  "Y128_X128_y8_x8_U16_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1760, 1760, 1760, 1760, 32, 1760, 0, 'f'},  "Y32_X32_y2_x2_U32_P1_GA2_APLU1_BPLU1_PU1_LIW0_MIW1_ICE7_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 4096, 4096, 4096, 4096, 32, 4096, 0, 'f'},  "Y16_X32_y2_x4_U32_P1_GA1_APLU0_BPLU0_PU0_LIW0_MIW1_ICE8_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 7680, 2560, 7680, 7680, 16, 2560, 0, 'f'},  "Y40_X16_y5_x2_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE2_NAW64_UFO1_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2048, 2048, 2048, 2048, 7000, 2048, 0, 'f'},  "Y128_X96_y8_x6_U32_P1_GA1_APLU0_BPLU0_PU0_LIW1_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 5124, 1760, 5124, 5124, 9124, 1760, 0, 'f'},  "Y128_X128_y8_x8_U16_P1_GA1_APLU0_BPLU0_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2560, 2560, 7680, 7680, 32, 2560, 0, 'f'},  "Y32_X32_y2_x2_U32_P1_GA1_APLU1_BPLU1_PU0_LIW0_MIW1_ICE5_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, true, false, 2048, 7133, 2048, 2048, 7133, 2048, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU0_PU0_LIW0_MIW1_ICE1_NAW64_UFO1_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1760, 1760, 35, 35, 8457, 1760, 0, 'f'},  "Y24_X40_y3_x5_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 3072, 1024, 3072, 3072, 64, 1024, 0, 'f'},  "Y32_X16_y4_x2_U16_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 7680, 7680, 2560, 2560, 128, 7680, 0, 'f'},  "Y80_X64_y5_x4_U16_P1_GA2_APLU0_BPLU0_PU0_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2560, 2560, 2560, 2560, 64, 2560, 0, 'f'},  "Y64_X32_y4_x2_U32_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE7_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 5124, 2048, 5124, 5124, 9124, 2048, 0, 'f'},  "Y128_X96_y8_x6_U16_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 3077, 3079, 1037, 1024, 128, 3072, 0, 'f'},  "Y64_X64_y4_x4_U16_P1_GA2_APLU0_BPLU0_PU0_LIW1_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1765, 1767, 1773, 1760, 128, 1760, 0, 'f'},  "Y64_X64_y4_x4_U32_P1_GA2_APLU0_BPLU1_PU0_LIW0_MIW1_ICE2_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 4101, 4103, 4109, 4096, 32, 4096, 0, 'f'},  "Y64_X32_y4_x2_U32_P1_GA2_APLU1_BPLU1_PU1_LIW0_MIW1_ICE8_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 4101, 4103, 4109, 4096, 7000, 4096, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 3077, 1031, 3085, 3072, 32, 1024, 0, 'f'},  "Y32_X32_y4_x4_U16_P1_GA2_APLU0_BPLU1_PU0_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 7685, 7687, 2573, 2560, 16, 7680, 0, 'f'},  "Y24_X16_y3_x2_U64_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW0_ICE6_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 5129, 2567, 5137, 5124, 9124, 2560, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2053, 2055, 2061, 2048, 64, 2048, 0, 'f'},  "Y64_X64_y4_x4_U16_P1_GA2_APLU0_BPLU0_PU1_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2053, 2055, 2061, 2048, 128, 2048, 0, 'f'},  "Y64_X64_y4_x4_U16_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE2_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2053, 2055, 2061, 2048, 32, 2048, 0, 'f'},  "Y32_X32_y4_x4_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, true, false, 2565, 7140, 2573, 2560, 7133, 2560, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE1_NAW64_UFO1_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2053, 2055, 2061, 2048, 16, 2048, 0, 'f'},  "Y16_X16_y2_x2_U16_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2565, 2567, 2573, 2560, 64, 2560, 0, 'f'},  "Y64_X64_y4_x4_U32_P1_GA2_APLU0_BPLU0_PU0_LIW0_MIW1_ICE6_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 40, 42, 2573, 2560, 8457, 35, 0, 'f'},  "Y64_X32_y4_x2_U8_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 4101, 4103, 4109, 4096, 16, 4096, 0, 'f'},  "Y32_X16_y4_x2_U32_P1_GA3_APLU0_BPLU0_PU0_LIW0_MIW1_ICE2_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, true, false, 7685, 5488, 7693, 7680, 5481, 2560, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE1_NAW64_UFO1_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 40, 42, 2061, 2048, 8457, 35, 0, 'f'},  "Y32_X48_y2_x3_U16_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 5129, 5131, 1773, 1760, 9124, 5124, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO1_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 40, 2055, 48, 35, 8457, 2048, 0, 'f'},  "Y24_X40_y3_x5_U16_P1_GA1_APLU1_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 5129, 4103, 5137, 5124, 9124, 4096, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 1765, 1767, 1773, 1760, 32, 1760, 0, 'f'},  "Y64_X32_y4_x2_U16_P1_GA2_APLU0_BPLU0_PU0_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 40, 2567, 48, 35, 8457, 2560, 0, 'f'},  "Y24_X40_y3_x5_U16_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 7685, 7687, 2573, 2560, 32, 7680, 0, 'f'},  "Y32_X32_y4_x4_U16_P1_GA2_APLU1_BPLU1_PU0_LIW0_MIW1_ICE3_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 5129, 5131, 4109, 4096, 9124, 5124, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2565, 2567, 2573, 2560, 128, 2560, 0, 'f'},  "Y80_X64_y5_x4_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE2_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1765, 1767, 1773, 1760, 64, 1760, 0, 'f'},  "Y64_X64_y4_x4_U8_P1_GA2_APLU0_BPLU0_PU1_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, true, false, 1765, 7140, 1773, 1760, 7133, 1760, 0, 'f'},  "Y128_X128_y8_x8_U16_P1_GA1_APLU0_BPLU0_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, true, false, 4101, 7140, 4109, 4096, 7133, 4096, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU0_PU0_LIW0_MIW1_ICE1_NAW64_UFO1_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1765, 1767, 5137, 5124, 9124, 1760, 0, 'f'},  "Y128_X128_y8_x8_U16_P1_GA3_APLU0_BPLU0_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1029, 1031, 3085, 3072, 128, 1024, 0, 'f'},  "Y48_X64_y3_x4_U16_P1_GA2_APLU1_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1765, 1767, 1773, 1760, 7000, 1760, 0, 'f'},  "Y128_X128_y8_x8_U16_P1_GA1_APLU0_BPLU0_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 4101, 4103, 4109, 4096, 64, 4096, 0, 'f'},  "Y64_X64_y4_x4_U16_P1_GA2_APLU0_BPLU1_PU0_LIW1_MIW1_ICE2_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 4101, 4103, 4109, 4096, 7000, 4096, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO1_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2565, 2567, 7693, 7680, 64, 2560, 0, 'f'},  "Y96_X64_y6_x4_U16_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 3077, 1031, 3085, 3072, 128, 1024, 0, 'f'},  "Y96_X64_y6_x4_U8_P1_GA2_APLU0_BPLU1_PU0_LIW0_MIW1_ICE2_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 3077, 3079, 1037, 1024, 64, 3072, 0, 'f'},  "Y32_X64_y2_x4_U16_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2565, 2567, 48, 35, 8457, 2560, 0, 'f'},  "Y24_X32_y3_x4_U32_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 7685, 2567, 7693, 7680, 32, 2560, 0, 'f'},  "Y32_X32_y4_x4_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 4101, 4103, 4109, 4096, 64, 4096, 0, 'f'},  "Y64_X64_y4_x4_U16_P1_GA2_APLU0_BPLU0_PU0_LIW0_MIW1_ICE2_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2053, 2055, 2061, 2048, 64, 2048, 0, 'f'},  "Y64_X64_y4_x4_U16_P1_GA2_APLU0_BPLU0_PU0_LIW1_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1765, 1767, 1773, 1760, 16, 1760, 0, 'f'},  "Y8_X16_y1_x2_U32_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW0_ICE2_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2565, 2567, 7693, 7680, 128, 2560, 0, 'f'},  "Y80_X64_y5_x4_U16_P1_GA3_APLU0_BPLU1_PU1_LIW0_MIW1_ICE2_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1029, 1031, 3085, 3072, 32, 1024, 0, 'f'},  "Y64_X32_y4_x2_U16_P1_GA2_APLU0_BPLU0_PU0_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 40, 1767, 48, 35, 8457, 1760, 0, 'f'},  "Y24_X40_y3_x5_U8_P1_GA1_APLU1_BPLU1_PU1_LIW1_MIW0_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 1765, 1767, 1773, 1760, 128, 1760, 0, 'f'},  "Y64_X64_y4_x4_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE2_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 40, 4103, 48, 35, 8457, 4096, 0, 'f'},  "Y24_X40_y3_x5_U16_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 7685, 2567, 7693, 7680, 128, 2560, 0, 'f'},  "Y128_X64_y8_x4_U16_P1_GA2_APLU0_BPLU1_PU0_LIW0_MIW1_ICE3_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2565, 2567, 2573, 2560, 16, 2560, 0, 'f'},  "Y32_X16_y4_x2_U16_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 1765, 1767, 1773, 1760, 64, 1760, 0, 'f'},  "Y64_X64_y4_x4_U16_P1_GA2_APLU0_BPLU1_PU0_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2053, 2055, 2061, 2048, 32, 2048, 0, 'f'},  "Y32_X32_y4_x4_U16_P1_GA2_APLU1_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 4101, 4103, 48, 35, 8457, 4096, 0, 'f'},  "Y24_X24_y3_x3_U32_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2053, 2055, 2061, 2048, 7000, 2048, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2053, 2055, 2061, 2048, 16, 2048, 0, 'f'},  "Y16_X16_y2_x2_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 7685, 2567, 7693, 7680, 64, 2560, 0, 'f'},  "Y128_X64_y8_x4_U16_P1_GA2_APLU0_BPLU1_PU0_LIW0_MIW1_ICE3_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2565, 2567, 2573, 2560, 32, 2560, 0, 'f'},  "Y64_X32_y4_x2_U32_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE3_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2053, 2055, 2061, 2048, 128, 2048, 0, 'f'},  "Y64_X64_y4_x4_U16_P1_GA3_APLU0_BPLU0_PU0_LIW1_MIW1_ICE2_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 3077, 1031, 3085, 3072, 16, 1024, 0, 'f'},  "Y24_X16_y3_x2_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2565, 2567, 2573, 2560, 16, 2560, 0, 'f'},  "Y16_X16_y2_x2_U32_P1_GA2_APLU1_BPLU1_PU0_LIW0_MIW0_ICE2_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2565, 2567, 5137, 5124, 9124, 2560, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA3_APLU1_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 1765, 1767, 1773, 1760, 16, 1760, 0, 'f'},  "Y16_X16_y2_x2_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2053, 2055, 48, 35, 8457, 2048, 0, 'f'},  "Y24_X40_y3_x5_U16_P1_GA1_APLU1_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 5129, 5131, 2573, 2560, 9124, 5124, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU1_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 3077, 3079, 1037, 1024, 16, 3072, 0, 'f'},  "Y32_X16_y2_x1_U32_P1_GA2_APLU1_BPLU1_PU1_LIW0_MIW1_ICE6_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 4101, 4103, 4109, 4096, 128, 4096, 0, 'f'},  "Y128_X64_y8_x4_U16_P1_GA2_APLU0_BPLU0_PU0_LIW0_MIW1_ICE2_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 5129, 5131, 2061, 2048, 9124, 5124, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA3_APLU1_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO1_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1029, 1031, 3085, 3072, 16, 1024, 0, 'f'},  "Y16_X16_y2_x2_U16_P1_GA2_APLU0_BPLU1_PU0_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, true, false, 3077, 7442, 3085, 3072, 7435, 1024, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE1_NAW64_UFO1_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2565, 2567, 2573, 2560, 128, 2560, 0, 'f'},  "Y80_X64_y5_x4_U16_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE2_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 1765, 1767, 1773, 1760, 7000, 1760, 0, 'f'},  "Y128_X96_y8_x6_U16_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 7685, 7687, 2573, 2560, 64, 7680, 0, 'f'},  "Y128_X64_y8_x4_U32_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE6_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2565, 2567, 2573, 2560, 32, 2560, 0, 'f'},  "Y32_X32_y2_x2_U32_P1_GA2_APLU1_BPLU1_PU0_LIW0_MIW1_ICE7_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1765, 1767, 48, 35, 8457, 1760, 0, 'f'},  "Y24_X40_y3_x5_U16_P1_GA1_APLU1_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 40, 42, 4109, 4096, 8457, 35, 0, 'f'},  "Y64_X32_y4_x2_U8_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2053, 2055, 5137, 5124, 9124, 2048, 0, 'f'},  "Y96_X128_y6_x8_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1029, 1031, 3085, 3072, 64, 1024, 0, 'f'},  "Y96_X64_y6_x4_U16_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 3077, 3079, 1037, 1024, 32, 3072, 0, 'f'},  "Y32_X32_y2_x2_U32_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 2565, 2567, 2573, 2560, 7000, 2560, 0, 'f'},  "Y128_X128_y8_x8_U16_P1_GA1_APLU0_BPLU0_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2565, 2567, 7693, 7680, 16, 2560, 0, 'f'},  "Y48_X16_y3_x1_U48_P1_GA2_APLU1_BPLU1_PU1_LIW0_MIW1_ICE8_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 4101, 4103, 4109, 4096, 128, 4096, 0, 'f'},  "Y64_X64_y4_x4_U16_P1_GA3_APLU0_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO1_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 4101, 4103, 4109, 4096, 16, 4096, 0, 'f'},  "Y24_X16_y3_x2_U48_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW0_ICE2_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 4101, 4103, 5137, 5124, 9124, 4096, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA3_APLU1_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2565, 2567, 2573, 2560, 7000, 2560, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO1_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1765, 1767, 1773, 1760, 32, 1760, 0, 'f'},  "Y64_X32_y4_x2_U16_P1_GA2_APLU1_BPLU0_PU0_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 4101, 4103, 4109, 4096, 32, 4096, 0, 'f'},  "Y24_X32_y3_x4_U32_P1_GA1_APLU1_BPLU1_PU0_LIW0_MIW1_ICE2_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 7685, 2567, 7693, 7680, 16, 2560, 0, 'f'},  "Y40_X16_y5_x2_U8_P1_GA1_APLU1_BPLU0_PU0_LIW1_MIW1_ICE2_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2053, 2055, 2061, 2048, 7000, 2048, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO1_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 5129, 1767, 5137, 5124, 9124, 1760, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2565, 2567, 7693, 7680, 32, 2560, 0, 'f'},  "Y48_X32_y3_x2_U32_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, true, false, 2053, 7140, 2061, 2048, 7133, 2048, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU0_PU0_LIW0_MIW1_ICE1_NAW64_UFO1_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 40, 42, 1773, 1760, 8457, 35, 0, 'f'},  "Y32_X48_y2_x3_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 3077, 1031, 3085, 3072, 64, 1024, 0, 'f'},  "Y96_X64_y6_x4_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 7685, 7687, 2573, 2560, 128, 7680, 0, 'f'},  "Y80_X64_y5_x4_U16_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2565, 2567, 2573, 2560, 64, 2560, 0, 'f'},  "Y80_X64_y5_x4_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 5129, 2055, 5137, 5124, 9124, 2048, 0, 'f'},  "Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
   
   
   //some back conv problems : 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1000, 1000, 16, 16, 16, 1000, 0, 'f'},    "Y8_X8_y1_x1_U40_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE7_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 5760, 5760, 144, 144, 32, 5760, 0, 'f'},    "Y8_X8_y1_x1_U32_P1_GA1_APLU1_BPLU1_PU0_LIW0_MIW1_ICE7_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 23040, 23040, 9, 9, 16, 23040, 0, 'f'},    "Y8_X8_y1_x1_U48_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW0_ICE37_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 12544, 12544, 147, 147, 64, 12544, 0, 'f'},    "Y32_X64_y2_x4_U32_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE24_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 26939, 26939, 100, 100, 32, 26939, 0, 'f'},    "Y16_X32_y1_x2_U32_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW0_ICE18_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2916, 2916, 27, 27, 64, 2916, 0, 'f'},    "Y8_X8_y1_x1_U32_P1_GA2_APLU1_BPLU1_PU0_LIW0_MIW1_ICE12_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 50176, 50176, 27, 27, 64, 50176, 0, 'f'},    "Y16_X32_y1_x2_U48_P1_GA2_APLU1_BPLU1_PU1_LIW0_MIW0_ICE32_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 49, 49, 832, 832, 256, 49, 0, 'f'},    "Y32_X32_y2_x2_U8_P1_GA2_APLU0_BPLU0_PU1_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 784, 784, 192, 192, 64, 784, 0, 'f'},    "Y16_X16_y1_x1_U16_P1_GA1_APLU1_BPLU0_PU1_LIW0_MIW1_ICE5_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2916, 2916, 576, 576, 64, 2916, 0, 'f'},    "Y64_X32_y4_x2_U16_P1_GA1_APLU1_BPLU0_PU1_LIW0_MIW1_ICE7_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 6308, 6308, 1600, 1600, 32, 6308, 0, 'f'},    "Y64_X32_y4_x2_U40_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE5_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1440, 1440, 288, 288, 64, 1440, 0, 'f'},    "Y32_X32_y2_x2_U32_P1_GA1_APLU1_BPLU0_PU0_LIW0_MIW1_ICE6_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 49, 49, 4608, 4608, 512, 49, 0, 'f'},    "Y32_X48_y2_x3_U16_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 49, 49, 2304, 2304, 512, 49, 0, 'f'},    "Y32_X32_y2_x2_U16_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 196, 196, 512, 512, 192, 196, 0, 'f'},    "Y32_X16_y2_x1_U16_P1_GA1_APLU1_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 49, 49, 20800, 20800, 128, 49, 0, 'f'},    "Y32_X32_y2_x2_U8_P1_GA3_APLU1_BPLU0_PU1_LIW0_MIW0_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 360, 360, 576, 576, 128, 360, 0, 'f'},    "Y16_X16_y2_x2_U24_P1_GA2_APLU1_BPLU1_PU1_LIW0_MIW0_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 196, 196, 4608, 4608, 512, 196, 0, 'f'},    "Y96_X64_y6_x4_U16_P1_GA2_APLU1_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 196, 196, 12800, 12800, 48, 196, 0, 'f'},    "Y32_X48_y2_x3_U16_P1_GA2_APLU1_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 3136, 3136, 1152, 1152, 256, 3136, 0, 'f'},    "Y80_X64_y5_x4_U16_P1_GA1_APLU0_BPLU0_PU0_LIW0_MIW1_ICE2_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 196, 196, 1152, 1152, 256, 196, 0, 'f'},    "Y48_X32_y3_x2_U16_P1_GA2_APLU1_BPLU0_PU0_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 12544, 12544, 576, 576, 128, 12544, 0, 'f'},    "Y96_X128_y6_x8_U32_P1_GA3_APLU0_BPLU0_PU0_LIW0_MIW1_ICE20_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 784, 784, 4800, 4800, 32, 784, 0, 'f'},    "Y32_X32_y2_x2_U32_P1_GA1_APLU1_BPLU0_PU1_LIW0_MIW1_ICE5_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 729, 729, 1152, 1152, 128, 729, 0, 'f'},    "Y48_X32_y3_x2_U16_P1_GA2_APLU1_BPLU1_PU0_LIW0_MIW1_ICE2_NAW64_UFO0" ), 
-  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 784, 784, 2304, 2304, 512, 784, 0, 'f'},    "Y96_X64_y6_x4_U16_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1000, 1000, 16, 16, 16, 1000, 0, 'f'},    "Y8_X8_y1_x1_U40_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE7_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 5760, 5760, 144, 144, 32, 5760, 0, 'f'},    "Y8_X8_y1_x1_U32_P1_GA1_APLU1_BPLU1_PU0_LIW0_MIW1_ICE7_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 23040, 23040, 9, 9, 16, 23040, 0, 'f'},    "Y8_X8_y1_x1_U48_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW0_ICE37_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 12544, 12544, 147, 147, 64, 12544, 0, 'f'},    "Y32_X64_y2_x4_U32_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE24_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 26939, 26939, 100, 100, 32, 26939, 0, 'f'},    "Y16_X32_y1_x2_U32_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW0_ICE18_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2916, 2916, 27, 27, 64, 2916, 0, 'f'},    "Y8_X8_y1_x1_U32_P1_GA2_APLU1_BPLU1_PU0_LIW0_MIW1_ICE12_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 50176, 50176, 27, 27, 64, 50176, 0, 'f'},    "Y16_X32_y1_x2_U48_P1_GA2_APLU1_BPLU1_PU1_LIW0_MIW0_ICE32_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 49, 49, 832, 832, 256, 49, 0, 'f'},    "Y32_X32_y2_x2_U8_P1_GA2_APLU0_BPLU0_PU1_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 784, 784, 192, 192, 64, 784, 0, 'f'},    "Y16_X16_y1_x1_U16_P1_GA1_APLU1_BPLU0_PU1_LIW0_MIW1_ICE5_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2916, 2916, 576, 576, 64, 2916, 0, 'f'},    "Y64_X32_y4_x2_U16_P1_GA1_APLU1_BPLU0_PU1_LIW0_MIW1_ICE7_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 6308, 6308, 1600, 1600, 32, 6308, 0, 'f'},    "Y64_X32_y4_x2_U40_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE5_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1440, 1440, 288, 288, 64, 1440, 0, 'f'},    "Y32_X32_y2_x2_U32_P1_GA1_APLU1_BPLU0_PU0_LIW0_MIW1_ICE6_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 49, 49, 4608, 4608, 512, 49, 0, 'f'},    "Y32_X48_y2_x3_U16_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 49, 49, 2304, 2304, 512, 49, 0, 'f'},    "Y32_X32_y2_x2_U16_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 196, 196, 512, 512, 192, 196, 0, 'f'},    "Y32_X16_y2_x1_U16_P1_GA1_APLU1_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 49, 49, 20800, 20800, 128, 49, 0, 'f'},    "Y32_X32_y2_x2_U8_P1_GA3_APLU1_BPLU0_PU1_LIW0_MIW0_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 360, 360, 576, 576, 128, 360, 0, 'f'},    "Y16_X16_y2_x2_U24_P1_GA2_APLU1_BPLU1_PU1_LIW0_MIW0_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 196, 196, 4608, 4608, 512, 196, 0, 'f'},    "Y96_X64_y6_x4_U16_P1_GA2_APLU1_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 196, 196, 12800, 12800, 48, 196, 0, 'f'},    "Y32_X48_y2_x3_U16_P1_GA2_APLU1_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 3136, 3136, 1152, 1152, 256, 3136, 0, 'f'},    "Y80_X64_y5_x4_U16_P1_GA1_APLU0_BPLU0_PU0_LIW0_MIW1_ICE2_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 196, 196, 1152, 1152, 256, 196, 0, 'f'},    "Y48_X32_y3_x2_U16_P1_GA2_APLU1_BPLU0_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 12544, 12544, 576, 576, 128, 12544, 0, 'f'},    "Y96_X128_y6_x8_U32_P1_GA3_APLU0_BPLU0_PU0_LIW0_MIW1_ICE20_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 784, 784, 4800, 4800, 32, 784, 0, 'f'},    "Y32_X32_y2_x2_U32_P1_GA1_APLU1_BPLU0_PU1_LIW0_MIW1_ICE5_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 729, 729, 1152, 1152, 128, 729, 0, 'f'},    "Y48_X32_y3_x2_U16_P1_GA2_APLU1_BPLU1_PU0_LIW0_MIW1_ICE2_NAW64_UFO0_ACW0_BCW0"), 
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 784, 784, 2304, 2304, 512, 784, 0, 'f'},    "Y96_X64_y6_x4_U16_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0"), 
 
 
 

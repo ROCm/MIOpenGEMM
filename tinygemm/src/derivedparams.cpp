@@ -8,9 +8,43 @@ namespace derivedparams{
 
 
 
+
+  
+  
+
+void DerivedParams::reset_acw1_params(const tinygemm::TinyGemmGeometry & gg){
+  /* what lda would be if no `padding' */
+  acw1_smallest_possible_lda = gg.tA == gg.isColMajor ? gg.k : gg.m;
+  /* smallest x s.t. x >= acw1_smallest_possible_lda and x = n*16 + 3. */ 
+  acw1_target_lda = 16* ( ( acw1_smallest_possible_lda  - 3 ) / 16 ) + 3  ;
+}
+
+void DerivedParams::reset_bcw1_params(const tinygemm::TinyGemmGeometry & gg){
+  /* what ldb would be if no `padding' */
+  bcw1_smallest_possible_ldb =  gg.tB == gg.isColMajor ? gg.n : gg.k;
+  /* smallest x s.t. x >= acw1_smallest_possible_lda and x = n*16 + 11. */ 
+  bcw1_target_lda = 16* ( ( acw1_smallest_possible_lda  - 11 ) / 16 ) + 11 ;
+}
+  
+void DerivedParams::reset_ga3_params(const hyperparams::HyperParams & hp){
+  
+  if (split_on_k == 1){
+    ga3_super_column_width = 
+    static_cast<unsigned>(std::floor(std::sqrt(static_cast<double>(hp.n_target_active_workgroups) / static_cast<double>(hp.n_work_items_per_c_elm))));
+  }
+  else if (split_on_k == 0){
+    ga3_super_column_width = 
+    static_cast<unsigned>(std::floor(std::sqrt(static_cast<double>(hp.n_target_active_workgroups))));
+  }
+  else{
+    throw tinygemm_error("split_on_k is neither 0 nor 1, how can this be? Logic error in append_super_column_width_defn");
+  }  
+  ga3_last_super_column_width = n_groups_horizontally % ga3_super_column_width;
+}
+
+
 std::tuple<bool, std::string>
 get_deriveability(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg){
-  hp.checks();
   DerivedParams dp("uninitialised");
   return dp.set_fragile(hp, gg);
 }
@@ -34,6 +68,7 @@ DerivedParams::set_fragile(const hyperparams::HyperParams & hp, const tinygemm::
   n_elements_of_b_to_load_per_workitem = n_elements_in_b_unroll / n_work_items_per_workgroup;  
   
   std::stringstream set_status_ss;  
+  
   /* check 0 : macro tile not too large */
   if (gg.m < hp.macro_tile_height){
     set_status_ss << "m < macro_tile_height, not considering this kernel\n";
@@ -135,20 +170,15 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams & hp, const tinygemm
   n_micro_b_tiles_pll_unroll = hp.unroll / micro_b_tile_pll_unroll;
   
   if (hp.group_allocation == 3){
-    if (split_on_k == 1){
-      ga3.super_column_width = 
-      static_cast<unsigned>(std::floor(std::sqrt(static_cast<double>(hp.n_target_active_workgroups) / static_cast<double>(hp.n_work_items_per_c_elm))));
-    }
-    else if (split_on_k == 0){
-      ga3.super_column_width = 
-      static_cast<unsigned>(std::floor(std::sqrt(static_cast<double>(hp.n_target_active_workgroups))));
-    }
-    
-    else{
-      throw tinygemm_error("split_on_k is neither 0 nor 1, how can this be? Logic error in append_super_column_width_defn");
-    }
-    
-    ga3.last_super_column_width = n_groups_horizontally % ga3.super_column_width;
+    reset_ga3_params(hp);//hp, n_groups_horizontally, split_on_k);
+  }
+  
+  if (hp.a_copy_workspace == 1){
+    reset_acw1_params(gg);
+  }
+
+  if (hp.b_copy_workspace == 1){
+    reset_bcw1_params(gg);
   }
 
 }
