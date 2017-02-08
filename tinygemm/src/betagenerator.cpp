@@ -123,14 +123,8 @@ __kernel void )"  << genericbetackernelname << R"((const unsigned dim_coal, cons
 
 )";
 
-
-  
   return {"betac", ss.str(), genericbetackernelname, get_global_work_size(gg), get_local_work_size(gg)};
 }
-
-
-
-
 
 
 }

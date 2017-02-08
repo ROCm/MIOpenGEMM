@@ -17,19 +17,10 @@ void TinyGemmKernel::try_release(){
   }
 }
 
-//TODO : why is second string passed by const &, and not as rval? pass new_kernstr with move.
-void TinyGemmKernel::update(const KernelString & ks){//const std::string & new_kernstr, const std::string & kern_func_name, size_t global_work_size_, size_t local_work_size_){
+
+void TinyGemmKernel::update(const KernelString & ks){
   try_release();
-  
-  tgk_strings = ks;
-  
-  //tgk_strings.kernstr = new_kernstr;      
-  //tgk_strings.fname = kern_func_name;
-  
-  //global_work_size = global_work_size_;
-  //local_work_size = local_work_size_;
-  
-  
+  tgk_strings = ks;  
   openclutil::set_program_and_kernel(command_queue, tgk_strings.kernstr, tgk_strings.fname, clprog, clkern);
 }
 

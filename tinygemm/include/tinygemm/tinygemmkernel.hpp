@@ -40,9 +40,15 @@ class TinyGemmKernel{
   
   public:  
     TinyGemmKernel(cl_command_queue command_queue_, const std::string & hash_);
-    //TODO : why is second string passed by const &, and not as rval?
-    void update(const KernelString & ks); //const std::string & new_kernstr, const std::string & kern_func_name, size_t global_work_size, size_t local_work_size);
+    
+    TinyGemmKernel():TinyGemmKernel(nullptr, "default constructed TinyGemmKernel"){}
+    
+    void update(const KernelString & ks); 
+
     ~TinyGemmKernel();
+    
+    TinyGemmKernel & operator= (const TinyGemmKernel &) = default;
+
     bool is_set();
     void set_kernel_args(std::vector<std::pair<size_t, const void *> > arg_sizes_values);
     
@@ -50,6 +56,7 @@ class TinyGemmKernel{
     int enqueue();
     
     void update_times();
+    
     void reset_times();
 };
 

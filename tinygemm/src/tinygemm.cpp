@@ -57,10 +57,9 @@ private:
   /* vector of times over a set of runs on core loop */
   std::vector<float> v_t_total;
 
-  TinyGemmKernel tk_main;
-  TinyGemmKernel tk_betac;
-  std::vector <TinyGemmKernel *> ptr_tk_kernels;
-  std::map<std::string, TinyGemmKernel *> tk_kernel_map;
+  std::map<std::string, TinyGemmKernel > tk_kernels_map;
+  std::vector <TinyGemmKernel *> tk_kernels_active;
+
 
 
 public:
@@ -83,13 +82,14 @@ public:
   b_gpu(b_gpu_), 
   c_gpu(c_gpu_),
   workspace_gpu(workspace_gpu_),
-  mowri(verbose_, outputfilename.compare("") != 0, outputfilename_),
-  tk_main(command_queue, "tk_main"),
-  tk_betac(command_queue, "tk_betac")
+  mowri(verbose_, outputfilename.compare("") != 0, outputfilename_)
   {
-    run_checks();    
-    tk_kernel_map["alphaonso"] = &tk_main;
-    tk_kernel_map["betac"] = &tk_betac;
+    
+    for (std::string x : {"alphaab", "betac", "alphaab_betac"}){
+      tk_kernels_map[x] = TinyGemmKernel(command_queue, x);
+    }
+    
+    run_checks();
   }
   
 private:
@@ -127,38 +127,59 @@ private:
     sizingup::check_sizes_ok_for_unsigned(gg, toff);
   }  
 
-  void set_main_kernel_arguments(){
-    /* set the main kernel parameters */
-    tk_main.set_kernel_args( {
-      {sizeof(cl_mem),                        (void *)&c_gpu},
-      {sizeof(cl_mem),                        (void *)&a_gpu},
-      {sizeof(cl_mem),                        (void *)&b_gpu},
-      {gg.derived.float_size_bytes,           m_alpha[gg.floattype]},
-      {gg.derived.float_size_bytes,           m_beta[gg.floattype]},
-      {sizeof(unsigned),                      &toff.oa},
-      {sizeof(unsigned),                      &toff.ob},
-      {sizeof(unsigned),                      &toff.oc} 
-    } );
+  //void set_betac_alphaab_kern_args(){
+    
+  void set_kern_args(const std::string & type){
+    
+    if (type.compare("betac_alphaab") == 0){
+      tk_kernels_map.at(type).set_kernel_args( {
+        {sizeof(cl_mem),                        (void *)&c_gpu},
+        {sizeof(cl_mem),                        (void *)&a_gpu},
+        {sizeof(cl_mem),                        (void *)&b_gpu},
+        {gg.derived.float_size_bytes,           m_alpha[gg.floattype]},
+        {gg.derived.float_size_bytes,           m_beta[gg.floattype]},
+        {sizeof(unsigned),                      &toff.oa},
+        {sizeof(unsigned),                      &toff.ob},
+        {sizeof(unsigned),                      &toff.oc} 
+      } );
+    }
+    
+    else if (type.compare("alphaab") == 0){
+      tk_kernels_map.at(type).set_kernel_args( {
+        {sizeof(cl_mem),                        (void *)&c_gpu},
+        {sizeof(cl_mem),                        (void *)&a_gpu},
+        {sizeof(cl_mem),                        (void *)&b_gpu},
+        {gg.derived.float_size_bytes,           m_alpha[gg.floattype]},
+        {sizeof(unsigned),                      &toff.oa},
+        {sizeof(unsigned),                      &toff.ob},
+        {sizeof(unsigned),                      &toff.oc} 
+      } );
+    }
+    
+    else if (type.compare("betac") == 0){
+      tk_kernels_map.at(type).set_kernel_args( {
+        {sizeof(unsigned),                      &gg.derived.dim_c_coal},
+        {sizeof(unsigned),                      &gg.derived.dim_c_uncoal},
+        {sizeof(unsigned),                      &gg.ldc},
+        {sizeof(unsigned),                      &toff.oc},
+        {sizeof(cl_mem),                        (void *)&c_gpu},
+        {gg.derived.float_size_bytes,           m_beta[gg.floattype]}    
+      } );              
+    }
+    
+    else{
+      throw tinygemm_error("what is the type of this kernel? Don't recognise " + type);
+    }
   }
-  
-  void set_betac_kernel_arguments(){
-    /* set the betac kernel parameters */
-    tk_betac.set_kernel_args( {
-      {sizeof(unsigned),                      &gg.derived.dim_c_coal},
-      {sizeof(unsigned),                      &gg.derived.dim_c_uncoal},
-      {sizeof(unsigned),                      &gg.ldc},
-      {sizeof(unsigned),                      &toff.oc},
-      {sizeof(cl_mem),                        (void *)&c_gpu},
-      {gg.derived.float_size_bytes,           m_beta[gg.floattype]}    
-    } );              
-  }
+    
+    
 
   bool refresh_needed(const std::string & type, const hyperparams::HyperParams & new_hp, const derivedparams::DerivedParams & new_dp){
     
     //TODO here : check hyper parameters to see if needed a new 
             
     if (type.compare("betac") == 0){
-       if (tk_betac.is_set() == false && new_dp.does_beta_c_inc == 0){
+       if (tk_kernels_map["betac"].is_set() == false && new_dp.does_beta_c_inc == 0){
          return true;
        }
        else{
@@ -166,7 +187,7 @@ private:
        }
     }
     
-    else if (type.compare("main") == 0 ||  type.compare("alphaonso") == 0){
+    else if (type.compare("alphaab") == 0 ||  type.compare("betac_alphaab") == 0){
       return true;
     }
     
@@ -179,20 +200,8 @@ private:
   void refresh_kernel(const KernelString & ks, const hyperparams::HyperParams & hp, const derivedparams::DerivedParams & dp){
     
     if (refresh_needed(ks.type, hp, dp) == true){
-    
-      if (ks.type.compare("betac") == 0){
-        tk_betac.update(ks);
-        set_betac_kernel_arguments();      
-      }
-      
-      else if (ks.type.compare("main") == 0 ||  ks.type.compare("alphaonso") == 0){
-        tk_main.update(ks);
-        set_main_kernel_arguments();
-      }
-      
-      else{
-        throw tinygemm_error("what is the type of this kernel? Don't recognise " + ks.type);
-      }
+      tk_kernels_map.at(ks.type).update(ks);
+      set_kern_args(ks.type);
     }
   }
 
@@ -201,10 +210,10 @@ private:
   //TODO : move kernstr in (rvalue ref)
   void setup_tinykernels(const hyperparams::HyperParams & hp, const kerngen::Bundle & bundle ){
     
-    ptr_tk_kernels.resize(0);
+    tk_kernels_active.resize(0);
     for (auto & ks : bundle.v_tgks){
       refresh_kernel(ks, hp, bundle.dp);
-      ptr_tk_kernels.push_back(tk_kernel_map.at(ks.type));
+      tk_kernels_active.push_back(&tk_kernels_map[ks.type]);
     }
   }
   
@@ -214,11 +223,11 @@ private:
     
     if (status == CL_SUCCESS){
       
-      for (auto & ptr_tk_kernel : ptr_tk_kernels){
+      for (auto & ptr_tk_kernel : tk_kernels_active){
         ptr_tk_kernel->update_times();
       }
       /* end time of last kernel - start time of first kernel */
-      v_t_total.push_back(1e-6*(ptr_tk_kernels.back()->t_end - ptr_tk_kernels[0]->t_start));
+      v_t_total.push_back(1e-6*(tk_kernels_active.back()->t_end - tk_kernels_active[0]->t_start));
     }
     
     else{
@@ -230,8 +239,8 @@ private:
     
     if (status == CL_SUCCESS){
       mowri << "total time : " <<  v_t_total.back() << "\t (";
-      for (unsigned k_ind = 0; k_ind < ptr_tk_kernels.size(); ++k_ind){
-        mowri << " k" << k_ind << ": " << ptr_tk_kernels[k_ind]->v_times.back() << " ";
+      for (unsigned k_ind = 0; k_ind < tk_kernels_active.size(); ++k_ind){
+        mowri << " k" << k_ind << ": " << tk_kernels_active[k_ind]->v_times.back() << " ";
       }
       mowri << ") " << "\tGflops/s : " << 2.0 * gg.m * gg.n * gg.k / (v_t_total.back() * 1e6) << Endl;
     }
@@ -245,7 +254,7 @@ private:
   void reset_v_times(){
     v_t_total.resize(0);
     
-    for (auto & ptr_tk_kernel : ptr_tk_kernels){
+    for (auto & ptr_tk_kernel : tk_kernels_active){
       ptr_tk_kernel->reset_times();
     }
   }
@@ -268,7 +277,7 @@ private:
        *  **************************************************************************************/
       
       int status = 10111; 
-      for (unsigned k_ind = 0; k_ind < ptr_tk_kernels.size(); ++k_ind){
+      for (unsigned k_ind = 0; k_ind < tk_kernels_active.size(); ++k_ind){
 
       /* At this point, the kernel has been succesfully compiled, 
        * but it is still possible that the resources necessary (LDS etc) are
@@ -276,16 +285,16 @@ private:
         
         
         if (k_ind == 0){ 
-          status = ptr_tk_kernels[k_ind]->enqueue();
+          status = tk_kernels_active[k_ind]->enqueue();
         }
         
         else{
-          status = ptr_tk_kernels[k_ind]->enqueue(1, &(ptr_tk_kernels[k_ind - 1]->clevent));
+          status = tk_kernels_active[k_ind]->enqueue(1, &(tk_kernels_active[k_ind - 1]->clevent));
         }
 
         if (status == CL_OUT_OF_RESOURCES){
           /* Set the run time(s) and append to vectors */
-          mowri << "kernel could not be enqueued, status returned from clEnqueueNDRangeKernel was CL_OUT_OF_RESOURCES (" <<ptr_tk_kernels[k_ind]->hash << ")" << Endl;
+          mowri << "kernel could not be enqueued, status returned from clEnqueueNDRangeKernel was CL_OUT_OF_RESOURCES (" <<tk_kernels_active[k_ind]->hash << ")" << Endl;
           break;
         }
       }
@@ -297,7 +306,7 @@ private:
       
       if (status == CL_SUCCESS){
         /* Wait for kernels to complete */
-        openclutil::cl_wait_for_events(1, &(ptr_tk_kernels.back()->clevent), "with status == CL_SUCCESS in core gemm loops");
+        openclutil::cl_wait_for_events(1, &(tk_kernels_active.back()->clevent), "with status == CL_SUCCESS in core gemm loops");
       }
 
       else if (status == CL_OUT_OF_RESOURCES){

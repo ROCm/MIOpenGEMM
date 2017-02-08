@@ -69,7 +69,8 @@ void print_kernel(){
   std::cout << bundle.v_tgks.back().kernstr;
   
   //std::ofstream floper ("/home/idiap/tinygemm/examplekernels/example1.cl", std::ios::out); 
-    std::ofstream floper ("/home/idiap/akernel.cl", std::ios::out); 
+  
+  std::ofstream floper ("/home/idiap/akernel.cl", std::ios::out); 
   floper << bundle.v_tgks.back().kernstr;
   
   floper.close();
@@ -80,10 +81,10 @@ void print_kernel(){
 int main(){
   
 
-  bool test_print = false;
-  bool test_benchgemm = true;
-  bool test_find = true;
-  bool test_accuracy = true;
+  bool test_print = true;
+  bool test_benchgemm = false;
+  bool test_find = false;
+  bool test_accuracy = false;
   bool test_default = false;
   
   typedef float tfloat;

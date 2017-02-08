@@ -645,7 +645,29 @@ void append_kernel_name(std::stringstream & ss){
   ss << kernelname;
 }
 
+
+void append_parameter_list(std::stringstream & ss){
+  ss << 
+R"((
+__global TFLOAT       *          c,
+__global const TFLOAT * restrict a,
+__global const TFLOAT * restrict b,
+const TFLOAT alpha,)"; 
   
+  if (dp.does_beta_c_inc == true){
+    ss << "\nconst TFLOAT beta,"; 
+  }
+  
+  ss<< 
+  
+R"(
+const unsigned a_offset,
+const unsigned b_offset,
+const unsigned c_offset  
+))";
+}
+
+
 public:
 
 /* the "main" kernel */
@@ -682,7 +704,6 @@ R"(****************************************************************** */
   ss << 
 R"(/* certain kernels can only do one or the other of the terms in c <- alpha a*b + beta c. */
 
-/* TODO : if DOES_BETA_C_INC is 0, then alpha should not appear as a kernel parameter */
 )";
   ss << "#define DOES_BETA_C_INC " << dp.does_beta_c_inc << "\n";
   ss << "#define DOES_ALPHA_A_B_INC 1" << "\n";
@@ -823,18 +844,9 @@ R"(
   ss << "\n\n\n__attribute__((reqd_work_group_size(" << dp.n_work_items_per_workgroup << ",1, 1)))\n";
   ss << "__kernel void ";
   append_kernel_name(ss);
+  append_parameter_list(ss);
   
-  ss << 
-R"((
-__global TFLOAT       *          c,
-__global const TFLOAT * restrict a,
-__global const TFLOAT * restrict b,
-const TFLOAT alpha,
-const TFLOAT beta,
-const unsigned a_offset,
-const unsigned b_offset,
-const unsigned c_offset  
-)
+  ss << R"(
 {
 
 
@@ -922,7 +934,9 @@ __local const TFLOAT * lB;
   append_final_write_all(ss);
   ss << "\n}\n";
 
-  return {"alphaonso", ss.str(), kernelname, dp.global_work_size, dp.n_work_items_per_workgroup};
+  std::string type = dp.does_beta_c_inc ? "betac_alphaab" : "alphaab";
+  
+  return {type, ss.str(), kernelname, dp.global_work_size, dp.n_work_items_per_workgroup};
 
 }
 
