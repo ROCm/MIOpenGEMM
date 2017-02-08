@@ -13,14 +13,6 @@
 namespace tinygemm{
 
 tinygemm::TinyGemmSolution
-get_default(
-const bool enforce_deterministic, 
-const char floattype, 
-const tinygemm::TinyGemmGeometry & gg
-);
-
-
-tinygemm::TinyGemmSolution
 find(
 /* in seconds */
 float allotted_time, 
@@ -50,8 +42,8 @@ get_default(
 const bool enforce_deterministic,
 const char floattype, 
 const tinygemm::TinyGemmGeometry & gg,
-bool verbose, 
-std::string logfile);
+bool verbose = false, 
+std::string logfile = "");
 
 void benchgemm(
 cl_command_queue command_queue, 
