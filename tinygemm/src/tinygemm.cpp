@@ -37,14 +37,16 @@ public:
 };
 
 
-/* TODO : this is exactly like that example from Scott Meyers ! */
-
-//template <typename K, typename T>
-//safe_at(const std::map<K,V> && m, const K && k){
-  //if (m.count(k) == 0){
-    //throw tinygemm_error("unrecognised key, " + std::to_string(k));
-  //}
-//}
+/* TODO : this is exactly like that example from Scott Meyers, return type index by map */
+template <typename V>
+auto safe_at(const std::map<std::string,V> & m, const std::string & k, std::string hash = "") -> decltype(m.at(k)) {
+  if (m.count(k) == 0){
+    throw tinygemm_error("unrecognised key, " + k + "  (" + hash + ")");
+  }
+  else{
+    return m.at(k);
+  }
+}
 
 static const MultiFloatType m_alpha(default_alpha);
 static const MultiFloatType m_beta(default_beta);
@@ -71,6 +73,8 @@ private:
 
   std::map<std::string, TinyGemmKernel > tk_kernels_map;
   std::vector <TinyGemmKernel *> tk_kernels_active;
+
+  std::vector<std::vector <unsigned > > v_wait_indices;
 
 
 
@@ -139,12 +143,11 @@ private:
     sizingup::check_sizes_ok_for_unsigned(gg, toff);
   }  
 
-  //void set_betac_alphaab_kern_args(){
     
   void set_kern_args(const std::string & type){
 
 
-
+    
     
     if (type.compare("betac_alphaab") == 0){
       tk_kernels_map.at(type).set_kernel_args( {
@@ -227,10 +230,11 @@ private:
   
   void refresh_kernel(const KernelString & ks, const hyperparams::HyperParams & hp, const derivedparams::DerivedParams & dp){
 
-
-    if (refresh_needed(ks.type, hp, dp) == true){
-      tk_kernels_map.at(ks.type).update(ks);
-      set_kern_args(ks.type);
+    auto type = ks.type;
+    if (refresh_needed(type, hp, dp) == true){
+      
+      tk_kernels_map.at(type).update(ks, mowri);
+      set_kern_args(type);
     }
   }
 
@@ -239,10 +243,19 @@ private:
   //TODO : move kernstr in (rvalue ref)
   void setup_tinykernels(const hyperparams::HyperParams & hp, const kerngen::Bundle & bundle ){
     
+    
+    
+    v_wait_indices = bundle.v_wait_indices;
+    
+
     tk_kernels_active.resize(0);
-    for (auto & ks : bundle.v_tgks){
-      refresh_kernel(ks, hp, bundle.dp);
-      tk_kernels_active.push_back(&tk_kernels_map[ks.type]);
+    
+    
+    
+    for (unsigned ksi = 0; ksi < bundle.v_tgks.size(); ++ksi){
+      auto type = bundle.v_tgks[ksi].type;
+      refresh_kernel(bundle.v_tgks[ksi], hp, bundle.dp);
+      tk_kernels_active.push_back(&tk_kernels_map[type]);
     }
   }
   
@@ -306,20 +319,34 @@ private:
        *  **************************************************************************************/
       
       int status = 10111; 
-      for (unsigned k_ind = 0; k_ind < tk_kernels_active.size(); ++k_ind){
 
+      for (unsigned k_ind = 0; k_ind < tk_kernels_active.size(); ++k_ind){
       /* At this point, the kernel has been succesfully compiled, 
        * but it is still possible that the resources necessary (LDS etc) are
        * not sufficient on this machine. We catch this case here. */        
         
-        
-        if (k_ind == 0){ 
-          status = tk_kernels_active[k_ind]->enqueue();
+
+        std::vector<cl_event> clevent_waits;
+
+        for (auto & evi : v_wait_indices[k_ind]){
+          /* copying cl_events is dangerous. I have seen that copying before passed to enqueue causes problems */
+          clevent_waits.emplace_back(tk_kernels_active[evi]->clevent);
         }
         
-        else{
-          status = tk_kernels_active[k_ind]->enqueue(1, &(tk_kernels_active[k_ind - 1]->clevent));
-        }
+        size_t num_events_int_wait_list = clevent_waits.size();
+        const cl_event * event_wait_list = num_events_int_wait_list == 0 ? nullptr : clevent_waits.data();
+        status = tk_kernels_active[k_ind]->enqueue(num_events_int_wait_list, event_wait_list);
+
+
+        ///* the in series solution */  
+        //if (k_ind == 0){ 
+          //status = tk_kernels_active[k_ind]->enqueue();
+        //}
+        
+        //else{
+          //status = tk_kernels_active[k_ind]->enqueue(1, &(tk_kernels_active[k_ind - 1]->clevent));
+        //}
+
 
         if (status == CL_OUT_OF_RESOURCES){
           /* Set the run time(s) and append to vectors */
@@ -464,6 +491,8 @@ public:
     
     mowri << "allotted time : " << allotted_time << Endl;
     while (improvement_found_on_front == true){
+      
+      
       improvement_found_on_front = false;
       mowri << "\nnew hyper front size : " << hyper_front.size() << Endl;
 
@@ -481,6 +510,7 @@ public:
         }
         
         else{
+          
           hyper_front_history.push_back(hp);
         
           /* reason 1 : the macro tile is too tall */
@@ -506,22 +536,16 @@ public:
              * with tests for hyper-parameter compatibilty in the python script which I don't want to recode here. The main compatibility 
              * issue caught here is that load sizes from global are multiples of the number of work items.  */
             
-            mowri << "\n" << hp.get_string() << Endl;
-            
-            
-            
             auto deriveability = derivedparams::get_deriveability(hp, gg);
             
-            
-            
             if (std::get<0>(deriveability) == true){
-            
+              
               auto bundle = tinygemm::kerngen::get_bundle(hp,gg);  
                             
               /* the kernel was succesfully generated, we now compile and benchmark it */
               
               ++global_counter;
-              mowri << "global gen-com-bench : " << global_counter  <<  "." << Endl;
+              mowri << "\nglobal gen-com-bench : " << global_counter  <<  ".\n" << hp.get_string() << Endl;
               
               setup_tinykernels(hp, bundle);  
               mowri << "(find) geometry : " << gg.get_string()  << "\nEntering the core gemm loops" << Endl; 
@@ -560,13 +584,15 @@ public:
                 tinygemm::TinyGemmSolutionStatistics tgss(median_time, median_benchmark_gflops, elapsed_seconds);
                      
                 path_of_best_solns.emplace_back( hp, gg, bundle.dp, tgss, bundle.v_tgks  );
+                
+                
 
               }
            
             }
           
             else{
-              mowri << "Skipping this kernel, hyper-parameters incompatible. " << Endl;
+              mowri << "\nSkipping " << hp.get_string() << ", hyper-parameters incompatible. " << Endl;
               mowri << "Specifically, the message from the kernel string setting function was \n`````\n" << std::get<1>(deriveability) << "'''''\n";
             }
           }
@@ -587,7 +613,6 @@ public:
         /* getting all `one-away's */
         hyper_front = best_hp.get_one_aways(gg);
       }
-
 
       
       if (improvement_found_on_front == false && front_search_horizon == 1 && elapsed_seconds < allotted_time){

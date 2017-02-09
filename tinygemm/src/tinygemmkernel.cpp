@@ -3,12 +3,16 @@
 #include <tinygemm/openclutil.hpp>
 #include <tinygemm/tinygemmerror.hpp>
 
+
+#include <chrono>
 namespace tinygemm{
   
 
 TinyGemmKernel::TinyGemmKernel(cl_command_queue command_queue_, const std::string & hash_): command_queue(command_queue_), clprog(nullptr), clkern(nullptr), hash(hash_) {}
     
 void TinyGemmKernel::try_release(){
+
+  
   if (clprog != nullptr){
     openclutil::cl_release_program(clprog, "TinyGemmKernel Destructor");
   }
@@ -18,10 +22,29 @@ void TinyGemmKernel::try_release(){
 }
 
 
-void TinyGemmKernel::update(const KernelString & ks){
+void TinyGemmKernel::update(const KernelString & ks, outputwriting::OutputWriter & mowri){
+
+
   try_release();
-  tgk_strings = ks;  
+  
+
+
+  tgk_strings = ks;
+  
+  mowri << "compiling " << ks.type << " ... " << Flush;
+
+
+    auto start = std::chrono::high_resolution_clock::now();
+
+
   openclutil::set_program_and_kernel(command_queue, tgk_strings.kernstr, tgk_strings.fname, clprog, clkern);
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<float> fp_ms = end - start;
+    float elapsed_seconds = fp_ms.count();
+
+
+  mowri << "done in " << elapsed_seconds << " [s]" << Endl;
+
 }
 
 TinyGemmKernel::~TinyGemmKernel(){
@@ -50,8 +73,9 @@ void TinyGemmKernel::set_kernel_args(std::vector<std::pair<size_t, const void *>
 
 int TinyGemmKernel::enqueue(cl_uint num_events_in_wait_list, const cl_event *event_wait_list){
   cl_int ret;
-  ret = clEnqueueNDRangeKernel(command_queue, clkern, 1, NULL, &tgk_strings.global_work_size, &tgk_strings.local_work_size, num_events_in_wait_list, event_wait_list, &clevent);
   
+  ret = clEnqueueNDRangeKernel(command_queue, clkern, 1, NULL, &tgk_strings.global_work_size, &tgk_strings.local_work_size, num_events_in_wait_list, event_wait_list, &clevent);
+    
   if (ret != CL_OUT_OF_RESOURCES){
     openclutil::confirm_cl_status(ret, "in enqueue of of TinyGemmKernel " + hash);
   }

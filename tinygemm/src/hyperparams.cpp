@@ -265,7 +265,7 @@ HyperParams get_default_tiniest(bool enforce_deterministic){
 /* Find the nearest geometry in the cache, and take its hyper params */
 HyperParams get_default(const tinygemm::TinyGemmGeometry & gg, bool enforce_deterministic){
   
-  //return std::string("Y128_X128_y8_x8_U32_P1_GA3_APLU0_BPLU1_PU1_LIW1_MIW1_ICE2__NAW64_UFO1_ACW0_BCW0");
+  //return std::string("Y128_X128_y8_x8_U32_P1_GA3_APLU0_BPLU1_PU1_LIW1_MIW1_ICE2_NAW64_UFO1_ACW0_BCW0");
   
   /* The case  of  (gg.m < 8 || gg.n < 8) */  
   if (gg.m < 8 || gg.n < 8) {
@@ -651,13 +651,13 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
     
     
     if (gg.tA == gg.isColMajor && gg.tB != gg.isColMajor && micro_tile_height*micro_tile_height == 64){
-      add_hps("Y128_X128_y8_x8_U8_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE1__NAW64_UFO1_ACW0_BCW0");
-      add_hps("Y128_X128_y8_x8_U8_P1_GA2_APLU1_BPLU1_PU1_LIW0_MIW1_ICE1__NAW64_UFO1_ACW0_BCW0");
+      add_hps("Y128_X128_y8_x8_U8_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO1_ACW0_BCW0");
+      add_hps("Y128_X128_y8_x8_U8_P1_GA2_APLU1_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO1_ACW0_BCW0");
     }
 
     else if (gg.tA != gg.isColMajor && gg.tB == gg.isColMajor && micro_tile_height*micro_tile_height == 64){
-      add_hps("Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE1__NAW64_UFO1_ACW0_BCW0");
-      add_hps("Y128_X128_y8_x8_U8_P1_GA2_APLU0_BPLU0_PU1_LIW0_MIW1_ICE1__NAW64_UFO1_ACW0_BCW0");
+      add_hps("Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE1_NAW64_UFO1_ACW0_BCW0");
+      add_hps("Y128_X128_y8_x8_U8_P1_GA2_APLU0_BPLU0_PU1_LIW0_MIW1_ICE1_NAW64_UFO1_ACW0_BCW0");
     }
     
     

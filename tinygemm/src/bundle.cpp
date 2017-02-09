@@ -31,28 +31,25 @@ public:
   BundleGenerator(const hyperparams::HyperParams & hp_, const tinygemm::TinyGemmGeometry & gg_): hp(hp_), gg(gg_), dp(hp, gg) {}
 
 Bundle generate(){
-  std::vector<KernelString> tgks;  
+  std::vector<KernelString> v_tgks;  
+  std::vector<std::vector<unsigned> > v_wait_indices;
   
   if (dp.does_beta_c_inc == 0){
-    
     /* currently the betac kernel does not rely on any hyper parameters, this may change. */
-    tgks.emplace_back( betagen::get_beta_kernelstring(gg) ); 
-    
-    //tgks.emplace_back (
-    //"betac", 
-    //betac::get_betac_kernel_string(gg.floattype, tinygemm::betac::genericbetackernelname), 
-    //tinygemm::betac::genericbetackernelname, 
-    //betac::get_global_work_size(gg),
-    //betac::get_local_work_size(gg) 
-    //);
+    v_tgks.emplace_back( betagen::get_beta_kernelstring(gg) );
+    v_tgks.emplace_back( alphagen::get_alpha_kernelstring(hp, gg, dp) );
+    v_wait_indices = { {}, {0} };
   }
   
-  tgks.emplace_back( alphagen::get_alpha_kernelstring(hp, gg, dp) );
+  else{
+    v_tgks.emplace_back( alphagen::get_alpha_kernelstring(hp, gg, dp) );
+    v_wait_indices = { {} };
+  }
   
-  for (auto & x : tgks){
+  for (auto & x : v_tgks){
     stringutil::indentify(x.kernstr);
   }
-  return { std::move(tgks), std::move(dp) };
+  return { std::move(v_tgks), std::move(v_wait_indices), std::move(dp) };
 }
 };
 

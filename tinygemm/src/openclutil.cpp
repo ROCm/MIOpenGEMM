@@ -146,14 +146,6 @@ cl_kernel cl_create_kernel(cl_program program, const char *kernel_name, const st
   cl_int errcode_ret;
   cl_kernel kernel = clCreateKernel(program, kernel_name, & errcode_ret);
   
-  /* proof that release should be called once, even if copies have been made */
-  //std::cout << "in create kernel" << std::endl;
-  //cl_kernel kernel2 = kernel;
-  //cl_release_kernel(kernel2, "bla bla");
-  //std::cout << "boom" << std::endl;
- 
-  //SafeClMem mem2("mem2");
-  //cl_release_mem_object(mem2, "bla bla");
   
   
   confirm_cl_status(errcode_ret, hash, "cl_create_kernel");

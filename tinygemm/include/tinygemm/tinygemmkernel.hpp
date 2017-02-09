@@ -6,6 +6,7 @@
 
 #include <CL/cl.h>
 #include <tinygemm/kernelstring.hpp>
+#include <tinygemm/outputwriter.hpp>
 
 namespace tinygemm{
   
@@ -43,8 +44,9 @@ class TinyGemmKernel{
     
     TinyGemmKernel():TinyGemmKernel(nullptr, "default constructed TinyGemmKernel"){}
     
-    void update(const KernelString & ks); 
+    void update(const KernelString & ks, outputwriting::OutputWriter & mowri); 
 
+  
     ~TinyGemmKernel();
     
     TinyGemmKernel & operator= (const TinyGemmKernel &) = default;
