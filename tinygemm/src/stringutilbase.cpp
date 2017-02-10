@@ -9,9 +9,15 @@ namespace stringutil{
 
 
 void indentify(std::string & source){
+  std::cout << source << std::endl;
   std::string newsource;
   newsource.reserve(source.length());
   std::string::size_type last_lend = source.find("\n", 0);  
+  
+  if (std::string::npos == last_lend){
+    throw tinygemm_error("the kernel up for indentification seems suspicious, it seems like it has no new lines in it :\n"  + source);  
+  }
+  
   std::string::size_type next_lend = source.find("\n", last_lend + 1);
   std::string::size_type next_open = source.find("{", 0);
   std::string::size_type next_close = source.find("}", 0);  
@@ -32,7 +38,7 @@ void indentify(std::string & source){
     else{
       newsource.append("\n");
       for (int i = 0; i < indent_level; ++i){
-	newsource.append("  ");
+        newsource.append("  ");
       }
       newsource.append(source, last_lend + 1, next_lend - last_lend - 1);
       last_lend = next_lend;

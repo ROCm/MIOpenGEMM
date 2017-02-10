@@ -17,12 +17,12 @@ class TinyGemmOffsets{
 
 class TinyGemmGeometryDerived{
 public:
-  unsigned dim_c_coal;
-  unsigned dim_c_uncoal;
+  //unsigned dim_c_coal;
+  //unsigned dim_c_uncoal;
   unsigned float_size_bits;
   unsigned float_size_bytes;
   
-  void reset(bool tC, bool isColMajor, unsigned n, unsigned m, char floattype);
+  void reset(char floattype); //bool tC, bool isColMajor, unsigned n, unsigned m, 
   
 };
 
@@ -42,10 +42,7 @@ public:
   unsigned workspace_size;
 //* 'f' : 32-bit single precision
 //* 'd' : 64-bit double precision 
-//* the user must guarantee that a, b and c are in agreement with floattype, 
-//* TODO is there a way to check float type from a,b,c? If so, floattype is not nec. */
-//const char floattype,
-  char floattype;
+  const char floattype;
   /* */
   TinyGemmGeometryDerived derived;
   
@@ -56,8 +53,13 @@ public:
   
   TinyGemmGeometry & operator= (const TinyGemmGeometry & ) = default;
   
-  //TODO : is this used? dangerous.
-  //TinyGemmGeometry() = default;
+  unsigned get_padless_dim(char x, bool isCoal) const;
+  
+  unsigned get_coal(char x) const;
+  
+  unsigned get_uncoal(char x) const;
+  
+  unsigned get_ld(char x) const;
   
   std::string get_string() const;
   

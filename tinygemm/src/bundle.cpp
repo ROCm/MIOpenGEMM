@@ -51,16 +51,28 @@ public:
   }
 
   Bundle generate(){
+    
+    
     std::vector<KernelString> v_tgks;  
     std::vector<std::vector<unsigned> > v_wait_indices;
     
     if (hp.a_copy_workspace == 1){
-      v_tgks.emplace_back( copygen::get_copy_a_kernelstring(hp, gg, dp) );
+      
+      
+      //KernelString get_copya_kernelstring(const tinygemm::TinyGemmGeometry & gg, const tinygemm::derivedparams::DerivedParams & dp){
+ //ForallGenerator fg(gg, dp, "copya");
+ //return fg.get_forall_kernelstring();
+//}
+
+
+      v_tgks.emplace_back( betagen::get_copya_kernelstring(gg, dp) );
     }
     
     if (hp.b_copy_workspace == 1){
       //v_tgks.emplace_back( copygen::get_copy_b_kernelstring(hp, gg, dp) ); //deduce from hp whether a is copied or not. 
     }
+    
+
     
     if (dp.does_beta_c_inc == 0){
       /* (OLD) currently the betac kernel does not rely on any hyper parameters, this may change. */
@@ -71,12 +83,13 @@ public:
     
     
     
-    
+
     /* indent the kernel strings, in case someone wants to print them. Performance addicts would not do this */
     for (auto & x : v_tgks){
       stringutil::indentify(x.kernstr);
     }
-      
+
+
     std::vector<std::string> types;
     for (unsigned i = 0; i < v_tgks.size(); ++i){
       types.push_back(v_tgks[i].type);
@@ -85,7 +98,7 @@ public:
     for (unsigned i = 0; i < v_tgks.size(); ++i){
       v_wait_indices.push_back({});
       for (unsigned j = 0; j < v_tgks.size(); ++j){
-        if (std::find(depmap[types[i]].begin(), depmap[types[i]].end(), types[j]) != depmap[types[i]].end()) {
+        if (std::find(depmap.at(types[i]).begin(), depmap.at(types[i]).end(), types[j]) != depmap.at(types[i]).end()) {
           v_wait_indices.back().push_back(j);
         }
       }

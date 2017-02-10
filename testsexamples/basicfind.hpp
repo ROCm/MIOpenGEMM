@@ -147,9 +147,6 @@ void basicfind(const tinygemm::TinyGemmGeometry & geometry, const tinygemm::Tiny
       clevents.emplace_back ();
       
       if (ks.type.compare("betac") == 0){
-        //tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 0, sizeof(unsigned), &geometry.derived.dim_c_coal, "betac 0");
-        //tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 1, sizeof(unsigned), &geometry.derived.dim_c_uncoal, "betac 1");
-        //tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 2, sizeof(unsigned), &geometry.ldc, "betac 2");
         tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 0, sizeof(unsigned), &toff.oc, "betac 0");
         tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 1, sizeof(cl_mem), (void *)&c_gpu, "betac 1");
         tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 2, sizeof(TFloat), &beta_true_type, "betac 2"); 

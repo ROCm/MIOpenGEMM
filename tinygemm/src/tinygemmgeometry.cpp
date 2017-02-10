@@ -12,9 +12,9 @@ namespace tinygemm{
 TinyGemmOffsets::TinyGemmOffsets(unsigned oa_, unsigned ob_, unsigned oc_, unsigned oworkspace_):oa(oa_), ob(ob_), oc(oc_), oworkspace(oworkspace_) {}
 
 
-void TinyGemmGeometryDerived::reset(bool tC, bool isColMajor, unsigned n, unsigned m, char floattype){
-  dim_c_coal = tC == isColMajor ? n : m;
-  dim_c_uncoal = tC == isColMajor ? m : n;
+void TinyGemmGeometryDerived::reset(char floattype){ //bool tC, bool isColMajor, unsigned n, unsigned m, 
+  //dim_c_coal = tC == isColMajor ? n : m;
+  //dim_c_uncoal = tC == isColMajor ? m : n;
   if (floattype == 'f'){
     float_size_bytes = sizeof(float);
   }
@@ -25,6 +25,60 @@ void TinyGemmGeometryDerived::reset(bool tC, bool isColMajor, unsigned n, unsign
 }
 
 
+/* return one of the dimensions of matrix a,b,c. this has nothing to do with lda, ldb, ldc. 
+ * isCoal : the coalesced dimesion? For example, for 'a' which is is m x k, 
+ * if tC = false, isColMajor = false, isCoal = true, then k is returned as k is the coalesced dim. 
+ * (false == false) == true  evaluates to true, so gate is true, so m is returned */
+unsigned TinyGemmGeometry::get_padless_dim(char x, bool isCoal) const{
+
+  bool gate = (tC == isColMajor) == isCoal;
+
+  if (x == 'a'){
+    return gate ? k : m;
+  }
+  
+  else if (x == 'b'){
+    return gate ? n : k;
+  }
+  
+  else if (x == 'c'){
+    return gate ? n : m; 
+  }
+  
+  else{
+    throw tinygemm_error("unrecognised char passed to get_coal in tinygemm geometry");
+  }
+}
+
+unsigned TinyGemmGeometry::get_ld(char x) const {
+  
+  if (x == 'a'){
+    return lda;
+  }
+  
+  else if (x == 'b'){
+    return ldb;
+  }
+  
+  else if (x == 'c'){
+    return ldc;
+  }
+  
+  else{
+    throw tinygemm_error("unrecognised char passed to get_ld in tinygemm geometry");
+  }
+  
+}
+  
+unsigned TinyGemmGeometry::get_uncoal(char x) const{
+  return get_padless_dim(x, false);
+}
+ 
+unsigned TinyGemmGeometry::get_coal(char x) const{
+  return get_padless_dim(x, true);
+} 
+  
+
 TinyGemmGeometry::TinyGemmGeometry(bool isColMajor_, bool tA_, bool tB_, bool tC_, unsigned lda_, unsigned ldb_, unsigned ldc_, unsigned m_, unsigned n_, unsigned k_, unsigned workspace_size_, char floattype_): isColMajor(isColMajor_), tA(tA_), tB(tB_), tC(tC_), lda(lda_), ldb(ldb_), ldc(ldc_), m(m_), n(n_), k(k_), workspace_size(workspace_size_), floattype(floattype_) {
 
   
@@ -34,7 +88,7 @@ TinyGemmGeometry::TinyGemmGeometry(bool isColMajor_, bool tA_, bool tB_, bool tC
     
   consistencychecks::check_ldx_mnk_consistent(isColMajor,  tA,  tB,  tC,  lda,  ldb,  ldc,  m,  n,  k); //, a_offset, b_offset, c_offset
   
-  derived.reset(tC, isColMajor, n, m, floattype);
+  derived.reset(floattype); //tC, isColMajor, n, m, 
 
 }
 
@@ -45,6 +99,7 @@ std::string TinyGemmGeometry::get_string() const{
   //geometry_stringstream << " tC:" << tC << " tA:" << tA << " tB:" << tB << " colMaj:" << isColMajor << " m:" << m << " n:" << n << " k:" << k << " lda:" << lda << " ldb:" << ldb << " ldc:" << ldc  << " workspace_size:" << workspace_size << " floattype:" << floattype;
   //return geometry_stringstream.str();
 }
+
 // " a_offset:" << a_offset << " b_offset:" << b_offset << " c_offset:" << c_offset << " workspace_offset:" << workspace_offset
 
 
