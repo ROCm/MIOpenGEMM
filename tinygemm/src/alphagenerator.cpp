@@ -17,7 +17,7 @@ namespace tinygemm{
 namespace alphagen{
   
   
-static const std::string generickernelname = "tg_generated_gemm";
+//static const std::string generickernelname = "tg_generated_gemm";
     
 class AlphaGenerator{
 
@@ -25,13 +25,20 @@ private:
   const hyperparams::HyperParams & hp;
   const tinygemm::TinyGemmGeometry & gg;
   const derivedparams::DerivedParams & dp;
+
+  std::string type;// = "betac";
+  std::string kernelname;
+
+
   /* set here as we do not want the user to choose (although would not break kernel) */
   unsigned use_edge_trick = 1;
-  
+
 
 public:
-  std::string kernelname = generickernelname;
-  AlphaGenerator(const hyperparams::HyperParams & hp_, const tinygemm::TinyGemmGeometry & gg_, const derivedparams::DerivedParams & dp_): hp(hp_), gg(gg_), dp(dp_) {}
+  //std::string kernelname = generickernelname;
+  AlphaGenerator(const hyperparams::HyperParams & hp_, const tinygemm::TinyGemmGeometry & gg_, const derivedparams::DerivedParams & dp_): 
+  hp(hp_), gg(gg_), dp(dp_), type(dp.does_beta_c_inc ? "betac_alphaab" : "alphaab"), kernelname(genutil::get_generic_kernelname(type))
+  {}
 
 
 private:
@@ -660,7 +667,6 @@ public:
 KernelString get_kernelstring(){
   
   
-  std::string type = dp.does_beta_c_inc ? "betac_alphaab" : "alphaab";
     
   //std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
   //std::time_t generation_time = std::chrono::system_clock::to_time_t(now);

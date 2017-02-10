@@ -7,6 +7,11 @@
 namespace tinygemm{
 namespace genutil{
 
+std::string get_generic_kernelname(const std::string & type){
+  return "tg_" + type;
+}
+
+
 std::string get_time_string(const std::string & type){  
 
   std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();

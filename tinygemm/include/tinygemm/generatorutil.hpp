@@ -6,6 +6,8 @@
 namespace tinygemm{
 namespace genutil{
 
+std::string get_generic_kernelname(const std::string & type);
+
 std::string get_time_string(const std::string & type); 
 
 std::string get_what_string();
