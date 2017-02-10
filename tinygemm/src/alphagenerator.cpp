@@ -1,5 +1,5 @@
 #include <tinygemm/alphagenerator.hpp>
-
+#include <tinygemm/generatorutil.hpp>
 
 #include <string>
 #include <iostream>
@@ -9,8 +9,8 @@
 #include <cmath>
 #include <tuple>
 #include <fstream>
-#include <chrono>
-#include <ctime>
+
+
 
 
 namespace tinygemm{
@@ -18,10 +18,6 @@ namespace alphagen{
   
   
 static const std::string generickernelname = "tg_generated_gemm";
-
-  //AlphaGenerator ag(hp, gg, dp);
-
-  //tgks.emplace_back( alphagen::get_alpha_kernelstring(hp, gg, dp) );
     
 class AlphaGenerator{
 
@@ -151,14 +147,6 @@ void append_b_load_for_pll(std::stringstream & ss){
   append_loop_var_bound_incr(ss, "mu_pll_i", bound_string, increment_string);
 }
 
-void append_mn_factor_string(std::stringstream & ss){
-  unsigned m_factor = use_edge_trick == 1 ? 1 : hp.macro_tile_height;
-  unsigned n_factor = use_edge_trick == 1 ? 1 : hp.macro_tile_width;
-  ss << R"(/* We define values which must be factors of m and n. Again, these have no influence on the running of the kernel */
-/* If  use_edge_trick is true, these are just 1 (every m and n are permissible) otherwise they are macro-tile dimensions */
-/* They are used by host code during checks for compatibility (for kernels with use_edge_trick false) of tile size with m and n */)" << 
-  "\n" << "#define M_FACTOR " << m_factor << "\n" << "#define N_FACTOR " << n_factor;
-}
 
 void append_final_write_element(std::stringstream & ss, unsigned atomic_increment, unsigned with_beta_scaling, unsigned with_alpha_increment){
   
@@ -670,22 +658,27 @@ public:
 
 /* the "main" kernel */
 KernelString get_kernelstring(){
+  
+  
+  std::string type = dp.does_beta_c_inc ? "betac_alphaab" : "alphaab";
     
-  std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
-  std::time_t generation_time = std::chrono::system_clock::to_time_t(now);
+  //std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+  //std::time_t generation_time = std::chrono::system_clock::to_time_t(now);
     
 
   std::stringstream ss;
   
-  ss << 
-  R"(/* ******************************************************************
-* This gemm kernel string was generated on )" << std::ctime(&generation_time) << 
-R"(****************************************************************** */
+  ss << genutil::get_time_string(type);
+//zzzzzzzzzzzzzzzzzzzzzz
+  //R"(/* ******************************************************************
+//* This gemm kernel string was generated on )" << std::ctime(&generation_time) << 
+//R"(****************************************************************** */
 
+  ss <<  "\n\n" << genutil::get_what_string() << "\n";
 /* ***********************************************
 * These parameters define WHAT this kernel does *
 * *********************************************** */
-)";
+//)";
 
   ss << "#define __M__ " << gg.m << "\n";
   ss << "#define __N__ " << gg.n << "\n";
@@ -699,10 +692,10 @@ R"(****************************************************************** */
   ss << "#define C_TRANSPOSED " << gg.tC <<  "\n";
   ss << "#define TFLOAT  "  << dp.t_float << "\n";
   
-  ss << 
-R"(/* certain kernels can only do one or the other of the terms in c <- alpha a*b + beta c. */
+  //ss << 
+//R"(/* certain kernels can only do one or the other of the terms in c <- alpha a*b + beta c. */
 
-)";
+//)";
   ss << "#define DOES_BETA_C_INC " << dp.does_beta_c_inc << "\n";
   ss << "#define DOES_ALPHA_A_B_INC 1" << "\n";
   
@@ -722,14 +715,9 @@ R"(
 /* TODO : investigate mad. When should one use this instead of standard overloads, += and * ? 
 
 
-/* ****************************************
- * These parameters define HOW it does it *
- * *****************************************/
+)" << genutil::get_how_string() << R"(
 /* Defines a tile shape. Each thread will process a tile of this shape from C (if N_WORK_ITEMS_PER_C_ELM > 1 the processing is shared with threads in other WGs)  */
 )";
-  
-  
-  
   ss << "#define MICRO_TILE_WIDTH " << hp.micro_tile_width << "\n";
   ss << "#define MICRO_TILE_HEIGHT " << hp.micro_tile_height << "\n";
   ss << "/* Area of C which a workgroup will process. Recall that a workgroup is made of several threads which share LDS memory */\n";
@@ -749,7 +737,6 @@ R"(
   ss << "/* if 0, no shimmying. if 1, instead of starting at k = 0 workgroups start at some negative offset dependent on work group id */\n";
   ss << "/* in the same way as the final unroll populates LDS with zeros in k mod UNROLL != 0, the initial negative indices here populate with 0 */\n";
   ss << "#define UNROLL_FOR_OFFSET " << hp.unroll_for_offset << "\n";
-  
   ss << 
 R"(
 /* define the way in which work groups are assigned to tiles */
@@ -759,7 +746,6 @@ R"(
 )";
 
   append_group_allocation_defn_string(ss);
-
   ss << 
 R"(
 /* Whether the load tiles are long in the direction of unroll (1) or perpendicular to the direction of unroll (0) */
@@ -785,15 +771,8 @@ R"(
   ss << "/* (deprecated parameter, as of 17 Nov 2016, see git log) How many steps ahead are we reading into LDS, as compared to the unroll loop */\n";
   ss << "/* This should be the domain of the compiler, and currently (26/08/2016, Catalyst) it seems that leaving this as 0 is best.  */\n";
   ss << "#define N_PREFETCH_FOR_LDS_LOAD " << 0 << "\n";
-  ss << 
-R"(
-
-
-
-/* *****************************************************************************
- * The following are all implied by the preceding: these are NOT free parameters!
- * **************************************************************************** */
-/*  <+_+>
+  ss << "\n\n\n\n" << genutil::get_derived_string() << "\n";
+  ss << R"(/*  <+_+>
  *           <+_+>
  *      <+_+>
  * TODO : rerereconsider assignment of workitems to load and math regions, there may be some sweet overlap spot where values automatically in registers for math (?) */
@@ -932,7 +911,7 @@ __local const TFLOAT * lB;
   append_final_write_all(ss);
   ss << "\n}\n";
 
-  std::string type = dp.does_beta_c_inc ? "betac_alphaab" : "alphaab";
+
   
   return {type, ss.str(), kernelname, dp.global_work_size, dp.n_work_items_per_workgroup};
 

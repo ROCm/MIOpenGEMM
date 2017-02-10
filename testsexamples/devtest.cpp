@@ -20,7 +20,7 @@
 tinygemm::hyperparams::HyperParams get_hp(std::string hyperstring = ""){
 
   if (hyperstring.compare("") == 0){
-    hyperstring = "Y64_X64_y4_x4_U8_P1_GA3_APLU1_BPLU1_PU0_LIW1_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0";
+    hyperstring = "Y64_X64_y4_x4_U8_P1_GA3_APLU1_BPLU1_PU0_LIW1_MIW1_ICE2_NAW64_UFO0_ACW0_BCW0";
     //hyperstring = "Y128_X96_y8_x6_U8_P1_GA3_APLU0_BPLU1_PU1_LIW1_MIW1_ICE2_NAW64_UFO1_NAW64_UFO0";
   }
   return hyperstring;
@@ -65,14 +65,17 @@ void print_kernel(){
   
   auto bundle = tinygemm::kerngen::get_bundle(hp, gg);
   
-  std::cout << bundle.v_tgks.back().kernstr;
+  //std::cout << bundle.v_tgks[0].kernstr; //.back()
   
-  //std::ofstream floper ("/home/idiap/tinygemm/examplekernels/example1.cl", std::ios::out); 
+
+    //std::ofstream floper ("/home/idiap/tinygemm/examplekernels/example1.cl", std::ios::out); 
   
-  std::ofstream floper ("/home/idiap/akernel.cl", std::ios::out); 
-  floper << bundle.v_tgks.back().kernstr;
-  
-  floper.close();
+  for (auto & x :  bundle.v_tgks){
+    std::ofstream floper ("/home/idiap/akernel_" +  x.type+ ".cl", std::ios::out); 
+    floper << x.kernstr;
+    floper.close();
+  }
+
 }
   
 
@@ -80,9 +83,9 @@ void print_kernel(){
 int main(){
   
 
-  bool test_print = false;
+  bool test_print = true;
   bool test_benchgemm = false;//true;
-  bool test_find = true;
+  bool test_find = false;
   bool test_accuracy = false;
   bool test_default = false;
   

@@ -40,12 +40,15 @@ public:
 /* TODO : this is exactly like that example from Scott Meyers, return type index by map */
 template <typename V>
 auto safe_at(const std::map<std::string,V> & m, const std::string & k, std::string hash = "") -> decltype(m.at(k)) {
+  
   if (m.count(k) == 0){
     throw tinygemm_error("unrecognised key, " + k + "  (" + hash + ")");
   }
+  
   else{
     return m.at(k);
   }
+
 }
 
 static const MultiFloatType m_alpha(default_alpha);
@@ -323,20 +326,37 @@ private:
       for (unsigned k_ind = 0; k_ind < tk_kernels_active.size(); ++k_ind){
       /* At this point, the kernel has been succesfully compiled, 
        * but it is still possible that the resources necessary (LDS etc) are
-       * not sufficient on this machine. We catch this case here. */        
+       * not sufficient on this machine. We catch this case here. 
+       * TODO : architects can go some way to catching these before compilation */        
         
 
         std::vector<cl_event> clevent_waits;
 
         for (auto & evi : v_wait_indices[k_ind]){
-          /* copying cl_events is dangerous. I have seen that copying before passed to enqueue causes problems */
+          /* copying cl_events is dangerous. 
+           * I have seen that copying them before passed to enqueue 
+           * (last parameter) causes problems,
+           * this is my idea of what is going on, to confirm: 
+           * from cl.h, we see that
+           * typedef struct _cl_event *          cl_event,
+           * that is cl_event is a pointer to a _cl_event. 
+           * when a cl_event address is passed to enqueue,
+           * the value if it changes. that is it points to a different _cl_event.
+           * thus ev_a = ev_b, enqueue(..., ev_b) 
+           * leaves ev_a pointing to a bad place 
+           * checking the event is safe:
+           * clGetEventInfo takes cl_events by value. 
+           * So the moral of the story is : 
+           * don't copy cl_events before passing their address  
+           * as non-const pointers somewhere!
+           * paruse cl.h, sometimes *cl_event is passed as const, sometimes not
+           *  */
           clevent_waits.emplace_back(tk_kernels_active[evi]->clevent);
         }
         
         size_t num_events_int_wait_list = clevent_waits.size();
         const cl_event * event_wait_list = num_events_int_wait_list == 0 ? nullptr : clevent_waits.data();
         status = tk_kernels_active[k_ind]->enqueue(num_events_int_wait_list, event_wait_list);
-
 
         ///* the in series solution */  
         //if (k_ind == 0){ 
