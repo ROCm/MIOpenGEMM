@@ -14,7 +14,7 @@ class TinyGemmOffsets{
     
     TinyGemmOffsets(unsigned oa, unsigned ob, unsigned oc, unsigned oworkspace);
     
-    unsigned & operator[](char c); 
+    const unsigned & operator[](char c) const; 
     
 };
 

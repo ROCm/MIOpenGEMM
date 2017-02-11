@@ -642,22 +642,27 @@ void append_kernel_name(std::stringstream & ss){
 void append_parameter_list(std::stringstream & ss){
   ss << 
 R"((
-__global TFLOAT       *          c,
 __global const TFLOAT * restrict a,
+const unsigned a_offset,
 __global const TFLOAT * restrict b,
-const TFLOAT alpha,)"; 
+const unsigned b_offset,
+__global TFLOAT       *          c,
+const unsigned c_offset,  
+const TFLOAT alpha )"; 
   
   if (dp.does_beta_c_inc == true){
-    ss << "\nconst TFLOAT beta,"; 
+    ss << ",\nconst TFLOAT beta)"; 
   }
-  
+  else{
+    ss << ")";
+  }
   ss<< 
   
 R"(
-const unsigned a_offset,
-const unsigned b_offset,
-const unsigned c_offset  
-))";
+
+
+
+)";
 }
 
 
@@ -917,9 +922,17 @@ __local const TFLOAT * lB;
   append_final_write_all(ss);
   ss << "\n}\n";
 
+  
+  bool uses_a = true; 
+  bool uses_b = true;
+  bool uses_c = true;
+  bool uses_workspace = false;
+  bool uses_alpha  = true;
+  bool uses_beta = dp.does_beta_c_inc;
+
 
   
-  return {type, ss.str(), kernelname, dp.global_work_size, dp.n_work_items_per_workgroup};
+  return { {uses_a, uses_b, uses_c, uses_workspace, uses_alpha, uses_beta } , ss.str(), kernelname, dp.global_work_size, dp.n_work_items_per_workgroup};
 
 }
 

@@ -71,7 +71,7 @@ void print_kernel(){
     //std::ofstream floper ("/home/idiap/tinygemm/examplekernels/example1.cl", std::ios::out); 
   
   for (auto & x :  bundle.v_tgks){
-    auto fname = "/home/idiap/akernel_" +  x.type +  ".cl";
+    auto fname = "/home/idiap/akernel_" +  x.type.full +  ".cl";
     std::cout << "writing " << fname << " ... " << std::flush;
     std::ofstream floper (fname, std::ios::out); 
     floper << x.kernstr;

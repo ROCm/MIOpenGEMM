@@ -18,6 +18,7 @@
 #include <tinygemm/tinygemmkernel.hpp>
 #include <tinygemm/derivedparams.hpp>
 #include <tinygemm/architests.hpp>
+#include <tinygemm/kernelstring.hpp>
 
 namespace tinygemm{
 
@@ -82,9 +83,6 @@ class TinyGemmGPUMems{
         throw tinygemm_error(std::string("unrecognised char passed to operator[] of TinyGemmGPUMems. Should be one of a,b,c,w, not ") + x);
       }
     }
-    
-    
-  
 };  
 
 class OpenCLGemmEncapsulator{
@@ -97,7 +95,9 @@ public:
   
   TinyGemmGPUMems gpum;
   
-  std::vector<std::string> possible_kernel_types = {"alphaab", "betac", "betac_alphaab"};
+  /* TODO : this belongs somewhere else */
+  const std::vector<std::string> possible_basic_types = {"copya", "copyb", "betac", "main"};
+  
 
 private:
   outputwriting::OutputWriter mowri;
@@ -131,7 +131,7 @@ public:
   mowri(verbose_, outputfilename.compare("") != 0, outputfilename_)
   {
     
-    for (auto & x : possible_kernel_types){
+    for (auto & x : possible_basic_types){
       tk_kernels_map[x] = TinyGemmKernel(command_queue, x);
     }
     
@@ -174,77 +174,89 @@ private:
   }  
 
     
-  void set_kern_args(const std::string & type){
+  void set_kern_args(const KernelType & type){
 
-
-    // TODO TODO !!! very cool solution:
     /* parameter order rule: {a, oa, b, ob, c, oc, ws, ows}, alpha, beta */
+    std::vector<std::pair<size_t, const void *> > arg_sizes_values;
     
+  
+    for (auto & x : {'a', 'b', 'c', 'w'}){
+      if (type.uses(x) == true){
+        arg_sizes_values.emplace_back(sizeof(cl_mem), (void *)&(gpum[x]));
+        arg_sizes_values.emplace_back(sizeof(unsigned), &(toff[x]));
+      }
+    }
     
-    //std::vector<std::pair<size_t, const void *> > arg_sizes_values;
+    if (type.uses_alpha){
+      arg_sizes_values.emplace_back(gg.derived.float_size_bytes, m_alpha[gg.floattype]);
+    }
     
+    if (type.uses_beta){
+      arg_sizes_values.emplace_back(gg.derived.float_size_bytes, m_beta[gg.floattype]);      
+    }
+    
+    tk_kernels_map.at(type.basic).set_kernel_args(arg_sizes_values);
+    
+  }
+  
+  
+      //else{
+      //throw tinygemm_error("what is the type of this kernel? Don't recognise " + type + ", in set_kern_args in tinygemm.cpp");
+    //}
 
-    
-    
-    //if (type.uses_a){
-      //arg_sizes_values.emplace_back(sizeof(cl_mem), (void *)&gpum['a']);
-      //arg_sizes_values.emplace_back(sizeof(unsigned), &toff.oa);
+
+    //if (type.compare("betac") == 0){
+      //tk_kernels_map.at(type).set_kernel_args( {
+        //{sizeof(unsigned),                      &toff.oc},
+        //{sizeof(cl_mem),                        (void *)&gpum['c']},
+        //{gg.derived.float_size_bytes,           m_beta[gg.floattype]}    
+      //} );              
     //}
         
     
-    if (type.compare("betac_alphaab") == 0){
-      tk_kernels_map.at(type).set_kernel_args( {
-        {sizeof(cl_mem),                        (void *)&gpum['c']},
-        {sizeof(cl_mem),                        (void *)&gpum['a']},
-        {sizeof(cl_mem),                        (void *)&gpum['b']},
-        {gg.derived.float_size_bytes,           m_alpha[gg.floattype]},
-        {gg.derived.float_size_bytes,           m_beta[gg.floattype]},
-        {sizeof(unsigned),                      &toff.oa},
-        {sizeof(unsigned),                      &toff.ob},
-        {sizeof(unsigned),                      &toff.oc} 
-      } );
-    }
+    //else if (type.compare("betac_alphaab") == 0){
+      //tk_kernels_map.at(type).set_kernel_args( {
+        //{sizeof(cl_mem),                        (void *)&gpum['c']},
+        //{sizeof(cl_mem),                        (void *)&gpum['a']},
+        //{sizeof(cl_mem),                        (void *)&gpum['b']},
+        //{gg.derived.float_size_bytes,           m_alpha[gg.floattype]},
+        //{gg.derived.float_size_bytes,           m_beta[gg.floattype]},
+        //{sizeof(unsigned),                      &toff.oa},
+        //{sizeof(unsigned),                      &toff.ob},
+        //{sizeof(unsigned),                      &toff.oc} 
+      //} );
+    //}
     
     
-    else if (type.compare("alphaab") == 0){
-      tk_kernels_map.at(type).set_kernel_args( {
-        {sizeof(cl_mem),                        (void *)&gpum['c']},
-        {sizeof(cl_mem),                        (void *)&gpum['a']},
-        {sizeof(cl_mem),                        (void *)&gpum['b']},
-        {gg.derived.float_size_bytes,           m_alpha[gg.floattype]},
-        {sizeof(unsigned),                      &toff.oa},
-        {sizeof(unsigned),                      &toff.ob},
-        {sizeof(unsigned),                      &toff.oc} 
-      } );
-    }
+    //else if (type.compare("alphaab") == 0){
+      //tk_kernels_map.at(type).set_kernel_args( {
+        //{sizeof(cl_mem),                        (void *)&gpum['c']},
+        //{sizeof(cl_mem),                        (void *)&gpum['a']},
+        //{sizeof(cl_mem),                        (void *)&gpum['b']},
+        //{gg.derived.float_size_bytes,           m_alpha[gg.floattype]},
+        //{sizeof(unsigned),                      &toff.oa},
+        //{sizeof(unsigned),                      &toff.ob},
+        //{sizeof(unsigned),                      &toff.oc} 
+      //} );
+    //}
     
-    else if (type.compare("betac") == 0){
-      tk_kernels_map.at(type).set_kernel_args( {
-        {sizeof(unsigned),                      &toff.oc},
-        {sizeof(cl_mem),                        (void *)&gpum['c']},
-        {gg.derived.float_size_bytes,           m_beta[gg.floattype]}    
-      } );              
-    }
 
-    else if (type.compare("betac_alphaab_fromworkspace") == 0){
-      tk_kernels_map.at(type).set_kernel_args( {
-        {sizeof(cl_mem),                        (void *)&gpum['c']},
-        {sizeof(cl_mem),                        (void *)&gpum['w']},
-        {gg.derived.float_size_bytes,           m_alpha[gg.floattype]},
-        {gg.derived.float_size_bytes,           m_beta[gg.floattype]},
-        {sizeof(unsigned),                      &toff.oworkspace},
-        {sizeof(unsigned),                      &toff.oc} 
-      } );
-    }
+    //else if (type.compare("betac_alphaab_fromworkspace") == 0){
+      //tk_kernels_map.at(type).set_kernel_args( {
+        //{sizeof(cl_mem),                        (void *)&gpum['c']},
+        //{sizeof(cl_mem),                        (void *)&gpum['w']},
+        //{gg.derived.float_size_bytes,           m_alpha[gg.floattype]},
+        //{gg.derived.float_size_bytes,           m_beta[gg.floattype]},
+        //{sizeof(unsigned),                      &toff.oworkspace},
+        //{sizeof(unsigned),                      &toff.oc} 
+      //} );
+    //}
         
     
-    else{
-      throw tinygemm_error("what is the type of this kernel? Don't recognise " + type + ", in set_kern_args in tinygemm.cpp");
-    }
     
 
 
-  }
+  
     
     
 
@@ -261,12 +273,12 @@ private:
        }
     }
     
-    else if (type.compare("alphaab") == 0 ||  type.compare("betac_alphaab") == 0){
+    else if (type.compare("main") == 0){// ||  type.compare("betac_alphaab") == 0){
       return true;
     }
     
     else{
-       throw tinygemm_error("what is the type of this kernel? Don't recognise " + type);
+       throw tinygemm_error("what is the type of this kernel? Don't recognise it : " + type);
     }
     
   }
@@ -274,9 +286,8 @@ private:
   void refresh_kernel(const KernelString & ks, const hyperparams::HyperParams & hp, const derivedparams::DerivedParams & dp){
 
     auto type = ks.type;
-    if (refresh_needed(type, hp, dp) == true){
-      
-      tk_kernels_map.at(type).update(ks, mowri);
+    if (refresh_needed(type.basic, hp, dp) == true){
+      tk_kernels_map.at(type.basic).update(ks, mowri);
       set_kern_args(type);
     }
   }
@@ -296,9 +307,9 @@ private:
     
     
     for (unsigned ksi = 0; ksi < bundle.v_tgks.size(); ++ksi){
-      auto type = bundle.v_tgks[ksi].type;
+      std::string basic = bundle.v_tgks[ksi].type.basic;
       refresh_kernel(bundle.v_tgks[ksi], hp, bundle.dp);
-      tk_kernels_active.push_back(&tk_kernels_map[type]);
+      tk_kernels_active.push_back(&tk_kernels_map[basic]);
     }
   }
   

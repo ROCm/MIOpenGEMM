@@ -11,7 +11,7 @@ namespace tinygemm{
 
 TinyGemmOffsets::TinyGemmOffsets(unsigned oa_, unsigned ob_, unsigned oc_, unsigned oworkspace_):oa(oa_), ob(ob_), oc(oc_), oworkspace(oworkspace_) {}
 
-unsigned & TinyGemmOffsets::operator[](char x){
+const unsigned & TinyGemmOffsets::operator[](char x) const{
   if (x == 'a'){
     return oa;
   }
@@ -30,9 +30,7 @@ unsigned & TinyGemmOffsets::operator[](char x){
   }
 }
 
-void TinyGemmGeometryDerived::reset(char floattype){ //bool tC, bool isColMajor, unsigned n, unsigned m, 
-  //dim_c_coal = tC == isColMajor ? n : m;
-  //dim_c_uncoal = tC == isColMajor ? m : n;
+void TinyGemmGeometryDerived::reset(char floattype){
   if (floattype == 'f'){
     float_size_bytes = sizeof(float);
   }
@@ -117,9 +115,6 @@ std::string TinyGemmGeometry::get_string() const{
   //geometry_stringstream << " tC:" << tC << " tA:" << tA << " tB:" << tB << " colMaj:" << isColMajor << " m:" << m << " n:" << n << " k:" << k << " lda:" << lda << " ldb:" << ldb << " ldc:" << ldc  << " workspace_size:" << workspace_size << " floattype:" << floattype;
   //return geometry_stringstream.str();
 }
-
-// " a_offset:" << a_offset << " b_offset:" << b_offset << " c_offset:" << c_offset << " workspace_offset:" << workspace_offset
-
 
 std::string TinyGemmGeometry::get_networkconfig_string() const{
   std::stringstream geometry_stringstream;

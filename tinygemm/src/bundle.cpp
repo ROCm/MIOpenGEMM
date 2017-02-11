@@ -44,8 +44,7 @@ public:
     depmap["copya"] = {};
     depmap["copyb"] = {};
     depmap["betac"] = {};
-    depmap["alphaab"] = {"betac", "copya", "copyb"};
-    depmap["betac_alphaab"] = {"copya", "copyb"};
+    depmap["main"] = {"betac", "copya", "copyb"};
 
   }
 
@@ -63,11 +62,10 @@ public:
       //v_tgks.emplace_back( copygen::get_copy_b_kernelstring(hp, gg, dp) ); //deduce from hp whether a is copied or not. 
     }
     
-
-    
     if (dp.does_beta_c_inc == 0){
       v_tgks.emplace_back( forallgen::get_beta_kernelstring(hp, gg, dp) );
     }
+    
     
     v_tgks.emplace_back( alphagen::get_alpha_kernelstring(hp, gg, dp) );
 
@@ -76,7 +74,7 @@ public:
       stringutil::indentify(x.kernstr);
     }
 
-    std::vector<std::string> types;
+    std::vector<KernelType> types;
     for (unsigned i = 0; i < v_tgks.size(); ++i){
       types.push_back(v_tgks[i].type);
     }
@@ -84,7 +82,7 @@ public:
     for (unsigned i = 0; i < v_tgks.size(); ++i){
       v_wait_indices.push_back({});
       for (unsigned j = 0; j < v_tgks.size(); ++j){
-        if (std::find(depmap.at(types[i]).begin(), depmap.at(types[i]).end(), types[j]) != depmap.at(types[i]).end()) {
+        if (std::find(depmap.at(types[i].basic).begin(), depmap.at(types[i].basic).end(), types[j].basic) != depmap.at(types[i].basic).end()) {
           v_wait_indices.back().push_back(j);
         }
       }
@@ -93,14 +91,15 @@ public:
     
     std::cout << "-----------------------------------------\nnetwork : \n";
     for (unsigned i = 0; i < v_tgks.size(); ++i){
-      std::cout << "kernel " << i << " ( " << types[i] << " )  ----- waits for -----> " << std::flush;
+      std::cout << "kernel " << i << " ( " << types[i].full << " )  ----- waits for -----> " << std::flush;
       for (unsigned j = 0; j < v_wait_indices[i].size(); ++j){
-        std::cout << v_wait_indices[i][j] << " ( " << types[v_wait_indices[i][j]] << " )   " << std::flush;
+        std::cout << v_wait_indices[i][j] << " ( " << types[v_wait_indices[i][j]].full << " )   " << std::flush;
       }
       std::cout << std::endl;
     }
     std::cout << "-----------------------------------------\n" << std::endl;
     
+
 
 
     

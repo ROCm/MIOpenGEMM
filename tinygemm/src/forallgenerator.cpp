@@ -25,7 +25,7 @@ private:
   const tinygemm::derivedparams::DerivedParams & dp;
 
   
-  std::string type;
+  std::string forall_type;
   std::string kernelname;
 
   unsigned n_full_work_items_per_line;
@@ -34,25 +34,65 @@ private:
   unsigned n_work_items;
   unsigned start_in_coal_last_work_item;
   unsigned work_for_last_item_in_coal;
-  char mxz;
+  
+  
+  bool uses_a; 
+  bool uses_b;
+  bool uses_c;
+  bool uses_workspace;
+  bool uses_alpha;
+  bool uses_beta;
+  char mxz;  
+  std::string description_string;
+  std::string function_definition;
+  std::string inner_work_string;
 
 void set_forall_derived(){
+
+  uses_alpha = false;  
   
-  if (type.compare("betac") == 0){
+  if (forall_type.compare("betac") == 0){
+    uses_a = false;
+    uses_b = false;
+    uses_c = true;
+    uses_workspace = false;
+    uses_beta = true;
     mxz = 'c';
+    description_string = R"(
+/* ****************************************************
+* It is used to perform the beta*C step in GEMM, 
+* where recall GEMM has C <- alpha*A*B + beta*C
+* It is not quite an axpy, as when ldc is not minimal, 
+* C is not contiguous memory  
+****************************************************** */ )";
+    function_definition = "(__global TFLOAT * x, const unsigned x_offset, TFLOAT beta)";
+    inner_work_string = "\n/* the beta scaling */\nx[i] *= beta;";
   }
-  
-  else if (type.compare("copya") == 0){
-    mxz = 'a';
+    
+  else if (forall_type.compare("copya") == 0 || forall_type.compare("copyb") == 0){
+    uses_c = false;
+    uses_workspace = true;
+    uses_beta = false;
+    description_string = R"()";
+    function_definition = "(__global const TFLOAT * restrict x, const unsigned x_offset, __global TFLOAT * y, const unsigned y_offset)";
+    inner_work_string = "\n/* the copy */\ny[i] = x[i];";
+    
+    if (forall_type.compare("copya") == 0){    
+      uses_a = true;
+      uses_b = false;    
+      mxz = 'a';
+    }
+    else{
+      uses_a = false;
+      uses_b = true;    
+      mxz = 'b';
+    }
   }
-  
-  else if (type.compare("copyb") == 0){
-    mxz = 'b';
-  }
-  
+    
   else{
-    throw tinygemm_error("Unrecognised type in forallgenerator.cpp : " + type + ".\n");
+    throw tinygemm_error("Unrecognised forall_type in forallgenerator.cpp : " + forall_type + ".\n");
   }
+  
   
   n_full_work_items_per_line = gg.get_coal(mxz)  / work_per_thread;
   n_work_items_per_line = n_full_work_items_per_line + (gg.get_coal(mxz) % work_per_thread != 0);
@@ -63,24 +103,22 @@ void set_forall_derived(){
 }
 
 
-void append_description_string(std::stringstream & ss){
-
-  if (type.compare("betac") == 0){
-  ss << 
-R"(
-
-
-/* ****************************************************
-* It is used to perform the beta*C step in GEMM, 
-* where recall GEMM has C <- alpha*A*B + beta*C
-* It is not quite an axpy, as when ldc is not minimal, 
-* C is not contiguous memory  
-****************************************************** */ )";
-
+public:
+  ForallGenerator(const tinygemm::hyperparams::HyperParams & hp_,  const tinygemm::TinyGemmGeometry & gg_, const tinygemm::derivedparams::DerivedParams & dp_, std::string forall_type_): 
+  hp(hp_), gg(gg_), dp(dp_), forall_type(forall_type_), kernelname(genutil::get_generic_kernelname(forall_type))
+  {
+    set_forall_derived();
   }
-  
-  
+
+
+private:
+
+void append_description_string(std::stringstream & ss){
+  ss <<  description_string;
 }
+
+
+ 
 
 
 void append_what_definitions(std::stringstream & ss){
@@ -105,7 +143,7 @@ R"(/* The number of values from C which each non-edge work-item will scale by be
 
 
 void append_copy_preprocessor(std::stringstream & ss){
-  if (hp.a_copy_workspace == 1 && (type.compare("copyb") == 0)){
+  if (hp.a_copy_workspace == 1 && (forall_type.compare("copyb") == 0)){
     ss << "/*      b will be copied to a section of workspace after where a is copied */\n";
     ss << "#define GLOBAL_OFFSET " <<  dp.get_target_ld('a')*gg.get_uncoal('a') << "\n";
   }
@@ -135,7 +173,7 @@ void append_derived_definitions(std::stringstream & ss){
   ss << "#define START_IN_COAL_LAST_WORK_ITEM " << start_in_coal_last_work_item <<  "\n";
   ss << "/*      and process DIM_COAL % WORK_PER_THREAD elements of c */\n";
   ss << "#define WORK_FOR_LAST_ITEM_IN_COAL " << work_for_last_item_in_coal << "\n";
-  if (type.compare("copya") == 0 || type.compare("copyb") == 0){
+  if (forall_type.compare("copya") == 0 || forall_type.compare("copyb") == 0){
     append_copy_preprocessor(ss);
   }
     
@@ -153,13 +191,7 @@ size_t get_global_work_size(){
 }
 
 void append_function_definition(std::stringstream & ss){
-  if (type.compare("betac") == 0){
-    ss << kernelname << "(const unsigned x_offset, __global TFLOAT * x, TFLOAT beta)";
-  }
-  
-  else if (type.compare("copya") == 0 || type.compare("copyb") == 0){
-    ss << kernelname << "(const unsigned x_offset, __global const TFLOAT * restrict x, const unsigned y_offset, __global TFLOAT * y)";
-  }
+  ss << kernelname << function_definition;
 }
 
 
@@ -202,27 +234,13 @@ x += start_coal;
 
 
 
-public:
-  ForallGenerator(const tinygemm::hyperparams::HyperParams & hp_,  const tinygemm::TinyGemmGeometry & gg_, const tinygemm::derivedparams::DerivedParams & dp_, std::string type_): 
-  hp(hp_), gg(gg_), dp(dp_), type(type_), kernelname(genutil::get_generic_kernelname(type))
-  {
-    set_forall_derived();
-  }
 
 
 private:
 
 
 void append_inner_work(std::stringstream & ss){
-  if (type.compare("betac") == 0){
-    ss << "\n/* the beta scaling */\n";
-    ss << "x[i] *= beta;";
-  }
-  
-  else{
-    ss << "\n/* the copy */\n";
-    ss << "y[i] = x[i];";
-  }
+  ss << inner_work_string;  
 }
 
 void append_work_string(std::stringstream & ss){
@@ -264,7 +282,7 @@ KernelString get_forall_kernelstring(){
 
   std::stringstream ss;
 
-  ss << genutil::get_time_string(type);
+  ss << genutil::get_time_string(forall_type);
   append_description_string(ss);
 
   ss << "\n\n" << genutil::get_what_string() << "\n";
@@ -286,7 +304,7 @@ KernelString get_forall_kernelstring(){
   append_setup_coordinates(ss);
   append_positioning_x_string(ss);
 
-  if (type.compare("copya") == 0 || type.compare("copyb") == 0){
+  if (forall_type.compare("copya") == 0 || forall_type.compare("copyb") == 0){
     append_positioning_y_string(ss);
   }
   
@@ -294,7 +312,10 @@ KernelString get_forall_kernelstring(){
   
   ss << "\n}\n\n\n";
 
-  return {type, ss.str(), kernelname, get_global_work_size(), get_local_work_size()};
+
+
+
+  return {{uses_a, uses_b, uses_c, uses_workspace, uses_alpha, uses_beta}, ss.str(), kernelname, get_global_work_size(), get_local_work_size()};
 }
 
 
@@ -304,12 +325,17 @@ KernelString get_forall_kernelstring(){
 
 
 KernelString get_beta_kernelstring(const tinygemm::hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg, const tinygemm::derivedparams::DerivedParams & dp){
- ForallGenerator fg(hp, gg, dp, "betac");
+ ForallGenerator fg(hp, gg, dp, "betac"); //haha hehe.
  return fg.get_forall_kernelstring();
 }
 
 KernelString get_copya_kernelstring(const tinygemm::hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg, const tinygemm::derivedparams::DerivedParams & dp){
  ForallGenerator fg(hp, gg, dp, "copya");
+ return fg.get_forall_kernelstring();
+}
+
+KernelString get_copyb_kernelstring(const tinygemm::hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg, const tinygemm::derivedparams::DerivedParams & dp){
+ ForallGenerator fg(hp, gg, dp, "copyb");
  return fg.get_forall_kernelstring();
 }
 

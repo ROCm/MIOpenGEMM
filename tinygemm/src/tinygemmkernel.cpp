@@ -31,7 +31,7 @@ void TinyGemmKernel::update(const KernelString & ks, outputwriting::OutputWriter
 
   tgk_strings = ks;
   
-  mowri << "compiling " << ks.type << " ... " << Flush;
+  mowri << "compiling " << ks.type.basic << " ( " << ks.type.full << " ) ... " << Flush;
 
 
     auto start = std::chrono::high_resolution_clock::now();
