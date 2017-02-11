@@ -1,9 +1,8 @@
 #include <tinygemm/bundle.hpp>
 #include <tinygemm/tinygemmerror.hpp>
 #include <tinygemm/derivedparams.hpp>
-#include <tinygemm/betagenerator.hpp>
 #include <tinygemm/alphagenerator.hpp>
-#include <tinygemm/copygenerator.hpp>
+#include <tinygemm/forallgenerator.hpp>
 #include <tinygemm/stringutilbase.hpp>
 
 #include <string>
@@ -42,11 +41,11 @@ public:
   BundleGenerator(const hyperparams::HyperParams & hp_, const tinygemm::TinyGemmGeometry & gg_): hp(hp_), gg(gg_), dp(hp, gg) {
     
     //TODO: should be static:    
-    depmap["copy_a"] = {};
-    depmap["copy_b"] = {};
+    depmap["copya"] = {};
+    depmap["copyb"] = {};
     depmap["betac"] = {};
-    depmap["alphaab"] = {"betac", "copy_a", "copy_b"};
-    depmap["betac_alphaab"] = {"betac", "copy_a", "copy_b"};
+    depmap["alphaab"] = {"betac", "copya", "copyb"};
+    depmap["betac_alphaab"] = {"copya", "copyb"};
 
   }
 
@@ -57,15 +56,7 @@ public:
     std::vector<std::vector<unsigned> > v_wait_indices;
     
     if (hp.a_copy_workspace == 1){
-      
-      
-      //KernelString get_copya_kernelstring(const tinygemm::TinyGemmGeometry & gg, const tinygemm::derivedparams::DerivedParams & dp){
- //ForallGenerator fg(gg, dp, "copya");
- //return fg.get_forall_kernelstring();
-//}
-
-
-      v_tgks.emplace_back( betagen::get_copya_kernelstring(gg, dp) );
+      v_tgks.emplace_back( forallgen::get_copya_kernelstring(hp, gg, dp) );
     }
     
     if (hp.b_copy_workspace == 1){
@@ -75,20 +66,15 @@ public:
 
     
     if (dp.does_beta_c_inc == 0){
-      /* (OLD) currently the betac kernel does not rely on any hyper parameters, this may change. */
-      v_tgks.emplace_back( betagen::get_beta_kernelstring(gg, dp) );
+      v_tgks.emplace_back( forallgen::get_beta_kernelstring(hp, gg, dp) );
     }
     
     v_tgks.emplace_back( alphagen::get_alpha_kernelstring(hp, gg, dp) );
-    
-    
-    
 
     /* indent the kernel strings, in case someone wants to print them. Performance addicts would not do this */
     for (auto & x : v_tgks){
       stringutil::indentify(x.kernstr);
     }
-
 
     std::vector<std::string> types;
     for (unsigned i = 0; i < v_tgks.size(); ++i){
@@ -134,3 +120,10 @@ Bundle get_bundle(const hyperparams::HyperParams & hp,  const tinygemm::TinyGemm
 
 }
 }
+
+
+      //KernelString get_copya_kernelstring(const tinygemm::TinyGemmGeometry & gg, const tinygemm::derivedparams::DerivedParams & dp){
+ //ForallGenerator fg(gg, dp, "copya");
+ //return fg.get_forall_kernelstring();
+//}
+

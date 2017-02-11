@@ -9,7 +9,6 @@ namespace stringutil{
 
 
 void indentify(std::string & source){
-  std::cout << source << std::endl;
   std::string newsource;
   newsource.reserve(source.length());
   std::string::size_type last_lend = source.find("\n", 0);  

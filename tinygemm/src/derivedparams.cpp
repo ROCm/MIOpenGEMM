@@ -10,20 +10,27 @@ namespace derivedparams{
 
 
   
-  
+unsigned get_target(unsigned grid_size, unsigned above_distance, unsigned x){
+  unsigned to_grid_line = (x - above_distance) / grid_size  + ((x - above_distance) % grid_size != 1);
+  return grid_size * to_grid_line + above_distance;
+} 
 
 void DerivedParams::reset_acw1_params(const tinygemm::TinyGemmGeometry & gg){
   /* what lda would be if no `padding' */
   acw1_smallest_possible_lda = gg.tA == gg.isColMajor ? gg.k : gg.m;
+  
+  
   /* smallest x s.t. x >= acw1_smallest_possible_lda and x = n*16 + 3. */ 
-  acw1_target_lda = 16* ( ( acw1_smallest_possible_lda  - 3 ) / 16 ) + 3  ;
+  acw1_target_lda = get_target(16, 3, acw1_smallest_possible_lda);
+  
 }
 
 void DerivedParams::reset_bcw1_params(const tinygemm::TinyGemmGeometry & gg){
   /* what ldb would be if no `padding' */
   bcw1_smallest_possible_ldb =  gg.tB == gg.isColMajor ? gg.n : gg.k;
-  /* smallest x s.t. x >= acw1_smallest_possible_lda and x = n*16 + 11. */ 
-  bcw1_target_lda = 16* ( ( acw1_smallest_possible_lda  - 11 ) / 16 ) + 11 ;
+  /* smallest x s.t. x >= bcw1_smallest_possible_ldb and x = n*16 + 11. */ 
+  bcw1_target_ldb =  get_target(16, 11, bcw1_smallest_possible_ldb);
+
 }
   
 void DerivedParams::reset_ga3_params(const hyperparams::HyperParams & hp){
@@ -181,6 +188,19 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams & hp, const tinygemm
     reset_bcw1_params(gg);
   }
 
+}
+
+
+unsigned DerivedParams::get_target_ld(char c) const{
+  if (c == 'a'){
+    return acw1_target_lda;
+  }
+  else if (c == 'b'){
+    return bcw1_target_ldb;
+  }
+  else{
+    throw tinygemm_error("unrecognised char in get_target_ld(char c)");
+  }  
 }
 
 

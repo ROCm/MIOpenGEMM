@@ -98,8 +98,10 @@ public:
   /* BCW1 specific derived parameters */
   unsigned bcw1_smallest_possible_ldb = uninitialised_unsigned; // ( tB == isColMajor ? n : k )
   /* smallest x s.t. x >= acw1_smallest_possible_lda and x = n*16 + 11. */ 
-  unsigned bcw1_target_lda = uninitialised_unsigned; //  16* ( ( acw1_smallest_possible_lda  - 11 ) / 16 ) + 11  
+  unsigned bcw1_target_ldb = uninitialised_unsigned; //  16* ( ( acw1_smallest_possible_lda  - 11 ) / 16 ) + 11  
 
+  unsigned get_target_ld(char c) const;
+  
 
 
 };

@@ -53,7 +53,39 @@ auto safe_at(const std::map<std::string,V> & m, const std::string & k, std::stri
 
 static const MultiFloatType m_alpha(default_alpha);
 static const MultiFloatType m_beta(default_beta);
+
+class TinyGemmGPUMems{
+  private:
+    cl_mem a_gpu;
+    cl_mem b_gpu;
+    cl_mem c_gpu;
+    cl_mem workspace_gpu;
   
+  public:
+    TinyGemmGPUMems(cl_mem a_gpu_, cl_mem b_gpu_, cl_mem c_gpu_, cl_mem workspace_gpu_):a_gpu(a_gpu_), b_gpu(b_gpu_), c_gpu(c_gpu_), workspace_gpu(workspace_gpu_) {}
+
+    cl_mem & operator[](char x){
+      if (x == 'a'){
+        return a_gpu;
+      }
+      else if (x == 'b'){
+        return b_gpu;
+      }
+      else if (x == 'c'){
+        return c_gpu;
+      }
+      else if (x == 'w'){
+        return workspace_gpu;
+      }
+      
+      else{
+        throw tinygemm_error(std::string("unrecognised char passed to operator[] of TinyGemmGPUMems. Should be one of a,b,c,w, not ") + x);
+      }
+    }
+    
+    
+  
+};  
 
 class OpenCLGemmEncapsulator{
 
@@ -62,11 +94,9 @@ public:
   std::string outputfilename;
   const tinygemm::TinyGemmGeometry gg;
   const tinygemm::TinyGemmOffsets toff;
-  cl_mem a_gpu;
-  cl_mem b_gpu;
-  cl_mem c_gpu;
-  cl_mem workspace_gpu;
-
+  
+  TinyGemmGPUMems gpum;
+  
   std::vector<std::string> possible_kernel_types = {"alphaab", "betac", "betac_alphaab"};
 
 private:
@@ -97,10 +127,7 @@ public:
   outputfilename(outputfilename_),
   gg(gg_),
   toff(toff_),
-  a_gpu(a_gpu_),
-  b_gpu(b_gpu_), 
-  c_gpu(c_gpu_),
-  workspace_gpu(workspace_gpu_),
+  gpum(a_gpu_, b_gpu_, c_gpu_, workspace_gpu_),
   mowri(verbose_, outputfilename.compare("") != 0, outputfilename_)
   {
     
@@ -113,30 +140,30 @@ public:
   
 private:
   void address_check_valid(){
-    if (c_gpu == a_gpu || c_gpu == b_gpu){
+    if (gpum['c'] == gpum['a'] || gpum['c'] == gpum['b']){
       throw tinygemm_error("c should be distinct from a and b for gemm, otherwise race condition arises (one thread writes its result to c before another one has finished reading from c)");
     }
     
-    if (c_gpu == nullptr){
+    if (gpum['c'] == nullptr){
       throw tinygemm_error("c should not be nullptr");
     }
     
-    if (workspace_gpu == nullptr && gg.workspace_size != 0){
+    if (gpum['w'] == nullptr && gg.workspace_size != 0){
       throw tinygemm_error("pointer to workspace memory is the nullptr, but workspace_size is not zero");
     }
     
-    if (workspace_gpu != nullptr && gg.workspace_size == 0){
+    if (gpum['w'] != nullptr && gg.workspace_size == 0){
       throw tinygemm_error("pointer to workspace memory is not the nullptr, but workspace_size is zero. if workspace_size is zero please set workspace_gpu to the nullptr to make super clear that there will be no workspace used ");      
     }
     
-    if (workspace_gpu != nullptr && (workspace_gpu == a_gpu || workspace_gpu == b_gpu || workspace_gpu == c_gpu ) ){
+    if (gpum['w'] != nullptr && (gpum['w'] == gpum['a'] || gpum['w'] == gpum['b'] || gpum['w'] == gpum['c'] ) ){
       throw tinygemm_error("pointer to workspace memory is not the nullptr, and it is the same as one of the a,b,c pointers ");
     }
   }
   
   void address_check_valid_and_reliable(){
     address_check_valid();
-    if (a_gpu == b_gpu){
+    if (gpum['a'] == gpum['b']){
       throw tinygemm_error( "a and b are the same. this will effect kernel run time, not sure if this should be allowed so throwing"); 
     }
   }
@@ -150,13 +177,26 @@ private:
   void set_kern_args(const std::string & type){
 
 
+    // TODO TODO !!! very cool solution:
+    /* parameter order rule: {a, oa, b, ob, c, oc, ws, ows}, alpha, beta */
     
+    
+    //std::vector<std::pair<size_t, const void *> > arg_sizes_values;
+    
+
+    
+    
+    //if (type.uses_a){
+      //arg_sizes_values.emplace_back(sizeof(cl_mem), (void *)&gpum['a']);
+      //arg_sizes_values.emplace_back(sizeof(unsigned), &toff.oa);
+    //}
+        
     
     if (type.compare("betac_alphaab") == 0){
       tk_kernels_map.at(type).set_kernel_args( {
-        {sizeof(cl_mem),                        (void *)&c_gpu},
-        {sizeof(cl_mem),                        (void *)&a_gpu},
-        {sizeof(cl_mem),                        (void *)&b_gpu},
+        {sizeof(cl_mem),                        (void *)&gpum['c']},
+        {sizeof(cl_mem),                        (void *)&gpum['a']},
+        {sizeof(cl_mem),                        (void *)&gpum['b']},
         {gg.derived.float_size_bytes,           m_alpha[gg.floattype]},
         {gg.derived.float_size_bytes,           m_beta[gg.floattype]},
         {sizeof(unsigned),                      &toff.oa},
@@ -168,9 +208,9 @@ private:
     
     else if (type.compare("alphaab") == 0){
       tk_kernels_map.at(type).set_kernel_args( {
-        {sizeof(cl_mem),                        (void *)&c_gpu},
-        {sizeof(cl_mem),                        (void *)&a_gpu},
-        {sizeof(cl_mem),                        (void *)&b_gpu},
+        {sizeof(cl_mem),                        (void *)&gpum['c']},
+        {sizeof(cl_mem),                        (void *)&gpum['a']},
+        {sizeof(cl_mem),                        (void *)&gpum['b']},
         {gg.derived.float_size_bytes,           m_alpha[gg.floattype]},
         {sizeof(unsigned),                      &toff.oa},
         {sizeof(unsigned),                      &toff.ob},
@@ -181,15 +221,15 @@ private:
     else if (type.compare("betac") == 0){
       tk_kernels_map.at(type).set_kernel_args( {
         {sizeof(unsigned),                      &toff.oc},
-        {sizeof(cl_mem),                        (void *)&c_gpu},
+        {sizeof(cl_mem),                        (void *)&gpum['c']},
         {gg.derived.float_size_bytes,           m_beta[gg.floattype]}    
       } );              
     }
 
     else if (type.compare("betac_alphaab_fromworkspace") == 0){
       tk_kernels_map.at(type).set_kernel_args( {
-        {sizeof(cl_mem),                        (void *)&c_gpu},
-        {sizeof(cl_mem),                        (void *)&workspace_gpu},
+        {sizeof(cl_mem),                        (void *)&gpum['c']},
+        {sizeof(cl_mem),                        (void *)&gpum['w']},
         {gg.derived.float_size_bytes,           m_alpha[gg.floattype]},
         {gg.derived.float_size_bytes,           m_beta[gg.floattype]},
         {sizeof(unsigned),                      &toff.oworkspace},
@@ -199,7 +239,7 @@ private:
         
     
     else{
-      throw tinygemm_error("what is the type of this kernel? Don't recognise " + type);
+      throw tinygemm_error("what is the type of this kernel? Don't recognise " + type + ", in set_kern_args in tinygemm.cpp");
     }
     
 
