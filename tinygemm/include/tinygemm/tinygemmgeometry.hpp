@@ -13,6 +13,9 @@ class TinyGemmOffsets{
     unsigned oworkspace;
     
     TinyGemmOffsets(unsigned oa, unsigned ob, unsigned oc, unsigned oworkspace);
+    
+    unsigned & operator[](char c); 
+    
 };
 
 class TinyGemmGeometryDerived{

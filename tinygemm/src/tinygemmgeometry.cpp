@@ -11,6 +11,24 @@ namespace tinygemm{
 
 TinyGemmOffsets::TinyGemmOffsets(unsigned oa_, unsigned ob_, unsigned oc_, unsigned oworkspace_):oa(oa_), ob(ob_), oc(oc_), oworkspace(oworkspace_) {}
 
+unsigned & TinyGemmOffsets::operator[](char x){
+  if (x == 'a'){
+    return oa;
+  }
+  else if (x == 'b'){
+    return ob;
+  }
+  else if (x == 'c'){
+    return oc;
+  }
+  else if (x == 'w'){
+    return oworkspace;
+  }
+  
+  else{
+    throw tinygemm_error(std::string("unrecognised char passed to operator[](char x) of TinyGemmOffsets. Should be one of a,b,c,w, not ") + x);
+  }
+}
 
 void TinyGemmGeometryDerived::reset(char floattype){ //bool tC, bool isColMajor, unsigned n, unsigned m, 
   //dim_c_coal = tC == isColMajor ? n : m;
