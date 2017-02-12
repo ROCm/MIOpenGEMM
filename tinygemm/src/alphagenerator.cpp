@@ -687,7 +687,7 @@ void append_parameter_list(std::stringstream & ss){
 void append_initial_a_offset(std::stringstream & ss){
   if (hp.a_copy_workspace == 1){
     ss << "/* a from workspace */\n";
-    ss << "TFLOAT * restrict a = workspace + workspace_offset;\n";
+    ss << "const TFLOAT * restrict a = workspace + workspace_offset;\n";
   }
   
   else{
@@ -701,7 +701,7 @@ void append_initial_b_offset(std::stringstream & ss){
 
   if (hp.b_copy_workspace == 1){
     ss << "/* b from workspace */\n";
-    ss << "TFLOAT * restrict b = workspace + workspace_offset + GLOBAL_OFFSET_B;\n";
+    ss << "const TFLOAT * restrict b = workspace + workspace_offset + GLOBAL_OFFSET_B;\n";
   }
   
   else{
