@@ -25,7 +25,7 @@ class DerivedParams{
 private:
   void reset_ga3_params(const hyperparams::HyperParams & hp);
   void reset_acw1_params(const tinygemm::TinyGemmGeometry & gg);
-  void reset_bcw1_params(const tinygemm::TinyGemmGeometry & gg);  
+  void reset_bcw1_params(const tinygemm::TinyGemmGeometry & gg, const hyperparams::HyperParams & hp);
     
 public:
   
@@ -99,6 +99,7 @@ public:
   unsigned bcw1_smallest_possible_ldb = uninitialised_unsigned; // ( tB == isColMajor ? n : k )
   /* smallest x s.t. x >= acw1_smallest_possible_lda and x = n*16 + 11. */ 
   unsigned bcw1_target_ldb = uninitialised_unsigned; //  16* ( ( acw1_smallest_possible_lda  - 11 ) / 16 ) + 11  
+  unsigned bcw1_global_offset_b = uninitialised_unsigned;
 
   unsigned get_target_ld(char c) const;
   

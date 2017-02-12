@@ -30,6 +30,18 @@ private:
   std::string kernelname;
 
 
+  bool uses_a = hp.a_copy_workspace  == 1 ? false : true; 
+  bool uses_b = hp.b_copy_workspace == 1 ? false : true;
+  bool uses_c = true;
+  bool uses_workspace = hp.a_copy_workspace + hp.b_copy_workspace == 0 ? false : true;
+  bool uses_alpha  = true;
+  bool uses_beta = dp.does_beta_c_inc;
+
+
+  unsigned effective_lda = hp.a_copy_workspace == 0 ? gg.lda : dp.acw1_target_lda;
+  unsigned effective_ldb = hp.b_copy_workspace == 0 ? gg.ldb : dp.bcw1_target_ldb;  
+
+
   /* set here as we do not want the user to choose (although would not break kernel) */
   unsigned use_edge_trick = 1;
 
@@ -601,9 +613,8 @@ void append_stride_defn(std::stringstream & ss, char LETTER, unsigned ldx,  unsi
 }
 
 void append_stride_defns(std::stringstream & ss){
-      
-  append_stride_defn(ss, 'A', gg.lda, gg.tA);
-  append_stride_defn(ss, 'B', gg.ldb, gg.tB);
+  append_stride_defn(ss, 'A', effective_lda, gg.tA);
+  append_stride_defn(ss, 'B', effective_ldb, gg.tB);
   append_stride_defn(ss, 'C', gg.ldc, gg.tC);
   
 }
@@ -640,73 +651,160 @@ void append_kernel_name(std::stringstream & ss){
 
 
 void append_parameter_list(std::stringstream & ss){
-  ss << 
-R"((
-__global const TFLOAT * restrict a,
-const unsigned a_offset,
-__global const TFLOAT * restrict b,
-const unsigned b_offset,
-__global TFLOAT       *          c,
-const unsigned c_offset,  
-const TFLOAT alpha )"; 
   
-  if (dp.does_beta_c_inc == true){
-    ss << ",\nconst TFLOAT beta)"; 
+  
+  ss << "\n(\n";
+  if (uses_a == true){
+    ss << "__global const TFLOAT * restrict a, \n";
+    ss << "const unsigned a_offset,\n";
   }
+
+  if (uses_b == true){
+    ss << "__global const TFLOAT * restrict b, \n";
+    ss << "const unsigned b_offset,\n";    
+  }
+  
+  ss << "__global TFLOAT       *          c,\n";
+  ss << "const unsigned c_offset,\n";
+
+  if (uses_workspace == true){
+    ss << "__global const TFLOAT * restrict workspace, \n";
+    ss << "const unsigned workspace_offset,\n";    
+  }
+
+  if (uses_beta == false){
+    ss << "const TFLOAT alpha ) \n\n\n";
+  }
+  
   else{
-    ss << ")";
+    ss << "const TFLOAT alpha,\n";
+    ss << "const TFLOAT beta )\n \n\n\n";
   }
-  ss<< 
+}    
+   
   
-R"(
 
+void append_initial_a_offset(std::stringstream & ss){
+  if (hp.a_copy_workspace == 1){
+    ss << "/* a from workspace */\n";
+    ss << "TFLOAT * restrict a = workspace + workspace_offset;\n";
+  }
+  
+  else{
+    ss << "a += a_offset;\n";
+  }
 
-
-)";
 }
 
+
+void append_initial_b_offset(std::stringstream & ss){
+
+  if (hp.b_copy_workspace == 1){
+    ss << "/* b from workspace */\n";
+    ss << "TFLOAT * restrict b = workspace + workspace_offset + GLOBAL_OFFSET_B;\n";
+  }
+  
+  else{
+    ss << "b += b_offset;\n";
+  }
+
+}
+
+
+void append_a_offset_string(std::stringstream & ss){
+
+  ss << R"(
+
+
+/* In OpenCL, host code does not have access to raw data pointers. */
+/* Host code works with cl_mem objects, which encapsulate and hide raw points. */
+/* For this reason, host code CANNOT simply increment pointers to data, */
+/* as one can do with pointers for CPU gemm, or cublas gemm for that matter. */
+
+c += c_offset;
+)";
+  
+  append_initial_a_offset(ss);
+  append_initial_b_offset(ss);
+  
+  ss << "\n\n\n";
+  
+}
+
+  
+
+void append_global_offset_b_workspace(std::stringstream & ss){
+  if (hp.b_copy_workspace == true){
+    ss << "\n\n/* b is offset in workspace because a comes before it */\n#define GLOBAL_OFFSET_B " << dp.bcw1_global_offset_b;
+  }
+}
+
+  
+  //ss << 
+//R"((
+//__global const TFLOAT * restrict a,
+//const unsigned a_offset,
+//__global const TFLOAT * restrict b,
+//const unsigned b_offset,
+//__global TFLOAT       *          c,
+//const unsigned c_offset,  
+//const TFLOAT alpha )"; 
+  
+  //if (dp.does_beta_c_inc == true){
+    //ss << ",\nconst TFLOAT beta)"; 
+  //}
+  //else{
+    //ss << ")";
+  //}
+  //ss<< 
+  
+//R"(
+
+
+
+//)";
+
+
+void append_ldx_definitions(std::stringstream & ss){
+
+  
+  if (hp.a_copy_workspace == 1){
+    ss << "/* as per a in workspace */\n";
+  }
+  ss << "#define __LDA__ " << effective_lda << "\n";
+  
+  if (hp.b_copy_workspace == 1){  
+    ss << "/* as per b in workspace */\n";
+  }
+  ss << "#define __LDB__ " << effective_ldb << "\n";
+  
+  ss << "#define __LDC__ " << gg.ldc << "\n";
+}
 
 public:
 
 /* the "main" kernel */
 KernelString get_kernelstring(){
   
-  
-    
-  //std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
-  //std::time_t generation_time = std::chrono::system_clock::to_time_t(now);
-    
-
+      
   std::stringstream ss;
   
   ss << genutil::get_time_string(type);
-//zzzzzzzzzzzzzzzzzzzzzz
-  //R"(/* ******************************************************************
-//* This gemm kernel string was generated on )" << std::ctime(&generation_time) << 
-//R"(****************************************************************** */
 
   ss <<  "\n\n" << genutil::get_what_string() << "\n";
-/* ***********************************************
-* These parameters define WHAT this kernel does *
-* *********************************************** */
-//)";
 
   ss << "#define __M__ " << gg.m << "\n";
   ss << "#define __N__ " << gg.n << "\n";
   ss << "#define __K__ " << gg.k << "\n";
-  ss << "#define __LDA__ " << gg.lda << "\n";
-  ss << "#define __LDB__ " << gg.ldb << "\n";
-  ss << "#define __LDC__ " << gg.ldc << "\n";
+  
+  append_ldx_definitions(ss);  
+  
   ss << "#define IS_COL_MAJOR " << gg.isColMajor << "\n";
   ss << "#define A_TRANSPOSED " << gg.tA << "\n";
   ss << "#define B_TRANSPOSED " << gg.tB <<  "\n";
   ss << "#define C_TRANSPOSED " << gg.tC <<  "\n";
   ss << "#define TFLOAT  "  << dp.t_float << "\n";
   
-  //ss << 
-//R"(/* certain kernels can only do one or the other of the terms in c <- alpha a*b + beta c. */
-
-//)";
   ss << "#define DOES_BETA_C_INC " << dp.does_beta_c_inc << "\n";
   ss << "#define DOES_ALPHA_A_B_INC 1" << "\n";
   
@@ -828,27 +926,22 @@ R"(
   append_ngroups_grid_string(ss);
   append_split_on_k_defns_string(ss);
   append_super_column_width_defn(ss);
+  append_global_offset_b_workspace(ss);
   
   ss << "\n\n\n__attribute__((reqd_work_group_size(" << dp.n_work_items_per_workgroup << ",1, 1)))\n";
   ss << "__kernel void ";
   append_kernel_name(ss);
   append_parameter_list(ss);
   
-  ss << R"(
-{
+  ss << "\n{\n\n";
 
-
-/* In OpenCL, host code does not have access to raw data pointers. */
-/* Host code works with cl_mem objects, which encapsulate and hide raw points. */
-/* For this reason, host code CANNOT simply increment pointers to data, */
-/* as one can do with pointers for CPU gemm, or cublas gemm for that matter. */
-a += a_offset;
-b += b_offset;
-c += c_offset;
+  append_a_offset_string(ss);
 
 
 
-)";
+
+
+
 
   append_group_id_defns(ss);
   ss << "const unsigned local_id = get_local_id(0);\n";
@@ -922,13 +1015,8 @@ __local const TFLOAT * lB;
   append_final_write_all(ss);
   ss << "\n}\n";
 
+
   
-  bool uses_a = true; 
-  bool uses_b = true;
-  bool uses_c = true;
-  bool uses_workspace = false;
-  bool uses_alpha  = true;
-  bool uses_beta = dp.does_beta_c_inc;
 
 
   

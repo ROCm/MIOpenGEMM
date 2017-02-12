@@ -76,17 +76,16 @@ public:
   gg(gg_), toff(toff_), a(a_), b(b_), c(c_), outputfilename(outputfilename_), mowri(verbose_, outputfilename_.compare("") != 0, outputfilename_), tgcq(mowri, "tiny gemm command queue in devtinygemm"),  a_gpu_safemem("a_gpu_safemem, of Gemini"), b_gpu_safemem("b_gpu_safemem, of Gemini"), c_gpu_safemem("c_gpu_safemem, of Gemini"), workspace_safemem("workspace_safemem, of Gemini")
   
   {
-    
     consistencychecks::check_ldx_mnk_consistent(gg);
-    
     if (gg.derived.float_size_bytes != sizeof(TFloat)){
       throw tinygemm_error("float sizes don't agree in derivedtinygemm.cpp");
     }
-    
     sizingup::check_sizes_ok_for_unsigned(gg, toff); 
     c_copy.resize(get_c_memsize()/sizeof(TFloat));
     std::memcpy(c_copy.data(), c, get_c_memsize());
     opencl_memory_initialise();
+    
+    
   }
 
   size_t get_c_memsize(){
@@ -111,22 +110,27 @@ public:
   
   void opencl_memory_initialise(){
     
+
     /* allocate memory for a,b,c on device, send it over */
     a_gpu_safemem.clmem = openclutil::cl_create_buffer_from_command_queue(tgcq.command_queue, CL_MEM_READ_ONLY, get_a_memsize(), NULL, "a_gpu in devtinygemm");
     b_gpu_safemem.clmem = openclutil::cl_create_buffer_from_command_queue(tgcq.command_queue, CL_MEM_READ_ONLY, get_b_memsize(), NULL, "b_gpu in devtinygemm");
     c_gpu_safemem.clmem = openclutil::cl_create_buffer_from_command_queue(tgcq.command_queue, CL_MEM_READ_WRITE, get_c_memsize(), NULL, "c_gpu in devtinygemm");  
     workspace_safemem.clmem = openclutil::cl_create_buffer_from_command_queue(tgcq.command_queue, CL_MEM_READ_WRITE, get_workspace_memsize(), NULL, "workspace_gpu in devtinygemm");     
+
+
           
     openclutil::cl_enqueue_write_buffer(tgcq.command_queue, a_gpu_safemem.clmem, CL_TRUE, 0, get_a_memsize(), a, 0, NULL, NULL, "enqueueing a on opencl_memory_initialise");
     openclutil::cl_enqueue_write_buffer(tgcq.command_queue, b_gpu_safemem.clmem, CL_TRUE, 0, get_b_memsize(), b, 0, NULL, NULL, "enqueueing b on opencl_memory_initialise");
-    openclutil::cl_enqueue_write_buffer(tgcq.command_queue, c_gpu_safemem.clmem, CL_TRUE, 0, get_c_memsize(), c, 0, NULL, NULL, "enqueueing c on opencl_memory_initialise");    
-    openclutil::cl_enqueue_write_buffer(tgcq.command_queue, workspace_safemem.clmem, CL_TRUE, 0, get_workspace_memsize(), c, 0, NULL, NULL, "enqueueing c on opencl_memory_initialise");        
-    
+    openclutil::cl_enqueue_write_buffer(tgcq.command_queue, c_gpu_safemem.clmem, CL_TRUE, 0, get_c_memsize(), c, 0, NULL, NULL, "enqueueing c on opencl_memory_initialise");
+
   }
 
     
   void benchgemm(const std::vector<hyperparams::HyperParams> & hps, size_t number_of_runs){
     /* dev code's connection to tinygemm */
+    
+    
+
     tinygemm::benchgemm(tgcq.command_queue, hps, number_of_runs, gg, toff, a_gpu_safemem.clmem, b_gpu_safemem.clmem, c_gpu_safemem.clmem, workspace_safemem.clmem, true, mowri.filename, false);
   }
   
@@ -163,7 +167,8 @@ public:
 template <typename TFloat>
 void benchgemm(const std::vector<hyperparams::HyperParams> & hps,         
 unsigned n_runs, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, const TFloat * a, const TFloat * b, const TFloat * c, bool verbose, std::string logfile){
-    
+  
+  
   Gemini <TFloat> gem(gg, toff, a, b, c, verbose, logfile);
   gem.benchgemm(hps, n_runs);
 }

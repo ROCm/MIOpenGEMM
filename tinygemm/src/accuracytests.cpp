@@ -23,7 +23,7 @@ void elementwise_compare(const TFloat * c_before, double beta, const TFloat * c_
     if (max_relerr > 0.01){
       std::stringstream ss;
       ss << "\nmax_relerr is above threshold, in basicfind.hpp. "; 
-      ss << "\nIndex in c : " << i_max << ".nValue before gemm call : " << c_before[i_max] << "    .\nValue after call from gpu : "  << c_cpu[i_max] << ".  \nValue after call from cpu : " << c_gpu[i_max] << "  \nrelerr : " << max_relerr << std::endl;
+      ss << "\nIndex in c : " << i_max << "\nValue before gemm call : " << c_before[i_max] << "    .\nValue after call from gpu : "  << c_cpu[i_max] << ".  \nValue after call from cpu : " << c_gpu[i_max] << "  \nrelerr : " << max_relerr << std::endl;
       throw tinygemm::tinygemm_error(ss.str());
     }
   

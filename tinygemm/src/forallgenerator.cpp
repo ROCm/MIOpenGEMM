@@ -9,13 +9,18 @@
 
 /* TODO : (more for alpha kernel : consider using the keyword restrict more liberally). Some initial thought suggests to me that it more be more approprialtely pult on c. where did the use og restrict inherit from anywayt??? TODO TODO TODO */
 
+/* TODO : could interwoven be faster ? */
 namespace tinygemm{
 namespace forallgen{
 
 
-const size_t work_per_thread = 4;
-const size_t n_work_items_per_group = 64;
+/* TODO : these so need to made hyper parameters, (1, 2, 4), (64, 128, 256)  */
 
+const size_t work_per_thread = 1;
+const size_t n_work_items_per_group = 256;
+
+//const size_t work_per_thread = 4;
+//const size_t n_work_items_per_group = 64;
 
 class ForallGenerator{
 
@@ -145,12 +150,12 @@ R"(/* The number of values from C which each non-edge work-item will scale by be
 void append_copy_preprocessor(std::stringstream & ss){
   if (hp.a_copy_workspace == 1 && (forall_type.compare("copyb") == 0)){
     ss << "/*      b will be copied to a section of workspace after where a is copied */\n";
-    ss << "#define GLOBAL_OFFSET " <<  dp.get_target_ld('a')*gg.get_uncoal('a') << "\n";
+    ss << "#define GLOBAL_OFFSET_B " <<  dp.bcw1_global_offset_b << "\n";
   }
   
   else{
     ss << "/*      no global offset as this is the first or only matric being copied to workspace */\n";
-    ss << "#define GLOBAL_OFFSET  0\n";
+    ss << "#define GLOBAL_OFFSET_B  0\n";
   }
   
   ss << "/*      the target stride between lines, derived from hp and gg (see DerivedParams) */\n";
@@ -267,7 +272,7 @@ void append_positioning_y_string(std::stringstream & ss){
   ss << R"(
 
 /* moving the y pointer to the first element to process */
-y += GLOBAL_OFFSET;
+y += GLOBAL_OFFSET_B;
 y += y_offset;
 y += start_uncoal * LDY;
 y += start_coal;
@@ -342,10 +347,3 @@ KernelString get_copyb_kernelstring(const tinygemm::hyperparams::HyperParams & h
 
 }
 }
-
-
-
-
-
-
-

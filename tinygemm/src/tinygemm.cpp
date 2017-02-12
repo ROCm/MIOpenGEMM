@@ -131,6 +131,8 @@ public:
   mowri(verbose_, outputfilename.compare("") != 0, outputfilename_)
   {
     
+
+    
     for (auto & x : possible_basic_types){
       tk_kernels_map[x] = TinyGemmKernel(command_queue, x);
     }
@@ -198,62 +200,7 @@ private:
     tk_kernels_map.at(type.basic).set_kernel_args(arg_sizes_values);
     
   }
-  
-  
-      //else{
-      //throw tinygemm_error("what is the type of this kernel? Don't recognise " + type + ", in set_kern_args in tinygemm.cpp");
-    //}
 
-
-    //if (type.compare("betac") == 0){
-      //tk_kernels_map.at(type).set_kernel_args( {
-        //{sizeof(unsigned),                      &toff.oc},
-        //{sizeof(cl_mem),                        (void *)&gpum['c']},
-        //{gg.derived.float_size_bytes,           m_beta[gg.floattype]}    
-      //} );              
-    //}
-        
-    
-    //else if (type.compare("betac_alphaab") == 0){
-      //tk_kernels_map.at(type).set_kernel_args( {
-        //{sizeof(cl_mem),                        (void *)&gpum['c']},
-        //{sizeof(cl_mem),                        (void *)&gpum['a']},
-        //{sizeof(cl_mem),                        (void *)&gpum['b']},
-        //{gg.derived.float_size_bytes,           m_alpha[gg.floattype]},
-        //{gg.derived.float_size_bytes,           m_beta[gg.floattype]},
-        //{sizeof(unsigned),                      &toff.oa},
-        //{sizeof(unsigned),                      &toff.ob},
-        //{sizeof(unsigned),                      &toff.oc} 
-      //} );
-    //}
-    
-    
-    //else if (type.compare("alphaab") == 0){
-      //tk_kernels_map.at(type).set_kernel_args( {
-        //{sizeof(cl_mem),                        (void *)&gpum['c']},
-        //{sizeof(cl_mem),                        (void *)&gpum['a']},
-        //{sizeof(cl_mem),                        (void *)&gpum['b']},
-        //{gg.derived.float_size_bytes,           m_alpha[gg.floattype]},
-        //{sizeof(unsigned),                      &toff.oa},
-        //{sizeof(unsigned),                      &toff.ob},
-        //{sizeof(unsigned),                      &toff.oc} 
-      //} );
-    //}
-    
-
-    //else if (type.compare("betac_alphaab_fromworkspace") == 0){
-      //tk_kernels_map.at(type).set_kernel_args( {
-        //{sizeof(cl_mem),                        (void *)&gpum['c']},
-        //{sizeof(cl_mem),                        (void *)&gpum['w']},
-        //{gg.derived.float_size_bytes,           m_alpha[gg.floattype]},
-        //{gg.derived.float_size_bytes,           m_beta[gg.floattype]},
-        //{sizeof(unsigned),                      &toff.oworkspace},
-        //{sizeof(unsigned),                      &toff.oc} 
-      //} );
-    //}
-        
-    
-    
 
 
   
@@ -265,7 +212,7 @@ private:
     //TODO here : check hyper parameters to see if needed a new 
             
     if (type.compare("betac") == 0){
-       if (tk_kernels_map["betac"].is_set() == false && new_dp.does_beta_c_inc == 0){
+       if (tk_kernels_map.at("betac").is_set() == false && new_dp.does_beta_c_inc == 0){
          return true;
        }
        else{
@@ -273,12 +220,32 @@ private:
        }
     }
     
-    else if (type.compare("main") == 0){// ||  type.compare("betac_alphaab") == 0){
+    else if (type.compare("main") == 0){
       return true;
     }
     
+    else if (type.compare("copya") == 0){
+      if (tk_kernels_map.at("copya").is_set() == false && new_hp.a_copy_workspace == 1){
+         return true;
+       }
+       else{
+         return false;
+       }
+    }
+
+    else if (type.compare("copyb") == 0){
+      if (tk_kernels_map.at("copyb").is_set() == false && new_hp.b_copy_workspace == 1){
+         return true;
+       }
+       else{
+         return false;
+       }
+    }
+
+    
+    
     else{
-       throw tinygemm_error("what is the type of this kernel? Don't recognise it : " + type);
+      throw tinygemm_error("what is the type of this kernel? Don't recognise it : " + type);
     }
     
   }

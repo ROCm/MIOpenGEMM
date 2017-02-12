@@ -11,26 +11,28 @@ namespace derivedparams{
 
   
 unsigned get_target(unsigned grid_size, unsigned above_distance, unsigned x){
-  unsigned to_grid_line = (x - above_distance) / grid_size  + ((x - above_distance) % grid_size != 1);
+  unsigned to_grid_line = (x - above_distance) / grid_size  + ((x - above_distance) % grid_size != 0);
   return grid_size * to_grid_line + above_distance;
 } 
 
 void DerivedParams::reset_acw1_params(const tinygemm::TinyGemmGeometry & gg){
   /* what lda would be if no `padding' */
   acw1_smallest_possible_lda = gg.tA == gg.isColMajor ? gg.k : gg.m;
-  
-  
   /* smallest x s.t. x >= acw1_smallest_possible_lda and x = n*16 + 3. */ 
   acw1_target_lda = get_target(16, 3, acw1_smallest_possible_lda);
   
 }
 
-void DerivedParams::reset_bcw1_params(const tinygemm::TinyGemmGeometry & gg){
+void DerivedParams::reset_bcw1_params(const tinygemm::TinyGemmGeometry & gg, const hyperparams::HyperParams & hp){
   /* what ldb would be if no `padding' */
   bcw1_smallest_possible_ldb =  gg.tB == gg.isColMajor ? gg.n : gg.k;
   /* smallest x s.t. x >= bcw1_smallest_possible_ldb and x = n*16 + 11. */ 
   bcw1_target_ldb =  get_target(16, 11, bcw1_smallest_possible_ldb);
 
+  if (acw1_target_lda == uninitialised_unsigned){
+    throw tinygemm_error("make sure reset_acw1_params is called before reset_bcw1_params, we need that acw1_target_lda be set here in derivedparams reset of bcw1");
+  }
+  bcw1_global_offset_b = hp.b_copy_workspace == 1 ? get_target_ld('a')*gg.get_uncoal('a') : 0;
 }
   
 void DerivedParams::reset_ga3_params(const hyperparams::HyperParams & hp){
@@ -75,6 +77,23 @@ DerivedParams::set_fragile(const hyperparams::HyperParams & hp, const tinygemm::
   n_elements_of_b_to_load_per_workitem = n_elements_in_b_unroll / n_work_items_per_workgroup;  
   
   std::stringstream set_status_ss;  
+  
+  /* check -1 : enough workspace memory */
+  unsigned required_workspace = 0;
+  if (hp.a_copy_workspace == 1){
+    reset_acw1_params(gg);
+    required_workspace += acw1_target_lda*gg.get_uncoal('a');
+  }
+
+  if (hp.b_copy_workspace == 1){
+    reset_bcw1_params(gg, hp);
+    required_workspace += bcw1_target_ldb*gg.get_uncoal('b');
+  }
+
+  if (gg.workspace_size < required_workspace){
+    set_status_ss << "gg.workspace_size ( " << gg.workspace_size << " ) is less then the required workspace ( " << required_workspace << " ) "; 
+  }
+  
   
   /* check 0 : macro tile not too large */
   if (gg.m < hp.macro_tile_height){
@@ -179,15 +198,6 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams & hp, const tinygemm
   if (hp.group_allocation == 3){
     reset_ga3_params(hp);//hp, n_groups_horizontally, split_on_k);
   }
-  
-  if (hp.a_copy_workspace == 1){
-    reset_acw1_params(gg);
-  }
-
-  if (hp.b_copy_workspace == 1){
-    reset_bcw1_params(gg);
-  }
-
 }
 
 

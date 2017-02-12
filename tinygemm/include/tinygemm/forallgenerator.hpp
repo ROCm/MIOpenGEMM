@@ -12,6 +12,7 @@ KernelString get_beta_kernelstring(const tinygemm::hyperparams::HyperParams & hp
 
 KernelString get_copya_kernelstring(const tinygemm::hyperparams::HyperParams & hp,  const tinygemm::TinyGemmGeometry & gg, const tinygemm::derivedparams::DerivedParams & dp);
 
+KernelString get_copyb_kernelstring(const tinygemm::hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg, const tinygemm::derivedparams::DerivedParams & dp);
 }
 }
 

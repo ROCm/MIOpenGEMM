@@ -87,7 +87,6 @@ void basicfind(const tinygemm::TinyGemmGeometry & geometry, const tinygemm::Tiny
   tinygemm::openclutil::cl_enqueue_write_buffer(command_queue, c_gpu, CL_TRUE, 0, sizeof(TFloat)*n_c, v_c.data(), 0, NULL, NULL, "c_gpu in basicfind.hpp");
   tinygemm::openclutil::cl_enqueue_write_buffer(command_queue, workspace_gpu, CL_TRUE, 0, sizeof(TFloat)*n_w, v_workspace.data(), 0, NULL, NULL, "workspace_gpu in basicfind.hpp");
 
-  /* TODO reduce code here so that above bp goes */
   std::map<char, void *> gpum;
   gpum['a'] = &a_gpu;
   gpum['b'] = &b_gpu;
@@ -155,7 +154,6 @@ void basicfind(const tinygemm::TinyGemmGeometry & geometry, const tinygemm::Tiny
 
 
       /* set parameters. easy, as parameters to kernels have a strict ordering */
-      
       std::string enqhash = std::string("basicfind.hpp") + ks.type.basic;
       unsigned parameter_index = 0;      
 
@@ -177,43 +175,6 @@ void basicfind(const tinygemm::TinyGemmGeometry & geometry, const tinygemm::Tiny
         tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), parameter_index, sizeof(TFloat), &beta_true_type, enqhash + " beta");
         ++parameter_index;
       }
-      
-    
-          
-      
-      //if (ks.type.basic.compare("betac") == 0){
-        //tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 0, sizeof(cl_mem), (void *)&c_gpu, "betac 0");
-        //tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 1, sizeof(unsigned), &toff.oc, "betac 1");
-        //tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 2, sizeof(TFloat), &beta_true_type, "betac 2"); 
-      //}
-      
-      //else if (ks.type.basic.compare("main") == 0 && ks.type.uses_beta == true){
-        //tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 1, sizeof(cl_mem), (void *)&a_gpu, "alphaab_betac 1 (basicfind.hpp)");
-        //tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 5, sizeof(unsigned), &toff.oa, "alphaab_betac 5 (basicfind.hpp)");
-        //tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 2, sizeof(cl_mem), (void *)&b_gpu, "alphaab_betac 2 (basicfind.hpp)");
-
-
-        //tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 0, sizeof(cl_mem), (void *)&c_gpu, "alphaab_betac 0 (basicfind.hpp)");
-        //tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 3, sizeof(TFloat), &alpha_true_type, "alphaab_betac 3 (basicfind.hpp)");
-        //tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 4, sizeof(TFloat), &beta_true_type, "alphaab_betac 4 (basicfind.hpp)");
-        //tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 6, sizeof(unsigned), &toff.ob, "alphaab_betac 6 (basicfind.hpp)");
-        //tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 7, sizeof(unsigned), &toff.oc, "alphaab_betac 7 (basicfind.hpp)");  
-      //}
-
-      //else if (ks.type.basic.compare("main") == 0 && ks.type.uses_beta == true){
-        //tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 0, sizeof(cl_mem), (void *)&c_gpu, "alphaab 0 (basicfind.hpp)");
-        //tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 1, sizeof(cl_mem), (void *)&a_gpu, "alphaab 1 (basicfind.hpp)");
-        //tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 2, sizeof(cl_mem), (void *)&b_gpu, "alphaab 2 (basicfind.hpp)");
-        //tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 3, sizeof(TFloat), &alpha_true_type, "alphaab 3 (basicfind.hpp)");
-        //tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 4, sizeof(unsigned), &toff.oa, "alphaab 4 (basicfind.hpp)");
-        //tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 5, sizeof(unsigned), &toff.ob, "alphaab 5 (basicfind.hpp)");
-        //tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), 6, sizeof(unsigned), &toff.oc, "alphaab 6 (basicfind.hpp)");  
-      //}      
-      
-      
-      //else{
-        //throw tinygemm::tinygemm_error("unrecognised kernel type, " + ks.type.basic);
-      //}
     }
     
     

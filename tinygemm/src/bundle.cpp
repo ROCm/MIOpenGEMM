@@ -59,7 +59,7 @@ public:
     }
     
     if (hp.b_copy_workspace == 1){
-      //v_tgks.emplace_back( copygen::get_copy_b_kernelstring(hp, gg, dp) ); //deduce from hp whether a is copied or not. 
+      v_tgks.emplace_back( forallgen::get_copyb_kernelstring(hp, gg, dp) ); //deduce from hp whether a is copied or not. 
     }
     
     if (dp.does_beta_c_inc == 0){
