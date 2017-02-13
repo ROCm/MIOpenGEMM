@@ -21,6 +21,11 @@ void basicexample(){
   unsigned a_offset = 1;
   unsigned b_offset = 2;
   unsigned c_offset = 3;
+
+
+  unsigned tail_off_a = 1000;
+  unsigned tail_off_b = 1000;
+  unsigned tail_off_c = 1000;
  
   /* These must be double, irrespective of the float type of the matrices */
   //double alpha = 0.123;
@@ -49,7 +54,7 @@ void basicexample(){
   unsigned workspace_offset = 4;      
   char floattype = 'f';
   tinygemm::TinyGemmGeometry gg (isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype);
-  tinygemm::TinyGemmOffsets offsets (a_offset, b_offset, c_offset, workspace_offset);    
+  tinygemm::TinyGemmOffsets offsets (a_offset, b_offset, c_offset, workspace_offset, tail_off_a, tail_off_b, tail_off_c);    
   basicfind<float>(gg, offsets, allotted_time, verbose, logfile, enforce_deterministic, n_postfind_runs, do_cpu_test);    
   
   

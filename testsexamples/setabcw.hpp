@@ -4,29 +4,39 @@
 namespace setabcw{
 
 template <typename TFloat>
+void fill_uni(std::vector<TFloat> & v, unsigned r_small, unsigned r_big){
+
+  //std::cout << "\nx" << std::flush;
+  for (size_t i = 0; i < r_small; ++i){
+    v[i] = TFloat(rand() % 1000) / 1000. - 0.5;
+  }
+  
+  //std::cout << "y" << std::flush;
+  for (size_t i = r_small; i < r_big; ++i){
+    v[i] = 1e9*(TFloat(rand() % 1000) / 1000. - 0.5);
+  }
+  //std::cout << "z" << std::endl;
+}
+
+
+template <typename TFloat>
 void set_abc(std::vector<TFloat> & v_a, std::vector<TFloat> & v_b, std::vector<TFloat> & v_c, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff){
 
-  size_t n_a = gg.lda * (gg.tA == gg.isColMajor ? gg.m : gg.k) + toff.oa;
-  size_t n_b = gg.ldb * (gg.tB == gg.isColMajor ? gg.k : gg.n) + toff.ob;
-  size_t n_c = gg.ldc * (gg.tC == gg.isColMajor ? gg.m : gg.n) + toff.oc; 
+  size_t n_a = gg.lda * (gg.tA == gg.isColMajor ? gg.m : gg.k) + toff.oa + toff.tail_off_a;
+  size_t n_b = gg.ldb * (gg.tB == gg.isColMajor ? gg.k : gg.n) + toff.ob + toff.tail_off_b;
+  size_t n_c = gg.ldc * (gg.tC == gg.isColMajor ? gg.m : gg.n) + toff.oc + toff.tail_off_c; 
 
   /* fill matrices with random floats. It is important to fill them with random floats, 
    * as if they're integers, the kernel can, and does, cheat! (runs faster) */
-  v_a.resize(n_a); 
-  for (size_t i = 0; i < n_a; ++i){
-    v_a[i] = TFloat(rand() % 1000) / 1000. - 0.5;
-  }
-  
+  v_a.resize(n_a);
   v_b.resize(n_b);
-  for (size_t i = 0; i < n_b; ++i){
-    v_b[i] = TFloat(rand() % 1000) / 1000. - 0.5;
-  }
-
   v_c.resize(n_c);
-  for (size_t i = 0; i < n_c; ++i){
-    v_c[i] = TFloat(rand() % 1000) / 500 - 1.;
-  }
+   
+  fill_uni<TFloat>(v_a, n_a - toff.tail_off_a, n_a);
+  fill_uni<TFloat>(v_b, n_b - toff.tail_off_b, n_b);
+  fill_uni<TFloat>(v_c, n_c - toff.tail_off_c, n_c);
 }
+
 
 
 template <typename TFloat>     
@@ -35,10 +45,9 @@ void set_abcw(std::vector<TFloat> & v_a, std::vector<TFloat> & v_b, std::vector<
   set_abc<TFloat>(v_a, v_b, v_c, gg, toff);
 
   size_t n_workspace = gg.workspace_size + toff.oworkspace;
+
   v_workspace.resize(n_workspace);
-  for (size_t i = 0; i < n_workspace; ++i){
-    v_workspace[i] = TFloat(rand() % 1000) / 500 - 1.;
-  }
+  fill_uni(v_workspace, n_workspace, n_workspace);
 }
 
 

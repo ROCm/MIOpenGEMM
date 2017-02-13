@@ -15,7 +15,9 @@ unsigned get_target(unsigned grid_size, unsigned above_distance, unsigned x){
   return grid_size * to_grid_line + above_distance;
 } 
 
+/* TODO : this 3 is ~ arbitrary : make hyper parameter ! */
 void DerivedParams::reset_acw1_params(const tinygemm::TinyGemmGeometry & gg){
+  
   /* what lda would be if no `padding' */
   acw1_smallest_possible_lda = gg.tA == gg.isColMajor ? gg.k : gg.m;
   /* smallest x s.t. x >= acw1_smallest_possible_lda and x = n*16 + 3. */ 
@@ -23,16 +25,20 @@ void DerivedParams::reset_acw1_params(const tinygemm::TinyGemmGeometry & gg){
   
 }
 
+/* TODO : this 0 is ~ arbitrary : make hyper parameter ! */
 void DerivedParams::reset_bcw1_params(const tinygemm::TinyGemmGeometry & gg, const hyperparams::HyperParams & hp){
-  /* what ldb would be if no `padding' */
-  bcw1_smallest_possible_ldb =  gg.tB == gg.isColMajor ? gg.n : gg.k;
-  /* smallest x s.t. x >= bcw1_smallest_possible_ldb and x = n*16 + 11. */ 
-  bcw1_target_ldb =  get_target(16, 11, bcw1_smallest_possible_ldb);
 
-  if (acw1_target_lda == uninitialised_unsigned){
+  if (hp.a_copy_workspace == 1 && acw1_target_lda == uninitialised_unsigned){
     throw tinygemm_error("make sure reset_acw1_params is called before reset_bcw1_params, we need that acw1_target_lda be set here in derivedparams reset of bcw1");
   }
-  bcw1_global_offset_b = hp.b_copy_workspace == 1 ? get_target_ld('a')*gg.get_uncoal('a') : 0;
+  
+  /* what ldb would be if no `padding' */
+  bcw1_smallest_possible_ldb =  gg.tB == gg.isColMajor ? gg.n : gg.k;
+  /* smallest x s.t. x >= bcw1_smallest_possible_ldb and x = n*16 + 6. */ 
+  bcw1_target_ldb =  get_target(16, 6, bcw1_smallest_possible_ldb);
+
+
+  bcw1_global_offset_b = hp.a_copy_workspace == 1 ? get_target_ld('a')*gg.get_uncoal('a') : 0;
 }
   
 void DerivedParams::reset_ga3_params(const hyperparams::HyperParams & hp){

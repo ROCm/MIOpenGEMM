@@ -9,7 +9,7 @@
 
 namespace tinygemm{
 
-TinyGemmOffsets::TinyGemmOffsets(unsigned oa_, unsigned ob_, unsigned oc_, unsigned oworkspace_):oa(oa_), ob(ob_), oc(oc_), oworkspace(oworkspace_) {}
+TinyGemmOffsets::TinyGemmOffsets(unsigned oa_, unsigned ob_, unsigned oc_, unsigned oworkspace_, unsigned tail_off_a_, unsigned tail_off_b_, unsigned tail_off_c_):oa(oa_), ob(ob_), oc(oc_), oworkspace(oworkspace_), tail_off_a(tail_off_a_), tail_off_b(tail_off_b_), tail_off_c(tail_off_c_) {}
 
 const unsigned & TinyGemmOffsets::operator[](char x) const{
   if (x == 'a'){

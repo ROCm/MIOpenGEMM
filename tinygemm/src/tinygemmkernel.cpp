@@ -34,13 +34,13 @@ void TinyGemmKernel::update(const KernelString & ks, outputwriting::OutputWriter
   mowri << "compiling " << ks.type.basic << " ( " << ks.type.full << " ) ... " << Flush;
 
 
-    auto start = std::chrono::high_resolution_clock::now();
+  auto start = std::chrono::high_resolution_clock::now();
 
 
   openclutil::set_program_and_kernel(command_queue, tgk_strings.kernstr, tgk_strings.fname, clprog, clkern);
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<float> fp_ms = end - start;
-    float elapsed_seconds = fp_ms.count();
+  auto end = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<float> fp_ms = end - start;
+  float elapsed_seconds = fp_ms.count();
 
 
   mowri << "done in " << elapsed_seconds << " [s]" << Endl;
@@ -74,10 +74,17 @@ void TinyGemmKernel::set_kernel_args(std::vector<std::pair<size_t, const void *>
 int TinyGemmKernel::enqueue(cl_uint num_events_in_wait_list, const cl_event *event_wait_list){
   cl_int ret;
   
+  
+  //std::cout << "local work size : " << tgk_strings.local_work_size << std::endl;
+  //std::cout << "global work size : " << tgk_strings.global_work_size << std::endl;
+  //std::cout << "global work size % local work size : " << tgk_strings.global_work_size % tgk_strings.local_work_size << std::endl;
+  
+  tgk_strings.global_work_size += 0;
+  
   ret = clEnqueueNDRangeKernel(command_queue, clkern, 1, NULL, &tgk_strings.global_work_size, &tgk_strings.local_work_size, num_events_in_wait_list, event_wait_list, &clevent);
     
   if (ret != CL_OUT_OF_RESOURCES){
-    openclutil::confirm_cl_status(ret, "in enqueue of of TinyGemmKernel " + hash);
+    openclutil::confirm_cl_status(ret, "in enqueue of TinyGemmKernel " + hash);
   }
   /* Either returning CL_SUCCESS or CL_OUT_OF_RESOURCES, any other bad result results in a throwd */
   return ret;

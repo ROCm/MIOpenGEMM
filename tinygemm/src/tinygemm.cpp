@@ -770,7 +770,7 @@ const tinygemm::TinyGemmGeometry & gg,
 bool verbose, 
 std::string logfile){
   
-  OpenCLGemmEncapsulator oger({}, gg, {0,0,0,0}, {}, {}, {}, {}, logfile, verbose); 
+  OpenCLGemmEncapsulator oger({}, gg, {0,0,0,0,0,0,0}, {}, {}, {}, {}, logfile, verbose); 
   return oger.get_default(enforce_deterministic);
  
 }

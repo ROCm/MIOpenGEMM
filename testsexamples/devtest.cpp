@@ -20,29 +20,39 @@
 tinygemm::hyperparams::HyperParams get_hp(std::string hyperstring = ""){
 
   if (hyperstring.compare("") == 0){
+
+hyperstring = "Y8_X8_y1_x1_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE3_NAW64_UFO0_ACW0_BCW0";
     //hyperstring = "Y64_X64_y4_x4_U8_P1_GA3_APLU1_BPLU1_PU0_LIW1_MIW1_ICE2_NAW64_UFO0_ACW1_BCW1";
-    hyperstring = "Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU1_PU1_LIW1_MIW1_ICE2_NAW64_UFO0_ACW1_BCW1";
+
+
+
+
+
+    //hyperstring = "Y128_X128_y8_x8_U8_P1_GA1_APLU0_BPLU1_PU1_LIW1_MIW1_ICE1_NAW64_UFO0_ACW1_BCW1";
   }
   return hyperstring;
 
 }
 
 tinygemm::TinyGemmGeometry get_geometry(){
+
+
+//tC0_tA0_tB0_colMaj1_m16_n64_k800_lda16_ldb800_ldc16
   
   bool isColMajor = true;
   bool tA = false;
   bool tB = false;
   bool tC = false;
-  unsigned m = 4096 + 0;//2195;
-  unsigned n = 4096 + 0;//2270;
-  unsigned k = 4000;//2399;
+  unsigned m = 16;//4096;
+  unsigned n = 64;//5025;
+  unsigned k = 800;//4096;
   unsigned lda = ( tA == isColMajor ? k : m ) + 0;//13;
   unsigned ldb = ( tB == isColMajor ? n : k ) + 0;//27;
   unsigned ldc = ( tC == isColMajor ? n : m ) + 0;//13;//11;
-  unsigned workspace_size =  34611776;
+  unsigned workspace_size =  38386109 ;
   char floattype = 'f';
 
-  return { isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype};
+  return { isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype };
     
 }
 
@@ -52,7 +62,12 @@ tinygemm::TinyGemmOffsets get_offsets(){
   unsigned b_offset = 71;
   unsigned c_offset = 91;
   unsigned workspace_offset = 13;
-  return { a_offset, b_offset, c_offset, workspace_offset };
+  
+  unsigned tail_off_a = 12345;
+  unsigned tail_off_b = 12345;
+  unsigned tail_off_c = 12345;
+  
+  return {a_offset, b_offset, c_offset, workspace_offset, tail_off_a, tail_off_b, tail_off_c};
 
 }
 
@@ -71,7 +86,7 @@ void print_kernel(){
     //std::ofstream floper ("/home/idiap/tinygemm/examplekernels/example1.cl", std::ios::out); 
   
   for (auto & x :  bundle.v_tgks){
-    auto fname = "/home/idiap/akernel_" +  x.type.full +  ".cl";
+    auto fname = "/home/james/akernel_" +  x.type.full +  ".cl";
     std::cout << "writing " << fname << " ... " << std::flush;
     std::ofstream floper (fname, std::ios::out); 
     floper << x.kernstr;
@@ -88,10 +103,10 @@ void print_kernel(){
 int main(){
   
 
-  bool test_print = false;
-  bool test_benchgemm = true;//true;
+  bool test_print = true;
+  bool test_benchgemm = false;//true;
   bool test_find = false;
-  bool test_accuracy = false;
+  bool test_accuracy = true;
   bool test_default = false;
   
   typedef float tfloat;

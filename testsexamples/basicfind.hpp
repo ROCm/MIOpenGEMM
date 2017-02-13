@@ -182,6 +182,10 @@ void basicfind(const tinygemm::TinyGemmGeometry & geometry, const tinygemm::Tiny
     auto enqueue_kernels_serial = [&soln, &clevents, &command_queue, &clkernels] (std::string hash) {
 
       for (unsigned ki = 0; ki < soln.v_tgks.size(); ++ki){
+        
+        
+
+
         size_t n_events_to_wait_on = ki == 0 ? 0 : 1;
         cl_event * events_to_wait_on = ki == 0 ? nullptr : &clevents[ki - 1];
         tinygemm::openclutil::cl_enqueue_ndrange_kernel(

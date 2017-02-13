@@ -12,7 +12,7 @@ void elementwise_compare(const TFloat * c_before, double beta, const TFloat * c_
   unsigned i_max = 0;
   for (unsigned i = 0; i < nels; ++i){
     float absdifference = std::abs(c_cpu[i] - c_gpu[i]);
-    float sumabs = std::abs(c_cpu[i]) + std::abs(c_gpu[i]) + beta*std::abs(c_before[i]);
+    float sumabs = 0.3333*(std::abs(c_cpu[i]) + std::abs(c_gpu[i]) + beta*std::abs(c_before[i]));
     float relerr = absdifference / std::max<float>(1e-9, sumabs);
     if (relerr > max_relerr){
       i_max = i;
@@ -23,7 +23,7 @@ void elementwise_compare(const TFloat * c_before, double beta, const TFloat * c_
     if (max_relerr > 0.01){
       std::stringstream ss;
       ss << "\nmax_relerr is above threshold, in basicfind.hpp. "; 
-      ss << "\nIndex in c : " << i_max << "\nValue before gemm call : " << c_before[i_max] << "    .\nValue after call from gpu : "  << c_cpu[i_max] << ".  \nValue after call from cpu : " << c_gpu[i_max] << "  \nrelerr : " << max_relerr << std::endl;
+      ss << "\nIndex in c : " << i_max << "\nValue before gemm call : " << c_before[i_max] << ". \nValue after call from cpu : "  << c_cpu[i_max] << ".  \nValue after call from gpu : " << c_gpu[i_max] << "  \nrelerr : " << max_relerr << std::endl;
       throw tinygemm::tinygemm_error(ss.str());
     }
   

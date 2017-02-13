@@ -89,16 +89,16 @@ public:
   }
 
   size_t get_c_memsize(){
-    auto c_memsize = sizingup::get_n_elements_padded(gg.m, gg.n, gg.ldc, gg.isColMajor, gg.tC, toff.oc)*sizeof(TFloat);
+    auto c_memsize = sizingup::get_n_elements_padded(gg.m, gg.n, gg.ldc, gg.isColMajor, gg.tC, toff.oc, toff.tail_off_c)*sizeof(TFloat);
     return c_memsize;
   }
 
   size_t get_a_memsize(){
-    return sizingup::get_n_elements_padded(gg.m, gg.k, gg.lda, gg.isColMajor, gg.tA, toff.oa)*sizeof(TFloat);
+    return sizingup::get_n_elements_padded(gg.m, gg.k, gg.lda, gg.isColMajor, gg.tA, toff.oa, toff.tail_off_a)*sizeof(TFloat);
   }
   
   size_t get_b_memsize(){
-    return sizingup::get_n_elements_padded(gg.k, gg.n, gg.ldb, gg.isColMajor, gg.tB, toff.ob)*sizeof(TFloat);
+    return sizingup::get_n_elements_padded(gg.k, gg.n, gg.ldb, gg.isColMajor, gg.tB, toff.ob, toff.tail_off_b)*sizeof(TFloat);
   }
   
   size_t get_workspace_memsize(){

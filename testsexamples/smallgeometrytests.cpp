@@ -7,9 +7,13 @@ void geometrytest(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsign
   unsigned ldb = ( tB == isColMajor ? n : k ) + 5;
   unsigned ldc = ( tC == isColMajor ? n : m ) + 7;
   
-  unsigned a_offset = 1;
-  unsigned b_offset = 2;
-  unsigned c_offset = 3;
+  unsigned a_offset = 5;
+  unsigned b_offset = 7;
+  unsigned c_offset = 11;
+  
+  unsigned tail_off_a = 121;
+  unsigned tail_off_b = 121;
+  unsigned tail_off_c = 121;
 
 
    
@@ -30,7 +34,7 @@ void geometrytest(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsign
   unsigned workspace_offset = 4;      
   char floattype = sizeof(TFloat) == 4 ? 'f' : 'd';
   tinygemm::TinyGemmGeometry gg (isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype);
-  tinygemm::TinyGemmOffsets offsets (a_offset, b_offset, c_offset, workspace_offset);    
+  tinygemm::TinyGemmOffsets offsets (a_offset, b_offset, c_offset, workspace_offset, tail_off_a, tail_off_b, tail_off_c);    
   basicfind<TFloat>(gg, offsets, allotted_time, verbose, logfile, enforce_deterministic, n_postfind_runs, do_cpu_test);
 }
 
@@ -41,18 +45,18 @@ int main(){
   for (bool tC : {false, true}){
     for (bool isColMajor : {false, true}){
       for (bool tA : {false, true}){
-	for (bool tB : {false, true}){
-	  for  (unsigned n : {m - 29, m + 30}){
-	    testi += 1;
-	    k += 1;
-	    std::cout << "\ntest " << testi << "/32";
-	    std::cout << "\nm=" << m << " n=" << n << " k=" << k << "\ntA=" << tA << " tB=" << tB << " tC=" << tC << " isColMajor=" << isColMajor << std::endl;
-	    std::cout << "<float> ";
-	    geometrytest<float>(isColMajor, tA, tB, tC, m, n, k);
-	    std::cout << "<double> ";
-	    geometrytest<double>(isColMajor, tA, tB, tC, m, n, k);
-	  }
-	}
+        for (bool tB : {false, true}){
+          for  (unsigned n : {m - 29, m + 30}){
+            testi += 1;
+            k += 1;
+            std::cout << "\ntest " << testi << "/32";
+            std::cout << "\nm=" << m << " n=" << n << " k=" << k << "\ntA=" << tA << " tB=" << tB << " tC=" << tC << " isColMajor=" << isColMajor << std::endl;
+            std::cout << "<float> ";
+            geometrytest<float>(isColMajor, tA, tB, tC, m, n, k);
+            std::cout << "<double> ";
+            geometrytest<double>(isColMajor, tA, tB, tC, m, n, k);
+          }
+        }
       }
     }
   }

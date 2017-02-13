@@ -96,7 +96,12 @@ std::make_tuple(20800, 128, 49, 49, 49, 20800, true, false),
 
     unsigned a_offset = 0;
     unsigned b_offset = 0;
-    unsigned c_offset = 0;    
+    unsigned c_offset = 0;   
+    
+    unsigned tail_off_a = 0;
+    unsigned tail_off_b = 0; 
+    unsigned tail_off_c = 0;
+    
     unsigned n_postfind_runs = 0;
     
     bool do_cpu_test = false;
@@ -106,7 +111,7 @@ std::make_tuple(20800, 128, 49, 49, 49, 20800, true, false),
     unsigned workspace_offset = 4;      
     char floattype = 'f';
     tinygemm::TinyGemmGeometry gg (isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype);
-    tinygemm::TinyGemmOffsets offsets (a_offset, b_offset, c_offset, workspace_offset);    
+    tinygemm::TinyGemmOffsets offsets (a_offset, b_offset, c_offset, workspace_offset, tail_off_a, tail_off_b, tail_off_c);    
     
      
     //basicfind<float>(isColMajor, tA, tB, tC, m, n, k, lda, ldb, ldc, a_offset, b_offset, c_offset, alpha, beta, allotted_time, verbose, ss_logfile.str(), enforce_deterministic, n_postfind_runs, do_cpu_test);    

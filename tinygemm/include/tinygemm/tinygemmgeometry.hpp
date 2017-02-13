@@ -11,8 +11,13 @@ class TinyGemmOffsets{
     unsigned ob;
     unsigned oc;
     unsigned oworkspace;
+    unsigned tail_off_a;
+    unsigned tail_off_b;
+    unsigned tail_off_c;
+
+//TinyGemmOffsets::TinyGemmOffsets(unsigned oa_, unsigned ob_, unsigned oc_, unsigned oworkspace_, unsigned tail_off_c_):oa(oa_), ob(ob_), oc(oc_), oworkspace(oworkspace_), tail_off_c(tail_off_c_)
     
-    TinyGemmOffsets(unsigned oa, unsigned ob, unsigned oc, unsigned oworkspace);
+    TinyGemmOffsets(unsigned oa, unsigned ob, unsigned oc, unsigned oworkspace, unsigned tail_off_a, unsigned tail_off_b, unsigned tail_off_c);
     
     const unsigned & operator[](char c) const; 
     
