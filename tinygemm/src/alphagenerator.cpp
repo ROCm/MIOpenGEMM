@@ -1,5 +1,6 @@
 #include <tinygemm/alphagenerator.hpp>
 #include <tinygemm/generatorutil.hpp>
+#include <tinygemm/tentotin.hpp>
 
 #include <string>
 #include <iostream>
@@ -1028,8 +1029,11 @@ __local const TFLOAT * lB;
 
 
 KernelString get_alpha_kernelstring(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg, const derivedparams::DerivedParams & dp){
- AlphaGenerator ag(hp, gg, dp);
- return ag.get_kernelstring();
+
+  return tinygemm::tensilegen::get_tensile_kernelstring(gg);
+
+  //AlphaGenerator ag(hp, gg, dp);
+  //return ag.get_kernelstring();
 }
 
 

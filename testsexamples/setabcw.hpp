@@ -30,6 +30,8 @@ void set_abc(std::vector<TFloat> & v_a, std::vector<TFloat> & v_b, std::vector<T
    * as if they're integers, the kernel can, and does, cheat! (runs faster) */
   v_a.resize(n_a);
   v_b.resize(n_b);
+  
+  std::cout << "setting v_c " << n_c - toff.tail_off_c << std::endl;
   v_c.resize(n_c);
    
   fill_uni<TFloat>(v_a, n_a - toff.tail_off_a, n_a);
