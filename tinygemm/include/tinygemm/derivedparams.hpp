@@ -103,6 +103,10 @@ public:
 
   unsigned get_target_ld(char c) const;
   
+  
+  bool nf_is_normal_form = false;
+  unsigned nf_k_normal_form = 0;
+  
 
 
 };

@@ -36,8 +36,8 @@ HyperParamList::HyperParamList() {
     {"BPLU",  "work_item_load_b_pll_to_unroll"},
     {"PU",  "unroll_pragma"},
   
-    {"LIW",  "load_to_lds_interwoven"},
-    {"MIW",  "c_micro_tiles_interwoven"},
+    {"LIW",  "load_to_lds_interwoven"}, //TODO : fix at 0
+    {"MIW",  "c_micro_tiles_interwoven"}, //TODO : fix at 1
     {"ICE",  "n_work_items_per_c_elm"},
     {"NAW",  "n_target_active_workgroups"},
     {"UFO",  "unroll_for_offset"},

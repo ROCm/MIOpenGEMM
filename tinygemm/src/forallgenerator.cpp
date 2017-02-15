@@ -16,7 +16,7 @@ namespace forallgen{
 
 /* TODO : these so need to made hyper parameters, (1, 2, 4), (64, 128, 256)  */
 
-const size_t work_per_thread = 1;
+const size_t work_per_thread = 2;
 const size_t n_work_items_per_group = 256;
 
 //const size_t work_per_thread = 4;
@@ -29,7 +29,7 @@ private:
   const tinygemm::TinyGemmGeometry & gg;
   const tinygemm::derivedparams::DerivedParams & dp;
 
-  
+
   std::string forall_type;
   std::string kernelname;
 

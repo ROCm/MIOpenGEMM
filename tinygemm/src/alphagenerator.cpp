@@ -39,7 +39,7 @@ private:
 
 
   unsigned effective_lda = hp.a_copy_workspace == 0 ? gg.lda : dp.acw1_target_lda;
-  unsigned effective_ldb = hp.b_copy_workspace == 0 ? gg.ldb : dp.bcw1_target_ldb;  
+  unsigned effective_ldb = hp.b_copy_workspace == 0 ? gg.ldb : dp.bcw1_target_ldb;
 
 
   /* set here as we do not want the user to choose (although would not break kernel) */
@@ -444,13 +444,15 @@ void append_micro_offset_string(std::stringstream & ss){
   
   ss << "\n/* make the micro adjustments (A) for the thread, getting ready to load */\n";
   ss << "const unsigned a_offset_pll_unroll = " << str_a_n_pll << " pll_unroll_a_load_id;\n";
-  ss <<  "const unsigned a_offset_perp_unroll = " << str_a_n_perp <<  " perp_unroll_a_load_id;\n";
-  ss << "a += COL_STRIDE_A * a_offset_pll_unroll;\na += ROW_STRIDE_A * a_offset_perp_unroll;\n\n";
+  ss << "const unsigned a_offset_perp_unroll = " << str_a_n_perp <<  " perp_unroll_a_load_id;\n";
+  ss << "a += COL_STRIDE_A * a_offset_pll_unroll;\n";
+  ss << "a += ROW_STRIDE_A * a_offset_perp_unroll;\n\n";
 
   ss << "/* make the micro adjustments (B) for the thread, getting ready to load */\n";
   ss << "const unsigned b_offset_pll_unroll = " << str_b_n_pll << " pll_unroll_b_load_id;\n";
   ss << "const unsigned b_offset_perp_unroll = " << str_b_n_perp << " perp_unroll_b_load_id;\n";
-  ss << "b += ROW_STRIDE_B * b_offset_pll_unroll;\nb += COL_STRIDE_B * b_offset_perp_unroll;\n";
+  ss << "b += ROW_STRIDE_B * b_offset_pll_unroll;\n";
+  ss << "b += COL_STRIDE_B * b_offset_perp_unroll;\n";
 }
 
 void append_load_load_string(std::stringstream & ss){
@@ -548,18 +550,35 @@ if ((group_id_horizontal != N_GROUPS_HORIZONTALLY - 1 || PRESHIFT_RIGHTMOST_TILE
 void append_split_on_k_ab_offset_adjustment_string(std::stringstream & ss){
   ss << "\n";
   if (dp.split_on_k != 0){
-    ss <<
+    ss << 
 R"(
 /* a,b are pointing to the top left of the region required by the macro tile, but this work group  */
-/* might not process the whole of a and b. We now turn 90 and shift pointers a,b to the start for this wg */
+/* might not process the whole of a and b. We now turn 90 and shift pointers a,b to the start for this wg */)";
+
+    if (dp.nf_is_normal_form == false){
+      ss <<
+R"(
 a += UNROLL*group_id_z*COL_STRIDE_A;
 b += UNROLL*group_id_z*ROW_STRIDE_B;
 )";
+    }
+    
+    else{
+      ss <<
+R"(
+a += group_id_z*N_ELEMENTS_IN_A_UNROLL;
+b += group_id_z*N_ELEMENTS_IN_B_UNROLL;
+)";
+
+      
+    }
   }
 }
 
 void append_k_unroll_offset_initial_string(std::stringstream & ss){
-  if (hp.unroll_for_offset != 0){
+  
+  
+  if (dp.nf_is_normal_form == false && hp.unroll_for_offset != 0){
     ss <<
 R"(
 /* this additional offset of a and b appears because UNROLL_FOR_OFFSET is 1 */
@@ -606,17 +625,23 @@ void append_stride_defn(std::stringstream & ss, char LETTER, unsigned ldx,  unsi
   std::string ldx_string = ldx_string_ss.str();
   
   
-  ss << "\n/* To move from " << LETTER << "[row][col] to " << LETTER << "[row+1][col], how much should the pointer increment? As we have " << LETTER << "_TRANSPOSED = " << transposed << " and IS_COL_MAJOR = " << gg.isColMajor << ", this is " << (transposed_xor_is_col_major == 1 ? "1" : ldx_string) << " */\n#define ROW_STRIDE_" << LETTER << " " << (transposed_xor_is_col_major == 1 ? 1 : ldx) << "\n";
+  //TODO merge the four message functions, there is redundancy
+  ss << "\n/* To move from " << LETTER << "[row][col] to " << LETTER << "[row+1][col], how much should the pointer increment? As we have " << LETTER << "_TRANSPOSED = " << transposed << " and IS_COL_MAJOR = " << gg.isColMajor << ", this is " << (transposed_xor_is_col_major == 1 ? "1" : ldx_string) << " */\n";
   
-  ss << "/* To move from " << LETTER << "[row][col] to " << LETTER << "[row][col+1], how much should the pointer increment? As we have " << LETTER << "_TRANSPOSED = " << transposed << " and IS_COL_MAJOR = " << gg.isColMajor << ", this is " << (transposed_xor_is_col_major == 1 ? ldx_string : "1") << " */\n#define COL_STRIDE_" << LETTER << " " << (transposed_xor_is_col_major == 1 ? ldx : 1) << "\n";
+  ss << "#define ROW_STRIDE_" << LETTER << " " << (transposed_xor_is_col_major == 1 ? 1 : ldx) << "\n";
+
+  ss << "/* To move from " << LETTER << "[row][col] to " << LETTER << "[row][col+1], how much should the pointer increment? As we have " << LETTER << "_TRANSPOSED = " << transposed << " and IS_COL_MAJOR = " << gg.isColMajor << ", this is " << (transposed_xor_is_col_major == 1 ? ldx_string : "1") << " */\n";
+
+  ss <<"#define COL_STRIDE_" << LETTER << " " << (transposed_xor_is_col_major == 1 ? ldx : 1) << "\n";
   
 }
 
 void append_stride_defns(std::stringstream & ss){
-  append_stride_defn(ss, 'A', effective_lda, gg.tA);
-  append_stride_defn(ss, 'B', effective_ldb, gg.tB);
-  append_stride_defn(ss, 'C', gg.ldc, gg.tC);
-  
+  if (dp.nf_is_normal_form == false){
+    append_stride_defn(ss, 'A', effective_lda, gg.tA);
+    append_stride_defn(ss, 'B', effective_ldb, gg.tB);
+  }
+  append_stride_defn(ss, 'C', gg.ldc, gg.tC);  
 }
 
 void append_rA_rB_decl_string(std::stringstream & ss){
@@ -767,20 +792,105 @@ void append_global_offset_b_workspace(std::stringstream & ss){
 
 void append_ldx_definitions(std::stringstream & ss){
 
+  if (dp.nf_is_normal_form == false){
+    
+    if (hp.a_copy_workspace == 1){
+      ss << "/* as per a in workspace */\n";
+    }
+    ss << "#define __LDA__ " << effective_lda << "\n";
+    
+    if (hp.b_copy_workspace == 1){  
+      ss << "/* as per b in workspace */\n";
+    }
+    ss << "#define __LDB__ " << effective_ldb << "\n";
   
-  if (hp.a_copy_workspace == 1){
-    ss << "/* as per a in workspace */\n";
   }
-  ss << "#define __LDA__ " << effective_lda << "\n";
-  
-  if (hp.b_copy_workspace == 1){  
-    ss << "/* as per b in workspace */\n";
-  }
-  ss << "#define __LDB__ " << effective_ldb << "\n";
   
   ss << "#define __LDC__ " << gg.ldc << "\n";
 }
 
+
+void append_mnk_definitions(std::stringstream & ss){
+  ss << "#define __M__ " << gg.m << "\n";
+  ss << "#define __N__ " << gg.n << "\n";
+  if (dp.nf_is_normal_form == false){
+    ss << "#define __K__ " << gg.k << "\n";
+  }
+  else{
+    ss << "#define __K_NORMAL_FORM__" << dp.nf_k_normal_form << "\n";
+  }
+}
+
+
+void append_transpose_definitions(std::stringstream & ss){
+  if (dp.nf_is_normal_form == false){
+    ss << "#define IS_COL_MAJOR " << gg.isColMajor << "\n";
+    ss << "#define A_TRANSPOSED " << gg.tA << "\n";
+    ss << "#define B_TRANSPOSED " << gg.tB <<  "\n";
+    ss << "#define C_TRANSPOSED " << gg.tC <<  "\n";
+  }
+}
+
+
+void append_transpose_note(std::stringstream & ss){
+  if (dp.nf_is_normal_form == false){
+    ss << 
+    R"(
+/* A note on how transposes IS_COL_MAJOR, A_TRANSPOSED, B_TRANSPOSED and C_TRANSPOSED effect the kernel generated: */
+/* very little. The only way they effect the kernel is through ROW_STRIDE_X, COL_STRIDE_X, for X in {A,B,C}. */
+/* ROW_STRIDE_X and COL_STRIDE_X are either 1 of ldx, depending on xor(IS_COL_MAJOR, X_TRANSPOSED) */ 
+/* the notation and comments which follow assume transposes are false, technically ROW_STRIDE_A should be ROW_STRIDE_OPA */
+/* in short, to understand tinygemm kernels, it is enough to understand the non-transpose case, all other cases are minor modifications */
+)";
+  }
+}
+
+void append_move_to_top_corner_string(std::stringstream & ss){
+  ss << "\n/* move to the top left corner of a (top left corner of b) of region required by the macro tile */";
+  if (dp.nf_is_normal_form == false){
+    ss << 
+R"(
+a += macro_tile_start_row_in_c*ROW_STRIDE_A;   
+b += macro_tile_start_col_in_c*COL_STRIDE_B;
+)";
+  }
+  else{
+    ss << 
+  R"(
+a += macro_tile_start_row_in_c*__K_NORMAL_FORM__;   
+b += macro_tile_start_col_in_c*__K_NORMAL_FORM__;
+)";
+  }
+}
+
+
+void append_load_within_tile_pattern_string(std::stringstream & ss){  
+  
+  if (dp.nf_is_normal_form == false){
+  
+    ss << 
+R"(
+/* Define which rows or columns of A, B this thread will load from global into LDS (% / or / % ? looks like % for pll is best, needs checking ) */
+const unsigned pll_unroll_a_load_id = local_id % N_MICRO_A_TILES_PLL_UNROLL;
+const unsigned perp_unroll_a_load_id = local_id / N_MICRO_A_TILES_PLL_UNROLL;
+const unsigned pll_unroll_b_load_id = local_id % N_MICRO_B_TILES_PLL_UNROLL;
+const unsigned perp_unroll_b_load_id = local_id / N_MICRO_B_TILES_PLL_UNROLL;
+
+
+)";
+  }
+  
+  else{
+    ss << 
+R"(
+
+
+)";
+    
+  }
+}
+
+  
 public:
 
 /* the "main" kernel */
@@ -793,35 +903,26 @@ KernelString get_kernelstring(){
 
   ss <<  "\n\n" << genutil::get_what_string() << "\n";
 
-  ss << "#define __M__ " << gg.m << "\n";
-  ss << "#define __N__ " << gg.n << "\n";
-  ss << "#define __K__ " << gg.k << "\n";
+  append_mnk_definitions(ss);
+
+  append_ldx_definitions(ss);
   
-  append_ldx_definitions(ss);  
-  
-  ss << "#define IS_COL_MAJOR " << gg.isColMajor << "\n";
-  ss << "#define A_TRANSPOSED " << gg.tA << "\n";
-  ss << "#define B_TRANSPOSED " << gg.tB <<  "\n";
-  ss << "#define C_TRANSPOSED " << gg.tC <<  "\n";
+  append_transpose_definitions(ss);
+
   ss << "#define TFLOAT  "  << dp.t_float << "\n";
   
   ss << "#define DOES_BETA_C_INC " << dp.does_beta_c_inc << "\n";
   ss << "#define DOES_ALPHA_A_B_INC 1" << "\n";
   
-  ss << 
-  R"(
-/* A note on how transposes IS_COL_MAJOR, A_TRANSPOSED, B_TRANSPOSED and C_TRANSPOSED effect the kernel generated: */
-/* very little. The only way they effect the kernel is through ROW_STRIDE_X, COL_STRIDE_X, for X in {A,B,C}. */
-/* ROW_STRIDE_X and COL_STRIDE_X are either 1 of ldx, depending on xor(IS_COL_MAJOR, X_TRANSPOSED) */ 
-/* the notation and comments which follow assume transposes are false, technically ROW_STRIDE_A should be ROW_STRIDE_OPA */
-/* in short, to understand tinygemm kernels, it is enough to understand the non-transpose case, all other cases are minor modifications */
-)";
+  append_transpose_note(ss);
+
+
 
   ss << 
 R"(
 /* TODO : remove final barrier, not nec. Check performance is not mysteriously hit! */
 /* TODO : beta = 1 optimisation */
-/* TODO : investigate mad. When should one use this instead of standard overloads, += and * ? 
+/* TODO : investigate mad. When should one use this instead of standard overloads, += and *. see tensile branch. 
 
 
 )" << genutil::get_how_string() << R"(
@@ -845,7 +946,9 @@ R"(
   ss << "/* whether or not to shimmy the starting k, in an attempt to avoid cache line overuse for cases where lda/ldb are powers of 2 */\n";
   ss << "/* if 0, no shimmying. if 1, instead of starting at k = 0 workgroups start at some negative offset dependent on work group id */\n";
   ss << "/* in the same way as the final unroll populates LDS with zeros in k mod UNROLL != 0, the initial negative indices here populate with 0 */\n";
-  ss << "#define UNROLL_FOR_OFFSET " << hp.unroll_for_offset << "\n";
+  if ( dp.nf_is_normal_form == false){
+    ss << "#define UNROLL_FOR_OFFSET " << hp.unroll_for_offset << "\n";
+  }
   ss << 
 R"(
 /* define the way in which work groups are assigned to tiles */
@@ -855,16 +958,18 @@ R"(
 )";
 
   append_group_allocation_defn_string(ss);
-  ss << 
+  
+  if (dp.nf_is_normal_form == false){
+    ss << 
 R"(
 /* Whether the load tiles are long in the direction of unroll (1) or perpendicular to the direction of unroll (0) */
 /* Note : if the load tiles are long in the direction of unroll, the destination tile in LDS is NOT contiguous  */
 /* We include these parameters here as pre-processor variables, but the loading micro-tile shapes are set in make_kernel.py */
 )";
-
-
-  ss << "#define WORK_ITEM_LOAD_A_PLL_TO_UNROLL " << hp.work_item_load_a_pll_to_unroll << "\n"; 
-  ss << "#define WORK_ITEM_LOAD_B_PLL_TO_UNROLL " << hp.work_item_load_b_pll_to_unroll << "\n";
+    ss << "#define WORK_ITEM_LOAD_A_PLL_TO_UNROLL " << hp.work_item_load_a_pll_to_unroll << "\n"; 
+    ss << "#define WORK_ITEM_LOAD_B_PLL_TO_UNROLL " << hp.work_item_load_b_pll_to_unroll << "\n";
+  }
+  
   ss << "/* Whether the load tiles are interwoven (ala Cobalt, (1)) or if the load tiles are truly contiguous tiles of A/B (0) */\n";
   ss << "/* Included here for user, in practice it has no direct effect on this kernel, as the relevent implementation has been done in make_kernel.py */\n";
   ss << "#define LOAD_TO_LDS_INTERWOVEN " << hp.load_to_lds_interwoven << "\n";
@@ -888,7 +993,8 @@ R"(
 )";
   
 
-  ss << "\n#define MACRO_TILE_AREA "<< dp.macro_tile_area <<"  // MACRO_TILE_WIDTH*MACRO_TILE_HEIGHT\n";
+  ss << "\n";
+  ss << "#define MACRO_TILE_AREA "<< dp.macro_tile_area <<"  // MACRO_TILE_WIDTH*MACRO_TILE_HEIGHT\n";
   ss << "#define MICRO_TILE_AREA "<< dp.micro_tile_area <<" // MICRO_TILE_WIDTH * MICRO_TILE_HEIGHT\n";
   ss << "#define N_WORK_ITEMS_PER_WORKGROUP  "<< dp.n_work_items_per_workgroup <<" // MACRO_TILE_AREA / MICRO_TILE_AREA\n";
   ss << "#define MACRO_TILE_HEIGHT_AND_PAD "<< dp.macro_tile_height_and_pad <<" // MACRO_TILE_HEIGHT + PAD\n";
@@ -901,17 +1007,20 @@ R"(
   ss << "#define N_ELEMENTS_OF_B_TO_LOAD_PER_WORKITEM "<< dp.n_elements_of_b_to_load_per_workitem <<" // N_ELEMENTS_IN_B_UNROLL / N_WORK_ITEMS_PER_WORKGROUP\n";
   ss << "#define N_MICRO_TILES_VERTICALLY "<< dp.n_micro_tiles_vertically <<" // MACRO_TILE_HEIGHT / MICRO_TILE_HEIGHT\n";
   ss << "#define N_MICRO_TILES_HORIZONTALLY "<< dp.n_micro_tiles_horizontally <<" // MACRO_TILE_WIDTH / MICRO_TILE_WIDTH\n";
-  ss << "\n/* MICRO_A_TILE_PLL_UNROLL * MICRO_A_TILE_PERP_UNROLL = N_ELEMENTS_OF_A_TO_LOAD_PER_WORKITEM */\n";
-  ss << "/* The dimensions of a tile in A loaded by a work item.  */\n";
-  ss << "#define MICRO_A_TILE_PLL_UNROLL " << dp.micro_a_tile_pll_unroll << " // size of the loaded tile, pll to unroll\n";
-  ss << "#define MICRO_A_TILE_PERP_UNROLL " << dp.micro_a_tile_perp_unroll << "\n";
-  ss << "#define N_MICRO_A_TILES_PLL_UNROLL " << dp.n_micro_a_tiles_pll_unroll << " // UNROLL / MICRO_A_TILE_PLL_UNROLL\n""";
-  ss << "\n/*  MICRO_B_TILE_PLL_UNROLL * MICRO_B_TILE_PERP_UNROLL = N_ELEMENTS_OF_B_TO_LOAD_PER_WORKITEM */\n";
-  ss << "/* The dimensions of a tile in B read by a work item */\n";
-  ss << "#define MICRO_B_TILE_PLL_UNROLL " << dp.micro_b_tile_pll_unroll << "\n";
-  ss << "#define MICRO_B_TILE_PERP_UNROLL " << dp.micro_b_tile_perp_unroll << "\n";
-  ss << "#define N_MICRO_B_TILES_PLL_UNROLL " << dp.n_micro_b_tiles_pll_unroll << " // UNROLL / MICRO_B_TILE_PLL_UNROLL\n";
-  ss << "#define N_MICRO_B_TILES_PLL_UNROLL " << dp.n_micro_b_tiles_pll_unroll << " // UNROLL / MICRO_B_TILE_PLL_UNROLL\n";
+
+  if (dp.nf_is_normal_form == false){
+    ss << "\n/* MICRO_A_TILE_PLL_UNROLL * MICRO_A_TILE_PERP_UNROLL = N_ELEMENTS_OF_A_TO_LOAD_PER_WORKITEM */\n";  
+    ss << "/* The dimensions of a tile in A loaded by a work item.  */\n";
+    ss << "#define MICRO_A_TILE_PLL_UNROLL " << dp.micro_a_tile_pll_unroll << " // size of the loaded tile, pll to unroll\n";
+    ss << "#define MICRO_A_TILE_PERP_UNROLL " << dp.micro_a_tile_perp_unroll << "\n";
+    ss << "#define N_MICRO_A_TILES_PLL_UNROLL " << dp.n_micro_a_tiles_pll_unroll << " // UNROLL / MICRO_A_TILE_PLL_UNROLL\n""";
+    ss << "\n/*  MICRO_B_TILE_PLL_UNROLL * MICRO_B_TILE_PERP_UNROLL = N_ELEMENTS_OF_B_TO_LOAD_PER_WORKITEM */\n";
+    ss << "/* The dimensions of a tile in B read by a work item */\n";
+    ss << "#define MICRO_B_TILE_PLL_UNROLL " << dp.micro_b_tile_pll_unroll << "\n";
+    ss << "#define MICRO_B_TILE_PERP_UNROLL " << dp.micro_b_tile_perp_unroll << "\n";
+    ss << "#define N_MICRO_B_TILES_PLL_UNROLL " << dp.n_micro_b_tiles_pll_unroll << " // UNROLL / MICRO_B_TILE_PLL_UNROLL\n";
+  }
+  
   ss << "\n/* two more parameters, which do dot have an effect the running of this kernel (used in enqueuing) */\n";
   ss << "/* the total number of work groups this kernel will use (recall m,n,k are fixed) */ \n";
   ss << "/* N_WORK_ITEMS_PER_C_ELM * ((__M__/MACRO_TILE_HEIGHT) + (__M__%MACRO_TILE_HEIGHT != 0)) * ((__N__/MACRO_TILE_WIDTH) + (__N__%MACRO_TILE_WIDTH != 0)) */ \n";
@@ -937,12 +1046,6 @@ R"(
 
   append_a_offset_string(ss);
 
-
-
-
-
-
-
   append_group_id_defns(ss);
   ss << "const unsigned local_id = get_local_id(0);\n";
   append_group_allocation_string(ss);
@@ -956,33 +1059,23 @@ unsigned macro_tile_start_col_in_c = group_id_horizontal*MACRO_TILE_WIDTH;
 
   append_special_case_edge_trick_string(ss);
 
-  ss << 
-R"(
-/* move to the top left corner of a (top left corner of b) of region required by the macro tile */
-a += macro_tile_start_row_in_c*ROW_STRIDE_A;   
-b += macro_tile_start_col_in_c*COL_STRIDE_B;
-)";
-
+  append_move_to_top_corner_string(ss);
+  
   append_split_on_k_ab_offset_adjustment_string(ss);
+
   append_k_unroll_offset_initial_string(ss);
 
-  ss << 
-R"(
-/* Define which rows or columns of A, B this thread will load from global into LDS */
-const unsigned pll_unroll_a_load_id = local_id % N_MICRO_A_TILES_PLL_UNROLL;
-const unsigned perp_unroll_a_load_id = local_id / N_MICRO_A_TILES_PLL_UNROLL;
-const unsigned pll_unroll_b_load_id = local_id % N_MICRO_B_TILES_PLL_UNROLL;
-const unsigned perp_unroll_b_load_id = local_id / N_MICRO_B_TILES_PLL_UNROLL;
-)";
+  append_load_within_tile_pattern_string(ss);
 
   append_micro_offset_string(ss);
   
   ss << 
 R"(
 
-/* Define which part of the C macro-tile this thread will process */
+/* Define which part of the C macro-tile this thread will process (% / or / % ?) */
 const unsigned micro_id_vertical = local_id % N_MICRO_TILES_VERTICALLY;
 const unsigned micro_id_horizontal = local_id / N_MICRO_TILES_VERTICALLY;
+
   
 )";
 
