@@ -77,7 +77,7 @@ ss <<  R"(
 
 /* data types */
 #define TFLOAT     float
-#define MAD(A,B,DST) DST += A*B; //mad(A,B,DST)
+#define MAD(A,B,DST) DST += mad(A,B,DST) ; //A*B; //
 
 /* MADs */
 #define TYPE_MAD(MULA,MULB,DST) DST = MAD(MULA,MULB,DST);

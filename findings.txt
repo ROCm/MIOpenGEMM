@@ -1,0 +1,24 @@
+The kernel from tensile, "generated" in tentotan.cpp, is basically the same as the original tensile kernel, but reparamaterised so that it can run through tinygemm. 
+
+One important change is that work groups are defined by 1-D indices, instead of 2-D. Simililary threads within work groups are defined in 1-D. That the indices of work groups is important is something we have already seem (GA1, GA2, GA3). But surprisingly, how threads are mapped is also important, and something which should be investigated in tinygemm.
+
+One mystery is the use of MADs. With MADs, kernels run much slower (~2x) than with standard a += b*c, when run through tinygemm. When run through tensile, the times are essentially the same, although MADs might be slightly faster. I have checked that the compilation flags are all the same. I cannot explain this. 
+
+Finally, the importance of initialising with random floats showed up again. The summary of the findings are:
+
+(where it is running through, 
+what addition operation is used, 
+how the data is generated, 
+tflops)
+
+tg, mad, x = rand() % 10,   3.1
+tg, mad, x = good quality,  2.9
+
+tg, +=*, x = rand() % 10,   5.7
+tg, +=*, x = good quality,  4.7
+
+tensile, mad, x = rand() % 10,   5.7
+tensile, mad, x = good quality,  5.4
+
+tensile, +=*, x = rand() % 10,   5.7
+tensile, +=*, x = good quality,  5.4

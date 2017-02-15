@@ -1032,8 +1032,8 @@ KernelString get_alpha_kernelstring(const hyperparams::HyperParams & hp, const t
 
   return tinygemm::tensilegen::get_tensile_kernelstring(gg);
 
-  //AlphaGenerator ag(hp, gg, dp);
-  //return ag.get_kernelstring();
+  AlphaGenerator ag(hp, gg, dp);
+  return ag.get_kernelstring();
 }
 
 

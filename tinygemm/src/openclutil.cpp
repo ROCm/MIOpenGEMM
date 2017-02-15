@@ -144,6 +144,9 @@ void get_device_info_from_command_queue(cl_command_queue command_queue, cl_devic
 
 cl_kernel cl_create_kernel(cl_program program, const char *kernel_name, const std::string & hash){
   cl_int errcode_ret;
+  
+  cl_kernel kernel;
+  //clCreateKernelsInProgram(program,1, &kernel,NULL );
   cl_kernel kernel = clCreateKernel(program, kernel_name, & errcode_ret);
   
   
@@ -167,9 +170,9 @@ void cl_build_program(cl_program program,cl_uint num_devices,const cl_device_id 
 
   if (ret != CL_SUCCESS){
     
-    char buffer[10240];
+    char buffer[50240];
     clGetProgramBuildInfo(program, device_list[0], CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer, NULL);
-    fprintf(stderr, "CL Compilation failed:\n%s", buffer);
+    fprintf(stderr, "CL Compilation failed, the buffer (clGetProgramBuildInfo) :\n%s", buffer);
   }
 
   confirm_cl_status(ret, hash, "cl_build_program");
@@ -303,7 +306,7 @@ void set_program_and_kernel(const cl_command_queue & command_queue, const std::s
   program = cl_create_program_with_source(context, 1, &kernel_cstr, &kernel_string_size , "creating program in set_program_and_kernel");
   
   /* To generate isa code, you'll need to add something like :   ``` -save-temps= + "/some/path/"  '''    to the following string  */
-  std::string buildOptions_11 = "-cl-std=CL2.0  -Werror";
+  std::string buildOptions_11 = "";//"-O5";//"-cl-std=CL2.0;" //-cl-unsafe-math-optimizations";//" "; //     -Werror
   auto buildOptions = buildOptions_11.c_str();
 
 
@@ -361,7 +364,13 @@ cl_command_queue auto_get_command_queue(outputwriting::OutputWriter & mowri, 	cl
   openclutil::set_platform_etc(platform, num_platforms, context, device_id_to_use, mowri);
 
 
-  return clCreateCommandQueue(context, device_id_to_use, properties, &locret);
+//(context, device_id_to_use, properties, &locret);
+
+  cl_command_queue cq = clCreateCommandQueue(context, device_id_to_use, properties, &locret);
+  confirm_cl_status(locret, "auto_get_command_queue", "cl_create_command_queue");
+  
+  
+  return cq;
 }
 
 
