@@ -14,9 +14,6 @@ namespace tinygemm{
 
 
 
-
-
-
 static const double default_alpha = 0.415693029182345929;
 static const double default_beta = 0.273539340934809345;
 
@@ -26,6 +23,7 @@ static const double default_beta = 0.273539340934809345;
 //const bool enforce_deterministic, 
 //const tinygemm::TinyGemmGeometry & gg
 //);
+
 
 
 tinygemm::TinyGemmSolution
@@ -52,8 +50,8 @@ tinygemm::TinyGemmSolution
 get_default(
 const bool enforce_deterministic,
 const tinygemm::TinyGemmGeometry & gg,
-bool verbose, 
-std::string logfile);
+bool verbose = false, 
+std::string logfile = "");
 
 void benchgemm(
 cl_command_queue command_queue, 

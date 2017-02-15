@@ -25,6 +25,7 @@ target_include_directories (tinygemm PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/dev_include>
     ${OPENCL_INCLUDE_DIRS})
 
+target_include_directories (tinygemm SYSTEM INTERFACE $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>)
 
 ############################################################
 # The following is cmake code to generate a config file package for Tensile
