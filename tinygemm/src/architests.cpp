@@ -17,8 +17,8 @@ std::tuple<bool, std::string> architecture_specific_tests(cl_command_queue comma
   
   
   /* check -1 : macro tile not too large */
-  if (dp.n_work_items_per_workgroup > max_work_group_size){
-    status_ss << "n_work_items_per_workgroup > CL_DEVICE_MAX_WORK_GROUP_SIZE, ( " << dp.n_work_items_per_workgroup << " > " << max_work_group_size << " ) : cannot compile this kernel to this architecture \n";
+  if (dp.main_n_work_items_per_workgroup > max_work_group_size){
+    status_ss << "n_work_items_per_workgroup > CL_DEVICE_MAX_WORK_GROUP_SIZE, ( " << dp.main_n_work_items_per_workgroup << " > " << max_work_group_size << " ) : cannot compile this kernel to this architecture \n";
   }
   
   

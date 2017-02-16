@@ -70,20 +70,17 @@ public:
   
   unsigned a_copy_workspace;
   unsigned b_copy_workspace;
-
-  std::string get_key_from_shortkey(const std::string & shortkey);
+  unsigned normal_form;
   
-  //unsigned get_workgroup_size();
+
+  std::string get_key_from_shortkey(const std::string & shortkey);  
   unsigned get_nwitems_h();
   unsigned get_nwitems_w();
   
   HyperParams(const std::map<std::string, unsigned> &);
   
-  
   /* take in hyper-parameter string and return a HyperParam object */
   HyperParams(const std::string & hyperstring);
-  
-  
   
   HyperParams() = delete;
   

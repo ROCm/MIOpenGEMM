@@ -47,7 +47,7 @@ private:
   bool uses_workspace;
   bool uses_alpha;
   bool uses_beta;
-  char mxz;  
+  char matrixchar;  
   std::string description_string;
   std::string function_definition;
   std::string inner_work_string;
@@ -62,7 +62,7 @@ void set_forall_derived(){
     uses_c = true;
     uses_workspace = false;
     uses_beta = true;
-    mxz = 'c';
+    matrixchar = 'c';
     description_string = R"(
 /* ****************************************************
 * It is used to perform the beta*C step in GEMM, 
@@ -85,12 +85,12 @@ void set_forall_derived(){
     if (forall_type.compare("copya") == 0){    
       uses_a = true;
       uses_b = false;    
-      mxz = 'a';
+      matrixchar = 'a';
     }
     else{
       uses_a = false;
       uses_b = true;    
-      mxz = 'b';
+      matrixchar = 'b';
     }
   }
     
@@ -99,12 +99,12 @@ void set_forall_derived(){
   }
   
   
-  n_full_work_items_per_line = gg.get_coal(mxz)  / work_per_thread;
-  n_work_items_per_line = n_full_work_items_per_line + (gg.get_coal(mxz) % work_per_thread != 0);
-  n_full_work_items = n_full_work_items_per_line*gg.get_uncoal(mxz);
-  n_work_items = n_work_items_per_line*gg.get_uncoal(mxz);
+  n_full_work_items_per_line = gg.get_coal(matrixchar) / work_per_thread;
+  n_work_items_per_line = n_full_work_items_per_line + (gg.get_coal(matrixchar) % work_per_thread != 0);
+  n_full_work_items = n_full_work_items_per_line*gg.get_uncoal(matrixchar);
+  n_work_items = n_work_items_per_line*gg.get_uncoal(matrixchar);
   start_in_coal_last_work_item = work_per_thread*n_full_work_items_per_line;
-  work_for_last_item_in_coal = gg.get_coal(mxz) % work_per_thread;
+  work_for_last_item_in_coal = gg.get_coal(matrixchar) % work_per_thread;
 }
 
 
@@ -128,11 +128,11 @@ void append_description_string(std::stringstream & ss){
 
 void append_what_definitions(std::stringstream & ss){
   ss << "#define TFLOAT  "  << dp.t_float << "\n";
-  ss<< "#define LDX " << gg.get_ld(mxz) << "\n" << 
+  ss<< "#define LDX " << gg.get_ld(matrixchar) << "\n" << 
 "/* less than or equal to LDX, DIM_COAL is size in the contiguous direction (m for c matrix if col contiguous and not transposed) */ \n" << 
-"#define DIM_COAL " << gg.get_coal(mxz) << "\n" <<
+"#define DIM_COAL " << gg.get_coal(matrixchar) << "\n" <<
 "/* DIM_UNCOAL is the other dimension of the matrix */ \n" << 
-"#define DIM_UNCOAL " << gg.get_uncoal(mxz) << "\n\n";
+"#define DIM_UNCOAL " << gg.get_uncoal(matrixchar) << "\n\n";
 }
 
 
@@ -159,7 +159,7 @@ void append_copy_preprocessor(std::stringstream & ss){
   }
   
   ss << "/*      the target stride between lines, derived from hp and gg (see DerivedParams) */\n";
-  ss << "#define LDY " << dp.get_target_ld(mxz) << "\n";
+  ss << "#define LDY " << dp.get_target_ld(matrixchar) << "\n";
   
 }
 

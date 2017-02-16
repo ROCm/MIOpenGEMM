@@ -26,7 +26,8 @@ private:
   void reset_ga3_params(const hyperparams::HyperParams & hp);
   void reset_acw1_params(const tinygemm::TinyGemmGeometry & gg);
   void reset_bcw1_params(const tinygemm::TinyGemmGeometry & gg, const hyperparams::HyperParams & hp);
-    
+  void reset_nf_params(const tinygemm::TinyGemmGeometry & gg, const hyperparams::HyperParams & hp);
+  
 public:
   
   /* initiate all parameters, throwing an error if there is an incompatibility */
@@ -34,20 +35,19 @@ public:
   
   DerivedParams(std::string s);
   
+    
   /* does the minimum setting to confirm compatibitily. called by get_deriveability */
   std::tuple<bool, std::string> set_fragile(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg);
   
   /* TODO : write descriptions */
   unsigned macro_tile_area = uninitialised_unsigned;
   unsigned micro_tile_area = uninitialised_unsigned;
-  //TODO : rename to reflect alpha kernel
-  unsigned n_work_items_per_workgroup = uninitialised_unsigned;
+  unsigned main_n_work_items_per_workgroup = uninitialised_unsigned;
   unsigned n_elements_in_a_unroll = uninitialised_unsigned;
   unsigned n_elements_in_b_unroll = uninitialised_unsigned;
   unsigned n_elements_of_a_to_load_per_workitem = uninitialised_unsigned;
   unsigned n_elements_of_b_to_load_per_workitem = uninitialised_unsigned;
   unsigned split_on_k = uninitialised_unsigned;
-  //TODO : rename to reflect alpha kernel
   unsigned does_beta_c_inc = uninitialised_unsigned;
   unsigned macro_tile_height_and_pad = uninitialised_unsigned;
   unsigned macro_tile_width_and_pad = uninitialised_unsigned;
@@ -65,23 +65,22 @@ public:
   unsigned preshift_rightmost_tile_width = uninitialised_unsigned;
   unsigned n_groups_vertically = uninitialised_unsigned;
   unsigned n_groups_horizontally = uninitialised_unsigned;
-  //TODO : rename to reflect alpha kernel
-  unsigned n_work_groups = uninitialised_unsigned;
-  //TODO : rename to reflect alpha kernel
-  unsigned global_work_size = uninitialised_unsigned; 
-  /* */
+  unsigned main_n_work_groups = uninitialised_unsigned;
+  unsigned main_global_work_size = uninitialised_unsigned; 
+ 
+  /* used when loading LDA -> registers, depends on MIW*/
   std::string strided_i_vertical;
-  /* */
-  std::string strided_i_horizontal; 
+  /* used when loading LDA -> registers, depends on MIW*/
+  std::string strided_i_horizontal;
   /*the int type for atomics */
   std::string infa;
   /* the function to use for atomic ints */
   std::string fati;
-  /* */
-  std::string effective_k; 
-  /* */
+  /* one of __K_NORMAL_FORM__   __K__  and  k_plus_offset */
+  std::string effective_k_varies_string; 
+  /* indexinf of c, depends on MIW*/
   std::string alpha_scaled;
-  /* pragma unroll string ("#pragma unroll\n" or "") */
+  /* pragma unroll string : #pragma unroll\n or "" */
   std::string pragma_unroll_string;
   /* currently one of "float" and "double", set from float_size */
   std::string t_float;
@@ -91,22 +90,26 @@ public:
   unsigned ga3_last_super_column_width = uninitialised_unsigned;
   
   /* ACW1 specific derived parameters */
-  unsigned acw1_smallest_possible_lda = uninitialised_unsigned; // ( tA == isColMajor ? k : m )
-  /* smallest x s.t. x >= acw1_smallest_possible_lda and x = n*16 + 3. */ 
-  unsigned acw1_target_lda = uninitialised_unsigned; //  16* ( ( acw1_smallest_possible_lda  - 3 ) / 16 ) + 3
+  unsigned acw1_smallest_possible_lda = uninitialised_unsigned;
+  unsigned acw1_target_lda = uninitialised_unsigned;
   
   /* BCW1 specific derived parameters */
-  unsigned bcw1_smallest_possible_ldb = uninitialised_unsigned; // ( tB == isColMajor ? n : k )
-  /* smallest x s.t. x >= acw1_smallest_possible_lda and x = n*16 + 11. */ 
-  unsigned bcw1_target_ldb = uninitialised_unsigned; //  16* ( ( acw1_smallest_possible_lda  - 11 ) / 16 ) + 11  
+  unsigned bcw1_smallest_possible_ldb = uninitialised_unsigned;
+  unsigned bcw1_target_ldb = uninitialised_unsigned; 
   unsigned bcw1_global_offset_b = uninitialised_unsigned;
 
   unsigned get_target_ld(char c) const;
-  
-  
-  bool nf_is_normal_form = false;
-  unsigned nf_k_normal_form = 0;
-  
+
+
+  /* normal form specifics */
+  unsigned nf_k_normal_form = uninitialised_unsigned;
+  unsigned needs_final_fractional_unroll = uninitialised_unsigned;
+
+
+  /* either original ldas, or those targetted in copy workspace */
+  unsigned effective_lda = uninitialised_unsigned;
+  unsigned effective_ldb = uninitialised_unsigned;
+
 
 
 };
