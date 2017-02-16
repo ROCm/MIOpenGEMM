@@ -145,7 +145,7 @@ void get_device_info_from_command_queue(cl_command_queue command_queue, cl_devic
 cl_kernel cl_create_kernel(cl_program program, const char *kernel_name, const std::string & hash){
   cl_int errcode_ret;
   
-  cl_kernel kernel;
+  //cl_kernel kernel;
   //clCreateKernelsInProgram(program,1, &kernel,NULL );
   cl_kernel kernel = clCreateKernel(program, kernel_name, & errcode_ret);
   

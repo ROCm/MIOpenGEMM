@@ -77,7 +77,7 @@ ss <<  R"(
 
 /* data types */
 #define TFLOAT     float
-#define MAD(A,B,DST) DST += mad(A,B,DST) ; //A*B; //
+#define MAD(A,B,DST) DST += A*B; //mad(A,B,DST) ; //
 
 /* MADs */
 #define TYPE_MAD(MULA,MULB,DST) DST = MAD(MULA,MULB,DST);
@@ -207,6 +207,29 @@ __kernel void CT_SSSSS_Cij_Sk_Aik_Bkj_i16x6f_j16x6s_nl6x1_k16_O2 )";
   do {
 
     barrier(CLK_LOCAL_MEM_FENCE);
+
+
+
+    
+    /* David said that it was faster to load to an intermediate, but I don't observe this. */
+    ///* load A global -> local */
+    //lA[ 0*LS_PARA_A + 0*LS_PERP_A*(MT_0I+PAD) ] = A[ 1*LS_PARA_A*strideA0I + 0*LS_PERP_A*strideAK];
+    //lA[ 1*LS_PARA_A + 0*LS_PERP_A*(MT_0I+PAD) ] = A[ 2*LS_PARA_A*strideA0I + 0*LS_PERP_A*strideAK];
+    //lA[ 2*LS_PARA_A + 0*LS_PERP_A*(MT_0I+PAD) ] = A[ 3*LS_PARA_A*strideA0I + 0*LS_PERP_A*strideAK];
+    //lA[ 3*LS_PARA_A + 0*LS_PERP_A*(MT_0I+PAD) ] = A[ 4*LS_PARA_A*strideA0I + 0*LS_PERP_A*strideAK];
+    //lA[ 4*LS_PARA_A + 0*LS_PERP_A*(MT_0I+PAD) ] = A[ 5*LS_PARA_A*strideA0I + 0*LS_PERP_A*strideAK];
+    //lA[ 5*LS_PARA_A + 0*LS_PERP_A*(MT_0I+PAD) ] = A[ 6*LS_PARA_A*strideA0I + 0*LS_PERP_A*strideAK];
+
+
+    ///* load B global -> local */
+    //lB[ 0*LS_PARA_B*(MT_1J+PAD) + 0*LS_PERP_B ] = B[ 0*LS_PARA_B*strideBK + 0*LS_PERP_B*strideB1J];
+    //lB[ 0*LS_PARA_B*(MT_1J+PAD) + 1*LS_PERP_B ] = B[ 0*LS_PARA_B*strideBK + 1*LS_PERP_B*strideB1J];
+    //lB[ 0*LS_PARA_B*(MT_1J+PAD) + 2*LS_PERP_B ] = B[ 0*LS_PARA_B*strideBK + 2*LS_PERP_B*strideB1J];
+    //lB[ 0*LS_PARA_B*(MT_1J+PAD) + 3*LS_PERP_B ] = B[ 0*LS_PARA_B*strideBK + 3*LS_PERP_B*strideB1J];
+    //lB[ 0*LS_PARA_B*(MT_1J+PAD) + 4*LS_PERP_B ] = B[ 0*LS_PARA_B*strideBK + 4*LS_PERP_B*strideB1J];
+    //lB[ 0*LS_PARA_B*(MT_1J+PAD) + 5*LS_PERP_B ] = B[ 0*LS_PARA_B*strideBK + 5*LS_PERP_B*strideB1J];
+
+
 
     /* load A global -> local */
     a_0_0 = A[ 0*LS_PARA_A*strideA0I + 0*LS_PERP_A*strideAK];
