@@ -68,6 +68,21 @@ unsigned TinyGemmGeometry::get_padless_dim(char x, bool isCoal) const{
   }
 }
 
+unsigned TinyGemmGeometry::get_non_k_dim(char x) const{
+  
+  if (x == 'a'){
+    return m;
+  }
+  
+  else if (x == 'b'){
+    return n;
+  }
+  
+  else{
+    throw tinygemm_error("invalid char passed to get_non_k_dim in tinygemm geometry, it should be either a or b");
+  }  
+}
+
 unsigned TinyGemmGeometry::get_ld(char x) const {
   
   if (x == 'a'){
@@ -95,6 +110,16 @@ unsigned TinyGemmGeometry::get_uncoal(char x) const{
 unsigned TinyGemmGeometry::get_coal(char x) const{
   return get_padless_dim(x, true);
 } 
+
+
+bool TinyGemmGeometry::coal_is_pll_k(char x) const{
+  if ((x != 'a') && (x != 'b')){
+    throw tinygemm_error("parameter to coal_is_pll_k should be 'a' or 'b'");
+  }
+  
+  /* proof : false, false, true should give 1 */
+  return (static_cast<unsigned>(isColMajor) + static_cast<unsigned>(get_tX(x)) + static_cast<unsigned>(x == 'a')) % 2;
+}
   
 
 TinyGemmGeometry::TinyGemmGeometry(bool isColMajor_, bool tA_, bool tB_, bool tC_, unsigned lda_, unsigned ldb_, unsigned ldc_, unsigned m_, unsigned n_, unsigned k_, unsigned workspace_size_, char floattype_): isColMajor(isColMajor_), tA(tA_), tB(tB_), tC(tC_), lda(lda_), ldb(ldb_), ldc(ldc_), m(m_), n(n_), k(k_), workspace_size(workspace_size_), floattype(floattype_) {

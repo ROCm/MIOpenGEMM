@@ -225,7 +225,7 @@ private:
     }
     
     else if (type.compare("copya") == 0){
-      if (tk_kernels_map.at("copya").is_set() == false && new_hp.a_copy_workspace == 1){
+      if (tk_kernels_map.at("copya").is_set() == false && new_hp.aps.copy_type == 1){
          return true;
        }
        else{
@@ -234,7 +234,7 @@ private:
     }
 
     else if (type.compare("copyb") == 0){
-      if (tk_kernels_map.at("copyb").is_set() == false && new_hp.b_copy_workspace == 1){
+      if (tk_kernels_map.at("copyb").is_set() == false && new_hp.bps.copy_type == 1){
          return true;
        }
        else{
@@ -552,13 +552,13 @@ public:
           hyper_front_history.push_back(hp);
         
           /* reason 1 : the macro tile is too tall */
-          if (gg.m < hp.macro_tile_height){
-            mowri << "m < macro_tile_height, not considering this kernel" << Endl;
+          if (gg.m < hp.aps.macro_tile_length){
+            mowri << "m < aps.macro_tile_length, not considering this kernel" << Endl;
           }
           
           /* reason 2 : the macro tile is too wide */
-          else if (gg.n < hp.macro_tile_width){
-            mowri << "m < macro_tile_width, not considering this kernel" << Endl;
+          else if (gg.n < hp.bps.macro_tile_length){
+            mowri << "m < bps.macro_tile_length, not considering this kernel" << Endl;
           }
           
           /* reason 3 : the user requests a deterministic kernel, which cannot be guaranteed */

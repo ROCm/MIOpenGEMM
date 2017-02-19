@@ -69,6 +69,10 @@ public:
   
   unsigned get_ld(char x) const;
   
+  unsigned get_non_k_dim(char x) const;
+  
+  bool coal_is_pll_k(char x) const;
+    
   bool get_tX(char x) const;
   
   std::string get_string() const;

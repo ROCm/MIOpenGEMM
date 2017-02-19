@@ -23,21 +23,16 @@ class AlphaGenerator : basegen::BaseGenerator{
 private:
 
 
-  /* set here as we do not want the user to choose (although would not break kernel) */
-  unsigned use_edge_trick = 1;
   
-  std::string pll_unroll_stride_a;
-  std::string perp_unroll_stride_a;
 
-  std::string pll_unroll_stride_b;  
-  std::string perp_unroll_stride_b;    
+
 
 void set_usage(){
   
-  uses_a = (hp.normal_form || hp.a_copy_workspace  == 1) ? false : true; 
-  uses_b = (hp.normal_form || hp.b_copy_workspace  == 1) ? false : true;
+  uses_a = (hp.normal_form || hp.aps.copy_type  == 1) ? false : true; 
+  uses_b = (hp.normal_form || hp.bps.copy_type  == 1) ? false : true;
   uses_c = true;
-  uses_workspace = hp.a_copy_workspace + hp.b_copy_workspace + hp.normal_form == 0  ? false : true;
+  uses_workspace = hp.aps.copy_type + hp.bps.copy_type + hp.normal_form == 0  ? false : true;
   uses_alpha  = true;
   uses_beta = dp.does_beta_c_inc;
 
@@ -58,11 +53,6 @@ virtual void setup() final override{
   
   set_usage();
 
-  pll_unroll_stride_a = (hp.normal_form == 0) ? "COL_STRIDE_A" : "MACRO_TILE_HEIGHT"; 
-  perp_unroll_stride_a = (hp.normal_form == 0) ? "ROW_STRIDE_A" : "1";
-
-  pll_unroll_stride_b = (hp.normal_form == 0) ? "ROW_STRIDE_B" : "MACRO_TILE_WIDTH";  
-  perp_unroll_stride_b = (hp.normal_form == 0) ? "COL_STRIDE_B" : "1";    
 
 
 }
@@ -285,8 +275,8 @@ void append_k_remaining_string(std::stringstream & ss){
 void append_worktime_increment_ab(std::stringstream & ss, unsigned final_unroll){
   if (final_unroll == 0){
     std::string n_jumps_string = dp.split_on_k == 0 ? "UNROLL" : "G_UNROLL";
-    ss << "a += " << pll_unroll_stride_a << "*" << n_jumps_string << ";\n",
-    ss << "b += " << pll_unroll_stride_b << "*" << n_jumps_string << ";\n";
+    ss << "a += " << dp.adps.main_pll_unroll_stride << "*" << n_jumps_string << ";\n",
+    ss << "b += " << dp.bdps.main_pll_unroll_stride << "*" << n_jumps_string << ";\n";
   }
 }
 
@@ -323,11 +313,11 @@ void append_load_ab_into_LDS_string(std::stringstream & ss, unsigned final_unrol
   else{
     
     std::stringstream a_value_to_get_ss;
-    a_value_to_get_ss << "a[mu_pll_i*" << pll_unroll_stride_a << " + mu_perp_i*" << perp_unroll_stride_a << "];";
+    a_value_to_get_ss << "a[mu_pll_i*" << dp.adps.main_pll_unroll_stride << " + mu_perp_i*" << dp.adps.main_perp_unroll_stride << "];";
     a_value_to_get = a_value_to_get_ss.str();
     
     std::stringstream b_value_to_get_ss;
-    b_value_to_get_ss << "b[mu_pll_i*" << pll_unroll_stride_b << " + mu_perp_i*" << perp_unroll_stride_b << "];";
+    b_value_to_get_ss << "b[mu_pll_i*" << dp.bdps.main_pll_unroll_stride << " + mu_perp_i*" << dp.bdps.main_perp_unroll_stride << "];";
     b_value_to_get = b_value_to_get_ss.str();
     
     a_comment =  "/* load data from a into LDS */";
@@ -485,23 +475,23 @@ void append_micro_offset_string(std::stringstream & ss){
     ss << "const unsigned a_offset_pll_unroll = " << str_a_n_pll << " pll_unroll_a_load_id;\n";
     ss << "const unsigned a_offset_perp_unroll = " << str_a_n_perp <<  " perp_unroll_a_load_id;\n";
   
-    ss << "a += " << pll_unroll_stride_a << " * a_offset_pll_unroll;\n";
-    ss << "a += " << perp_unroll_stride_a << " * a_offset_perp_unroll;\n\n";
+    ss << "a += " << dp.adps.main_pll_unroll_stride << " * a_offset_pll_unroll;\n";
+    ss << "a += " << dp.adps.main_perp_unroll_stride << " * a_offset_perp_unroll;\n\n";
   
     
     ss << "/* make the micro adjustments (B) for the thread, getting ready to load */\n";
     ss << "const unsigned b_offset_pll_unroll = " << str_b_n_pll << " pll_unroll_b_load_id;\n";
     ss << "const unsigned b_offset_perp_unroll = " << str_b_n_perp << " perp_unroll_b_load_id;\n";
 
-    ss << "b += " << pll_unroll_stride_b << " * b_offset_pll_unroll;\n";
-    ss << "b += " << perp_unroll_stride_b << " * b_offset_perp_unroll;\n";
+    ss << "b += " << dp.bdps.main_pll_unroll_stride << " * b_offset_pll_unroll;\n";
+    ss << "b += " << dp.bdps.main_perp_unroll_stride << " * b_offset_perp_unroll;\n";
 
 }
 
 void append_load_load_string(std::stringstream & ss){
-  ss << "\n" << dp.pragma_unroll_string << "for (unsigned i = 0; i < MICRO_TILE_HEIGHT; ++i){\nrA[i] = lA[" << dp.strided_i_vertical << "];\n}\n";
+  ss << "\n" << dp.pragma_unroll_string << "for (unsigned i = 0; i < MICRO_TILE_HEIGHT; ++i){\nrA[i] = lA[" << dp.adps.main_strided_i << "];\n}\n";
   ss << "lA += MACRO_TILE_HEIGHT_AND_PAD;\n\n" << dp.pragma_unroll_string;
-  ss << "for (unsigned i = 0; i < MICRO_TILE_WIDTH; ++i){\nrB[i] = lB[" << dp.strided_i_horizontal << "];\n}\n";
+  ss << "for (unsigned i = 0; i < MICRO_TILE_WIDTH; ++i){\nrB[i] = lB[" << dp.bdps.main_strided_i << "];\n}\n";
   ss << "lB += MACRO_TILE_WIDTH_AND_PAD;";
 }
 
@@ -513,19 +503,19 @@ void append_localA_localB_decl_string(std::stringstream & ss){
 void append_preshift_defns(std::stringstream & ss){
   
   
-  if (use_edge_trick != 0){
+  if (dp.use_edge_trick != 0){
     ss << "\n" << 
     "/* 1 + (__M__ - 1) % MACRO_TILE_HEIGHT  */ \n" << 
-    "#define PRESHIFT_BOTTOMMOST_TILE_HEIGHT " << dp.preshift_bottommost_tile_height << " // somewhere in 1 ... MACRO_TILE_HEIGHT\n" << 
+    "#define PRESHIFT_BOTTOMMOST_TILE_HEIGHT " << dp.adps.main_preshift_final_tile << " // somewhere in 1 ... MACRO_TILE_HEIGHT\n" << 
     "/* 1 + (__N__ - 1) % MACRO_TILE_WIDTH */ \n" << 
-    "#define PRESHIFT_RIGHTMOST_TILE_WIDTH " << dp.preshift_rightmost_tile_width << " // somewhere in 1 ... MACRO_TILE_WIDTH\n";
+    "#define PRESHIFT_RIGHTMOST_TILE_WIDTH " << dp.bdps.main_preshift_final_tile << " // somewhere in 1 ... MACRO_TILE_WIDTH\n";
   }
 }
 
 void append_special_case_edge_trick_string(std::stringstream & ss){
   ss << "\n";
   //TODO : if normal form, a b in copy will be buffered.
-  if (hp.normal_form == 0 && use_edge_trick != 0){
+  if (hp.normal_form == 0 && dp.use_edge_trick != 0){
     ss <<
 R"(/* Special case of the tile being on far right : pull the tile to the left just enough so that it doesn't overflow C */
 if (group_id_horizontal == N_GROUPS_HORIZONTALLY - 1){
@@ -555,24 +545,24 @@ void append_ngroups_grid_string(std::stringstream & ss){
   
   ss << "\n"
   << "/* number of groups vertically : __M__ / MACRO_TILE_HEIGHT";
-  if (use_edge_trick == 1){
+  if (dp.use_edge_trick == 1){
     ss << " + (PRESHIFT_BOTTOMMOST_TILE_HEIGHT != MACRO_TILE_HEIGHT)";
   } 
   ss << " */" << "\n"
-  << "#define N_GROUPS_VERTICALLY " <<  dp.n_groups_vertically << "\n"
+  << "#define N_GROUPS_VERTICALLY " <<  dp.adps.main_n_groups << "\n"
   << "/* number of groups horizontally : __N__ / MACRO_TILE_WIDTH";
-  if (use_edge_trick == 1){
+  if (dp.use_edge_trick == 1){
     ss << " + (PRESHIFT_RIGHTMOST_TILE_WIDTH != MACRO_TILE_WIDTH)";
   }
   ss << "*/" << "\n"
-  << "#define N_GROUPS_HORIZONTALLY " <<  dp.n_groups_horizontally << "\n";
+  << "#define N_GROUPS_HORIZONTALLY " <<  dp.bdps.main_n_groups << "\n";
 
 }
 
 
 void append_final_write_all(std::stringstream & ss){
   
-  if (use_edge_trick == 0){
+  if (dp.use_edge_trick == 0){
     ss << "\n";
     append_final_write_loops_no_check(ss);
   }
@@ -682,8 +672,8 @@ void append_stride_defn(std::stringstream & ss, char LETTER, unsigned ldx,  unsi
 
 void append_stride_defns(std::stringstream & ss){
   if (hp.normal_form == 0){
-    append_stride_defn(ss, 'A', dp.effective_lda, gg.tA);
-    append_stride_defn(ss, 'B', dp.effective_ldb, gg.tB);
+    append_stride_defn(ss, 'A', dp.adps.main_effective_ldx, gg.tA);
+    append_stride_defn(ss, 'B', dp.bdps.main_effective_ldx, gg.tB);
   }
   append_stride_defn(ss, 'C', gg.ldc, gg.tC);  
 }
@@ -722,7 +712,7 @@ void append_kernel_name(std::stringstream & ss){
   
 
 void append_initial_a_offset(std::stringstream & ss){
-  if (hp.a_copy_workspace == 1){
+  if (hp.aps.copy_type == 1){
     ss << "/* a from workspace */\n";
     ss << "const TFLOAT * restrict a = workspace + workspace_offset;\n";
   }
@@ -736,7 +726,7 @@ void append_initial_a_offset(std::stringstream & ss){
 
 void append_initial_b_offset(std::stringstream & ss){
 
-  if (hp.b_copy_workspace == 1){
+  if (hp.bps.copy_type == 1){
     ss << "/* b from workspace */\n";
     ss << "const TFLOAT * restrict b = workspace + workspace_offset + GLOBAL_OFFSET_B;\n";
   }
@@ -771,8 +761,8 @@ c += c_offset;
   
 
 void append_global_offset_b_workspace(std::stringstream & ss){
-  if (hp.b_copy_workspace == true){
-    ss << "\n\n/* b is offset in workspace because a comes before it */\n#define GLOBAL_OFFSET_B " << dp.bcw1_global_offset_b;
+  if (hp.bps.copy_type == true){
+    ss << "\n\n/* b is offset in workspace because a comes before it */\n#define GLOBAL_OFFSET_B " << dp.bdps.cw_global_offset;
   }
 }
 
@@ -783,15 +773,15 @@ void append_ldx_definitions(std::stringstream & ss){
 
   if (hp.normal_form == 0){
     
-    if (hp.a_copy_workspace == 1){
+    if (hp.aps.copy_type == 1){
       ss << "/* as per a in workspace */\n";
     }
-    ss << "#define __LDA__ " << dp.effective_lda << "\n";
+    ss << "#define __LDA__ " << dp.adps.main_effective_ldx << "\n";
     
-    if (hp.b_copy_workspace == 1){  
+    if (hp.bps.copy_type == 1){  
       ss << "/* as per b in workspace */\n";
     }
-    ss << "#define __LDB__ " << dp.effective_ldb << "\n";
+    ss << "#define __LDB__ " << dp.bdps.main_effective_ldx << "\n";
   
   }
   
@@ -916,18 +906,19 @@ R"(
 )" << genutil::get_how_string() << R"(
 /* Defines a tile shape. Each thread will process a tile of this shape from C (if N_WORK_ITEMS_PER_C_ELM > 1 the processing is shared with threads in other WGs)  */
 )";
-  ss << "#define MICRO_TILE_WIDTH " << hp.micro_tile_width << "\n";
-  ss << "#define MICRO_TILE_HEIGHT " << hp.micro_tile_height << "\n";
+  ss << "#define MICRO_TILE_WIDTH " << hp.bps.micro_tile_length << "\n";
+  ss << "#define MICRO_TILE_HEIGHT " << hp.aps.micro_tile_length << "\n";
   ss << "/* Area of C which a workgroup will process. Recall that a workgroup is made of several threads which share LDS memory */\n";
-  ss << "#define MACRO_TILE_WIDTH " << hp.macro_tile_width << "\n";
-  ss << "#define MACRO_TILE_HEIGHT " << hp.macro_tile_height << "\n";
+  ss << "#define MACRO_TILE_WIDTH " << hp.bps.macro_tile_length << "\n";
+  ss << "#define MACRO_TILE_HEIGHT " << hp.aps.macro_tile_length << "\n";
   ss << "/* How much a workgroup load (global -> LDS) in the k-direction at each iteration of the outer-most loop */\n";
   ss << "#define UNROLL " << hp.unroll  << "\n";
   ss << "/* padding in LDS to avoid bank conflicts*/\n";
-  ss << "#define PAD " << hp.pad << "\n";
+  ss << "#define PAD_LDS_A " << hp.aps.lds_pad_size << "\n";
+  ss << "#define PAD_LDS_B " << hp.bps.lds_pad_size << "\n";
   ss << "/* whether or not this kernel uses the edge trick (see documentation : (TODO, currently internal AMD document)) */\n";
   ss << "/* this precompiler defn has no direct influence on the running the kernel, implementation already done in make_kernel.py */\n";
-  ss << "#define EDGETRICK " << use_edge_trick << "\n";
+  ss << "#define EDGETRICK " << dp.use_edge_trick << "\n";
   ss << "/* the number of work items working on the same c element. if this is 1, there will be just one thread doing all k multiply-adds, */\n";
   ss << "/* otherwise if it is greater than 1, each thread will be computing ~ k / N_WORK_ITEMS_PER_C_ELM of the multiply adds, to be atomically added at the end */ \n";
   ss << "#define N_WORK_ITEMS_PER_C_ELM " << hp.n_work_items_per_c_elm << "\n";
@@ -955,8 +946,8 @@ R"(
 /* We include these parameters here as pre-processor variables, but the loading micro-tile shapes are set in make_kernel.py */
 )";
 
-  ss << "#define WORK_ITEM_LOAD_A_PLL_TO_UNROLL " << hp.work_item_load_a_pll_to_unroll << "\n"; 
-  ss << "#define WORK_ITEM_LOAD_B_PLL_TO_UNROLL " << hp.work_item_load_b_pll_to_unroll << "\n";
+  ss << "#define WORK_ITEM_LOAD_A_PLL_TO_UNROLL " << hp.aps.load_pll_to_unroll << "\n"; 
+  ss << "#define WORK_ITEM_LOAD_B_PLL_TO_UNROLL " << hp.aps.load_pll_to_unroll << "\n";
   ss << "/* Whether the load tiles are interwoven (ala Cobalt, (1)) or if the load tiles are truly contiguous tiles of A/B (0) */\n";
   ss << "/* Included here for user, in practice it has no direct effect on this kernel, as the relevent implementation has been done in make_kernel.py */\n";
   ss << "#define LOAD_TO_LDS_INTERWOVEN " << hp.load_to_lds_interwoven << "\n";
@@ -988,27 +979,27 @@ R"(
   ss << "#define MACRO_TILE_AREA "<< dp.macro_tile_area <<"  // MACRO_TILE_WIDTH*MACRO_TILE_HEIGHT\n";
   ss << "#define MICRO_TILE_AREA "<< dp.micro_tile_area <<" // MICRO_TILE_WIDTH * MICRO_TILE_HEIGHT\n";
   ss << "#define N_WORK_ITEMS_PER_WORKGROUP  "<< dp.main_n_work_items_per_workgroup <<" // MACRO_TILE_AREA / MICRO_TILE_AREA\n";
-  ss << "#define MACRO_TILE_HEIGHT_AND_PAD "<< dp.macro_tile_height_and_pad <<" // MACRO_TILE_HEIGHT + PAD\n";
-  ss << "#define MACRO_TILE_WIDTH_AND_PAD "<< dp.macro_tile_width_and_pad <<" // MACRO_TILE_WIDTH + PAD\n";
-  ss << "#define N_ELEMENTS_IN_A_UNROLL "<< dp.n_elements_in_a_unroll <<" // MACRO_TILE_HEIGHT * UNROLL\n";
-  ss << "#define N_ELEMENTS_IN_B_UNROLL "<< dp.n_elements_in_b_unroll <<" // MACRO_TILE_WIDTH * UNROLL\n";
-  ss << "#define N_ELEMENTS_IN_PADDED_A_UNROLL "<< dp.n_elements_in_padded_a_unroll <<" // MACRO_TILE_HEIGHT_AND_PAD * UNROLL\n";
-  ss << "#define N_ELEMENTS_IN_PADDED_B_UNROLL "<< dp.n_elements_in_padded_b_unroll <<" // MACRO_TILE_WIDTH_AND_PAD * UNROLL\n";
-  ss << "#define N_ELEMENTS_OF_A_TO_LOAD_PER_WORKITEM "<< dp.n_elements_of_a_to_load_per_workitem <<" // N_ELEMENTS_IN_A_UNROLL / N_WORK_ITEMS_PER_WORKGROUP\n";
-  ss << "#define N_ELEMENTS_OF_B_TO_LOAD_PER_WORKITEM "<< dp.n_elements_of_b_to_load_per_workitem <<" // N_ELEMENTS_IN_B_UNROLL / N_WORK_ITEMS_PER_WORKGROUP\n";
-  ss << "#define N_MICRO_TILES_VERTICALLY "<< dp.n_micro_tiles_vertically <<" // MACRO_TILE_HEIGHT / MICRO_TILE_HEIGHT\n";
-  ss << "#define N_MICRO_TILES_HORIZONTALLY "<< dp.n_micro_tiles_horizontally <<" // MACRO_TILE_WIDTH / MICRO_TILE_WIDTH\n";
+  ss << "#define MACRO_TILE_HEIGHT_AND_PAD "<< dp.adps.main_macro_tile_length_and_pad <<" // MACRO_TILE_HEIGHT + PAD_LDS_A\n";
+  ss << "#define MACRO_TILE_WIDTH_AND_PAD "<< dp.bdps.main_macro_tile_length_and_pad <<" // MACRO_TILE_WIDTH + PAD_LDS_B\n";
+  ss << "#define N_ELEMENTS_IN_A_UNROLL "<< dp.adps.n_elements_in_unroll <<" // MACRO_TILE_HEIGHT * UNROLL\n";
+  ss << "#define N_ELEMENTS_IN_B_UNROLL "<< dp.bdps.n_elements_in_unroll <<" // MACRO_TILE_WIDTH * UNROLL\n";
+  ss << "#define N_ELEMENTS_IN_PADDED_A_UNROLL "<< dp.adps.main_n_elements_in_padded_unroll <<" // MACRO_TILE_HEIGHT_AND_PAD * UNROLL\n";
+  ss << "#define N_ELEMENTS_IN_PADDED_B_UNROLL "<< dp.bdps.main_n_elements_in_padded_unroll <<" // MACRO_TILE_WIDTH_AND_PAD * UNROLL\n";
+  ss << "#define N_ELEMENTS_OF_A_TO_LOAD_PER_WORKITEM "<< dp.adps.main_n_elements_to_load_per_workitem <<" // N_ELEMENTS_IN_A_UNROLL / N_WORK_ITEMS_PER_WORKGROUP\n";
+  ss << "#define N_ELEMENTS_OF_B_TO_LOAD_PER_WORKITEM "<< dp.bdps.main_n_elements_to_load_per_workitem <<" // N_ELEMENTS_IN_B_UNROLL / N_WORK_ITEMS_PER_WORKGROUP\n";
+  ss << "#define N_MICRO_TILES_VERTICALLY "<< dp.adps.main_n_micro_in_macro <<" // MACRO_TILE_HEIGHT / MICRO_TILE_HEIGHT\n";
+  ss << "#define N_MICRO_TILES_HORIZONTALLY "<< dp.bdps.main_n_micro_in_macro <<" // MACRO_TILE_WIDTH / MICRO_TILE_WIDTH\n";
 
   ss << "\n/* MICRO_A_TILE_PLL_UNROLL * MICRO_A_TILE_PERP_UNROLL = N_ELEMENTS_OF_A_TO_LOAD_PER_WORKITEM */\n";  
   ss << "/* The dimensions of a tile in A loaded by a work item.  */\n";
-  ss << "#define MICRO_A_TILE_PLL_UNROLL " << dp.micro_a_tile_pll_unroll << " // size of the loaded tile, pll to unroll\n";
-  ss << "#define MICRO_A_TILE_PERP_UNROLL " << dp.micro_a_tile_perp_unroll << "\n";
-  ss << "#define N_MICRO_A_TILES_PLL_UNROLL " << dp.n_micro_a_tiles_pll_unroll << " // UNROLL / MICRO_A_TILE_PLL_UNROLL\n""";
+  ss << "#define MICRO_A_TILE_PLL_UNROLL " << dp.adps.main_micro_tile_pll_unroll << " // size of the loaded tile, pll to unroll\n";
+  ss << "#define MICRO_A_TILE_PERP_UNROLL " << dp.adps.main_micro_tile_perp_unroll << "\n";
+  ss << "#define N_MICRO_A_TILES_PLL_UNROLL " << dp.adps.main_n_micro_tiles_pll_unroll << " // UNROLL / MICRO_A_TILE_PLL_UNROLL\n""";
   ss << "\n/*  MICRO_B_TILE_PLL_UNROLL * MICRO_B_TILE_PERP_UNROLL = N_ELEMENTS_OF_B_TO_LOAD_PER_WORKITEM */\n";
   ss << "/* The dimensions of a tile in B read by a work item */\n";
-  ss << "#define MICRO_B_TILE_PLL_UNROLL " << dp.micro_b_tile_pll_unroll << "\n";
-  ss << "#define MICRO_B_TILE_PERP_UNROLL " << dp.micro_b_tile_perp_unroll << "\n";
-  ss << "#define N_MICRO_B_TILES_PLL_UNROLL " << dp.n_micro_b_tiles_pll_unroll << " // UNROLL / MICRO_B_TILE_PLL_UNROLL\n";
+  ss << "#define MICRO_B_TILE_PLL_UNROLL " << dp.bdps.main_micro_tile_pll_unroll << "\n";
+  ss << "#define MICRO_B_TILE_PERP_UNROLL " << dp.bdps.main_micro_tile_perp_unroll << "\n";
+  ss << "#define N_MICRO_B_TILES_PLL_UNROLL " << dp.bdps.main_n_micro_tiles_pll_unroll << " // UNROLL / MICRO_B_TILE_PLL_UNROLL\n";
   
   ss << "\n/* two more parameters, which do dot have an effect the running of this kernel (used in enqueuing) */\n";
   ss << "/* the total number of work groups this kernel will use (recall m,n,k are fixed) */ \n";

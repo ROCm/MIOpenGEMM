@@ -30,6 +30,17 @@ class HyperParamList{
 extern HyperParamList hpl;
   
 
+class HyperParamsChiral{
+  
+public:
+  unsigned micro_tile_length;
+  unsigned macro_tile_length;
+  unsigned load_pll_to_unroll;
+  unsigned copy_type; //for now 0 : none, 1 : simple copy with ldx padding. To include : 2 : normal form.
+  unsigned lds_pad_size;
+  
+};
+
 class HyperParams{
 
 private: 
@@ -37,11 +48,11 @@ private:
 
 public:
 
-  void bool_check(const std::string & key, unsigned v) const;
+  //void bool_check(const std::string & key, unsigned v) const;
   
-  void positive_check(const std::string & key, unsigned v) const;
+  //void positive_check(const std::string & key, unsigned v) const;
   
-  void mod_check(const std::string & key1, unsigned v1, const std::string & key2, unsigned v2) const;
+  //void mod_check(const std::string & key1, unsigned v1, const std::string & key2, unsigned v2) const;
   
   void ga_check() const;
   
@@ -49,28 +60,30 @@ public:
   
   static std::vector<std::tuple<tinygemm::TinyGemmGeometry, std::string>> kernel_cache;  
   
-  /* the hyper parameters */
-  unsigned micro_tile_width;  
-  unsigned micro_tile_height;  
-  unsigned macro_tile_width; 
-  unsigned macro_tile_height;  
+  
+  HyperParamsChiral aps;
+  HyperParamsChiral bps;
+  
+  const HyperParamsChiral & at(char x) const;
+  
+  
+  //will go into HyperParamsChiral eventually
+  unsigned normal_form;
+  //unsigned pad;  
+  
+
+  
   unsigned unroll;  
-  
-  unsigned pad;  
   unsigned group_allocation;  
-  unsigned work_item_load_a_pll_to_unroll;  
-  unsigned work_item_load_b_pll_to_unroll;  
   unsigned unroll_pragma;  
-  
   unsigned load_to_lds_interwoven;  
   unsigned c_micro_tiles_interwoven; 
   unsigned n_work_items_per_c_elm;  
   unsigned n_target_active_workgroups; 
   unsigned unroll_for_offset;
-  
-  unsigned a_copy_workspace;
-  unsigned b_copy_workspace;
-  unsigned normal_form;
+ 
+ 
+
   
 
   std::string get_key_from_shortkey(const std::string & shortkey);  

@@ -9,6 +9,9 @@ namespace tinygemm{
 namespace derivedparams{
 
 
+unsigned DerivedParams::get_target_ld(char x) const{
+  return at(x).cw_target_ldx;
+}
 
 
   
@@ -17,34 +20,52 @@ unsigned get_target(unsigned grid_size, unsigned above_distance, unsigned x){
   return grid_size * to_grid_line + above_distance;
 } 
 
-/* TODO : this 3 is ~ arbitrary : make hyper parameter ! */
-void DerivedParams::reset_acw1_params(const tinygemm::TinyGemmGeometry & gg){
-  
-  /* what lda would be if no `padding' */
-  acw1_smallest_possible_lda = gg.tA == gg.isColMajor ? gg.k : gg.m;
-  /* smallest x s.t. x >= acw1_smallest_possible_lda and x = n*16 + 3. */ 
-  acw1_target_lda = get_target(16, 3, acw1_smallest_possible_lda);
-  
+
+const ChiralDerivedParams & DerivedParams::at(char x) const{
+  if (x == 'a'){
+    return adps;
+  }
+  else if (x == 'b'){
+    return bdps;
+  }
+  else{
+    throw tinygemm_error("unrecognised char om   ChiralDerivedParams & at(char x)");
+  }
 }
+
+
+/* This is the Scott Meyers solution */
+ChiralDerivedParams & DerivedParams::at(char x) {
+   return const_cast<ChiralDerivedParams &>(static_cast<const DerivedParams &>(*this).at(x));
+}
+
+
 
 void DerivedParams::reset_nf_params(const tinygemm::TinyGemmGeometry & gg, const hyperparams::HyperParams & hp){
   nf_k_normal_form = hp.unroll*(gg.k / hp.unroll + ((gg.k % hp.unroll) != 0));
 }
 
-/* TODO : this 0 is ~ arbitrary : make hyper parameter ! */
-void DerivedParams::reset_bcw1_params(const tinygemm::TinyGemmGeometry & gg, const hyperparams::HyperParams & hp){
 
-  if (hp.a_copy_workspace == 1 && acw1_target_lda == uninitialised_unsigned){
-    throw tinygemm_error("make sure reset_acw1_params is called before reset_bcw1_params, we need that acw1_target_lda be set here in derivedparams reset of bcw1");
+unsigned get_copy_pad(char x){
+  if (x == 'a'){
+    return 3;
+  }
+  else{
+    return 6;
+  }
+}
+  
+
+void DerivedParams::reset_cw_params(const tinygemm::TinyGemmGeometry & gg, const hyperparams::HyperParams & hp, char x){
+  
+  if (x == 'b' && hp.aps.copy_type == 1 && adps.cw_target_ldx == uninitialised_unsigned){
+    throw tinygemm_error("make sure reset_acw1_params is called before reset_bcw1_params, we need that adps.cw_target_ldx be set here in derivedparams reset of bcw1");
   }
   
-  /* what ldb would be if no `padding' */
-  bcw1_smallest_possible_ldb =  gg.tB == gg.isColMajor ? gg.n : gg.k;
-  /* smallest x s.t. x >= bcw1_smallest_possible_ldb and x = n*16 + 6. */ 
-  bcw1_target_ldb =  get_target(16, 6, bcw1_smallest_possible_ldb);
-
-
-  bcw1_global_offset_b = hp.a_copy_workspace == 1 ? get_target_ld('a')*gg.get_uncoal('a') : 0;
+  at(x).cw_smallest_possible_ldx = gg.coal_is_pll_k(x) ? gg.k : gg.get_non_k_dim(x);
+  at(x).cw_target_ldx = get_target(16, get_copy_pad(x), at(x).cw_smallest_possible_ldx);
+  at(x).cw_global_offset = (x == 'b' && hp.aps.copy_type == 1) ? get_target_ld('a')*gg.get_uncoal('a') : 0;
+  
 }
   
 void DerivedParams::reset_ga3_params(const hyperparams::HyperParams & hp){
@@ -60,7 +81,7 @@ void DerivedParams::reset_ga3_params(const hyperparams::HyperParams & hp){
   else{
     throw tinygemm_error("split_on_k is neither 0 nor 1, how can this be? Logic error in append_super_column_width_defn");
   }  
-  ga3_last_super_column_width = n_groups_horizontally % ga3_super_column_width;
+  ga3_last_super_column_width = bdps.main_n_groups % ga3_super_column_width;
 }
 
 
@@ -80,65 +101,53 @@ DerivedParams::DerivedParams(std::string s){
 std::tuple<bool, std::string>
 DerivedParams::set_fragile(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg){
 
-  macro_tile_area = hp.macro_tile_width * hp.macro_tile_height;
-  micro_tile_area = hp.micro_tile_width * hp.micro_tile_height;
+  macro_tile_area = hp.bps.macro_tile_length * hp.aps.macro_tile_length;
+  micro_tile_area = hp.bps.micro_tile_length * hp.aps.micro_tile_length;
+  
   main_n_work_items_per_workgroup = macro_tile_area / micro_tile_area;
-  n_elements_in_a_unroll = hp.macro_tile_height * hp.unroll;
-  n_elements_in_b_unroll = hp.macro_tile_width * hp.unroll;
-  n_elements_of_a_to_load_per_workitem = n_elements_in_a_unroll / main_n_work_items_per_workgroup;
-  n_elements_of_b_to_load_per_workitem = n_elements_in_b_unroll / main_n_work_items_per_workgroup;  
-  
-  std::stringstream set_status_ss;  
-  
-  /* check -1 : enough workspace memory */
+
   unsigned required_workspace = 0;
-  if (hp.a_copy_workspace == 1){
-    reset_acw1_params(gg);
-    required_workspace += acw1_target_lda*gg.get_uncoal('a');
-  }
 
-  if (hp.b_copy_workspace == 1){
-    reset_bcw1_params(gg, hp);
-    required_workspace += bcw1_target_ldb*gg.get_uncoal('b');
-  }
+  std::stringstream set_status_ss;
+  
+  for (char x : {'a', 'b'}){
+    at(x).n_elements_in_unroll = hp.at(x).macro_tile_length * hp.unroll;
+    at(x).main_n_elements_to_load_per_workitem = at(x).n_elements_in_unroll / main_n_work_items_per_workgroup;  
 
+    if (hp.at(x).copy_type == 1){
+      reset_cw_params(gg, hp, x);
+      required_workspace += at(x).cw_target_ldx*gg.get_uncoal(x);
+    }
+  
+    /* check 0 : macro tile not too large */  
+    if (gg.get_non_k_dim(x) < hp.at(x).macro_tile_length){
+      set_status_ss << "gg.get_non_k_dim(x) < hp.at(x).macro_tile_length, this means the tile is too big to work with x = " << x << " . not considering this kernel\n";
+    }
+
+  }
+  
+ 
+  /* check -1 : enough workspace memory */
   if (gg.workspace_size < required_workspace){
     set_status_ss << "gg.workspace_size ( " << gg.workspace_size << " ) is less then the required workspace ( " << required_workspace << " ) "; 
   }
   
-  
-  /* check 0 : macro tile not too large */
-  if (gg.m < hp.macro_tile_height){
-    set_status_ss << "m < macro_tile_height, not considering this kernel\n";
-  }
-  if (gg.n < hp.macro_tile_width){
-    set_status_ss << "n < macro_tile_width,  not considering this kernel\n";
-  }
   if (set_status_ss.str() != ""){
     return std::make_tuple(false, set_status_ss.str()); 
   }
   
-  /* check 1 : n_work_items_per_workgroup divides n_elements_in_a_unroll and n_elements_in_b_unroll  */
-  if (n_elements_in_a_unroll % main_n_work_items_per_workgroup != 0){
-    set_status_ss << "this is not supported:\nn_work_items_per_workgroup (" << main_n_work_items_per_workgroup << ") is not a factor of n_elements_in_" <<  "a" << "_UNROLL (" << n_elements_in_a_unroll << "). \nConsider rounding unroll up. \n";
+  /* check 1 : n_work_items_per_workgroup divides n_elements_in_unroll for a and b  */
+  for (char x : {'a', 'b'}){
+    if (at(x).n_elements_in_unroll % main_n_work_items_per_workgroup != 0){
+      set_status_ss << "this is not supported:\nn_work_items_per_workgroup (" << main_n_work_items_per_workgroup << ") is not a factor of n_elements_in_" <<  x << "_UNROLL (" << adps.n_elements_in_unroll << "). \nConsider rounding unroll up. \n";
+      return std::make_tuple(false, set_status_ss.str());
+    }
   }
-  if (n_elements_in_b_unroll % main_n_work_items_per_workgroup != 0){
-    set_status_ss << "this is not supported:\nn_work_items_per_workgroup (" << main_n_work_items_per_workgroup << ") is not a factor of n_elements_in_" <<  "b" << "_UNROLL (" << n_elements_in_b_unroll << "). \nConsider rounding unroll up. \n";
-  }
-  if (set_status_ss.str() != ""){
-    return std::make_tuple(false, set_status_ss.str()); 
-  }
+  
   
   /* check 2 : tilability */
-  auto tup1 = //hp.work_item_load_a_pll_to_unroll == 0 ? 
-  tiling::get_tileability(hp.macro_tile_height, hp.unroll, n_elements_of_a_to_load_per_workitem);
-  //tiling::get_tileability(hp.unroll, hp.macro_tile_height, n_elements_of_a_to_load_per_workitem);
-  
-  auto tup2 = //hp.work_item_load_b_pll_to_unroll == 0 ?
-  tiling::get_tileability(hp.macro_tile_width, hp.unroll, n_elements_of_b_to_load_per_workitem);
-  //tiling::get_tileability(hp.unroll, hp.macro_tile_width, n_elements_of_b_to_load_per_workitem);
-
-  for (auto & tup : {tup1, tup2}){
+  for (char x : {'a', 'b'}){  
+    auto tup = tiling::get_tileability(hp.at(x).macro_tile_length, hp.unroll, at(x).main_n_elements_to_load_per_workitem);
     if (std::get<0>(tup) == false){
       return tup;
     }
@@ -158,15 +167,15 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams & hp, const tinygemm
   }
   
   /* do the tiling */  
-  tiling::set_tile_dimensions(micro_a_tile_perp_unroll, micro_a_tile_pll_unroll, hp.macro_tile_height, hp.unroll, n_elements_of_a_to_load_per_workitem, hp.work_item_load_a_pll_to_unroll == 0); 
+  tiling::set_tile_dimensions(adps.main_micro_tile_perp_unroll, adps.main_micro_tile_pll_unroll, hp.aps.macro_tile_length, hp.unroll, adps.main_n_elements_to_load_per_workitem, hp.aps.load_pll_to_unroll == 0); 
   
-  tiling::set_tile_dimensions(micro_b_tile_perp_unroll, micro_b_tile_pll_unroll, hp.macro_tile_width, hp.unroll, n_elements_of_b_to_load_per_workitem, hp.work_item_load_b_pll_to_unroll == 0); 
+  tiling::set_tile_dimensions(bdps.main_micro_tile_perp_unroll, bdps.main_micro_tile_pll_unroll, hp.bps.macro_tile_length, hp.unroll, bdps.main_n_elements_to_load_per_workitem, hp.bps.load_pll_to_unroll == 0); 
     
   split_on_k = hp.n_work_items_per_c_elm == 1 ? 0 : 1;
   does_beta_c_inc = split_on_k == 1 ? 0 : 1; 
   
-  strided_i_vertical = hp.c_micro_tiles_interwoven == 0 ? "i" : "i*N_MICRO_TILES_VERTICALLY";
-  strided_i_horizontal = hp.c_micro_tiles_interwoven == 0 ? "i" : "i*N_MICRO_TILES_HORIZONTALLY";
+  adps.main_strided_i = hp.c_micro_tiles_interwoven == 0 ? "i" : "i*N_MICRO_TILES_VERTICALLY";
+  bdps.main_strided_i = hp.c_micro_tiles_interwoven == 0 ? "i" : "i*N_MICRO_TILES_HORIZONTALLY";
   
   if (hp.n_work_items_per_c_elm == 1){
     infa = "n_work_items_per_c_elm is 1, should not be using atomics";
@@ -191,20 +200,22 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams & hp, const tinygemm
   
   t_float = gg.derived.float_size_bits == 32 ? "float" : "double";
   
-  preshift_bottommost_tile_height = 1 + (gg.m - 1) % hp.macro_tile_height;
-  preshift_rightmost_tile_width = 1 + (gg.n - 1) % hp.macro_tile_width;
-  n_groups_vertically = gg.m / hp.macro_tile_height + (preshift_bottommost_tile_height != hp.macro_tile_height);
-  n_groups_horizontally = gg.n / hp.macro_tile_width + (preshift_rightmost_tile_width != hp.macro_tile_width);
-  macro_tile_height_and_pad = hp.macro_tile_height + hp.pad;
-  macro_tile_width_and_pad = hp.macro_tile_width + hp.pad;
-  n_elements_in_padded_a_unroll = macro_tile_height_and_pad * hp.unroll;
-  n_elements_in_padded_b_unroll = macro_tile_width_and_pad * hp.unroll;
-  n_micro_tiles_vertically = hp.macro_tile_height / hp.micro_tile_height;
-  n_micro_tiles_horizontally = hp.macro_tile_width / hp.micro_tile_width ;
-  main_n_work_groups = hp.n_work_items_per_c_elm * ((gg.m/hp.macro_tile_height) + (gg.m%hp.macro_tile_height != 0)) * ((gg.n/hp.macro_tile_width) + (gg.n%hp.macro_tile_width != 0));
+  
+  for (char x : {'a', 'b'}){
+    at(x).main_preshift_final_tile = 1 + (gg.get_non_k_dim(x) - 1) % hp.at(x).macro_tile_length;
+    at(x).main_n_groups = gg.get_non_k_dim(x) / hp.at(x).macro_tile_length + (at(x).main_preshift_final_tile != hp.at(x).macro_tile_length);
+    at(x).main_macro_tile_length_and_pad = hp.at(x).macro_tile_length + hp.at(x).lds_pad_size;
+    at(x).main_n_elements_in_padded_unroll = at(x).main_macro_tile_length_and_pad * hp.unroll;
+    at(x).main_n_micro_in_macro = hp.at(x).macro_tile_length / hp.at(x).micro_tile_length;
+    at(x).main_n_micro_tiles_pll_unroll = hp.unroll / at(x).main_micro_tile_pll_unroll;
+  
+  }
+  
+  main_n_work_groups = hp.n_work_items_per_c_elm * ((gg.m/hp.aps.macro_tile_length) + (gg.m%hp.aps.macro_tile_length != 0)) * ((gg.n/hp.bps.macro_tile_length) + (gg.n%hp.bps.macro_tile_length != 0));
+  
   main_global_work_size = main_n_work_groups * main_n_work_items_per_workgroup;
-  n_micro_a_tiles_pll_unroll = hp.unroll / micro_a_tile_pll_unroll;
-  n_micro_b_tiles_pll_unroll = hp.unroll / micro_b_tile_pll_unroll;
+  
+
 
   needs_final_fractional_unroll = (hp.unroll_for_offset == 1 || (hp.normal_form == 0 && gg.k%hp.unroll != 0)) ? 1 : 0;
     
@@ -217,23 +228,33 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams & hp, const tinygemm
   }
   
   if (hp.normal_form == 0){
-    effective_lda = hp.a_copy_workspace == 0 ? gg.lda : acw1_target_lda;
-    effective_ldb = hp.b_copy_workspace == 0 ? gg.ldb : bcw1_target_ldb;
+    adps.main_effective_ldx = hp.aps.copy_type == 0 ? gg.lda : adps.cw_target_ldx;
+    bdps.main_effective_ldx = hp.bps.copy_type == 0 ? gg.ldb : bdps.cw_target_ldx;
   }
+  
+  
+  adps.main_pll_unroll_stride = (hp.normal_form == 0) ? "COL_STRIDE_A" : "MACRO_TILE_HEIGHT"; 
+  adps.main_perp_unroll_stride = (hp.normal_form == 0) ? "ROW_STRIDE_A" : "1";
+
+  bdps.main_pll_unroll_stride = (hp.normal_form == 0) ? "ROW_STRIDE_B" : "MACRO_TILE_WIDTH";  
+  bdps.main_perp_unroll_stride = (hp.normal_form == 0) ? "COL_STRIDE_B" : "1";    
+  
+  use_edge_trick = 1;
+
+
 }
 
 
-unsigned DerivedParams::get_target_ld(char c) const{
-  if (c == 'a'){
-    return acw1_target_lda;
-  }
-  else if (c == 'b'){
-    return bcw1_target_ldb;
-  }
-  else{
-    throw tinygemm_error("unrecognised char in get_target_ld(char c)");
-  }  
-}
+  //if (x == 'a'){
+    //return adps.cw_target_ldx;
+  //}
+  //else if (x == 'b'){
+    //return bdps.cw_target_ldx;
+  //}
+  //else{
+    //throw tinygemm_error("unrecognised char in get_target_ld(char c)");
+  //}  
+//}
 
 
 
@@ -241,10 +262,10 @@ unsigned DerivedParams::get_target_ld(char c) const{
 
 unsigned DerivedParams::get_n_elements_in_x_unroll(char x){
   if (x == 'a'){
-    return n_elements_in_a_unroll;
+    return adps.n_elements_in_unroll;
   }
   else if (x == 'b'){
-    return n_elements_in_b_unroll;
+    return bdps.n_elements_in_unroll;
   }
   else{
     throw tinygemm_error("unrecognised x in get_n_elements_in_x_unroll");

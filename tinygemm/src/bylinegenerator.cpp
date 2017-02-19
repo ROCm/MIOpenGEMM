@@ -58,9 +58,9 @@ R"(/* The number of values from C which each non-edge work-item will scale by be
 
 
 void ByLineGenerator::append_copy_preprocessor(std::stringstream & ss){
-  if (hp.a_copy_workspace == 1 && (matrixchar == 'b')){
+  if (hp.aps.copy_type == 1 && (matrixchar == 'b')){
     ss << "/*      b will be copied to a section of workspace after where a is copied */\n";
-    ss << "#define GLOBAL_OFFSET_B " <<  dp.bcw1_global_offset_b << "\n";
+    ss << "#define GLOBAL_OFFSET_B " <<  dp.bdps.cw_global_offset << "\n";
   }
   
   else{

@@ -55,11 +55,11 @@ public:
     std::vector<KernelString> v_tgks;  
     std::vector<std::vector<unsigned> > v_wait_indices;
     
-    if (hp.a_copy_workspace == 1){
+    if (hp.aps.copy_type == 1){
       v_tgks.emplace_back( copygen::get_copya_kernelstring(hp, gg, dp) );
     }
     
-    if (hp.b_copy_workspace == 1){
+    if (hp.bps.copy_type == 1){
       v_tgks.emplace_back( copygen::get_copyb_kernelstring(hp, gg, dp) ); //deduce from hp whether a is copied or not. 
     }
     
