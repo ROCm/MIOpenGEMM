@@ -68,6 +68,10 @@ public:
   unsigned main_n_work_groups = uninitialised_unsigned;
   unsigned main_global_work_size = uninitialised_unsigned; 
  
+  unsigned get_n_elements_in_x_unroll(char x);  
+  //unsigned get_macro_tile_x_length(char x);
+
+  
   /* used when loading LDA -> registers, depends on MIW*/
   std::string strided_i_vertical;
   /* used when loading LDA -> registers, depends on MIW*/

@@ -30,6 +30,8 @@ const unsigned & TinyGemmOffsets::operator[](char x) const{
   }
 }
 
+ 
+ 
 void TinyGemmGeometryDerived::reset(char floattype){
   if (floattype == 'f'){
     float_size_bytes = sizeof(float);
@@ -122,6 +124,23 @@ std::string TinyGemmGeometry::get_networkconfig_string() const{
   return geometry_stringstream.str();
 }
 
+
+bool TinyGemmGeometry::get_tX(char x) const{
+  if (x == 'a' || x == 'A'){
+    return tA;
+  }
+  else if (x == 'b' || x == 'B'){
+    return tB;
+  }
+  
+  else if (x == 'c' || x == 'C'){
+    return tC;
+  }
+  
+  else{
+    throw tinygemm_error("char x unrecognised in get_tX in tiny gemm geom");
+  }
+}
 
 
 float TinyGemmGeometry::get_distance(const TinyGemmGeometry & gg) const{

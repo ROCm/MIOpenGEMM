@@ -3,6 +3,8 @@
 #include <tinygemm/tiling.hpp>
 #include <tinygemm/tinygemmerror.hpp>
 
+
+#include <iostream>
 namespace tinygemm{
 namespace tiling{
 
@@ -73,7 +75,7 @@ std::tuple<bool, std::string> get_tileability(unsigned TH, unsigned TW, unsigned
   
 }
 
-void set_tile_dimensions(unsigned & tH, unsigned & tW, unsigned TH, unsigned TW, unsigned tS){
+void set_tile_dimensions(unsigned & tH, unsigned & tW, unsigned TH, unsigned TW, unsigned tS, bool tall){
 
   bool is_tileable;
   std::string tileable_status;
@@ -83,7 +85,14 @@ void set_tile_dimensions(unsigned & tH, unsigned & tW, unsigned TH, unsigned TW,
     throw tinygemm_error("The problem is not tileable (in set_tile_dimensions). Call get_tileability before set_tile_dimensions to catch this case without throwing an error. The string returned from set_tile_dimensions was : " + tileable_status);
   }
   
-  set_tile_dimensions_no_checks(tH, tW, TH, TW, tS);
+  /* switch (tW <-> tH) and (TW <-> TH) */
+  if (tall == false)  {
+    set_tile_dimensions_no_checks(tW, tH, TW, TH, tS);
+  }
+
+  else{  
+    set_tile_dimensions_no_checks(tH, tW, TH, TW, tS);
+  }
 }
 
 

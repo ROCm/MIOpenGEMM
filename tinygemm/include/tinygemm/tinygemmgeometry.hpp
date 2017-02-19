@@ -69,6 +69,8 @@ public:
   
   unsigned get_ld(char x) const;
   
+  bool get_tX(char x) const;
+  
   std::string get_string() const;
   
   std::string get_networkconfig_string() const;

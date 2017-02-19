@@ -21,7 +21,7 @@
 tinygemm::hyperparams::HyperParams get_hp(std::string hyperstring = ""){
 
   if (hyperstring.compare("") == 0){
-    hyperstring = "Y96_X96_y6_x6_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE3_NAW64_UFO0_ACW0_BCW1_NOF0";
+    hyperstring = "Y96_X96_y6_x6_U16_P1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE2_NAW64_UFO0_ACW1_BCW1_NOF0";
   }
   return hyperstring;
 }
@@ -33,9 +33,9 @@ tinygemm::TinyGemmGeometry get_geometry(){
   bool tA = false;
   bool tB = false;
   bool tC = false;
-  unsigned m = 4180; // 96*51;//4096;
-  unsigned n = 4180; // 96*51;//5025;
-  unsigned k = 3999; // 96*51;//4096;
+  unsigned m = 418;//0; // 96*51;//4096;
+  unsigned n = 418;//0; // 96*51;//5025;
+  unsigned k = 399;//9; // 96*51;//4096;
   unsigned lda = ( tA == isColMajor ? k : m ) + 1;//13;
   unsigned ldb = ( tB == isColMajor ? n : k ) + 2;//27;
   unsigned ldc = ( tC == isColMajor ? n : m ) + 3;//13;//11;
@@ -94,9 +94,9 @@ int main(){
   
 
   bool test_print = true;
-  bool test_benchgemm = false;//true;
+  bool test_benchgemm = true;//true;
   bool test_find = false;
-  bool test_accuracy = false;
+  bool test_accuracy = true;
   bool test_default = false;
   
   typedef float tfloat;

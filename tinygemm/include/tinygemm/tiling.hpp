@@ -12,7 +12,8 @@ namespace tiling{
 
   /*given a macro tile TH x TW, 
   and given a micro tile size of tS, 
-  find the tallest possible micro tile size (tH x tW)
+  find the tallest (if tall = true, otherwise widest)
+  possible micro tile size (tH x tW)
   to fit the macro tile. Example, macro tile is 6 x 4:
   
   * * * * 
@@ -35,7 +36,7 @@ namespace tiling{
   tS = 12 return [6, 2]
   tS = 13 .. 23 raise an error ((TH * TH) % tS != 0)
   tS = 24 return [6, 4] */
-void set_tile_dimensions(unsigned & tH, unsigned & tW, unsigned TH, unsigned TW, unsigned tS);
+void set_tile_dimensions(unsigned & tH, unsigned & tW, unsigned TH, unsigned TW, unsigned tS, bool tall = true);
 
 /* checks if it is tileable according to the above. returns (true, "") if, otherwise (false, "reason") */
 std::tuple<bool, std::string> get_tileability(unsigned TH, unsigned TW, unsigned tS);

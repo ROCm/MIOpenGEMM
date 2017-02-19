@@ -1,5 +1,6 @@
 #include <tinygemm/alphagenerator.hpp>
 #include <tinygemm/generatorutil.hpp>
+#include <tinygemm/basegenerator.hpp>
 
 #include <string>
 #include <iostream>
@@ -15,27 +16,11 @@
 
 namespace tinygemm{
 namespace alphagen{
-  
-  
-//static const std::string generickernelname = "tg_generated_gemm";
-    
-class AlphaGenerator{
+
+
+class AlphaGenerator : basegen::BaseGenerator{
 
 private:
-  const hyperparams::HyperParams & hp;
-  const tinygemm::TinyGemmGeometry & gg;
-  const derivedparams::DerivedParams & dp;
-
-  std::string type;
-  std::string kernelname;
-
-
-  bool uses_a = (hp.normal_form || hp.a_copy_workspace  == 1) ? false : true; 
-  bool uses_b = (hp.normal_form || hp.b_copy_workspace  == 1) ? false : true;
-  bool uses_c = true;
-  bool uses_workspace = hp.a_copy_workspace + hp.b_copy_workspace + hp.normal_form == 0  ? false : true;
-  bool uses_alpha  = true;
-  bool uses_beta = dp.does_beta_c_inc;
 
 
   /* set here as we do not want the user to choose (although would not break kernel) */
@@ -47,20 +32,40 @@ private:
   std::string pll_unroll_stride_b;  
   std::string perp_unroll_stride_b;    
 
+void set_usage(){
+  
+  uses_a = (hp.normal_form || hp.a_copy_workspace  == 1) ? false : true; 
+  uses_b = (hp.normal_form || hp.b_copy_workspace  == 1) ? false : true;
+  uses_c = true;
+  uses_workspace = hp.a_copy_workspace + hp.b_copy_workspace + hp.normal_form == 0  ? false : true;
+  uses_alpha  = true;
+  uses_beta = dp.does_beta_c_inc;
+
+}
+
 
 public:
   //std::string kernelname = generickernelname;
-  AlphaGenerator(const hyperparams::HyperParams & hp_, const tinygemm::TinyGemmGeometry & gg_, const derivedparams::DerivedParams & dp_): 
-  hp(hp_), gg(gg_), dp(dp_), type(dp.does_beta_c_inc ? "betac_alphaab" : "alphaab"), kernelname(genutil::get_generic_kernelname(type))
+  AlphaGenerator(const hyperparams::HyperParams & hp_, const tinygemm::TinyGemmGeometry & gg_, const derivedparams::DerivedParams & dp_, std::string & type_):
+  basegen::BaseGenerator(hp_, gg_, dp_, type_)
+  
   {
   
-    pll_unroll_stride_a = (hp.normal_form == 0) ? "COL_STRIDE_A" : "MACRO_TILE_HEIGHT";  //is this correct?
-    perp_unroll_stride_a = (hp.normal_form == 0) ? "ROW_STRIDE_A" : "1";
-
-    pll_unroll_stride_b = (hp.normal_form == 0) ? "ROW_STRIDE_B" : "MACRO_TILE_WIDTH";  
-    perp_unroll_stride_b = (hp.normal_form == 0) ? "COL_STRIDE_B" : "1";    
   
   }
+
+virtual void setup() final override{
+  
+  set_usage();
+
+  pll_unroll_stride_a = (hp.normal_form == 0) ? "COL_STRIDE_A" : "MACRO_TILE_HEIGHT"; 
+  perp_unroll_stride_a = (hp.normal_form == 0) ? "ROW_STRIDE_A" : "1";
+
+  pll_unroll_stride_b = (hp.normal_form == 0) ? "ROW_STRIDE_B" : "MACRO_TILE_WIDTH";  
+  perp_unroll_stride_b = (hp.normal_form == 0) ? "COL_STRIDE_B" : "1";    
+
+
+}
 
 
 private:
@@ -713,37 +718,6 @@ void append_kernel_name(std::stringstream & ss){
 }
 
 
-void append_parameter_list(std::stringstream & ss){
-  
-  
-  ss << "\n(\n";
-  if (uses_a == true){
-    ss << "__global const TFLOAT * restrict a, \n";
-    ss << "const unsigned a_offset,\n";
-  }
-
-  if (uses_b == true){
-    ss << "__global const TFLOAT * restrict b, \n";
-    ss << "const unsigned b_offset,\n";    
-  }
-  
-  ss << "__global TFLOAT       *          c,\n";
-  ss << "const unsigned c_offset,\n";
-
-  if (uses_workspace == true){
-    ss << "__global const TFLOAT * restrict workspace, \n";
-    ss << "const unsigned workspace_offset,\n";    
-  }
-
-  if (uses_beta == false){
-    ss << "const TFLOAT alpha ) \n\n\n";
-  }
-  
-  else{
-    ss << "const TFLOAT alpha,\n";
-    ss << "const TFLOAT beta )\n \n\n\n";
-  }
-}    
    
   
 
@@ -802,30 +776,7 @@ void append_global_offset_b_workspace(std::stringstream & ss){
   }
 }
 
-  
-  //ss << 
-//R"((
-//__global const TFLOAT * restrict a,
-//const unsigned a_offset,
-//__global const TFLOAT * restrict b,
-//const unsigned b_offset,
-//__global TFLOAT       *          c,
-//const unsigned c_offset,  
-//const TFLOAT alpha )"; 
-  
-  //if (dp.does_beta_c_inc == true){
-    //ss << ",\nconst TFLOAT beta)"; 
-  //}
-  //else{
-    //ss << ")";
-  //}
-  //ss<< 
-  
-//R"(
 
-
-
-//)";
 
 
 void append_ldx_definitions(std::stringstream & ss){
@@ -907,11 +858,20 @@ void append_load_within_tile_pattern_string(std::stringstream & ss){
   
   ss << 
 R"(
-/* Define which rows or columns of A, B this thread will load from global into LDS (% / or / % ? looks like % for pll is best, needs checking ) */
+///* Define which rows or columns of A, B this thread will load from global into LDS (% / or / % ? looks like no difference ) */
+
 const unsigned pll_unroll_a_load_id = local_id % N_MICRO_A_TILES_PLL_UNROLL;
 const unsigned perp_unroll_a_load_id = local_id / N_MICRO_A_TILES_PLL_UNROLL;
+
 const unsigned pll_unroll_b_load_id = local_id % N_MICRO_B_TILES_PLL_UNROLL;
 const unsigned perp_unroll_b_load_id = local_id / N_MICRO_B_TILES_PLL_UNROLL;
+
+/* flipping the order doesn't seem to make any difference */
+//const unsigned pll_unroll_a_load_id = local_id / (N_WORK_ITEMS_PER_WORKGROUP / N_MICRO_A_TILES_PLL_UNROLL);
+//const unsigned perp_unroll_a_load_id = local_id % (N_WORK_ITEMS_PER_WORKGROUP / N_MICRO_A_TILES_PLL_UNROLL);
+
+//const unsigned pll_unroll_b_load_id = local_id / (N_WORK_ITEMS_PER_WORKGROUP / N_MICRO_B_TILES_PLL_UNROLL);
+//const unsigned perp_unroll_b_load_id = local_id % (N_WORK_ITEMS_PER_WORKGROUP / N_MICRO_B_TILES_PLL_UNROLL);
 
 
 )";
@@ -1069,7 +1029,7 @@ R"(
   ss << "\n\n\n__attribute__((reqd_work_group_size(" << dp.main_n_work_items_per_workgroup << ",1, 1)))\n";
   ss << "__kernel void ";
   append_kernel_name(ss);
-  append_parameter_list(ss);
+  append_parameter_list_from_usage(ss);
   
   ss << "\n{\n\n";
 
@@ -1101,9 +1061,13 @@ unsigned macro_tile_start_col_in_c = group_id_horizontal*MACRO_TILE_WIDTH;
   ss << 
 R"(
 
-/* Define which part of the C macro-tile this thread will process (% / or / % ?) */
+/* Define which part of the C macro-tile this thread will process (% / or / % ? doesn't seem to make much difference) */
+
 const unsigned micro_id_vertical = local_id % N_MICRO_TILES_VERTICALLY;
 const unsigned micro_id_horizontal = local_id / N_MICRO_TILES_VERTICALLY;
+
+//const unsigned micro_id_vertical = local_id / N_MICRO_TILES_HORIZONTALLY;
+//const unsigned micro_id_horizontal = local_id % N_MICRO_TILES_HORIZONTALLY;
 
   
 )";
@@ -1157,8 +1121,13 @@ __local const TFLOAT * lB;
 
 
 KernelString get_alpha_kernelstring(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg, const derivedparams::DerivedParams & dp){
- AlphaGenerator ag(hp, gg, dp);
- return ag.get_kernelstring();
+ std::cout << "in get_alpha_kernelstring" << std::endl;
+
+  std::string type = dp.does_beta_c_inc ? "betac_alphaab" : "alphaab";
+  AlphaGenerator ag(hp, gg, dp, type);
+  ag.setup();
+  
+  return ag.get_kernelstring();
 }
 
 

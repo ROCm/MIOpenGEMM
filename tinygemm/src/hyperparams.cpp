@@ -340,6 +340,20 @@ void add_hyperparam(const std::string & hyperstring, std::vector<HyperParams> & 
   one_aways.push_back(HyperParams(hyperstring));
 }
 
+
+
+unsigned HyperParams::get_macro_tile_x_length(char x) const{
+  if (x == 'a'){
+    return macro_tile_height;
+  }
+  else if (x == 'b'){
+    return macro_tile_width;
+  }
+  else{
+    throw tinygemm_error("unrecognised x in get_macro_tile_x_length");
+  }
+}
+
   
 std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeometry & gg){
   

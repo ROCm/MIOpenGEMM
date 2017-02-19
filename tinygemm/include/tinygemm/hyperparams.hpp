@@ -93,6 +93,8 @@ public:
   std::string get_string() const;
 
 
+  unsigned get_macro_tile_x_length(char x) const;
+
 };  
 
 
