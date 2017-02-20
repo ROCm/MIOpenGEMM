@@ -174,13 +174,16 @@ void append_b_load_for_pll(std::stringstream & ss){
 
 void append_final_write_element(std::stringstream & ss, unsigned atomic_increment, unsigned with_beta_scaling, unsigned with_alpha_increment){
   
+  std::string alpha_scaled =  "alpha*rC[row/C_INTERWEAVE_STRIDE_A][col/C_INTERWEAVE_STRIDE_B]";
+  
   ss << "\nindex = ROW_STRIDE_C*(write_start_row + row) + COL_STRIDE_C*(write_start_col + col);\n";
   /* beta string */
   ss << (with_beta_scaling == 0 ? "" : "c[index] *= beta;\n");
   if (with_alpha_increment != 0){
     ss << "\n";
     if (atomic_increment == 0){
-      ss << "c[index] += " + dp.alpha_scaled + ";\n"; 
+
+      ss << "c[index] += " <<  alpha_scaled << + ";\n"; 
     }
     
     else{
@@ -189,7 +192,7 @@ void append_final_write_element(std::stringstream & ss, unsigned atomic_incremen
       << "do {\n"
       << "previous_value = *ptr_to_c_elm;\n" 
       << "prevVal = as_" << dp.infa << "(previous_value);\n"
-      << "newVal = as_" << dp.infa << "(" << dp.alpha_scaled << " + previous_value);\n"
+      << "newVal = as_" << dp.infa << "(" << alpha_scaled << " + previous_value);\n"
       << "} while (" << dp.fati << "(( __global " << dp.infa << "*)(ptr_to_c_elm), prevVal, newVal) != prevVal);";        
     }
   }
@@ -489,9 +492,9 @@ void append_micro_offset_string(std::stringstream & ss){
 }
 
 void append_load_load_string(std::stringstream & ss){
-  ss << "\n" << dp.pragma_unroll_string << "for (unsigned i = 0; i < MICRO_TILE_LENGTH_A; ++i){\nrA[i] = lA[" << dp.adps.main_strided_i << "];\n}\n";
+  ss << "\n" << dp.pragma_unroll_string << "for (unsigned i = 0; i < MICRO_TILE_LENGTH_A; ++i){\nrA[i] = lA[" << "i*" << "C_INTERWEAVE_STRIDE_A" << "];\n}\n";
   ss << "lA += MACRO_TILE_LENGTH_A_AND_PAD;\n\n" << dp.pragma_unroll_string;
-  ss << "for (unsigned i = 0; i < MICRO_TILE_LENGTH_B; ++i){\nrB[i] = lB[" << dp.bdps.main_strided_i << "];\n}\n";
+  ss << "for (unsigned i = 0; i < MICRO_TILE_LENGTH_B; ++i){\nrB[i] = lB[" << "i*" << "C_INTERWEAVE_STRIDE_B"  << "];\n}\n";
   ss << "lB += MACRO_TILE_LENGTH_B_AND_PAD;";
 }
 
@@ -677,20 +680,33 @@ void append_stride_defns(std::stringstream & ss){
     //append_stride_defn(ss, 'B', dp.bdps.main_effective_ldx, gg.tB);
   //}
 
+  //for (char X : {'A', 'B'}){
+    //char x = (X == 'A') ? 'a' : 'b';
+    //ss << "\n";
+    //for (std::string orth :  {"PLL", "PERP"}){
+      //if (hp.normal_form == 0){
+        //ss << "#define STRIDE_" << orth << "_K_" << X << " " << (gg.coal_is_pll_k(x) == (orth == "PLL") ? 1 : gg.get_ld(x)) << "\n";
+        //ss << "#define MACRO_STRIDE_" << orth << "_K_" << X << " " << (gg.coal_is_pll_k(x) == (orth == "PLL") ? 1 : gg.get_ld(x)) << "\n";
+      //}
+      //else{
+        //ss << "#define STRIDE_" << orth << "_K_" << X << " " << (orth == "PLL" ? hp.at(x).macro_tile_length : 1) << "\n";
+        //ss << "#define MACRO_STRIDE_" << orth << "_K_" << X << " " << (orth == "PLL" ? hp.at(x).macro_tile_length : gg.get_non_k_dim(x)) << "\n";      
+      //}
+    //}
+  //}
+  
+
+
   for (char X : {'A', 'B'}){
     char x = (X == 'A') ? 'a' : 'b';
     ss << "\n";
     for (std::string orth :  {"PLL", "PERP"}){
-      if (hp.normal_form == 0){
-        ss << "#define STRIDE_" << orth << "_K_" << X << " " << (gg.coal_is_pll_k(x) == (orth == "PLL") ? 1 : gg.get_ld(x)) << "\n";
-        ss << "#define MACRO_STRIDE_" << orth << "_K_" << X << " " << (gg.coal_is_pll_k(x) == (orth == "PLL") ? 1 : gg.get_ld(x)) << "\n";
-      }
-      else{
-        ss << "#define STRIDE_" << orth << "_K_" << X << " " << (orth == "PLL" ? hp.at(x).macro_tile_length : 1) << "\n";
-        ss << "#define MACRO_STRIDE_" << orth << "_K_" << X << " " << (orth == "PLL" ? hp.at(x).macro_tile_length : gg.get_non_k_dim(x)) << "\n";      
-      }
+      bool pll_k = ("PLL" == orth);
+      ss << "#define STRIDE_" << orth << "_K_" << X << " " << dp.get_stride(x, pll_k, false) << "\n";
+      ss << "#define MACRO_STRIDE_" << orth << "_K_" << X << " " << dp.get_stride(x, pll_k, true) << "\n";
     }
   }
+    
   append_stride_defn(ss, 'C', gg.ldc, gg.tC);  
 }
 
@@ -843,20 +859,20 @@ void append_transpose_note(std::stringstream & ss){
 
 void append_move_to_top_corner_string(std::stringstream & ss){
   ss << "\n/* move to the top left corner of a (top left corner of b) of region required by the macro tile */";
-  if (hp.normal_form == 0){
+  //if (hp.normal_form == 0){
     ss << 
 R"(
 a += macro_tile_start_a*MACRO_STRIDE_PERP_K_A;   
 b += macro_tile_start_b*MACRO_STRIDE_PERP_K_B;
 )";
-  }
-  else{
-    ss << 
-  R"(
-a += macro_tile_start_a*__K_NORMAL_FORM__;   
-b += macro_tile_start_b*__K_NORMAL_FORM__;
-)";
-  }
+  //}
+  //else{
+    //ss << 
+  //R"(
+//a += macro_tile_start_a*__K_NORMAL_FORM__;   
+//b += macro_tile_start_b*__K_NORMAL_FORM__;
+//)";
+  //}
 }
 
 
@@ -896,12 +912,14 @@ KernelString get_kernelstring(){
   ss << genutil::get_time_string(type);
 
   ss <<  "\n\n" << genutil::get_what_string() << "\n";
-
+  
+  
+  ss << "/* this kernel was generated for starting geometry " << gg.get_string() << "*/\n";
   append_mnk_definitions(ss);
 
-  append_ldx_definitions(ss);
+  //append_ldx_definitions(ss);
   
-  append_transpose_definitions(ss);
+  //append_transpose_definitions(ss);
 
   ss << "#define TFLOAT  "  << dp.t_float << "\n";
   
@@ -992,8 +1010,8 @@ R"(
   
 
   ss << "\n";
-  ss << "#define MACRO_TILE_AREA "<< dp.macro_tile_area <<"  // MACRO_TILE_LENGTH_B*MACRO_TILE_LENGTH_A\n";
-  ss << "#define MICRO_TILE_AREA "<< dp.micro_tile_area <<" // MICRO_TILE_LENGTH_B * MICRO_TILE_LENGTH_A\n";
+  ss << "#define MACRO_TILE_AREA "<< dp.main_macro_tile_area <<"  // MACRO_TILE_LENGTH_B*MACRO_TILE_LENGTH_A\n";
+  ss << "#define MICRO_TILE_AREA "<< dp.main_micro_tile_area <<" // MICRO_TILE_LENGTH_B * MICRO_TILE_LENGTH_A\n";
   ss << "#define N_WORK_ITEMS_PER_WORKGROUP  "<< dp.main_n_work_items_per_workgroup <<" // MACRO_TILE_AREA / MICRO_TILE_AREA\n";
   ss << "#define MACRO_TILE_LENGTH_A_AND_PAD "<< dp.adps.main_macro_tile_length_and_pad <<" // MACRO_TILE_LENGTH_A + PAD_LDS_A\n";
   ss << "#define MACRO_TILE_LENGTH_B_AND_PAD "<< dp.bdps.main_macro_tile_length_and_pad <<" // MACRO_TILE_LENGTH_B + PAD_LDS_B\n";
@@ -1033,6 +1051,12 @@ R"(
   append_super_column_width_defn(ss);
   append_global_offset_b_workspace(ss);
   
+  
+  ss << "\n\n/* depending on whether loads to c are interwoven, set as MIW == 0 ? 1 : n_micro_in_macro */";
+  ss << "\n#define C_INTERWEAVE_STRIDE_A " << dp.adps.main_c_interweave_stride;
+  ss << "\n#define C_INTERWEAVE_STRIDE_B " << dp.bdps.main_c_interweave_stride;
+ 
+
   ss << "\n\n\n__attribute__((reqd_work_group_size(" << dp.main_n_work_items_per_workgroup << ",1, 1)))\n";
   ss << "__kernel void ";
   append_kernel_name(ss);

@@ -36,7 +36,7 @@ public:
   unsigned main_n_groups = uninitialised_unsigned;
   
   /* used when loading LDS -> registers, depends on MIW*/
-  std::string main_strided_i;
+  unsigned main_c_interweave_stride;
   
   /* copy to workspace specific parameters */
   unsigned cw_smallest_possible_ldx = uninitialised_unsigned;
@@ -46,6 +46,7 @@ public:
   /* either original ldas, or those targetted in copy workspace */
   unsigned main_effective_ldx = uninitialised_unsigned;
 
+  
 
 
 };
@@ -54,9 +55,12 @@ public:
 class DerivedParams{
 
 private:
-  void reset_ga3_params(const hyperparams::HyperParams & hp);
-  void reset_cw_params(const tinygemm::TinyGemmGeometry & gg, const hyperparams::HyperParams & hp, char x);
-  void reset_nf_params(const tinygemm::TinyGemmGeometry & gg, const hyperparams::HyperParams & hp);
+  const hyperparams::HyperParams & hp;
+  const tinygemm::TinyGemmGeometry & gg;
+  
+  void reset_ga3_params();//const hyperparams::HyperParams & hp);
+  void reset_cw_params(char x);//(const tinygemm::TinyGemmGeometry & gg, const hyperparams::HyperParams & hp, char x);
+  void reset_nf_params();//(const tinygemm::TinyGemmGeometry & gg, const hyperparams::HyperParams & hp);
   
 public:
   
@@ -64,7 +68,7 @@ public:
   /* initiate all parameters, throwing an error if there is an incompatibility */
   DerivedParams(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg);
   
-  DerivedParams(std::string s);
+  DerivedParams(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg, std::string s);
   
   ChiralDerivedParams adps;
   ChiralDerivedParams bdps;
@@ -73,36 +77,36 @@ public:
   const ChiralDerivedParams & at(char x) const;
   
   /* does the minimum setting to confirm compatibitily. called by get_deriveability */
-  std::tuple<bool, std::string> set_fragile(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg);
+  std::tuple<bool, std::string> set_fragile();//const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg);
   
   /* TODO : write descriptions */
-  unsigned macro_tile_area = uninitialised_unsigned;
-  unsigned micro_tile_area = uninitialised_unsigned;
-  
+  unsigned main_macro_tile_area = uninitialised_unsigned;
+  unsigned main_micro_tile_area = uninitialised_unsigned;
   unsigned main_n_work_items_per_workgroup = uninitialised_unsigned;
+  unsigned main_n_work_groups = uninitialised_unsigned;
+  unsigned main_global_work_size = uninitialised_unsigned; 
+
   
   unsigned split_on_k = uninitialised_unsigned;
   unsigned does_beta_c_inc = uninitialised_unsigned;
-   
-  unsigned main_n_work_groups = uninitialised_unsigned;
-  unsigned main_global_work_size = uninitialised_unsigned; 
-  
   unsigned use_edge_trick = uninitialised_unsigned;
+
 
   unsigned get_n_elements_in_x_unroll(char x);  
 
   
+  unsigned get_stride(char x, bool pll_k, bool is_macro) const;
+
+
   /*the int type for atomics */
   std::string infa;
   /* the function to use for atomic ints */
   std::string fati;
   /* one of __K_NORMAL_FORM__   __K__  and  k_plus_offset */
   std::string effective_k_varies_string; 
-  /* indexinf of c, depends on MIW*/
-  std::string alpha_scaled;
   /* pragma unroll string : #pragma unroll\n or "" */
   std::string pragma_unroll_string;
-  /* currently one of "float" and "double", set from float_size */
+  //* currently one of "float" and "double", set from float_size */
   std::string t_float;
   
 
@@ -115,7 +119,11 @@ public:
   /* normal form specifics */
   unsigned nf_k_normal_form = uninitialised_unsigned;
 
+
   unsigned needs_final_fractional_unroll = uninitialised_unsigned;
+
+
+  unsigned nf_effective_k = 123123123;
 
 };
 
