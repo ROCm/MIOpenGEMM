@@ -174,8 +174,8 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams & hp, const tinygemm
   split_on_k = hp.n_work_items_per_c_elm == 1 ? 0 : 1;
   does_beta_c_inc = split_on_k == 1 ? 0 : 1; 
   
-  adps.main_strided_i = hp.c_micro_tiles_interwoven == 0 ? "i" : "i*N_MICRO_TILES_VERTICALLY";
-  bdps.main_strided_i = hp.c_micro_tiles_interwoven == 0 ? "i" : "i*N_MICRO_TILES_HORIZONTALLY";
+  adps.main_strided_i = hp.c_micro_tiles_interwoven == 0 ? "i" : "i*N_MICRO_IN_MACRO_A";
+  bdps.main_strided_i = hp.c_micro_tiles_interwoven == 0 ? "i" : "i*N_MICRO_IN_MACRO_B";
   
   if (hp.n_work_items_per_c_elm == 1){
     infa = "n_work_items_per_c_elm is 1, should not be using atomics";
@@ -196,7 +196,7 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams & hp, const tinygemm
   
   effective_k_varies_string = hp.normal_form == 1 ? "__K_NORMAL_FORM__" : (hp.unroll_for_offset == 0 ? "__K__" : "k_plus_offset");
   
-  alpha_scaled = hp.c_micro_tiles_interwoven == 0 ? "alpha*rC[row][col]" : "alpha*rC[row/N_MICRO_TILES_VERTICALLY][col/N_MICRO_TILES_HORIZONTALLY]";
+  alpha_scaled = hp.c_micro_tiles_interwoven == 0 ? "alpha*rC[row][col]" : "alpha*rC[row/N_MICRO_IN_MACRO_A][col/N_MICRO_IN_MACRO_B]";
   
   t_float = gg.derived.float_size_bits == 32 ? "float" : "double";
   
@@ -232,32 +232,10 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams & hp, const tinygemm
     bdps.main_effective_ldx = hp.bps.copy_type == 0 ? gg.ldb : bdps.cw_target_ldx;
   }
   
-  
-  adps.main_pll_unroll_stride = (hp.normal_form == 0) ? "COL_STRIDE_A" : "MACRO_TILE_HEIGHT"; 
-  adps.main_perp_unroll_stride = (hp.normal_form == 0) ? "ROW_STRIDE_A" : "1";
-
-  bdps.main_pll_unroll_stride = (hp.normal_form == 0) ? "ROW_STRIDE_B" : "MACRO_TILE_WIDTH";  
-  bdps.main_perp_unroll_stride = (hp.normal_form == 0) ? "COL_STRIDE_B" : "1";    
-  
+    
   use_edge_trick = 1;
 
-
 }
-
-
-  //if (x == 'a'){
-    //return adps.cw_target_ldx;
-  //}
-  //else if (x == 'b'){
-    //return bdps.cw_target_ldx;
-  //}
-  //else{
-    //throw tinygemm_error("unrecognised char in get_target_ld(char c)");
-  //}  
-//}
-
-
-
 
 
 unsigned DerivedParams::get_n_elements_in_x_unroll(char x){

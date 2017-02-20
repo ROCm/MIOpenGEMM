@@ -21,7 +21,7 @@
 tinygemm::hyperparams::HyperParams get_hp(std::string hyperstring = ""){
 
   if (hyperstring.compare("") == 0){
-    hyperstring = "Y128_X96_y8_x6_U8_PA1_PB1_GA1_APLU0_BPLU1_PU1_LIW0_MIW0_ICE2_NAW64_UFO0_ACW1_BCW1_NOF0";
+    hyperstring = "Y128_X96_y8_x6_U8_PA1_PB1_GA1_APLU0_BPLU1_PU1_LIW0_MIW0_ICE2_NAW64_UFO0_ACW0_BCW0_NOF0";
   }
   return hyperstring;
 }

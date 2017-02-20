@@ -31,21 +31,17 @@ public:
   unsigned main_macro_tile_length_and_pad = uninitialised_unsigned;
   unsigned main_n_micro_in_macro = uninitialised_unsigned;
   unsigned main_preshift_final_tile = uninitialised_unsigned;
+  
   /* how many macro_lengths to cover m (a) or n (b) */
   unsigned main_n_groups = uninitialised_unsigned;
   
-  std::string main_pll_unroll_stride;
-  std::string main_perp_unroll_stride;
-  
   /* used when loading LDS -> registers, depends on MIW*/
   std::string main_strided_i;
-  
   
   /* copy to workspace specific parameters */
   unsigned cw_smallest_possible_ldx = uninitialised_unsigned;
   unsigned cw_target_ldx = uninitialised_unsigned; 
   unsigned cw_global_offset = uninitialised_unsigned;
-  
   
   /* either original ldas, or those targetted in copy workspace */
   unsigned main_effective_ldx = uninitialised_unsigned;
@@ -59,8 +55,6 @@ class DerivedParams{
 
 private:
   void reset_ga3_params(const hyperparams::HyperParams & hp);
-  //void reset_acw1_params(const tinygemm::TinyGemmGeometry & gg);
-  //void reset_bcw1_params(const tinygemm::TinyGemmGeometry & gg, const hyperparams::HyperParams & hp);
   void reset_cw_params(const tinygemm::TinyGemmGeometry & gg, const hyperparams::HyperParams & hp, char x);
   void reset_nf_params(const tinygemm::TinyGemmGeometry & gg, const hyperparams::HyperParams & hp);
   
@@ -95,7 +89,6 @@ public:
   
   unsigned use_edge_trick = uninitialised_unsigned;
 
- 
   unsigned get_n_elements_in_x_unroll(char x);  
 
   
@@ -117,13 +110,10 @@ public:
   unsigned ga3_super_column_width = uninitialised_unsigned;
   unsigned ga3_last_super_column_width = uninitialised_unsigned;
   
-
   unsigned get_target_ld(char c) const;
-
 
   /* normal form specifics */
   unsigned nf_k_normal_form = uninitialised_unsigned;
-
 
   unsigned needs_final_fractional_unroll = uninitialised_unsigned;
 
