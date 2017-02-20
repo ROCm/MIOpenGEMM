@@ -310,7 +310,7 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
   
   
   if (gg.m < 8 || gg.n < 8){
-    throw tinygemm_error("Currently, if matrix C has a dimension less that 16, it is not supported. If you are seeing this, please remind to fix it via github ");
+    throw tinygemm_error("Logic error : should not enter here with m,n < 8. Algorithm to be reconsidered ");
   }
  
   std::vector<HyperParams> one_aways;
@@ -914,6 +914,19 @@ HyperParams::kernel_cache = {                             /* colMaj tA    tB    
   std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 784, 784, 4800, 4800, 32, 784, 0, 0, 0} ,   "Y32_X32_y2_x2_U32_P1_GA1_APLU1_BPLU0_PU1_LIW0_MIW1_ICE5_NAW64_UFO0" ), 
   std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 729, 729, 1152, 1152, 128, 729, 0, 0, 0} ,   "Y48_X32_y3_x2_U16_P1_GA2_APLU1_BPLU1_PU0_LIW0_MIW1_ICE2_NAW64_UFO0" ), 
   std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 784, 784, 2304, 2304, 512, 784, 0, 0, 0} ,   "Y96_X64_y6_x4_U16_P1_GA1_APLU1_BPLU1_PU1_LIW0_MIW1_ICE1_NAW64_UFO0" ), 
+
+
+  /* new for AlexNet, TODO : change geometry distance, as 4096 is actually far from 4097 */
+  /*  1. tC0_tA1_tB0_colMaj1_m4096_n128_k9216_lda9216_ldb9216_ldc4096: Y96_X64_y6_x4_U32_P1_GA2_APLU0_BPLU0_PU1_LIW0_MIW1_ICE7_NAW64_UFO0
+      a. I think GA3 might give a little boost to this config. Can you try a specific config on your end?
+      2. tC0_tA1_tB0_colMaj1_m4096_n128_k4096_lda4096_ldb4096_ldc4096: Y64_X64_y4_x4_U16_P1_GA2_APLU0_BPLU1_PU0_LIW0_MIW1_ICE5_NAW64_UFO0
+      3. tC0_tA1_tB0_colMaj1_m1000_n128_k4096_lda4096_ldb4096_ldc1000: Y64_X32_y4_x2_U32_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE7_NAW64_UFO0 */
+
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 9216, 9216, 4096, 4096, 128, 9216, 0, 0, 0} ,   "Y96_X64_y6_x4_U32_P1_GA2_APLU0_BPLU0_PU1_LIW0_MIW1_ICE7_NAW64_UFO0" ), 
+  
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 4096, 4096, 4096, 4096, 128, 4096, 0, 0, 0} ,   "Y64_X64_y4_x4_U16_P1_GA2_APLU0_BPLU1_PU0_LIW0_MIW1_ICE5_NAW64_UFO0" ), 
+    
+  std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 4096, 4096, 1000, 1000, 128, 4096, 0, 0, 0} ,   "Y64_X32_y4_x2_U32_P1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE7_NAW64_UFO0" ) 
 
 
 
