@@ -63,7 +63,7 @@ public:
       v_tgks.emplace_back( copygen::get_copyb_kernelstring(hp, gg, dp) ); //deduce from hp whether a is copied or not. 
     }
     
-    if (dp.does_beta_c_inc == 0){
+    if (dp.main_does_beta_c_inc == 0){
       v_tgks.emplace_back( betacgen::get_betac_kernelstring(hp, gg, dp) );
     }
     

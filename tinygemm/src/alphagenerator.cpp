@@ -34,7 +34,7 @@ void set_usage(){
   uses_c = true;
   uses_workspace = hp.aps.copy_type + hp.bps.copy_type + hp.normal_form == 0  ? false : true;
   uses_alpha  = true;
-  uses_beta = dp.does_beta_c_inc;
+  uses_beta = dp.main_does_beta_c_inc;
 
 }
 
@@ -133,7 +133,7 @@ void append_super_column_width_defn(std::stringstream & ss){
 }
 
 void append_split_on_k_vardecl_write_string(std::stringstream & ss){
-  if (dp.split_on_k != 0){
+  if (dp.main_split_on_k != 0){
     ss << 
 R"(
 /* the following variables are used in implementing a basic atomic increment */
@@ -253,7 +253,7 @@ void append_checked_wrapped_loops_from_bools(std::stringstream & ss, unsigned wi
   
 
 void append_final_write_loops(std::stringstream & ss, unsigned with_check){
-  if (dp.split_on_k == 0){
+  if (dp.main_split_on_k == 0){
     append_checked_wrapped_loops_from_bools(ss, with_check, 0, 1, 1);
   }
   
@@ -277,7 +277,7 @@ void append_k_remaining_string(std::stringstream & ss){
 
 void append_worktime_increment_ab(std::stringstream & ss, unsigned final_unroll){
   if (final_unroll == 0){
-    std::string n_jumps_string = dp.split_on_k == 0 ? "UNROLL" : "G_UNROLL";
+    std::string n_jumps_string = dp.main_split_on_k == 0 ? "UNROLL" : "G_UNROLL";
     ss << "a += " << "STRIDE_PLL_K_A" << "*" << n_jumps_string << ";\n", //"STRIDE_PLL_K_A"
     ss << "b += " << "STRIDE_PLL_K_B" << "*" << n_jumps_string << ";\n"; //dp.bdps.main_pll_unroll_stride
   }
@@ -406,7 +406,7 @@ barrier(CLK_LOCAL_MEM_FENCE); )";
   
 void append_final_unroll_string(std::stringstream & ss){
   
-  if (dp.split_on_k == 0){
+  if (dp.main_split_on_k == 0){
     ss << "\n";
     append_relocate_load_math_string(ss, 1, 0);
     ss << "\n";
@@ -426,7 +426,7 @@ if (group_id_z == n_work_groups_with_1_more && k_remaining > 0){
 void append_first_unroll_block(std::stringstream & ss){
   if (hp.unroll_for_offset != 0){
     ss << "\n\n/* This is where the first unroll will be performed. Identical to what is in the main while, but with zero buffering.  */";
-    if (dp.split_on_k == 0){
+    if (dp.main_split_on_k == 0){
       ss << "\n";
       append_relocate_load_math_string(ss, 0, 1); 
       ss << "\n--n_unrolls_remaining;\n";
@@ -506,7 +506,7 @@ void append_localA_localB_decl_string(std::stringstream & ss){
 void append_preshift_defns(std::stringstream & ss){
   
   
-  if (dp.use_edge_trick != 0){
+  if (dp.main_use_edge_trick != 0){
     ss << "\n" << 
     "/* 1 + (__M__ - 1) % MACRO_TILE_LENGTH_A  */ \n" << 
     "#define PRESHIFT_FINAL_TILE_A " << dp.adps.main_preshift_final_tile << " // somewhere in 1 ... MACRO_TILE_LENGTH_A\n" << 
@@ -518,7 +518,7 @@ void append_preshift_defns(std::stringstream & ss){
 void append_special_case_edge_trick_string(std::stringstream & ss){
   ss << "\n";
   //TODO : if normal form, a b in copy will be buffered.
-  if (hp.normal_form == 0 && dp.use_edge_trick != 0){
+  if (hp.normal_form == 0 && dp.main_use_edge_trick != 0){
     ss <<
 R"(/* Special case of the tile being on far right : pull the tile to the left just enough so that it doesn't overflow C */
 if (group_id_b == N_GROUPS_B - 1){
@@ -548,13 +548,13 @@ void append_ngroups_grid_string(std::stringstream & ss){
   
   ss << "\n"
   << "/* number of groups vertically : __M__ / MACRO_TILE_LENGTH_A";
-  if (dp.use_edge_trick == 1){
+  if (dp.main_use_edge_trick == 1){
     ss << " + (PRESHIFT_FINAL_TILE_A != MACRO_TILE_LENGTH_A)";
   } 
   ss << " */" << "\n"
   << "#define N_GROUPS_A " <<  dp.adps.main_n_groups << "\n"
   << "/* number of groups horizontally : __N__ / MACRO_TILE_LENGTH_B";
-  if (dp.use_edge_trick == 1){
+  if (dp.main_use_edge_trick == 1){
     ss << " + (PRESHIFT_FINAL_TILE_B != MACRO_TILE_LENGTH_B)";
   }
   ss << "*/" << "\n"
@@ -565,7 +565,7 @@ void append_ngroups_grid_string(std::stringstream & ss){
 
 void append_final_write_all(std::stringstream & ss){
   
-  if (dp.use_edge_trick == 0){
+  if (dp.main_use_edge_trick == 0){
     ss << "\n";
     append_final_write_loops_no_check(ss);
   }
@@ -586,7 +586,7 @@ if ((group_id_b != N_GROUPS_B - 1 || PRESHIFT_FINAL_TILE_B == MACRO_TILE_LENGTH_
 
 void append_split_on_k_ab_offset_adjustment_string(std::stringstream & ss){
   ss << "\n";
-  if (dp.split_on_k != 0){
+  if (dp.main_split_on_k != 0){
     ss << 
 R"(
 /* a,b are pointing to the top left of the region required by the macro tile, but this work group  */
@@ -619,7 +619,7 @@ void append_k_unroll_offset_initial_string(std::stringstream & ss){
     ss <<
 R"(
 /* this additional offset of a and b appears because UNROLL_FOR_OFFSET is 1 */
-unsigned unroll_offset = (3*group_id_a + 11*group_id_a)%UNROLL;
+unsigned unroll_offset = (13*group_id_a + 7*group_id_b)%UNROLL;
 unsigned k_plus_offset = __K__ + unroll_offset;
 a -= unroll_offset*STRIDE_PLL_K_A;
 b -= unroll_offset*STRIDE_PLL_K_B;
@@ -628,7 +628,7 @@ b -= unroll_offset*STRIDE_PLL_K_B;
 }
 
 void append_split_on_k_defns_string(std::stringstream & ss){
-  if (dp.split_on_k != 0){
+  if (dp.main_split_on_k != 0){
     ss << 
 R"(
 /* the cumulative unroll. */
@@ -638,7 +638,7 @@ R"(
 }
 
 void append_group_id_defns(std::stringstream & ss){
-  if (dp.split_on_k == 0){
+  if (dp.main_split_on_k == 0){
     ss << "\nconst unsigned group_id_xy = get_group_id(0);\n";
   }
   else{
@@ -719,7 +719,7 @@ void append_n_unrolls_remaining_string(std::stringstream & ss){
   std::string k_effective_div_G_UNROLL = dp.effective_k_varies_string + " / G_UNROLL";
   std::string k_effective_div_UNROLL = dp.effective_k_varies_string + " / UNROLL";
   
-  if (dp.split_on_k == 0){
+  if (dp.main_split_on_k == 0){
     ss << "\nint n_unrolls_remaining = " << k_effective_div_UNROLL << ";";
   }
   
@@ -803,33 +803,35 @@ void append_global_offset_b_workspace(std::stringstream & ss){
 
 void append_ldx_definitions(std::stringstream & ss){
 
-  if (hp.normal_form == 0){
-    
-    if (hp.aps.copy_type == 1){
-      ss << "/* as per a in workspace */\n";
-    }
-    ss << "#define __LDA__ " << dp.adps.main_effective_ldx << "\n";
-    
-    if (hp.bps.copy_type == 1){  
-      ss << "/* as per b in workspace */\n";
-    }
-    ss << "#define __LDB__ " << dp.bdps.main_effective_ldx << "\n";
-  
-  }
-  
-  ss << "#define __LDC__ " << gg.ldc << "\n";
 }
+
+  //if (hp.normal_form == 0){
+    
+    //if (hp.aps.copy_type == 1){
+      //ss << "/* as per a in workspace */\n";
+    //}
+    //ss << "#define __LDA__ " << dp.adps.main_effective_ldx << "\n";
+    
+    //if (hp.bps.copy_type == 1){  
+      //ss << "/* as per b in workspace */\n";
+    //}
+    //ss << "#define __LDB__ " << dp.bdps.main_effective_ldx << "\n";
+  
+  //}
+  
+  //ss << "#define __LDC__ " << gg.ldc << "\n";
+//}
 
 
 void append_mnk_definitions(std::stringstream & ss){
   ss << "#define __M__ " << gg.m << "\n";
   ss << "#define __N__ " << gg.n << "\n";
-  if (hp.normal_form == 0){
-    ss << "#define __K__ " << gg.k << "\n";
-  }
-  else{
-    ss << "#define __K_NORMAL_FORM__ " << dp.nf_k_normal_form << "\n";
-  }
+  //if (hp.normal_form == 0){
+  ss << "#define __K__ " << gg.k << "\n";
+  //}
+  //else{
+    //ss << "#define __K_NORMAL_FORM__ " << dp.nf_k_normal_form << "\n";
+  //}
 }
 
 
@@ -923,7 +925,7 @@ KernelString get_kernelstring(){
 
   ss << "#define TFLOAT  "  << dp.t_float << "\n";
   
-  ss << "#define DOES_BETA_C_INC " << dp.does_beta_c_inc << "\n";
+  ss << "#define DOES_BETA_C_INC " << dp.main_does_beta_c_inc << "\n";
   ss << "#define DOES_ALPHA_A_B_INC 1" << "\n";
   
   append_transpose_note(ss);
@@ -952,7 +954,7 @@ R"(
   ss << "#define PAD_LDS_B " << hp.bps.lds_pad_size << "\n";
   ss << "/* whether or not this kernel uses the edge trick (see documentation : (TODO, currently internal AMD document)) */\n";
   ss << "/* this precompiler defn has no direct influence on the running the kernel, implementation already done in make_kernel.py */\n";
-  ss << "#define EDGETRICK " << dp.use_edge_trick << "\n";
+  ss << "#define EDGETRICK " << dp.main_use_edge_trick << "\n";
   ss << "/* the number of work items working on the same c element. if this is 1, there will be just one thread doing all k multiply-adds, */\n";
   ss << "/* otherwise if it is greater than 1, each thread will be computing ~ k / N_WORK_ITEMS_PER_C_ELM of the multiply adds, to be atomically added at the end */ \n";
   ss << "#define N_WORK_ITEMS_PER_C_ELM " << hp.n_work_items_per_c_elm << "\n";
@@ -1122,7 +1124,7 @@ __local const TFLOAT * lB;
   append_relocate_load_math_string(ss, 0,0);
   ss << "\n--n_unrolls_remaining;\n}\n";
   
-  if (dp.needs_final_fractional_unroll == 1){
+  if (dp.main_final_fractional_unroll == 1){
     ss << "\n/* *********** processing the tail *************** */\n";
     append_k_remaining_string(ss);
     append_final_unroll_string(ss);
@@ -1154,7 +1156,7 @@ __local const TFLOAT * lB;
 KernelString get_alpha_kernelstring(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg, const derivedparams::DerivedParams & dp){
  std::cout << "in get_alpha_kernelstring" << std::endl;
 
-  std::string type = dp.does_beta_c_inc ? "betac_alphaab" : "alphaab";
+  std::string type = dp.main_does_beta_c_inc ? "betac_alphaab" : "alphaab";
   AlphaGenerator ag(hp, gg, dp, type);
   ag.setup();
   

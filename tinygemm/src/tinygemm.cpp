@@ -212,7 +212,7 @@ private:
     //TODO here : check hyper parameters to see if needed a new 
             
     if (type.compare("betac") == 0){
-       if (tk_kernels_map.at("betac").is_set() == false && new_dp.does_beta_c_inc == 0){
+       if (tk_kernels_map.at("betac").is_set() == false && new_dp.main_does_beta_c_inc == 0){
          return true;
        }
        else{

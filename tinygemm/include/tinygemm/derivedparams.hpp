@@ -43,11 +43,8 @@ public:
   unsigned cw_target_ldx = uninitialised_unsigned; 
   unsigned cw_global_offset = uninitialised_unsigned;
   
-  /* either original ldas, or those targetted in copy workspace */
-  unsigned main_effective_ldx = uninitialised_unsigned;
-
-  
-
+  ///* either original ldas, or those targetted in copy workspace */
+  //unsigned main_effective_ldx = uninitialised_unsigned;
 
 };
 
@@ -82,20 +79,16 @@ public:
   /* TODO : write descriptions */
   unsigned main_macro_tile_area = uninitialised_unsigned;
   unsigned main_micro_tile_area = uninitialised_unsigned;
+  
   unsigned main_n_work_items_per_workgroup = uninitialised_unsigned;
   unsigned main_n_work_groups = uninitialised_unsigned;
   unsigned main_global_work_size = uninitialised_unsigned; 
-
   
-  unsigned split_on_k = uninitialised_unsigned;
-  unsigned does_beta_c_inc = uninitialised_unsigned;
-  unsigned use_edge_trick = uninitialised_unsigned;
+  unsigned main_split_on_k = uninitialised_unsigned;
+  unsigned main_does_beta_c_inc = uninitialised_unsigned;
+  unsigned main_use_edge_trick = uninitialised_unsigned;
+  unsigned main_final_fractional_unroll = uninitialised_unsigned;
 
-
-  unsigned get_n_elements_in_x_unroll(char x);  
-
-  
-  unsigned get_stride(char x, bool pll_k, bool is_macro) const;
 
 
   /*the int type for atomics */
@@ -116,14 +109,11 @@ public:
   
   unsigned get_target_ld(char c) const;
 
-  /* normal form specifics */
-  unsigned nf_k_normal_form = uninitialised_unsigned;
+  unsigned get_n_elements_in_x_unroll(char x);  
+  
+  unsigned get_stride(char x, bool pll_k, bool is_macro) const;
 
 
-  unsigned needs_final_fractional_unroll = uninitialised_unsigned;
-
-
-  unsigned nf_effective_k = 123123123;
 
 };
 

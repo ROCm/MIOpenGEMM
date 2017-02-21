@@ -41,9 +41,9 @@ ChiralDerivedParams & DerivedParams::at(char x) {
 
 
 
-void DerivedParams::reset_nf_params(){//const tinygemm::TinyGemmGeometry & gg, const hyperparams::HyperParams & hp){
-  nf_k_normal_form = hp.unroll*(gg.k / hp.unroll + ((gg.k % hp.unroll) != 0));
-}
+//void DerivedParams::reset_nf_params(){//const tinygemm::TinyGemmGeometry & gg, const hyperparams::HyperParams & hp){
+  //nf_k_normal_form = hp.unroll*(gg.k / hp.unroll + ((gg.k % hp.unroll) != 0));
+//}
 
 
 unsigned get_copy_pad(char x){
@@ -56,7 +56,7 @@ unsigned get_copy_pad(char x){
 }
   
 
-void DerivedParams::reset_cw_params(char x){//const tinygemm::TinyGemmGeometry & gg, const hyperparams::HyperParams & hp, char x){
+void DerivedParams::reset_cw_params(char x){
   
   if (x == 'b' && hp.aps.copy_type == 1 && adps.cw_target_ldx == uninitialised_unsigned){
     throw tinygemm_error("make sure reset_acw1_params is called before reset_bcw1_params, we need that adps.cw_target_ldx be set here in derivedparams reset of bcw1");
@@ -68,18 +68,18 @@ void DerivedParams::reset_cw_params(char x){//const tinygemm::TinyGemmGeometry &
   
 }
   
-void DerivedParams::reset_ga3_params(){//const hyperparams::HyperParams & hp){
+void DerivedParams::reset_ga3_params(){
   
-  if (split_on_k == 1){
+  if (main_split_on_k == 1){
     ga3_super_column_width = 
     static_cast<unsigned>(std::floor(std::sqrt(static_cast<double>(hp.n_target_active_workgroups) / static_cast<double>(hp.n_work_items_per_c_elm))));
   }
-  else if (split_on_k == 0){
+  else if (main_split_on_k == 0){
     ga3_super_column_width = 
     static_cast<unsigned>(std::floor(std::sqrt(static_cast<double>(hp.n_target_active_workgroups))));
   }
   else{
-    throw tinygemm_error("split_on_k is neither 0 nor 1, how can this be? Logic error in append_super_column_width_defn");
+    throw tinygemm_error("main_split_on_k is neither 0 nor 1, how can this be? Logic error in append_super_column_width_defn");
   }  
   ga3_last_super_column_width = bdps.main_n_groups % ga3_super_column_width;
 }
@@ -88,7 +88,7 @@ void DerivedParams::reset_ga3_params(){//const hyperparams::HyperParams & hp){
 std::tuple<bool, std::string>
 get_deriveability(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg){
   DerivedParams dp(hp, gg, "uninitialised");
-  return dp.set_fragile();//hp, gg);
+  return dp.set_fragile();
 }
 
 DerivedParams::DerivedParams(const hyperparams::HyperParams & hp_, const tinygemm::TinyGemmGeometry & gg_, std::string s):hp(hp_), gg(gg_){
@@ -99,7 +99,7 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams & hp_, const tinygem
 
 
 std::tuple<bool, std::string>
-DerivedParams::set_fragile(){//const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg){
+DerivedParams::set_fragile(){
 
   main_macro_tile_area = hp.bps.macro_tile_length * hp.aps.macro_tile_length;
   main_micro_tile_area = hp.bps.micro_tile_length * hp.aps.micro_tile_length;
@@ -160,7 +160,7 @@ DerivedParams::set_fragile(){//const hyperparams::HyperParams & hp, const tinyge
 
 DerivedParams::DerivedParams(const hyperparams::HyperParams & hp_, const tinygemm::TinyGemmGeometry & gg_): hp(hp_), gg(gg_) {
 
-  auto tup = set_fragile();//hp, gg);
+  auto tup = set_fragile();
 
   if (std::get<0>(tup) == false){
     throw tinygemm_error("Failure to construct DerivedParams. Problem caught in set_fragile. It is recommended to run use function derivable to check that a valid DerivedParams can be constructed. The message returned in set_fragile is :  " + std::get<1>(tup));
@@ -171,8 +171,8 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams & hp_, const tinygem
   
   tiling::set_tile_dimensions(bdps.main_micro_tile_perp_unroll, bdps.main_micro_tile_pll_unroll, hp.bps.macro_tile_length, hp.unroll, bdps.main_n_elements_to_load_per_workitem, hp.bps.load_pll_to_unroll == 0); 
     
-  split_on_k = hp.n_work_items_per_c_elm == 1 ? 0 : 1;
-  does_beta_c_inc = split_on_k == 1 ? 0 : 1; 
+  main_split_on_k = hp.n_work_items_per_c_elm == 1 ? 0 : 1;
+  main_does_beta_c_inc = main_split_on_k == 1 ? 0 : 1; 
   
   adps.main_c_interweave_stride = hp.c_micro_tiles_interwoven == 0 ? 1 : adps.main_n_micro_in_macro;
   bdps.main_c_interweave_stride = hp.c_micro_tiles_interwoven == 0 ? 1 : bdps.main_n_micro_in_macro;
@@ -189,13 +189,11 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams & hp_, const tinygem
   
   pragma_unroll_string = hp.unroll_pragma == 1 ?  "#pragma unroll\n" : "" ;
   
-  
   if (hp.normal_form != 0 && hp.normal_form != 1){
     throw tinygemm_error("hp.normal_form is not set yet, reorder needed in derivedparams");
   }
   
-  effective_k_varies_string = hp.normal_form == 1 ? "__K_NORMAL_FORM__" : (hp.unroll_for_offset == 0 ? "__K__" : "k_plus_offset");
-  
+  effective_k_varies_string = hp.unroll_for_offset == 0 ? "__K__" : "k_plus_offset";
   t_float = gg.derived.float_size_bits == 32 ? "float" : "double";
   
   
@@ -209,29 +207,25 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams & hp_, const tinygem
   
   }
   
-  main_n_work_groups = hp.n_work_items_per_c_elm * ((gg.m/hp.aps.macro_tile_length) + (gg.m%hp.aps.macro_tile_length != 0)) * ((gg.n/hp.bps.macro_tile_length) + (gg.n%hp.bps.macro_tile_length != 0));
+  main_n_work_groups = hp.n_work_items_per_c_elm * 
+  ((gg.m/hp.aps.macro_tile_length) + (gg.m%hp.aps.macro_tile_length != 0)) * 
+  ((gg.n/hp.bps.macro_tile_length) + (gg.n%hp.bps.macro_tile_length != 0));
   
   main_global_work_size = main_n_work_groups * main_n_work_items_per_workgroup;
   
 
 
-  needs_final_fractional_unroll = (hp.unroll_for_offset == 1 || (hp.normal_form == 0 && gg.k%hp.unroll != 0)) ? 1 : 0;
     
   if (hp.group_allocation == 3){
-    reset_ga3_params();//hp);//hp, n_groups_horizontally, split_on_k);
+    reset_ga3_params();
   }
   
-  if (hp.normal_form == 1){
-    reset_nf_params();//gg, hp);
-  }
   
-  if (hp.normal_form == 0){
-    adps.main_effective_ldx = hp.aps.copy_type == 0 ? gg.lda : adps.cw_target_ldx;
-    bdps.main_effective_ldx = hp.bps.copy_type == 0 ? gg.ldb : bdps.cw_target_ldx;
-  }
   
-    
-  use_edge_trick = 1;
+  /* these guys are hyper params, with a check if not optional ? */
+  main_use_edge_trick = 1;
+  main_final_fractional_unroll = (hp.unroll_for_offset == 1 || gg.k%hp.unroll != 0) ? 1 : 0;
+
 
 }
 
@@ -250,15 +244,25 @@ unsigned DerivedParams::get_n_elements_in_x_unroll(char x){
 
 
 unsigned DerivedParams::get_stride(char x, bool pll_k, bool is_macro) const{
+
+
+  //if (hp.normal_form == 0){
+    //adps.main_effective_ldx = hp.aps.copy_type == 0 ? gg.lda : adps.cw_target_ldx;
+    //bdps.main_effective_ldx = hp.bps.copy_type == 0 ? gg.ldb : bdps.cw_target_ldx;
+  //}
+ 
+
   if (hp.normal_form == 0){
-    return gg.coal_is_pll_k(x) == pll_k ? 1 : at(x).main_effective_ldx;
+    unsigned effective_ldx = hp.at(x).copy_type == 0  ? gg.get_ld(x) : at(x).cw_target_ldx;
+    return gg.coal_is_pll_k(x) == pll_k ? 1 : effective_ldx; //at(x).main_effective_ldx;
   }
+  
   else{
     if (is_macro == false){
       return pll_k == true ? hp.at(x).macro_tile_length : 1;
     }
     else{
-      return pll_k == true ? hp.at(x).macro_tile_length : nf_effective_k;
+      return pll_k == true ? hp.at(x).macro_tile_length : gg.k;
     }
   }
 }
