@@ -21,7 +21,9 @@
 tinygemm::hyperparams::HyperParams get_hp(std::string hyperstring = ""){
 
   if (hyperstring.compare("") == 0){
-    hyperstring = "Y128_X96_y8_x6_U8_PA1_PB1_GA1_APLU0_BPLU1_PU1_LIW0_MIW0_ICE2_NAW64_UFO0_ACW0_BCW0_NOF0";
+    //hyperstring = "Y128_X96_y8_x6_U8_PA1_PB1_GA1_APLU0_BPLU1_PU1_LIW0_MIW0_ICE2_NAW64_UFO0_ACW0_BCW0_NOF0";
+    
+    hyperstring = "Y48_X24_y6_x3_U8_PA1_PB1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE2_NAW64_UFO0_ACW0_BCW0_NOF0";
   }
   return hyperstring;
 }
@@ -33,9 +35,9 @@ tinygemm::TinyGemmGeometry get_geometry(){
   bool tA = false;
   bool tB = false;
   bool tC = false;
-  unsigned m = 818;//0; // 96*51;//4096;
+  unsigned m = 138;//0; // 96*51;//4096;
   unsigned n = 318;//0; // 96*51;//5025;
-  unsigned k = 319;//9; // 96*51;//4096;
+  unsigned k = 519;//9; // 96*51;//4096;
   unsigned lda = ( tA == isColMajor ? k : m ) + 1;//13;
   unsigned ldb = ( tB == isColMajor ? n : k ) + 3;//27;
   unsigned ldc = ( tC == isColMajor ? n : m ) + 5;//13;//11;

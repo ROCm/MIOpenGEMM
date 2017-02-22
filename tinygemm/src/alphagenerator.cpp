@@ -675,37 +675,16 @@ void append_stride_defn(std::stringstream & ss, char LETTER, unsigned ldx,  unsi
 }
 
 void append_stride_defns(std::stringstream & ss){
-  //if (hp.normal_form == 0){
-    //append_stride_defn(ss, 'A', dp.adps.main_effective_ldx, gg.tA);
-    //append_stride_defn(ss, 'B', dp.bdps.main_effective_ldx, gg.tB);
-  //}
 
   //for (char X : {'A', 'B'}){
     //char x = (X == 'A') ? 'a' : 'b';
     //ss << "\n";
     //for (std::string orth :  {"PLL", "PERP"}){
-      //if (hp.normal_form == 0){
-        //ss << "#define STRIDE_" << orth << "_K_" << X << " " << (gg.coal_is_pll_k(x) == (orth == "PLL") ? 1 : gg.get_ld(x)) << "\n";
-        //ss << "#define MACRO_STRIDE_" << orth << "_K_" << X << " " << (gg.coal_is_pll_k(x) == (orth == "PLL") ? 1 : gg.get_ld(x)) << "\n";
-      //}
-      //else{
-        //ss << "#define STRIDE_" << orth << "_K_" << X << " " << (orth == "PLL" ? hp.at(x).macro_tile_length : 1) << "\n";
-        //ss << "#define MACRO_STRIDE_" << orth << "_K_" << X << " " << (orth == "PLL" ? hp.at(x).macro_tile_length : gg.get_non_k_dim(x)) << "\n";      
-      //}
+      //bool pll_k = ("PLL" == orth);
+      //ss << "#define STRIDE_" << orth << "_K_" << X << " " << dp.get_stride(x, pll_k, false) << "\n";
+      //ss << "#define MACRO_STRIDE_" << orth << "_K_" << X << " " << dp.get_stride(x, pll_k, true) << "\n";
     //}
   //}
-  
-
-
-  for (char X : {'A', 'B'}){
-    char x = (X == 'A') ? 'a' : 'b';
-    ss << "\n";
-    for (std::string orth :  {"PLL", "PERP"}){
-      bool pll_k = ("PLL" == orth);
-      ss << "#define STRIDE_" << orth << "_K_" << X << " " << dp.get_stride(x, pll_k, false) << "\n";
-      ss << "#define MACRO_STRIDE_" << orth << "_K_" << X << " " << dp.get_stride(x, pll_k, true) << "\n";
-    }
-  }
     
   append_stride_defn(ss, 'C', gg.ldc, gg.tC);  
 }
@@ -939,31 +918,76 @@ R"(
 /* TODO : investigate mad. When should one use this instead of standard overloads, += and *. see tensile branch. 
 
 
-)" << genutil::get_how_string() << R"(
+)" << genutil::get_how_string() << "\n";
+
+ //<< R"(
 /* Defines a tile shape. Each thread will process a tile of this shape from C (if N_WORK_ITEMS_PER_C_ELM > 1 the processing is shared with threads in other WGs)  */
-)";
-  ss << "#define MICRO_TILE_LENGTH_B " << hp.bps.micro_tile_length << "\n";
-  ss << "#define MICRO_TILE_LENGTH_A " << hp.aps.micro_tile_length << "\n";
-  ss << "/* Area of C which a workgroup will process. Recall that a workgroup is made of several threads which share LDS memory */\n";
-  ss << "#define MACRO_TILE_LENGTH_B " << hp.bps.macro_tile_length << "\n";
-  ss << "#define MACRO_TILE_LENGTH_A " << hp.aps.macro_tile_length << "\n";
-  ss << "/* How much a workgroup load (global -> LDS) in the k-direction at each iteration of the outer-most loop */\n";
-  ss << "#define UNROLL " << hp.unroll  << "\n";
-  ss << "/* padding in LDS to avoid bank conflicts*/\n";
-  ss << "#define PAD_LDS_A " << hp.aps.lds_pad_size << "\n";
-  ss << "#define PAD_LDS_B " << hp.bps.lds_pad_size << "\n";
-  ss << "/* whether or not this kernel uses the edge trick (see documentation : (TODO, currently internal AMD document)) */\n";
-  ss << "/* this precompiler defn has no direct influence on the running the kernel, implementation already done in make_kernel.py */\n";
-  ss << "#define EDGETRICK " << dp.main_use_edge_trick << "\n";
-  ss << "/* the number of work items working on the same c element. if this is 1, there will be just one thread doing all k multiply-adds, */\n";
-  ss << "/* otherwise if it is greater than 1, each thread will be computing ~ k / N_WORK_ITEMS_PER_C_ELM of the multiply adds, to be atomically added at the end */ \n";
-  ss << "#define N_WORK_ITEMS_PER_C_ELM " << hp.n_work_items_per_c_elm << "\n";
+//)";
+
+  auto defcom = [&ss](char x, std::string && comment){
+    if (x == 'A') ss << "/*" << " " << comment << " : */\n";
+  };
+  
+  for (auto x : {'A', 'B'}){
+    ss << "\n";
+    if (x == 'A') ss << "/* micro tiles define the pattern of C that individual threads process */\n";
+    ss << "#define MICRO_TILE_LENGTH_" << x << " " << hp.at(x).micro_tile_length << "\n";
+    if (x == 'A') ss << "/* macro tiles define the pattern of C that workgroups (threads with shared local memory) process */\n";
+    ss << "#define MACRO_TILE_LENGTH_" << x << " " << hp.at(x).macro_tile_length << "\n";    
+    if (x == 'A') ss << "/* the amount of padding of " << x << " in LDS (local) memory, to avoid bank comflicts */\n";
+    ss << "#define PAD_LDS_" << x <<  hp.at(x).lds_pad_size << "\n";
+    if (x == 'A') ss << "/* whether loading of " << x << " from global should try to be long in direction of unroll (1) or perpendicular to it (0) */\n";
+    ss << "#define WORK_ITEM_LOAD_" << x << "_PLL_TO_UNROLL " << hp.at(x).load_pll_to_unroll << "\n"; 
+    defcom(x, "MACRO_TILE_LENGTH_A + PAD_LDS_A");  
+    ss << "#define MACRO_TILE_LENGTH_" << x << "_AND_PAD "<< dp.at(x).main_macro_tile_length_and_pad << "\n";
+    defcom(x, "MACRO_TILE_LENGTH_A * UNROLL");
+    ss << "#define N_ELEMENTS_IN_" << x << "_UNROLL "<< dp.at(x).n_elements_in_unroll <<"\n";
+    defcom(x, "MACRO_TILE_LENGTH_A_AND_PAD * UNROLL");
+    ss << "#define N_ELEMENTS_IN_PADDED_" << x << "_UNROLL "<< dp.at(x).main_n_elements_in_padded_unroll <<"\n";
+    defcom(x, "N_ELEMENTS_IN_A_UNROLL / N_WORK_ITEMS_PER_WORKGROUP");
+    ss << "#define N_ELEMENTS_OF_" << x << "_TO_LOAD_PER_WORKITEM "<< dp.at(x).main_n_elements_to_load_per_workitem <<"\n";
+    defcom(x, "MACRO_TILE_LENGTH_A / MICRO_TILE_LENGTH_A");
+    ss << "#define N_MICRO_IN_MACRO_" << x << "  " << dp.at(x).main_n_micro_in_macro << "\n"; 
+    defcom(x, "MICRO_A_TILE_PLL_UNROLL * MICRO_A_TILE_PERP_UNROLL = N_ELEMENTS_OF_A_TO_LOAD_PER_WORKITEM");  
+    ss << "#define MICRO_" << x << "_TILE_PLL_UNROLL " << dp.at(x).main_micro_tile_pll_unroll << " \n";
+    ss << "#define MICRO_" << x << "_TILE_PERP_UNROLL " << dp.at(x).main_micro_tile_perp_unroll << "\n";
+    defcom(x, "MACRO_A_TILE_PLL_UNROLL / MICRO_A_TILE_PLL_UNROLL");  
+    ss << "#define N_MICRO_" << x << "_TILES_PLL_UNROLL " << dp.at(x).main_n_micro_tiles_pll_unroll << " \n";
+
+    if (x == 'A') ss << "/* sensible comment */\n"; 
+    for (std::string orth :  {"PLL", "PERP"}){
+      bool pll_k = ("PLL" == orth);
+      ss << "#define STRIDE_" << orth << "_K_" << x << " " << dp.get_stride(x, pll_k, false) << "\n";
+      ss << "#define MACRO_STRIDE_" << orth << "_K_" << x << " " << dp.get_stride(x, pll_k, true) << "\n";
+    }  
+  
+    
+    ss << "\n";
+  }
+  
+
+  
+  
+  
+
   ss << "/* whether or not to shimmy the starting k, in an attempt to avoid cache line overuse for cases where lda/ldb are powers of 2 */\n";
   ss << "/* if 0, no shimmying. if 1, instead of starting at k = 0 workgroups start at some negative offset dependent on work group id */\n";
   ss << "/* in the same way as the final unroll populates LDS with zeros in k mod UNROLL != 0, the initial negative indices here populate with 0 */\n";
   if (hp.normal_form == 0){
     ss << "#define UNROLL_FOR_OFFSET " << hp.unroll_for_offset << "\n";
   }
+
+  
+  
+  ss << "/* How much a workgroup loads (global -> LDS) in the k-direction at each iteration of the outer-most loop */\n";
+  ss << "#define UNROLL " << hp.unroll  << "\n";
+  ss << "/* whether or not this kernel uses the edge trick (see documentation : (TODO, currently internal AMD document)) */\n";
+  ss << "/* this precompiler defn has no direct influence on the running the kernel, implementation already done in make_kernel.py */\n";
+  ss << "#define EDGETRICK " << dp.main_use_edge_trick << "\n";  
+  ss << "/* the number of work items working on the same c element. if this is 1, there will be just one thread doing all k multiply-adds, */\n";
+  ss << "/* otherwise if it is greater than 1, each thread will be computing ~ k / N_WORK_ITEMS_PER_C_ELM of the multiply adds, to be atomically added at the end */ \n";
+  ss << "#define N_WORK_ITEMS_PER_C_ELM " << hp.n_work_items_per_c_elm << "\n";
+  
   ss << 
 R"(
 /* define the way in which work groups are assigned to tiles */
@@ -974,16 +998,7 @@ R"(
 
   append_group_allocation_defn_string(ss);
   
-  ss << 
-R"(
-/* Whether the load tiles are long in the direction of unroll (1) or perpendicular to the direction of unroll (0) */
-/* Note : if the load tiles are long in the direction of unroll, the destination tile in LDS is NOT contiguous,  */
-/* in other words, unroll tiles are stored with the the direction perpendicular to unroll as the fastest changing index */
-/* We include these parameters here as pre-processor variables, but the loading micro-tile shapes are set in make_kernel.py */
-)";
-
-  ss << "#define WORK_ITEM_LOAD_A_PLL_TO_UNROLL " << hp.aps.load_pll_to_unroll << "\n"; 
-  ss << "#define WORK_ITEM_LOAD_B_PLL_TO_UNROLL " << hp.aps.load_pll_to_unroll << "\n";
+  
   ss << "/* Whether the load tiles are interwoven (ala Cobalt, (1)) or if the load tiles are truly contiguous tiles of A/B (0) */\n";
   ss << "/* Included here for user, in practice it has no direct effect on this kernel, as the relevent implementation has been done in make_kernel.py */\n";
   ss << "#define LOAD_TO_LDS_INTERWOVEN " << hp.load_to_lds_interwoven << "\n";
@@ -1015,27 +1030,13 @@ R"(
   ss << "#define MACRO_TILE_AREA "<< dp.main_macro_tile_area <<"  // MACRO_TILE_LENGTH_B*MACRO_TILE_LENGTH_A\n";
   ss << "#define MICRO_TILE_AREA "<< dp.main_micro_tile_area <<" // MICRO_TILE_LENGTH_B * MICRO_TILE_LENGTH_A\n";
   ss << "#define N_WORK_ITEMS_PER_WORKGROUP  "<< dp.main_n_work_items_per_workgroup <<" // MACRO_TILE_AREA / MICRO_TILE_AREA\n";
-  ss << "#define MACRO_TILE_LENGTH_A_AND_PAD "<< dp.adps.main_macro_tile_length_and_pad <<" // MACRO_TILE_LENGTH_A + PAD_LDS_A\n";
-  ss << "#define MACRO_TILE_LENGTH_B_AND_PAD "<< dp.bdps.main_macro_tile_length_and_pad <<" // MACRO_TILE_LENGTH_B + PAD_LDS_B\n";
-  ss << "#define N_ELEMENTS_IN_A_UNROLL "<< dp.adps.n_elements_in_unroll <<" // MACRO_TILE_LENGTH_A * UNROLL\n";
-  ss << "#define N_ELEMENTS_IN_B_UNROLL "<< dp.bdps.n_elements_in_unroll <<" // MACRO_TILE_LENGTH_B * UNROLL\n";
-  ss << "#define N_ELEMENTS_IN_PADDED_A_UNROLL "<< dp.adps.main_n_elements_in_padded_unroll <<" // MACRO_TILE_LENGTH_A_AND_PAD * UNROLL\n";
-  ss << "#define N_ELEMENTS_IN_PADDED_B_UNROLL "<< dp.bdps.main_n_elements_in_padded_unroll <<" // MACRO_TILE_LENGTH_B_AND_PAD * UNROLL\n";
-  ss << "#define N_ELEMENTS_OF_A_TO_LOAD_PER_WORKITEM "<< dp.adps.main_n_elements_to_load_per_workitem <<" // N_ELEMENTS_IN_A_UNROLL / N_WORK_ITEMS_PER_WORKGROUP\n";
-  ss << "#define N_ELEMENTS_OF_B_TO_LOAD_PER_WORKITEM "<< dp.bdps.main_n_elements_to_load_per_workitem <<" // N_ELEMENTS_IN_B_UNROLL / N_WORK_ITEMS_PER_WORKGROUP\n";
-  ss << "#define N_MICRO_IN_MACRO_A "<< dp.adps.main_n_micro_in_macro <<" // MACRO_TILE_LENGTH_A / MICRO_TILE_LENGTH_A\n";
-  ss << "#define N_MICRO_IN_MACRO_B "<< dp.bdps.main_n_micro_in_macro <<" // MACRO_TILE_LENGTH_B / MICRO_TILE_LENGTH_B\n";
 
-  ss << "\n/* MICRO_A_TILE_PLL_UNROLL * MICRO_A_TILE_PERP_UNROLL = N_ELEMENTS_OF_A_TO_LOAD_PER_WORKITEM */\n";  
-  ss << "/* The dimensions of a tile in A loaded by a work item.  */\n";
-  ss << "#define MICRO_A_TILE_PLL_UNROLL " << dp.adps.main_micro_tile_pll_unroll << " // size of the loaded tile, pll to unroll\n";
-  ss << "#define MICRO_A_TILE_PERP_UNROLL " << dp.adps.main_micro_tile_perp_unroll << "\n";
-  ss << "#define N_MICRO_A_TILES_PLL_UNROLL " << dp.adps.main_n_micro_tiles_pll_unroll << " // UNROLL / MICRO_A_TILE_PLL_UNROLL\n""";
-  ss << "\n/*  MICRO_B_TILE_PLL_UNROLL * MICRO_B_TILE_PERP_UNROLL = N_ELEMENTS_OF_B_TO_LOAD_PER_WORKITEM */\n";
-  ss << "/* The dimensions of a tile in B read by a work item */\n";
-  ss << "#define MICRO_B_TILE_PLL_UNROLL " << dp.bdps.main_micro_tile_pll_unroll << "\n";
-  ss << "#define MICRO_B_TILE_PERP_UNROLL " << dp.bdps.main_micro_tile_perp_unroll << "\n";
-  ss << "#define N_MICRO_B_TILES_PLL_UNROLL " << dp.bdps.main_n_micro_tiles_pll_unroll << " // UNROLL / MICRO_B_TILE_PLL_UNROLL\n";
+  
+  //ss << "\n/*  MICRO_B_TILE_PLL_UNROLL * MICRO_B_TILE_PERP_UNROLL = N_ELEMENTS_OF_B_TO_LOAD_PER_WORKITEM */\n";
+  //ss << "/* The dimensions of a tile in B read by a work item */\n";
+  //ss << "#define MICRO_B_TILE_PLL_UNROLL " << dp.bdps.main_micro_tile_pll_unroll << "\n";
+  //ss << "#define MICRO_B_TILE_PERP_UNROLL " << dp.bdps.main_micro_tile_perp_unroll << "\n";
+  //ss << "#define N_MICRO_B_TILES_PLL_UNROLL " << dp.bdps.main_n_micro_tiles_pll_unroll << " // UNROLL / MICRO_B_TILE_PLL_UNROLL\n";
   
   ss << "\n/* two more parameters, which do dot have an effect the running of this kernel (used in enqueuing) */\n";
   ss << "/* the total number of work groups this kernel will use (recall m,n,k are fixed) */ \n";

@@ -22,14 +22,14 @@ unsigned get_target(unsigned grid_size, unsigned above_distance, unsigned x){
 
 
 const ChiralDerivedParams & DerivedParams::at(char x) const{
-  if (x == 'a'){
+  if (x == 'a' || x == 'A'){
     return adps;
   }
-  else if (x == 'b'){
+  else if (x == 'b' || x == 'B'){
     return bdps;
   }
   else{
-    throw tinygemm_error("unrecognised char om   ChiralDerivedParams & at(char x)");
+    throw tinygemm_error("unrecognised char in ChiralDerivedParams & at(char x)");
   }
 }
 
@@ -174,8 +174,6 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams & hp_, const tinygem
   main_split_on_k = hp.n_work_items_per_c_elm == 1 ? 0 : 1;
   main_does_beta_c_inc = main_split_on_k == 1 ? 0 : 1; 
   
-  adps.main_c_interweave_stride = hp.c_micro_tiles_interwoven == 0 ? 1 : adps.main_n_micro_in_macro;
-  bdps.main_c_interweave_stride = hp.c_micro_tiles_interwoven == 0 ? 1 : bdps.main_n_micro_in_macro;
   
   if (hp.n_work_items_per_c_elm == 1){
     infa = "n_work_items_per_c_elm is 1, should not be using atomics";
@@ -204,8 +202,12 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams & hp_, const tinygem
     at(x).main_n_elements_in_padded_unroll = at(x).main_macro_tile_length_and_pad * hp.unroll;
     at(x).main_n_micro_in_macro = hp.at(x).macro_tile_length / hp.at(x).micro_tile_length;
     at(x).main_n_micro_tiles_pll_unroll = hp.unroll / at(x).main_micro_tile_pll_unroll;
-  
+    at(x).main_c_interweave_stride = hp.c_micro_tiles_interwoven == 0 ? 1 : at(x).main_n_micro_in_macro;  
   }
+
+
+  //bdps.main_c_interweave_stride = hp.c_micro_tiles_interwoven == 0 ? 1 : bdps.main_n_micro_in_macro;
+
   
   main_n_work_groups = hp.n_work_items_per_c_elm * 
   ((gg.m/hp.aps.macro_tile_length) + (gg.m%hp.aps.macro_tile_length != 0)) * 
@@ -250,6 +252,13 @@ unsigned DerivedParams::get_stride(char x, bool pll_k, bool is_macro) const{
     //adps.main_effective_ldx = hp.aps.copy_type == 0 ? gg.lda : adps.cw_target_ldx;
     //bdps.main_effective_ldx = hp.bps.copy_type == 0 ? gg.ldb : bdps.cw_target_ldx;
   //}
+  
+  if (x == 'A') x = 'a';
+  
+  if (x == 'B') x = 'b';
+    
+  
+  
  
 
   if (hp.normal_form == 0){

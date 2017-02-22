@@ -159,10 +159,10 @@ void HyperParams::ga_check() const{
 }
 
 const HyperParamsChiral & HyperParams::at(char x)  const{
-  if (x == 'a'){
+  if (x == 'a' || x == 'A'){
     return aps;
   }
-  else if (x == 'b'){
+  else if (x == 'b' || x == 'B'){
     return bps;
   }
   else{

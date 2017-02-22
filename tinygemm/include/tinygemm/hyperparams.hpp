@@ -65,21 +65,20 @@ public:
   HyperParamsChiral bps;
   
   const HyperParamsChiral & at(char x) const;
-  
-  
+    
   //will go into HyperParamsChiral eventually
   unsigned normal_form;
   //unsigned pad;  
-  
 
-  
   unsigned unroll;  
   unsigned group_allocation;  
-  unsigned unroll_pragma;  
-  unsigned load_to_lds_interwoven;  
-  unsigned c_micro_tiles_interwoven; 
+  unsigned unroll_pragma;
   unsigned n_work_items_per_c_elm;  
   unsigned n_target_active_workgroups; 
+
+  //TODO : make theses chiral:
+  unsigned load_to_lds_interwoven;
+  unsigned c_micro_tiles_interwoven;
   unsigned unroll_for_offset;
  
  
