@@ -115,7 +115,7 @@ int main(){
   bool tC = false;
   //double alpha = 1.43235342345;
   //double beta = 0.45348379373;
-  float allotted_time = .003; 
+  float allotted_time = 1.003; 
   bool verbose = false;
   
   /* enforce_deterministc, ldx_offset */
@@ -138,11 +138,14 @@ int main(){
     unsigned ldx_offset;
     std::tie(enforce_deterministic, ldx_offset) = run_setting;
     
-    std::cout << "\nEntering benchmarking experiment with enforce_deterministic = " << enforce_deterministic << " and ldx_offset = " << ldx_offset << std::endl;
+    std::cout << "\n\n\nEntering benchmarking experiment with enforce_deterministic = " << enforce_deterministic << " and ldx_offset = " << ldx_offset << std::endl;
     
     
     
-    for (unsigned prob_i = 0; prob_i < problems.size(); ++prob_i){
+    //for (unsigned prob_i = 0; prob_i < problems.size(); ++prob_i){
+    
+   for (unsigned prob_i = 0; prob_i < 2; ++prob_i){
+    
       auto problem = problems[prob_i];
       int m, n, k;
       bool tA, tB;

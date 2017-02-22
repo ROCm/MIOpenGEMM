@@ -89,16 +89,18 @@ public:
       }
     }
 
-    
-    std::cout << "-----------------------------------------\nnetwork : \n";
-    for (unsigned i = 0; i < v_tgks.size(); ++i){
-      std::cout << "kernel " << i << " ( " << types[i].full << " )  ----- waits for -----> " << std::flush;
-      for (unsigned j = 0; j < v_wait_indices[i].size(); ++j){
-        std::cout << v_wait_indices[i][j] << " ( " << types[v_wait_indices[i][j]].full << " )   " << std::flush;
+
+    if (false == true){
+      std::cout << "-----------------------------------------\nnetwork : \n";
+      for (unsigned i = 0; i < v_tgks.size(); ++i){
+        std::cout << "kernel " << i << " ( " << types[i].full << " )  ----- waits for -----> " << std::flush;
+        for (unsigned j = 0; j < v_wait_indices[i].size(); ++j){
+          std::cout << v_wait_indices[i][j] << " ( " << types[v_wait_indices[i][j]].full << " )   " << std::flush;
+        }
+        std::cout << std::endl;
       }
-      std::cout << std::endl;
+      std::cout << "-----------------------------------------\n" << std::endl;
     }
-    std::cout << "-----------------------------------------\n" << std::endl;
     
 
 

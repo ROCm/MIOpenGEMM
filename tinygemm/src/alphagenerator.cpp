@@ -1155,7 +1155,6 @@ __local const TFLOAT * lB;
 
 
 KernelString get_alpha_kernelstring(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg, const derivedparams::DerivedParams & dp){
- std::cout << "in get_alpha_kernelstring" << std::endl;
 
   std::string type = dp.main_does_beta_c_inc ? "betac_alphaab" : "alphaab";
   AlphaGenerator ag(hp, gg, dp, type);
