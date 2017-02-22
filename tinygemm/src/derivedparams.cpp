@@ -202,7 +202,7 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams & hp_, const tinygem
     at(x).main_n_elements_in_padded_unroll = at(x).main_macro_tile_length_and_pad * hp.unroll;
     at(x).main_n_micro_in_macro = hp.at(x).macro_tile_length / hp.at(x).micro_tile_length;
     at(x).main_n_micro_tiles_pll_unroll = hp.unroll / at(x).main_micro_tile_pll_unroll;
-    at(x).main_c_interweave_stride = hp.c_micro_tiles_interwoven == 0 ? 1 : at(x).main_n_micro_in_macro;  
+    at(x).main_c_interweave_stride = hp.at(x).c_micro_tiles_interwoven == 0 ? 1 : at(x).main_n_micro_in_macro;  
   }
 
 
@@ -223,11 +223,9 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams & hp_, const tinygem
   }
   
   
-  
   /* these guys are hyper params, with a check if not optional ? */
   main_use_edge_trick = 1;
   main_final_fractional_unroll = (hp.unroll_for_offset == 1 || gg.k%hp.unroll != 0) ? 1 : 0;
-
 
 }
 
@@ -247,23 +245,13 @@ unsigned DerivedParams::get_n_elements_in_x_unroll(char x){
 
 unsigned DerivedParams::get_stride(char x, bool pll_k, bool is_macro) const{
 
-
-  //if (hp.normal_form == 0){
-    //adps.main_effective_ldx = hp.aps.copy_type == 0 ? gg.lda : adps.cw_target_ldx;
-    //bdps.main_effective_ldx = hp.bps.copy_type == 0 ? gg.ldb : bdps.cw_target_ldx;
-  //}
   
-  if (x == 'A') x = 'a';
-  
-  if (x == 'B') x = 'b';
-    
-  
-  
- 
+  if (x == 'A') x = 'a';  
+  if (x == 'B') x = 'b'; 
 
   if (hp.normal_form == 0){
     unsigned effective_ldx = hp.at(x).copy_type == 0  ? gg.get_ld(x) : at(x).cw_target_ldx;
-    return gg.coal_is_pll_k(x) == pll_k ? 1 : effective_ldx; //at(x).main_effective_ldx;
+    return gg.coal_is_pll_k(x) == pll_k ? 1 : effective_ldx; 
   }
   
   else{

@@ -38,21 +38,22 @@ public:
   unsigned load_pll_to_unroll;
   unsigned copy_type; //for now 0 : none, 1 : simple copy with ldx padding. To include : 2 : normal form.
   unsigned lds_pad_size;
+  unsigned load_to_lds_interwoven;
+  unsigned c_micro_tiles_interwoven;
+  
+  void checks() const;
+
+  std::string get_string() const;
   
 };
+
+
 
 class HyperParams{
 
 private: 
 
-
 public:
-
-  //void bool_check(const std::string & key, unsigned v) const;
-  
-  //void positive_check(const std::string & key, unsigned v) const;
-  
-  //void mod_check(const std::string & key1, unsigned v1, const std::string & key2, unsigned v2) const;
   
   void ga_check() const;
   
@@ -75,15 +76,7 @@ public:
   unsigned unroll_pragma;
   unsigned n_work_items_per_c_elm;  
   unsigned n_target_active_workgroups; 
-
-  //TODO : make theses chiral:
-  unsigned load_to_lds_interwoven;
-  unsigned c_micro_tiles_interwoven;
   unsigned unroll_for_offset;
- 
- 
-
-  
 
   std::string get_key_from_shortkey(const std::string & shortkey);  
   unsigned get_nwitems_h();
@@ -101,10 +94,8 @@ public:
   std::vector<HyperParams> get_two_aways(const tinygemm::TinyGemmGeometry & gg);  
   std::map<std::string, unsigned> get_params();
   
-  
   std::string get_string() const;
-
-
+  
   unsigned get_macro_tile_x_length(char x) const;
 
 };  
