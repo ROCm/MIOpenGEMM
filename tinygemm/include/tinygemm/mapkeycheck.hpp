@@ -6,6 +6,8 @@
 #include <sstream>
 #include <algorithm>
 
+
+#include <iostream>
 namespace tinygemm{
 namespace mapkeycheck{
 
@@ -22,6 +24,7 @@ void check_map_keys(const std::map<std::string, ValType> & params, const std::ve
   }
   
   for (auto & x : params){
+    //std::cout << x.first << std::endl;
     auto blip = std::find(names.cbegin(), names.cend(), x.first);
     if (blip == names.cend()) {
       ss << "The parameter `" << x.first << "', which appears in the map, is not recognised in the list of prescribed names.\n";

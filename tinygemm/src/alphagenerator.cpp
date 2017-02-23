@@ -29,10 +29,10 @@ private:
 
 void set_usage(){
   
-  uses_a = (hp.normal_form || hp.aps.copy_type  == 1) ? false : true; 
-  uses_b = (hp.normal_form || hp.bps.copy_type  == 1) ? false : true;
+  uses_a = (hp.aps.copy_type == 1) ? false : true; 
+  uses_b = (hp.bps.copy_type == 1) ? false : true;
   uses_c = true;
-  uses_workspace = hp.aps.copy_type + hp.bps.copy_type + hp.normal_form == 0  ? false : true;
+  uses_workspace = (hp.aps.copy_type + hp.bps.copy_type) == 0  ? false : true;
   uses_alpha  = true;
   uses_beta = dp.main_does_beta_c_inc;
 
@@ -158,7 +158,7 @@ void append_final_write_element(std::stringstream & ss, unsigned atomic_incremen
   
   std::string alpha_scaled =  "alpha*rC[row/C_INTERWEAVE_STRIDE_A][col/C_INTERWEAVE_STRIDE_B]";
   
-  ss << "\nindex = STRIDE_PLL_M_C*(write_start_row + row) + STRIDE_PLL_N_C*(write_start_col + col);\n";
+  ss << "\nindex = STRIDE_PLL_M_C*(write_start_a + row) + STRIDE_PLL_N_C*(write_start_b + col);\n";
   /* beta string */
   ss << (with_beta_scaling == 0 ? "" : "c[index] *= beta;\n");
   if (with_alpha_increment != 0){
@@ -206,15 +206,15 @@ R"(
 /* catching the write cases */
 if (
 /* B overflow, but not A edge */
-((write_start_col + col >= MACRO_TILE_LENGTH_B*(N_GROUPS_B - 1)) && group_id_a  !=  (N_GROUPS_A - 1 )) ||
+((write_start_b + col >= MACRO_TILE_LENGTH_B*(N_GROUPS_B - 1)) && group_id_a  !=  (N_GROUPS_A - 1 )) ||
 /* A overflow, but not B edge */
-((write_start_row + row >= MACRO_TILE_LENGTH_A*(N_GROUPS_A - 1)) && group_id_b  !=  (N_GROUPS_B - 1 )) ||
+((write_start_a + row >= MACRO_TILE_LENGTH_A*(N_GROUPS_A - 1)) && group_id_b  !=  (N_GROUPS_B - 1 )) ||
 /* A edge and B edge and A overflow and B overflow */
 (
 group_id_a == (N_GROUPS_A - 1)   && 
 group_id_b == (N_GROUPS_B - 1)   && 
-write_start_col + col >= MACRO_TILE_LENGTH_B*(N_GROUPS_B - 1) && 
-write_start_row + row >= MACRO_TILE_LENGTH_A*(N_GROUPS_A - 1)
+write_start_b + col >= MACRO_TILE_LENGTH_B*(N_GROUPS_B - 1) && 
+write_start_a + row >= MACRO_TILE_LENGTH_A*(N_GROUPS_A - 1)
 )){
 )";
 
@@ -291,9 +291,9 @@ void append_load_into_LDS_string(char x, std::stringstream & ss, unsigned final_
     throw tinygemm_error("From get_load_ab_into_LDS_string > It is not possible for this to be both a `special_first_unroll' and a `final_unroll'. This is a logic error, broken alg, come and sort it out");
   }
   
-  if (hp.normal_form == 1 && (final_unroll != 0 || special_first_unroll != 0)){
-    throw tinygemm_error("normal form should not have final or special first unrolls, from alphagenerator");
-  }
+  //if (hp.normal_form == 1 && (final_unroll != 0 || special_first_unroll != 0)){
+    //throw tinygemm_error("normal form should not have final or special first unrolls, from alphagenerator");
+  //}
   
   std::stringstream ss_value_to_get;
   std::stringstream ss_comment;
@@ -543,6 +543,12 @@ unsigned k_plus_offset = __K__ + unroll_offset;
   }
 }
 
+
+void append_apply_macro_offset(char x, char X, std::stringstream & ss){
+  if (X == 'A') ss << "/* move to corner of the region required by the macro tile */\n";
+  ss << x << " += macro_tile_start_" << x << "*MACRO_STRIDE_PERP_K_" << X << ";\n";
+}
+
 void append_id_string_sym(std::stringstream & ss, char x){
 
   /* set upper - lower case versions */
@@ -567,15 +573,20 @@ void append_id_string_sym(std::stringstream & ss, char x){
   if (X == 'A') ss << "/* Define which part of the C macro-tile this thread will process (% / or / % ? doesn't seem to make much difference) */\n";
   ss << "unsigned macro_tile_start_" << x << " = group_id_" << x << "*MACRO_TILE_LENGTH_" << X << "; \n";
   
-  if (hp.normal_form == 0 && dp.main_use_edge_trick != 0){
-    if (X == 'A') ss << "/* tile on edge : pullling it in so no C overflow */\n";
+  /* applying macro offset before pulling in edge, as normal form already prepared */
+  if (hp.at(x).copy_type == 2) append_apply_macro_offset(x, X, ss);
+
+  if (dp.main_use_edge_trick != 0){
+    if (X == 'A') ss << "/* tile on edge : pulling it in so no C overflow */\n";
     ss << "if (group_id_" << x << " == N_GROUPS_" << X << " - 1){\n";
     ss << "macro_tile_start_" << x << " -= (MACRO_TILE_LENGTH_" << X << " - PRESHIFT_FINAL_TILE_" << X << ");\n";
     ss << "}\n";
   }
   
-  if (X == 'A') ss << "/* move to corner of the region required by the macro tile */\n";
-  ss << x << " += macro_tile_start_" << x << "*MACRO_STRIDE_PERP_K_" << X << ";\n";
+  if (hp.at(x).copy_type != 2) append_apply_macro_offset(x, X, ss);
+ 
+  ss << "const unsigned write_start_" << x << " = macro_tile_start_" << x << " + micro_id_" << x << "*" << get_c_work_item_next(X) << ";\n";
+ 
 
   if (dp.main_split_on_k != 0){
     if (X == 'A') ss <<  R"(/* a points to top left of region required, but this work group  */
@@ -721,9 +732,7 @@ R"(
   ss << "\n/* whether or not to shimmy the starting k, in an attempt to avoid cache line overuse for cases where lda/ldb are powers of 2 */\n";
   ss << "/* if 0, no shimmying. if 1, instead of starting at k = 0 workgroups start at some negative offset dependent on work group id */\n";
   ss << "/* in the same way as the final unroll populates LDS with zeros in k mod UNROLL != 0, the initial negative indices here populate with 0 */\n";
-  if (hp.normal_form == 0){
-    ss << "#define UNROLL_FOR_OFFSET " << hp.unroll_for_offset << "\n";
-  }
+  ss << "#define UNROLL_FOR_OFFSET " << hp.unroll_for_offset << "\n";
   
   ss << "/* How much a workgroup loads (global -> LDS) in the k-direction at each iteration of the outer-most loop */\n";
   ss << "#define UNROLL " << hp.unroll  << "\n";
@@ -819,8 +828,10 @@ R"(
   
   
   ss << "\n\n";
-  ss << "const unsigned write_start_row = macro_tile_start_a + micro_id_a*" << get_c_work_item_next('A') << ";\n";
-  ss << "const unsigned write_start_col = macro_tile_start_b + micro_id_b*" << get_c_work_item_next('B') << ";\n";  
+
+  //unsigned macro_tile_start_
+
+   
   ss << "unsigned index;\n";
   
   append_split_on_k_vardecl_write_string(ss);

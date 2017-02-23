@@ -11,24 +11,23 @@ namespace tinygemm{
 namespace hyperparams{
 
 
-class HyperParamList{
+class ParamList{
   
   public:
   
-    /* enumerating the hyper parameters */ 
+    /* enumerating parameters */ 
     std::map<std::string, std::string> map_shortkey_to_key;
     std::map<std::string, std::string> map_key_to_shortkey;
     std::vector<std::string> keys;
     std::vector<std::string> shortkeys;
+    std::string get_key_from_shortkey(const std::string & shortkey) const;
 
-    std::string get_key_from_shortkey(const std::string & shortkey);
-
-    HyperParamList();
+    ParamList(std::map<std::string, std::string> map_shortkey_to_key);
   
 };
 
-extern HyperParamList hpl;
-  
+extern ParamList nonchiral_pl;
+extern ParamList chiral_pl;
 
 class HyperParamsChiral{
   
@@ -66,11 +65,8 @@ public:
   HyperParamsChiral bps;
   
   const HyperParamsChiral & at(char x) const;
+  HyperParamsChiral & at(char x);  
     
-  //will go into HyperParamsChiral eventually
-  unsigned normal_form;
-  //unsigned pad;  
-
   unsigned unroll;  
   unsigned group_allocation;  
   unsigned unroll_pragma;
@@ -82,7 +78,8 @@ public:
   unsigned get_nwitems_h();
   unsigned get_nwitems_w();
   
-  HyperParams(const std::map<std::string, unsigned> &);
+  HyperParams(const std::map<char, std::map<std::string, unsigned> > & );
+  //HyperParams(const std::map<std::string, unsigned> &);
   
   /* take in hyper-parameter string and return a HyperParam object */
   HyperParams(const std::string & hyperstring);
@@ -92,8 +89,9 @@ public:
   bool operator == (const HyperParams & hpr);
   std::vector<HyperParams> get_one_aways(const tinygemm::TinyGemmGeometry & gg);
   std::vector<HyperParams> get_two_aways(const tinygemm::TinyGemmGeometry & gg);  
-  std::map<std::string, unsigned> get_params();
+  std::map<char, std::map<std::string, unsigned > > get_params();
   
+  void check_map_keys(const std::map<char, std::map<std::string, unsigned> > & params);
   std::string get_string() const;
   
   unsigned get_macro_tile_x_length(char x) const;

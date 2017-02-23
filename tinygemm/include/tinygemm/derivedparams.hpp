@@ -43,8 +43,6 @@ public:
   unsigned cw_target_ldx = uninitialised_unsigned; 
   unsigned cw_global_offset = uninitialised_unsigned;
   
-  ///* either original ldas, or those targetted in copy workspace */
-  //unsigned main_effective_ldx = uninitialised_unsigned;
 
 };
 
@@ -55,9 +53,8 @@ private:
   const hyperparams::HyperParams & hp;
   const tinygemm::TinyGemmGeometry & gg;
   
-  void reset_ga3_params();//const hyperparams::HyperParams & hp);
-  void reset_cw_params(char x);//(const tinygemm::TinyGemmGeometry & gg, const hyperparams::HyperParams & hp, char x);
-  void reset_nf_params();//(const tinygemm::TinyGemmGeometry & gg, const hyperparams::HyperParams & hp);
+  void reset_ga3_params();
+  void reset_cw_params(char x);
   
 public:
   
@@ -74,7 +71,7 @@ public:
   const ChiralDerivedParams & at(char x) const;
   
   /* does the minimum setting to confirm compatibitily. called by get_deriveability */
-  std::tuple<bool, std::string> set_fragile();//const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg);
+  std::tuple<bool, std::string> set_fragile();
   
   /* TODO : write descriptions */
   unsigned main_macro_tile_area = uninitialised_unsigned;

@@ -20,47 +20,40 @@ namespace tinygemm{
 namespace hyperparams{
 
 
-HyperParamList::HyperParamList() {
-
-  map_shortkey_to_key =  {
-
-    {"Y",  "macro_tile_height"}, 
-    {"X",  "macro_tile_width"},
-    {"y",  "micro_tile_height"},
-    {"x",  "micro_tile_width"},
-    {"U",  "unroll"},  
-  
-    {"PA",  "a_lds_pad_size"},
-    {"PB",  "b_lds_pad_size"},
-    {"GA",  "group_allocation"},
-    {"APLU",  "work_item_load_a_pll_to_unroll"},
-    {"BPLU",  "work_item_load_b_pll_to_unroll"},
-    {"PU",  "unroll_pragma"},
-  
-    {"LIW",  "load_to_lds_interwoven"}, //TODO : fix at 0
-    {"MIW",  "c_micro_tiles_interwoven"}, //TODO : fix at 1
-    {"ICE",  "n_work_items_per_c_elm"},
-    {"NAW",  "n_target_active_workgroups"},
-    {"UFO",  "unroll_for_offset"},
-    
-    {"ACW",  "a_copy_workspace"},
-    {"BCW",  "b_copy_workspace"},
-    {"NOF",  "normal_form"}
-    
-    
-  };
-
-  
+ParamList::ParamList(std::map<std::string, std::string> map_shortkey_to_key_): map_shortkey_to_key (map_shortkey_to_key_){
   for(auto const & v: map_shortkey_to_key){
     keys.push_back(v.second);
     shortkeys.push_back(v.first);
     map_key_to_shortkey[v.second] = v.first;
   }
-  
 }
 
-HyperParamList hpl;
+ParamList nonchiral_pl(
 
+  {
+  {"U", "unroll"}, 
+  {"GA", "group_allocation"}, 
+  {"PU", "unroll_pragma"}, 
+  {"ICE", "n_work_items_per_c_elm"}, 
+  {"NAW", "n_target_active_workgroups"},
+  {"UFO", "unroll_for_offset"}
+  }
+
+);
+
+ParamList chiral_pl(
+
+  {
+  {"MAC", "macro_tile_length"},  
+  {"MIC", "micro_tile_length"}, 
+  {"PAD", "lds_pad_size"}, 
+  {"PLU", "load_pll_to_unroll"}, 
+  {"LIW", "load_to_lds_interwoven"}, 
+  {"MIW", "c_micro_tiles_interwoven"}, 
+  {"CTY", "copy_type"}
+  }
+
+);
 
 
 std::string HyperParamsChiral::get_string() const{
@@ -100,34 +93,40 @@ std::string HyperParams::get_string() const {
 }
 
 
-std::string HyperParamList::get_key_from_shortkey(const std::string & shortkey){
-  if (hpl.map_shortkey_to_key.count(shortkey) == 0){
+std::string ParamList::get_key_from_shortkey(const std::string & shortkey) const{
+  if (map_shortkey_to_key.count(shortkey) == 0){
     std::stringstream ss;
     ss << "The shortkey `" << shortkey << "', does not appear as a key in map_shortkey_to_key. \n";
     throw tinygemm_error(ss.str());
   }
   
   else{
-    return hpl.map_shortkey_to_key.at(shortkey);
+    return map_shortkey_to_key.at(shortkey);
   }
 }
 
 
-/* take in hyper-parameter string and a map */
+void splitpop(const std::string & hyperstring, std::map<std::string, unsigned> & maptopop, const ParamList & pl){
+  std::string shortkey;
+  unsigned val;
+  auto frags = stringutil::split(hyperstring, "_");
+  for (auto & x : frags){
+    std::tie(shortkey, val) = stringutil::splitnumeric(x);
+    maptopop[pl.get_key_from_shortkey(shortkey)] = val;
+  }
+}
+
+/* take in hyper-parameter string and return a map */
 std::map<char, std::map<std::string, unsigned> > get_params_from_string(const std::string & hyperstring){
+
+  std::map<char, std::map<std::string, unsigned> > params = { {'A', {}}, {'B', {}}, {'C', {}} };
  
-  if (hyperstring[0] == 'Y'){
-    auto frags = stringutil::split(hyperstring, "_");
-  
-    std::map<std::string, unsigned> old_params;
-    std::string shortkey;
-    unsigned val;
-  
-    for (auto & x : frags){
-      std::tie(shortkey, val) = stringutil::splitnumeric(x);
-      old_params[hpl.get_key_from_shortkey(shortkey)] = val;
-    }
+ 
     
+  if (hyperstring[0] == 'Y'){
+    throw tinygemm_error("Old hyper string processing not enabled currently");
+    //std::map<std::string, unsigned> old_params;
+    //splitpop(hyperstring, old_params, old_pl);
     //TODO : map old_params to params.
 
   }
@@ -137,17 +136,14 @@ std::map<char, std::map<std::string, unsigned> > get_params_from_string(const st
     for (auto & frag : frags){
       if (frag[0] == 'A' || frag[0] == 'B'){
         char key = frag[0]; //bla bla bla
-        auto subfrags = stringutil::split(frag, "_");
-        
+        splitpop(frag.substr(2), params[key], chiral_pl);
       }
-      else{
         
+      else{
+        splitpop(frag, params['C'], nonchiral_pl);
       }
     }
   }
-    
-    
-
   
   return params;
 }
@@ -195,6 +191,10 @@ const HyperParamsChiral & HyperParams::at(char x)  const{
   else{
     throw tinygemm_error("unrecognised char looking for HyperParamsChiral");
   }
+}
+
+HyperParamsChiral & HyperParams::at(char x)  {
+  return const_cast<HyperParamsChiral &>(static_cast<const HyperParams &>(*this).at(x));
 }
 
 void HyperParamsChiral::checks() const{
@@ -253,26 +253,32 @@ void HyperParams::checks() const{
 //const std::map<std::string, unsigned> & params){
 
   //here.
-  //mapkeycheck::check_map_keys(params, hpl.keys, "HyperParams constructor, params against keys");
+  //
 
 
 HyperParams::HyperParams(const std::map<char, std::map<std::string, unsigned> > & params){
-){
 
-
-  TODO : some kind of check of paramms map.
+  check_map_keys(params);
+    
   
   for (char X : {'A', 'B'}){
-    at(X).macro_tile_length = params.at(X).at("macro_tile_height"); 
-    at(X).micro_tile_length = params.at(X).at("micro_tile_height");
+    //std::cout << "in constructor of HyperParams::HyperParams, with " << X << " ..." << std::flush;
+    
+    
+    at(X).macro_tile_length = params.at(X).at("macro_tile_length"); 
+    //std::cout << " ... macro_tile_height is fine ... " << std::flush;
+    
+    at(X).micro_tile_length = params.at(X).at("micro_tile_length");
     at(X).load_pll_to_unroll = params.at(X).at("load_pll_to_unroll");
     at(X).copy_type = params.at(X).at("copy_type");
     at(X).lds_pad_size = params.at(X).at("lds_pad_size");
     at(X).load_to_lds_interwoven = params.at(X).at("load_to_lds_interwoven");
     at(X).c_micro_tiles_interwoven = params.at(X).at("c_micro_tiles_interwoven");
+    
+    //std::cout << "done!" << std::endl;
   }
  
-  unroll = params.at('C').("unroll");
+  unroll = params.at('C').at("unroll");
   group_allocation = params.at('C').at("group_allocation");
   unroll_pragma = params.at('C').at("unroll_pragma");
   n_work_items_per_c_elm = params.at('C').at("n_work_items_per_c_elm");
@@ -285,12 +291,16 @@ HyperParams::HyperParams(const std::map<char, std::map<std::string, unsigned> > 
 
 HyperParams::HyperParams(const std::string & hyperstring):HyperParams(get_params_from_string(hyperstring)){}
   
-std::map<std::string, unsigned> HyperParams::get_params(){
+
+
+std::map<char, std::map<std::string, unsigned > > HyperParams::get_params(){
+  
   std::map<char, std::map<std::string, unsigned > > params = 
   
-  { 'A' : {},
-    'B' : {},
-    'C' : {}
+  {
+    {'A', {}},
+    {'B', {}},
+    {'C', {}}
   };
   
   for (char X : {'A', 'B'}){
@@ -303,19 +313,25 @@ std::map<std::string, unsigned> HyperParams::get_params(){
     params[X]["c_micro_tiles_interwoven"] = at(X).c_micro_tiles_interwoven;
   }
   
-  params['C']["unroll"] = at(X).unroll;
-  params['C']["group_allocation"] = at(X).group_allocation;
-  params['C']["unroll_pragma"] = at(X).unroll_pragma;
-  params['C']["n_work_items_per_c_elm"] = at(X).n_work_items_per_c_elm;
-  params['C']["n_target_active_workgroups"] = at(C).n_target_active_workgroups;
-  params['C']["unroll_for_offset"] = at(X).unroll_for_offset;
+  params['C']["unroll"] = unroll;
+  params['C']["group_allocation"] = group_allocation;
+  params['C']["unroll_pragma"] = unroll_pragma;
+  params['C']["n_work_items_per_c_elm"] = n_work_items_per_c_elm;
+  params['C']["n_target_active_workgroups"] = n_target_active_workgroups;
+  params['C']["unroll_for_offset"] = unroll_for_offset;
   
- 
-  TODO : the same check. 
-  //mapkeycheck::check_map_keys(params, hpl.keys, "HyperParams::get_params, params against keys");
   
+  check_map_keys(params);
+   
   return params;
 
+}
+
+void HyperParams::check_map_keys(const std::map<char, std::map<std::string, unsigned> > & params){
+  for (char X : {'A', 'B'}){
+    mapkeycheck::check_map_keys(params.at(X), chiral_pl.keys, std::string("HyperParams constructor, params against keys, ") + X);
+  }
+  mapkeycheck::check_map_keys(params.at('C'), nonchiral_pl.keys, std::string("HyperParams constructor, params against keys, C"));
 }
 
 
@@ -1006,7 +1022,6 @@ HyperParams::kernel_cache = {                             /* colMaj tA    tB    
   std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2565, 2567, 2573, 2560, 64, 2560, 0, 'f'},  "Y80_X64_y5_x4_U16_PA1_PB1_GA1_APLU0_BPLU1_PU1_LIW0_MIW1_ICE4_NAW64_UFO0_ACW0_BCW0_NOF0"), 
   std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, false, false, 5129, 2055, 5137, 5124, 9124, 2048, 0, 'f'},  "Y128_X128_y8_x8_U8_PA1_PB1_GA1_APLU0_BPLU1_PU0_LIW0_MIW1_ICE1_NAW64_UFO0_ACW0_BCW0_NOF0"), 
   
-  
   //some back conv problems : 
   std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1000, 1000, 16, 16, 16, 1000, 0, 'f'},    "Y8_X8_y1_x1_U40_PA1_PB1_GA1_APLU0_BPLU0_PU1_LIW0_MIW1_ICE7_NAW64_UFO0_ACW0_BCW0_NOF0"), 
   std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 5760, 5760, 144, 144, 32, 5760, 0, 'f'},    "Y8_X8_y1_x1_U32_PA1_PB1_GA1_APLU1_BPLU1_PU0_LIW0_MIW1_ICE7_NAW64_UFO0_ACW0_BCW0_NOF0"), 
@@ -1043,7 +1058,5 @@ HyperParams::kernel_cache = {                             /* colMaj tA    tB    
  
 }
 } // namespace
-
-
 
 

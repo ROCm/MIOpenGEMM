@@ -41,10 +41,6 @@ ChiralDerivedParams & DerivedParams::at(char x) {
 
 
 
-//void DerivedParams::reset_nf_params(){//const tinygemm::TinyGemmGeometry & gg, const hyperparams::HyperParams & hp){
-  //nf_k_normal_form = hp.unroll*(gg.k / hp.unroll + ((gg.k % hp.unroll) != 0));
-//}
-
 
 unsigned get_copy_pad(char x){
   if (x == 'a'){
@@ -57,6 +53,9 @@ unsigned get_copy_pad(char x){
   
 
 void DerivedParams::reset_cw_params(char x){
+  
+  std::cout << "whaaaaaaaaaaaaaaattttttttttttttttt ????????????" << std::endl;
+  std::abort();
   
   if (x == 'b' && hp.aps.copy_type == 1 && adps.cw_target_ldx == uninitialised_unsigned){
     throw tinygemm_error("make sure reset_acw1_params is called before reset_bcw1_params, we need that adps.cw_target_ldx be set here in derivedparams reset of bcw1");
@@ -187,10 +186,6 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams & hp_, const tinygem
   
   pragma_unroll_string = hp.unroll_pragma == 1 ?  "#pragma unroll\n" : "" ;
   
-  if (hp.normal_form != 0 && hp.normal_form != 1){
-    throw tinygemm_error("hp.normal_form is not set yet, reorder needed in derivedparams");
-  }
-  
   effective_k_varies_string = hp.unroll_for_offset == 0 ? "__K__" : "k_plus_offset";
   t_float = gg.derived.float_size_bits == 32 ? "float" : "double";
   
@@ -224,7 +219,7 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams & hp_, const tinygem
   
   
   /* these guys are hyper params, with a check if not optional ? */
-  main_use_edge_trick = 1;
+  main_use_edge_trick = 0;
   main_final_fractional_unroll = (hp.unroll_for_offset == 1 || gg.k%hp.unroll != 0) ? 1 : 0;
 
 }
@@ -249,7 +244,8 @@ unsigned DerivedParams::get_stride(char x, bool pll_k, bool is_macro) const{
   if (x == 'A') x = 'a';  
   if (x == 'B') x = 'b'; 
 
-  if (hp.normal_form == 0){
+  if (hp.at(x).copy_type == 2){
+    //TODO : 
     unsigned effective_ldx = hp.at(x).copy_type == 0  ? gg.get_ld(x) : at(x).cw_target_ldx;
     return gg.coal_is_pll_k(x) == pll_k ? 1 : effective_ldx; 
   }
