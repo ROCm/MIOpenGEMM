@@ -14,23 +14,28 @@ chiral_keys = ["MAC", "MIC", "PAD", "PLU", "LIW", "MIW", "CTY"]
 
 for l in lines:
   if "_UFO" in l:
-    if "ice" in l:
-      pass
+    if "blymenoway" in l:
+      print l
     else:
       snip = l.split("\"Y")[-1]
       snip = snip.split("_NOF0")[0]
       snip = "Y" + snip + "_NOF0"
       
+      
+      
       oldparms = snip.split("_")
       d_oldparms = {}
+      
+      bingo = False
+      
       for x in oldparms:
-        #if re.search("\d", x):
-          ##print x, " yip"
-        #else:
-          ##print x, " nope"
-        start = re.search("\d", x).start()
-        d_oldparms[x[0:start]] = x[start::]
-      #print d_oldparms
+        start = re.search("\d", x)
+        if start:
+          start = start.start()
+          d_oldparms[x[0:start]] = x[start::]
+        else:
+          bingo = True
+          d_oldparms["ICE"] = "\" +  ice + \""
       
   
       vals = {'A':{}, 'B':{}, 'C':{}}
@@ -65,16 +70,24 @@ for l in lines:
         new_string += "_"
         new_string += k 
         new_string += vals['C'][k]
-       
-      print new_string
+      
+      
+      l = l.replace(snip, new_string)
+      newlines.append(l)
+      #print l
+      #print snip
+      #print new_string
           
-      #print "\n"
-      #print d_oldparms
-      #print vals
     
   else:
     newlines.append(l)
 
+
+filly = open("hyperparams_new.cpp", "w")
+for l in newlines:
+  filly.write(l)
+filly.close()
+  
 
   #Y32_X64_y2_x4_U32_PA1_PB1_GA2_APLU0_BPLU1_PU1_LIW0_MIW1_ICE24_NAW64_UFO0_ACW0_BCW0_NOF0
   #to

@@ -78,7 +78,7 @@ public:
   {
     consistencychecks::check_ldx_mnk_consistent(gg);
     if (gg.derived.float_size_bytes != sizeof(TFloat)){
-      throw tinygemm_error("float sizes don't agree in derivedtinygemm.cpp");
+      throw tinygemm_error("float sizes don't agree in devtinygemm.cpp");
     }
     sizingup::check_sizes_ok_for_unsigned(gg, toff); 
     c_copy.resize(get_c_memsize()/sizeof(TFloat));

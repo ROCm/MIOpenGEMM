@@ -291,10 +291,6 @@ void append_load_into_LDS_string(char x, std::stringstream & ss, unsigned final_
     throw tinygemm_error("From get_load_ab_into_LDS_string > It is not possible for this to be both a `special_first_unroll' and a `final_unroll'. This is a logic error, broken alg, come and sort it out");
   }
   
-  //if (hp.normal_form == 1 && (final_unroll != 0 || special_first_unroll != 0)){
-    //throw tinygemm_error("normal form should not have final or special first unrolls, from alphagenerator");
-  //}
-  
   std::stringstream ss_value_to_get;
   std::stringstream ss_comment;
   
@@ -665,6 +661,15 @@ void add_predefine_chiral(char x, std::stringstream & ss){
   ss << "#define MICRO_" << x << "_TILE_PERP_UNROLL " << dp.at(x).main_micro_tile_perp_unroll << "\n";
   defcom("MACRO_A_TILE_PLL_UNROLL / MICRO_A_TILE_PLL_UNROLL");  
   ss << "#define N_MICRO_" << x << "_TILES_PLL_UNROLL " << dp.at(x).main_n_micro_tiles_pll_unroll << " \n";
+  
+  
+  ss << "\n/* Whether the load tiles are interwoven (ala Cobalt, (1)) or if the load tiles are truly contiguous tiles (0) */\n";
+  ss << "#define LOAD_TO_LDS_INTERWOVEN_" << x << " " << hp.at(x).load_to_lds_interwoven << "\n";
+  ss << "/* Whether micro tile being processed by a compute item is interwoven with other micro tiles (ala Cobalt, (1)) or if the micro tiles are contiguous in C */\n";
+  ss << "#define C_MICRO_TILES_INTERWOVEN_" << x << " " << hp.at(x).c_micro_tiles_interwoven << "\n";
+
+
+  
   if (x == 'A') ss << "/* strides parallel to k (unroll) in A. MACRO_STRIDE_ is between unroll tiles, STRIDE_ is within unroll tiles  */\n"; 
   for (std::string orth :  {"PLL", "PERP"}){
     bool pll_k = ("PLL" == orth);
@@ -752,19 +757,8 @@ R"(
   append_group_allocation_defn_string(ss);
   
   
-  ss << "\n/* Whether the load tiles are interwoven (ala Cobalt, (1)) or if the load tiles are truly contiguous tiles of A/B (0) */\n";
-  ss << "/* Included here for user, in practice it has no direct effect on this kernel, as the relevent implementation has been done in make_kernel.py */\n";
-  
-  //for now TODO
-  ss << "#define LOAD_TO_LDS_INTERWOVEN " << hp.at('A').load_to_lds_interwoven << "\n";
-    
 
-  
 
-  ss << "/* Whether the micro tile being processed by a compute item is interwoven with other micro tiles (ala Cobalt, (1)) or if the micro tiles are contiguous in C */\n";
-  ss << "/* Included here for user, in practice it has no direct effect on this kernel, as the relevent implementation has been done in make_kernel.py */\n";
-  //for now TODO
-  ss << "#define C_MICRO_TILES_INTERWOVEN " << hp.at('A').c_micro_tiles_interwoven << "\n";
   ss << "/* Whether to use the unroll pragma to encourage the compiler to unroll certain loops */\n";
   ss << "/* Included here for user, in practice it has no direct effect on this kernel, as the relevent implementation has been done in make_kernel.py */\n";
   ss << "#define PRAGMA_UNROLL_FORLOOPS " << hp.unroll_pragma << "\n";
@@ -829,9 +823,6 @@ R"(
   
   ss << "\n\n";
 
-  //unsigned macro_tile_start_
-
-   
   ss << "unsigned index;\n";
   
   append_split_on_k_vardecl_write_string(ss);

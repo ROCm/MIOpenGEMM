@@ -39,6 +39,9 @@ void TinyGemmGeometryDerived::reset(char floattype){
   else if (floattype == 'd'){
     float_size_bytes = sizeof(double);
   }
+  else{
+    throw tinygemm_error("what is this floattype : " + floattype + std::string(" ?? in tinygemmgeometry"));
+  }
   float_size_bits = 8*float_size_bytes;
 }
 

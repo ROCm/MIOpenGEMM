@@ -219,7 +219,7 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams & hp_, const tinygem
   
   
   /* these guys are hyper params, with a check if not optional ? */
-  main_use_edge_trick = 0;
+  main_use_edge_trick = 1;
   main_final_fractional_unroll = (hp.unroll_for_offset == 1 || gg.k%hp.unroll != 0) ? 1 : 0;
 
 }
@@ -244,7 +244,7 @@ unsigned DerivedParams::get_stride(char x, bool pll_k, bool is_macro) const{
   if (x == 'A') x = 'a';  
   if (x == 'B') x = 'b'; 
 
-  if (hp.at(x).copy_type == 2){
+  if (hp.at(x).copy_type != 2){
     //TODO : 
     unsigned effective_ldx = hp.at(x).copy_type == 0  ? gg.get_ld(x) : at(x).cw_target_ldx;
     return gg.coal_is_pll_k(x) == pll_k ? 1 : effective_ldx; 

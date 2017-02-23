@@ -23,28 +23,31 @@ tinygemm::hyperparams::HyperParams get_hp(std::string hyperstring = ""){
   if (hyperstring.compare("") == 0){
     //hyperstring = "Y128_X96_y8_x6_U8_PA1_PB1_GA1_APLU0_BPLU1_PU1_LIW0_MIW0_ICE2_NAW64_UFO0_ACW0_BCW0_NOF0";
     
-    hyperstring = "A_MAC128_MIC8_PAD1_PLU1_LIW0_MIW0_CTY0__B_MAC128_MIC8_PAD1_PLU1_LIW0_MIW0_CTY0__U8_GA1_PU0_ICE1_NAW64_UFO0";
+    //hyperstring = "A_MAC96_MIC6_PAD1_PLU1_LIW1_MIW0_CTY0__B_MAC128_MIC8_PAD1_PLU0_LIW0_MIW1_CTY0__U8_GA1_PU0_ICE3_NAW64_UFO1";
 
+    hyperstring = "A_MAC128_MIC8_PAD1_PLU0_LIW0_MIW1_CTY0__B_MAC96_MIC6_PAD1_PLU1_LIW1_MIW0_CTY0__U8_GA1_PU0_ICE1_NAW64_UFO0";
+    
     //hyperstring = "Y128_X64_y8_x4_U8_PA1_PB1_GA1_APLU1_BPLU1_PU1_LIW0_MIW0_ICE3_NAW64_UFO1_ACW0_BCW0_NOF0";
   }
   return hyperstring;
 }
 
+template <typename TFloat>
 tinygemm::TinyGemmGeometry get_geometry(){
 
   
   bool isColMajor = true;
   bool tA = true;
-  bool tB = false;
-  bool tC = false;
-  unsigned m = 128;//0; // 96*51;//4096;
-  unsigned n = 128;//0; // 96*51;//5025;
-  unsigned k = 8;//9; // 96*51;//4096;
-  unsigned lda = ( tA == isColMajor ? k : m ) + 0;//13;
-  unsigned ldb = ( tB == isColMajor ? n : k ) + 0;//27;
-  unsigned ldc = ( tC == isColMajor ? n : m ) + 0;//13;//11;
+  bool tB = true;
+  bool tC = true;
+  unsigned m = 301;//0; // 96*51;//4096;
+  unsigned n = 233;//0; // 96*51;//5025;
+  unsigned k = 127;//9; // 96*51;//4096;
+  unsigned lda = ( tA == isColMajor ? k : m ) + 13;
+  unsigned ldb = ( tB == isColMajor ? n : k ) + 27;
+  unsigned ldc = ( tC == isColMajor ? n : m ) + 11;//11;
   unsigned workspace_size =  1;//150386109 ;
-  char floattype = 'f';
+  char floattype = sizeof(TFloat) == sizeof(double) ? 'd' : 'f';
 
   return { isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype };
     
@@ -52,25 +55,26 @@ tinygemm::TinyGemmGeometry get_geometry(){
 
 tinygemm::TinyGemmOffsets get_offsets(){
 
-  unsigned a_offset = 0;//51;
-  unsigned b_offset = 0;//71;
-  unsigned c_offset = 0;//91;
-  unsigned workspace_offset = 0;//13;
+  unsigned a_offset = 51;
+  unsigned b_offset = 71;
+  unsigned c_offset = 91;
+  unsigned workspace_offset = 13;
   
-  unsigned tail_off_a = 0;//12345;
-  unsigned tail_off_b = 0;//12345;
-  unsigned tail_off_c = 0;//12345;
+  unsigned tail_off_a = 123;
+  unsigned tail_off_b = 97;
+  unsigned tail_off_c = 67;
   
   return {a_offset, b_offset, c_offset, workspace_offset, tail_off_a, tail_off_b, tail_off_c};
 
 }
 
 
+template <typename TFloat>
 void print_kernel(){
 
   std::string kernel_string;
   auto hp = get_hp();
-  auto gg = get_geometry();
+  auto gg = get_geometry<TFloat>();
   
   auto bundle = tinygemm::kerngen::get_bundle(hp, gg);
   
@@ -99,7 +103,7 @@ int main(){
 
   bool test_print = true;
   bool test_benchgemm = false;//true;
-  bool test_find = false;
+  bool test_find = true;
   bool test_accuracy = true;
   bool test_default = false;
   
@@ -107,7 +111,7 @@ int main(){
   srand(time(NULL));
   tinygemm::hyperparams::HyperParams hp = get_hp();
   
-  tinygemm::TinyGemmGeometry gg = get_geometry();
+  tinygemm::TinyGemmGeometry gg = get_geometry<tfloat>();
   tinygemm::TinyGemmOffsets toff = get_offsets();
 
 
@@ -122,7 +126,7 @@ int main(){
   const tfloat * c_true_bla = nullptr; 
   
   if (test_print){
-    print_kernel();
+    print_kernel<tfloat>();
   }
   
   if (test_accuracy){
@@ -139,7 +143,7 @@ int main(){
   }
   
   if (test_default){
-    auto bla = tinygemm::get_default(false, get_geometry(), true, "");
+    auto bla = tinygemm::get_default(false, get_geometry<tfloat>(), true, "");
     for (auto & x : bla.v_tgks){
       std::cout << x.kernstr << std::endl;
     }
