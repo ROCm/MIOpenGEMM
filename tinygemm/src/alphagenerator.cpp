@@ -270,6 +270,7 @@ void append_load_ab_into_LDS_string(std::stringstream & ss, unsigned final_unrol
   append_load_into_LDS_string('a', ss, final_unroll, special_first_unroll);
   append_load_into_LDS_string('b', ss, final_unroll, special_first_unroll);  
 
+
   ss << 
 R"(
 /* make sure all loads from LDS memory have completed */
@@ -322,10 +323,11 @@ void append_load_into_LDS_string(char x, std::stringstream & ss, unsigned final_
   <<  "}\n" 
   <<  "}\n";
 
-  ss << "\n" << "l" << X << " = local" << X << " + micro_id_" << x << "*"  << get_c_work_item_next(X) << ";\n";
+  
   
   if (final_unroll == 0) ss << x << " += " << "STRIDE_PLL_K_" << X << "*" << n_jumps_string << ";\n"; 
   
+  ss << "\n";
 }
 
     
@@ -356,6 +358,15 @@ void append_relocate_load_math_string(std::stringstream & ss, unsigned final_unr
   }
 
   append_load_ab_into_LDS_string(ss, final_unroll, special_first_unroll);
+  
+  ss << "\n";
+  for (char X : {'A', 'B'}){
+    char x = (X == 'A') ? 'a' : 'b';
+    ss << "\n" << "l" << X << " = local" << X << " + micro_id_" << x << "*"  << get_c_work_item_next(X) << ";";
+  }
+  
+  ss << "\n";
+  
   append_math_section(ss, final_unroll);
   ss << 
 R"(
@@ -540,10 +551,6 @@ unsigned k_plus_offset = __K__ + unroll_offset;
 }
 
 
-void append_apply_macro_offset(char x, char X, std::stringstream & ss){
-  if (X == 'A') ss << "/* move to corner of the region required by the macro tile */\n";
-  ss << x << " += macro_tile_start_" << x << "*MACRO_STRIDE_PERP_K_" << X << ";\n";
-}
 
 void append_id_string_sym(std::stringstream & ss, char x){
 
@@ -553,37 +560,59 @@ void append_id_string_sym(std::stringstream & ss, char x){
   x = (x == 'B') ? 'b' : ((x == 'A') ? 'a' : x);
 
   ss << "\n";  
+  
+  if (X == 'A') ss << "/* LDS memory */\n";
+  ss << "__local TFLOAT local" << X << "[N_ELEMENTS_IN_PADDED_" << X << "_UNROLL];\n";
+  if (X == 'A') ss << "/* jumping pointer to locate the LDS to load into register memory */\n";
+  ss << "__local const TFLOAT * l" << X << ";\n";
+  if (X == 'A') ss << "/* register memory */ \n";
+  ss << "TFLOAT r" << X << "[MICRO_TILE_LENGTH_" << X << "];\n";
+  if (X == 'A') ss << "/* Define which part of the C macro-tile this thread will process (% / or / % ? doesn't seem to make much difference) */\n";
+  ss << "unsigned write_macro_tile_start_" << x << " = group_id_" << x << "*MACRO_TILE_LENGTH_" << X << "; \n";
+  if (dp.main_use_edge_trick != 0){
+    if (X == 'A') ss << "/* tile on edge : pulling it in so no C overflow */\n";
+    ss << "if (group_id_" << x << " == N_GROUPS_" << X << " - 1){\n";
+    ss << "write_macro_tile_start_" << x << " -= (MACRO_TILE_LENGTH_" << X << " - PRESHIFT_FINAL_TILE_" << X << ");\n";
+    ss << "}\n";
+  }
+  ss << "const unsigned write_start_" << x << " = write_macro_tile_start_" << x << " + micro_id_" << x << "*" << get_c_work_item_next(X) << ";\n";
+ 
+  ss << "\n\n\n"; 
+  
+  
+  
   if (hp.at(x).copy_type == 1){
     if (X == 'A') ss << "/* from workspace */\n";
     ss << "const TFLOAT * restrict " << x << " = workspace + workspace_offset + GLOBAL_OFFSET_" << X << ";\n";
   }
-  
+
+  else if (hp.at(x).copy_type == 2){
+    throw tinygemm_error("Currently, copy type == 2 is not permitted");
+  }
+    
   else{
     ss << x << " += " << x << "_offset;\n";
   }
 
-
   if (X == 'A') ss << "/* Define what of A this thread will load from unroll tile in global to LDS (% / or / % ? looks like no difference ) */\n";
   ss << "const unsigned pll_unroll_" << x << "_load_id = local_id % N_MICRO_" << X << "_TILES_PLL_UNROLL;\n";
   ss << "const unsigned perp_unroll_" << x << "_load_id = local_id / N_MICRO_" << X << "_TILES_PLL_UNROLL;\n";
-  if (X == 'A') ss << "/* Define which part of the C macro-tile this thread will process (% / or / % ? doesn't seem to make much difference) */\n";
-  ss << "unsigned macro_tile_start_" << x << " = group_id_" << x << "*MACRO_TILE_LENGTH_" << X << "; \n";
-  
-  /* applying macro offset before pulling in edge, as normal form already prepared */
-  if (hp.at(x).copy_type == 2) append_apply_macro_offset(x, X, ss);
 
-  if (dp.main_use_edge_trick != 0){
-    if (X == 'A') ss << "/* tile on edge : pulling it in so no C overflow */\n";
+
+  if (X == 'A') ss << "/* Define which part of A this thread will read from process (% / or / % ? doesn't seem to make much difference) */\n";
+  ss << "unsigned read_macro_tile_start_" << x << " = group_id_" << x << "*MACRO_TILE_LENGTH_" << X << "; \n";  
+  if (dp.main_use_edge_trick != 0 && hp.at(x).copy_type != 2 ) {
+    if (X == 'A') ss << "/* tile on edge and A is not normal form: pulling in read zone so no C overflow */\n";
     ss << "if (group_id_" << x << " == N_GROUPS_" << X << " - 1){\n";
-    ss << "macro_tile_start_" << x << " -= (MACRO_TILE_LENGTH_" << X << " - PRESHIFT_FINAL_TILE_" << X << ");\n";
+    ss << "read_macro_tile_start_" << x << " -= (MACRO_TILE_LENGTH_" << X << " - PRESHIFT_FINAL_TILE_" << X << ");\n";
     ss << "}\n";
   }
   
-  if (hp.at(x).copy_type != 2) append_apply_macro_offset(x, X, ss);
+   
+  if (X == 'A') ss << "/* move to corner of the region required by the macro tile */\n";
+  ss << x << " += read_macro_tile_start_" << x << "*MACRO_STRIDE_PERP_K_" << X << ";\n";
+  
  
-  ss << "const unsigned write_start_" << x << " = macro_tile_start_" << x << " + micro_id_" << x << "*" << get_c_work_item_next(X) << ";\n";
- 
-
   if (dp.main_split_on_k != 0){
     if (X == 'A') ss <<  R"(/* a points to top left of region required, but this work group  */
 /* might not process the whole of a. So turn 90 and move to the start for this wg */
@@ -607,15 +636,7 @@ void append_id_string_sym(std::stringstream & ss, char x){
   ss << "const unsigned " << x << "_offset_perp_unroll = " << str_n_perp <<  " perp_unroll_" << x <<"_load_id;\n";
   ss << x << " += " << "STRIDE_PLL_K_" << X << " * " << x << "_offset_pll_unroll;\n";
   ss << x << " += " << "STRIDE_PERP_K_" << X << " * " << x << "_offset_perp_unroll;\n";
-  if (X == 'A') ss << "/* LDS memory */\n";
-  ss << "__local TFLOAT local" << X << "[N_ELEMENTS_IN_PADDED_" << X << "_UNROLL];\n";
 
-
-  if (X == 'A') ss << "/* jumping pointer to locate the LDS to load into register memory */\n";
-  ss << "__local const TFLOAT * l" << X << ";\n";
-
-  if (X == 'A') ss << "/* register memory */ \n";
-  ss << "TFLOAT r" << X << "[MICRO_TILE_LENGTH_" << X << "];\n";
 
   ss << "\n";
   
@@ -659,13 +680,11 @@ void add_predefine_chiral(char x, std::stringstream & ss){
   defcom("MICRO_A_TILE_PLL_UNROLL * MICRO_A_TILE_PERP_UNROLL = N_ELEMENTS_OF_A_TO_LOAD_PER_WORKITEM");  
   ss << "#define MICRO_" << x << "_TILE_PLL_UNROLL " << dp.at(x).main_micro_tile_pll_unroll << " \n";
   ss << "#define MICRO_" << x << "_TILE_PERP_UNROLL " << dp.at(x).main_micro_tile_perp_unroll << "\n";
-  defcom("MACRO_A_TILE_PLL_UNROLL / MICRO_A_TILE_PLL_UNROLL");  
+  defcom("MACRO_TILE_LENGTH_A / MICRO_A_TILE_PLL_UNROLL");  
   ss << "#define N_MICRO_" << x << "_TILES_PLL_UNROLL " << dp.at(x).main_n_micro_tiles_pll_unroll << " \n";
-  
-  
-  ss << "\n/* Whether the load tiles are interwoven (ala Cobalt, (1)) or if the load tiles are truly contiguous tiles (0) */\n";
+  if (x == 'A') ss << "/* Whether the load tiles are interwoven (ala Cobalt, (1)) or if the load tiles are truly contiguous tiles (0) */\n";
   ss << "#define LOAD_TO_LDS_INTERWOVEN_" << x << " " << hp.at(x).load_to_lds_interwoven << "\n";
-  ss << "/* Whether micro tile being processed by a compute item is interwoven with other micro tiles (ala Cobalt, (1)) or if the micro tiles are contiguous in C */\n";
+  if (x == 'A') ss << "/* Whether micro tile being processed by a compute item is interwoven with other micro tiles (ala Cobalt, (1)) or if the micro tiles are contiguous in C */\n";
   ss << "#define C_MICRO_TILES_INTERWOVEN_" << x << " " << hp.at(x).c_micro_tiles_interwoven << "\n";
 
 
@@ -721,6 +740,8 @@ KernelString get_kernelstring(){
   
   ss << 
 R"(
+/* TODO : I started working on half threads load A to LDS, others B to LDS, but realised it'd only work in unusual cirmumstances */
+/* (strides same, or tiles parallel to contiguous), and so put it on hold. However, with normal form matrices, it should work in all situations.  */
 /* TODO : remove final barrier, not nec. Check performance is not mysteriously hit! */
 /* TODO : beta = 1 optimisation */
 /* TODO : investigate mad. When should one use this instead of standard overloads, += and *. see tensile branch. 

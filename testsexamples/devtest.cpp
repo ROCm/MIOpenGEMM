@@ -21,13 +21,8 @@
 tinygemm::hyperparams::HyperParams get_hp(std::string hyperstring = ""){
 
   if (hyperstring.compare("") == 0){
-    //hyperstring = "Y128_X96_y8_x6_U8_PA1_PB1_GA1_APLU0_BPLU1_PU1_LIW0_MIW0_ICE2_NAW64_UFO0_ACW0_BCW0_NOF0";
-    
-    //hyperstring = "A_MAC96_MIC6_PAD1_PLU1_LIW1_MIW0_CTY0__B_MAC128_MIC8_PAD1_PLU0_LIW0_MIW1_CTY0__U8_GA1_PU0_ICE3_NAW64_UFO1";
-
-    hyperstring = "A_MAC128_MIC8_PAD1_PLU0_LIW0_MIW1_CTY0__B_MAC96_MIC6_PAD1_PLU1_LIW1_MIW0_CTY0__U8_GA1_PU0_ICE1_NAW64_UFO0";
-    
-    //hyperstring = "Y128_X64_y8_x4_U8_PA1_PB1_GA1_APLU1_BPLU1_PU1_LIW0_MIW0_ICE3_NAW64_UFO1_ACW0_BCW0_NOF0";
+    //hyperstring = "A_MAC128_MIC8_PAD1_PLU0_LIW0_MIW1_CTY0__B_MAC128_MIC8_PAD1_PLU0_LIW0_MIW0_CTY0__U8_GA1_PU0_ICE1_NAW64_UFO0";
+    hyperstring = "A_MAC96_MIC6_PAD1_PLU1_LIW0_MIW1_CTY0__B_MAC96_MIC6_PAD1_PLU1_LIW0_MIW0_CTY0__U16_GA1_PU0_ICE2_NAW64_UFO0";
   }
   return hyperstring;
 }
@@ -37,15 +32,15 @@ tinygemm::TinyGemmGeometry get_geometry(){
 
   
   bool isColMajor = true;
-  bool tA = true;
+  bool tA = false;
   bool tB = true;
-  bool tC = true;
-  unsigned m = 301;//0; // 96*51;//4096;
-  unsigned n = 233;//0; // 96*51;//5025;
-  unsigned k = 127;//9; // 96*51;//4096;
-  unsigned lda = ( tA == isColMajor ? k : m ) + 13;
-  unsigned ldb = ( tB == isColMajor ? n : k ) + 27;
-  unsigned ldc = ( tC == isColMajor ? n : m ) + 11;//11;
+  bool tC = false;
+  unsigned m = 961;      
+  unsigned n = 961;      
+  unsigned k = 161;                
+  unsigned lda = ( tA == isColMajor ? k : m ) + 3;//13;
+  unsigned ldb = ( tB == isColMajor ? n : k ) + 9;//27;
+  unsigned ldc = ( tC == isColMajor ? n : m ) + 0;//11;//11;
   unsigned workspace_size =  1;//150386109 ;
   char floattype = sizeof(TFloat) == sizeof(double) ? 'd' : 'f';
 
@@ -103,7 +98,7 @@ int main(){
 
   bool test_print = true;
   bool test_benchgemm = false;//true;
-  bool test_find = true;
+  bool test_find = false;
   bool test_accuracy = true;
   bool test_default = false;
   
@@ -134,7 +129,7 @@ int main(){
   }
 
   if (test_benchgemm){
-    tinygemm::dev::benchgemm({hp}, 5, gg, toff, v_a.data(), v_b.data(), v_c.data(), true, "");
+    tinygemm::dev::benchgemm({hp}, 8, gg, toff, v_a.data(), v_b.data(), v_c.data(), true, "");
   }
   
   if (test_find){

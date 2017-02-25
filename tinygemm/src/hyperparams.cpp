@@ -124,18 +124,14 @@ std::map<char, std::map<std::string, unsigned> > get_params_from_string(const st
  
     
   if (hyperstring[0] == 'Y'){
-    throw tinygemm_error("Old hyper string processing not enabled currently");
-    //std::map<std::string, unsigned> old_params;
-    //splitpop(hyperstring, old_params, old_pl);
-    //TODO : map old_params to params.
-
+    throw tinygemm_error("Old hyper string processing not enabled currently, please convert to new format manually, or see dev/qqc");
   }
   
   else{
     auto frags = stringutil::split(hyperstring, "__");
     for (auto & frag : frags){
       if (frag[0] == 'A' || frag[0] == 'B'){
-        char key = frag[0]; //bla bla bla
+        char key = frag[0];
         splitpop(frag.substr(2), params[key], chiral_pl);
       }
         
@@ -152,14 +148,12 @@ std::map<char, std::map<std::string, unsigned> > get_params_from_string(const st
 
 void bool_check(const std::string & key, unsigned v) {
   if (v != 0 && v != 1){
-    // "' (" + hpl.map_key_to_shortkey.at(key) + ")"
     throw tinygemm::tinygemm_error("`"+ key + " should be 0/1, not " + std::to_string(v) + ".");
   }
 }
 
 void positive_check(const std::string & key, unsigned v) {
   if (v == 0){
-    //' (" + hpl.map_key_to_shortkey.at(key) + ")
     throw tinygemm::tinygemm_error("`" + key + " should be strictly positive.");
   }
 }
@@ -167,7 +161,6 @@ void positive_check(const std::string & key, unsigned v) {
 void mod_check(const std::string & key1, unsigned v1, const std::string & key2, unsigned v2) {
   positive_check(key1, v1);
   positive_check(key2, v2);
-  //    " (" + hpl.map_key_to_shortkey.at(key1) + " % " + hpl.map_key_to_shortkey.at(key2) + ") " +
   if ((v1 % v2) != 0){
     throw tinygemm::tinygemm_error(
     key1 + " % " + key2 +  
@@ -214,47 +207,15 @@ void HyperParams::checks() const{
 
   aps.checks();
   bps.checks();
-
   bool_check("unroll_pragma", unroll_pragma);
   bool_check("unroll_for_offset", unroll_for_offset);
   positive_check("unroll", unroll);
   positive_check("n_target_active_workgroups", n_target_active_workgroups);
   positive_check("n_work_items_per_c_elm", n_work_items_per_c_elm);
-
-  
   ga_check();
   
-  //if ((normal_form == 1) && ( aps.copy_type == 1 || bps.copy_type == 1)){
-    //throw tinygemm_error("normal form = 1, so (a/b)_copy_workspace should be 0. throwing from checks in hyperparams");
-  //}
 }
     
-
-
-
-
-  
-  //bps.macro_tile_length = params.at("macro_tile_width");
-  //bps.micro_tile_length = params.at("micro_tile_width");
-  //bps.load_pll_to_unroll = params.at("work_item_load_b_pll_to_unroll");  
-  //bps.copy_type = params.at("b_copy_workspace");
-  //bps.lds_pad_size = params.at("b_lds_pad_size");
-  ////for now TODO
-  //bps.load_to_lds_interwoven = params.at("load_to_lds_interwoven");
-  //bps.c_micro_tiles_interwoven = params.at("c_micro_tiles_interwoven");
-
-
-  
-  //load_to_lds_interwoven = params.at("load_to_lds_interwoven");
-  //c_micro_tiles_interwoven = params.at("c_micro_tiles_interwoven");
-
-  //normal_form = params.at('C').at("normal_form");
-  
-//const std::map<std::string, unsigned> & params){
-
-  //here.
-  //
-
 
 HyperParams::HyperParams(const std::map<char, std::map<std::string, unsigned> > & params){
 
@@ -262,20 +223,13 @@ HyperParams::HyperParams(const std::map<char, std::map<std::string, unsigned> > 
     
   
   for (char X : {'A', 'B'}){
-    //std::cout << "in constructor of HyperParams::HyperParams, with " << X << " ..." << std::flush;
-    
-    
     at(X).macro_tile_length = params.at(X).at("macro_tile_length"); 
-    //std::cout << " ... macro_tile_height is fine ... " << std::flush;
-    
     at(X).micro_tile_length = params.at(X).at("micro_tile_length");
     at(X).load_pll_to_unroll = params.at(X).at("load_pll_to_unroll");
     at(X).copy_type = params.at(X).at("copy_type");
     at(X).lds_pad_size = params.at(X).at("lds_pad_size");
     at(X).load_to_lds_interwoven = params.at(X).at("load_to_lds_interwoven");
     at(X).c_micro_tiles_interwoven = params.at(X).at("c_micro_tiles_interwoven");
-    
-    //std::cout << "done!" << std::endl;
   }
  
   unroll = params.at('C').at("unroll");
@@ -296,7 +250,6 @@ HyperParams::HyperParams(const std::string & hyperstring):HyperParams(get_params
 std::map<char, std::map<std::string, unsigned > > HyperParams::get_params(){
   
   std::map<char, std::map<std::string, unsigned > > params = 
-  
   {
     {'A', {}},
     {'B', {}},
@@ -363,20 +316,14 @@ HyperParams get_default(const tinygemm::TinyGemmGeometry & gg, bool enforce_dete
 
   //tinygemm::TinyGemmGeometry nearestgeometry;
   HyperParams best_hp = get_default_small(enforce_deterministic);
-
   float min_distance = std::numeric_limits<float>::max();
 
-
-
   for (auto geohyp : HyperParams::kernel_cache){
-    //std::tie(geoparms, hpstring) = geohyp; 
-    
     tinygemm::TinyGemmGeometry geo = std::get<0>(geohyp);
     std::string hpstring = std::get<1>(geohyp);
     
     float new_distance = gg.get_distance(geo);
     if (new_distance < min_distance){
-      //nearestgeometry = geo;
       best_hp = HyperParams(hpstring);
       min_distance = new_distance;
     }
@@ -390,15 +337,6 @@ HyperParams get_default(const tinygemm::TinyGemmGeometry & gg, bool enforce_dete
   return best_hp;
 }
   
-
-
-
-  
-
-//unsigned HyperParams::get_workgroup_size(){
-  //return (aps.macro_tile_length * bps.macro_tile_length) / (aps.micro_tile_length * bps.micro_tile_length);
-//}
-
 unsigned HyperParams::get_nwitems_h(){
   return aps.macro_tile_length / aps.micro_tile_length;
 }
@@ -417,7 +355,6 @@ void add_hyperparam(const std::string & hyperstring, std::vector<HyperParams> & 
 }
 
 
-
 unsigned HyperParams::get_macro_tile_x_length(char x) const{
   if (x == 'a'){
     return aps.macro_tile_length;
@@ -432,8 +369,6 @@ unsigned HyperParams::get_macro_tile_x_length(char x) const{
 
   
 std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeometry & gg){
-  
-  
   
   if (gg.m < 8 || gg.n < 8){
     throw tinygemm_error("Currently, if matrix C has a dimension less that 16, it is not supported. If you are seeing this, please remind to fix it via github ");
@@ -570,7 +505,6 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
     one_aways.push_back(hp);
   }
   
-  /* Currently, if C has m or n less than 16, an error is thrown. */
   /* **************** unrolls **********************************  */
   
   std::vector<int> delta_unrolls = {-16, -8, +8, +16};
@@ -605,8 +539,11 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
   std::vector<unsigned> pads = {1}; //2
   for (auto & pad_ : pads){
     HyperParams hp(*this);
-    hp.aps.lds_pad_size = pad_;
-    hp.bps.lds_pad_size = pad_;
+    
+    for (char x : {'a', 'b'}) {
+      hp.at(x).lds_pad_size = pad_;
+    }
+    
     one_aways.push_back(hp);
   }
 
@@ -623,12 +560,13 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
   }
 
   /* ************** work_item_load_a_pll_to_unrolls ****************
-   * TODO : reference to a base explanantion of meta params
   */
   std::vector<unsigned> work_item_load_a_pll_to_unrolls = {0,1};
   for (auto & work_item_load_a_pll_to_unroll_ : work_item_load_a_pll_to_unrolls){
     HyperParams hp(*this);
-    hp.aps.load_pll_to_unroll = work_item_load_a_pll_to_unroll_;
+    hp.at('a').load_pll_to_unroll = work_item_load_a_pll_to_unroll_;
+    
+    
     one_aways.push_back(hp);
   }
 
@@ -660,9 +598,9 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
   std::vector<unsigned> load_to_lds_interwovens = {0,1};
   for (auto & load_to_lds_interwoven_ : load_to_lds_interwovens){
     HyperParams hp(*this);
-    //TODO: separate out.
-    hp.aps.load_to_lds_interwoven = load_to_lds_interwoven_;
-    hp.bps.load_to_lds_interwoven = load_to_lds_interwoven_;
+    for (char x : {'a', 'b'}) {
+      hp.at(x).load_to_lds_interwoven = load_to_lds_interwoven_;
+    }
     one_aways.push_back(hp);
   }
   
@@ -673,9 +611,9 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
   std::vector<unsigned> c_micro_tiles_interwovens = {0,1};
   for (auto & c_micro_tiles_interwoven_ : c_micro_tiles_interwovens){
     HyperParams hp(*this);
-    //TODO: separate out.
-    hp.aps.c_micro_tiles_interwoven = c_micro_tiles_interwoven_;
-    hp.bps.c_micro_tiles_interwoven = c_micro_tiles_interwoven_;
+    for (char x : {'a', 'b'}){
+      hp.at(x).c_micro_tiles_interwoven = c_micro_tiles_interwoven_;
+    }
     one_aways.push_back(hp);
   }
   

@@ -219,7 +219,7 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams & hp_, const tinygem
   
   
   /* these guys are hyper params, with a check if not optional ? */
-  main_use_edge_trick = 1;
+  main_use_edge_trick = (gg.m%hp.aps.macro_tile_length == 0 && gg.n%hp.bps.macro_tile_length == 0) ? 0 : 1;
   main_final_fractional_unroll = (hp.unroll_for_offset == 1 || gg.k%hp.unroll != 0) ? 1 : 0;
 
 }
