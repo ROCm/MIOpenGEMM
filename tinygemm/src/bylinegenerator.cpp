@@ -1,5 +1,6 @@
 #include <string>
 #include <sstream>
+#include <iostream>
 
 #include <tinygemm/bylinegenerator.hpp>
 #include <tinygemm/tinygemmerror.hpp>
@@ -59,6 +60,8 @@ R"(/* The number of values from C which each non-edge work-item will scale by be
 
 
 void ByLineGenerator::append_derived_definitions(std::stringstream & ss){
+  
+
   ss << "/*      each (full) work item will process WORK_PER_THREAD elements in the coalesced direction, */ \n";
   ss << "/*      so the number of work items per coalesced line is DIM_COAL / WORK_PER_THREAD */ \n"; 
   ss << "#define N_FULL_WORK_ITEMS_PER_LINE " << n_full_work_items_per_line << "\n";
@@ -66,18 +69,24 @@ void ByLineGenerator::append_derived_definitions(std::stringstream & ss){
   ss << "/*      there are N_FULL_WORK_ITEMS_PER_LINE + (DIM_COAL % WORK_PER_THREAD != 0) */ \n";
   ss << "#define N_WORK_ITEMS_PER_LINE " << n_work_items_per_line << "\n";
   ss << "/*      in total there are N_FULL_WORK_ITEMS_PER_LINE * DIM_UNCOAL full work items, */ \n";
+
+
+
   ss << "#define N_FULL_WORK_ITEMS " << n_full_work_items << "\n";
   ss << "/*      and a grand total of N_WORK_ITEMS_PER_LINE * DIM_UNCOAL work items. */ \n";
   ss << "#define N_WORK_ITEMS " << n_work_items << "\n";  
   ss << "/*      tail work items start at WORK_PER_THREAD * N_FULL_WORK_ITEMS_PER_LINE in the coalesced direction,  */\n";
   ss << "#define START_IN_COAL_LAST_WORK_ITEM " << start_in_coal_last_work_item <<  "\n";
   ss << "/*      and process DIM_COAL % WORK_PER_THREAD elements of c */\n";
+
+
+
   ss << "#define WORK_FOR_LAST_ITEM_IN_COAL " << work_for_last_item_in_coal << "\n";
   ss << "/*      the target stride between lines, derived from hp and gg (see DerivedParams) */\n";
-  ss << "#define LDY " << dp.get_target_ld(matrixchar) << "\n";
 
 
   append_derived_definitions_additional(ss);
+
   
 
 }
@@ -172,6 +181,9 @@ y += start_coal;
 
 KernelString ByLineGenerator::get_kernelstring(){
 
+
+
+
   std::stringstream ss;
 
   ss << genutil::get_time_string(type);
@@ -183,14 +195,19 @@ KernelString ByLineGenerator::get_kernelstring(){
   ss << genutil::get_how_string() << "\n";
   append_how_definitions(ss);
 
+
+
   ss << genutil::get_derived_string() << "\n";
   append_derived_definitions(ss);
+
+
 
   
   ss << "\n\n" << "__attribute__((reqd_work_group_size(N_WORK_ITEMS_PER_GROUP,1,1)))" << "\n";
   ss << "__kernel void ";
 
   append_function_definition(ss);
+
 
   ss << "{";
   
@@ -204,6 +221,7 @@ KernelString ByLineGenerator::get_kernelstring(){
   append_work_string(ss);
   
   ss << "\n}\n\n\n";
+
 
 
 

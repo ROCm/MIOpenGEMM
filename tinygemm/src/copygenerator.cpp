@@ -34,9 +34,10 @@ void CopyGenerator::setup_additional() {
 
 
 void CopyGenerator::append_derived_definitions_additional(std::stringstream & ss){
-  if (matrixchar != 'a' && matrixchar == 'b'){
-    throw tinygemm_error("this is unexpected, call to append_derived_definitions_additional but matrixchar is neither a not b");
+  if (matrixchar != 'a' && matrixchar != 'b'){
+    throw tinygemm_error(std::string("this is unexpected, call to append_derived_definitions_additional but matrixchar is neither a not b, but rather  ") + matrixchar);
   }
+  ss << "#define LDY " << dp.get_target_ld(matrixchar) << "\n";
   ss << "#define GLOBAL_OFFSET_Y " << dp.at(matrixchar).cw_global_offset << "\n";
 }
 

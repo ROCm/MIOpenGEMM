@@ -225,7 +225,7 @@ private:
     }
     
     else if (type.compare("copya") == 0){
-      if (tk_kernels_map.at("copya").is_set() == false && new_hp.aps.copy_type == 1){
+      if (tk_kernels_map.at("copya").is_set() == false && new_hp.aps.copy_type != 0){
          return true;
        }
        else{
@@ -234,7 +234,7 @@ private:
     }
 
     else if (type.compare("copyb") == 0){
-      if (tk_kernels_map.at("copyb").is_set() == false && new_hp.bps.copy_type == 1){
+      if (tk_kernels_map.at("copyb").is_set() == false && new_hp.bps.copy_type != 0){
          return true;
        }
        else{

@@ -22,7 +22,9 @@ tinygemm::hyperparams::HyperParams get_hp(std::string hyperstring = ""){
 
   if (hyperstring.compare("") == 0){
     //hyperstring = "A_MAC128_MIC8_PAD1_PLU0_LIW0_MIW1_CTY0__B_MAC128_MIC8_PAD1_PLU0_LIW0_MIW0_CTY0__U8_GA1_PU0_ICE1_NAW64_UFO0";
-    hyperstring = "A_MAC96_MIC6_PAD1_PLU1_LIW0_MIW1_CTY0__B_MAC96_MIC6_PAD1_PLU1_LIW0_MIW0_CTY1__U16_GA1_PU0_ICE2_NAW64_UFO0";
+    
+    
+    hyperstring = "A_MAC96_MIC6_PAD1_PLU1_LIW0_MIW1_CTY1__B_MAC96_MIC6_PAD1_PLU1_LIW0_MIW0_CTY1__U16_GA1_PU1_ICE1_NAW64_UFO0";
   }
   return hyperstring;
 }
@@ -31,17 +33,17 @@ template <typename TFloat>
 tinygemm::TinyGemmGeometry get_geometry(){
 
   
-  bool isColMajor = true;
-  bool tA = false;
-  bool tB = true;
+  bool isColMajor = false;
+  bool tA = true;
+  bool tB = false;
   bool tC = false;
-  unsigned m = 961;      
-  unsigned n = 961;      
-  unsigned k = 161;                
-  unsigned lda = ( tA == isColMajor ? k : m ) + 3;//13;
-  unsigned ldb = ( tB == isColMajor ? n : k ) + 9;//27;
-  unsigned ldc = ( tC == isColMajor ? n : m ) + 0;//11;//11;
-  unsigned workspace_size =  1;//150386109 ;
+  unsigned m = 140;//640;      
+  unsigned n = 120;//      
+  unsigned k = 100;//                
+  unsigned lda = ( tA == isColMajor ? k : m ) + 4;//13;
+  unsigned ldb = ( tB == isColMajor ? n : k ) + 19;//27;
+  unsigned ldc = ( tC == isColMajor ? n : m ) + 15;//11;//11;
+  unsigned workspace_size =  2e6;//150386109 ;
   char floattype = sizeof(TFloat) == sizeof(double) ? 'd' : 'f';
 
   return { isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype };
@@ -50,10 +52,10 @@ tinygemm::TinyGemmGeometry get_geometry(){
 
 tinygemm::TinyGemmOffsets get_offsets(){
 
-  unsigned a_offset = 51;
-  unsigned b_offset = 71;
-  unsigned c_offset = 91;
-  unsigned workspace_offset = 13;
+  unsigned a_offset = 5;
+  unsigned b_offset = 7;
+  unsigned c_offset = 11;
+  unsigned workspace_offset = 17;
   
   unsigned tail_off_a = 123;
   unsigned tail_off_b = 97;

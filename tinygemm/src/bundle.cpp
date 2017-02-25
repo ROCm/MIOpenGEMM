@@ -55,11 +55,11 @@ public:
     std::vector<KernelString> v_tgks;  
     std::vector<std::vector<unsigned> > v_wait_indices;
     
-    if (hp.aps.copy_type == 1){
+    if (hp.aps.copy_type != 0){
       v_tgks.emplace_back( copygen::get_copya_kernelstring(hp, gg, dp) );
     }
     
-    if (hp.bps.copy_type == 1){
+    if (hp.bps.copy_type != 0){
       v_tgks.emplace_back( copygen::get_copyb_kernelstring(hp, gg, dp) ); //deduce from hp whether a is copied or not. 
     }
     
@@ -90,7 +90,7 @@ public:
     }
 
 
-    if (false == true){
+    if (true == true){
       std::cout << "-----------------------------------------\nnetwork : \n";
       for (unsigned i = 0; i < v_tgks.size(); ++i){
         std::cout << "kernel " << i << " ( " << types[i].full << " )  ----- waits for -----> " << std::flush;

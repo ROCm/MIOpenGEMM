@@ -10,6 +10,9 @@ namespace derivedparams{
 
 
 unsigned DerivedParams::get_target_ld(char x) const{
+  if (x != 'a' && x != 'A' && x != 'b' && x != 'B'){
+    throw tinygemm_error("call to get_target_ld must be made with an aAbB, not " + std::string(1, x));  
+  }
   return at(x).cw_target_ldx;
 }
 
@@ -29,7 +32,7 @@ const ChiralDerivedParams & DerivedParams::at(char x) const{
     return bdps;
   }
   else{
-    throw tinygemm_error("unrecognised char in ChiralDerivedParams & at(char x)");
+    throw tinygemm_error("unrecognised char in ChiralDerivedParams & at(char x) : " + x);
   }
 }
 
@@ -53,22 +56,36 @@ unsigned get_copy_pad(char x){
   
 
 void DerivedParams::reset_cw_params(char x){
+ 
   
-  std::cout << "whaaaaaaaaaaaaaaattttttttttttttttt ????????????" << std::endl;
-  std::abort();
-  
-  if (x == 'b' && hp.aps.copy_type == 1 && adps.cw_target_ldx == uninitialised_unsigned){
-    throw tinygemm_error("make sure reset_acw1_params is called before reset_bcw1_params, we need that adps.cw_target_ldx be set here in derivedparams reset of bcw1");
+  if (x == 'b' && hp.aps.copy_type != 0 && adps.cw_target_ldx == uninitialised_unsigned){
+    throw tinygemm_error(std::string("make sure reset acw1 params is called before reset_bcw1_params, we need that adps.cw_target_ldx be set here in derivedparams reset of bcw1"));
   }
   
-  at(x).cw_smallest_possible_ldx = gg.coal_is_pll_k(x) ? gg.k : gg.get_non_k_dim(x);
-  at(x).cw_target_ldx = get_target(16, get_copy_pad(x), at(x).cw_smallest_possible_ldx);
-  at(x).cw_global_offset = (x == 'b' && hp.aps.copy_type == 1) ? get_target_ld('a')*gg.get_uncoal('a') : 0;
+  
+  /* simple copy with padding */
+  if (hp.at(x).copy_type == 1){
+    at(x).cw_smallest_possible_ldx = 0;//gg.coal_is_pll_k(x) ? gg.k : gg.get_non_k_dim(x);
+    at(x).cw_target_ldx = gg.get_ld(x);//get_target(16, get_copy_pad(x), at(x).cw_smallest_possible_ldx);
+    at(x).cw_n_elements = at(x).cw_target_ldx*gg.get_uncoal(x);
+  }
+  
+  else if (hp.at(x).copy_type == 2){
+    throw tinygemm_error("currently copy type 2 is not ready mmmmmmm");
+  }
+
+  else{
+    throw tinygemm_error("copy type is neither 1 not 2, so can't be correct that there's a call to reset_cw_params");
+  }
+  
+  at(x).cw_global_offset = (x == 'b' && hp.at('a').copy_type != 0) ? at('a').cw_n_elements : 0;
+  
+  
   
 }
   
 void DerivedParams::reset_ga3_params(){
-  
+
   if (main_split_on_k == 1){
     ga3_super_column_width = 
     static_cast<unsigned>(std::floor(std::sqrt(static_cast<double>(hp.n_target_active_workgroups) / static_cast<double>(hp.n_work_items_per_c_elm))));
@@ -78,7 +95,7 @@ void DerivedParams::reset_ga3_params(){
     static_cast<unsigned>(std::floor(std::sqrt(static_cast<double>(hp.n_target_active_workgroups))));
   }
   else{
-    throw tinygemm_error("main_split_on_k is neither 0 nor 1, how can this be? Logic error in append_super_column_width_defn");
+    throw tinygemm_error("main_split_on_k is neither 0 nor 1, how can this be? Logic error in reset_ga3_params");
   }  
   ga3_last_super_column_width = bdps.main_n_groups % ga3_super_column_width;
 }
@@ -113,9 +130,9 @@ DerivedParams::set_fragile(){
     at(x).n_elements_in_unroll = hp.at(x).macro_tile_length * hp.unroll;
     at(x).main_n_elements_to_load_per_workitem = at(x).n_elements_in_unroll / main_n_work_items_per_workgroup;  
 
-    if (hp.at(x).copy_type == 1){
-      reset_cw_params(x);//gg, hp, x);
-      required_workspace += at(x).cw_target_ldx*gg.get_uncoal(x);
+    if (hp.at(x).copy_type != 0){
+      reset_cw_params(x);
+      required_workspace += at(x).cw_n_elements; //cw_target_ldx*gg.get_uncoal(x);
     }
   
     /* check 0 : macro tile not too large */  
@@ -171,6 +188,8 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams & hp_, const tinygem
   tiling::set_tile_dimensions(bdps.main_micro_tile_perp_unroll, bdps.main_micro_tile_pll_unroll, hp.bps.macro_tile_length, hp.unroll, bdps.main_n_elements_to_load_per_workitem, hp.bps.load_pll_to_unroll == 0); 
     
   main_split_on_k = hp.n_work_items_per_c_elm == 1 ? 0 : 1;
+  
+  
   main_does_beta_c_inc = main_split_on_k == 1 ? 0 : 1; 
   
   
@@ -212,15 +231,18 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams & hp_, const tinygem
   
 
 
-    
+  
+  
   if (hp.group_allocation == 3){
     reset_ga3_params();
   }
-  
+
   
   /* these guys are hyper params, with a check if not optional ? */
   main_use_edge_trick = (gg.m%hp.aps.macro_tile_length == 0 && gg.n%hp.bps.macro_tile_length == 0) ? 0 : 1;
   main_final_fractional_unroll = (hp.unroll_for_offset == 1 || gg.k%hp.unroll != 0) ? 1 : 0;
+
+
 
 }
 
@@ -245,12 +267,12 @@ unsigned DerivedParams::get_stride(char x, bool pll_k, bool is_macro) const{
   if (x == 'B') x = 'b'; 
 
   if (hp.at(x).copy_type != 2){
-    //TODO : 
     unsigned effective_ldx = hp.at(x).copy_type == 0  ? gg.get_ld(x) : at(x).cw_target_ldx;
     return gg.coal_is_pll_k(x) == pll_k ? 1 : effective_ldx; 
   }
   
   else{
+    //TODO : confirm these
     if (is_macro == false){
       return pll_k == true ? hp.at(x).macro_tile_length : 1;
     }

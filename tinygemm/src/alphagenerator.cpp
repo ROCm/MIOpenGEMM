@@ -29,8 +29,8 @@ private:
 
 void set_usage(){
   
-  uses_a = (hp.aps.copy_type == 1) ? false : true; 
-  uses_b = (hp.bps.copy_type == 1) ? false : true;
+  uses_a = (hp.aps.copy_type == 0) ? true : false; 
+  uses_b = (hp.bps.copy_type == 0) ? true : false;
   uses_c = true;
   uses_workspace = (hp.aps.copy_type + hp.bps.copy_type) == 0  ? false : true;
   uses_alpha  = true;
@@ -711,7 +711,7 @@ void add_predefine_chiral(char x, std::stringstream & ss){
   if (x == 'A') ss << "/* depending on whether loads to c are interwoven, set as MIW == 0 ? 1 : N_MICRO_IN_MACRO_A */\n";
   ss << "#define C_INTERWEAVE_STRIDE_" << x << " " << dp.at(x).main_c_interweave_stride << "\n";
   
-  if (hp.at(x).copy_type == true){
+  if (hp.at(x).copy_type != 0){
     if (x == 'A') ss << "/* global memory offset, depends on type of copy of both a,b */\n";
     ss << "#define GLOBAL_OFFSET_" << x << " " << dp.at(x).cw_global_offset;
   }
@@ -864,10 +864,13 @@ R"(
 
 KernelString get_alpha_kernelstring(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg, const derivedparams::DerivedParams & dp){
 
+
   std::string type = dp.main_does_beta_c_inc ? "betac_alphaab" : "alphaab";
   AlphaGenerator ag(hp, gg, dp, type);
   ag.setup();
   
+
+
   return ag.get_kernelstring();
 }
 
