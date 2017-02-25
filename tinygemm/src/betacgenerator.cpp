@@ -24,7 +24,10 @@ void BetacGenerator::setup_additional(){
 
 }
 
-    
+
+void BetacGenerator::append_derived_definitions_additional(std::stringstream & ss) {    
+  //nothing to do
+}
   
 
 

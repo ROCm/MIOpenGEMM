@@ -62,6 +62,7 @@ private:
 
 protected:
   virtual void setup_additional() = 0;
+  virtual void append_derived_definitions_additional(std::stringstream & ss) = 0;
 
 };
 

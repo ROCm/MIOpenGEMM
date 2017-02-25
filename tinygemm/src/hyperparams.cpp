@@ -121,8 +121,6 @@ std::map<char, std::map<std::string, unsigned> > get_params_from_string(const st
 
   std::map<char, std::map<std::string, unsigned> > params = { {'A', {}}, {'B', {}}, {'C', {}} };
  
- 
-    
   if (hyperstring[0] == 'Y'){
     throw tinygemm_error("Old hyper string processing not enabled currently, please convert to new format manually, or see dev/qqc");
   }
@@ -314,7 +312,6 @@ HyperParams get_default(const tinygemm::TinyGemmGeometry & gg, bool enforce_dete
     return get_default_tiniest(enforce_deterministic);
   }
 
-  //tinygemm::TinyGemmGeometry nearestgeometry;
   HyperParams best_hp = get_default_small(enforce_deterministic);
   float min_distance = std::numeric_limits<float>::max();
 

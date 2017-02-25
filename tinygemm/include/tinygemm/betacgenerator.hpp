@@ -15,7 +15,8 @@ BetacGenerator(const tinygemm::hyperparams::HyperParams & hp_,  const tinygemm::
 
 
   virtual void setup_additional() final override;
-  
+
+  virtual void append_derived_definitions_additional(std::stringstream & ss) override final;
     
   
 };

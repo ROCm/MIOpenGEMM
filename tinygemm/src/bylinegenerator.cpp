@@ -57,21 +57,6 @@ R"(/* The number of values from C which each non-edge work-item will scale by be
 }
 
 
-void ByLineGenerator::append_copy_preprocessor(std::stringstream & ss){
-  if (hp.aps.copy_type == 1 && (matrixchar == 'b')){
-    ss << "/*      b will be copied to a section of workspace after where a is copied */\n";
-    ss << "#define GLOBAL_OFFSET_B " <<  dp.bdps.cw_global_offset << "\n";
-  }
-  
-  else{
-    ss << "/*      no global offset as this is the first or only matric being copied to workspace */\n";
-    ss << "#define GLOBAL_OFFSET_B  0\n";
-  }
-  
-  ss << "/*      the target stride between lines, derived from hp and gg (see DerivedParams) */\n";
-  ss << "#define LDY " << dp.get_target_ld(matrixchar) << "\n";
-  
-}
 
 void ByLineGenerator::append_derived_definitions(std::stringstream & ss){
   ss << "/*      each (full) work item will process WORK_PER_THREAD elements in the coalesced direction, */ \n";
@@ -88,11 +73,13 @@ void ByLineGenerator::append_derived_definitions(std::stringstream & ss){
   ss << "#define START_IN_COAL_LAST_WORK_ITEM " << start_in_coal_last_work_item <<  "\n";
   ss << "/*      and process DIM_COAL % WORK_PER_THREAD elements of c */\n";
   ss << "#define WORK_FOR_LAST_ITEM_IN_COAL " << work_for_last_item_in_coal << "\n";
+  ss << "/*      the target stride between lines, derived from hp and gg (see DerivedParams) */\n";
+  ss << "#define LDY " << dp.get_target_ld(matrixchar) << "\n";
+
+
+  append_derived_definitions_additional(ss);
   
-  if (matrixchar == 'a' || matrixchar == 'b'){
-    append_copy_preprocessor(ss);
-  }
-    
+
 }
 
 
@@ -175,7 +162,7 @@ void ByLineGenerator::append_positioning_y_string(std::stringstream & ss){
   ss << R"(
 
 /* moving the y pointer to the first element to process */
-y += GLOBAL_OFFSET_B;
+y += GLOBAL_OFFSET_Y;
 y += y_offset;
 y += start_uncoal * LDY;
 y += start_coal;
@@ -198,6 +185,7 @@ KernelString ByLineGenerator::get_kernelstring(){
 
   ss << genutil::get_derived_string() << "\n";
   append_derived_definitions(ss);
+
   
   ss << "\n\n" << "__attribute__((reqd_work_group_size(N_WORK_ITEMS_PER_GROUP,1,1)))" << "\n";
   ss << "__kernel void ";
