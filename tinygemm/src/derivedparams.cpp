@@ -13,7 +13,7 @@ unsigned DerivedParams::get_target_ld(char x) const{
   if (x != 'a' && x != 'A' && x != 'b' && x != 'B'){
     throw tinygemm_error("call to get_target_ld must be made with an aAbB, not " + std::string(1, x));  
   }
-  return at(x).cw_target_ldx;
+  return at(x).cw1_target_ldx;
 }
 
 
@@ -58,27 +58,33 @@ unsigned get_copy_pad(char x){
 void DerivedParams::reset_cw_params(char x){
  
   
-  if (x == 'b' && hp.aps.copy_type != 0 && adps.cw_target_ldx == uninitialised_unsigned){
-    throw tinygemm_error(std::string("make sure reset acw1 params is called before reset_bcw1_params, we need that adps.cw_target_ldx be set here in derivedparams reset of bcw1"));
+  if (x == 'b' && hp.aps.workspace_type != 0 && adps.cw1_target_ldx == uninitialised_unsigned){
+    throw tinygemm_error(std::string("make sure reset acw1 params is called before reset_bcw1_params, we need that adps.cw1_target_ldx be set here in derivedparams reset of bcw1"));
   }
   
   
   /* simple copy with padding */
-  if (hp.at(x).copy_type == 1){
-    at(x).cw_smallest_possible_ldx = 0;//gg.coal_is_pll_k(x) ? gg.k : gg.get_non_k_dim(x);
-    at(x).cw_target_ldx = gg.get_ld(x);//get_target(16, get_copy_pad(x), at(x).cw_smallest_possible_ldx);
-    at(x).cw_n_elements = at(x).cw_target_ldx*gg.get_uncoal(x);
+  if (hp.at(x).workspace_type == 1){
+    at(x).cw1_smallest_possible_ldx = 0;//gg.coal_is_pll_k(x) ? gg.k : gg.get_non_k_dim(x);
+    at(x).cw1_target_ldx = gg.get_ld(x);//get_target(16, get_copy_pad(x), at(x).cw1_smallest_possible_ldx);
+    at(x).cw_n_elements = at(x).cw1_target_ldx*gg.get_uncoal(x);
   }
   
-  else if (hp.at(x).copy_type == 2){
-    throw tinygemm_error("currently copy type 2 is not ready mmmmmmm");
+  else if (hp.at(x).workspace_type == 2){
+    
+    at(x).cw2_n_elements_perp_unroll = at(x).n_groups*hp.at(x).macro_tile_length;    
+    at(x).cw_n_elements = at(x).cw2_n_elements_perp_unroll * gg.k;
+    
+    std::cout << "\n\n" << at(x).cw_n_elements;
+    std::cout << "\n\n\n\n\nwhat cw2 resets here ? \n\n\n\n" << std::endl;
+    //throw tinygemm_error("currently copy type 2 is not ready mmmmmmm");
   }
 
   else{
     throw tinygemm_error("copy type is neither 1 not 2, so can't be correct that there's a call to reset_cw_params");
   }
   
-  at(x).cw_global_offset = (x == 'b' && hp.at('a').copy_type != 0) ? at('a').cw_n_elements : 0;
+  at(x).cw_global_offset = (x == 'b' && hp.at('a').workspace_type != 0) ? at('a').cw_n_elements : 0;
   
   
   
@@ -97,7 +103,7 @@ void DerivedParams::reset_ga3_params(){
   else{
     throw tinygemm_error("main_split_on_k is neither 0 nor 1, how can this be? Logic error in reset_ga3_params");
   }  
-  ga3_last_super_column_width = bdps.main_n_groups % ga3_super_column_width;
+  ga3_last_super_column_width = bdps.n_groups % ga3_super_column_width;
 }
 
 
@@ -118,6 +124,19 @@ std::tuple<bool, std::string>
 DerivedParams::set_fragile(){
   
   
+  set_should_be_hyperparams();
+
+  
+  for (char x : {'a', 'b'}){
+    at(x).main_preshift_final_tile = 1 + (gg.get_non_k_dim(x) - 1) % hp.at(x).macro_tile_length;
+    at(x).n_groups = gg.get_non_k_dim(x) / hp.at(x).macro_tile_length + (at(x).main_preshift_final_tile != hp.at(x).macro_tile_length);
+    at(x).main_macro_tile_length_and_pad = hp.at(x).macro_tile_length + hp.at(x).lds_pad_size;
+    at(x).main_n_elements_in_padded_unroll = at(x).main_macro_tile_length_and_pad * hp.unroll;
+    at(x).main_n_micro_in_macro = hp.at(x).macro_tile_length / hp.at(x).micro_tile_length;
+    at(x).main_n_micro_tiles_pll_unroll = hp.unroll / at(x).main_micro_tile_pll_unroll;
+    at(x).main_c_interweave_stride = hp.at(x).c_micro_tiles_interwoven == 0 ? 1 : at(x).main_n_micro_in_macro;  
+  }
+
 
 
   main_macro_tile_area = hp.bps.macro_tile_length * hp.aps.macro_tile_length;
@@ -137,9 +156,9 @@ DerivedParams::set_fragile(){
 
     at(x).main_n_elements_to_load_per_workitem = at(x).n_elements_in_unroll / main_n_work_items_per_workgroup;  
 
-    if (hp.at(x).copy_type != 0){
+    if (hp.at(x).workspace_type != 0){
       reset_cw_params(x);
-      required_workspace += at(x).cw_n_elements; //cw_target_ldx*gg.get_uncoal(x);
+      required_workspace += at(x).cw_n_elements; //cw1_target_ldx*gg.get_uncoal(x);
     }
   
     /* check 0 : macro tile not too large */  
@@ -179,8 +198,8 @@ DerivedParams::set_fragile(){
       return tup;
     }    
     
-    if (hp.at(x).copy_type == 2 && at(x).n_elements_in_unroll % at(x).cw_n_work_items_per_workgroup != 0){
-      auto tup_cw = is_div(x, "at(x).cw_n_work_items_per_workgroup", at(x).cw_n_work_items_per_workgroup);
+    if (hp.at(x).workspace_type == 2 && at(x).n_elements_in_unroll % at(x).cw2_local_work_size != 0){
+      auto tup_cw = is_div(x, "at(x).cw2_local_work_size", at(x).cw2_local_work_size);
       if (std::get<0>(tup_cw) == false){
         return tup_cw;
       }
@@ -188,7 +207,7 @@ DerivedParams::set_fragile(){
   }
   
   
-  /* check 2 : tilability */
+  /* check 2 : tileability */
   for (char x : {'a', 'b'}){  
     auto tup = tiling::get_tileability(hp.at(x).macro_tile_length, hp.unroll, at(x).main_n_elements_to_load_per_workitem);
     if (std::get<0>(tup) == false){
@@ -236,18 +255,7 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams & hp_, const tinygem
   t_float = gg.derived.float_size_bits == 32 ? "float" : "double";
   
   
-  for (char x : {'a', 'b'}){
-    at(x).main_preshift_final_tile = 1 + (gg.get_non_k_dim(x) - 1) % hp.at(x).macro_tile_length;
-    at(x).main_n_groups = gg.get_non_k_dim(x) / hp.at(x).macro_tile_length + (at(x).main_preshift_final_tile != hp.at(x).macro_tile_length);
-    at(x).main_macro_tile_length_and_pad = hp.at(x).macro_tile_length + hp.at(x).lds_pad_size;
-    at(x).main_n_elements_in_padded_unroll = at(x).main_macro_tile_length_and_pad * hp.unroll;
-    at(x).main_n_micro_in_macro = hp.at(x).macro_tile_length / hp.at(x).micro_tile_length;
-    at(x).main_n_micro_tiles_pll_unroll = hp.unroll / at(x).main_micro_tile_pll_unroll;
-    at(x).main_c_interweave_stride = hp.at(x).c_micro_tiles_interwoven == 0 ? 1 : at(x).main_n_micro_in_macro;  
-  }
 
-
-  //bdps.main_c_interweave_stride = hp.c_micro_tiles_interwoven == 0 ? 1 : bdps.main_n_micro_in_macro;
 
   
   main_n_work_groups = hp.n_work_items_per_c_elm * 
@@ -268,11 +276,27 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams & hp_, const tinygem
   /* these guys are hyper params, with a check if not optional ? */
   main_use_edge_trick = (gg.m%hp.aps.macro_tile_length == 0 && gg.n%hp.bps.macro_tile_length == 0) ? 0 : 1;
   main_final_fractional_unroll = (hp.unroll_for_offset == 1 || gg.k%hp.unroll != 0) ? 1 : 0;
-
+  
+ 
 
 
 }
 
+void DerivedParams::set_should_be_hyperparams(){
+
+
+  
+  betac_local_work_size = 256;
+  betac_work_per_thread = 2;
+
+  for (char x : {'a', 'b'}){
+    at(x).cw1_local_work_size = 256;
+    at(x).cw1_work_per_thread = 2;
+    
+    at(x).cw2_local_work_size = 256;
+  }
+  
+}
 
 unsigned DerivedParams::get_n_elements_in_x_unroll(char x){
   if (x == 'a'){
@@ -287,26 +311,39 @@ unsigned DerivedParams::get_n_elements_in_x_unroll(char x){
 }
 
 
-unsigned DerivedParams::get_stride(char x, bool pll_k, bool is_macro) const{
-
+unsigned DerivedParams::get_stride(char x, bool pll_k, bool is_macro, unsigned workspace_type) const{
   
-  if (x == 'A') x = 'a';  
-  if (x == 'B') x = 'b'; 
-
-  if (hp.at(x).copy_type != 2){
-    unsigned effective_ldx = hp.at(x).copy_type == 0  ? gg.get_ld(x) : at(x).cw_target_ldx;
-    return gg.coal_is_pll_k(x) == pll_k ? 1 : effective_ldx; 
+  if (workspace_type == 0){
+    return get_stride_cw0(x, pll_k);
   }
   
+  else if (workspace_type == 1){
+    return get_stride_cw1(x, pll_k);
+  }
+  
+  else if (workspace_type == 2){
+    return get_stride_cw2(x, pll_k, is_macro);
+  }
+  else throw tinygemm_error("unrecognised workspace_type in get_strinde in derivedparams");
+}
+
+unsigned DerivedParams::get_stride_cw0(char x, bool pll_k) const{
+  return gg.coal_is_pll_k(x) == pll_k ? 1 : gg.get_ld(x); 
+}
+
+unsigned DerivedParams::get_stride_cw1(char x, bool pll_k) const{
+  return gg.coal_is_pll_k(x) == pll_k ? 1 : at(x).cw1_target_ldx; 
+}
+
+unsigned DerivedParams::get_stride_cw2(char x, bool pll_k, bool is_macro) const{
+
+  if (is_macro == false){
+    return pll_k == true ? hp.at(x).macro_tile_length : 1;
+  }
   else{
-    //TODO : confirm these
-    if (is_macro == false){
-      return pll_k == true ? hp.at(x).macro_tile_length : 1;
-    }
-    else{
-      return pll_k == true ? hp.at(x).macro_tile_length : gg.k;
-    }
+    return pll_k == true ? hp.at(x).macro_tile_length : gg.k;
   }
+  
 }
 
 

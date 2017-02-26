@@ -9,20 +9,14 @@
 namespace tinygemm{
 namespace nformgen{
 
-const size_t n_work_items_per_group = 256;
+//const size_t n_work_items_per_group = 256;
 
 class NormalFormGenerator : public prepgen::PrepGenerator{
 
 private:
 
   /* these should all go to derived params. That way, is_deriveable can be called first to ensure tileability. */
-  unsigned work_item_load_pll_to_unroll = 0;
-  unsigned micro_tile_pll_unroll;
-  unsigned micro_tile_perp_unroll;
-  unsigned n_macro_tiles_pll_unroll;  
-  unsigned n_macro_tiles;
-  
-  
+
   
   unsigned stride_pll_unroll;
   unsigned stride_perp_unroll;
@@ -55,7 +49,7 @@ public:
   
   size_t get_local_work_size() override final{
     /* should be made into a hyper param */
-    return 64;
+    return dp.at(matrixchar).cw2_local_work_size;
   }
 
   size_t get_n_work_groups() override final{
@@ -75,7 +69,9 @@ public:
 KernelString get_kernelstring(){
   std::stringstream ss;
   
-  append_unroll_block_geometry(matrixchar, ss);
+  append_unroll_block_geometry(matrixchar, ss, false);
+  append_stride_definitions(matrixchar, ss, 0, false, "READ_");
+  append_stride_definitions(matrixchar, ss, 0, false, "WRITE_");
   
   //get id_pll_unroll and id_perp_unroll  
   ss << "not done yet";

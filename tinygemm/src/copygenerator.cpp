@@ -12,6 +12,14 @@ namespace copygen{
 CopyGenerator::CopyGenerator(const tinygemm::hyperparams::HyperParams & hp_,  const tinygemm::TinyGemmGeometry & gg_, const tinygemm::derivedparams::DerivedParams & dp_, const std::string & type_): bylinegen::ByLineGenerator(hp_, gg_, dp_, type_){}
 
 
+size_t CopyGenerator::get_local_work_size(){
+  return dp.at(matrixchar).cw1_local_work_size;
+}
+
+size_t CopyGenerator::get_work_per_thread(){
+  return dp.at(matrixchar).cw1_work_per_thread;
+}
+
 void CopyGenerator::setup_additional() {
     
   if (type.compare("copya") == 0){
@@ -29,7 +37,6 @@ void CopyGenerator::setup_additional() {
   }
 
   description_string = R"()";
-  //function_definition = std::string("(__global const TFLOAT * restrict ") + matrixchar + ", const unsigned " + matrixchar + "_offset, __global TFLOAT * w, const unsigned w_offset)";
   inner_work_string = std::string("\n/* the copy */\nw[i] = ") + matrixchar + "[i];";
 
 }

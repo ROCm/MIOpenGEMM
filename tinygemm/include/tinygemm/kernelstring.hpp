@@ -24,7 +24,7 @@ public:
 /* summary of uses_a, uses_b, uses_c etc */
 std::string full;
 
-/* one of copya, copyb, betac, main */
+/* one of wsa, wsb, betac, main */
 std::string basic;
 
 bool uses_a;

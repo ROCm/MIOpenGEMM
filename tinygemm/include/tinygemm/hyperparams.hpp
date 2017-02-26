@@ -35,11 +35,13 @@ public:
   unsigned micro_tile_length;
   unsigned macro_tile_length;
   unsigned load_pll_to_unroll;
-  unsigned copy_type; //for now 0 : none, 1 : simple copy with ldx padding. To include : 2 : normal form.
+  unsigned workspace_type; //for now 0 : none, 1 : simple copy with ldx padding. To include : 2 : normal form.
   unsigned lds_pad_size;
   unsigned load_to_lds_interwoven;
   unsigned c_micro_tiles_interwoven;
   
+  void cw_check() const;
+    
   void checks() const;
 
   std::string get_string() const;

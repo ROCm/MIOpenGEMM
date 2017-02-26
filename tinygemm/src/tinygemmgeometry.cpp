@@ -88,15 +88,15 @@ unsigned TinyGemmGeometry::get_non_k_dim(char x) const{
 
 unsigned TinyGemmGeometry::get_ld(char x) const {
   
-  if (x == 'a'){
+  if (x == 'a' || x == 'A'){
     return lda;
   }
   
-  else if (x == 'b'){
+  else if (x == 'b' || x == 'B'){
     return ldb;
   }
   
-  else if (x == 'c'){
+  else if (x == 'c' || x == 'C'){
     return ldc;
   }
   
@@ -116,8 +116,9 @@ unsigned TinyGemmGeometry::get_coal(char x) const{
 
 
 bool TinyGemmGeometry::coal_is_pll_k(char x) const{
+  x = ((x == 'A') ? 'a' : ((x == 'B') ? 'b' : x));
   if ((x != 'a') && (x != 'b')){
-    throw tinygemm_error("parameter to coal_is_pll_k should be 'a' or 'b'");
+    throw tinygemm_error("parameter to coal_is_pll_k should be 'a' or 'b', not " + std::string(1, x));
   }
   
   /* proof : false, false, true should give 1 */

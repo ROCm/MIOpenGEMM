@@ -96,7 +96,7 @@ public:
   TinyGemmGPUMems gpum;
   
   /* TODO : this belongs somewhere else */
-  const std::vector<std::string> possible_basic_types = {"copya", "copyb", "betac", "main"};
+  const std::vector<std::string> possible_basic_types = {"wsa", "wsb", "betac", "main"};
   
 
 private:
@@ -224,8 +224,8 @@ private:
       return true;
     }
     
-    else if (type.compare("copya") == 0){
-      if (tk_kernels_map.at("copya").is_set() == false && new_hp.aps.copy_type != 0){
+    else if (type.compare("wsa") == 0){
+      if (tk_kernels_map.at("wsa").is_set() == false && new_hp.aps.workspace_type != 0){
          return true;
        }
        else{
@@ -233,8 +233,8 @@ private:
        }
     }
 
-    else if (type.compare("copyb") == 0){
-      if (tk_kernels_map.at("copyb").is_set() == false && new_hp.bps.copy_type != 0){
+    else if (type.compare("wsb") == 0){
+      if (tk_kernels_map.at("wsb").is_set() == false && new_hp.bps.workspace_type != 0){
          return true;
        }
        else{

@@ -35,20 +35,14 @@ void ByLineGenerator::append_description_string(std::stringstream & ss){
   ss <<  description_string;
 }
 
-
-
-
-
 void ByLineGenerator::append_how_definitions(std::stringstream & ss){
   ss << 
 R"(/* The number of values from C which each non-edge work-item will scale by beta */
-#define WORK_PER_THREAD  )" << get_work_per_thread()  << R"(
+#define WORK_PER_THREAD  )" << get_work_per_thread() << R"(
 /* The number of work items per work group
  * TODO : generalise for vega support */
 #define N_WORK_ITEMS_PER_GROUP )" << get_local_work_size() << "\n\n";
 }
-
-
 
 void ByLineGenerator::append_derived_definitions(std::stringstream & ss){
 

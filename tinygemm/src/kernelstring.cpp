@@ -34,6 +34,7 @@ uses_a(uses_a_), uses_b(uses_b_), uses_c(uses_c_), uses_workspace(uses_workspace
       full += x;
     }
   }
+  
   if (uses_alpha){
     full += "_alpha";
   }
@@ -52,11 +53,11 @@ uses_a(uses_a_), uses_b(uses_b_), uses_c(uses_c_), uses_workspace(uses_workspace
   }
   
   else if (uses('a') && uses('w')){
-    basic = "copya";
+    basic = "wsa";
   }
   
   else if (uses('b') && uses('w')){
-    basic = "copyb";
+    basic = "wsb";
   }
   
   else{

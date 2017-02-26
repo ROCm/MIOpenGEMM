@@ -21,10 +21,9 @@
 tinygemm::hyperparams::HyperParams get_hp(std::string hyperstring = ""){
 
   if (hyperstring.compare("") == 0){
-    //hyperstring = "A_MAC128_MIC8_PAD1_PLU0_LIW0_MIW1_CTY0__B_MAC128_MIC8_PAD1_PLU0_LIW0_MIW0_CTY0__U8_GA1_PU0_ICE1_NAW64_UFO0";
+    //hyperstring = "A_MAC128_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MAC128_MIC8_PAD1_PLU0_LIW0_MIW0_WOS0__U8_GA1_PU0_ICE1_NAW64_UFO0";
     
-    
-    hyperstring = "A_MAC96_MIC6_PAD1_PLU1_LIW0_MIW1_CTY1__B_MAC96_MIC6_PAD1_PLU1_LIW0_MIW0_CTY1__U16_GA1_PU1_ICE2_NAW64_UFO0";
+    hyperstring = "A_MAC96_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__B_MAC96_MIC6_PAD1_PLU0_LIW0_MIW0_WOS0__U16_GA1_PU0_ICE1_NAW64_UFO0";
   }
   return hyperstring;
 }
@@ -37,12 +36,12 @@ tinygemm::TinyGemmGeometry get_geometry(){
   bool tA = true;
   bool tB = false;
   bool tC = false;
-  unsigned m = 140;//640;      
-  unsigned n = 120;//      
-  unsigned k = 100;//                
-  unsigned lda = ( tA == isColMajor ? k : m ) + 4;//13;
-  unsigned ldb = ( tB == isColMajor ? n : k ) + 19;//27;
-  unsigned ldc = ( tC == isColMajor ? n : m ) + 15;//11;//11;
+  unsigned m = 96;//640;      
+  unsigned n = 96;//      
+  unsigned k = 16;//                
+  unsigned lda = ( tA == isColMajor ? k : m ) + 0;//4;//13;
+  unsigned ldb = ( tB == isColMajor ? n : k ) + 0;//19;//27;
+  unsigned ldc = ( tC == isColMajor ? n : m ) + 0;//15;//11;//11;
   unsigned workspace_size =  2e6;//150386109 ;
   char floattype = sizeof(TFloat) == sizeof(double) ? 'd' : 'f';
 
@@ -52,14 +51,14 @@ tinygemm::TinyGemmGeometry get_geometry(){
 
 tinygemm::TinyGemmOffsets get_offsets(){
 
-  unsigned a_offset = 5;
-  unsigned b_offset = 7;
-  unsigned c_offset = 11;
-  unsigned workspace_offset = 17;
+  unsigned a_offset = 1e6;//5;
+  unsigned b_offset = 1e6;//7;
+  unsigned c_offset = 1e6;//11;
+  unsigned workspace_offset = 1e6;//17;
   
-  unsigned tail_off_a = 123;
-  unsigned tail_off_b = 97;
-  unsigned tail_off_c = 67;
+  unsigned tail_off_a = 1e6 + 123;
+  unsigned tail_off_b = 1e6 + 97;
+  unsigned tail_off_c = 1e6 + 67;
   
   return {a_offset, b_offset, c_offset, workspace_offset, tail_off_a, tail_off_b, tail_off_c};
 
@@ -76,9 +75,7 @@ void print_kernel(){
   auto bundle = tinygemm::kerngen::get_bundle(hp, gg);
   
   //std::cout << bundle.v_tgks[0].kernstr; //.back()
-  
-
-    //std::ofstream floper ("/home/idiap/tinygemm/examplekernels/example1.cl", std::ios::out); 
+  //std::ofstream floper ("/home/idiap/tinygemm/examplekernels/example1.cl", std::ios::out); 
   
   for (auto & x :  bundle.v_tgks){
     auto fname = "/home/james/akernel_" +  x.type.full +  ".cl";
@@ -131,7 +128,7 @@ int main(){
   }
 
   if (test_benchgemm){
-    tinygemm::dev::benchgemm({hp}, 8, gg, toff, v_a.data(), v_b.data(), v_c.data(), true, "");
+    tinygemm::dev::benchgemm({hp}, 16, gg, toff, v_a.data(), v_b.data(), v_c.data(), true, "");
   }
   
   if (test_find){

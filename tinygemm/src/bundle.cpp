@@ -3,6 +3,7 @@
 #include <tinygemm/derivedparams.hpp>
 #include <tinygemm/alphagenerator.hpp>
 #include <tinygemm/copygenerator.hpp>
+#include <tinygemm/normalformgenerator.hpp>
 #include <tinygemm/betacgenerator.hpp>
 #include <tinygemm/stringutilbase.hpp>
 
@@ -42,10 +43,10 @@ public:
   BundleGenerator(const hyperparams::HyperParams & hp_, const tinygemm::TinyGemmGeometry & gg_): hp(hp_), gg(gg_), dp(hp, gg) {
     
     //TODO: should be static:    
-    depmap["copya"] = {};
-    depmap["copyb"] = {};
+    depmap["wsa"] = {};
+    depmap["wsb"] = {};
     depmap["betac"] = {};
-    depmap["main"] = {"betac", "copya", "copyb"};
+    depmap["main"] = {"betac", "wsa", "wsb"};
 
   }
 
@@ -55,13 +56,40 @@ public:
     std::vector<KernelString> v_tgks;  
     std::vector<std::vector<unsigned> > v_wait_indices;
     
-    if (hp.aps.copy_type != 0){
+    if (hp.aps.workspace_type == 0){
+      //no wsa kernel
+    }
+    
+    else if (hp.aps.workspace_type == 1){
       v_tgks.emplace_back( copygen::get_copya_kernelstring(hp, gg, dp) );
     }
     
-    if (hp.bps.copy_type != 0){
+    else if (hp.aps.workspace_type == 2){
+      v_tgks.emplace_back( nformgen::get_nforma_kernelstring(hp, gg, dp) );
+    }
+    
+    else{
+      throw tinygemm_error("hp.aps.workspace_type should be 0, 1 or 2");
+    }
+    
+
+    if (hp.bps.workspace_type == 0){
+      //no wsb kernel
+    }
+    
+    
+    else if (hp.bps.workspace_type == 1){
       v_tgks.emplace_back( copygen::get_copyb_kernelstring(hp, gg, dp) ); //deduce from hp whether a is copied or not. 
     }
+
+    else if (hp.bps.workspace_type == 2){
+      throw tinygemm_error("not ready here kaboodle kaboodle");
+    }
+
+    else {
+      throw tinygemm_error("hp.bps.workspace_type should be 0, 1 or 2");
+    }
+
     
     if (dp.main_does_beta_c_inc == 0){
       v_tgks.emplace_back( betacgen::get_betac_kernelstring(hp, gg, dp) );

@@ -7,7 +7,7 @@
 #include <tinygemm/prepgenerator.hpp>
 
 namespace tinygemm{
-namespace forallgen{
+namespace nformgen{
 
 KernelString get_nforma_kernelstring(const tinygemm::hyperparams::HyperParams & hp,  const tinygemm::TinyGemmGeometry & gg, const tinygemm::derivedparams::DerivedParams & dp);
 

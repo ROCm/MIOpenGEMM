@@ -7,9 +7,6 @@
 namespace tinygemm{
 namespace bylinegen{
 
-///* TODO : these could be made hyper parameters, (1, 2, 4), (64, 128, 256)  */
-//const size_t work_per_thread = 2;
-//const size_t n_work_items_per_group = 256;
 
 
 class ByLineGenerator : public prepgen::PrepGenerator {
@@ -26,17 +23,8 @@ protected:
   std::string description_string;
   std::string inner_work_string;
 
-  size_t get_work_per_thread(){
-    //could be made a hyperparam
-    return 2;
-  }
-
-  size_t get_local_work_size() override final{
-    //could be made a hyperparam
-    return 256;
-  }
-
-
+  virtual size_t get_work_per_thread()  = 0;
+  
   size_t get_n_work_groups() override final;
 
 public:
@@ -66,11 +54,11 @@ protected:
 
 };
 
-KernelString get_beta_kernelstring(const tinygemm::hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg, const tinygemm::derivedparams::DerivedParams & dp);
+//KernelString get_beta_kernelstring(const tinygemm::hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg, const tinygemm::derivedparams::DerivedParams & dp);
 
-KernelString get_copya_kernelstring(const tinygemm::hyperparams::HyperParams & hp,  const tinygemm::TinyGemmGeometry & gg, const tinygemm::derivedparams::DerivedParams & dp);
+//KernelString get_copya_kernelstring(const tinygemm::hyperparams::HyperParams & hp,  const tinygemm::TinyGemmGeometry & gg, const tinygemm::derivedparams::DerivedParams & dp);
 
-KernelString get_copyb_kernelstring(const tinygemm::hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg, const tinygemm::derivedparams::DerivedParams & dp);
+//KernelString get_copyb_kernelstring(const tinygemm::hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg, const tinygemm::derivedparams::DerivedParams & dp);
 
 }
 }

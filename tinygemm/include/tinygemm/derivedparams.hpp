@@ -33,19 +33,31 @@ public:
   unsigned main_preshift_final_tile = uninitialised_unsigned;
   
   /* how many macro_lengths to cover m (a) or n (b) */
-  unsigned main_n_groups = uninitialised_unsigned;
+  unsigned n_groups = uninitialised_unsigned;
   
   /* used when loading LDS -> registers, depends on MIW*/
   unsigned main_c_interweave_stride;
   
   /* copy to workspace specific parameters */
-  unsigned cw_smallest_possible_ldx = uninitialised_unsigned;
-  unsigned cw_target_ldx = uninitialised_unsigned; 
   unsigned cw_global_offset = uninitialised_unsigned;
   unsigned cw_n_elements = uninitialised_unsigned;
+
+  /* copy to workspace, type 1, specific parameters */
+  unsigned cw1_smallest_possible_ldx = uninitialised_unsigned;
+  unsigned cw1_target_ldx = uninitialised_unsigned; 
+  size_t cw1_local_work_size = uninitialised_unsigned;  //  256;
+  size_t cw1_work_per_thread = uninitialised_unsigned;  //  2;
   
-  //TODO: sort out how to and where to set this.
-  unsigned cw_n_work_items_per_workgroup = uninitialised_unsigned;
+  /* copy to workspace, type 2, specific parameters */
+  size_t cw2_local_work_size = uninitialised_unsigned;
+  
+  unsigned cw2_work_item_load_pll_to_unroll = 0; //always perp
+  unsigned cw2_micro_tile_pll_unroll = uninitialised_unsigned;
+  unsigned cw2_micro_tile_perp_unroll = uninitialised_unsigned;
+  unsigned cw2_n_elements_perp_unroll = uninitialised_unsigned;
+  
+
+  
 
 };
 
@@ -90,6 +102,12 @@ public:
   unsigned main_final_fractional_unroll = uninitialised_unsigned;
 
 
+  /* specific to scaling kernel, betac */
+  size_t betac_local_work_size = uninitialised_unsigned;//256;
+  size_t betac_work_per_thread = uninitialised_unsigned;//2;
+
+
+  unsigned cw2_n_macro_tiles_pll_unroll = uninitialised_unsigned;  
 
   /*the int type for atomics */
   std::string infa;
@@ -111,8 +129,15 @@ public:
 
   unsigned get_n_elements_in_x_unroll(char x);  
   
-  unsigned get_stride(char x, bool pll_k, bool is_macro) const;
+  unsigned get_stride(char x, bool pll_k, bool is_macro, unsigned workspace_type) const;
 
+  unsigned get_stride_cw0(char x, bool pll_k) const;
+
+  unsigned get_stride_cw1(char x, bool pll_k) const;
+
+  unsigned get_stride_cw2(char x, bool pll_k, bool is_macro) const;
+
+  void set_should_be_hyperparams();
 
 
 };

@@ -54,8 +54,10 @@ public:
 
   void append_parameter_list_from_usage(std::stringstream & ss);
 
+  void append_unroll_block_geometry(char x, std::stringstream & ss, bool withcomments);
 
-  void append_unroll_block_geometry(char x, std::stringstream & ss);
+  void append_stride_definitions(char x, std::stringstream & ss, unsigned workspace_type, bool withcomments, std::string macro_prefix);
+
 
 };
 

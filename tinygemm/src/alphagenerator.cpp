@@ -23,10 +23,10 @@ private:
 
 void set_usage(){
   
-  uses_a = (hp.aps.copy_type == 0) ? true : false; 
-  uses_b = (hp.bps.copy_type == 0) ? true : false;
+  uses_a = (hp.aps.workspace_type == 0) ? true : false; 
+  uses_b = (hp.bps.workspace_type == 0) ? true : false;
   uses_c = true;
-  uses_workspace = (hp.aps.copy_type + hp.bps.copy_type) == 0  ? false : true;
+  uses_workspace = (hp.aps.workspace_type + hp.bps.workspace_type) == 0  ? false : true;
   uses_alpha  = true;
   uses_beta = dp.main_does_beta_c_inc;
 
@@ -575,14 +575,14 @@ void append_id_string_sym(std::stringstream & ss, char x){
   
   
   
-  if (hp.at(x).copy_type == 1){
+  if (hp.at(x).workspace_type == 1 || hp.at(x).workspace_type == 2){
     if (X == 'A') ss << "/* from workspace */\n";
     ss << "const TFLOAT * restrict " << x << " = w + w_offset + GLOBAL_OFFSET_" << X << ";\n";
   }
 
-  else if (hp.at(x).copy_type == 2){
-    throw tinygemm_error("Currently, copy type == 2 is not permitted");
-  }
+  //else if (hp.at(x).workspace_type == 2){
+    //throw tinygemm_error("Currently, copy type == 2 is not permitted");
+  //}
     
   else{
     ss << x << " += " << x << "_offset;\n";
@@ -595,7 +595,7 @@ void append_id_string_sym(std::stringstream & ss, char x){
 
   if (X == 'A') ss << "/* Define which part of A this thread will read from process (% / or / % ? doesn't seem to make much difference) */\n";
   ss << "unsigned read_macro_tile_start_" << x << " = group_id_" << x << "*MACRO_TILE_LENGTH_" << X << "; \n";  
-  if (dp.main_use_edge_trick != 0 && hp.at(x).copy_type != 2 ) {
+  if (dp.main_use_edge_trick != 0 && hp.at(x).workspace_type != 2 ) {
     if (X == 'A') ss << "/* tile on edge and A is not normal form: pulling in read zone so no C overflow */\n";
     ss << "if (group_id_" << x << " == N_GROUPS_" << X << " - 1){\n";
     ss << "read_macro_tile_start_" << x << " -= (MACRO_TILE_LENGTH_" << X << " - PRESHIFT_FINAL_TILE_" << X << ");\n";
@@ -654,7 +654,11 @@ void add_predefine_chiral(char x, std::stringstream & ss){
   };    
 
   
-  append_unroll_block_geometry(x, ss);
+  append_unroll_block_geometry(x, ss, x == 'A');
+    
+  append_stride_definitions(x, ss, hp.at(x).workspace_type, x == 'A', "");    
+    
+    
     
   
   if (x == 'A') ss << "/* micro tiles define the pattern of C that individual threads process */\n";
@@ -687,7 +691,7 @@ void add_predefine_chiral(char x, std::stringstream & ss){
   if (x == 'A') ss << "/* depending on whether loads to c are interwoven, set as MIW == 0 ? 1 : N_MICRO_IN_MACRO_A */\n";
   ss << "#define C_INTERWEAVE_STRIDE_" << x << " " << dp.at(x).main_c_interweave_stride << "\n";
   
-  if (hp.at(x).copy_type != 0){
+  if (hp.at(x).workspace_type != 0){
     if (x == 'A') ss << "/* global memory offset, depends on type of copy of both a,b */\n";
     ss << "#define GLOBAL_OFFSET_" << x << " " << dp.at(x).cw_global_offset;
   }
