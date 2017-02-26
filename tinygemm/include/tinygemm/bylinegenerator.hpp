@@ -53,12 +53,12 @@ private:
   void append_copy_preprocessor(std::stringstream & ss);
   void append_derived_definitions(std::stringstream & ss);
 
-  void append_function_definition(std::stringstream & ss);
+  //void append_function_definition(std::stringstream & ss);
   void append_setup_coordinates(std::stringstream & ss);
   void append_positioning_x_string(std::stringstream & ss);
   void append_inner_work(std::stringstream & ss);
   void append_work_string(std::stringstream & ss);
-  void append_positioning_y_string(std::stringstream & ss);
+  void append_positioning_w_string(std::stringstream & ss);
 
 protected:
   virtual void setup_additional() = 0;

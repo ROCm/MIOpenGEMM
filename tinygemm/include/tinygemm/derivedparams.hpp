@@ -43,6 +43,9 @@ public:
   unsigned cw_target_ldx = uninitialised_unsigned; 
   unsigned cw_global_offset = uninitialised_unsigned;
   unsigned cw_n_elements = uninitialised_unsigned;
+  
+  //TODO: sort out how to and where to set this.
+  unsigned cw_n_work_items_per_workgroup = uninitialised_unsigned;
 
 };
 

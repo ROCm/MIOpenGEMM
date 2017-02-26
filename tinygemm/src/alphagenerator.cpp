@@ -1,5 +1,4 @@
 #include <tinygemm/alphagenerator.hpp>
-#include <tinygemm/generatorutil.hpp>
 #include <tinygemm/basegenerator.hpp>
 
 #include <string>
@@ -21,11 +20,6 @@ namespace alphagen{
 class AlphaGenerator : basegen::BaseGenerator{
 
 private:
-
-
-  
-
-
 
 void set_usage(){
   
@@ -583,7 +577,7 @@ void append_id_string_sym(std::stringstream & ss, char x){
   
   if (hp.at(x).copy_type == 1){
     if (X == 'A') ss << "/* from workspace */\n";
-    ss << "const TFLOAT * restrict " << x << " = workspace + workspace_offset + GLOBAL_OFFSET_" << X << ";\n";
+    ss << "const TFLOAT * restrict " << x << " = w + w_offset + GLOBAL_OFFSET_" << X << ";\n";
   }
 
   else if (hp.at(x).copy_type == 2){
@@ -652,25 +646,27 @@ void append_transpose_note(std::stringstream & ss){
 
 
 
+
 void add_predefine_chiral(char x, std::stringstream & ss){
   
   auto defcom = [x, &ss](std::string && comment){
     if (x == 'A') ss << "/*" << " " << comment << " : */\n";
-  };
+  };    
 
-  ss << "\n";
+  
+  append_unroll_block_geometry(x, ss);
+    
+  
   if (x == 'A') ss << "/* micro tiles define the pattern of C that individual threads process */\n";
   ss << "#define MICRO_TILE_LENGTH_" << x << " " << hp.at(x).micro_tile_length << "\n";
-  if (x == 'A') ss << "/* macro tiles define the pattern of C that workgroups (threads with shared local memory) process */\n";
-  ss << "#define MACRO_TILE_LENGTH_" << x << " " << hp.at(x).macro_tile_length << "\n";    
+
   if (x == 'A') ss << "/* the amount of padding of " << x << " in LDS (local) memory, to avoid bank comflicts */\n";
   ss << "#define PAD_LDS_" << x << "  " << hp.at(x).lds_pad_size << "\n";
   if (x == 'A') ss << "/* whether loading of " << x << " from global should try to be long in direction of unroll (1) or perpendicular to it (0) */\n";
   ss << "#define WORK_ITEM_LOAD_" << x << "_PLL_TO_UNROLL " << hp.at(x).load_pll_to_unroll << "\n"; 
   defcom("MACRO_TILE_LENGTH_A + PAD_LDS_A");  
   ss << "#define MACRO_TILE_LENGTH_" << x << "_AND_PAD "<< dp.at(x).main_macro_tile_length_and_pad << "\n";
-  defcom("MACRO_TILE_LENGTH_A * UNROLL");
-  ss << "#define N_ELEMENTS_IN_" << x << "_UNROLL "<< dp.at(x).n_elements_in_unroll <<"\n";
+
   defcom("MACRO_TILE_LENGTH_A_AND_PAD * UNROLL");
   ss << "#define N_ELEMENTS_IN_PADDED_" << x << "_UNROLL "<< dp.at(x).main_n_elements_in_padded_unroll <<"\n";
   defcom("N_ELEMENTS_IN_A_UNROLL / N_WORK_ITEMS_PER_WORKGROUP");
@@ -687,26 +683,6 @@ void add_predefine_chiral(char x, std::stringstream & ss){
   if (x == 'A') ss << "/* Whether micro tile being processed by a compute item is interwoven with other micro tiles (ala Cobalt, (1)) or if the micro tiles are contiguous in C */\n";
   ss << "#define C_MICRO_TILES_INTERWOVEN_" << x << " " << hp.at(x).c_micro_tiles_interwoven << "\n";
 
-
-  
-  if (x == 'A') ss << "/* strides parallel to k (unroll) in A. MACRO_STRIDE_ is between unroll tiles, STRIDE_ is within unroll tiles  */\n"; 
-  for (std::string orth :  {"PLL", "PERP"}){
-    bool pll_k = ("PLL" == orth);
-    ss << "#define STRIDE_" << orth << "_K_" << x << " " << dp.get_stride(x, pll_k, false) << "\n";
-    ss << "#define MACRO_STRIDE_" << orth << "_K_" << x << " " << dp.get_stride(x, pll_k, true) << "\n";
-  }  
-  if (dp.main_use_edge_trick != 0){
-    if (x == 'A') ss <<  "/* 1 + (__M__ - 1) % MACRO_TILE_LENGTH_A. somewhere in 1 ... MACRO_TILE_LENGTH_A  */ \n";
-    ss << "#define PRESHIFT_FINAL_TILE_" << x << " " << dp.at(x).main_preshift_final_tile << "\n";
-  }
-  if (x == 'A') {
-    ss << "/* number of groups covering __M__ : __M__ / MACRO_TILE_LENGTH_A";
-    if (dp.main_use_edge_trick == 1){
-      ss << " + (PRESHIFT_FINAL_TILE_A != MACRO_TILE_LENGTH_A)";
-    }
-    ss << " */" << "\n";
-  }
-  ss << "#define N_GROUPS_" << x << " " <<  dp.at(x).main_n_groups << "\n";
 
   if (x == 'A') ss << "/* depending on whether loads to c are interwoven, set as MIW == 0 ? 1 : N_MICRO_IN_MACRO_A */\n";
   ss << "#define C_INTERWEAVE_STRIDE_" << x << " " << dp.at(x).main_c_interweave_stride << "\n";
@@ -727,7 +703,7 @@ public:
 KernelString get_kernelstring(){
   
   std::stringstream ss;
-  ss << genutil::get_time_string(type);
+  ss << get_time_string();
   ss <<  "\n\n"; // << genutil::get_what_string() << "\n";
   ss << "/* this kernel was generated for starting geometry : */\n";
   ss << "/* " << gg.get_string() << "*/\n";  
@@ -811,9 +787,7 @@ R"(
   
   ss << "\n{\n\n";
 
-
   append_c_offset_string(ss);
-
 
   append_id_string_nonsym(ss);
   ss << "\n\n/* *************************** A setup ************************** */";
@@ -841,19 +815,11 @@ R"(
     ss << "\n/* *********************************************** */\n\n";
   }
   
-  
   ss << "\n\n";
-
-  ss << "unsigned index;\n";
-  
+  ss << "unsigned index;\n";  
   append_split_on_k_vardecl_write_string(ss);
   append_final_write_all(ss);
   ss << "\n}\n";
-
-
-  
-
-
   
   return { {uses_a, uses_b, uses_c, uses_workspace, uses_alpha, uses_beta } , ss.str(), kernelname, dp.main_global_work_size, dp.main_n_work_items_per_workgroup};
 

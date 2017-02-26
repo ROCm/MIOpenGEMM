@@ -10,7 +10,6 @@ namespace prepgen{
 void PrepGenerator::set_usage_from_matrixchar(){
 
   uses_alpha = false;  
-  
   if (matrixchar == 'c') {
     uses_a = false;
     uses_b = false;
@@ -33,15 +32,15 @@ void PrepGenerator::set_usage_from_matrixchar(){
       uses_b = true;    
     }
     else{
-      throw tinygemm_error("Unrecognised matrixchar in forallgenerator.cpp : " + matrixchar + std::string(".\n"));
+      throw tinygemm_error("Unrecognised matrixchar in forallgenerator.cpp : " + std::string(1,matrixchar) + std::string(".\n"));
     }
   }
 }
 
 void PrepGenerator::append_basic_what_definitions(std::stringstream & ss){
   ss << "#define TFLOAT  "  << dp.t_float << "\n";
-  ss<< "#define LDX " << gg.get_ld(matrixchar) << "\n" << 
-"/* less than or equal to LDX, DIM_COAL is size in the contiguous direction (m for c matrix if col contiguous and not transposed) */ \n" << 
+  ss << "#define LD" << MATRIXCHAR << " " << gg.get_ld(matrixchar) << "\n";
+  ss << "/* less than or equal to LD" << MATRIXCHAR << ", DIM_COAL is size in the contiguous direction (m for c matrix if col contiguous and not transposed) */ \n" << 
 "#define DIM_COAL " << gg.get_coal(matrixchar) << "\n" <<
 "/* DIM_UNCOAL is the other dimension of the matrix */ \n" << 
 "#define DIM_UNCOAL " << gg.get_uncoal(matrixchar) << "\n\n";

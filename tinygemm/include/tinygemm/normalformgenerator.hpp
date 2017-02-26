@@ -4,6 +4,7 @@
 #include <tinygemm/kernelstring.hpp>
 #include <tinygemm/tinygemmgeometry.hpp>
 #include <tinygemm/derivedparams.hpp>
+#include <tinygemm/prepgenerator.hpp>
 
 namespace tinygemm{
 namespace forallgen{

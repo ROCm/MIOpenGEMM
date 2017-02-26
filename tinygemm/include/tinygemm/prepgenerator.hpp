@@ -11,7 +11,9 @@ class PrepGenerator : public basegen::BaseGenerator{
 protected:
   unsigned n_work_items;
   unsigned n_work_groups;
-  char matrixchar; 
+  char matrixchar;
+  char MATRIXCHAR;
+  
   void set_usage_from_matrixchar();
   void append_basic_what_definitions(std::stringstream & ss);
 

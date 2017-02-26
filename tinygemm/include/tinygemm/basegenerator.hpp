@@ -23,7 +23,7 @@ protected:
 
   std::string type;
   std::string kernelname;
-  std::string function_definition;
+  //std::string function_definition;
   
   bool uses_a; 
   bool uses_b;
@@ -31,7 +31,17 @@ protected:
   bool uses_workspace;
   bool uses_alpha;
   bool uses_beta;
+
+  //std::string get_generic_kernelname(const std::string & type);
   
+  std::string get_time_string();//const std::string & type); 
+  
+  std::string get_what_string();
+  
+  std::string get_how_string();
+  
+  std::string get_derived_string();
+
 
 public:
   
@@ -43,6 +53,9 @@ public:
   BaseGenerator(const tinygemm::hyperparams::HyperParams & hp_, const tinygemm::TinyGemmGeometry & gg_, const tinygemm::derivedparams::DerivedParams & dp_, const std::string & type_);
 
   void append_parameter_list_from_usage(std::stringstream & ss);
+
+
+  void append_unroll_block_geometry(char x, std::stringstream & ss);
 
 };
 

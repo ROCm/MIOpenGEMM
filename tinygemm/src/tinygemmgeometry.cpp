@@ -54,15 +54,15 @@ unsigned TinyGemmGeometry::get_padless_dim(char x, bool isCoal) const{
 
   bool gate = (get_tX(x) == isColMajor) == isCoal;
 
-  if (x == 'a'){
+  if (x == 'a' || x == 'A'){
     return gate ? k : m;
   }
   
-  else if (x == 'b'){
+  else if (x == 'b'  || x == 'B'){
     return gate ? n : k;
   }
   
-  else if (x == 'c'){
+  else if (x == 'c'  || x == 'C'){
     return gate ? n : m; 
   }
   
@@ -191,9 +191,6 @@ float TinyGemmGeometry::get_distance(const TinyGemmGeometry & gg) const{
     1.0*std::abs(float(ldb) - float(gg.ldb)) + 
     0.2*std::abs(float(ldc) - float(gg.ldc));
   }
-  
-
-  
   
   return distance;
 }

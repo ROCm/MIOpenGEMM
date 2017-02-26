@@ -116,11 +116,16 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams & hp_, const tinygem
 
 std::tuple<bool, std::string>
 DerivedParams::set_fragile(){
+  
+  
+
 
   main_macro_tile_area = hp.bps.macro_tile_length * hp.aps.macro_tile_length;
   main_micro_tile_area = hp.bps.micro_tile_length * hp.aps.micro_tile_length;
   
   main_n_work_items_per_workgroup = main_macro_tile_area / main_micro_tile_area;
+
+
 
   unsigned required_workspace = 0;
 
@@ -128,6 +133,8 @@ DerivedParams::set_fragile(){
   
   for (char x : {'a', 'b'}){
     at(x).n_elements_in_unroll = hp.at(x).macro_tile_length * hp.unroll;
+
+
     at(x).main_n_elements_to_load_per_workitem = at(x).n_elements_in_unroll / main_n_work_items_per_workgroup;  
 
     if (hp.at(x).copy_type != 0){
@@ -142,6 +149,7 @@ DerivedParams::set_fragile(){
 
   }
   
+
  
   /* check -1 : enough workspace memory */
   if (gg.workspace_size < required_workspace){
@@ -153,10 +161,29 @@ DerivedParams::set_fragile(){
   }
   
   /* check 1 : n_work_items_per_workgroup divides n_elements_in_unroll for a and b  */
+
+  auto is_div = [&set_status_ss, this](char x, std::string which, unsigned val){
+    if (at(x).n_elements_in_unroll % val != 0){
+      set_status_ss << "this is not supported:\n" << which << " (" << val << ") is not a factor of n_elements_in_" <<  x << "_unroll (" << at(x).n_elements_in_unroll << "). \n" << "Consider rounding unroll up. \n";
+      return std::make_tuple<bool, std::string>(false, set_status_ss.str());
+    }
+    else{
+      return std::make_tuple<bool, std::string>(true, {});
+    }
+  };
+
+
   for (char x : {'a', 'b'}){
-    if (at(x).n_elements_in_unroll % main_n_work_items_per_workgroup != 0){
-      set_status_ss << "this is not supported:\nn_work_items_per_workgroup (" << main_n_work_items_per_workgroup << ") is not a factor of n_elements_in_" <<  x << "_UNROLL (" << adps.n_elements_in_unroll << "). \nConsider rounding unroll up. \n";
-      return std::make_tuple(false, set_status_ss.str());
+    auto tup = is_div(x, "main_n_work_items_per_workgroup", main_n_work_items_per_workgroup);
+    if (std::get<0>(tup) == false){
+      return tup;
+    }    
+    
+    if (hp.at(x).copy_type == 2 && at(x).n_elements_in_unroll % at(x).cw_n_work_items_per_workgroup != 0){
+      auto tup_cw = is_div(x, "at(x).cw_n_work_items_per_workgroup", at(x).cw_n_work_items_per_workgroup);
+      if (std::get<0>(tup_cw) == false){
+        return tup_cw;
+      }
     }
   }
   
@@ -168,7 +195,7 @@ DerivedParams::set_fragile(){
       return tup;
     }
   }
-  
+
   /* ran the gauntlet, returning deriveable is true */
   return std::make_tuple(true, "");
 }

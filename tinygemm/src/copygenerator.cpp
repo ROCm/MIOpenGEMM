@@ -16,10 +16,12 @@ void CopyGenerator::setup_additional() {
     
   if (type.compare("copya") == 0){
     matrixchar = 'a';
+    MATRIXCHAR = 'A';
   }
   
   else if (type.compare("copyb") == 0){
     matrixchar = 'b';
+    MATRIXCHAR = 'B';
   }
 
   else{
@@ -27,8 +29,8 @@ void CopyGenerator::setup_additional() {
   }
 
   description_string = R"()";
-  function_definition = "(__global const TFLOAT * restrict x, const unsigned x_offset, __global TFLOAT * y, const unsigned y_offset)";
-  inner_work_string = "\n/* the copy */\ny[i] = x[i];";
+  //function_definition = std::string("(__global const TFLOAT * restrict ") + matrixchar + ", const unsigned " + matrixchar + "_offset, __global TFLOAT * w, const unsigned w_offset)";
+  inner_work_string = std::string("\n/* the copy */\nw[i] = ") + matrixchar + "[i];";
 
 }
 
@@ -37,8 +39,8 @@ void CopyGenerator::append_derived_definitions_additional(std::stringstream & ss
   if (matrixchar != 'a' && matrixchar != 'b'){
     throw tinygemm_error(std::string("this is unexpected, call to append_derived_definitions_additional but matrixchar is neither a not b, but rather  ") + matrixchar);
   }
-  ss << "#define LDY " << dp.get_target_ld(matrixchar) << "\n";
-  ss << "#define GLOBAL_OFFSET_Y " << dp.at(matrixchar).cw_global_offset << "\n";
+  ss << "#define LDW " << dp.get_target_ld(matrixchar) << "\n";
+  ss << "#define GLOBAL_OFFSET_W " << dp.at(matrixchar).cw_global_offset << "\n";
 }
 
 

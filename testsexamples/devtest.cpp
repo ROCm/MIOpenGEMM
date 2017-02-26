@@ -24,7 +24,7 @@ tinygemm::hyperparams::HyperParams get_hp(std::string hyperstring = ""){
     //hyperstring = "A_MAC128_MIC8_PAD1_PLU0_LIW0_MIW1_CTY0__B_MAC128_MIC8_PAD1_PLU0_LIW0_MIW0_CTY0__U8_GA1_PU0_ICE1_NAW64_UFO0";
     
     
-    hyperstring = "A_MAC96_MIC6_PAD1_PLU1_LIW0_MIW1_CTY1__B_MAC96_MIC6_PAD1_PLU1_LIW0_MIW0_CTY1__U16_GA1_PU1_ICE1_NAW64_UFO0";
+    hyperstring = "A_MAC96_MIC6_PAD1_PLU1_LIW0_MIW1_CTY1__B_MAC96_MIC6_PAD1_PLU1_LIW0_MIW0_CTY1__U16_GA1_PU1_ICE2_NAW64_UFO0";
   }
   return hyperstring;
 }
