@@ -40,8 +40,8 @@ tinygemm::TinyGemmGeometry get_geometry(){
   bool tB = false;
   bool tC = false;
   unsigned m = 200;//96;//640;      
-  unsigned n = 130;//96;//      
-  unsigned k = 1;//                
+  unsigned n = 200;//96;//      
+  unsigned k = 200;//                
   unsigned lda = ( tA == isColMajor ? k : m ) + 4;//13;
   unsigned ldb = ( tB == isColMajor ? n : k ) + 19;//27;
   unsigned ldc = ( tC == isColMajor ? n : m ) + 15;//11;//11;
