@@ -436,6 +436,8 @@ void append_group_allocation_defn_string(std::stringstream & ss){
 
 void append_final_write_all(std::stringstream & ss){
   
+  
+  
   if (dp.main_use_edge_trick == 0){
     ss << "\n";
     append_final_write_loops_no_check(ss);
@@ -654,9 +656,10 @@ void add_predefine_chiral(char x, std::stringstream & ss){
   };    
 
   
-  append_unroll_block_geometry(x, ss, x == 'A');
+  bool withcomments = x == 'A';
+  append_unroll_block_geometry(x, ss, withcomments );
     
-  append_stride_definitions(x, ss, hp.at(x).workspace_type, x == 'A', "");    
+  append_stride_definitions(x, ss, hp.at(x).workspace_type, withcomments, "");    
     
     
     

@@ -72,10 +72,16 @@ void TinyGemmKernel::set_kernel_args(std::vector<std::pair<size_t, const void *>
 
 
 int TinyGemmKernel::enqueue(cl_uint num_events_in_wait_list, const cl_event *event_wait_list){
+
+  
+
   cl_int ret;
   
 
-  tgk_strings.global_work_size += 0;
+
+
+  //std::cout << "\n" << tgk_strings.global_work_size << "\n" << tgk_strings.local_work_size << "\n" << std::endl;
+
   
   ret = clEnqueueNDRangeKernel(command_queue, clkern, 1, NULL, &tgk_strings.global_work_size, &tgk_strings.local_work_size, num_events_in_wait_list, event_wait_list, &clevent);
     
