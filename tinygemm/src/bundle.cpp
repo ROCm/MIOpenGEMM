@@ -83,7 +83,7 @@ public:
     }
 
     else if (hp.bps.workspace_type == 2){
-      throw tinygemm_error("not ready here kaboodle kaboodle");
+      v_tgks.emplace_back( nformgen::get_nformb_kernelstring(hp, gg, dp) );
     }
 
     else {
@@ -119,15 +119,14 @@ public:
 
 
     if (true == true){
-      std::cout << "-----------------------------------------\nnetwork : \n";
+      std::cout << "------------ network ------------------- \n";
       for (unsigned i = 0; i < v_tgks.size(); ++i){
-        std::cout << "kernel " << i << " ( " << types[i].full << " )  ----- waits for -----> " << std::flush;
+        std::cout << "------------ kernel " << i << " ( " << types[i].full << " )  ----- waits for -----> " << std::flush;
         for (unsigned j = 0; j < v_wait_indices[i].size(); ++j){
-          std::cout << v_wait_indices[i][j] << " ( " << types[v_wait_indices[i][j]].full << " )   " << std::flush;
+          std::cout << "------------ " << v_wait_indices[i][j] << " ( " << types[v_wait_indices[i][j]].full << " )   " << std::flush;
         }
         std::cout << std::endl;
       }
-      std::cout << "-----------------------------------------\n" << std::endl;
     }
     
 

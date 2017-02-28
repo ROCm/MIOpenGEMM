@@ -66,39 +66,42 @@ void BaseGenerator::append_parameter_list_from_usage(std::stringstream & ss){
 
 
 
-void BaseGenerator::append_stride_definitions(char x, std::stringstream & ss, unsigned workspace_type, bool withcomments, std::string macro_prefix){
+void BaseGenerator::append_stride_definitions(char x, std::stringstream & ss, unsigned workspace_type, bool withcomments, std::string macro_prefix, bool with_x_in_name){
   if (withcomments) ss << "/* strides parallel to k (unroll) in " << x << ". MACRO_STRIDE_" << x << " is between unroll tiles, STRIDE_" << x << " is within unroll tiles  */\n"; 
+  
+  std::string x_bit = with_x_in_name ? "_" + std::string(1, x) : "";
   for (std::string orth :  {"PLL", "PERP"}){
     bool pll_k = ("PLL" == orth);
-    ss << "#define " << macro_prefix << "STRIDE_" << orth << "_K_" << x << " " << dp.get_stride(x, pll_k, false, workspace_type) << "\n";
-    ss << "#define " << macro_prefix << "MACRO_STRIDE_" << orth << "_K_" << x << " " << dp.get_stride(x, pll_k, true, workspace_type) << "\n";
+    ss << "#define " << macro_prefix << "STRIDE_" << orth << "_K" << x_bit << " " << dp.get_stride(x, pll_k, false, workspace_type) << "\n";
+    ss << "#define " << macro_prefix << "MACRO_STRIDE_" << orth << "_K" << x_bit << " " << dp.get_stride(x, pll_k, true, workspace_type) << "\n";
   }
 }
 
 
-void BaseGenerator::append_unroll_block_geometry(char x, std::stringstream & ss, bool withcomments){
+void BaseGenerator::append_unroll_block_geometry(char x, std::stringstream & ss, bool withcomments, bool with_x_string){
 
+  std::string x_string = with_x_string ? "_" + std::string(1, x) : "";
   x = (x == 'a' ? 'A' : (x == 'b' ? 'B' : x));
   
   ss << "\n";
   if (withcomments) ss << "/* macro tiles define the pattern of C that workgroups (threads with shared local memory) process */\n";
-  ss << "#define " << "MACRO_TILE_LENGTH_" << x << " " << hp.at(x).macro_tile_length << "\n";
+  ss << "#define " << "MACRO_TILE_LENGTH" << x_string << " " << hp.at(x).macro_tile_length << "\n";
 
-  if (withcomments) ss << "/* number of elements in load block : MACRO_TILE_LENGTH_" << x << " * UNROLL */\n";
-  ss << "#define " << "N_ELEMENTS_IN_" << x << "_UNROLL "<< dp.at(x).n_elements_in_unroll <<"\n";
+  if (withcomments) ss << "/* number of elements in load block : MACRO_TILE_LENGTH" << x_string << " * UNROLL */\n";
+  ss << "#define " << "N_ELEMENTS_IN" << x_string << "_UNROLL "<< dp.at(x).n_elements_in_unroll <<"\n";
 
   if (withcomments) {
-    ss << "/* number of groups covering " << (x == 'A' ? 'M': 'N') <<  " / MACRO_TILE_LENGTH_" << x;
+    ss << "/* number of groups covering " << (x == 'A' ? 'M': 'N') <<  " / MACRO_TILE_LENGTH" << x_string;
     if (dp.main_use_edge_trick == 1){
-      ss << " + (PRESHIFT_FINAL_TILE_" << x << " != MACRO_TILE_LENGTH_" << x << ")";
+      ss << " + (PRESHIFT_FINAL_TILE" << x_string << " != MACRO_TILE_LENGTH" << x_string << ")";
     }
     ss << " */" << "\n";
   }
-  ss << "#define " << "N_GROUPS_" << x << " " <<  dp.at(x).n_groups << "\n";
+  ss << "#define " << "N_GROUPS" << x_string << " " <<  dp.at(x).n_groups << "\n";
 
   if (dp.main_use_edge_trick != 0){
-    if (withcomments) ss <<  "/* 1 + ("  << (x == 'A' ? 'M': 'N') << " - 1) % MACRO_TILE_LENGTH_" << x << ". somewhere in 1 ... MACRO_TILE_LENGTH_" << x << "  */ \n";
-    ss << "#define " << "PRESHIFT_FINAL_TILE_" << x << " " << dp.at(x).main_preshift_final_tile << "\n";
+    if (withcomments) ss <<  "/* 1 + ("  << (x == 'A' ? 'M': 'N') << " - 1) % MACRO_TILE_LENGTH" << x_string << ". somewhere in 1 ... MACRO_TILE_LENGTH" << x_string << "  */ \n";
+    ss << "#define " << "PRESHIFT_FINAL_TILE" << x_string << " " << dp.at(x).preshift_final_tile << "\n";
   }
 }
 

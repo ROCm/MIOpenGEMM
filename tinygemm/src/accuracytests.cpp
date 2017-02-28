@@ -10,7 +10,8 @@ namespace accuracytests {
 template <typename TFloat>
 void elementwise_compare(const TFloat * c_before, double beta, const TFloat * c_cpu, const TFloat * c_gpu, unsigned nels, tinygemm::outputwriting::OutputWriter & mowri){
   
-  float threshold = 0.1;
+  // 1 in 100.
+  float threshold = 0.01;
   
   float max_relerr = 0;
   unsigned i_max = 0;

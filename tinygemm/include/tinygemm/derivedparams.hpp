@@ -30,12 +30,12 @@ public:
   unsigned main_n_micro_tiles_pll_unroll = uninitialised_unsigned;
   unsigned main_macro_tile_length_and_pad = uninitialised_unsigned;
   unsigned main_n_micro_in_macro = uninitialised_unsigned;
-  unsigned main_preshift_final_tile = uninitialised_unsigned;
+  unsigned preshift_final_tile = uninitialised_unsigned;
   
   /* how many macro_lengths to cover m (a) or n (b) */
   unsigned n_groups = uninitialised_unsigned;
   
-  /* used when loading LDS -> registers, depends on MIW*/
+  /* used when loading LDS -> registers, depends on MIW */
   unsigned main_c_interweave_stride;
   
   /* copy to workspace specific parameters */
@@ -45,20 +45,21 @@ public:
   /* copy to workspace, type 1, specific parameters */
   unsigned cw1_smallest_possible_ldx = uninitialised_unsigned;
   unsigned cw1_target_ldx = uninitialised_unsigned; 
-  size_t cw1_local_work_size = uninitialised_unsigned;  //  256;
-  size_t cw1_work_per_thread = uninitialised_unsigned;  //  2;
+  size_t cw1_local_work_size = uninitialised_unsigned;
+  size_t cw1_work_per_thread = uninitialised_unsigned;
   
   /* copy to workspace, type 2, specific parameters */
-  size_t cw2_local_work_size = uninitialised_unsigned;
-  
-  unsigned cw2_work_item_load_pll_to_unroll = 0; //always perp
+  size_t cw2_local_work_size = uninitialised_unsigned;  
+  unsigned cw2_load_pll_to_unroll = uninitialised_unsigned; //always perp
   unsigned cw2_micro_tile_pll_unroll = uninitialised_unsigned;
   unsigned cw2_micro_tile_perp_unroll = uninitialised_unsigned;
+  unsigned cw2_n_micro_tiles_pll_unroll = uninitialised_unsigned;
+  unsigned cw2_n_micro_tiles_perp_unroll = uninitialised_unsigned;
+  
   unsigned cw2_n_elements_perp_unroll = uninitialised_unsigned;
-  
+  unsigned cw2_n_elements_to_load_per_workitem = uninitialised_unsigned;
 
-  
-
+        
 };
 
 /* all derived parameters */
@@ -101,10 +102,9 @@ public:
   unsigned main_use_edge_trick = uninitialised_unsigned;
   unsigned main_final_fractional_unroll = uninitialised_unsigned;
 
-
   /* specific to scaling kernel, betac */
-  size_t betac_local_work_size = uninitialised_unsigned;//256;
-  size_t betac_work_per_thread = uninitialised_unsigned;//2;
+  size_t betac_local_work_size = uninitialised_unsigned;
+  size_t betac_work_per_thread = uninitialised_unsigned;
 
 
   unsigned cw2_n_macro_tiles_pll_unroll = uninitialised_unsigned;  

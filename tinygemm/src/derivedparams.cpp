@@ -58,7 +58,7 @@ unsigned get_copy_pad(char x){
 void DerivedParams::reset_cw_params(char x){
  
   
-  if (x == 'b' && hp.aps.workspace_type != 0 && adps.cw1_target_ldx == uninitialised_unsigned){
+  if (x == 'b' && hp.aps.workspace_type != 0 && adps.cw_n_elements == uninitialised_unsigned){
     throw tinygemm_error(std::string("make sure reset acw1 params is called before reset_bcw1_params, we need that adps.cw1_target_ldx be set here in derivedparams reset of bcw1"));
   }
   
@@ -75,9 +75,11 @@ void DerivedParams::reset_cw_params(char x){
     at(x).cw2_n_elements_perp_unroll = at(x).n_groups*hp.at(x).macro_tile_length;    
     at(x).cw_n_elements = at(x).cw2_n_elements_perp_unroll * gg.k;
     
-    std::cout << "\n\n" << at(x).cw_n_elements;
-    std::cout << "\n\n\n\n\nwhat cw2 resets here ? \n\n\n\n" << std::endl;
-    //throw tinygemm_error("currently copy type 2 is not ready mmmmmmm");
+    cw2_n_macro_tiles_pll_unroll = gg.k / hp.unroll + ((gg.k % hp.unroll) != 0);
+    
+    //std::cout << "\n\n" << at(x).cw_n_elements;
+    //std::cout << "\n\n\n\n\nwhat cw2 resets here ? \n\n\n\n" << std::endl;
+    ////throw tinygemm_error("currently copy type 2 is not ready mmmmmmm");
   }
 
   else{
@@ -123,39 +125,33 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams & hp_, const tinygem
 std::tuple<bool, std::string>
 DerivedParams::set_fragile(){
   
-  
   set_should_be_hyperparams();
 
-  
   for (char x : {'a', 'b'}){
-    at(x).main_preshift_final_tile = 1 + (gg.get_non_k_dim(x) - 1) % hp.at(x).macro_tile_length;
-    at(x).n_groups = gg.get_non_k_dim(x) / hp.at(x).macro_tile_length + (at(x).main_preshift_final_tile != hp.at(x).macro_tile_length);
+    at(x).preshift_final_tile = 1 + (gg.get_non_k_dim(x) - 1) % hp.at(x).macro_tile_length;
+    at(x).n_groups = gg.get_non_k_dim(x) / hp.at(x).macro_tile_length + (at(x).preshift_final_tile != hp.at(x).macro_tile_length);
     at(x).main_macro_tile_length_and_pad = hp.at(x).macro_tile_length + hp.at(x).lds_pad_size;
     at(x).main_n_elements_in_padded_unroll = at(x).main_macro_tile_length_and_pad * hp.unroll;
-    at(x).main_n_micro_in_macro = hp.at(x).macro_tile_length / hp.at(x).micro_tile_length;
-    at(x).main_n_micro_tiles_pll_unroll = hp.unroll / at(x).main_micro_tile_pll_unroll;
-    at(x).main_c_interweave_stride = hp.at(x).c_micro_tiles_interwoven == 0 ? 1 : at(x).main_n_micro_in_macro;  
   }
-
-
+  
 
   main_macro_tile_area = hp.bps.macro_tile_length * hp.aps.macro_tile_length;
   main_micro_tile_area = hp.bps.micro_tile_length * hp.aps.micro_tile_length;
-  
   main_n_work_items_per_workgroup = main_macro_tile_area / main_micro_tile_area;
-
-
 
   unsigned required_workspace = 0;
 
   std::stringstream set_status_ss;
   
   for (char x : {'a', 'b'}){
+    
     at(x).n_elements_in_unroll = hp.at(x).macro_tile_length * hp.unroll;
-
-
     at(x).main_n_elements_to_load_per_workitem = at(x).n_elements_in_unroll / main_n_work_items_per_workgroup;  
-
+    
+    if (hp.at(x).workspace_type == 2){
+      at(x).cw2_n_elements_to_load_per_workitem = at(x).n_elements_in_unroll / at(x).cw2_local_work_size;  
+    }
+    
     if (hp.at(x).workspace_type != 0){
       reset_cw_params(x);
       required_workspace += at(x).cw_n_elements; //cw1_target_ldx*gg.get_uncoal(x);
@@ -198,7 +194,7 @@ DerivedParams::set_fragile(){
       return tup;
     }    
     
-    if (hp.at(x).workspace_type == 2 && at(x).n_elements_in_unroll % at(x).cw2_local_work_size != 0){
+    if (hp.at(x).workspace_type == 2){// && at(x).n_elements_in_unroll % at(x).cw2_local_work_size != 0){
       auto tup_cw = is_div(x, "at(x).cw2_local_work_size", at(x).cw2_local_work_size);
       if (std::get<0>(tup_cw) == false){
         return tup_cw;
@@ -213,6 +209,15 @@ DerivedParams::set_fragile(){
     if (std::get<0>(tup) == false){
       return tup;
     }
+    
+    if (hp.at(x).workspace_type == 2){
+      tup = tiling::get_tileability(hp.at(x).macro_tile_length, hp.unroll, at(x).cw2_n_elements_to_load_per_workitem);
+      if (std::get<0>(tup) == false){
+        return tup;
+      }
+    }
+    
+    
   }
 
   /* ran the gauntlet, returning deriveable is true */
@@ -229,15 +234,20 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams & hp_, const tinygem
   }
   
   /* do the tiling */  
-  tiling::set_tile_dimensions(adps.main_micro_tile_perp_unroll, adps.main_micro_tile_pll_unroll, hp.aps.macro_tile_length, hp.unroll, adps.main_n_elements_to_load_per_workitem, hp.aps.load_pll_to_unroll == 0); 
+  for (char x : {'a', 'b'}){
   
-  tiling::set_tile_dimensions(bdps.main_micro_tile_perp_unroll, bdps.main_micro_tile_pll_unroll, hp.bps.macro_tile_length, hp.unroll, bdps.main_n_elements_to_load_per_workitem, hp.bps.load_pll_to_unroll == 0); 
+    tiling::set_tile_dimensions(at(x).main_micro_tile_perp_unroll, at(x).main_micro_tile_pll_unroll, hp.at(x).macro_tile_length, hp.unroll, at(x).main_n_elements_to_load_per_workitem, hp.at(x).load_pll_to_unroll == 0);
     
+    if (hp.at(x).workspace_type == 2){
+      tiling::set_tile_dimensions(at(x).cw2_micro_tile_perp_unroll, at(x).cw2_micro_tile_pll_unroll, hp.at(x).macro_tile_length, hp.unroll, at(x).cw2_n_elements_to_load_per_workitem, at(x).cw2_load_pll_to_unroll == 0);
+    }
+  } 
+  
+  //tiling::set_tile_dimensions(bdps.main_micro_tile_perp_unroll, bdps.main_micro_tile_pll_unroll, hp.bps.macro_tile_length, hp.unroll, bdps.main_n_elements_to_load_per_workitem, hp.bps.load_pll_to_unroll == 0); 
+  
+  
   main_split_on_k = hp.n_work_items_per_c_elm == 1 ? 0 : 1;
-  
-  
   main_does_beta_c_inc = main_split_on_k == 1 ? 0 : 1; 
-  
   
   if (hp.n_work_items_per_c_elm == 1){
     infa = "n_work_items_per_c_elm is 1, should not be using atomics";
@@ -254,46 +264,49 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams & hp_, const tinygem
   effective_k_varies_string = hp.unroll_for_offset == 0 ? "__K__" : "k_plus_offset";
   t_float = gg.derived.float_size_bits == 32 ? "float" : "double";
   
-  
-
-
-  
   main_n_work_groups = hp.n_work_items_per_c_elm * 
   ((gg.m/hp.aps.macro_tile_length) + (gg.m%hp.aps.macro_tile_length != 0)) * 
   ((gg.n/hp.bps.macro_tile_length) + (gg.n%hp.bps.macro_tile_length != 0));
   
   main_global_work_size = main_n_work_groups * main_n_work_items_per_workgroup;
   
+  for (char x : {'a', 'b'}){      
+    at(x).main_n_micro_in_macro = hp.at(x).macro_tile_length / hp.at(x).micro_tile_length;
+    at(x).main_n_micro_tiles_pll_unroll = hp.unroll / at(x).main_micro_tile_pll_unroll;
+    at(x).main_c_interweave_stride = hp.at(x).c_micro_tiles_interwoven == 0 ? 1 : at(x).main_n_micro_in_macro;  
+    
+    
+    if (hp.at(x).workspace_type == 2){
+      at(x).cw2_n_micro_tiles_pll_unroll = hp.unroll / at(x).cw2_micro_tile_pll_unroll;
+      at(x).cw2_n_micro_tiles_perp_unroll = hp.at(x).macro_tile_length / at(x).cw2_micro_tile_perp_unroll;
+    }
 
+  }
 
-  
-  
   if (hp.group_allocation == 3){
     reset_ga3_params();
   }
 
-  
   /* these guys are hyper params, with a check if not optional ? */
   main_use_edge_trick = (gg.m%hp.aps.macro_tile_length == 0 && gg.n%hp.bps.macro_tile_length == 0) ? 0 : 1;
   main_final_fractional_unroll = (hp.unroll_for_offset == 1 || gg.k%hp.unroll != 0) ? 1 : 0;
   
- 
-
-
 }
 
 void DerivedParams::set_should_be_hyperparams(){
-
-
   
+;
   betac_local_work_size = 256;
   betac_work_per_thread = 2;
 
   for (char x : {'a', 'b'}){
+
     at(x).cw1_local_work_size = 256;
     at(x).cw1_work_per_thread = 2;
     
-    at(x).cw2_local_work_size = 256;
+
+    at(x).cw2_load_pll_to_unroll = 0;    
+    at(x).cw2_local_work_size = 64;//256;
   }
   
 }

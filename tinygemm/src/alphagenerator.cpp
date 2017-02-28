@@ -657,9 +657,10 @@ void add_predefine_chiral(char x, std::stringstream & ss){
 
   
   bool withcomments = x == 'A';
-  append_unroll_block_geometry(x, ss, withcomments );
-    
-  append_stride_definitions(x, ss, hp.at(x).workspace_type, withcomments, "");    
+  bool with_x_in_name = true;
+  append_unroll_block_geometry(x, ss, withcomments, with_x_in_name);
+  
+  append_stride_definitions(x, ss, hp.at(x).workspace_type, withcomments, "", with_x_in_name);    
     
     
     
@@ -683,6 +684,7 @@ void add_predefine_chiral(char x, std::stringstream & ss){
   defcom("MICRO_A_TILE_PLL_UNROLL * MICRO_A_TILE_PERP_UNROLL = N_ELEMENTS_OF_A_TO_LOAD_PER_WORKITEM");  
   ss << "#define MICRO_" << x << "_TILE_PLL_UNROLL " << dp.at(x).main_micro_tile_pll_unroll << " \n";
   ss << "#define MICRO_" << x << "_TILE_PERP_UNROLL " << dp.at(x).main_micro_tile_perp_unroll << "\n";
+  
   defcom("MACRO_TILE_LENGTH_A / MICRO_A_TILE_PLL_UNROLL");  
   ss << "#define N_MICRO_" << x << "_TILES_PLL_UNROLL " << dp.at(x).main_n_micro_tiles_pll_unroll << " \n";
   if (x == 'A') ss << "/* Whether the load tiles are interwoven (ala Cobalt, (1)) or if the load tiles are truly contiguous tiles (0) */\n";
