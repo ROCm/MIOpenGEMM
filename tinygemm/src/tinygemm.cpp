@@ -766,7 +766,20 @@ const std::string & hash
   size_t n_c = gg.ldc * (gg.tC == gg.isColMajor ? gg.m : gg.n) + gg.c_offset;
   size_t c_memsize = get_floatbytes(floattype)*n_c;
   c_copied.clmem = openclutil::cl_create_buffer_from_command_queue(command_queue, CL_MEM_READ_WRITE, c_memsize, NULL, hash + ", in function get_copy of tinygemm");
-  openclutil::cl_enqueue_copy_buffer(command_queue, c, c_copied.clmem, 0, 0, c_memsize, 0, NULL, &c_copy_event, hash + ", in function get_copy of tinygemm");
+  
+  try {
+    openclutil::cl_enqueue_copy_buffer(command_queue, c, c_copied.clmem, 0, 0, c_memsize, 0, NULL, &c_copy_event, hash + ", in function get_copy of tinygemm");
+  }
+  catch (const tinygemm_error& e){
+    
+    outputwriting::OutputWriter localmowri(true, false, "");
+    localmowri << "\n\ncaught error in get_copy, where the passed in geometry is: \n          " << gg.get_string();
+    localmowri << "\nthe new buffer, which was succesfully created, is of size: \n          ";
+    localmowri << n_c <<  "*" << get_floatbytes(floattype) << " = " << c_memsize << Endl;
+    localmowri << e.what();
+    throw e;
+  }
+  
   openclutil::cl_wait_for_events(1, &c_copy_event, "in function find of tinygemm");
   return c_copied;
 }
