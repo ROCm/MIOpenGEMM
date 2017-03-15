@@ -200,7 +200,7 @@ void HyperParamsChiral::checks() const{
   bool_check("load_pll_to_unroll", load_pll_to_unroll); 
   positive_check("micro_tile_length", micro_tile_length);
   positive_check("macro_tile_length", macro_tile_length);
-  positive_check("lds_pad_size", lds_pad_size);
+  //positive_check("lds_pad_size", lds_pad_size);
   bool_check("load_to_lds_interwoven", load_to_lds_interwoven);
   bool_check("c_micro_tiles_interwoven", c_micro_tiles_interwoven);
   mod_check("macro_tile_length", macro_tile_length, "micro_tile_length", micro_tile_length);  

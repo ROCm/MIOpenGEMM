@@ -21,21 +21,31 @@
 tinygemm::hyperparams::HyperParams get_hp(std::string hyperstring = ""){
 
   if (hyperstring.compare("") == 0){
-    //unsigned wos = 2;
-    //hyperstring = "A_MAC128_MIC8_PAD1_PLU0_LIW0_MIW1_WOS" + std::to_string(wos) + "__B_MAC128_MIC8_PAD1_PLU0_LIW0_MIW0_WOS" + std::to_string(wos) + "__U8_GA1_PU0_ICE1_NAW64_UFO0";
+  //unsigned wos = 2;
+  //hyperstring = "A_MAC128_MIC8_PAD1_PLU0_LIW0_MIW1_WOS" + std::to_string(wos) + "__B_MAC128_MIC8_PAD1_PLU0_LIW0_MIW0_WOS" + std::to_string(wos) + "__U8_GA1_PU0_ICE1_NAW64_UFO0";
+  //hyperstring = "A_MAC24_MIC3_PAD1_PLU0_LIW0_MIW1_WOS0__B_MAC16_MIC2_PAD1_PLU1_LIW0_MIW1_WOS0__U16_GA2_PU0_ICE5_NAW64_UFO0";
+
+  //hyperstring = "A_MAC96_MIC6_PAD1_PLU0_LIW1_MIW1_WOS0__B_MAC64_MIC4_PAD1_PLU0_LIW1_MIW1_WOS1__U16_GA2_PU1_ICE5_NAW64_UFO0";
+  //hyperstring = "A_MAC96_MIC6_PAD1_PLU0_LIW0_MIW1_WOS2__B_MAC96_MIC6_PAD1_PLU0_LIW0_MIW0_WOS2__U16_GA1_PU0_ICE1_NAW64_UFO0";
+  //hyperstring = "A_MAC1_MIC1_PAD1_PLU0_LIW0_MIW0_WOS0__B_MAC1_MIC1_PAD1_PLU0_LIW0_MIW0_WOS0__U16_GA1_PU0_ICE1_NAW64_UFO0";
 
 
-    //hyperstring = "A_MAC24_MIC3_PAD1_PLU0_LIW0_MIW1_WOS0__B_MAC16_MIC2_PAD1_PLU1_LIW0_MIW1_WOS0__U16_GA2_PU0_ICE5_NAW64_UFO0";
 
+  //hyperstring = "A_MAC96_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__B_MAC96_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__U16_GA1_PU1_ICE1_NAW64_UFO0";
 
-  hyperstring = "A_MAC96_MIC6_PAD1_PLU0_LIW1_MIW1_WOS0__B_MAC64_MIC4_PAD1_PLU0_LIW1_MIW1_WOS1__U16_GA2_PU1_ICE5_NAW64_UFO0";
-  
-  
-    //hyperstring = "A_MAC96_MIC6_PAD1_PLU0_LIW0_MIW1_WOS2__B_MAC96_MIC6_PAD1_PLU0_LIW0_MIW0_WOS2__U16_GA1_PU0_ICE1_NAW64_UFO0";
-    
-     //hyperstring = "A_MAC1_MIC1_PAD1_PLU0_LIW0_MIW0_WOS0__B_MAC1_MIC1_PAD1_PLU0_LIW0_MIW0_WOS0__U16_GA1_PU0_ICE1_NAW64_UFO0";
+  unsigned pad = 0;
+  unsigned plu = 1;
+  unsigned miw = 1;
+  unsigned liw = 0;
+  unsigned mac = 128;
+  unsigned mic = (mac == 128 ? 8 : 6);
+
+  std::stringstream hyperstring_ss; 
+  hyperstring_ss << "A_MAC" << mac << "_MIC" << mic << "_PAD" << pad << "_PLU" << plu << "_LIW" << liw << "_MIW" << miw << "_WOS0__B_MAC" << mac << "_MIC" << mic << "_PAD" << pad << "_PLU" << plu << "_LIW" << liw << "_MIW" << miw << "_WOS0__U16_GA1_PU0_ICE1_NAW25_UFO0";
+  hyperstring = hyperstring_ss.str();
         
   }
+  
   return hyperstring;
 }
 
@@ -48,16 +58,16 @@ tinygemm::TinyGemmGeometry get_geometry(){
 
   
   bool isColMajor = true;
-  bool tA = true;
-  bool tB = false;
+  bool tA = false;
+  bool tB = true;
   bool tC = false;
-  unsigned m = 1024;//4000;//*30;//490;//96;//640;      
-  unsigned n = 128;//*30;//96;//      
-  unsigned k = 3072;//                
-  unsigned lda = ( tA == isColMajor ? k : m ) + 0;//10;//13;
-  unsigned ldb = ( tB == isColMajor ? n : k ) + 0;//20;//27;
-  unsigned ldc = ( tC == isColMajor ? n : m ) + 0;//30;//11;//11;
-  unsigned workspace_size =  2e8;//150386109 ;
+  unsigned m = 4090;//4000;//*30;//490;//96;//640;      
+  unsigned n = 4090;//*30;//96;//      
+  unsigned k = 3600;//                
+  unsigned lda = ( tA == isColMajor ? k : m ) + 1;//10;//13;
+  unsigned ldb = ( tB == isColMajor ? n : k ) + 1;//20;//27;
+  unsigned ldc = ( tC == isColMajor ? n : m ) + 1;//30;//11;//11;
+  unsigned workspace_size =  1;//2e8;//150386109 ;
   char floattype = sizeof(TFloat) == sizeof(double) ? 'd' : 'f';
 
   return { isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype };
@@ -71,9 +81,9 @@ tinygemm::TinyGemmOffsets get_offsets(){
   unsigned c_offset = 77;//1e6;//11;
   unsigned workspace_offset = 99;//1e6;//17;
   
-  unsigned tail_off_a = 1e6 + 123;
-  unsigned tail_off_b = 1e6 + 97;
-  unsigned tail_off_c = 1e6 + 67;
+  unsigned tail_off_a = 0;//1e6 + 123;
+  unsigned tail_off_b = 0;//1e6 + 97;
+  unsigned tail_off_c = 0;//1e6 + 67;
   
   return {a_offset, b_offset, c_offset, workspace_offset, tail_off_a, tail_off_b, tail_off_c};
 
@@ -141,7 +151,7 @@ int main(){
   }
 
   if (test_benchgemm){
-    tinygemm::dev::benchgemm({hp}, 32, gg, toff, v_a.data(), v_b.data(), v_c.data(), true, "");
+    tinygemm::dev::benchgemm({hp}, 7, gg, toff, v_a.data(), v_b.data(), v_c.data(), true, "");
   }
   
   if (test_find){

@@ -22,6 +22,7 @@
 
 namespace tinygemm{
 
+/* TODO TODO TODO : float4 */
 
 class MultiFloatType{
 
