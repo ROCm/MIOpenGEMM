@@ -115,12 +115,12 @@ int main(){
   bool tC = false;
   //double alpha = 1.43235342345;
   //double beta = 0.45348379373;
-  float allotted_time = 1.003; 
+  float allotted_time = 0.003; 
   bool verbose = false;
   
   /* enforce_deterministc, ldx_offset */
   std::vector<std::tuple<bool, unsigned>> run_settings = {
-    std::make_tuple(false,1), 
+    //std::make_tuple(false,1), 
     std::make_tuple(false,0), 
   }; 
   
@@ -144,7 +144,7 @@ int main(){
     
     //for (unsigned prob_i = 0; prob_i < problems.size(); ++prob_i){
     
-   for (unsigned prob_i = 0; prob_i < 2; ++prob_i){
+   for (unsigned prob_i = 0; prob_i < 10; ++prob_i){
     
       auto problem = problems[prob_i];
       int m, n, k;
