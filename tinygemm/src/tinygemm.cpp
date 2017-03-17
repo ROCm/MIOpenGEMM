@@ -226,7 +226,7 @@ private:
     }
     
     else if (type.compare("wsa") == 0){
-      if (tk_kernels_map.at("wsa").is_set() == false && new_hp.aps.workspace_type != 0){
+      if (tk_kernels_map.at("wsa").is_set() == false && new_hp.aps.workspace_type.val != 0){
          return true;
        }
        else{
@@ -235,7 +235,7 @@ private:
     }
 
     else if (type.compare("wsb") == 0){
-      if (tk_kernels_map.at("wsb").is_set() == false && new_hp.bps.workspace_type != 0){
+      if (tk_kernels_map.at("wsb").is_set() == false && new_hp.bps.workspace_type.val != 0){
          return true;
        }
        else{
@@ -553,17 +553,17 @@ public:
           hyper_front_history.push_back(hp);
         
           /* reason 1 : the macro tile is too tall */
-          if (gg.m < hp.aps.macro_tile_length){
+          if (gg.m < hp.aps.macro_tile_length.val){
             mowri << "m < aps.macro_tile_length, not considering this kernel" << Endl;
           }
           
           /* reason 2 : the macro tile is too wide */
-          else if (gg.n < hp.bps.macro_tile_length){
+          else if (gg.n < hp.bps.macro_tile_length.val){
             mowri << "m < bps.macro_tile_length, not considering this kernel" << Endl;
           }
           
           /* reason 3 : the user requests a deterministic kernel, which cannot be guaranteed */
-          else if (enforce_deterministic == true && hp.n_work_items_per_c_elm != 1){
+          else if (enforce_deterministic == true && hp.n_work_items_per_c_elm.val != 1){
             mowri << "not considering kernels which may be non-deterministic" << Endl;
           }
           /* ************************************************************************ */
@@ -648,7 +648,7 @@ public:
   
       /* TODO: maybe. add another level of loop here. get_one_aways, then get_two_aways, etc. 
        * what we will have here is that `one' is just rough tile shape, important stuff.*/
-      if (improvement_found_on_front == true && front_search_horizon == 1){        
+      if (improvement_found_on_front == true && front_search_horizon == 1){
         /* getting all `one-away's */
         hyper_front = best_hp.get_one_aways(gg);
       }
@@ -657,8 +657,9 @@ public:
       if (improvement_found_on_front == false && front_search_horizon == 1 && elapsed_seconds < allotted_time){
         ++front_search_horizon;
 
-        /* TODO : if you WANT to go onto front 2, uncomment the following. This should be finalised TODO TODO TODO  */        
+        /* TODO : if you WANT to go onto front 2, set the following to true. This should be finalised TODO TODO TODO  */        
         const bool jump_to_front_horizon_size_2 = true;
+        
         if (jump_to_front_horizon_size_2 == true){
           improvement_found_on_front = true;
           mowri << "\nSWITCHING TO FRONT HORIZON SIZE 2\n" << Endl;

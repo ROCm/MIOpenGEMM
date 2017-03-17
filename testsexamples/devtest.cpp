@@ -21,53 +21,25 @@
 tinygemm::hyperparams::HyperParams get_hp(std::string hyperstring = ""){
 
   if (hyperstring.compare("") == 0){
-  //unsigned wos = 2;
-  //hyperstring = "A_MAC128_MIC8_PAD1_PLU0_LIW0_MIW1_WOS" + std::to_string(wos) + "__B_MAC128_MIC8_PAD1_PLU0_LIW0_MIW0_WOS" + std::to_string(wos) + "__U8_GA1_PU0_ICE1_NAW64_UFO0";
-  //hyperstring = "A_MAC24_MIC3_PAD1_PLU0_LIW0_MIW1_WOS0__B_MAC16_MIC2_PAD1_PLU1_LIW0_MIW1_WOS0__U16_GA2_PU0_ICE5_NAW64_UFO0";
-
-  //hyperstring = "A_MAC96_MIC6_PAD1_PLU0_LIW1_MIW1_WOS0__B_MAC64_MIC4_PAD1_PLU0_LIW1_MIW1_WOS1__U16_GA2_PU1_ICE5_NAW64_UFO0";
-  //hyperstring = "A_MAC96_MIC6_PAD1_PLU0_LIW0_MIW1_WOS2__B_MAC96_MIC6_PAD1_PLU0_LIW0_MIW0_WOS2__U16_GA1_PU0_ICE1_NAW64_UFO0";
-  //hyperstring = "A_MAC1_MIC1_PAD1_PLU0_LIW0_MIW0_WOS0__B_MAC1_MIC1_PAD1_PLU0_LIW0_MIW0_WOS0__U16_GA1_PU0_ICE1_NAW64_UFO0";
-
-
-
-  //hyperstring = "A_MAC96_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__B_MAC96_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__U16_GA1_PU1_ICE1_NAW64_UFO0";
-
-  unsigned pad = 0;
-  unsigned plu = 1;
-  unsigned miw = 1;
-  unsigned liw = 0;
-  unsigned mac = 128;
-  unsigned mic = (mac == 128 ? 8 : 6);
-
-  std::stringstream hyperstring_ss; 
-  hyperstring_ss << "A_MAC" << mac << "_MIC" << mic << "_PAD" << pad << "_PLU" << plu << "_LIW" << liw << "_MIW" << miw << "_WOS0__B_MAC" << mac << "_MIC" << mic << "_PAD" << pad << "_PLU" << plu << "_LIW" << liw << "_MIW" << miw << "_WOS0__U16_GA1_PU0_ICE1_NAW25_UFO0";
-  hyperstring = hyperstring_ss.str();
-        
+    hyperstring = "A_MAC128_MIC8_PAD2_PLU0_LIW0_MIW1_WOS0__B_MAC96_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__U16_GA3_PU0_ICE1_NAW64_UFO0";
   }
-  
   return hyperstring;
 }
 
 template <typename TFloat>
 tinygemm::TinyGemmGeometry get_geometry(){
 
-  //std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 2048, 2048, 35, 35, 8457, 2048, 0, 'f'}, 
-
-  // std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 3072, 3072, 1024, 1024, 128, 3072, 0, 'f'},  
-
-  
   bool isColMajor = true;
   bool tA = false;
   bool tB = true;
   bool tC = false;
-  unsigned m = 4090;//4000;//*30;//490;//96;//640;      
-  unsigned n = 4090;//*30;//96;//      
-  unsigned k = 3600;//                
-  unsigned lda = ( tA == isColMajor ? k : m ) + 1;//10;//13;
-  unsigned ldb = ( tB == isColMajor ? n : k ) + 1;//20;//27;
-  unsigned ldc = ( tC == isColMajor ? n : m ) + 1;//30;//11;//11;
-  unsigned workspace_size =  1;//2e8;//150386109 ;
+  unsigned m = 128*(32) - 6; 
+  unsigned n = 96*(55) - 4; 
+  unsigned k = 16*229;           
+  unsigned lda = ( tA == isColMajor ? k : m ) + 0;
+  unsigned ldb = ( tB == isColMajor ? n : k ) + 0;
+  unsigned ldc = ( tC == isColMajor ? n : m ) + 0;
+  unsigned workspace_size =  1;
   char floattype = sizeof(TFloat) == sizeof(double) ? 'd' : 'f';
 
   return { isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype };
@@ -118,7 +90,7 @@ void print_kernel(){
 int main(){
   
 
-  bool test_print = true;
+  bool test_print = false;
   bool test_benchgemm = true;//true;
   bool test_find = false;
   bool test_accuracy = false;
@@ -155,7 +127,7 @@ int main(){
   }
   
   if (test_find){
-    float allotted_time = 5.;
+    float allotted_time = 40.;
     tinygemm::dev::find(allotted_time, v_a.data(), v_b.data(), v_c.data(), false, gg, toff, true, "");
   }
   

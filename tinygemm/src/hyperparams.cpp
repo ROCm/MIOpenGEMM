@@ -61,13 +61,13 @@ std::string HyperParamsChiral::get_string() const{
   std::stringstream ss;
   
   ss << 
-  "MAC" << macro_tile_length << "_" <<  
-  "MIC" << micro_tile_length << "_" << 
-  "PAD" << lds_pad_size << "_" << 
-  "PLU" << load_pll_to_unroll << "_" << 
-  "LIW" << load_to_lds_interwoven << "_" << 
-  "MIW" << c_micro_tiles_interwoven << "_" << 
-  "WOS" << workspace_type;
+  "MAC" << macro_tile_length.val << "_" <<  
+  "MIC" << micro_tile_length.val << "_" << 
+  "PAD" << lds_pad_size.val << "_" << 
+  "PLU" << load_pll_to_unroll.val << "_" << 
+  "LIW" << load_to_lds_interwoven.val << "_" << 
+  "MIW" << c_micro_tiles_interwoven.val << "_" << 
+  "WOS" << workspace_type.val;
 
   return ss.str();
   
@@ -81,12 +81,12 @@ std::string HyperParams::get_string() const {
   ss << 
   "A_" << at('a').get_string() << "__" << 
   "B_" << at('b').get_string() << "__" << 
-  "U" << unroll << "_" <<   
-  "GA" << group_allocation << "_" << 
-  "PU" << unroll_pragma << "_" << 
-  "ICE" << n_work_items_per_c_elm << "_" << 
-  "NAW" << n_target_active_workgroups << "_" << 
-  "UFO" << unroll_for_offset;
+  "U" << unroll.val << "_" <<   
+  "GA" << group_allocation.val << "_" << 
+  "PU" << unroll_pragma.val << "_" << 
+  "ICE" << n_work_items_per_c_elm.val << "_" << 
+  "NAW" << n_target_active_workgroups.val << "_" << 
+  "UFO" << unroll_for_offset.val;
   
   return ss.str();
 
@@ -167,14 +167,14 @@ void mod_check(const std::string & key1, unsigned v1, const std::string & key2, 
 }
 
 void HyperParams::ga_check() const{
-  if (group_allocation != 1 && group_allocation != 2 && group_allocation != 3){
-    throw tinygemm::tinygemm_error("Invalid group_allocation (GA) value, it should be in [1,2,3], not " + std::to_string(group_allocation) + "\n");
+  if (group_allocation.val != 1 && group_allocation.val != 2 && group_allocation.val != 3){
+    throw tinygemm::tinygemm_error("Invalid group_allocation (GA) value, it should be in [1,2,3], not " + std::to_string(group_allocation.val) + "\n");
   }  
 }
 
 void HyperParamsChiral::cw_check() const{
-  if (workspace_type != 0 && workspace_type != 1 && workspace_type != 2){
-    throw tinygemm::tinygemm_error("Invalid workspace_type (CW) value, it should be in [0,1,2], not " + std::to_string(workspace_type) + "\n");
+  if (workspace_type.val != 0 && workspace_type.val != 1 && workspace_type.val != 2){
+    throw tinygemm::tinygemm_error("Invalid workspace_type (CW) value, it should be in [0,1,2], not " + std::to_string(workspace_type.val) + "\n");
   }  
 }
 
@@ -197,13 +197,13 @@ HyperParamsChiral & HyperParams::at(char x)  {
 
 void HyperParamsChiral::checks() const{
 
-  bool_check("load_pll_to_unroll", load_pll_to_unroll); 
-  positive_check("micro_tile_length", micro_tile_length);
-  positive_check("macro_tile_length", macro_tile_length);
+  bool_check("load_pll_to_unroll", load_pll_to_unroll.val); 
+  positive_check("micro_tile_length", micro_tile_length.val);
+  positive_check("macro_tile_length", macro_tile_length.val);
   //positive_check("lds_pad_size", lds_pad_size);
-  bool_check("load_to_lds_interwoven", load_to_lds_interwoven);
-  bool_check("c_micro_tiles_interwoven", c_micro_tiles_interwoven);
-  mod_check("macro_tile_length", macro_tile_length, "micro_tile_length", micro_tile_length);  
+  bool_check("load_to_lds_interwoven", load_to_lds_interwoven.val);
+  bool_check("c_micro_tiles_interwoven", c_micro_tiles_interwoven.val);
+  mod_check("macro_tile_length", macro_tile_length.val, "micro_tile_length", micro_tile_length.val);  
   cw_check();
   
 }
@@ -212,11 +212,11 @@ void HyperParams::checks() const{
 
   aps.checks();
   bps.checks();
-  bool_check("unroll_pragma", unroll_pragma);
-  bool_check("unroll_for_offset", unroll_for_offset);
-  positive_check("unroll", unroll);
-  positive_check("n_target_active_workgroups", n_target_active_workgroups);
-  positive_check("n_work_items_per_c_elm", n_work_items_per_c_elm);
+  bool_check("unroll_pragma", unroll_pragma.val);
+  bool_check("unroll_for_offset", unroll_for_offset.val);
+  positive_check("unroll", unroll.val);
+  positive_check("n_target_active_workgroups", n_target_active_workgroups.val);
+  positive_check("n_work_items_per_c_elm", n_work_items_per_c_elm.val);
   ga_check();
   
 }
@@ -228,21 +228,21 @@ HyperParams::HyperParams(const std::map<char, std::map<std::string, unsigned> > 
     
   
   for (char X : {'A', 'B'}){
-    at(X).macro_tile_length = params.at(X).at("macro_tile_length"); 
-    at(X).micro_tile_length = params.at(X).at("micro_tile_length");
-    at(X).load_pll_to_unroll = params.at(X).at("load_pll_to_unroll");
-    at(X).workspace_type = params.at(X).at("workspace_type");
-    at(X).lds_pad_size = params.at(X).at("lds_pad_size");
+    at(X).macro_tile_length.val = params.at(X).at("macro_tile_length"); 
+    at(X).micro_tile_length.val = params.at(X).at("micro_tile_length");
+    at(X).load_pll_to_unroll.val = params.at(X).at("load_pll_to_unroll");
+    at(X).workspace_type.val = params.at(X).at("workspace_type");
+    at(X).lds_pad_size.val = params.at(X).at("lds_pad_size");
     at(X).load_to_lds_interwoven = params.at(X).at("load_to_lds_interwoven");
     at(X).c_micro_tiles_interwoven = params.at(X).at("c_micro_tiles_interwoven");
   }
  
-  unroll = params.at('C').at("unroll");
-  group_allocation = params.at('C').at("group_allocation");
-  unroll_pragma = params.at('C').at("unroll_pragma");
-  n_work_items_per_c_elm = params.at('C').at("n_work_items_per_c_elm");
-  n_target_active_workgroups = params.at('C').at("n_target_active_workgroups");
-  unroll_for_offset = params.at('C').at("unroll_for_offset");
+  unroll.val = params.at('C').at("unroll");
+  group_allocation.val = params.at('C').at("group_allocation");
+  unroll_pragma.val = params.at('C').at("unroll_pragma");
+  n_work_items_per_c_elm.val = params.at('C').at("n_work_items_per_c_elm");
+  n_target_active_workgroups.val = params.at('C').at("n_target_active_workgroups");
+  unroll_for_offset.val = params.at('C').at("unroll_for_offset");
 
   checks();
 }
@@ -262,21 +262,21 @@ std::map<char, std::map<std::string, unsigned > > HyperParams::get_params(){
   };
   
   for (char X : {'A', 'B'}){
-    params[X]["macro_tile_length"] = at(X).micro_tile_length;
-    params[X]["micro_tile_length"] = at(X).micro_tile_length;
-    params[X]["load_pll_to_unroll"] =  at(X).load_pll_to_unroll;
-    params[X]["workspace_type"] = at(X).workspace_type;
-    params[X]["lds_pad_size"] = at(X).lds_pad_size;
-    params[X]["load_to_lds_interwoven"] = at(X).load_to_lds_interwoven;
-    params[X]["c_micro_tiles_interwoven"] = at(X).c_micro_tiles_interwoven;
+    params[X]["macro_tile_length"] = at(X).macro_tile_length.val;
+    params[X]["micro_tile_length"] = at(X).micro_tile_length.val;
+    params[X]["load_pll_to_unroll"] =  at(X).load_pll_to_unroll.val;
+    params[X]["workspace_type"] = at(X).workspace_type.val;
+    params[X]["lds_pad_size"] = at(X).lds_pad_size.val;
+    params[X]["load_to_lds_interwoven"] = at(X).load_to_lds_interwoven.val;
+    params[X]["c_micro_tiles_interwoven"] = at(X).c_micro_tiles_interwoven.val;
   }
   
-  params['C']["unroll"] = unroll;
-  params['C']["group_allocation"] = group_allocation;
-  params['C']["unroll_pragma"] = unroll_pragma;
-  params['C']["n_work_items_per_c_elm"] = n_work_items_per_c_elm;
-  params['C']["n_target_active_workgroups"] = n_target_active_workgroups;
-  params['C']["unroll_for_offset"] = unroll_for_offset;
+  params['C']["unroll"] = unroll.val;
+  params['C']["group_allocation"] = group_allocation.val;
+  params['C']["unroll_pragma"] = unroll_pragma.val;
+  params['C']["n_work_items_per_c_elm"] = n_work_items_per_c_elm.val;
+  params['C']["n_target_active_workgroups"] = n_target_active_workgroups.val;
+  params['C']["unroll_for_offset"] = unroll_for_offset.val;
   
   
   check_map_keys(params);
@@ -312,7 +312,8 @@ HyperParams get_default_tiniest(bool enforce_deterministic){
 /* Find the nearest geometry in the cache, and take its hyper params */
 HyperParams get_default(const tinygemm::TinyGemmGeometry & gg, bool enforce_deterministic){
   
-  //return std::string("A_MAC128_MIC8_PAD1_PLU0_LIW1_MIW1_WOS0__B_MAC128_MIC8_PAD1_PLU1_LIW1_MIW1_WOS0__U32_GA3_PU1_ICE2_NAW64_UFO1");
+                      //A_MAC128_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MAC96_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__U16_GA3_PU0_ICE1_NAW64_UFO0
+  //return std::string("A_MAC128_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MAC96_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__U8_GA1_PU1_ICE4_NAW64_UFO0");
   
   /* The case  of  (gg.m < 8 || gg.n < 8) */  
   if (gg.m < 8 || gg.n < 8) {
@@ -334,7 +335,7 @@ HyperParams get_default(const tinygemm::TinyGemmGeometry & gg, bool enforce_dete
   }
 
   if (enforce_deterministic == true){
-    best_hp.n_work_items_per_c_elm = 1;
+    best_hp.n_work_items_per_c_elm.val= 1;
   }
 
       
@@ -342,11 +343,11 @@ HyperParams get_default(const tinygemm::TinyGemmGeometry & gg, bool enforce_dete
 }
   
 unsigned HyperParams::get_nwitems_h(){
-  return aps.macro_tile_length / aps.micro_tile_length;
+  return aps.macro_tile_length.val / aps.micro_tile_length.val;
 }
 
 unsigned HyperParams::get_nwitems_w(){
-  return bps.macro_tile_length / bps.micro_tile_length;
+  return bps.macro_tile_length.val / bps.micro_tile_length.val;
 }
 
 bool HyperParams::operator == (const HyperParams & hpr){
@@ -417,7 +418,7 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
     }
   }
   
-  for (auto & micro_tile : micro_tile_edges[ {{aps.micro_tile_length , bps.micro_tile_length }} ]){
+  for (auto & micro_tile : micro_tile_edges[ {{aps.micro_tile_length.val , bps.micro_tile_length.val }} ]){
     
     auto micro_h = micro_tile[0];
     auto micro_w = micro_tile[1];
@@ -426,39 +427,39 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
      * change n_work_items_per_c_elm in the same step, provided that n_work_items_per_c_elm 
      * increases by 1 if the area of the micro tile decreases, and v.v. */
     std::vector<unsigned> k_splits_to_consider;
-    if (micro_h*micro_w < aps.micro_tile_length*bps.micro_tile_length && aps.micro_tile_length*bps.micro_tile_length < 36){
+    if (micro_h*micro_w < aps.micro_tile_length.val*bps.micro_tile_length.val && aps.micro_tile_length.val*bps.micro_tile_length.val < 36){
       if (rand()%3 == 0){ //TODO : is using rand bad?
-        k_splits_to_consider = {n_work_items_per_c_elm, n_work_items_per_c_elm + 1};
+        k_splits_to_consider = {n_work_items_per_c_elm.val, n_work_items_per_c_elm.val + 1};
       }
       else{
-        k_splits_to_consider = {n_work_items_per_c_elm};
+        k_splits_to_consider = {n_work_items_per_c_elm.val};
       }
     }
     
-    else if (micro_h*micro_w > aps.micro_tile_length*bps.micro_tile_length && n_work_items_per_c_elm > 1 ){
+    else if (micro_h*micro_w > aps.micro_tile_length.val*bps.micro_tile_length.val && n_work_items_per_c_elm.val > 1 ){
       if (rand()%3 == 0){
-        k_splits_to_consider = {n_work_items_per_c_elm, n_work_items_per_c_elm - 1};
+        k_splits_to_consider = {n_work_items_per_c_elm.val, n_work_items_per_c_elm.val - 1};
       }
       else{
-        k_splits_to_consider = {n_work_items_per_c_elm};
+        k_splits_to_consider = {n_work_items_per_c_elm.val};
       }
     }
     
     else{
-      k_splits_to_consider = {n_work_items_per_c_elm};
+      k_splits_to_consider = {n_work_items_per_c_elm.val};
     }
     
     for (auto k_split : k_splits_to_consider){
       HyperParams hp(*this);
-      hp.aps.micro_tile_length = micro_h;
-      hp.bps.micro_tile_length = micro_w;
-      hp.aps.macro_tile_length = micro_h*n_h0;
-      hp.bps.macro_tile_length = micro_w*n_w0;
-      hp.n_work_items_per_c_elm = k_split;
+      hp.aps.micro_tile_length.val = micro_h;
+      hp.bps.micro_tile_length.val = micro_w;
+      hp.aps.macro_tile_length.val = micro_h*n_h0;
+      hp.bps.macro_tile_length.val = micro_w*n_w0;
+      hp.n_work_items_per_c_elm.val = k_split;
       
       /* Observations suggest that k-split > 1 does not work very well with ufo. */
       if (k_split > 1){
-        hp.unroll_for_offset = 0;
+        hp.unroll_for_offset.val = 0;
       }
        
       one_aways.push_back(hp);
@@ -472,14 +473,14 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
     
   std::vector<int> delta_k_split = {-4, -2, -1, 1, 2, 4, 8};
   for (auto & dx : delta_k_split){
-    int old_k_split = static_cast<int>(n_work_items_per_c_elm);
+    int old_k_split = static_cast<int>(n_work_items_per_c_elm.val);
     int new_k_split =  old_k_split + dx;
     if (new_k_split > 0 &&  (new_k_split / old_k_split <= 2)){
       HyperParams hp(*this);
-      hp.n_work_items_per_c_elm = new_k_split;
+      hp.n_work_items_per_c_elm.val = new_k_split;
       /* Observations suggest that k-split > 1 does not work very well with ufo. */
       if (new_k_split > 1){
-        hp.unroll_for_offset = 0;
+        hp.unroll_for_offset.val = 0;
       }
       one_aways.push_back(hp);
     }
@@ -493,8 +494,8 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
   std::vector<unsigned> wg_hw_s = {8, 16};
   for (auto & wg_hw : wg_hw_s){
     HyperParams hp(*this);
-    hp.aps.macro_tile_length = wg_hw*hp.aps.micro_tile_length;
-    hp.bps.macro_tile_length = wg_hw*hp.bps.micro_tile_length;          
+    hp.aps.macro_tile_length.val = wg_hw*hp.aps.micro_tile_length.val;
+    hp.bps.macro_tile_length.val = wg_hw*hp.bps.micro_tile_length.val;          
     one_aways.push_back(hp);
   }
   
@@ -502,14 +503,14 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
   
   std::vector<int> delta_unrolls = {-16, -8, +8, +16};
   for (auto & d_unroll : delta_unrolls){
-    int old_unroll = unroll;
+    int old_unroll = unroll.val;
     int new_unroll = old_unroll + d_unroll;
     if (new_unroll > 0 && new_unroll <= 60){
       HyperParams hp(*this);
-      hp.unroll = new_unroll;
+      hp.unroll.val = new_unroll;
       /* (weak) observations suggest that unroll > 8 does not work well with ufo. */
       if (new_unroll > 8){
-        hp.unroll_for_offset = 0;
+        hp.unroll_for_offset.val = 0;
       }
       one_aways.push_back(hp);
     }
@@ -517,11 +518,11 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
     
   
   
-  if (n_work_items_per_c_elm >= 4){ //if n_work_items_per_c_elm is 4,5,6,7,8,9,10 ... consider making it 2,2,2,2,4,4,4,4 ... with an "increase" in unroll_map
+  if (n_work_items_per_c_elm.val >= 4){ //if n_work_items_per_c_elm is 4,5,6,7,8,9,10 ... consider making it 2,2,2,2,4,4,4,4 ... with an "increase" in unroll_map
     HyperParams hp_2(*this);
-    hp_2.unroll = 16*(hp_2.unroll/16 + 1); //= unroll_map.at(unroll).back();
-    hp_2.n_work_items_per_c_elm = 2*(n_work_items_per_c_elm/4);
-    //hp_2.unroll_for_offset = 0; /* this is a mere whim */
+    hp_2.unroll.val = 16*(hp_2.unroll.val/16 + 1); //= unroll_map.at(unroll).back();
+    hp_2.n_work_items_per_c_elm.val = 2*(n_work_items_per_c_elm.val/4);
+    //hp_2.unroll_for_offset.val = 0; /* this is a mere whim */
     one_aways.push_back(hp_2);
   }  
   
@@ -534,7 +535,7 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
     HyperParams hp(*this);
     
     for (char x : {'a', 'b'}) {
-      hp.at(x).lds_pad_size = pad_;
+      hp.at(x).lds_pad_size.val = pad_;
     }
     
     one_aways.push_back(hp);
@@ -548,7 +549,7 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
   std::vector<unsigned> group_allocations = {1,2,3};
   for (auto & group_allocation_ : group_allocations){
     HyperParams hp(*this);
-    hp.group_allocation = group_allocation_;
+    hp.group_allocation.val = group_allocation_;
     one_aways.push_back(hp);
   }
 
@@ -557,7 +558,7 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
   std::vector<unsigned> work_item_load_a_pll_to_unrolls = {0,1};
   for (auto & work_item_load_a_pll_to_unroll_ : work_item_load_a_pll_to_unrolls){
     HyperParams hp(*this);
-    hp.at('a').load_pll_to_unroll = work_item_load_a_pll_to_unroll_;
+    hp.at('a').load_pll_to_unroll.val = work_item_load_a_pll_to_unroll_;
     
     
     one_aways.push_back(hp);
@@ -568,7 +569,7 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
   std::vector<unsigned> work_item_load_b_pll_to_unrolls = {0,1};    
   for (auto & work_item_load_b_pll_to_unroll_ : work_item_load_b_pll_to_unrolls){
     HyperParams hp(*this);  
-    hp.bps.load_pll_to_unroll = work_item_load_b_pll_to_unroll_;
+    hp.bps.load_pll_to_unroll.val = work_item_load_b_pll_to_unroll_;
     one_aways.push_back(hp);
   }
   
@@ -580,7 +581,7 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
   std::vector<unsigned> unroll_pragmas = {0,1};
   for (auto & unroll_pragma_ : unroll_pragmas){
     HyperParams hp(*this);
-    hp.unroll_pragma = unroll_pragma_;
+    hp.unroll_pragma.val = unroll_pragma_;
     one_aways.push_back(hp);
   }
   
@@ -592,7 +593,7 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
   for (auto & load_to_lds_interwoven_ : load_to_lds_interwovens){
     HyperParams hp(*this);
     for (char x : {'a', 'b'}) {
-      hp.at(x).load_to_lds_interwoven = load_to_lds_interwoven_;
+      hp.at(x).load_to_lds_interwoven.val = load_to_lds_interwoven_;
     }
     one_aways.push_back(hp);
   }
@@ -617,10 +618,10 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
    * with the additional complexity added by unroll_for_offset = 1.
    * */
   std::vector<unsigned> unroll_for_offsets = {0,1};
-  for (auto & unroll_for_offset_ : unroll_for_offsets){
+  for (auto & value_ : unroll_for_offsets){
     HyperParams hp2(*this);
-    hp2.unroll_for_offset = unroll_for_offset_;
-    hp2.unroll_pragma = true;
+    hp2.unroll_for_offset.val = value_;
+    hp2.unroll_pragma.val = true;
     one_aways.push_back(hp2);
   }
   
@@ -636,47 +637,47 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
       add_hyperparam(hparamstring, one_aways); //*this, 
     };
     
-    if (aps.micro_tile_length*bps.micro_tile_length <=4 ){
+    if (aps.micro_tile_length.val*bps.micro_tile_length.val <=4 ){
       add_hps("A_MAC16_MIC2_PAD1_PLU0_LIW0_MIW1_WOS0__B_MAC16_MIC2_PAD1_PLU1_LIW0_MIW1_WOS0__U16_GA1_PU1_ICE6_NAW64_UFO0");
     }
 
-    if (aps.micro_tile_length*bps.micro_tile_length <=16 ){
+    if (aps.micro_tile_length.val*bps.micro_tile_length.val <=16 ){
       add_hps("A_MAC48_MIC3_PAD1_PLU1_LIW0_MIW1_WOS0__B_MAC32_MIC2_PAD1_PLU0_LIW0_MIW1_WOS0__U16_GA2_PU0_ICE5_NAW64_UFO0");
     }
 
-    if (aps.micro_tile_length*bps.micro_tile_length <=20 ){
+    if (aps.micro_tile_length.val*bps.micro_tile_length.val <=20 ){
       add_hps("A_MAC64_MIC4_PAD1_PLU0_LIW1_MIW1_WOS0__B_MAC64_MIC4_PAD1_PLU0_LIW1_MIW1_WOS0__U16_GA2_PU0_ICE4_NAW64_UFO0");
     }
     
-    if (aps.micro_tile_length*bps.micro_tile_length >=16 ){
+    if (aps.micro_tile_length.val*bps.micro_tile_length.val >=16 ){
       add_hps("A_MAC128_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MAC128_MIC8_PAD1_PLU1_LIW0_MIW1_WOS0__U16_GA1_PU1_ICE1_NAW64_UFO0");
     }
     
-    if (aps.micro_tile_length*bps.micro_tile_length >=8 ){
+    if (aps.micro_tile_length.val*bps.micro_tile_length.val >=8 ){
       add_hps("A_MAC80_MIC5_PAD1_PLU0_LIW0_MIW1_WOS0__B_MAC64_MIC4_PAD1_PLU1_LIW0_MIW1_WOS0__U16_GA2_PU1_ICE2_NAW64_UFO0");
     }
 
-    if (aps.micro_tile_length >= bps.micro_tile_length &&  aps.micro_tile_length*bps.micro_tile_length >=10){
+    if (aps.micro_tile_length.val >= bps.micro_tile_length.val &&  aps.micro_tile_length.val*bps.micro_tile_length.val >=10){
       add_hps("A_MAC96_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__B_MAC64_MIC4_PAD1_PLU1_LIW0_MIW1_WOS0__U16_GA1_PU1_ICE4_NAW64_UFO0");
     }
 
-    if ((aps.micro_tile_length == 8 || aps.micro_tile_length == 4) && bps.micro_tile_length ==  4){
+    if ((aps.micro_tile_length.val == 8 || aps.micro_tile_length.val == 4) && bps.micro_tile_length.val ==  4){
       add_hps("A_MAC128_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MAC64_MIC4_PAD1_PLU1_LIW0_MIW1_WOS0__U16_GA2_PU0_ICE3_NAW64_UFO0");
     }
     
-    if ((aps.micro_tile_length == 8 || aps.micro_tile_length == 4) && bps.micro_tile_length ==  4){    
+    if ((aps.micro_tile_length.val == 8 || aps.micro_tile_length.val == 4) && bps.micro_tile_length.val ==  4){    
       add_hps("A_MAC64_MIC4_PAD1_PLU0_LIW0_MIW1_WOS0__B_MAC64_MIC4_PAD1_PLU1_LIW0_MIW1_WOS0__U16_GA3_PU1_ICE1_NAW64_UFO0");
     }
     
-    if ((aps.micro_tile_length*aps.micro_tile_length == 24) && n_work_items_per_c_elm >  1){    
+    if ((aps.micro_tile_length.val*aps.micro_tile_length.val == 24) && n_work_items_per_c_elm.val >  1){    
       add_hps("A_MAC48_MIC3_PAD1_PLU0_LIW0_MIW1_WOS0__B_MAC64_MIC4_PAD1_PLU1_LIW0_MIW1_WOS0__U16_GA2_PU0_ICE1_NAW64_UFO0");
     }
   
-    if (aps.micro_tile_length == 3 && aps.micro_tile_length < bps.micro_tile_length){    
+    if (aps.micro_tile_length.val == 3 && aps.micro_tile_length.val < bps.micro_tile_length.val){    
       add_hps("A_MAC24_MIC3_PAD1_PLU1_LIW0_MIW1_WOS0__B_MAC40_MIC5_PAD1_PLU1_LIW0_MIW1_WOS0__U16_GA1_PU0_ICE1_NAW64_UFO0");
     }
 
-    if (aps.micro_tile_length*bps.micro_tile_length > 5 && aps.micro_tile_length*bps.micro_tile_length < 48 && n_work_items_per_c_elm >  1){    
+    if (aps.micro_tile_length.val*bps.micro_tile_length.val > 5 && aps.micro_tile_length.val*bps.micro_tile_length.val < 48 && n_work_items_per_c_elm.val >  1){    
       add_hps("A_MAC64_MIC4_PAD1_PLU0_LIW0_MIW1_WOS0__B_MAC64_MIC4_PAD1_PLU1_LIW0_MIW1_WOS0__U16_GA1_PU1_ICE1_NAW64_UFO0");
     }
 
@@ -686,15 +687,17 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
     
     if (gg.m*gg.n > 2000*2000){
       add_hps("A_MAC128_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MAC128_MIC8_PAD1_PLU1_LIW0_MIW1_WOS0__U8_GA1_PU0_ICE1_NAW64_UFO0");
+      
+      add_hps("A_MAC128_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MAC96_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__U16_GA3_PU0_ICE1_NAW64_UFO0");
     }    
     
     
-    if (gg.tA == gg.isColMajor && gg.tB != gg.isColMajor && aps.micro_tile_length*aps.micro_tile_length == 64){
+    if (gg.tA == gg.isColMajor && gg.tB != gg.isColMajor && aps.micro_tile_length.val*aps.micro_tile_length.val == 64){
       add_hps("A_MAC128_MIC8_PAD1_PLU1_LIW0_MIW1_WOS0__B_MAC128_MIC8_PAD1_PLU1_LIW0_MIW1_WOS0__U8_GA1_PU1_ICE1_NAW64_UFO1");
       add_hps("A_MAC128_MIC8_PAD1_PLU1_LIW0_MIW1_WOS0__B_MAC128_MIC8_PAD1_PLU1_LIW0_MIW1_WOS0__U8_GA2_PU1_ICE1_NAW64_UFO1");
     }
 
-    else if (gg.tA != gg.isColMajor && gg.tB == gg.isColMajor && aps.micro_tile_length*aps.micro_tile_length == 64){
+    else if (gg.tA != gg.isColMajor && gg.tB == gg.isColMajor && aps.micro_tile_length.val*aps.micro_tile_length.val == 64){
       add_hps("A_MAC128_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MAC128_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__U8_GA1_PU1_ICE1_NAW64_UFO1");
       add_hps("A_MAC128_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MAC128_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__U8_GA2_PU1_ICE1_NAW64_UFO1");
     }

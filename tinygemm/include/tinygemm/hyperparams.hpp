@@ -29,21 +29,30 @@ class ParamList{
 extern ParamList nonchiral_pl;
 extern ParamList chiral_pl;
 
+
+class HyperParam{
+  public:
+    unsigned val;
+    HyperParam(unsigned val_):val(val_){};
+    HyperParam() = default;
+    std::map one_step<unsigned, std::vector<unsigned> >;
+};
+
+
+
 class HyperParamsChiral{
   
 public:
-  unsigned micro_tile_length;
-  unsigned macro_tile_length;
-  unsigned load_pll_to_unroll;
-  unsigned workspace_type; //for now 0 : none, 1 : simple copy with ldx padding. To include : 2 : normal form.
-  unsigned lds_pad_size;
-  unsigned load_to_lds_interwoven;
-  unsigned c_micro_tiles_interwoven;
+  HyperParam micro_tile_length;
+  HyperParam macro_tile_length;
+  HyperParam load_pll_to_unroll;
+  HyperParam workspace_type; //for now 0 : none, 1 : simple copy with ldx padding. To include : 2 : normal form.
+  HyperParam lds_pad_size;
+  HyperParam load_to_lds_interwoven;
+  HyperParam c_micro_tiles_interwoven;
   
   void cw_check() const;
-    
   void checks() const;
-
   std::string get_string() const;
   
 };
@@ -68,13 +77,15 @@ public:
   
   const HyperParamsChiral & at(char x) const;
   HyperParamsChiral & at(char x);  
+
     
-  unsigned unroll;  
-  unsigned group_allocation;  
-  unsigned unroll_pragma;
-  unsigned n_work_items_per_c_elm;  
-  unsigned n_target_active_workgroups; 
-  unsigned unroll_for_offset;
+  HyperParam unroll;  
+  HyperParam group_allocation;  
+  HyperParam unroll_pragma;
+  HyperParam n_work_items_per_c_elm;  
+  HyperParam n_target_active_workgroups; 
+  HyperParam unroll_for_offset;
+
 
   std::string get_key_from_shortkey(const std::string & shortkey);  
   unsigned get_nwitems_h();

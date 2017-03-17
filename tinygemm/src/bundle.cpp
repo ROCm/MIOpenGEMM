@@ -56,38 +56,38 @@ public:
     std::vector<KernelString> v_tgks;  
     std::vector<std::vector<unsigned> > v_wait_indices;
     
-    if (hp.aps.workspace_type == 0){
+    if (hp.aps.workspace_type.val == 0){
       //no wsa kernel
     }
     
-    else if (hp.aps.workspace_type == 1){
+    else if (hp.aps.workspace_type.val == 1){
       v_tgks.emplace_back( copygen::get_copya_kernelstring(hp, gg, dp) );
     }
     
-    else if (hp.aps.workspace_type == 2){
+    else if (hp.aps.workspace_type.val == 2){
       v_tgks.emplace_back( nformgen::get_nforma_kernelstring(hp, gg, dp) );
     }
     
     else{
-      throw tinygemm_error("hp.aps.workspace_type should be 0, 1 or 2");
+      throw tinygemm_error("hp.aps.workspace_type.val should be 0, 1 or 2");
     }
     
 
-    if (hp.bps.workspace_type == 0){
+    if (hp.bps.workspace_type.val == 0){
       //no wsb kernel
     }
     
     
-    else if (hp.bps.workspace_type == 1){
+    else if (hp.bps.workspace_type.val == 1){
       v_tgks.emplace_back( copygen::get_copyb_kernelstring(hp, gg, dp) ); //deduce from hp whether a is copied or not. 
     }
 
-    else if (hp.bps.workspace_type == 2){
+    else if (hp.bps.workspace_type.val == 2){
       v_tgks.emplace_back( nformgen::get_nformb_kernelstring(hp, gg, dp) );
     }
 
     else {
-      throw tinygemm_error("hp.bps.workspace_type should be 0, 1 or 2");
+      throw tinygemm_error("hp.bps.workspace_type.val should be 0, 1 or 2");
     }
 
     
