@@ -65,8 +65,8 @@ void DerivedParams::reset_cw_params(char x){
   
   /* simple copy with padding */
   if (hp.at(x).workspace_type == 1){
-    at(x).cw1_smallest_possible_ldx = 0;//gg.coal_is_pll_k(x) ? gg.k : gg.get_non_k_dim(x);
-    at(x).cw1_target_ldx = gg.get_ld(x);//get_target(16, get_copy_pad(x), at(x).cw1_smallest_possible_ldx);
+    at(x).cw1_smallest_possible_ldx = gg.coal_is_pll_k(x) ? gg.k : gg.get_non_k_dim(x);
+    at(x).cw1_target_ldx = get_target(16, get_copy_pad(x), at(x).cw1_smallest_possible_ldx);
     at(x).cw_n_elements = at(x).cw1_target_ldx*gg.get_uncoal(x);
   }
   
