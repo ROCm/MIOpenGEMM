@@ -20,24 +20,40 @@ namespace tinygemm{
 namespace hyperparams{
 
 
-std::map<std::vector<unsigned, std::vector<unsigned> > one_away_graph = 
-{ "
-  {1, {2,3,4} },
-  {2, {1,3,4} },
-  {3, {1,2,4,5} },
-  {4, {1,2,3,5,6} },
-  {5, {2,3,4,6,7} },
-  {6, {3,4,5,7,8} },
-  {7, {4,5,6,8} },
-  {8, {4,6,7} }
+const std::map<std::string, std::map<unsigned, std::vector<unsigned> > > bla =
+{
+  {"bla11", {
+    {1, {1}}, 
+    {2, {1,2}} 
+  } },
+  {"bla12", {{1, {1}}, {2, {1,2}} }} 
 };
 
 
+std::map<std::vector<unsigned, std::vector<unsigned> > one_away_graph = 
+
+{
+  { "MIC", {
+    {1, {2,3,4} },
+    {2, {1,3,4} },
+    {3, {1,2,4,5} },
+    {4, {1,2,3,5,6} },
+    {5, {2,3,4,6,7} },
+    {6, {3,4,5,7,8} },
+    {7, {4,5,6,8} },
+    {8, {4,6,7} }
+  } },
+
+  { "U", {
     {4, {8} },
     {8, {4,16} },
     {16, {8,24,32} },
     {24, {16, 32} },
     {32, {16} }
+  } },
+
+  //etc.
+};
     
 
 ChiralHyperParams::ChiralHyperParams():
