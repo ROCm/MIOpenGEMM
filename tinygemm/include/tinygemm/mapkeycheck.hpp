@@ -13,7 +13,7 @@ namespace mapkeycheck{
 
 
 template <typename ValType>
-void check_map_keys(const std::map<std::string, ValType> & params, const std::vector<std::string>  & names, const std::string & hash){
+void check_map_keys(const std::map<std::string, ValType> & params, const std::vector<std::string> & names, const std::string & hash){
   std::stringstream ss;
   ss << "while in check_map_keys (" << hash << "). ";
   for (auto & x : names){

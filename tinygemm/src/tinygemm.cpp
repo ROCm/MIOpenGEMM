@@ -226,7 +226,7 @@ private:
     }
     
     else if (type.compare("wsa") == 0){
-      if (tk_kernels_map.at("wsa").is_set() == false && new_hp.aps.workspace_type.val != 0){
+      if (tk_kernels_map.at("wsa").is_set() == false && new_hp.at(matA).vs[WOS] != 0){
          return true;
        }
        else{
@@ -235,7 +235,7 @@ private:
     }
 
     else if (type.compare("wsb") == 0){
-      if (tk_kernels_map.at("wsb").is_set() == false && new_hp.bps.workspace_type.val != 0){
+      if (tk_kernels_map.at("wsb").is_set() == false && new_hp.at(matB).vs[WOS] != 0){
          return true;
        }
        else{
@@ -457,9 +457,9 @@ public:
   
   
   tinygemm::TinyGemmSolution
-  get_default(const bool enforce_deterministic){
+  get_default(){
     
-    hyperparams::HyperParams hp = hyperparams::get_default(gg, enforce_deterministic);
+    hyperparams::HyperParams hp = hyperparams::get_default();
     
     
     deriveability_test(hp, "in get_default");
@@ -479,13 +479,13 @@ public:
     
     if (gg.m < 8 || gg.n < 8){
       mowri << "really skinny/thin matrix, returning a default kernel (to be improved) " << Endl;
-      return get_default(enforce_deterministic);
+      return get_default();
     }
       
     
     if (allotted_time <= 0){
       mowri << "Allotted time insufficient for benchmarking, returning default TinyGemmSolution" << Endl;
-      return get_default(enforce_deterministic);      
+      return get_default();      
     }
 
     address_check_valid_and_reliable();
@@ -507,7 +507,7 @@ public:
     /* while generating, compiling and benchmarking kernels, we will keep track of the fastest found thus far */
     float best_time = std::numeric_limits<float>::max();
     
-    hyperparams::HyperParams best_hp = hyperparams::get_default(gg, enforce_deterministic);
+    hyperparams::HyperParams best_hp = hyperparams::get_default();
     
     
     
@@ -515,7 +515,7 @@ public:
 
 
     /* we initialise the `hyper-front' with a single HyperParams, selected based on problem dimensions  */
-    std::vector<hyperparams::HyperParams> hyper_front = { hyperparams::get_default(gg, enforce_deterministic) };
+    std::vector<hyperparams::HyperParams> hyper_front = { hyperparams::get_default() };
     
         
     auto hyper_param_start = hyper_front[0];
@@ -552,18 +552,8 @@ public:
           
           hyper_front_history.push_back(hp);
         
-          /* reason 1 : the macro tile is too tall */
-          if (gg.m < hp.aps.macro_tile_length.val){
-            mowri << "m < aps.macro_tile_length, not considering this kernel" << Endl;
-          }
-          
-          /* reason 2 : the macro tile is too wide */
-          else if (gg.n < hp.bps.macro_tile_length.val){
-            mowri << "m < bps.macro_tile_length, not considering this kernel" << Endl;
-          }
-          
           /* reason 3 : the user requests a deterministic kernel, which cannot be guaranteed */
-          else if (enforce_deterministic == true && hp.n_work_items_per_c_elm.val != 1){
+          if (enforce_deterministic == true && hp.at(matC).vs[ICE] != 1){
             mowri << "not considering kernels which may be non-deterministic" << Endl;
           }
           /* ************************************************************************ */
@@ -578,8 +568,15 @@ public:
             auto deriveability = derivedparams::get_deriveability(hp, gg);
             
             if (std::get<0>(deriveability) == true){
+
+
+
               
               auto bundle = tinygemm::kerngen::get_bundle(hp,gg);  
+
+
+
+
                             
               /* the kernel was succesfully generated, we now compile and benchmark it */
               
@@ -650,7 +647,7 @@ public:
        * what we will have here is that `one' is just rough tile shape, important stuff.*/
       if (improvement_found_on_front == true && front_search_horizon == 1){
         /* getting all `one-away's */
-        hyper_front = best_hp.get_one_aways(gg);
+        hyper_front = best_hp.get_one_aways();
       }
 
       
@@ -668,7 +665,7 @@ public:
       
       if (improvement_found_on_front == true && front_search_horizon == 2){        
         /* getting all `two-aways' */
-        hyper_front = best_hp.get_two_aways(gg);
+        //hyper_front = best_hp.get_two_aways(gg);
       }
       
       if (improvement_found_on_front == false && front_search_horizon == 2){
@@ -773,7 +770,7 @@ bool verbose,
 std::string logfile){
   
   OpenCLGemmEncapsulator oger({}, gg, {0,0,0,0,0,0,0}, {}, {}, {}, {}, logfile, verbose); 
-  return oger.get_default(enforce_deterministic);
+  return oger.get_default();
  
 }
   

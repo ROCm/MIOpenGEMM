@@ -5,7 +5,8 @@
 #include <map>
 #include <random>
 
-#include "tinygemmgeometry.hpp"
+#include <tinygemm/tinygemmgeometry.hpp>
+#include <tinygemm/tinygemmerror.hpp>
 
 namespace tinygemm{
 
@@ -22,7 +23,7 @@ const std::vector<std::string> ChiralHPKeys = {"MIC", "PAD", "PLU", "LIW", "MIW"
 enum EnumNonChiralHP {UNR = 0, GAL, PUN, ICE, NAW, UFO, MAC, nNonChiralHPs};
 const std::vector<std::string> NonChiralHPKeys = {"UNR", "GAL", "PUN", "ICE", "NAW", "UFO", "MAC"};
 
-const std::map<char, const std::vector<std::string> & > HPKeys = {
+const std::map<char, std::vector<std::string> > HPKeys = {
 {'A', ChiralHPKeys},  {'B', ChiralHPKeys}, {'C', NonChiralHPKeys} };
 
 std::map<char, unsigned> nHPs = {{'A', nChiralHPs}, {'B', nChiralHPs}, {'C', nNonChiralHPs}};
@@ -30,6 +31,7 @@ std::map<char, unsigned> nHPs = {{'A', nChiralHPs}, {'B', nChiralHPs}, {'C', nNo
 
 enum EnumMatrix {matA = 0, matB, matC, nMatrices};
 const std::map<char, EnumMatrix> matNums = {{'C', matC}, {'B', matB}, {'A', matA}};
+const std::map<EnumMatrix, char> matChars = {{matC, 'C'}, {matB, 'B'}, {matA, 'A'}};
 
 
 
@@ -39,9 +41,9 @@ class Graph{
   
 public:
   /* example : graph[MIC] is a map; graph[MIC][1] --> {2,3,4} */
-  const std::vector<std::map<unsigned, std::vector<unsigned> > > graph;
+  std::vector<std::map<unsigned, std::vector<unsigned> > > graph;
   /* example : range[MIC] --> {1,2,3,4,5,6,7,8} */
-  const std::vector<std::vector<unsigned> > range;  
+  std::vector<std::vector<unsigned> > range;  
   void update_range();
 };
 
@@ -53,12 +55,13 @@ Graph get_g_non_chiral();
 
 class XHPs{
   
-  protected:
-    const std::vector<unsigned> & hpkeys;
-    const Graph & hpgraph;
       
   public:
-    std::vector<unsigned> values;
+
+    const std::vector<unsigned> & hpkeys;
+    const Graph & hpgraph;
+
+    std::vector<unsigned> vs;
     std::vector<unsigned> importances;
     std::string get_string() const;
     void check() const;
@@ -68,6 +71,8 @@ class XHPs{
         throw tinygemm_error("There is a discrepency in the number of hyper parameters in XHPs constructor");
       }
     }
+    
+    XHPs() = default;
     
 };
 
@@ -82,6 +87,10 @@ public:
   const XHPs & at(EnumMatrix matX) const {return  v_xhps[matX]; }
   XHPs & at(EnumMatrix matX) {return  v_xhps[matX]; }
   
+  //TODO : deprecate these
+  const XHPs & at(char X) const {return v_xhps[matNums.at(X)]; }
+  XHPs & at(char X) {return v_xhps[matNums.at(X)]; }
+  
   HyperParams(const std::map<char, std::map<std::string, unsigned> > & );
 
   /* take in hyper-parameter string and return a HyperParam object */
@@ -93,9 +102,11 @@ public:
   
   std::vector<HyperParams> get_one_aways();
 
-  void check_map_keys(const std::map<char, std::map<std::string, unsigned> > & params);
+  void check_map_keys(const std::map<char, std::map<std::string, unsigned> > & params) const;
 
   std::string get_string() const;
+  
+  void checks() const ;
   
 
 };  

@@ -22,6 +22,7 @@ get_deriveability(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmG
 class ChiralDerivedParams{
 public:
 
+  unsigned macro_tile_length = uninitialised_unsigned;
   unsigned n_elements_in_unroll = uninitialised_unsigned; 
   unsigned main_n_elements_to_load_per_workitem = uninitialised_unsigned;
   unsigned main_n_elements_in_padded_unroll = uninitialised_unsigned;

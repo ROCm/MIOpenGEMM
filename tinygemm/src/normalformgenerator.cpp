@@ -77,7 +77,7 @@ KernelString get_kernelstring(){
   
   ss << "#define TFLOAT " << dp.t_float << "\n";
   ss << "#define " << "N_WORK_ITEMS_PER_GROUP " << dp.at(MATRIXCHAR).cw2_local_work_size << "\n";
-  ss << "#define UNROLL " << hp.unroll.val << "\n";
+  ss << "#define UNROLL " << hp.at(matC).vs[UNR] << "\n";
   ss << "#define __K__ " << gg.k << "\n";
   
   append_unroll_block_geometry(matrixchar, ss, false, false);
@@ -105,8 +105,8 @@ KernelString get_kernelstring(){
   ss << "\n#define GLOBAL_WORKSPACE_OFFSET " << dp.at(MATRIXCHAR).cw_global_offset << "\n";
   
   ss << "\n#define PRESHIFT_FINAL_TILE " << dp.at(MATRIXCHAR).preshift_final_tile << "\n";
-  unsigned final_unroll_depth = gg.k%hp.unroll.val;
-  final_unroll_depth = (final_unroll_depth == 0 ? hp.unroll.val : final_unroll_depth);
+  unsigned final_unroll_depth = gg.k%hp.at(matC).vs[UNR];
+  final_unroll_depth = (final_unroll_depth == 0 ? hp.at(matC).vs[UNR] : final_unroll_depth);
   
   ss << "\n#define FINAL_UNROLL_DEPTH " << final_unroll_depth << "\n";
   

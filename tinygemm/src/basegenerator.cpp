@@ -85,7 +85,7 @@ void BaseGenerator::append_unroll_block_geometry(char x, std::stringstream & ss,
   
   ss << "\n";
   if (withcomments) ss << "/* macro tiles define the pattern of C that workgroups (threads with shared local memory) process */\n";
-  ss << "#define " << "MACRO_TILE_LENGTH" << x_string << " " << hp.at(x).macro_tile_length.val << "\n";
+  ss << "#define " << "MACRO_TILE_LENGTH" << x_string << " " << dp.at(x).macro_tile_length << "\n";
 
   if (withcomments) ss << "/* number of elements in load block : MACRO_TILE_LENGTH" << x_string << " * UNROLL */\n";
   ss << "#define " << "N_ELEMENTS_IN" << x_string << "_UNROLL "<< dp.at(x).n_elements_in_unroll <<"\n";

@@ -27,7 +27,7 @@ void Graph::update_range(){
   range.resize(graph.size());
   for (unsigned i = 0; i < graph.size(); ++i){
     for (auto & x : graph[i]){
-      range[i] = x.first;
+      range[i].push_back(x.first);
     }
   }
 }
@@ -66,7 +66,7 @@ Graph get_g_chiral(){
   
   hpg.update_range();
   return hpg;
-};
+}
 
 Graph get_g_non_chiral(){
 
@@ -120,22 +120,26 @@ Graph get_g_non_chiral(){
 
   hpg.update_range();
   return hpg;
-};
+}
 
-const Graph g_chiral(get_g_chiral());
-const Graph g_non_chiral(get_g_non_chiral());
+Graph g_chiral(get_g_chiral());
+Graph g_non_chiral(get_g_non_chiral());
 
 /* take in hyper-parameter string and return a map */
 std::map<char, std::map<std::string, unsigned> > get_params_from_string(const std::string & hyperstring){
+  
+  std::string shortkey;
+  unsigned val;
+  
   std::map<char, std::map<std::string, unsigned> > params = { {'A', {}}, {'B', {}}, {'C', {}} }; 
   auto megafrags = stringutil::split(hyperstring, "__");
-  for (auto & frag : megafrags){
-    char matrixkey = frag[0];
+  for (auto & megafrag : megafrags){
+    char matrixkey = megafrag[0];
     if (matrixkey != 'A' && matrixkey != 'B' && matrixkey != 'C'){
       throw tinygemm_error("matrixkey should be A,B or C");
     }
-    auto keyvalfrags = stringutil::split(megafrags.substr(2), "_");
-    for (auto & x : frags){
+    auto keyvalfrags = stringutil::split(megafrag.substr(2), "_");
+    for (auto & x : keyvalfrags){
       std::tie(shortkey, val) = stringutil::splitnumeric(x);
       params[matrixkey][shortkey] = val;
     }
@@ -145,12 +149,12 @@ std::map<char, std::map<std::string, unsigned> > get_params_from_string(const st
 
 
 void XHPs::check() const{
-  for (unsigned i = 0; i < values.size(); ++i){
+  for (unsigned i = 0; i < vs.size(); ++i){
     auto start = hpgraph.range[i].begin();
     auto end = hpgraph.range[i].end();
-    if(std::find(start, end, values[i]) == end) {
+    if(std::find(start, end, vs[i]) == end) {
       std::stringstream errm;
-      errm << "\nIn XHPs::check(). It appears as though `" << values[i] << "' is not a valid value for " << hpkeys[i] << ".\n"; 
+      errm << "\nIn XHPs::check(). It appears as though `" << vs[i] << "' is not a valid value for " << hpkeys[i] << ".\n"; 
       throw tinygemm_error(errm.str());
     }
   }
@@ -162,9 +166,12 @@ void HyperParams::checks() const{
   }
 }
 
-void HyperParams::check_map_keys(const std::map<char, std::map<std::string, unsigned> > & params){  
+void HyperParams::check_map_keys(const std::map<char, std::map<std::string, unsigned> > & params) const{  
   for (char X : {'A', 'B', 'C'}){
-    mapkeycheck::check_map_keys(params.at(X), HPKeys[X], std::string("HyperParams constructor, params against keys, ") + X);
+    mapkeycheck::check_map_keys(
+    params.at(X), 
+    HPKeys.at(X), 
+    std::string("HyperParams constructor, params against keys, ") + X);
   }
 }
     
@@ -173,7 +180,7 @@ HyperParams::HyperParams(const std::map<char, std::map<std::string, unsigned> > 
   check_map_keys(params);
   for (char X : {'A', 'B', 'C'}){
     for (unsigned i = 0; i < nHPs[X]; ++i){
-      values[i] = params.at(X).at(HPKeys[X][i]);
+      v_xhps[matNums.at(X)].vs[i] = params.at(X).at(HPKeys.at(X)[i]);
     }
   }
   checks();
@@ -191,12 +198,12 @@ bool HyperParams::operator == (const HyperParams & hpr){
 }
 
 
-std::string XHPs::get_string() const{
+std::string HyperParams::get_string() const{
   std::stringstream ss;
   for (char X : {'A', 'B'}){
-    ss << X << "_" << v_xhps[matNums[X]].get_string() << "__";
+    ss << X << "_" << v_xhps[matNums.at(X)].get_string() << "__";
   }
-  ss << 'C' << "_" << v_xhps[matNums['C']].get_string();
+  ss << 'C' << "_" << v_xhps[matNums.at('C')].get_string();
   return ss.str();
 }
     
@@ -204,15 +211,16 @@ void add_hyperparam(const std::string & hyperstring, std::vector<HyperParams> & 
   one_aways.push_back(HyperParams(hyperstring));
 }
 
-std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeometry & gg){
+std::vector<HyperParams> HyperParams::get_one_aways(){
   
   std::vector<HyperParams> one_aways;
   
-  for (unsigned mat_i = 0; mat_i < nMatrices; ++mat_i){
-    for (hp_i = 0; hp_i < HPKeys[X].size(); ++hp_i){
-      for (auto & newval : v_xhps.hpgraph.graph[hp_i]){
-        HyperParams hp(&*this);
-        hp.values[hp_i] = newval;
+  for (auto X   : {'A', 'B', 'C'} ){
+    for (unsigned hp_i = 0; hp_i < HPKeys.at(X).size(); ++hp_i){
+      unsigned value = v_xhps.at(matNums.at(X)).vs[hp_i];
+      for (auto & newval : v_xhps.at(matNums.at(X)).hpgraph.graph[hp_i].at(value)){
+        HyperParams hp(*this);
+        hp.v_xhps.at(X).vs[hp_i] = newval;
       }
     }
   }
@@ -241,11 +249,11 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
 
 
 
-};
+}
 
 
  
 }
-}
+
 
 
