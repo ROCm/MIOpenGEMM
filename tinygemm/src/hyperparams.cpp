@@ -20,43 +20,109 @@ namespace tinygemm{
 namespace hyperparams{
 
 
-ParamList::ParamList(std::map<std::string, std::string> map_shortkey_to_key_): map_shortkey_to_key (map_shortkey_to_key_){
-  for(auto const & v: map_shortkey_to_key){
-    keys.push_back(v.second);
-    shortkeys.push_back(v.first);
-    map_key_to_shortkey[v.second] = v.first;
+
+ChiralHyperParams::ChiralHyperParams():
+micro_tile_length(&info_MIC),
+macro_tile_length(&tempstat),
+load_pll_to_unroll(&tempstat),
+workspace_type(&tempstat),
+lds_pad_size(&tempstat),
+load_to_lds_interwoven(&tempstat),
+c_micro_tiles_interwoven(&tempstat) {}
+
+
+ParamList::ParamList(std::vector<const HyperParamStaticInfo *> v_ptr_hpsis){
+
+  for(auto const & v: v_ptr_hpsis){
+    
+    keys.push_back(v->key);
+    shortkeys.push_back(v->shortkey);
+    map_key_to_shortkey[v->key] = v->shortkey;
+    map_shortkey_to_key[v->shortkey] = v->key;
+  
   }
 }
 
+
+    //std::string shortkey = v->shortkey;
+    //std::string key = v->key;
+    //std::map<unsigned, std::vector<unsigned> > one_aways = std::get<2>(v);
+
+    //map_shortkey_to_one_aways[shortkey] = one_aways;
+    
+    //std::vector<unsigned> range;
+    //for (auto & x : one_aways){
+      //range.push_back(x.first);
+    //}
+    //map_shortkey_to_ranges[shortkey] = range;
+  //}
+
+  //}
+  
+  //check_map_keys(one_aways, shortkeys, "checking that the one_away keys match the shortkeynames...");
+  
+  //for(auto const & v: short_long_neigh){
+
+    //std::string shortkey = std::get<0>(short_long_neigh);
+    //std::string key = std::get<1>(short_long_neigh);
+    //std::map<unsigned, std::vector<unsigned> > one_aways = std::get<2>(short_long_neigh);
+
+    
+      //if (map_shortkey_to_one_aways,.count(shortkey) == 0){
+    //std::stringstream ss;
+    //ss << "The shortkey `" << shortkey << "', does not appear as a key in map_shortkey_to_key. \n";
+    //throw tinygemm_error(ss.str());
+  //}
+  
+  //else{
+    //return map_shortkey_to_key.at(shortkey);
+  //}
+  
+    
+  //}
+//}
+
 ParamList nonchiral_pl(
 
-  {
-  {"U", "unroll"}, 
-  {"GA", "group_allocation"}, 
-  {"PU", "unroll_pragma"}, 
-  {"ICE", "n_work_items_per_c_elm"}, 
-  {"NAW", "n_target_active_workgroups"},
-  {"UFO", "unroll_for_offset"}
-  }
+  {&tempstat} 
+  //std::vector<HyperParamStaticInfo *>(&tempstat, &tempstat, &tempstat)
+  //{"U", "unroll", {0, {0,0,0,0}} }, 
+  //{"GA", "group_allocation", {0, {0,0,0,0}}   }, 
+  //{"PU", "unroll_pragma", {0, {0,0,0,0}}   }, 
+  //{"ICE", "n_work_items_per_c_elm", {0, {0,0,0,0}}   }, 
+  //{"NAW", "n_target_active_workgroups", {0, {0,0,0,0}}   },
+  //{"UFO", "unroll_for_offset", {0, {0,0,0,0}}   }
 
 );
+
+
+
+//std::vector<unsigned> scoop {};
+
+//std::map<unsigned, std::vector<unsigned> > poop {  };
+
+
+
 
 ParamList chiral_pl(
 
   {
-  {"MAC", "macro_tile_length"},  
-  {"MIC", "micro_tile_length"}, 
-  {"PAD", "lds_pad_size"}, 
-  {"PLU", "load_pll_to_unroll"}, 
-  {"LIW", "load_to_lds_interwoven"}, 
-  {"MIW", "c_micro_tiles_interwoven"}, 
-  {"WOS", "workspace_type"}
+  
   }
+  
+  //{0, std::vector<unsigned> {1,2,3} }   }
+  //{"MIC", "micro_tile_length", {0, {0,0,0,0}}   }, 
+  //{"PAD", "lds_pad_size", {0, {0,0,0,0}}   }, 
+  //{"PLU", "load_pll_to_unroll", {0, {0,0,0,0}}   }, 
+  //{"LIW", "load_to_lds_interwoven", {0, {0,0,0,0}}   }, 
+  //{"MIW", "c_micro_tiles_interwoven", {0, {0,0,0,0}}   }, 
+  //{"WOS", "workspace_type", {0, {0,0,0,0}}   }
+  
 
 );
 
 
-std::string HyperParamsChiral::get_string() const{
+std::string ChiralHyperParams::get_string() const{
 
   std::stringstream ss;
   
@@ -172,14 +238,14 @@ void HyperParams::ga_check() const{
   }  
 }
 
-void HyperParamsChiral::cw_check() const{
+void ChiralHyperParams::cw_check() const{
   if (workspace_type.val != 0 && workspace_type.val != 1 && workspace_type.val != 2){
     throw tinygemm::tinygemm_error("Invalid workspace_type (CW) value, it should be in [0,1,2], not " + std::to_string(workspace_type.val) + "\n");
   }  
 }
 
 
-const HyperParamsChiral & HyperParams::at(char x)  const{
+const ChiralHyperParams & HyperParams::at(char x)  const{
   if (x == 'a' || x == 'A'){
     return aps;
   }
@@ -187,20 +253,19 @@ const HyperParamsChiral & HyperParams::at(char x)  const{
     return bps;
   }
   else{
-    throw tinygemm_error("unrecognised char looking for HyperParamsChiral");
+    throw tinygemm_error("unrecognised char looking for ChiralHyperParams");
   }
 }
 
-HyperParamsChiral & HyperParams::at(char x)  {
-  return const_cast<HyperParamsChiral &>(static_cast<const HyperParams &>(*this).at(x));
+ChiralHyperParams & HyperParams::at(char x)  {
+  return const_cast<ChiralHyperParams &>(static_cast<const HyperParams &>(*this).at(x));
 }
 
-void HyperParamsChiral::checks() const{
+void ChiralHyperParams::checks() const{
 
   bool_check("load_pll_to_unroll", load_pll_to_unroll.val); 
   positive_check("micro_tile_length", micro_tile_length.val);
   positive_check("macro_tile_length", macro_tile_length.val);
-  //positive_check("lds_pad_size", lds_pad_size);
   bool_check("load_to_lds_interwoven", load_to_lds_interwoven.val);
   bool_check("c_micro_tiles_interwoven", c_micro_tiles_interwoven.val);
   mod_check("macro_tile_length", macro_tile_length.val, "micro_tile_length", micro_tile_length.val);  
@@ -212,6 +277,8 @@ void HyperParams::checks() const{
 
   aps.checks();
   bps.checks();
+  
+  
   bool_check("unroll_pragma", unroll_pragma.val);
   bool_check("unroll_for_offset", unroll_for_offset.val);
   positive_check("unroll", unroll.val);
@@ -222,7 +289,17 @@ void HyperParams::checks() const{
 }
     
 
-HyperParams::HyperParams(const std::map<char, std::map<std::string, unsigned> > & params){
+HyperParams::HyperParams(const std::map<char, std::map<std::string, unsigned> > & params):
+  unroll(&tempstat),  
+  group_allocation(&tempstat), 
+  unroll_pragma(&tempstat),
+  n_work_items_per_c_elm(&tempstat),
+  n_target_active_workgroups(&tempstat),
+  unroll_for_offset(&tempstat)
+
+
+
+{
 
   check_map_keys(params);
     
@@ -233,8 +310,8 @@ HyperParams::HyperParams(const std::map<char, std::map<std::string, unsigned> > 
     at(X).load_pll_to_unroll.val = params.at(X).at("load_pll_to_unroll");
     at(X).workspace_type.val = params.at(X).at("workspace_type");
     at(X).lds_pad_size.val = params.at(X).at("lds_pad_size");
-    at(X).load_to_lds_interwoven = params.at(X).at("load_to_lds_interwoven");
-    at(X).c_micro_tiles_interwoven = params.at(X).at("c_micro_tiles_interwoven");
+    at(X).load_to_lds_interwoven.val = params.at(X).at("load_to_lds_interwoven");
+    at(X).c_micro_tiles_interwoven.val = params.at(X).at("c_micro_tiles_interwoven");
   }
  
   unroll.val = params.at('C').at("unroll");
@@ -606,7 +683,7 @@ std::vector<HyperParams> HyperParams::get_one_aways(const tinygemm::TinyGemmGeom
   for (auto & c_micro_tiles_interwoven_ : c_micro_tiles_interwovens){
     HyperParams hp(*this);
     for (char x : {'a', 'b'}){
-      hp.at(x).c_micro_tiles_interwoven = c_micro_tiles_interwoven_;
+      hp.at(x).c_micro_tiles_interwoven.val = c_micro_tiles_interwoven_;
     }
     one_aways.push_back(hp);
   }
