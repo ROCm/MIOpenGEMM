@@ -23,7 +23,7 @@ private:
 
 void set_usage(){
   
-  uses_a = (hp.aps.workspace_type.val == 0) ? true : false; 
+  uses_a = (hp.at(matA).values[WOS] == 0) ? true : false;   //this worked. propogate.
   uses_b = (hp.bps.workspace_type.val == 0) ? true : false;
   uses_c = true;
   uses_workspace = (hp.aps.workspace_type.val + hp.bps.workspace_type.val) == 0  ? false : true;

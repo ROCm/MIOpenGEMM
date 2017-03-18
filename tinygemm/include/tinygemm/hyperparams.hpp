@@ -9,9 +9,35 @@
 
 namespace tinygemm{
 
+
+enum EnumMAC {a4b8 = 0, a8b4 = 1, a8b8 = 2, a8b16 = 3, a16b8 = 4, a16b16 = 5};
+enum EnumGA  {byrow = 1, bycol = 2, sucol = 3};
+
+/* if you're going to add a parameter here, make sure to add it BEFORE the final count */
+enum EnumChiralHP {MIC = 0, PAD, PLU, LIW, MIW, WOS, nChiralHPs};
+/* the strings must appear in same order as enum */
+const std::vector<std::string> ChiralHPKeys = {"MIC", "PAD", "PLU", "LIW", "MIW", "WOS"};
+// TODO : confirm somewhere that nChiralHPs = chiralHPKeys.size(), etc ditto
+
+enum EnumNonChiralHP {UNR = 0, GAL, PUN, ICE, NAW, UFO, MAC, nNonChiralHPs};
+const std::vector<std::string> NonChiralHPKeys = {"UNR", "GAL", "PUN", "ICE", "NAW", "UFO", "MAC"};
+
+const std::map<char, const std::vector<std::string> & > HPKeys = {
+{'A', ChiralHPKeys},  {'B', ChiralHPKeys}, {'C', NonChiralHPKeys} };
+
+std::map<char, unsigned> nHPs = {{'A', nChiralHPs}, {'B', nChiralHPs}, {'C', nNonChiralHPs}};
+  
+
+enum EnumMatrix {matA = 0, matB, matC, nMatrices};
+const std::map<char, EnumMatrix> matNums = {{'C', matC}, {'B', matB}, {'A', matA}};
+
+
+
 namespace hyperparams{
   
-class HyperParamsGraph{
+class Graph{
+  
+public:
   /* example : graph[MIC] is a map; graph[MIC][1] --> {2,3,4} */
   const std::vector<std::map<unsigned, std::vector<unsigned> > > graph;
   /* example : range[MIC] --> {1,2,3,4,5,6,7,8} */
@@ -19,45 +45,29 @@ class HyperParamsGraph{
   void update_range();
 };
 
-class ChiralHyperParamsGraph:public HyperParamsGraph{
-  ChiralHyperParamsGraph();
-}
 
-class NonChiralHyperParamsGraph:public HyperParamsGraph{
-  ChiralHyperParamsGraph();
-}
+Graph get_g_chiral();
+Graph get_g_non_chiral();
 
-extern const ChiralHyperParamsGraph * ptr_chiral_hyper_params_graph;
-extern const NonChiralHyperParamsGraph * ptr_non_chiral_hyper_params_graph;
 
-enum EnumMAC {a4b8 = 0, a8b4 = 1, a8b8 = 2, a8b16 = 3, a16b8 = 4, a16b16 = 5};
-enum EnumGA  {byrow = 1, bycol = 2, sucol = 3};
 
-/* if you're going to add parameter here, make sure to add it BEFORE the final count */
-enum EnumChiralHyperParam {MIC = 0, PAD, PLU, LIW, MIW, WOS,          NumberOfChiralHyperParams};
-/* the strings must appear in same order as enum */
-const std::vector<std::string> ChiralHyperParamShortkeys = {"MIC", "PAD", "PLU", "LIW", "MIW", "WOS"};
-
-enum EnumNonChiralHyperParam {UNR = 0, GAL, PUN, ICE, NAW, UFO, MAC,      NumberOfNonChiralHyperParams};
-const std::vector<std::string> NonChiralHyperParamShortkeys = {"UNR", "GAL", "PUN", "ICE", "NAW", "UFO", "MAC"};
-
-// TODO : confirm somewhere that NumberOfChiralHyperParams = chiralHyperParamShortkeys.size() etc
-enum EnumMatrix {matA = 0, matB, matC, NumberOfMatrices};
-
-class XChiralHyperParams{
+class XHPs{
   
   protected:
-    const std::vector<std::string> & shortkeys;
-    const HyperParamsGraph * ptr_hpgraph;
+    const std::vector<unsigned> & hpkeys;
+    const Graph & hpgraph;
       
   public:
     std::vector<unsigned> values;
     std::vector<unsigned> importances;
-    XChiralHyperParams(unsigned size):values(size), importances(size) {}
     std::string get_string() const;
     void check() const;
     
-    XChiralHyperParams(const std::vector<std::string> & shortkeys_, const HyperParamsGraph * ptr_hpgraph_, unsigned MParamsTest)
+    XHPs(const std::vector<unsigned> & hpkeys_, const Graph & hpgraph_, unsigned nHPsTest):hpkeys(hpkeys_), hpgraph(hpgraph_){
+      if (nHPsTest != hpkeys.size() || nHPsTest != hpgraph.graph.size() ){
+        throw tinygemm_error("There is a discrepency in the number of hyper parameters in XHPs constructor");
+      }
+    }
     
 };
 
@@ -65,16 +75,12 @@ class XChiralHyperParams{
 class HyperParams{
 
 private:
-  XChiralHyperParams aps(ChiralHyperParamShortkeys, .., NumberOfChiralHyperParams);
-  XChiralHyperParams bps(ChiralHyperParamShortkeys, .., NumberOfChiralHyperParams);
-  XChiralHyperParams cps(NonChiralHyperParamShortkeys, .., NumberOfNonChiralHyperParams);
-
-  std::vector<XChiralHyperParams> xchiralhps;
+  std::vector<XHPs> v_xhps;
 
 public:
 
-  const XChiralHyperParams & at(EnumMatrix matX) const {return  xchiralhps[matX]; }
-  XChiralHyperParams & at(EnumMatrix matX) {return  xchiralhps[matX]; }
+  const XHPs & at(EnumMatrix matX) const {return  v_xhps[matX]; }
+  XHPs & at(EnumMatrix matX) {return  v_xhps[matX]; }
   
   HyperParams(const std::map<char, std::map<std::string, unsigned> > & );
 
@@ -85,10 +91,8 @@ public:
   
   bool operator == (const HyperParams & hpr);
   
-  std::vector<HyperParams> get_one_aways(const tinygemm::TinyGemmGeometry & gg);
+  std::vector<HyperParams> get_one_aways();
 
-  std::map<char, std::map<std::string, unsigned > > get_params();
-  
   void check_map_keys(const std::map<char, std::map<std::string, unsigned> > & params);
 
   std::string get_string() const;
@@ -97,7 +101,7 @@ public:
 };  
 
 
-HyperParams get_default(const tinygemm::TinyGemmGeometry & gg, bool enforce_deterministic);
+HyperParams get_default();
 
 }
 }
