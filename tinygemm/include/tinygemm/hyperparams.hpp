@@ -8,100 +8,48 @@
 #include "tinygemmgeometry.hpp"
 
 namespace tinygemm{
+
 namespace hyperparams{
 
-/* enumerating parameters */ 
-class ParamList{
-
-  private:
-    /* private, as get_key_from_shortkey is the preferred access route due to it's checks. Logic : minimise direct map accesses */ 
-    std::map<std::string, std::string> map_key_to_shortkey;
-    std::map<std::string, std::string> map_shortkey_to_key;
-    
-  public:
-    std::vector<std::string> keys;
-    std::vector<std::string> shortkeys;    
-    
-    std::string get_key_from_shortkey(const std::string & shortkey) const;
-    std::string get_shortkey_from_key(const std::string & shortkey) const;
-
-    ParamList(std::map<std::string, std::string> bla_to_bla);
-  
-};
-
-extern ParamList nonchiral_pl;
-extern ParamList chiral_pl;
-
-
-
 class HyperParam{
+  
   public:
       
-    unsigned importance;
-    unsigned val;
-    
-    HyperParam();
+  unsigned importance;
+  unsigned val;
+  HyperParam();
+  virtual std::string get_shortkey() const = 0;
+  virtual std::vector<unsigned> get_one_away() const = 0;
+  virtual bool is_valid() const = 0;
+  
+  std::string get_string(){
+    return get_shortkey() + std::to_string(val);
+  }
 
-    virtual std::vector<unsigned> get_one_away() const = 0;
-    virtual std::string get_key() const = 0;
-    virtual std::string get_shortkey() const = 0;
-    virtual bool is_valid() const = 0;
-    
-    std::string get_string(){      
-      return get_shortkey() + std::to_string(val);
-    };
-    
 };
 
-
-
-/* with a fixed and enumerable transition graph / matrix */
-class SimpleHyperParam : public HyperParam{
-  private:
-
-
-  public:
-    virtual std::vector<unsigned> get_one_away() const override final { return one_aways[val] };
-    virtual std::string get_key() const = 0;
-    virtual std::string get_shortkey() const = 0;
-    virtual bool is_valid() const override final {return true; } // TODO should check in range
-    SimpleHyperParam(std::vector<unsigned, std::vector<unsigned> > one_aways_):one_aways(one_aways_){} //TODO should set range
-};
-
-class hp_MIC : public SimpleHyperParam{
-
+class SimpleHyperParam : public HyperParam {
+  
 public:
 
-  /* the transition graph / matrix */
-  const static std::vector<unsigned, std::vector<unsigned> > one_aways;
+  virtual std::vector<unsigned> get_one_away() const override final {return one_away_graph[get_shortkey][val]; }
+  // TODO check that val in range_MIC. 
+  virtual bool is_valid() const override final { return true; } 
   
-  /* vertices in transition graph */
-  const static std::vector<unsigned> range;
-    
-  virtual std::string get_key() const override final { return "micro_tile_length"; }
-  virtual std::string get_shortkey() const override final { return "MIC"; };
-  hp_MIC(): SimpleHyperParam{
-    {1, {2,3,4} },
-    {2, {1,3,4} },
-    {3, {1,2,4,5} },
-    {4, {1,2,3,5,6} },
-    {5, {2,3,4,6,7} },
-    {6, {3,4,5,7,8} },
-    {7, {4,5,6,8} },
-    {8, {4,6,7} }
-  };
+  
 }
+
+class hp_MIC : public SimpleHyperParam {
+public:    
+  virtual std::string get_shortkey() const override final { return "MIC"; };
+};
 
 class hp_U : public SimpleHyperParam{  
 public:
   virtual std::string get_key() const override final { return "unroll"; }
   virtual std::string get_shortkey() const override final { return "U"; };
   hp_U(): SimpleHyperParam{
-    {4, {8} },
-    {8, {4,16} },
-    {16, {8,24,32} },
-    {24, {16, 32} },
-    {32, {16} }
+
   }
 };
 
@@ -240,4 +188,29 @@ HyperParams get_default(const tinygemm::TinyGemmGeometry & gg, bool enforce_dete
 }
 
 #endif
+
+
+
+////* enumerating parameters */ 
+////class ParamList{
+
+  ////private:
+    /////* private, as get_key_from_shortkey is the preferred access route due to it's checks. Logic : minimise direct map accesses */ 
+    ////std::map<std::string, std::string> map_key_to_shortkey;
+    ////std::map<std::string, std::string> map_shortkey_to_key;
+    
+  ////public:
+    ////std::vector<std::string> keys;
+    ////std::vector<std::string> shortkeys;    
+    
+    ////std::string get_key_from_shortkey(const std::string & shortkey) const;
+    ////std::string get_shortkey_from_key(const std::string & shortkey) const;
+
+    ////ParamList(std::map<std::string, std::string> bla_to_bla);
+  
+////};
+
+////extern ParamList nonchiral_pl;
+////extern ParamList chiral_pl;
+
 
