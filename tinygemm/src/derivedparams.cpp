@@ -175,7 +175,7 @@ DerivedParams::set_fragile(){
   for (char x : {'a', 'b'}){
     at(x).preshift_final_tile = 1 + (gg.get_non_k_dim(x) - 1) % at(x).macro_tile_length;
     at(x).n_groups = gg.get_non_k_dim(x) / at(x).macro_tile_length + (at(x).preshift_final_tile != at(x).macro_tile_length);
-    at(x).main_macro_tile_length_and_pad = at(x).macro_tile_length + hp.at(x).vs[nsHP::MIC];
+    at(x).main_macro_tile_length_and_pad = at(x).macro_tile_length + hp.at(x).vs[nsHP::PAD];
     at(x).main_n_elements_in_padded_unroll = at(x).main_macro_tile_length_and_pad * hp.at(nsHP::matC).vs[nsHP::UNR];
   }
   
