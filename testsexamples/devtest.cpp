@@ -21,7 +21,10 @@
 tinygemm::hyperparams::HyperParams get_hp(std::string hyperstring = ""){
 
   if (hyperstring.compare("") == 0){
+    
     hyperstring = "A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN1_ICE1_NAW16_UFO0_MAC5";
+        
+    //hyperstring = "A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN1_ICE1_NAW16_UFO0_MAC5";
   }
   return tinygemm::hyperparams::HyperParams(hyperstring);
 }
@@ -75,7 +78,7 @@ void print_kernel(){
   //std::ofstream floper ("/home/idiap/tinygemm/examplekernels/example1.cl", std::ios::out); 
   
   for (auto & x :  bundle.v_tgks){
-    auto fname = "/home/james/akernel_" +  x.type.full +  ".cl";
+    auto fname = "/home/james/dub_akernel_" +  x.type.full +  ".cl";
     std::cout << "writing " << fname << " ... " << std::flush;
     std::ofstream floper (fname, std::ios::out); 
     floper << x.kernstr;

@@ -43,9 +43,6 @@ SUHP::SUHP(){
   HPVals.resize(nsHP::nMatrices);
   HPKeys.resize(nsHP::nMatrices);
   nHPs.resize(nsHP::nMatrices);  
-
-  
-  std::cout << "In SUHP::SUHP() 1" << std::endl;
   
   
   ChiralKeys[nsHP::MIC] = "MIC";
@@ -56,8 +53,6 @@ SUHP::SUHP(){
   ChiralKeys[nsHP::WOS] = "WOS";
   ChiralVals = getVals(nsHP::nChiralHPs, ChiralKeys, "ChiralKeys");
 
-  std::cout << "In SUHP::SUHP() 50" << std::endl;
-
 
   NonChiralKeys[nsHP::UNR] = "UNR";
   NonChiralKeys[nsHP::GAL] = "GAL";
@@ -67,10 +62,6 @@ SUHP::SUHP(){
   NonChiralKeys[nsHP::UFO] = "UFO"; 
   NonChiralKeys[nsHP::MAC] = "MAC"; 
   NonChiralVals = getVals(nsHP::nNonChiralKeys, NonChiralKeys, "NonChiralKeys");
-
-
-
-  std::cout << "In SUHP::SUHP() 100" << std::endl;
   
 
   MatKeys[nsHP::matA] = 'A';
@@ -86,9 +77,6 @@ SUHP::SUHP(){
   HPKeys[nsHP::matA] = ChiralKeys;
   HPKeys[nsHP::matB] = ChiralKeys;
   HPKeys[nsHP::matC] = NonChiralKeys;
-
-  std::cout << "In SUHP::SUHP() 200" << std::endl;
-
 
 
   nHPs[nsHP::matA] = nsHP::nChiralHPs;
@@ -169,8 +157,8 @@ Graph get_g_non_chiral(){
     {32, {16} }  };
   
   hpg.graph[nsHP::NAW] = 
-  { {16, {81}},
-    {81, {16}}   };
+  { {16, {64}},
+    {64, {16}}   };
   
   hpg.graph[nsHP::GAL] = 
   { {nsGAL::byrow, {nsGAL::bycol, nsGAL::sucol}   },
