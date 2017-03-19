@@ -58,24 +58,24 @@ unsigned get_copy_pad(char x){
 void DerivedParams::reset_cw_params(char x){
  
   
-  if (x == 'b' && hp.at(matA).vs[WOS] != 0 && adps.cw_n_elements == uninitialised_unsigned){
+  if (x == 'b' && hp.at(nsHP::matA).vs[nsHP::WOS] != 0 && adps.cw_n_elements == uninitialised_unsigned){
     throw tinygemm_error(std::string("make sure reset acw1 params is called before reset_bcw1_params, we need that adps.cw1_target_ldx be set here in derivedparams reset of bcw1"));
   }
   
   
   /* simple copy with padding */
-  if (hp.at(x).vs[WOS] == 1){
+  if (hp.at(x).vs[nsHP::WOS] == 1){
     at(x).cw1_smallest_possible_ldx = gg.coal_is_pll_k(x) ? gg.k : gg.get_non_k_dim(x);
     at(x).cw1_target_ldx = get_target(16, get_copy_pad(x), at(x).cw1_smallest_possible_ldx);
     at(x).cw_n_elements = at(x).cw1_target_ldx*gg.get_uncoal(x);
   }
   
-  else if (hp.at(x).vs[WOS] == 2){
+  else if (hp.at(x).vs[nsHP::WOS] == 2){
     
     at(x).cw2_n_elements_perp_unroll = at(x).n_groups*at(x).macro_tile_length;    
     at(x).cw_n_elements = at(x).cw2_n_elements_perp_unroll * gg.k;
     
-    cw2_n_macro_tiles_pll_unroll = gg.k / hp.at(matC).vs[UNR] + ((gg.k % hp.at(matC).vs[UNR]) != 0);
+    cw2_n_macro_tiles_pll_unroll = gg.k / hp.at(nsHP::matC).vs[nsHP::UNR] + ((gg.k % hp.at(nsHP::matC).vs[nsHP::UNR]) != 0);
     
     //std::cout << "\n\n" << at(x).cw_n_elements;
     //std::cout << "\n\n\n\n\nwhat cw2 resets here ? \n\n\n\n" << std::endl;
@@ -86,7 +86,7 @@ void DerivedParams::reset_cw_params(char x){
     throw tinygemm_error("copy type is neither 1 not 2, so can't be correct that there's a call to reset_cw_params");
   }
   
-  at(x).cw_global_offset = (x == 'b' && hp.at('a').vs[WOS] != 0) ? at('a').cw_n_elements : 0;
+  at(x).cw_global_offset = (x == 'b' && hp.at('a').vs[nsHP::WOS] != 0) ? at('a').cw_n_elements : 0;
   
   
   
@@ -96,11 +96,11 @@ void DerivedParams::reset_ga3_params(){
 
   if (main_split_on_k == 1){
     ga3_super_column_width = 
-    static_cast<unsigned>(std::floor(std::sqrt(static_cast<double>(hp.at(matC).vs[NAW]) / static_cast<double>(hp.at(matC).vs[ICE]))));
+    static_cast<unsigned>(std::floor(std::sqrt(static_cast<double>(hp.at(nsHP::matC).vs[nsHP::NAW]) / static_cast<double>(hp.at(nsHP::matC).vs[nsHP::ICE]))));
   }
   else if (main_split_on_k == 0){
     ga3_super_column_width = 
-    static_cast<unsigned>(std::floor(std::sqrt(static_cast<double>(hp.at(matC).vs[NAW]))));
+    static_cast<unsigned>(std::floor(std::sqrt(static_cast<double>(hp.at(nsHP::matC).vs[nsHP::NAW]))));
   }
   else{
     throw tinygemm_error("main_split_on_k is neither 0 nor 1, how can this be? Logic error in reset_ga3_params");
@@ -127,34 +127,36 @@ DerivedParams::set_fragile(){
   
   set_should_be_hyperparams();
 
-
-  if (hp.at(matC).vs[MAC] == a4b8)  {
+  
+  
+  //TODO : tidy this up, compactify
+  if (hp.at(nsHP::matC).vs[nsHP::MAC] == nsMAC::a4b8)  {
     at('A').macro_tile_length = 4;
     at('B').macro_tile_length = 8;
   }
 
-  else if (hp.at(matC).vs[MAC] == a8b4)  {
+  else if (hp.at(nsHP::matC).vs[nsHP::MAC] == nsMAC::a8b4)  {
     at('A').macro_tile_length = 8;
     at('B').macro_tile_length = 4;
   }
 
   
-  else if (hp.at(matC).vs[MAC] == a8b8)  {
+  else if (hp.at(nsHP::matC).vs[nsHP::MAC] == nsMAC::a8b8)  {
     at('A').macro_tile_length = 8;
     at('B').macro_tile_length = 8;
   }
   
-  else if (hp.at(matC).vs[MAC] == a8b16)  {
+  else if (hp.at(nsHP::matC).vs[nsHP::MAC] == nsMAC::a8b16)  {
     at('A').macro_tile_length = 8;
     at('B').macro_tile_length = 16;
   }
 
-  else if (hp.at(matC).vs[MAC] == a16b8)  {
+  else if (hp.at(nsHP::matC).vs[nsHP::MAC] == nsMAC::a16b8)  {
     at('A').macro_tile_length = 16;
     at('B').macro_tile_length = 8;
   }
    
-  else if (hp.at(matC).vs[MAC] == a16b16)  {
+  else if (hp.at(nsHP::matC).vs[nsHP::MAC] == nsMAC::a16b16)  {
     at('A').macro_tile_length = 16;
     at('B').macro_tile_length = 16;
   }
@@ -162,7 +164,9 @@ DerivedParams::set_fragile(){
   else{
     throw tinygemm_error("unrecognised MAC (macro tile sizes cannot be set)");
   }
-
+  
+  at('A').macro_tile_length *= hp.at('A').vs[nsHP::MIC];
+  at('B').macro_tile_length *= hp.at('B').vs[nsHP::MIC];
 
 
 
@@ -171,13 +175,13 @@ DerivedParams::set_fragile(){
   for (char x : {'a', 'b'}){
     at(x).preshift_final_tile = 1 + (gg.get_non_k_dim(x) - 1) % at(x).macro_tile_length;
     at(x).n_groups = gg.get_non_k_dim(x) / at(x).macro_tile_length + (at(x).preshift_final_tile != at(x).macro_tile_length);
-    at(x).main_macro_tile_length_and_pad = at(x).macro_tile_length + hp.at(x).vs[MIC];
-    at(x).main_n_elements_in_padded_unroll = at(x).main_macro_tile_length_and_pad * hp.at(matC).vs[UNR];
+    at(x).main_macro_tile_length_and_pad = at(x).macro_tile_length + hp.at(x).vs[nsHP::MIC];
+    at(x).main_n_elements_in_padded_unroll = at(x).main_macro_tile_length_and_pad * hp.at(nsHP::matC).vs[nsHP::UNR];
   }
   
 
   main_macro_tile_area = at('b').macro_tile_length * at('a').macro_tile_length;
-  main_micro_tile_area = hp.at(matB).vs[MIC] * hp.at(matA).vs[MIC];
+  main_micro_tile_area = hp.at(nsHP::matB).vs[nsHP::MIC] * hp.at(nsHP::matA).vs[nsHP::MIC];
   main_n_work_items_per_workgroup = main_macro_tile_area / main_micro_tile_area;
 
   unsigned required_workspace = 0;
@@ -199,14 +203,14 @@ DerivedParams::set_fragile(){
     
   
     
-    at(x).n_elements_in_unroll = at(x).macro_tile_length * hp.at(matC).vs[UNR];
+    at(x).n_elements_in_unroll = at(x).macro_tile_length * hp.at(nsHP::matC).vs[nsHP::UNR];
     at(x).main_n_elements_to_load_per_workitem = at(x).n_elements_in_unroll / main_n_work_items_per_workgroup;  
     
-    if (hp.at(x).vs[WOS] == 2){
+    if (hp.at(x).vs[nsHP::WOS] == 2){
       at(x).cw2_n_elements_to_load_per_workitem = at(x).n_elements_in_unroll / at(x).cw2_local_work_size;  
     }
     
-    if (hp.at(x).vs[WOS] != 0){
+    if (hp.at(x).vs[nsHP::WOS] != 0){
       reset_cw_params(x);
       required_workspace += at(x).cw_n_elements; //cw1_target_ldx*gg.get_uncoal(x);
     }
@@ -248,7 +252,7 @@ DerivedParams::set_fragile(){
       return tup;
     }    
     
-    if (hp.at(x).vs[WOS] == 2){// && at(x).n_elements_in_unroll % at(x).cw2_local_work_size != 0){
+    if (hp.at(x).vs[nsHP::WOS] == 2){// && at(x).n_elements_in_unroll % at(x).cw2_local_work_size != 0){
       auto tup_cw = is_div(x, "at(x).cw2_local_work_size", at(x).cw2_local_work_size);
       if (std::get<0>(tup_cw) == false){
         return tup_cw;
@@ -259,13 +263,13 @@ DerivedParams::set_fragile(){
   
   /* check 2 : tileability */
   for (char x : {'a', 'b'}){  
-    auto tup = tiling::get_tileability(at(x).macro_tile_length, hp.at(matC).vs[UNR], at(x).main_n_elements_to_load_per_workitem);
+    auto tup = tiling::get_tileability(at(x).macro_tile_length, hp.at(nsHP::matC).vs[nsHP::UNR], at(x).main_n_elements_to_load_per_workitem);
     if (std::get<0>(tup) == false){
       return tup;
     }
     
-    if (hp.at(x).vs[WOS] == 2){
-      tup = tiling::get_tileability(at(x).macro_tile_length, hp.at(matC).vs[UNR], at(x).cw2_n_elements_to_load_per_workitem);
+    if (hp.at(x).vs[nsHP::WOS] == 2){
+      tup = tiling::get_tileability(at(x).macro_tile_length, hp.at(nsHP::matC).vs[nsHP::UNR], at(x).cw2_n_elements_to_load_per_workitem);
       if (std::get<0>(tup) == false){
         return tup;
       }
@@ -290,20 +294,20 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams & hp_, const tinygem
   /* do the tiling */  
   for (char x : {'a', 'b'}){
   
-    tiling::set_tile_dimensions(at(x).main_micro_tile_perp_unroll, at(x).main_micro_tile_pll_unroll, at(x).macro_tile_length, hp.at(matC).vs[UNR], at(x).main_n_elements_to_load_per_workitem, hp.at(x).vs[PLU] == 0);
+    tiling::set_tile_dimensions(at(x).main_micro_tile_perp_unroll, at(x).main_micro_tile_pll_unroll, at(x).macro_tile_length, hp.at(nsHP::matC).vs[nsHP::UNR], at(x).main_n_elements_to_load_per_workitem, hp.at(x).vs[nsHP::PLU] == 0);
     
-    if (hp.at(x).vs[WOS] == 2){
-      tiling::set_tile_dimensions(at(x).cw2_micro_tile_perp_unroll, at(x).cw2_micro_tile_pll_unroll, at(x).macro_tile_length, hp.at(matC).vs[UNR], at(x).cw2_n_elements_to_load_per_workitem, at(x).cw2_load_pll_to_unroll == 0);
+    if (hp.at(x).vs[nsHP::WOS] == 2){
+      tiling::set_tile_dimensions(at(x).cw2_micro_tile_perp_unroll, at(x).cw2_micro_tile_pll_unroll, at(x).macro_tile_length, hp.at(nsHP::matC).vs[nsHP::UNR], at(x).cw2_n_elements_to_load_per_workitem, at(x).cw2_load_pll_to_unroll == 0);
     }
   } 
   
-  //tiling::set_tile_dimensions(bdps.main_micro_tile_perp_unroll, bdps.main_micro_tile_pll_unroll, hp.at(matB).macro_tile_length, hp.at(matC).vs[UNR], bdps.main_n_elements_to_load_per_workitem, hp.at(matB).load_pll_to_unroll == 0); 
+  //tiling::set_tile_dimensions(bdps.main_micro_tile_perp_unroll, bdps.main_micro_tile_pll_unroll, hp.at(nsHP::matB).macro_tile_length, hp.at(nsHP::matC).vs[nsHP::UNR], bdps.main_n_elements_to_load_per_workitem, hp.at(nsHP::matB).load_pll_to_unroll == 0); 
   
   
-  main_split_on_k = hp.at(matC).vs[ICE] == 1 ? 0 : 1;
+  main_split_on_k = hp.at(nsHP::matC).vs[nsHP::ICE] == 1 ? 0 : 1;
   main_does_beta_c_inc = main_split_on_k == 1 ? 0 : 1; 
   
-  if (hp.at(matC).vs[ICE] == 1){
+  if (hp.at(nsHP::matC).vs[nsHP::ICE] == 1){
     infa = "n_work_items_per_c_elm is 1, should not be using atomics";
     fati = "n_work_items_per_c_elm is 1, should not be using atomics";
   }
@@ -313,37 +317,37 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams & hp_, const tinygem
     fati = gg.derived.float_size_bits == 32 ? "atomic_cmpxchg" : "atom_cmpxchg";
   }
   
-  pragma_unroll_string = hp.at(matC).vs[PUN] == 1 ?  "#pragma unroll\n" : "" ;
+  pragma_unroll_string = hp.at(nsHP::matC).vs[nsHP::PUN] == 1 ?  "#pragma unroll\n" : "" ;
   
-  effective_k_varies_string = hp.at(matC).vs[UFO] == 0 ? "__K__" : "k_plus_offset";
+  effective_k_varies_string = hp.at(nsHP::matC).vs[nsHP::UFO] == 0 ? "__K__" : "k_plus_offset";
   t_float = gg.derived.float_size_bits == 32 ? "float" : "double";
   
-  main_n_work_groups = hp.at(matC).vs[ICE] * 
+  main_n_work_groups = hp.at(nsHP::matC).vs[nsHP::ICE] * 
   ((gg.m/at('a').macro_tile_length) + (gg.m%at('a').macro_tile_length != 0)) * 
   ((gg.n/at('b').macro_tile_length) + (gg.n%at('b').macro_tile_length != 0));
   
   main_global_work_size = main_n_work_groups * main_n_work_items_per_workgroup;
   
   for (char x : {'a', 'b'}){      
-    at(x).main_n_micro_in_macro = at(x).macro_tile_length / hp.at(x).vs[MIC];
-    at(x).main_n_micro_tiles_pll_unroll = hp.at(matC).vs[UNR] / at(x).main_micro_tile_pll_unroll;
-    at(x).main_c_interweave_stride = hp.at(x).vs[MIW] == 0 ? 1 : at(x).main_n_micro_in_macro;  
+    at(x).main_n_micro_in_macro = at(x).macro_tile_length / hp.at(x).vs[nsHP::MIC];
+    at(x).main_n_micro_tiles_pll_unroll = hp.at(nsHP::matC).vs[nsHP::UNR] / at(x).main_micro_tile_pll_unroll;
+    at(x).main_c_interweave_stride = hp.at(x).vs[nsHP::MIW] == 0 ? 1 : at(x).main_n_micro_in_macro;  
     
     
-    if (hp.at(x).vs[WOS] == 2){
-      at(x).cw2_n_micro_tiles_pll_unroll = hp.at(matC).vs[UNR] / at(x).cw2_micro_tile_pll_unroll;
+    if (hp.at(x).vs[nsHP::WOS] == 2){
+      at(x).cw2_n_micro_tiles_pll_unroll = hp.at(nsHP::matC).vs[nsHP::UNR] / at(x).cw2_micro_tile_pll_unroll;
       at(x).cw2_n_micro_tiles_perp_unroll = at(x).macro_tile_length / at(x).cw2_micro_tile_perp_unroll;
     }
 
   }
 
-  if (hp.at(matC).vs[GAL] == 3){
+  if (hp.at(nsHP::matC).vs[nsHP::GAL] == 3){
     reset_ga3_params();
   }
 
   /* these guys are hyper params, with a check if not optional ? */
   main_use_edge_trick = (gg.m%at('a').macro_tile_length == 0 && gg.n%at('b').macro_tile_length == 0) ? 0 : 1;
-  main_final_fractional_unroll = (hp.at(matC).vs[UFO] == 1 || gg.k%hp.at(matC).vs[UNR] != 0) ? 1 : 0;
+  main_final_fractional_unroll = (hp.at(nsHP::matC).vs[nsHP::UFO] == 1 || gg.k%hp.at(nsHP::matC).vs[nsHP::UNR] != 0) ? 1 : 0;
   
 }
 

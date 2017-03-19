@@ -66,7 +66,7 @@ std::make_tuple(20800, 128, 49, 49, 49, 20800, true, false),
   bool tC = false;
   float allotted_time = 2.; 
   bool verbose = false;
-  bool enforce_deterministic = false;
+  std::string constraint_string = "";
   
   /* We're just tracking the overall run time with these */
   auto start = std::chrono::high_resolution_clock::now();
@@ -114,10 +114,10 @@ std::make_tuple(20800, 128, 49, 49, 49, 20800, true, false),
     tinygemm::TinyGemmOffsets offsets (a_offset, b_offset, c_offset, workspace_offset, tail_off_a, tail_off_b, tail_off_c);    
     
      
-    //basicfind<float>(isColMajor, tA, tB, tC, m, n, k, lda, ldb, ldc, a_offset, b_offset, c_offset, alpha, beta, allotted_time, verbose, ss_logfile.str(), enforce_deterministic, n_postfind_runs, do_cpu_test);    
+    //basicfind<float>(isColMajor, tA, tB, tC, m, n, k, lda, ldb, ldc, a_offset, b_offset, c_offset, alpha, beta, allotted_time, verbose, ss_logfile.str(), constraint_string, n_postfind_runs, do_cpu_test);    
     
     
-    basicfind<float>(gg, offsets, allotted_time, verbose, ss_logfile.str(), enforce_deterministic, n_postfind_runs, do_cpu_test);    
+    basicfind<float>(gg, offsets, allotted_time, verbose, ss_logfile.str(), constraint_string, n_postfind_runs, do_cpu_test);    
   }
   
   return 0;

@@ -118,10 +118,9 @@ int main(){
   float allotted_time = 0.003; 
   bool verbose = false;
   
-  /* enforce_deterministc, ldx_offset */
-  std::vector<std::tuple<bool, unsigned>> run_settings = {
-    //std::make_tuple(false,1), 
-    std::make_tuple(false,0), 
+  /* constraint_string, ldx_offset */
+  std::vector<std::tuple<std::string, unsigned>> run_settings = {
+    std::make_tuple("",0), 
   }; 
   
   /* We're just tracking the overall run time with these */
@@ -134,11 +133,11 @@ int main(){
   
   for (const auto & run_setting :  run_settings){
   
-    bool enforce_deterministic;
+    std::string constraint_string;
     unsigned ldx_offset;
-    std::tie(enforce_deterministic, ldx_offset) = run_setting;
+    std::tie(constraint_string, ldx_offset) = run_setting;
     
-    std::cout << "\n\n\nEntering benchmarking experiment with enforce_deterministic = " << enforce_deterministic << " and ldx_offset = " << ldx_offset << std::endl;
+    std::cout << "\n\n\nEntering benchmarking experiment with constraint_string = (" << constraint_string << ") and ldx_offset = " << ldx_offset << std::endl;
     
     
     
@@ -160,7 +159,7 @@ int main(){
       
       std::stringstream ss_logfile;
 #ifdef DIR_FOR_WRITING
-      ss_logfile << DIR_FOR_WRITING << "/deepbench/" << "at" << int(allotted_time) << "_off" << ldx_offset << "_ed" << int(enforce_deterministic) << "_m" << m  << "_n" << n  << "_k" << k  << "_tA" << tA  << "_tB" << tB << ".txt";   
+      ss_logfile << DIR_FOR_WRITING << "/deepbench/" << "at" << int(allotted_time) << "_off" << ldx_offset << "_cs" << constraint_string << "_m" << m  << "_n" << n  << "_k" << k  << "_tA" << tA  << "_tB" << tB << ".txt";   
 #endif
       
       unsigned lda = (tA == isColMajor ? k : m) + (ldx_offset == 1 ? 5 : 0);
@@ -188,7 +187,7 @@ int main(){
       tinygemm::TinyGemmGeometry gg (isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype);
       tinygemm::TinyGemmOffsets offsets (a_offset, b_offset, c_offset, workspace_offset, tail_off_a, tail_off_b, tail_off_c);
 
-      basicfind<float>(gg, offsets, allotted_time, verbose, ss_logfile.str(), enforce_deterministic, n_postfind_runs, do_cpu_test);    
+      basicfind<float>(gg, offsets, allotted_time, verbose, ss_logfile.str(), constraint_string, n_postfind_runs, do_cpu_test);    
     }
   }
   

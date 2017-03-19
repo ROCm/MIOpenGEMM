@@ -28,7 +28,7 @@
   
 template <typename TFloat> 
 
-void basicfind(const tinygemm::TinyGemmGeometry & geometry, const tinygemm::TinyGemmOffsets & toff, float allotted_time, bool verbose, std::string logfile, bool enforce_deterministic, unsigned n_postfind_runs, bool do_cpu_test){
+void basicfind(const tinygemm::TinyGemmGeometry & geometry, const tinygemm::TinyGemmOffsets & toff, float allotted_time, bool verbose, std::string logfile, std::string constraint_string, unsigned n_postfind_runs, bool do_cpu_test){
   
   /* just checking that geometry floattype is correct */
   if (!((geometry.floattype == 'f' && sizeof(TFloat) == 4) || (geometry.floattype == 'd' && sizeof(TFloat) == 8))) {
@@ -103,7 +103,7 @@ void basicfind(const tinygemm::TinyGemmGeometry & geometry, const tinygemm::Tiny
   /* *****************
    * Find a solution *
    * *****************/
-  tinygemm::TinyGemmSolution soln = tinygemm::find(allotted_time, command_queue, a_gpu, b_gpu, c_gpu, workspace_gpu, enforce_deterministic, geometry, toff, verbose, logfile);
+  tinygemm::TinyGemmSolution soln = tinygemm::find(allotted_time, command_queue, a_gpu, b_gpu, c_gpu, workspace_gpu, constraint_string, geometry, toff, verbose, logfile);
   
     
   if (do_cpu_test == true && n_postfind_runs < 1){

@@ -56,38 +56,38 @@ public:
     std::vector<KernelString> v_tgks;  
     std::vector<std::vector<unsigned> > v_wait_indices;
     
-    if (hp.at(matA).vs[WOS] == 0){
+    if (hp.at(nsHP::matA).vs[nsHP::WOS] == 0){
       //no wsa kernel
     }
     
-    else if (hp.at(matA).vs[WOS] == 1){
+    else if (hp.at(nsHP::matA).vs[nsHP::WOS] == 1){
       v_tgks.emplace_back( copygen::get_copya_kernelstring(hp, gg, dp) );
     }
     
-    else if (hp.at(matA).vs[WOS] == 2){
+    else if (hp.at(nsHP::matA).vs[nsHP::WOS] == 2){
       v_tgks.emplace_back( nformgen::get_nforma_kernelstring(hp, gg, dp) );
     }
     
     else{
-      throw tinygemm_error("hp.at(matA).vs[WOS] should be 0, 1 or 2");
+      throw tinygemm_error("hp.at(nsHP::matA).vs[nsHP::WOS] should be 0, 1 or 2");
     }
     
 
-    if (hp.at(matB).vs[WOS] == 0){
+    if (hp.at(nsHP::matB).vs[nsHP::WOS] == 0){
       //no wsb kernel
     }
     
     
-    else if (hp.at(matB).vs[WOS] == 1){
+    else if (hp.at(nsHP::matB).vs[nsHP::WOS] == 1){
       v_tgks.emplace_back( copygen::get_copyb_kernelstring(hp, gg, dp) ); //deduce from hp whether a is copied or not. 
     }
 
-    else if (hp.at(matB).vs[WOS] == 2){
+    else if (hp.at(nsHP::matB).vs[nsHP::WOS] == 2){
       v_tgks.emplace_back( nformgen::get_nformb_kernelstring(hp, gg, dp) );
     }
 
     else {
-      throw tinygemm_error("hp.at(matB).vs[WOS] should be 0, 1 or 2");
+      throw tinygemm_error("hp.at(nsHP::matB).vs[nsHP::WOS] should be 0, 1 or 2");
     }
 
     
@@ -140,7 +140,8 @@ public:
 
 
 
-Bundle get_bundle(const hyperparams::HyperParams & hp,  const tinygemm::TinyGemmGeometry & gg){  
+Bundle get_bundle(const hyperparams::HyperParams & hp,  const tinygemm::TinyGemmGeometry & gg){
+  
   BundleGenerator ksbg(hp, gg);
   return ksbg.generate();
 }

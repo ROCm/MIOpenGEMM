@@ -226,7 +226,7 @@ private:
     }
     
     else if (type.compare("wsa") == 0){
-      if (tk_kernels_map.at("wsa").is_set() == false && new_hp.at(matA).vs[WOS] != 0){
+      if (tk_kernels_map.at("wsa").is_set() == false && new_hp.at(nsHP::matA).vs[nsHP::WOS] != 0){
          return true;
        }
        else{
@@ -235,7 +235,7 @@ private:
     }
 
     else if (type.compare("wsb") == 0){
-      if (tk_kernels_map.at("wsb").is_set() == false && new_hp.at(matB).vs[WOS] != 0){
+      if (tk_kernels_map.at("wsb").is_set() == false && new_hp.at(nsHP::matB).vs[nsHP::WOS] != 0){
          return true;
        }
        else{
@@ -439,8 +439,10 @@ public:
       mowri << "\nSource kernel " << "(" << i + 1 << "/" << hps.size() << ") "  << hps[i].get_string() << Endl;      
       
 
+      std::cout << "before deriveability test..." << std::endl;
       deriveability_test(hps[i], "in benchgemm");
 
+      std::cout << "before get bundle..." << std::endl;
       auto bundle = tinygemm::kerngen::get_bundle(hps[i],gg); 
 
       auto atr = architests::architecture_specific_tests(command_queue, hps[i], bundle.dp);
@@ -472,7 +474,7 @@ public:
   }
   
   
-  tinygemm::TinyGemmSolution find(float allotted_time, bool enforce_deterministic, unsigned n_runs_per_kernel){
+  tinygemm::TinyGemmSolution find(float allotted_time, std::string constraint_string, unsigned n_runs_per_kernel){
     
     
 
@@ -553,8 +555,11 @@ public:
           hyper_front_history.push_back(hp);
         
           /* reason 3 : the user requests a deterministic kernel, which cannot be guaranteed */
-          if (enforce_deterministic == true && hp.at(matC).vs[ICE] != 1){
-            mowri << "not considering kernels which may be non-deterministic" << Endl;
+          if (constraint_string != "") {
+    
+            mowri << "TODO : this violates the constraint string" << Endl;
+            throw tinygemm_error("a non-empty constraint string. I should do something about that. ");
+            
           }
           /* ************************************************************************ */
   
@@ -735,7 +740,7 @@ cl_mem a,
 cl_mem b,
 cl_mem c,
 cl_mem workspace,
-const bool enforce_deterministic,
+const std::string constraint_string,
 const tinygemm::TinyGemmGeometry & gg,
 const tinygemm::TinyGemmOffsets & toff,
 bool verbose, 
@@ -753,18 +758,18 @@ bool c_is_const){
   
     openclutil::SafeClMem c_copied = get_copy(command_queue, c, gg, toff, "copy of c in find");
     OpenCLGemmEncapsulator oger(command_queue, gg, toff, a, b, c_copied.clmem, workspace, logfile, verbose); 
-    return oger.find(allotted_time, enforce_deterministic, n_runs_per_kernel);
+    return oger.find(allotted_time, constraint_string, n_runs_per_kernel);
   }
   
   else{
     OpenCLGemmEncapsulator oger(command_queue, gg, toff, a, b, c, workspace, logfile, verbose); 
-    return oger.find(allotted_time, enforce_deterministic, n_runs_per_kernel);
+    return oger.find(allotted_time, constraint_string, n_runs_per_kernel);
   }
 }
 
 tinygemm::TinyGemmSolution
 get_default(
-const bool enforce_deterministic,
+const std::string constraint_string,
 const tinygemm::TinyGemmGeometry & gg,
 bool verbose, 
 std::string logfile){
@@ -792,6 +797,8 @@ void benchgemm(
   std::string logfile,
   bool c_is_const){
   
+  
+  std::cout << "in tinygemm's benchgemm" << std::endl;
   tinygemm::consistencychecks::check_ldx_mnk_consistent(gg);
   if (c_is_const == true){
     openclutil::SafeClMem c_copied = get_copy(command_queue, c_gpu, gg, toff, "copy of c in benchgemm");

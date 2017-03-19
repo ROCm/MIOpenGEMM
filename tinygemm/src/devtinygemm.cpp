@@ -134,10 +134,10 @@ public:
     tinygemm::benchgemm(tgcq.command_queue, hps, number_of_runs, gg, toff, a_gpu_safemem.clmem, b_gpu_safemem.clmem, c_gpu_safemem.clmem, workspace_safemem.clmem, true, mowri.filename, false);
   }
   
-  tinygemm::TinyGemmSolution find(float allotted_time, bool enforce_deterministic){
+  tinygemm::TinyGemmSolution find(float allotted_time, std::string constraint_string){
     /* dev code's connection to tinygemm */
     tinygemm::TinyGemmSolution tgs = tinygemm::find(
-      allotted_time, tgcq.command_queue, a_gpu_safemem.clmem, b_gpu_safemem.clmem, c_gpu_safemem.clmem, workspace_safemem.clmem, enforce_deterministic, gg, toff, 
+      allotted_time, tgcq.command_queue, a_gpu_safemem.clmem, b_gpu_safemem.clmem, c_gpu_safemem.clmem, workspace_safemem.clmem, constraint_string, gg, toff, 
       true, // yes, write to terminal (may be captured further upstream)
       outputfilename, // file where to write the output (if "", nowhere). A new mowri will be created in the function called. 
       false); 
@@ -193,14 +193,14 @@ template void accuracy_test(const hyperparams::HyperParams & hp, const tinygemm:
 
 
 template <typename TFloat>
-tinygemm::TinyGemmSolution find(float allotted_time, const TFloat * a, const TFloat * b, const TFloat * c, bool enforce_deterministic, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff,  bool verbose, std::string logfile){
+tinygemm::TinyGemmSolution find(float allotted_time, const TFloat * a, const TFloat * b, const TFloat * c, std::string constraint_string, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff,  bool verbose, std::string logfile){
   
   Gemini <TFloat> gem(gg, toff, a, b, c, verbose, logfile);
-  return gem.find(allotted_time, enforce_deterministic);
+  return gem.find(allotted_time, constraint_string);
 }
-template tinygemm::TinyGemmSolution find(float allotted_time, const double * a, const double * b, const double * c, bool enforce_deterministic, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, bool verbose, std::string logfile);
+template tinygemm::TinyGemmSolution find(float allotted_time, const double * a, const double * b, const double * c, std::string constraint_string, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, bool verbose, std::string logfile);
 
-template tinygemm::TinyGemmSolution find(float allotted_time, const float * a, const float * b, const float * c, bool enforce_deterministic, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, bool verbose, std::string logfile);
+template tinygemm::TinyGemmSolution find(float allotted_time, const float * a, const float * b, const float * c, std::string constraint_string, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, bool verbose, std::string logfile);
 
 
 

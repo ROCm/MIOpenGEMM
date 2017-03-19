@@ -17,6 +17,94 @@
 
 
 namespace tinygemm{
+
+
+namespace hyperparams{
+
+template <typename T>
+std::map<T, unsigned> getVals(unsigned nVals, const std::vector<T> & keys, const std::string & hash){
+  std::map<T, unsigned> vals;    
+  for (unsigned val = 0; val < nVals; ++val){
+    if (keys[val] == T()){
+      throw tinygemm_error("It appears as though one of the elements of " + hash +  " has not been added to keys, unitialisation error");
+    }
+    vals[keys[val]] = val;
+    
+  }
+  return vals;
+}
+
+ 
+SUHP::SUHP(){
+
+  ChiralKeys.resize(nsHP::nChiralHPs);
+  NonChiralKeys.resize(nsHP::nNonChiralKeys);
+  MatKeys.resize(nsHP::nMatrices);
+  HPVals.resize(nsHP::nMatrices);
+  HPKeys.resize(nsHP::nMatrices);
+  nHPs.resize(nsHP::nMatrices);  
+
+  
+  std::cout << "In SUHP::SUHP() 1" << std::endl;
+  
+  
+  ChiralKeys[nsHP::MIC] = "MIC";
+  ChiralKeys[nsHP::PAD] = "PAD";
+  ChiralKeys[nsHP::PLU] = "PLU";
+  ChiralKeys[nsHP::LIW] = "LIW";
+  ChiralKeys[nsHP::MIW] = "MIW";
+  ChiralKeys[nsHP::WOS] = "WOS";
+  ChiralVals = getVals(nsHP::nChiralHPs, ChiralKeys, "ChiralKeys");
+
+  std::cout << "In SUHP::SUHP() 50" << std::endl;
+
+
+  NonChiralKeys[nsHP::UNR] = "UNR";
+  NonChiralKeys[nsHP::GAL] = "GAL";
+  NonChiralKeys[nsHP::PUN] = "PUN";
+  NonChiralKeys[nsHP::ICE] = "ICE";
+  NonChiralKeys[nsHP::NAW] = "NAW";
+  NonChiralKeys[nsHP::UFO] = "UFO"; 
+  NonChiralKeys[nsHP::MAC] = "MAC"; 
+  NonChiralVals = getVals(nsHP::nNonChiralKeys, NonChiralKeys, "NonChiralKeys");
+
+
+
+  std::cout << "In SUHP::SUHP() 100" << std::endl;
+  
+
+  MatKeys[nsHP::matA] = 'A';
+  MatKeys[nsHP::matB] = 'B';
+  MatKeys[nsHP::matC] = 'C';
+  MatVals = getVals(nsHP::nMatrices, MatKeys, "MatKeys");
+  
+  HPVals[nsHP::matA] = ChiralVals;
+  HPVals[nsHP::matB] = ChiralVals;
+  HPVals[nsHP::matC] = NonChiralVals;
+
+
+  HPKeys[nsHP::matA] = ChiralKeys;
+  HPKeys[nsHP::matB] = ChiralKeys;
+  HPKeys[nsHP::matC] = NonChiralKeys;
+
+  std::cout << "In SUHP::SUHP() 200" << std::endl;
+
+
+
+  nHPs[nsHP::matA] = nsHP::nChiralHPs;
+  nHPs[nsHP::matB] = nsHP::nChiralHPs;
+  nHPs[nsHP::matC] = nsHP::nNonChiralKeys;  
+
+
+
+
+
+}
+
+const SUHP suHP;
+
+}
+
 namespace hyperparams{
 
 const std::map<unsigned, std::vector<unsigned> > graph_binary = 
@@ -35,9 +123,9 @@ void Graph::update_range(){
 Graph get_g_chiral(){
 
   Graph hpg;
-  hpg.graph.resize(nChiralHPs);
+  hpg.graph.resize(nsHP::nChiralHPs);
   
-  hpg.graph[MIC] =
+  hpg.graph[nsHP::MIC] =
   { {1, {2,3,4} },
     {2, {1,3,4} },
     {3, {1,2,4,5} },
@@ -47,21 +135,21 @@ Graph get_g_chiral(){
     {7, {4,5,6,8} },
     {8, {4,6,7} }    };
   
-  hpg.graph[PAD] = 
+  hpg.graph[nsHP::PAD] = 
   { {0, {1,2}   },
     {1, {0,2}   },
     {2, {0,1}   }    };
   
-  hpg.graph[PLU] = 
+  hpg.graph[nsHP::PLU] = 
   {  graph_binary  };
 
-  hpg.graph[LIW] = 
+  hpg.graph[nsHP::LIW] = 
   {  graph_binary  };
 
-  hpg.graph[MIW] = 
+  hpg.graph[nsHP::MIW] = 
   {  graph_binary  };
   
-  hpg.graph[WOS] = 
+  hpg.graph[nsHP::WOS] = 
   {  {0, {}}   };// for now, no copying TODO
   
   hpg.update_range();
@@ -71,32 +159,34 @@ Graph get_g_chiral(){
 Graph get_g_non_chiral(){
 
   Graph hpg;
-  hpg.graph.resize(nNonChiralHPs);
+  hpg.graph.resize(nsHP::nNonChiralKeys);
   
-  hpg.graph[UNR] = 
+  hpg.graph[nsHP::UNR] = 
   { {4, {8} },
     {8, {4,16} },
     {16, {8,24,32} },
     {24, {16, 32} },
     {32, {16} }  };
   
-  hpg.graph[NAW] = 
+  hpg.graph[nsHP::NAW] = 
   { {16, {81}},
     {81, {16}}   };
   
-  hpg.graph[GAL] = 
-  { {byrow, {bycol, sucol}   },
-    {bycol, {byrow, sucol}   },
-    {sucol, {byrow, bycol}   }   };
+  hpg.graph[nsHP::GAL] = 
+  { {nsGAL::byrow, {nsGAL::bycol, nsGAL::sucol}   },
+    {nsGAL::bycol, {nsGAL::byrow, nsGAL::sucol}   },
+    {nsGAL::sucol, {nsGAL::byrow, nsGAL::bycol}   }   };
 
-  hpg.graph[MAC] = 
-  { {a4b8, {a8b8}},
-    {a8b4, {a8b8}},
-    {a8b8, {a4b8, a8b4, a8b8, a8b16, a16b8, a16b16}},
-    {a8b16, {a8b8, a16b16}},
-    {a16b8, {a8b8, a16b16}}    };
+  hpg.graph[nsHP::MAC] = 
+  { {nsMAC::a4b8, {nsMAC::a8b8}},
+    {nsMAC::a8b4, {nsMAC::a8b8}},
+    {nsMAC::a8b8, {nsMAC::a4b8, nsMAC::a8b4, nsMAC::a8b8, nsMAC::a8b16, nsMAC::a16b8, nsMAC::a16b16}},
+    {nsMAC::a8b16, {nsMAC::a8b8, nsMAC::a16b16}},
+    {nsMAC::a16b8, {nsMAC::a8b8, nsMAC::a16b16}},
+    {nsMAC::a16b16, {nsMAC::a8b8, nsMAC::a8b4, nsMAC::a4b8}},
+        };
   
-  hpg.graph[ICE] = 
+  hpg.graph[nsHP::ICE] = 
   { {1,  {2,3}},
     {2,  {1,3,4}},
     {3,  {1,2,4,6}},
@@ -112,10 +202,10 @@ Graph get_g_non_chiral(){
     {13, {10,11,12,14}},
     {14, {11,12,13}}   };
   
-  hpg.graph[PUN] = 
+  hpg.graph[nsHP::PUN] = 
   {  graph_binary  };
   
-  hpg.graph[UFO] =
+  hpg.graph[nsHP::UFO] =
   {  graph_binary  };
 
   hpg.update_range();
@@ -125,36 +215,91 @@ Graph get_g_non_chiral(){
 Graph g_chiral(get_g_chiral());
 Graph g_non_chiral(get_g_non_chiral());
 
-/* take in hyper-parameter string and return a map */
-std::map<char, std::map<std::string, unsigned> > get_params_from_string(const std::string & hyperstring){
+std::vector<std::vector<unsigned>> get_params_from_string(const std::string & hyperstring){
+
+  /* TODO only generate this when an error emerges */
+  std::stringstream ssghe;
+  ssghe << "the hyperstring received here is :\n";
+  ssghe << "         " << hyperstring << "\n";
+  ssghe << "an example of a hyperstring in the correct format is:\n";
+  ssghe << "         ";
+  ssghe << "A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN0_ICE1_NAW81_UFO0_MAC2\n";
+  std::string generic_hyperstring_errm = ssghe.str();
+
   
+  
+  std::cout << "In get_params_from_string" << std::endl;
+ 
   std::string shortkey;
   unsigned val;
   
-  std::map<char, std::map<std::string, unsigned> > params = { {'A', {}}, {'B', {}}, {'C', {}} }; 
+  std::vector<std::vector<unsigned>> params (nsHP::nMatrices);
+  for (unsigned mi = 0; mi < nsHP::nMatrices; ++mi){
+    params[mi].resize(suHP.nHPs[mi]);
+  }
+  
   auto megafrags = stringutil::split(hyperstring, "__");
   for (auto & megafrag : megafrags){
     char matrixkey = megafrag[0];
+
     if (matrixkey != 'A' && matrixkey != 'B' && matrixkey != 'C'){
-      throw tinygemm_error("matrixkey should be A,B or C");
+      std::stringstream ss;
+      ss << "\nWhile reading hyperstring in get_params_from_string. `matrixkey' should be A,B or C, not `" << matrixkey << "'.\n";
+      ss << generic_hyperstring_errm;
+      throw tinygemm_error(ss.str());
     }
+
+    auto matrix_val = suHP.MatVals.at(matrixkey);
     auto keyvalfrags = stringutil::split(megafrag.substr(2), "_");
+    if (keyvalfrags.size() < suHP.HPKeys[matrix_val].size()){
+      std::stringstream ss;
+      ss << "While processing frag section " << suHP.MatKeys[matrix_val] << ".\n";
+      ss << "There appear to be too few parameters (" << keyvalfrags.size() << " as opposed to " << suHP.HPKeys[matrix_val].size() << ")";
+      ss << generic_hyperstring_errm;
+      throw tinygemm_error(ss.str());
+    }
+    
     for (auto & x : keyvalfrags){
       std::tie(shortkey, val) = stringutil::splitnumeric(x);
-      params[matrixkey][shortkey] = val;
+      auto start = suHP.HPKeys[matrix_val].begin();
+      auto end  = suHP.HPKeys[matrix_val].end();
+      if(std::find(start, end, shortkey) == end) {
+        std::stringstream ss;
+        ss << "While processing frag section " << suHP.MatKeys[matrix_val] << ".\n";
+        ss << "in get_params_from_string in hyperparams.cpp   :   unrecognised : " + shortkey << ".\n";
+        ss << generic_hyperstring_errm;
+        throw tinygemm_error(ss.str());
+      }
+      /* We have confirmed that shortkey is valid, this is safe */
+      auto shortkey_val = suHP.HPVals[matrix_val].at(shortkey);
+      
+      if (shortkey_val < params[matrix_val].size()){
+        params[matrix_val][shortkey_val] = val;
+      }
+      else{
+        throw tinygemm_error("in get_params_from_string, cannot insert as out of bounds.");
+      }
     }
   }
   return params;
 }
 
+std::string XHPs::get_string() const{
+  std::stringstream ss;
+  for (unsigned hpi = 0; hpi < vs.size(); ++hpi){
+    ss << (*ptr_hpkeys)[hpi] << vs[hpi] << "_";
+  }
+  ss << (*ptr_hpkeys).back() << vs.back();
+  return ss.str();
+}
 
 void XHPs::check() const{
   for (unsigned i = 0; i < vs.size(); ++i){
-    auto start = hpgraph.range[i].begin();
-    auto end = hpgraph.range[i].end();
+    auto start = ptr_hpgraph->range[i].begin();
+    auto end = ptr_hpgraph->range[i].end();
     if(std::find(start, end, vs[i]) == end) {
       std::stringstream errm;
-      errm << "\nIn XHPs::check(). It appears as though `" << vs[i] << "' is not a valid value for " << hpkeys[i] << ".\n"; 
+      errm << "\nIn XHPs::check(). It appears as though `" << vs[i] << "' is not a valid value for " << (*ptr_hpkeys)[i] << ".\n"; 
       throw tinygemm_error(errm.str());
     }
   }
@@ -166,21 +311,12 @@ void HyperParams::checks() const{
   }
 }
 
-void HyperParams::check_map_keys(const std::map<char, std::map<std::string, unsigned> > & params) const{  
-  for (char X : {'A', 'B', 'C'}){
-    mapkeycheck::check_map_keys(
-    params.at(X), 
-    HPKeys.at(X), 
-    std::string("HyperParams constructor, params against keys, ") + X);
-  }
-}
-    
-
-HyperParams::HyperParams(const std::map<char, std::map<std::string, unsigned> > & params){
-  check_map_keys(params);
-  for (char X : {'A', 'B', 'C'}){
-    for (unsigned i = 0; i < nHPs[X]; ++i){
-      v_xhps[matNums.at(X)].vs[i] = params.at(X).at(HPKeys.at(X)[i]);
+HyperParams::HyperParams(const std::vector<std::vector<unsigned>> & params): // [mi][hpi]
+v_xhps {{&suHP.ChiralKeys, &g_chiral, nsHP::nChiralHPs}, {&suHP.ChiralKeys, &g_chiral, nsHP::nChiralHPs}, {&suHP.NonChiralKeys, &g_non_chiral, nsHP::nNonChiralKeys}}
+{
+  for (unsigned mi = 0; mi < nsHP::nMatrices; ++mi){
+    for (unsigned hpi = 0; hpi < suHP.nHPs[mi]; ++hpi){
+      v_xhps[mi].vs[hpi] = params.at(mi).at(hpi);
     }
   }
   checks();
@@ -189,38 +325,32 @@ HyperParams::HyperParams(const std::map<char, std::map<std::string, unsigned> > 
 HyperParams::HyperParams(const std::string & hyperstring):HyperParams(get_params_from_string(hyperstring)){}
 
 /* Find the nearest geometry in the cache, and take its hyper params */
-HyperParams get_default(){
-  return std::string("A_MAC64_MIC4_PAD0_PLU1_LIW1_MIW1_WOS0__B_MAC96_MIC6_PAD1_PLU0_LIW1_MIW1_WOS0__U8_GA3_PU1_ICE7_NAW64_UFO0");
+HyperParams get_default(){  
+  return std::string("A_MIC2_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC2_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN0_ICE2_NAW81_UFO0_MAC2");
 }
   
 bool HyperParams::operator == (const HyperParams & hpr){
   return get_string() == hpr.get_string(); 
 }
 
-
 std::string HyperParams::get_string() const{
   std::stringstream ss;
-  for (char X : {'A', 'B'}){
-    ss << X << "_" << v_xhps[matNums.at(X)].get_string() << "__";
+  //for (char X : {'A', 'B'}){
+  for (unsigned mi : {nsHP::matA, nsHP::matB}){
+    ss << suHP.MatKeys[mi] << "_" << v_xhps[mi].get_string() << "__";
   }
-  ss << 'C' << "_" << v_xhps[matNums.at('C')].get_string();
+  ss << 'C' << "_" << v_xhps[nsHP::matC].get_string();
   return ss.str();
 }
-    
-void add_hyperparam(const std::string & hyperstring, std::vector<HyperParams> & one_aways){
-  one_aways.push_back(HyperParams(hyperstring));
-}
 
-std::vector<HyperParams> HyperParams::get_one_aways(){
-  
+std::vector<HyperParams> HyperParams::get_one_aways(){  
   std::vector<HyperParams> one_aways;
-  
-  for (auto X   : {'A', 'B', 'C'} ){
-    for (unsigned hp_i = 0; hp_i < HPKeys.at(X).size(); ++hp_i){
-      unsigned value = v_xhps.at(matNums.at(X)).vs[hp_i];
-      for (auto & newval : v_xhps.at(matNums.at(X)).hpgraph.graph[hp_i].at(value)){
+  for (unsigned mi = 0; mi < nsHP::nMatrices; ++mi){
+    for (unsigned hpi = 0; hpi < suHP.nHPs[mi]; ++hpi){
+      unsigned value = v_xhps[mi].vs[hpi];
+      for (auto & newval : v_xhps[mi].ptr_hpgraph->graph[hpi].at(value)){
         HyperParams hp(*this);
-        hp.v_xhps.at(X).vs[hp_i] = newval;
+        hp.v_xhps[mi].vs[hpi] = newval;
       }
     }
   }
@@ -235,10 +365,6 @@ std::vector<HyperParams> HyperParams::get_one_aways(){
   return one_aways;
 }
   
-  
-
-
-
 
 //std::make_tuple(100, 32, 26939, 26939, 26939, 100, true, false), 
 /* see dev/python/deepbench/deepbench_results.py : this is generated by get_kernel_cache_string, based on results running find with allotted_time =  30 seconds per problem, with three starting kernels for
@@ -250,10 +376,5 @@ std::vector<HyperParams> HyperParams::get_one_aways(){
 
 
 }
-
-
  
 }
-
-
-

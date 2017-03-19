@@ -21,9 +21,9 @@
 tinygemm::hyperparams::HyperParams get_hp(std::string hyperstring = ""){
 
   if (hyperstring.compare("") == 0){
-    hyperstring = "A_MAC128_MIC8_PAD2_PLU0_LIW0_MIW1_WOS0__B_MAC96_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__U16_GA3_PU0_ICE1_NAW64_UFO0";
+    hyperstring = "A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN1_ICE1_NAW16_UFO0_MAC5";
   }
-  return hyperstring;
+  return tinygemm::hyperparams::HyperParams(hyperstring);
 }
 
 template <typename TFloat>
@@ -89,8 +89,10 @@ void print_kernel(){
 
 int main(){
   
+  std::cout << "in main of devtest " << std::endl;
 
-  bool test_print = false;
+
+  bool test_print = true;
   bool test_benchgemm = true;//true;
   bool test_find = false;
   bool test_accuracy = false;
@@ -98,7 +100,10 @@ int main(){
   
   typedef float tfloat;
   srand(time(NULL));
-  tinygemm::hyperparams::HyperParams hp = get_hp();
+  
+  std::cout << "about to do   tinygemm::hyperparams::HyperParams hp(get_hp());  " << std::endl;
+    
+  tinygemm::hyperparams::HyperParams hp(get_hp());
   
   tinygemm::TinyGemmGeometry gg = get_geometry<tfloat>();
   tinygemm::TinyGemmOffsets toff = get_offsets();
@@ -113,7 +118,9 @@ int main(){
   std::cout << "done." << std::endl;
     
   const tfloat * c_true_bla = nullptr; 
-  
+
+  std::string constraint_string("");
+      
   if (test_print){
     print_kernel<tfloat>();
   }
@@ -123,16 +130,20 @@ int main(){
   }
 
   if (test_benchgemm){
-    tinygemm::dev::benchgemm({hp}, 7, gg, toff, v_a.data(), v_b.data(), v_c.data(), true, "");
+    
+    std::cout << "in devtest, about to benchgemm" << std::endl;
+      
+    tinygemm::dev::benchgemm({hp}, 8, gg, toff, v_a.data(), v_b.data(), v_c.data(), true, "");
   }
   
   if (test_find){
     float allotted_time = 40.;
-    tinygemm::dev::find(allotted_time, v_a.data(), v_b.data(), v_c.data(), false, gg, toff, true, "");
+    tinygemm::dev::find(allotted_time, v_a.data(), v_b.data(), v_c.data(), constraint_string, gg, toff, true, "");
   }
   
   if (test_default){
-    auto bla = tinygemm::get_default(false, get_geometry<tfloat>(), true, "");
+
+    auto bla = tinygemm::get_default(constraint_string, get_geometry<tfloat>(), true, "");
     for (auto & x : bla.v_tgks){
       std::cout << x.kernstr << std::endl;
     }

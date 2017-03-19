@@ -11,69 +11,83 @@
 namespace tinygemm{
 
 
-enum EnumMAC {a4b8 = 0, a8b4 = 1, a8b8 = 2, a8b16 = 3, a16b8 = 4, a16b16 = 5};
-enum EnumGA  {byrow = 1, bycol = 2, sucol = 3};
+/* design note: a safer choice than namespacing enums is to use enum class. */ 
+/* but this would involve static casting from the enumerated type to unsigned all the time */
 
-/* if you're going to add a parameter here, make sure to add it BEFORE the final count */
-enum EnumChiralHP {MIC = 0, PAD, PLU, LIW, MIW, WOS, nChiralHPs};
-/* the strings must appear in same order as enum */
-const std::vector<std::string> ChiralHPKeys = {"MIC", "PAD", "PLU", "LIW", "MIW", "WOS"};
-// TODO : confirm somewhere that nChiralHPs = chiralHPKeys.size(), etc ditto
+namespace nsMAC{
+  enum eMAC {a4b8 = 0, a8b4 = 1, a8b8 = 2, a8b16 = 3, a16b8 = 4, a16b16 = 5};
+}
 
-enum EnumNonChiralHP {UNR = 0, GAL, PUN, ICE, NAW, UFO, MAC, nNonChiralHPs};
-const std::vector<std::string> NonChiralHPKeys = {"UNR", "GAL", "PUN", "ICE", "NAW", "UFO", "MAC"};
+namespace nsGAL{
+  enum eGAL {byrow = 1, bycol = 2, sucol = 3};
+}
 
-const std::map<char, std::vector<std::string> > HPKeys = {
-{'A', ChiralHPKeys},  {'B', ChiralHPKeys}, {'C', NonChiralHPKeys} };
-
-std::map<char, unsigned> nHPs = {{'A', nChiralHPs}, {'B', nChiralHPs}, {'C', nNonChiralHPs}};
-  
-
-enum EnumMatrix {matA = 0, matB, matC, nMatrices};
-const std::map<char, EnumMatrix> matNums = {{'C', matC}, {'B', matB}, {'A', matA}};
-const std::map<EnumMatrix, char> matChars = {{matC, 'C'}, {matB, 'B'}, {matA, 'A'}};
-
-
+namespace nsHP{
+  /* if you're going to add a parameter here, make sure to add it BEFORE the final count */
+  enum eChiral {MIC = 0, PAD, PLU, LIW, MIW, WOS, nChiralHPs};
+  enum eNonChiral {UNR = 0, GAL, PUN, ICE, NAW, UFO, MAC, nNonChiralKeys};  
+  enum eMatrix {matA = 0, matB, matC, nMatrices};
+}
 
 namespace hyperparams{
-  
+
+struct SUHP{
+/* where for example, ChiralKeys[PAD] is "PAD" */
+std::vector<std::string> ChiralKeys;
+std::map<std::string, unsigned> ChiralVals;
+
+std::vector<std::string> NonChiralKeys;
+std::map<std::string, unsigned> NonChiralVals;
+
+std::vector<char> MatKeys;
+std::map<char, unsigned> MatVals;
+
+std::vector<std::vector<std::string>> HPKeys;
+std::vector<std::map<std::string, unsigned>> HPVals;
+std::vector<unsigned> nHPs;
+
+
+
+SUHP();
+};
+
+extern const SUHP suHP;
+
+
+
 class Graph{
   
 public:
-  /* example : graph[MIC] is a map; graph[MIC][1] --> {2,3,4} */
+  /* example : graph[nsHP::MIC] is a map; graph[nsHP::MIC][1] --> {2,3,4} */
   std::vector<std::map<unsigned, std::vector<unsigned> > > graph;
-  /* example : range[MIC] --> {1,2,3,4,5,6,7,8} */
+  /* example : range[nsHP::MIC] --> {1,2,3,4,5,6,7,8} */
   std::vector<std::vector<unsigned> > range;  
   void update_range();
 };
 
 
-Graph get_g_chiral();
-Graph get_g_non_chiral();
-
-
 
 class XHPs{
   
-      
   public:
-
-    const std::vector<unsigned> & hpkeys;
-    const Graph & hpgraph;
-
+    /* design choice. I think that pointers to vectors ugly. But, using const ref class variables means manually enforcing copy/default constructors */ 
+    const std::vector<std::string> * ptr_hpkeys;
+    const Graph * ptr_hpgraph;
     std::vector<unsigned> vs;
     std::vector<unsigned> importances;
     std::string get_string() const;
     void check() const;
     
-    XHPs(const std::vector<unsigned> & hpkeys_, const Graph & hpgraph_, unsigned nHPsTest):hpkeys(hpkeys_), hpgraph(hpgraph_){
-      if (nHPsTest != hpkeys.size() || nHPsTest != hpgraph.graph.size() ){
+    XHPs(
+    const std::vector<std::string> * ptr_hpkeys_, const Graph * ptr_hpgraph_, unsigned nHPsIn): 
+    ptr_hpkeys(ptr_hpkeys_), ptr_hpgraph(ptr_hpgraph_)
+    {
+      if (nHPsIn != ptr_hpkeys->size() || nHPsIn != ptr_hpgraph->graph.size() ){
         throw tinygemm_error("There is a discrepency in the number of hyper parameters in XHPs constructor");
       }
+      vs.resize(nHPsIn);
+      importances.resize(nHPsIn);
     }
-    
-    XHPs() = default;
-    
 };
 
 
@@ -81,18 +95,30 @@ class HyperParams{
 
 private:
   std::vector<XHPs> v_xhps;
-
+  HyperParams(const std::vector<std::vector<unsigned>> & params); 
+  
 public:
 
-  const XHPs & at(EnumMatrix matX) const {return  v_xhps[matX]; }
-  XHPs & at(EnumMatrix matX) {return  v_xhps[matX]; }
+  
+ 
+  const XHPs & at(nsHP::eMatrix matX) const {return  v_xhps[matX]; }
+  XHPs & at(nsHP::eMatrix matX) {return  v_xhps[matX]; }
   
   //TODO : deprecate these
-  const XHPs & at(char X) const {return v_xhps[matNums.at(X)]; }
-  XHPs & at(char X) {return v_xhps[matNums.at(X)]; }
+  const XHPs & at(char X) const {
+    X = (X == 'a' ? 'A' : X);
+    X = (X == 'b' ? 'B' : X); 
+    X = (X == 'c' ? 'C' : X);     
+    return v_xhps[suHP.MatVals.at(X)]; 
+  }
   
-  HyperParams(const std::map<char, std::map<std::string, unsigned> > & );
-
+  XHPs & at(char X) {
+    X = (X == 'a' ? 'A' : X);
+    X = (X == 'b' ? 'B' : X); 
+    X = (X == 'c' ? 'C' : X);     
+    return v_xhps[suHP.MatVals.at(X)]; 
+  }
+ 
   /* take in hyper-parameter string and return a HyperParam object */
   HyperParams(const std::string & hyperstring);
   
@@ -102,11 +128,9 @@ public:
   
   std::vector<HyperParams> get_one_aways();
 
-  void check_map_keys(const std::map<char, std::map<std::string, unsigned> > & params) const;
-
   std::string get_string() const;
   
-  void checks() const ;
+  void checks() const;
   
 
 };  
