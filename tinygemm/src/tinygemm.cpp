@@ -751,7 +751,7 @@ bool c_is_const){
   
   /* The number of times each kernel is run in find. 
    * consider adding this parameter to user API. */
-  unsigned n_runs_per_kernel = 3;
+  unsigned n_runs_per_kernel = 5;
 
   tinygemm::consistencychecks::check_ldx_mnk_consistent(gg);  
 

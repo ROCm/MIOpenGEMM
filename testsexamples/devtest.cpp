@@ -36,9 +36,9 @@ tinygemm::TinyGemmGeometry get_geometry(){
   bool tA = false;
   bool tB = true;
   bool tC = false;
-  unsigned m = 500;//128*(32) - 6; 
-  unsigned n = 500;//96*(55) - 4; 
-  unsigned k = 500;//16*240;           
+  unsigned m = 300;//128*(32) - 6; 
+  unsigned n = 300;//96*(55) - 4; 
+  unsigned k = 1500;//16*240;           
   unsigned lda = ( tA == isColMajor ? k : m ) + 0;
   unsigned ldb = ( tB == isColMajor ? n : k ) + 0;
   unsigned ldc = ( tC == isColMajor ? n : m ) + 0;
