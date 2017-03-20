@@ -480,8 +480,9 @@ public:
 
     
     if (gg.m < 8 || gg.n < 8){
-      mowri << "really skinny/thin matrix, returning a default kernel (to be improved) " << Endl;
-      return get_default();
+      throw tinygemm_error("geom too small, TODO(jn) fix this. throwing from tinygemm.cpp");
+      //mowri << "really skinny/thin matrix, returning a default kernel (to be improved) " << Endl;
+      //return get_default();
     }
       
     
@@ -504,7 +505,7 @@ public:
     std::vector<tinygemm::TinyGemmSolution> path_of_best_solns;
     
     /* In here, we will store all previously considered HyperParams, used to check and ensure that we do not consider a HyperParam more than once */
-    std::vector<hyperparams::HyperParams> hyper_front_history;
+    std::vector<std::string> hyper_front_history;
         
     /* while generating, compiling and benchmarking kernels, we will keep track of the fastest found thus far */
     float best_time = std::numeric_limits<float>::max();
@@ -541,18 +542,18 @@ public:
       while (hfi < hyper_front.size() && improvement_found_on_front == false && elapsed_seconds < allotted_time){
         
         hyperparams::HyperParams hp = hyper_front[hfi];
-        
+        std::string hp_string = hp.get_string();
         
         
         /* certain kernels will not be generated, for diverse reasons */
         /* reason 0 : it's already been considered */
-        if (std::find(hyper_front_history.begin(), hyper_front_history.end(), hp) != hyper_front_history.end()){
+        if (std::find(hyper_front_history.begin(), hyper_front_history.end(), hp_string) != hyper_front_history.end()){
           /* this kernel has already been considered */
         }
         
         else{
           
-          hyper_front_history.push_back(hp);
+          hyper_front_history.push_back(hp_string);
         
           /* reason 3 : the user requests a deterministic kernel, which cannot be guaranteed */
           if (constraint_string != "") {
@@ -664,7 +665,7 @@ public:
         
         if (jump_to_front_horizon_size_2 == true){
           improvement_found_on_front = true;
-          mowri << "\nSWITCHING TO FRONT HORIZON SIZE 2\n" << Endl;
+          mowri << "\n\n----------SWITCHING TO FRONT HORIZON SIZE 2-------------\n\n" << Endl;
         }
       }
       
@@ -704,7 +705,7 @@ public:
       mowri <<  x.get_hyper_param_string() << "\t " << x.statistics.solution_discovery_time << "\t\t " << x.statistics.median_benchmark_gflops  << Endl;
     }
     
-    mowri <<  path_of_best_solns.back().get_hyper_param_string() << "\t " << elapsed_seconds << "\t\t " << path_of_best_solns.back().statistics.median_benchmark_gflops  << Endl;
+    mowri <<  "\n" << path_of_best_solns.back().get_hyper_param_string() << "\t " << elapsed_seconds << "\t\t " << path_of_best_solns.back().statistics.median_benchmark_gflops  << Endl;
     return path_of_best_solns.back();
   }
 }; 

@@ -114,19 +114,17 @@ Graph get_g_chiral(){
   hpg.graph.resize(nsHP::nChiralHPs);
   
   hpg.graph[nsHP::MIC] =
-  { {1, {2,3,4} },
+  { {1, {2,3} },
     {2, {1,3,4} },
     {3, {1,2,4,5} },
-    {4, {1,2,3,5,6} },
-    {5, {2,3,4,6,7} },
-    {6, {3,4,5,7,8} },
-    {7, {4,5,6,8} },
-    {8, {4,6,7} }    };
+    {4, {2,3,5,6} },
+    {5, {2,4,6} },
+    {6, {4,5,8} },
+    {8, {4,6} }    };
   
   hpg.graph[nsHP::PAD] = 
-  { {0, {1,2}   },
-    {1, {0,2}   },
-    {2, {0,1}   }    };
+  { {0, {1}   },
+    {1, {0}   }     };
   
   hpg.graph[nsHP::PLU] = 
   {  graph_binary  };
@@ -138,7 +136,7 @@ Graph get_g_chiral(){
   {  graph_binary  };
   
   hpg.graph[nsHP::WOS] = 
-  {  {0, {}}   };// for now, no copying TODO
+  {  {0, {}}   };// for now, no copying TODO(jn) incorporate
   
   hpg.update_range();
   return hpg;
@@ -150,15 +148,13 @@ Graph get_g_non_chiral(){
   hpg.graph.resize(nsHP::nNonChiralKeys);
   
   hpg.graph[nsHP::UNR] = 
-  { {4, {8} },
-    {8, {4,16} },
-    {16, {8,24,32} },
-    {24, {16, 32} },
-    {32, {16} }  };
+  { {8, {16} },
+    {16, {8,32} },
+    {32, {16, 64} },
+    {64, {16, 32} }  };
   
   hpg.graph[nsHP::NAW] = 
-  { {16, {64}},
-    {64, {16}}   };
+  { {64, {} }  };
   
   hpg.graph[nsHP::GAL] = 
   { {nsGAL::byrow, {nsGAL::bycol, nsGAL::sucol}   },
@@ -166,29 +162,34 @@ Graph get_g_non_chiral(){
     {nsGAL::sucol, {nsGAL::byrow, nsGAL::bycol}   }   };
 
   hpg.graph[nsHP::MAC] = 
-  { {nsMAC::a4b8, {nsMAC::a8b8}},
-    {nsMAC::a8b4, {nsMAC::a8b8}},
-    {nsMAC::a8b8, {nsMAC::a4b8, nsMAC::a8b4, nsMAC::a8b8, nsMAC::a8b16, nsMAC::a16b8, nsMAC::a16b16}},
-    {nsMAC::a8b16, {nsMAC::a8b8, nsMAC::a16b16}},
-    {nsMAC::a16b8, {nsMAC::a8b8, nsMAC::a16b16}},
-    {nsMAC::a16b16, {nsMAC::a8b8, nsMAC::a8b4, nsMAC::a4b8}},
-        };
+  {
+    // to be added foe 32 in work group GPUs
+    //{nsMAC::a4b8, {nsMAC::a8b8}},
+    //{nsMAC::a8b4, {nsMAC::a8b8}},
+
+    //{nsMAC::a8b16, {nsMAC::a8b8, nsMAC::a16b16}},
+    //{nsMAC::a16b8, {nsMAC::a8b8, nsMAC::a16b16}},
+
+    
+    {nsMAC::a8b8, {nsMAC::a16b16}},
+    {nsMAC::a16b16, {nsMAC::a8b8}},
+  };
   
   hpg.graph[nsHP::ICE] = 
-  { {1,  {2,3}},
+  { {1,  {2}},
     {2,  {1,3,4}},
     {3,  {1,2,4,6}},
-    {4,  {1,2,3,5,6,7}},
-    {5,  {2,3,4,6,7,8}},
-    {6,  {3,4,5,7,8,9}},
-    {7,  {4,5,6,8,9,10}},
-    {8,  {5,6,7,9,10,11}},
-    {9,  {6,7,8,10,11,12}},
-    {10, {7,8,9,11,12,13}},
-    {11, {8,9,10,12,13,14}},
-    {12, {9,10,11,13,14}},
-    {13, {10,11,12,14}},
-    {14, {11,12,13}}   };
+    {4,  {1,3,5,7}},
+    {5,  {2,4,6,8}},
+    {6,  {3,5,7,9}},
+    {7,  {4,6,8,10}},
+    {8,  {5,7,9,11}},
+    {9,  {6,8,10,12}},
+    {10, {7,9,11,13}},
+    {11, {8,10,12,14}},
+    {12, {9,11,13,14}},
+    {13, {10,12,14}},
+    {14, {11,13}}   };
   
   hpg.graph[nsHP::PUN] = 
   {  graph_binary  };
@@ -211,16 +212,11 @@ std::vector<std::vector<unsigned>> get_params_from_string(const std::string & hy
   ssghe << "         " << hyperstring << "\n";
   ssghe << "an example of a hyperstring in the correct format is:\n";
   ssghe << "         ";
-  ssghe << "A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN0_ICE1_NAW81_UFO0_MAC2\n";
+  ssghe << "A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN0_ICE1_NAW64_UFO0_MAC2\n";
   std::string generic_hyperstring_errm = ssghe.str();
 
-  
-  
-  std::cout << "In get_params_from_string" << std::endl;
- 
   std::string shortkey;
-  unsigned val;
-  
+  unsigned val;  
   std::vector<std::vector<unsigned>> params (nsHP::nMatrices);
   for (unsigned mi = 0; mi < nsHP::nMatrices; ++mi){
     params[mi].resize(suHP.nHPs[mi]);
@@ -260,7 +256,6 @@ std::vector<std::vector<unsigned>> get_params_from_string(const std::string & hy
       }
       /* We have confirmed that shortkey is valid, this is safe */
       auto shortkey_val = suHP.HPVals[matrix_val].at(shortkey);
-      
       if (shortkey_val < params[matrix_val].size()){
         params[matrix_val][shortkey_val] = val;
       }
@@ -274,7 +269,7 @@ std::vector<std::vector<unsigned>> get_params_from_string(const std::string & hy
 
 std::string XHPs::get_string() const{
   std::stringstream ss;
-  for (unsigned hpi = 0; hpi < vs.size(); ++hpi){
+  for (unsigned hpi = 0; hpi < vs.size() - 1; ++hpi){
     ss << (*ptr_hpkeys)[hpi] << vs[hpi] << "_";
   }
   ss << (*ptr_hpkeys).back() << vs.back();
@@ -288,6 +283,11 @@ void XHPs::check() const{
     if(std::find(start, end, vs[i]) == end) {
       std::stringstream errm;
       errm << "\nIn XHPs::check(). It appears as though `" << vs[i] << "' is not a valid value for " << (*ptr_hpkeys)[i] << ".\n"; 
+      errm << "The valid values are,\n         [";
+      for (auto & x : ptr_hpgraph->range[i]){
+        errm << " " <<  x << " ";
+      }
+      errm << "]\n";
       throw tinygemm_error(errm.str());
     }
   }
@@ -313,8 +313,8 @@ v_xhps {{&suHP.ChiralKeys, &g_chiral, nsHP::nChiralHPs}, {&suHP.ChiralKeys, &g_c
 HyperParams::HyperParams(const std::string & hyperstring):HyperParams(get_params_from_string(hyperstring)){}
 
 /* Find the nearest geometry in the cache, and take its hyper params */
-HyperParams get_default(){  
-  return std::string("A_MIC2_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC2_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN0_ICE2_NAW81_UFO0_MAC2");
+HyperParams get_default(){
+  return std::string("A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN0_ICE1_NAW64_UFO0_MAC5");
 }
   
 bool HyperParams::operator == (const HyperParams & hpr){
@@ -331,7 +331,7 @@ std::string HyperParams::get_string() const{
   return ss.str();
 }
 
-std::vector<HyperParams> HyperParams::get_one_aways(){  
+std::vector<HyperParams> HyperParams::get_one_aways(){
   std::vector<HyperParams> one_aways;
   for (unsigned mi = 0; mi < nsHP::nMatrices; ++mi){
     for (unsigned hpi = 0; hpi < suHP.nHPs[mi]; ++hpi){
@@ -339,6 +339,7 @@ std::vector<HyperParams> HyperParams::get_one_aways(){
       for (auto & newval : v_xhps[mi].ptr_hpgraph->graph[hpi].at(value)){
         HyperParams hp(*this);
         hp.v_xhps[mi].vs[hpi] = newval;
+        one_aways.push_back(hp);
       }
     }
   }
@@ -350,6 +351,8 @@ std::vector<HyperParams> HyperParams::get_one_aways(){
   std::random_device rd;
   std::default_random_engine default_engine(rd());
   std::shuffle(one_aways.begin(), one_aways.end(), default_engine);
+  
+  
   return one_aways;
 }
   
@@ -361,8 +364,5 @@ std::vector<HyperParams> HyperParams::get_one_aways(){
  * TODO : should not be a single vector, this has linear find time. At least seperate out isColMajor, tA, tB  
  * TODO : figure out how to make cache contain only reduced problems .... very important! */
 
-
-
-}
- 
+} 
 }

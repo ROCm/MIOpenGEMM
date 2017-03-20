@@ -122,16 +122,11 @@ public:
   /* take in hyper-parameter string and return a HyperParam object */
   HyperParams(const std::string & hyperstring);
   
-  HyperParams() = delete;
-  
+  HyperParams() = delete;  
   bool operator == (const HyperParams & hpr);
-  
   std::vector<HyperParams> get_one_aways();
-
   std::string get_string() const;
-  
   void checks() const;
-  
 
 };  
 
