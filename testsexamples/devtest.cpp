@@ -32,13 +32,16 @@ tinygemm::hyperparams::HyperParams get_hp(std::string hyperstring = ""){
 template <typename TFloat>
 tinygemm::TinyGemmGeometry get_geometry(){
 
+
   bool isColMajor = true;
   bool tA = false;
-  bool tB = true;
+  bool tB = false;//true;
   bool tC = false;
-  unsigned m = 300;//128*(32) - 6; 
-  unsigned n = 300;//96*(55) - 4; 
-  unsigned k = 1500;//16*240;           
+  unsigned m = 1760;//128*(32) - 6; 
+  unsigned n = 128;//96*(55) - 4; 
+  unsigned k = 1760;//16*229;           
+
+    
   unsigned lda = ( tA == isColMajor ? k : m ) + 0;
   unsigned ldb = ( tB == isColMajor ? n : k ) + 0;
   unsigned ldc = ( tC == isColMajor ? n : m ) + 0;
