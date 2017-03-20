@@ -459,9 +459,9 @@ public:
   
   
   tinygemm::TinyGemmSolution
-  get_default(){
+  get_default(std::string constraint_string){
     
-    hyperparams::HyperParams hp = hyperparams::get_default();
+    hyperparams::HyperParams hp = hyperparams::get_default(gg, constraint_string);
     
     
     deriveability_test(hp, "in get_default");
@@ -474,21 +474,20 @@ public:
   }
   
   
-  tinygemm::TinyGemmSolution find(float allotted_time, std::string constraint_string, unsigned n_runs_per_kernel){
+  tinygemm::TinyGemmSolution find(float allotted_time, std::string constraint_string, std::string start_string, unsigned n_runs_per_kernel){
     
     
 
     
     if (gg.m < 8 || gg.n < 8){
-      throw tinygemm_error("geom too small, TODO(jn) fix this. throwing from tinygemm.cpp");
-      //mowri << "really skinny/thin matrix, returning a default kernel (to be improved) " << Endl;
-      //return get_default();
+      mowri << "really skinny/thin matrix, returning a default kernel based on gg and constraint_string (to be improved) " << Endl;
+      return get_default(gg, constraint_string);
     }
       
     
     if (allotted_time <= 0){
-      mowri << "Allotted time insufficient for benchmarking, returning default TinyGemmSolution" << Endl;
-      return get_default();      
+      mowri << "Allotted time insufficient for benchmarking, returning default TinyGemmSolution (given gg and constraint_string)" << Endl;
+      return get_default(gg, constraint_string);
     }
 
     address_check_valid_and_reliable();
@@ -510,17 +509,17 @@ public:
     /* while generating, compiling and benchmarking kernels, we will keep track of the fastest found thus far */
     float best_time = std::numeric_limits<float>::max();
     
-    hyperparams::HyperParams best_hp = hyperparams::get_default();
+    /* as there is no default constructor for HyperParams, forced to initialise from hyperstring. TODO(jn) clean this up */
+    hyperparams::HyperParams best_hp(hyperparams::get_default(gg, constraint_string));
     
     
     
 
 
 
-    /* we initialise the `hyper-front' with a single HyperParams, selected based on problem dimensions  */
-    std::vector<hyperparams::HyperParams> hyper_front = { hyperparams::get_default() };
+    /* we initialise the `hyper-front' with a single HyperParams, selected based on problem dimension, constraints and start ("default" or "random" or a valid hyperstring)  */
+    std::vector<hyperparams::HyperParams> hyper_front = { hyperparams::get_random(gg, constraint_string, start_string) };
     
-        
     auto hyper_param_start = hyper_front[0];
  
     bool improvement_found_on_front = true;
@@ -742,6 +741,7 @@ cl_mem b,
 cl_mem c,
 cl_mem workspace,
 const std::string constraint_string,
+const std::string start_string,
 const tinygemm::TinyGemmGeometry & gg,
 const tinygemm::TinyGemmOffsets & toff,
 bool verbose, 
@@ -759,12 +759,12 @@ bool c_is_const){
   
     openclutil::SafeClMem c_copied = get_copy(command_queue, c, gg, toff, "copy of c in find");
     OpenCLGemmEncapsulator oger(command_queue, gg, toff, a, b, c_copied.clmem, workspace, logfile, verbose); 
-    return oger.find(allotted_time, constraint_string, n_runs_per_kernel);
+    return oger.find(allotted_time, constraint_string, start_string, n_runs_per_kernel);
   }
   
   else{
     OpenCLGemmEncapsulator oger(command_queue, gg, toff, a, b, c, workspace, logfile, verbose); 
-    return oger.find(allotted_time, constraint_string, n_runs_per_kernel);
+    return oger.find(allotted_time, constraint_string, start_string, n_runs_per_kernel);
   }
 }
 

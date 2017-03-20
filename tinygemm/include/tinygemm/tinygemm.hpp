@@ -26,7 +26,12 @@ cl_mem a,
 cl_mem b,
 cl_mem c,
 cl_mem workspace,
-std::string constraint_string,
+
+/* a substring of a hyperstring, defines hyper-parameters with fixed values */
+const std::string constraint_string,
+
+/* one of "default", "random" and a valid hyperstring */
+const std::string start_string,
 
 /* see tinygemm/include/tinygemmgeometry.hpp for TinyGemmGeometry parameters */
 const tinygemm::TinyGemmGeometry & gg,
