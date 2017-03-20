@@ -27,6 +27,7 @@ namespace nsHP{
   enum eChiral {MIC = 0, PAD, PLU, LIW, MIW, WOS, nChiralHPs};
   enum eNonChiral {UNR = 0, GAL, PUN, ICE, NAW, UFO, MAC, nNonChiralKeys};  
   enum eMatrix {matA = 0, matB, matC, nMatrices};
+  enum eSpecial {undefined = -1};
 }
 
 namespace hyperparams{
@@ -96,10 +97,16 @@ class HyperParams{
 private:
   std::vector<XHPs> v_xhps;
   HyperParams(const std::vector<std::vector<unsigned>> & params); 
+
+  
+
+  
+  
   
 public:
 
-  
+  void replace_undefined_randomly();
+  void update(const std::vector<std::vector<unsigned>> & params);
  
   const XHPs & at(nsHP::eMatrix matX) const {return  v_xhps[matX]; }
   XHPs & at(nsHP::eMatrix matX) {return  v_xhps[matX]; }
@@ -122,7 +129,7 @@ public:
   /* take in hyper-parameter string and return a HyperParam object */
   HyperParams(const std::string & hyperstring);
   
-  HyperParams() = delete;  
+  HyperParams();  
   bool operator == (const HyperParams & hpr);
   std::vector<HyperParams> get_one_aways();
   std::string get_string() const;
@@ -131,7 +138,8 @@ public:
 };  
 
 
-HyperParams get_default();
+//HyperParams get_default(const tinygemm::TinyGemmGeometry & gg, std::string constraint_string);
+HyperParams get_hp_start(std::string start_string, std::string constraint_string, const tinygemm::TinyGemmGeometry & gg);
 
 }
 }

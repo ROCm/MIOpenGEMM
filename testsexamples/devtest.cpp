@@ -42,8 +42,8 @@ tinygemm::TinyGemmGeometry get_geometry(){
   bool tB = false;//true;
   bool tC = false;
   unsigned m = 7680;//128*(32) - 6; 
-  unsigned n = 16;//96*(55) - 4; 
-  unsigned k = 2560;//16*229;           
+  unsigned n = 128;//96*(55) - 4; 
+  unsigned k = 256;//16*229;           
 
     
   unsigned lda = ( tA == isColMajor ? k : m ) + 0;
@@ -101,8 +101,8 @@ int main(){
   
   std::cout << "in main of devtest " << std::endl;
 
-  std::string constraint_string("");
-  std::string start_string("default");
+  std::string constraint_string("A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN0_ICE1_NAW64_UFO0_MAC5");
+  std::string start_string("random");
 
 
   bool test_print = false;
@@ -149,7 +149,7 @@ int main(){
   }
   
   if (test_find){
-    float allotted_time = 100.;
+    float allotted_time = 5.0;
     tinygemm::dev::find(allotted_time, v_a.data(), v_b.data(), v_c.data(), constraint_string, start_string, gg, toff, true, "");
   }
   

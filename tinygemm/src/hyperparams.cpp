@@ -21,6 +21,31 @@ namespace tinygemm{
 
 namespace hyperparams{
 
+
+class RandomUtil {
+
+private:
+  std::random_device rd;
+  std::default_random_engine gen;
+  std::uniform_int_distribution<unsigned> unidis;
+
+public:
+  RandomUtil():rd(), gen(rd()) {} 
+  unsigned get_from_range(unsigned upper){
+    return unidis(gen) % upper;
+  }
+  
+  template <typename T>
+  void shuffle(T & t){
+    std::shuffle(t.begin(), t.end(), gen);
+  }
+  
+  
+};
+
+RandomUtil radu;
+
+
 template <typename T>
 std::map<T, unsigned> getVals(unsigned nVals, const std::vector<T> & keys, const std::string & hash){
   std::map<T, unsigned> vals;    
@@ -204,22 +229,29 @@ Graph get_g_non_chiral(){
 Graph g_chiral(get_g_chiral());
 Graph g_non_chiral(get_g_non_chiral());
 
-std::vector<std::vector<unsigned>> get_params_from_string(const std::string & hyperstring){
+std::vector<std::vector<unsigned>> get_params_from_string(const std::string & hyperstring, bool expect_full_hyperstring){
+
+  std::cout << "in get_params_from_string" << std::endl;
 
   /* TODO only generate this when an error emerges */
   std::stringstream ssghe;
-  ssghe << "the hyperstring received here is :\n";
+  ssghe << "the " << (expect_full_hyperstring == true ? "`full'" : "`partial'") << " hyperstring received here is :\n";
   ssghe << "         " << hyperstring << "\n";
-  ssghe << "an example of a hyperstring in the correct format is:\n";
+  ssghe << "an example of a full hyperstring correctly formated is:\n";
   ssghe << "         ";
   ssghe << "A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN0_ICE1_NAW64_UFO0_MAC2\n";
   std::string generic_hyperstring_errm = ssghe.str();
 
   std::string shortkey;
   unsigned val;  
+
+  /* set params to be of the correct shape, filled with nsHP::undefined */
   std::vector<std::vector<unsigned>> params (nsHP::nMatrices);
   for (unsigned mi = 0; mi < nsHP::nMatrices; ++mi){
     params[mi].resize(suHP.nHPs[mi]);
+    for (unsigned hpi = 0; hpi < suHP.nHPs[mi]; ++hpi){
+      params[mi][hpi] = nsHP::undefined;
+    }
   }
   
   auto megafrags = stringutil::split(hyperstring, "__");
@@ -235,7 +267,7 @@ std::vector<std::vector<unsigned>> get_params_from_string(const std::string & hy
 
     auto matrix_val = suHP.MatVals.at(matrixkey);
     auto keyvalfrags = stringutil::split(megafrag.substr(2), "_");
-    if (keyvalfrags.size() < suHP.HPKeys[matrix_val].size()){
+    if (expect_full_hyperstring && (keyvalfrags.size() < suHP.HPKeys[matrix_val].size())){
       std::stringstream ss;
       ss << "While processing frag section " << suHP.MatKeys[matrix_val] << ".\n";
       ss << "There appear to be too few parameters (" << keyvalfrags.size() << " as opposed to " << suHP.HPKeys[matrix_val].size() << ")";
@@ -280,7 +312,7 @@ void XHPs::check() const{
   for (unsigned i = 0; i < vs.size(); ++i){
     auto start = ptr_hpgraph->range[i].begin();
     auto end = ptr_hpgraph->range[i].end();
-    if(std::find(start, end, vs[i]) == end) {
+    if (vs[i] == nsHP::undefined || (std::find(start, end, vs[i]) == end)) {
       std::stringstream errm;
       errm << "\nIn XHPs::check(). It appears as though `" << vs[i] << "' is not a valid value for " << (*ptr_hpkeys)[i] << ".\n"; 
       errm << "The valid values are,\n         [";
@@ -299,22 +331,77 @@ void HyperParams::checks() const{
   }
 }
 
-HyperParams::HyperParams(const std::vector<std::vector<unsigned>> & params): // [mi][hpi]
-v_xhps {{&suHP.ChiralKeys, &g_chiral, nsHP::nChiralHPs}, {&suHP.ChiralKeys, &g_chiral, nsHP::nChiralHPs}, {&suHP.NonChiralKeys, &g_non_chiral, nsHP::nNonChiralKeys}}
-{
+
+void HyperParams::update(const std::vector<std::vector<unsigned>> & params){
   for (unsigned mi = 0; mi < nsHP::nMatrices; ++mi){
     for (unsigned hpi = 0; hpi < suHP.nHPs[mi]; ++hpi){
       v_xhps[mi].vs[hpi] = params.at(mi).at(hpi);
     }
   }
+}
+
+HyperParams::HyperParams():
+v_xhps {{&suHP.ChiralKeys, &g_chiral, nsHP::nChiralHPs}, 
+{&suHP.ChiralKeys, &g_chiral, nsHP::nChiralHPs}, 
+{&suHP.NonChiralKeys, &g_non_chiral, nsHP::nNonChiralKeys}} 
+{
+  for (unsigned mi = 0; mi < nsHP::nMatrices; ++mi){
+    for (unsigned hpi = 0; hpi < suHP.nHPs[mi]; ++hpi){
+      v_xhps[mi].vs[hpi] = nsHP::undefined;
+    }
+  }
+}  
+
+HyperParams::HyperParams(const std::vector<std::vector<unsigned>> & params):HyperParams()
+{
+  update(params);
   checks();
 }
 
-HyperParams::HyperParams(const std::string & hyperstring):HyperParams(get_params_from_string(hyperstring)){}
 
-/* Find the nearest geometry in the cache, and take its hyper params */
-HyperParams get_default(){
-  return std::string("A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN0_ICE1_NAW64_UFO0_MAC5");
+HyperParams::HyperParams(const std::string & hyperstring):HyperParams(get_params_from_string(hyperstring, true)){}
+
+
+void HyperParams::replace_undefined_randomly(){
+  for (unsigned mi = 0; mi < nsHP::nMatrices; ++mi){
+    for (unsigned hpi = 0; hpi < suHP.nHPs[mi]; ++hpi){
+      if (v_xhps[mi].vs[hpi] == nsHP::undefined){
+        //select randomly from ptr_hpgraph->range. 
+        
+        
+        
+        unsigned index = radu.get_from_range (v_xhps[mi].ptr_hpgraph->range[hpi].size());
+        v_xhps[mi].vs[hpi] = v_xhps[mi].ptr_hpgraph->range[hpi][index];
+      }
+    }
+  }
+}
+
+
+HyperParams get_random(std::string constraint_string){
+  HyperParams hp;  
+  auto constraint_params = get_params_from_string(constraint_string, false);
+  hp.update(constraint_params);
+  hp.replace_undefined_randomly();
+  
+  hp.checks();  
+  return hp;
+}
+
+
+HyperParams get_cacheless_default(const tinygemm::TinyGemmGeometry & gg, std::string constraint_string){
+  HyperParams hp("A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN0_ICE1_NAW64_UFO0_MAC5");
+  auto constraint_params = get_params_from_string(constraint_string, false);
+  hp.update(constraint_params);
+  return hp;
+}
+
+
+HyperParams get_default(const tinygemm::TinyGemmGeometry & gg, std::string constraint_string){
+  /* TODO : rather get default from cache, based on gg (?) */
+  auto hp = get_cacheless_default(gg, constraint_string);
+  throw tinygemm_error("get_default not yet enabled (not needed for paper)");
+  return hp;  
 }
   
 bool HyperParams::operator == (const HyperParams & hpr){
@@ -331,7 +418,7 @@ std::string HyperParams::get_string() const{
   return ss.str();
 }
 
-std::vector<HyperParams> HyperParams::get_one_aways(){
+std::vector<HyperParams> HyperParams::get_one_aways(){ //const tinygemm::TinyGemmGeometry & gg){
   std::vector<HyperParams> one_aways;
   for (unsigned mi = 0; mi < nsHP::nMatrices; ++mi){
     for (unsigned hpi = 0; hpi < suHP.nHPs[mi]; ++hpi){
@@ -339,7 +426,7 @@ std::vector<HyperParams> HyperParams::get_one_aways(){
       for (auto & newval : v_xhps[mi].ptr_hpgraph->graph[hpi].at(value)){
         HyperParams hp(*this);
         hp.v_xhps[mi].vs[hpi] = newval;
-        one_aways.push_back(hp);
+        one_aways.push_back(hp);        
       }
     }
   }
@@ -348,9 +435,9 @@ std::vector<HyperParams> HyperParams::get_one_aways(){
    * (prevents pathological case of all improving kernels at end of vector) 
    * currently, we shuffle after adding custom edges, might consider shuffling
    * before adding, to prevent getting trapped in previously found minima.*/
-  std::random_device rd;
-  std::default_random_engine default_engine(rd());
-  std::shuffle(one_aways.begin(), one_aways.end(), default_engine);
+
+  radu.shuffle(one_aways);
+  
   
   
   return one_aways;
@@ -363,6 +450,46 @@ std::vector<HyperParams> HyperParams::get_one_aways(){
  * TODO : regenerate with longer runs and more problems.
  * TODO : should not be a single vector, this has linear find time. At least seperate out isColMajor, tA, tB  
  * TODO : figure out how to make cache contain only reduced problems .... very important! */
+
+
+    
+     
+  HyperParams get_hp_start(std::string start_string, std::string constraint_string, const tinygemm::TinyGemmGeometry & gg){
+    
+    /* we initialise the `hyper-front' with a single HyperParams, */
+    /* selected based on problem dimension, constraints and start type  */    
+    HyperParams hyper_param_start;
+
+
+    if (gg.m < 8 || gg.n < 8){
+      mowri << "really skinny/thin matrix, returning a default TinyGemmSolution based on gg and constraint_string without searching/benching " << Endl;
+      throw std::tinygemm_error("sort this out");
+    }
+          
+
+
+    if (start_string.compare("default") == 0){
+      hyper_param_start = get_default(gg, constraint_string);
+    }
+    
+    else if (start_string.compare("random") == 0){
+      hyper_param_start = get_random(constraint_string);
+    }
+    
+    else if (start_string == ""){
+      throw tinygemm_error("start_string should not be empty string");
+    }
+    
+    else {
+      /* assume it is a valid hyperstring */
+      hyper_param_start = HyperParams(start_string);
+    }
+    
+    // TODO I MUST guarantee that start_hp is going to pass ... warm up bench run with it ?
+    
+    return hyper_param_start;
+  }
+
 
 } 
 }

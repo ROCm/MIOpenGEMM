@@ -346,7 +346,7 @@ private:
       /* At this point, the kernel has been succesfully compiled, 
        * but it is still possible that the resources necessary (LDS etc) are
        * not sufficient on this machine. We catch this case here. 
-       * TODO : architects can go some way to catching these before compilation */        
+       * TODO : architests can go some way to catching these before compilation */        
         
 
         std::vector<cl_event> clevent_waits;
@@ -377,7 +377,7 @@ private:
         const cl_event * event_wait_list = num_events_int_wait_list == 0 ? nullptr : clevent_waits.data();
         status = tk_kernels_active[k_ind]->enqueue(num_events_int_wait_list, event_wait_list);
 
-        ///* the in series solution */  
+        ////* the in series solution */  
         //if (k_ind == 0){ 
           //status = tk_kernels_active[k_ind]->enqueue();
         //}
@@ -438,13 +438,9 @@ public:
       
       mowri << "\nSource kernel " << "(" << i + 1 << "/" << hps.size() << ") "  << hps[i].get_string() << Endl;      
       
-
-      std::cout << "before deriveability test..." << std::endl;
       deriveability_test(hps[i], "in benchgemm");
-
-      std::cout << "before get bundle..." << std::endl;
+      
       auto bundle = tinygemm::kerngen::get_bundle(hps[i],gg); 
-
       auto atr = architests::architecture_specific_tests(command_queue, hps[i], bundle.dp);
       if (std::get<0>(atr) == false){
         throw tinygemm_error(std::get<1>(atr));
@@ -460,225 +456,136 @@ public:
   
   tinygemm::TinyGemmSolution
   get_default(std::string constraint_string){
-    
-    hyperparams::HyperParams hp = hyperparams::get_default(gg, constraint_string);
-    
-    
-    deriveability_test(hp, "in get_default");
-    
+    hyperparams::HyperParams hp = hyperparams::get_hp_start("default", constraint_string, gg);
+    deriveability_test(hp, "in get_default");    
     auto bundle = tinygemm::kerngen::get_bundle(hp,gg); 
     tinygemm::TinyGemmSolutionStatistics tgss(std::numeric_limits<float>::max(), 0, 0);    
-    
     return { hp, gg, bundle.dp, tgss, bundle.v_tgks };
-    
   }
   
   
   tinygemm::TinyGemmSolution find(float allotted_time, std::string constraint_string, std::string start_string, unsigned n_runs_per_kernel){
     
-    
+    mowri << "(find) geometry : " << gg.get_string()  << Endl;
 
-    
-    if (gg.m < 8 || gg.n < 8){
-      mowri << "really skinny/thin matrix, returning a default kernel based on gg and constraint_string (to be improved) " << Endl;
-      return get_default(gg, constraint_string);
-    }
-      
-    
     if (allotted_time <= 0){
-      mowri << "Allotted time insufficient for benchmarking, returning default TinyGemmSolution (given gg and constraint_string)" << Endl;
-      return get_default(gg, constraint_string);
+      mowri << "allotted_time (" << allotted_time << ") is insufficient for benchmarking, returning default TinyGemmSolution based on gg and constraint_string without bencing/searching" << Endl;
+      return get_default(constraint_string);
     }
 
     address_check_valid_and_reliable();
-        
-    auto start = std::chrono::high_resolution_clock::now();
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<float> fp_ms = end - start;
-    float elapsed_seconds = fp_ms.count();
 
     /* we will count how many kernels are successfully generated AND compiled AND benchmarked */
     unsigned global_counter = 0;
-        
+
+    hyperparams::HyperParams hyper_param_start = hyperparams::get_hp_start(start_string, constraint_string, gg);        
     /* we track the best TinyGemmSolution found during the search  */    
     std::vector<tinygemm::TinyGemmSolution> path_of_best_solns;
-    
-    /* In here, we will store all previously considered HyperParams, used to check and ensure that we do not consider a HyperParam more than once */
+    /* In here, we will store all previously considered HyperParams strings, used to check and ensure that we do not consider a HyperParam more than once */
     std::vector<std::string> hyper_front_history;
-        
     /* while generating, compiling and benchmarking kernels, we will keep track of the fastest found thus far */
     float best_time = std::numeric_limits<float>::max();
-    
-    /* as there is no default constructor for HyperParams, forced to initialise from hyperstring. TODO(jn) clean this up */
-    hyperparams::HyperParams best_hp(hyperparams::get_default(gg, constraint_string));
-    
-    
-    
+    hyperparams::HyperParams best_hp = hyper_param_start;
+    std::vector<hyperparams::HyperParams> hyper_front = { hyper_param_start };
 
-
-
-    /* we initialise the `hyper-front' with a single HyperParams, selected based on problem dimension, constraints and start ("default" or "random" or a valid hyperstring)  */
-    std::vector<hyperparams::HyperParams> hyper_front = { hyperparams::get_random(gg, constraint_string, start_string) };
-    
-    auto hyper_param_start = hyper_front[0];
- 
-    bool improvement_found_on_front = true;
-    
-    /* a hyper front consists of all kernels within a certain "distance of the current best. We start with a front
-     * distance of 1, and when this gets into a local mimimum we switch to front distance 2. Front distance 2 kernels
-     * are defined is terms of front distance 1 kernels : front distance 2 kernels are just the concatenatition of 
-     * the distance 1 kernels from all distance 1 kernels */
-    unsigned front_search_horizon = 1;
-    
+    bool improvement_found_on_front = true;    
     mowri << "allotted time : " << allotted_time << Endl;
-    while (improvement_found_on_front == true){
-      
-      
-      improvement_found_on_front = false;
-      mowri << "\nnew hyper front size : " << hyper_front.size() << Endl;
 
+    float elapsed_seconds;
+    auto start = std::chrono::high_resolution_clock::now();
+
+    auto update_elapsed_seconds  =  [&elapsed_seconds, &start]()  {      
+      auto end = std::chrono::high_resolution_clock::now();
+      std::chrono::duration<float> fp_ms = end - start;
+      elapsed_seconds = fp_ms.count();          
+    };
+    update_elapsed_seconds();
+    
+    while (improvement_found_on_front == true){
+      improvement_found_on_front = false;
       unsigned hfi = 0;
       while (hfi < hyper_front.size() && improvement_found_on_front == false && elapsed_seconds < allotted_time){
-        
         hyperparams::HyperParams hp = hyper_front[hfi];
         std::string hp_string = hp.get_string();
-        
-        
-        /* certain kernels will not be generated, for diverse reasons */
-        /* reason 0 : it's already been considered */
-        if (std::find(hyper_front_history.begin(), hyper_front_history.end(), hp_string) != hyper_front_history.end()){
-          /* this kernel has already been considered */
+
+        /* extra precaution, should be able to remove this */
+        auto deriveability = derivedparams::get_deriveability(hp, gg);
+        if (std::get<0>(deriveability) == false){
+          std::stringstream sserr;
+          sserr << hp.get_string() << " is not deriveable, because " << std::get<1>(deriveability) << "\nThis should have already been checked." << Endl;
+          throw tinygemm_error(sserr.str());
         }
         
-        else{
-          
-          hyper_front_history.push_back(hp_string);
+        auto bundle = tinygemm::kerngen::get_bundle(hp,gg);
+        /* the OpenCL string was succesfully generated, we can now attempt to compile and benchmark it */
         
-          /* reason 3 : the user requests a deterministic kernel, which cannot be guaranteed */
-          if (constraint_string != "") {
-    
-            mowri << "TODO : this violates the constraint string" << Endl;
-            throw tinygemm_error("a non-empty constraint string. I should do something about that. ");
-            
-          }
-          /* ************************************************************************ */
-  
-          /* We will now attempt to generate the kernel */
-          else {
+        ++global_counter;
+        mowri << "\nglobal gen-com-bench : " << global_counter  <<  ".\n" << hp.get_string() << Endl;        
+        setup_tinykernels(hp, bundle);  
+        mowri << "Entering the core gemm loops" << Endl; 
+        core_gemm_loop(n_runs_per_kernel);
 
-            /* attempt to generate the kernel. Certain `bad' kernels are only caught at this stage (set_status.is_good() == false)
-             * with tests for hyper-parameter compatibilty in the python script which I don't want to recode here. The main compatibility 
-             * issue caught here is that load sizes from global are multiples of the number of work items.  */
-            
-            auto deriveability = derivedparams::get_deriveability(hp, gg);
-            
-            if (std::get<0>(deriveability) == true){
-
-
-
-              
-              auto bundle = tinygemm::kerngen::get_bundle(hp,gg);  
-
-
-
-
-                            
-              /* the kernel was succesfully generated, we now compile and benchmark it */
-              
-              ++global_counter;
-              mowri << "\nglobal gen-com-bench : " << global_counter  <<  ".\n" << hp.get_string() << Endl;
-              
-              setup_tinykernels(hp, bundle);  
-              mowri << "(find) geometry : " << gg.get_string()  << "\nEntering the core gemm loops" << Endl; 
-              core_gemm_loop(n_runs_per_kernel);
-  
-              std::sort(v_t_total.begin(), v_t_total.end());
-  
-              /* Taking the fastest or median? */ 
-              float median_time = v_t_total[v_t_total.size()/2]; 
-              
-              if (std::abs(v_t_total.back() - median_time) / median_time > 0.2) {
-                mowri << "tinygemm_warning: large variance in times. " <<  Endl;
-              }
-              
-              end = std::chrono::high_resolution_clock::now();
-              fp_ms = end - start;
-              elapsed_seconds = fp_ms.count();
-                              
-              mowri << "median time  : " << median_time << "\t m-Gflops/s : " << 2.0 * gg.m * gg.n * gg.k / (median_time * 1e6) << Endl;
-              mowri << "elapsed seconds : " << elapsed_seconds << Endl;
-      
-              /* A new best kernel !!! we're only interested in an improvement if it's 0.5% or more */
-              if (median_time < 0.995*best_time){
-                
-                improvement_found_on_front = true;
-                best_time = median_time;
-                best_hp = hp;
-                mowri << "---------- NEW BEST TIME FOUND --------- : " << best_time << Endl << "breaking from current hyper front, creating new hyper front " << Endl;
-  
-                end = std::chrono::high_resolution_clock::now();
-                fp_ms = end - start;
-                elapsed_seconds = fp_ms.count();
-  
-                float median_benchmark_gflops = (2. * gg.m * gg.n * gg.k) / (median_time * 10e5);                
-                
-                tinygemm::TinyGemmSolutionStatistics tgss(median_time, median_benchmark_gflops, elapsed_seconds);
-                     
-                path_of_best_solns.emplace_back( hp, gg, bundle.dp, tgss, bundle.v_tgks  );
-                
-                
-
-              }
-           
-            }
-          
-            else{
-              mowri << "\nSkipping " << hp.get_string() << ", hyper-parameters incompatible. " << Endl;
-              mowri << "Specifically, the message from the kernel string setting function was \n`````\n" << std::get<1>(deriveability) << "'''''\n";
-            }
-          }
+        std::sort(v_t_total.begin(), v_t_total.end());
+        /* Taking the fastest or median? */ 
+        float median_time = v_t_total[v_t_total.size()/2]; 
+        if (std::abs(v_t_total.back() - median_time) / median_time > 0.2) {
+          mowri << "tinygemm_warning: large variance in times. " <<  Endl;
         }
         
-        ++hfi;
-        
-        end = std::chrono::high_resolution_clock::now();
-        fp_ms = end - start;
-        elapsed_seconds = fp_ms.count();
-        
-      }
-      
-  
-      /* TODO: maybe. add another level of loop here. get_one_aways, then get_two_aways, etc. 
-       * what we will have here is that `one' is just rough tile shape, important stuff.*/
-      if (improvement_found_on_front == true && front_search_horizon == 1){
-        /* getting all `one-away's */
-        hyper_front = best_hp.get_one_aways();
-      }
+        update_elapsed_seconds();                        
+        mowri << "median time  : " << median_time << "\t m-Gflops/s : " << 2.0 * gg.m * gg.n * gg.k / (median_time * 1e6) << Endl;
+        mowri << "elapsed seconds : " << elapsed_seconds << Endl;
 
-      
-      if (improvement_found_on_front == false && front_search_horizon == 1 && elapsed_seconds < allotted_time){
-        ++front_search_horizon;
-
-        /* TODO : if you WANT to go onto front 2, set the following to true. This should be finalised TODO TODO TODO  */        
-        const bool jump_to_front_horizon_size_2 = true;
-        
-        if (jump_to_front_horizon_size_2 == true){
+        /* A new best kernel found */
+        if (median_time < 1.000*best_time){
           improvement_found_on_front = true;
-          mowri << "\n\n----------SWITCHING TO FRONT HORIZON SIZE 2-------------\n\n" << Endl;
+          best_time = median_time;
+          float median_gflops = (2. * gg.m * gg.n * gg.k) / (median_time * 10e5);
+          best_hp = hp;
+          mowri << "NEW BEST MEDIAN TIME FOUND, median gflops  : " << median_gflops << Endl;
+          mowri << "breaking from current hyper front " << Endl;
+          update_elapsed_seconds();
+          tinygemm::TinyGemmSolutionStatistics tgss(median_time, median_gflops, elapsed_seconds);               
+          path_of_best_solns.emplace_back( hp, gg, bundle.dp, tgss, bundle.v_tgks  );
         }
+        ++hfi;
+        update_elapsed_seconds();
       }
       
-      if (improvement_found_on_front == true && front_search_horizon == 2){        
-        /* getting all `two-aways' */
-        //hyper_front = best_hp.get_two_aways(gg);
-      }
-      
-      if (improvement_found_on_front == false && front_search_horizon == 2){
-        /* this is going to cause the end of the search */
-      }
-      
-      if (front_search_horizon != 1 && front_search_horizon != 2){
-        throw std::logic_error("front_search_horizon is neither 1 nor 2. This is currently not possible, Broken algorithm, come fix.");        
+  
+      if (improvement_found_on_front == true && allotted_time > elapsed_seconds){
+        mowri << "creating new current hyper front " << Endl;
+        /* getting all `one-away's */        
+        auto one_aways = best_hp.get_one_aways();
+        
+        /* refreshing hyper front */
+        hyper_front.resize(0);
+
+        for (auto & hp : one_aways){
+          /* confirming that constrain string is not violated */
+          if (constraint_string == "failure bla TODO") {
+            mowri << "TODO : check if this violates the constraint string and throw an error if it does " << Endl;          
+          }
+          
+          auto hp_string = hp.get_string();
+          
+          /* filtering out if it has already been considered */
+          if (std::find(hyper_front_history.begin(), hyper_front_history.end(), hp_string) != hyper_front_history.end()){
+            //mowri << hp_string << " has already been considered "<< Endl; 
+            continue;
+          }
+          hyper_front_history.push_back(hp_string);
+
+          /* filtering out non-deriveables */
+          auto deriveability = derivedparams::get_deriveability(hp, gg);
+          if (std::get<0>(deriveability) == false){
+            mowri << hp.get_string() << " is not deriveable, because " << std::get<1>(deriveability) << Endl;            
+            continue;
+          }
+          hyper_front.push_back(hp); 
+        }
+        
+        mowri << "\n" << "new hyper front size : " << hyper_front.size() << Endl;
       }
     }
     
@@ -686,12 +593,16 @@ public:
       mowri << "stopping the search because the allotted time has been surpassed" << Endl;
     }
     
-    else{
+    else if (improvement_found_on_front == false){
       mowri << "stopping the search because a locally minimal kernel has been found" << Endl;
     }
     
+    else{
+      throw tinygemm_error("why did the algorithm stop ? ");
+    }
+    
     if (path_of_best_solns.size() == 0){
-      throw tinygemm_error("\nUser should never see this error, this is an internal problem. Possibly, there were no solutions found. Which is strange, as at least the initial kernel (the initial hyper front) should have been a solution. Either, the initial kernel was not valid (which should not happen unless my filters are broken) or for whatever reason the kernel was not generated or did not compile. Maybe there is some preceding warning printed which sheds light on this? Another possibility is that there was an error in the kernel string generation which I did not think of. ");
+      throw tinygemm_error("\nThere were no solutions found. This suggests that the initial kernel did not work (could not derive hyper parameters, required too much memory, or did not compile. Maybe there is some preceding warning printed which sheds light on this? Probably with a modification to the start_string or the constraint_string, this should be resolved. For example, the unroll UNR can be reduced if the problem is memory. TODO(jn) catch certain problems in architests ");
     }
   
     mowri << "\nstart kernel : " << hyper_param_start.get_string() << Endl;
@@ -776,7 +687,7 @@ bool verbose,
 std::string logfile){
   
   OpenCLGemmEncapsulator oger({}, gg, {0,0,0,0,0,0,0}, {}, {}, {}, {}, logfile, verbose); 
-  return oger.get_default();
+  return oger.get_default(constraint_string);
  
 }
   
@@ -819,3 +730,39 @@ void benchgemm(
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+      
+      //if (improvement_found_on_front == false && front_search_horizon == 1 && elapsed_seconds < allotted_time){
+        //++front_search_horizon;
+
+        ///* TODO : if you WANT to go onto front 2, set the following to true. This should be finalised TODO TODO TODO  */        
+        //const bool jump_to_front_horizon_size_2 = true;
+        
+        //if (jump_to_front_horizon_size_2 == true){
+          //improvement_found_on_front = true;
+          //mowri << "\n\n----------SWITCHING TO FRONT HORIZON SIZE 2-------------\n\n" << Endl;
+        //}
+      //}
+      
+      //if (improvement_found_on_front == true && front_search_horizon == 2){        
+        ///* getting all `two-aways' */
+        ////hyper_front = best_hp.get_two_aways(gg);
+      //}
+      
+      //if (improvement_found_on_front == false && front_search_horizon == 2){
+        ///* this is going to cause the end of the search */
+      //}
+      
+      //if (front_search_horizon != 1 && front_search_horizon != 2){
+        //throw std::logic_error("front_search_horizon is neither 1 nor 2. This is currently not possible, Broken algorithm, come fix.");        
+      //}
