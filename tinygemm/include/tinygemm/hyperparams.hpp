@@ -49,7 +49,9 @@ std::vector<std::vector<std::string>> HPKeys;
 std::vector<std::map<std::string, unsigned>> HPVals;
 std::vector<unsigned> nHPs;
 
-
+/* for example, we want to couple [matA][MIC] with [matB][MIC]  */
+/* design choice : going with pairs as opposed to tuples as they have nicer initializer_list behavioUr*/
+std::vector<std::pair< std::pair<unsigned, unsigned>, std::pair<unsigned, unsigned> > > coupled_parameters;
 
 SUHP();
 };
@@ -70,6 +72,9 @@ public:
 
 
 
+
+
+
 class XHPs{
   
   public:
@@ -81,6 +86,7 @@ class XHPs{
     std::string get_string() const;
     void check() const;
     
+     
     XHPs(
     const std::vector<std::string> * ptr_hpkeys_, const Graph * ptr_hpgraph_, unsigned nHPsIn): 
     ptr_hpkeys(ptr_hpkeys_), ptr_hpgraph(ptr_hpgraph_)

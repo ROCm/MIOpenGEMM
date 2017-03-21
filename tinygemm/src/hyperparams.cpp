@@ -36,8 +36,11 @@ public:
   }
   
   template <typename T>
-  void shuffle(T & t){
-    std::shuffle(t.begin(), t.end(), gen);
+  void shuffle(unsigned start_index, unsigned end_index, T & t){
+    if (end_index > t.size() || start_index > end_index){
+      throw tinygemm_error("problem in shuffle");
+    }
+    std::shuffle(t.begin() + start_index, t.begin() + end_index, gen);
   }
   
   
@@ -109,6 +112,10 @@ SUHP::SUHP(){
   nHPs[nsHP::matC] = nsHP::nNonChiralKeys;  
 
 
+///* for example, we want to couple [matA][MIC] with [matB][MIC]  */
+//std::vector<std::tuple< std::tuple<unsigned, unsigned>, std::tuple<unsigned, unsigned> > > 
+
+  coupled_parameters.push_back( { {nsHP::matA, nsHP::MIC}, {nsHP::matB, nsHP::MIC} } );
 
 
 
@@ -445,16 +452,53 @@ std::vector<HyperParams> HyperParams::get_one_aways(){ //const tinygemm::TinyGem
       }
     }
   }
+  
+  unsigned n_uncoupled = one_aways.size();
+  
+  
+  for (auto & couple_p : suHP.coupled_parameters){
+
+    auto first = std::get<0>(couple_p);
+    auto first_m = std::get<0>(first);
+    auto first_p = std::get<1>(first);
+    auto first_value = v_xhps[first_m].vs[first_p];
+    
+    auto second = std::get<1>(couple_p);
+    auto second_m = std::get<0>(second);
+    auto second_p = std::get<1>(second);
+    auto second_value = v_xhps[second_m].vs[second_p];
+
+    for (auto & new_first_val : v_xhps[first_m].ptr_hpgraph->graph[first_p].at(first_value)){
+      for (auto & new_second_val : v_xhps[second_m].ptr_hpgraph->graph[second_p].at(second_value)){      
+        HyperParams hp(*this);
+        
+        hp.v_xhps[first_m].vs[first_p] = new_first_val;
+        hp.v_xhps[second_m].vs[second_p] = new_second_val;
+        one_aways.push_back(hp);
+      
+      }
+    }
+  }
+  
+  unsigned n_total = one_aways.size();
+  
+ 
+ 
+  
 
   /* shuffle them, which bounds the expected time to finding an improvement 
-   * (prevents pathological case of all improving kernels at end of vector) 
-   * currently, we shuffle after adding custom edges, might consider shuffling
-   * before adding, to prevent getting trapped in previously found minima.*/
+   * (prevents pathological case of all improving kernels at end of vector)  */
 
-  radu.shuffle(one_aways);
+  /* shuffle the true one aways */
+  radu.shuffle(0, n_uncoupled, one_aways);
   
   
+  /* shuffle the two aways (coupled) */
+  radu.shuffle(n_uncoupled, n_total, one_aways);
   
+  /* shuffle the custom kernels. What? Custom kernels? */
+  
+
   return one_aways;
 }
   

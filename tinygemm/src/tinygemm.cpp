@@ -538,8 +538,13 @@ public:
       unsigned hfi = 0;
       while (hfi < hyper_front.size() && improvement_found_on_front == false && elapsed_seconds < allotted_time){
         hyperparams::HyperParams hp = hyper_front[hfi];
+        
+
+
         std::string hp_string = hp.get_string();
 
+
+        hyper_front_history.push_back(hp_string);
 
 
         /* extra precaution, should be able to remove this */
@@ -556,7 +561,7 @@ public:
 
         std::sort(v_t_total.begin(), v_t_total.end());
         /* Taking the fastest or median? */ 
-        float median_time = v_t_total[v_t_total.size()/2]; 
+        float median_time = v_t_total[0];//[v_t_total.size()/2]; 
         if (std::abs(v_t_total.back() - median_time) / median_time > 0.2) {
           mowri << "tinygemm_warning: large variance in times. " <<  Endl;
         }
@@ -600,7 +605,11 @@ public:
             mowri << hp_string << " has already been considered "<< Endl; 
             continue;
           }
-          hyper_front_history.push_back(hp_string);
+          
+          
+          if (std::count(one_aways.begin(), one_aways.end(), hp_string) > 1){
+            throw tinygemm_error("duplicates in one_aways not allowed, or filter out here ");
+          }
 
           bool constraints_satisfied = hp.satisfies_where_source_defined(constraint_params);
           if (constraints_satisfied == false){
@@ -694,7 +703,7 @@ bool c_is_const){
   
   /* The number of times each kernel is run in find. 
    * consider adding this parameter to user API. */
-  unsigned n_runs_per_kernel = 5;
+  unsigned n_runs_per_kernel = 3;
 
   tinygemm::consistencychecks::check_ldx_mnk_consistent(gg);  
 

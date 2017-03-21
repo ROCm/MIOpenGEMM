@@ -23,7 +23,8 @@
 tinygemm::hyperparams::HyperParams get_hp(std::string hyperstring = ""){
 
   if (hyperstring.compare("") == 0){
-    
+                   
+                   
     hyperstring = "A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN0_ICE1_NAW64_UFO0_MAC5";
         
     //hyperstring = "A_MIC8_PAD2_PLU1_LIW1_MIW0_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL2_PUN1_ICE3_NAW16_UFO1_MAC5";
@@ -39,7 +40,7 @@ tinygemm::TinyGemmGeometry get_geometry(){
 
   bool isColMajor = true;
   bool tA = false;
-  bool tB = false;//true;
+  bool tB = true;
   bool tC = false;
   unsigned m = 128*(32) - 6; 
   unsigned n = 96*(55) - 4; 
@@ -104,10 +105,12 @@ int main(){
 
   //A_MIC5_PAD1_PLU1_LIW0_MIW1_WOS0__B_MIC8_PAD1_PLU1_LIW0_MIW0_WOS0__C_UNR16_GAL2_PUN0_ICE1_NAW64_UFO0_MAC5	
 
-  //std::string constraint_string("A_LIW0_MIW1_PAD1__B_LIW0_MIW1_PAD1__C_UNR16"); 
+  std::string constraint_string("A_LIW0_MIW1_PAD1__B_LIW0_MIW1_PAD1__C_ICE1_UFO0"); 
   
                                  //A_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL1_PUN1_ICE1_NAW64_UFO0_MAC5  
-  std::string constraint_string("A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN0_ICE1_NAW64_UFO0_MAC5");
+  
+      //hyperstring = "A_MAC MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MAC96_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__U16_GA3_PU0_ICE1_NAW16_UFO0";
+  //std::string constraint_string("A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN0_ICE1_NAW16_UFO0_MAC5");
   //A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN0_ICE1_NAW64_UFO0_MAC5");
 
   tinygemm::FindStartType fst(tinygemm::FindStartType::Random);
