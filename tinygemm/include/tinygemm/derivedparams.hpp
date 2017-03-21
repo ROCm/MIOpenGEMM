@@ -17,7 +17,7 @@ const unsigned uninitialised_unsigned = std::numeric_limits<unsigned>::max();
 
 std::tuple<bool, std::string>
 get_deriveability(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg);
-
+//void deriveability_test(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg);
 
 class ChiralDerivedParams{
 public:

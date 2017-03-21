@@ -195,7 +195,8 @@ Graph get_g_non_chiral(){
     //{nsMAC::a8b16, {nsMAC::a8b8, nsMAC::a16b16}},
     //{nsMAC::a16b8, {nsMAC::a8b8, nsMAC::a16b16}},
 
-    
+    //{nsMAC::a1b1, {nsMAC::a4b4}},
+    //{nsMAC::a4b4, {nsMAC::a8b8, nsMAC::a8b8}},
     {nsMAC::a8b8, {nsMAC::a16b16}},
     {nsMAC::a16b16, {nsMAC::a8b8}},
   };
@@ -205,16 +206,16 @@ Graph get_g_non_chiral(){
     {2,  {1,3,4}},
     {3,  {1,2,4,6}},
     {4,  {1,3,5,7}},
-    {5,  {2,4,6,8}},
-    {6,  {3,5,7,9}},
-    {7,  {4,6,8,10}},
-    {8,  {5,7,9,11}},
-    {9,  {6,8,10,12}},
-    {10, {7,9,11,13}},
-    {11, {8,10,12,14}},
-    {12, {9,11,13,14}},
-    {13, {10,12,14}},
-    {14, {11,13}}   };
+    {5,  {1,2,4,6,8}},
+    {6,  {1,3,5,7,9}},
+    {7,  {1,4,6,8,10}},
+    {8,  {1,5,7,9,11}},
+    {9,  {1,6,8,10,12}},
+    {10, {1,7,9,11,13}},
+    {11, {1,8,10,12,14}},
+    {12, {1,9,11,13,14}},
+    {13, {1,10,12,14}},
+    {14, {1,11,13}}   };
   
   hpg.graph[nsHP::PUN] = 
   {  graph_binary  };
@@ -231,7 +232,6 @@ Graph g_non_chiral(get_g_non_chiral());
 
 std::vector<std::vector<unsigned>> get_params_from_string(const std::string & hyperstring, bool expect_full_hyperstring){
 
-  std::cout << "in get_params_from_string" << std::endl;
 
   /* TODO only generate this when an error emerges */
   std::stringstream ssghe;
@@ -254,7 +254,12 @@ std::vector<std::vector<unsigned>> get_params_from_string(const std::string & hy
     }
   }
   
+  //if (hyperstring == ""){
+    //throw tinygemm_error("In get_params_from_string with hyperstring as empty string, not good");
+  //}
+  
   auto megafrags = stringutil::split(hyperstring, "__");
+  
   for (auto & megafrag : megafrags){
     char matrixkey = megafrag[0];
 
@@ -332,13 +337,37 @@ void HyperParams::checks() const{
 }
 
 
-void HyperParams::update(const std::vector<std::vector<unsigned>> & params){
+void HyperParams::replace(const std::vector<std::vector<unsigned>> & params){
   for (unsigned mi = 0; mi < nsHP::nMatrices; ++mi){
     for (unsigned hpi = 0; hpi < suHP.nHPs[mi]; ++hpi){
       v_xhps[mi].vs[hpi] = params.at(mi).at(hpi);
     }
   }
 }
+
+/* go through the params, and where it is not nHP::undefined, use its value to replace this */
+void HyperParams::replace_where_source_defined(const std::vector<std::vector<unsigned>> & params){
+  for (unsigned mi = 0; mi < nsHP::nMatrices; ++mi){
+    for (unsigned hpi = 0; hpi < suHP.nHPs[mi]; ++hpi){
+      if (params[mi][hpi] != nsHP::undefined){
+        v_xhps[mi].vs[hpi] = params[mi][hpi];
+      }
+    }
+  }
+}
+
+void HyperParams::replace_undefined_randomly(){
+  for (unsigned mi = 0; mi < nsHP::nMatrices; ++mi){
+    for (unsigned hpi = 0; hpi < suHP.nHPs[mi]; ++hpi){
+      if (v_xhps[mi].vs[hpi] == nsHP::undefined){
+        //select randomly from ptr_hpgraph->range. 
+        unsigned index = radu.get_from_range (v_xhps[mi].ptr_hpgraph->range[hpi].size());
+        v_xhps[mi].vs[hpi] = v_xhps[mi].ptr_hpgraph->range[hpi][index];
+      }
+    }
+  }
+}
+
 
 HyperParams::HyperParams():
 v_xhps {{&suHP.ChiralKeys, &g_chiral, nsHP::nChiralHPs}, 
@@ -354,7 +383,7 @@ v_xhps {{&suHP.ChiralKeys, &g_chiral, nsHP::nChiralHPs},
 
 HyperParams::HyperParams(const std::vector<std::vector<unsigned>> & params):HyperParams()
 {
-  update(params);
+  replace(params);
   checks();
 }
 
@@ -362,44 +391,31 @@ HyperParams::HyperParams(const std::vector<std::vector<unsigned>> & params):Hype
 HyperParams::HyperParams(const std::string & hyperstring):HyperParams(get_params_from_string(hyperstring, true)){}
 
 
-void HyperParams::replace_undefined_randomly(){
-  for (unsigned mi = 0; mi < nsHP::nMatrices; ++mi){
-    for (unsigned hpi = 0; hpi < suHP.nHPs[mi]; ++hpi){
-      if (v_xhps[mi].vs[hpi] == nsHP::undefined){
-        //select randomly from ptr_hpgraph->range. 
-        
-        
-        
-        unsigned index = radu.get_from_range (v_xhps[mi].ptr_hpgraph->range[hpi].size());
-        v_xhps[mi].vs[hpi] = v_xhps[mi].ptr_hpgraph->range[hpi][index];
-      }
-    }
-  }
-}
 
 
-HyperParams get_random(std::string constraint_string){
-  HyperParams hp;  
-  auto constraint_params = get_params_from_string(constraint_string, false);
-  hp.update(constraint_params);
-  hp.replace_undefined_randomly();
-  
-  hp.checks();  
-  return hp;
-}
 
-
-HyperParams get_cacheless_default(const tinygemm::TinyGemmGeometry & gg, std::string constraint_string){
+HyperParams get_cacheless_default(const tinygemm::TinyGemmGeometry & gg){
   HyperParams hp("A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN0_ICE1_NAW64_UFO0_MAC5");
-  auto constraint_params = get_params_from_string(constraint_string, false);
-  hp.update(constraint_params);
+  
+  //whittle ?
+  
   return hp;
 }
 
 
-HyperParams get_default(const tinygemm::TinyGemmGeometry & gg, std::string constraint_string){
+HyperParams get_default(const tinygemm::TinyGemmGeometry & gg){
+  
+  if (gg.m < 8 || gg.n < 8){
+    std::cout << "really skinny/thin matrix, returning a default TinyGemmSolution based on gg and constraint_string without searching/benching " << std::endl;
+    throw tinygemm_error("sort this out");
+  }
+    
   /* TODO : rather get default from cache, based on gg (?) */
-  auto hp = get_cacheless_default(gg, constraint_string);
+  auto hp = get_cacheless_default(gg);
+
+
+
+
   throw tinygemm_error("get_default not yet enabled (not needed for paper)");
   return hp;  
 }
@@ -410,7 +426,6 @@ bool HyperParams::operator == (const HyperParams & hpr){
 
 std::string HyperParams::get_string() const{
   std::stringstream ss;
-  //for (char X : {'A', 'B'}){
   for (unsigned mi : {nsHP::matA, nsHP::matB}){
     ss << suHP.MatKeys[mi] << "_" << v_xhps[mi].get_string() << "__";
   }
@@ -452,43 +467,43 @@ std::vector<HyperParams> HyperParams::get_one_aways(){ //const tinygemm::TinyGem
  * TODO : figure out how to make cache contain only reduced problems .... very important! */
 
 
-    
      
-  HyperParams get_hp_start(std::string start_string, std::string constraint_string, const tinygemm::TinyGemmGeometry & gg){
-    
-    /* we initialise the `hyper-front' with a single HyperParams, */
-    /* selected based on problem dimension, constraints and start type  */    
-    HyperParams hyper_param_start;
+HyperParams get_hp_start(FindStartType fst, std::string constraint_string, const tinygemm::TinyGemmGeometry & gg){
 
-
-    if (gg.m < 8 || gg.n < 8){
-      mowri << "really skinny/thin matrix, returning a default TinyGemmSolution based on gg and constraint_string without searching/benching " << Endl;
-      throw std::tinygemm_error("sort this out");
-    }
-          
-
-
-    if (start_string.compare("default") == 0){
-      hyper_param_start = get_default(gg, constraint_string);
-    }
-    
-    else if (start_string.compare("random") == 0){
-      hyper_param_start = get_random(constraint_string);
-    }
-    
-    else if (start_string == ""){
-      throw tinygemm_error("start_string should not be empty string");
-    }
-    
-    else {
-      /* assume it is a valid hyperstring */
-      hyper_param_start = HyperParams(start_string);
-    }
-    
-    // TODO I MUST guarantee that start_hp is going to pass ... warm up bench run with it ?
-    
-    return hyper_param_start;
+  auto constraint_params = get_params_from_string(constraint_string, false);
+  /* we initialise the `hyper-front' with a single HyperParams, */
+  /* selected based on problem dimension, constraints and start type  */    
+  HyperParams hyper_param_start;
+  if (fst == FindStartType::Default){
+    hyper_param_start = get_default(gg);
+    hyper_param_start.replace_where_source_defined(constraint_params);
   }
+  
+  else if (fst == FindStartType::Random){
+    hyper_param_start.replace(constraint_params);
+    hyper_param_start.replace_undefined_randomly();
+  }
+  
+  hyper_param_start.checks();  
+  return hyper_param_start;
+}
+
+
+
+
+bool HyperParams::satisfies_where_source_defined(const std::vector<std::vector<unsigned>> & params){
+  /* filtering out if violates the constraint string */
+  bool constraints_satisfied = true;
+  for (unsigned mi = 0; mi < nsHP::nMatrices; ++mi){
+    for (unsigned hpi = 0; hpi < suHP.nHPs[mi]; ++hpi){
+      if (params[mi][hpi] != nsHP::undefined && v_xhps[mi].vs[hpi] != params[mi][hpi]){
+        constraints_satisfied = false;
+        break;
+      }
+    }
+  }
+  return constraints_satisfied;
+}
 
 
 } 

@@ -41,9 +41,9 @@ tinygemm::TinyGemmGeometry get_geometry(){
   bool tA = false;
   bool tB = false;//true;
   bool tC = false;
-  unsigned m = 7680;//128*(32) - 6; 
-  unsigned n = 128;//96*(55) - 4; 
-  unsigned k = 256;//16*229;           
+  unsigned m = 128*(32) - 6; 
+  unsigned n = 96*(55) - 4; 
+  unsigned k = 16*229;           
 
     
   unsigned lda = ( tA == isColMajor ? k : m ) + 0;
@@ -101,8 +101,16 @@ int main(){
   
   std::cout << "in main of devtest " << std::endl;
 
+
+  //A_MIC5_PAD1_PLU1_LIW0_MIW1_WOS0__B_MIC8_PAD1_PLU1_LIW0_MIW0_WOS0__C_UNR16_GAL2_PUN0_ICE1_NAW64_UFO0_MAC5	
+
+  //std::string constraint_string("A_LIW0_MIW1_PAD1__B_LIW0_MIW1_PAD1__C_UNR16"); 
+  
+                                 //A_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL1_PUN1_ICE1_NAW64_UFO0_MAC5  
   std::string constraint_string("A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN0_ICE1_NAW64_UFO0_MAC5");
-  std::string start_string("random");
+  //A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN0_ICE1_NAW64_UFO0_MAC5");
+
+  tinygemm::FindStartType fst(tinygemm::FindStartType::Random);
 
 
   bool test_print = false;
@@ -149,8 +157,8 @@ int main(){
   }
   
   if (test_find){
-    float allotted_time = 5.0;
-    tinygemm::dev::find(allotted_time, v_a.data(), v_b.data(), v_c.data(), constraint_string, start_string, gg, toff, true, "");
+    float allotted_time = 100;
+    tinygemm::dev::find(allotted_time, v_a.data(), v_b.data(), v_c.data(), constraint_string, fst, gg, toff, true, "/home/james/output.txt");
   }
   
   if (test_default){

@@ -456,15 +456,42 @@ public:
   
   tinygemm::TinyGemmSolution
   get_default(std::string constraint_string){
-    hyperparams::HyperParams hp = hyperparams::get_hp_start("default", constraint_string, gg);
+    hyperparams::HyperParams hp = hyperparams::get_hp_start(FindStartType::Default, constraint_string, gg);
     deriveability_test(hp, "in get_default");    
     auto bundle = tinygemm::kerngen::get_bundle(hp,gg); 
     tinygemm::TinyGemmSolutionStatistics tgss(std::numeric_limits<float>::max(), 0, 0);    
     return { hp, gg, bundle.dp, tgss, bundle.v_tgks };
   }
+
+
+  hyperparams::HyperParams  get_hyper_param_start(std::string constraint_string, FindStartType fst){
+    hyperparams::HyperParams hyper_param_start;
+    bool found_a_deriveable_hp = false;
+    unsigned deriveable_search_iteration = 0;
+    std::stringstream deriveablesearch_ss;
+    while (found_a_deriveable_hp == false && deriveable_search_iteration < 1000){
+      hyper_param_start = hyperparams::get_hp_start(fst, constraint_string, gg);
+      //deriveability_test(hyper_param_start, "test of hyper_param_start in start");
+      auto deriveability = derivedparams::get_deriveability(hyper_param_start, gg);
+      
+      if (std::get<0>(deriveability) == false){
+        deriveablesearch_ss << hyper_param_start.get_string() << " is not deriveable, because " << std::get<1>(deriveability) << "\n\n";            
+      }
+      else{
+        found_a_deriveable_hp = true;
+      }
+      ++deriveable_search_iteration;
+    }
+    
+    if (found_a_deriveable_hp == false){
+      deriveablesearch_ss << "\n\nStruggling to find a deriveable set of hyper parameters which satisfy the geometry and constraints, throwing an error\n";
+      //should rather return nosolution ? or one which we know to be deriveable ?
+      throw tinygemm_error(deriveablesearch_ss.str());
+    }
+    return hyper_param_start;
+  }  
   
-  
-  tinygemm::TinyGemmSolution find(float allotted_time, std::string constraint_string, std::string start_string, unsigned n_runs_per_kernel){
+  tinygemm::TinyGemmSolution find(float allotted_time, std::string constraint_string, FindStartType fst, unsigned n_runs_per_kernel){
     
     mowri << "(find) geometry : " << gg.get_string()  << Endl;
 
@@ -478,7 +505,12 @@ public:
     /* we will count how many kernels are successfully generated AND compiled AND benchmarked */
     unsigned global_counter = 0;
 
-    hyperparams::HyperParams hyper_param_start = hyperparams::get_hp_start(start_string, constraint_string, gg);        
+
+    auto constraint_params = hyperparams::get_params_from_string(constraint_string, false);
+    /* This is a VERY elegant solution !!! */
+    hyperparams::HyperParams hyper_param_start = get_hyper_param_start(constraint_string, fst);
+
+    
     /* we track the best TinyGemmSolution found during the search  */    
     std::vector<tinygemm::TinyGemmSolution> path_of_best_solns;
     /* In here, we will store all previously considered HyperParams strings, used to check and ensure that we do not consider a HyperParam more than once */
@@ -508,13 +540,10 @@ public:
         hyperparams::HyperParams hp = hyper_front[hfi];
         std::string hp_string = hp.get_string();
 
+
+
         /* extra precaution, should be able to remove this */
-        auto deriveability = derivedparams::get_deriveability(hp, gg);
-        if (std::get<0>(deriveability) == false){
-          std::stringstream sserr;
-          sserr << hp.get_string() << " is not deriveable, because " << std::get<1>(deriveability) << "\nThis should have already been checked." << Endl;
-          throw tinygemm_error(sserr.str());
-        }
+        deriveability_test(hp, "in find loop");
         
         auto bundle = tinygemm::kerngen::get_bundle(hp,gg);
         /* the OpenCL string was succesfully generated, we can now attempt to compile and benchmark it */
@@ -562,19 +591,22 @@ public:
         hyper_front.resize(0);
 
         for (auto & hp : one_aways){
-          /* confirming that constrain string is not violated */
-          if (constraint_string == "failure bla TODO") {
-            mowri << "TODO : check if this violates the constraint string and throw an error if it does " << Endl;          
-          }
-          
+           
           auto hp_string = hp.get_string();
+        
           
           /* filtering out if it has already been considered */
           if (std::find(hyper_front_history.begin(), hyper_front_history.end(), hp_string) != hyper_front_history.end()){
-            //mowri << hp_string << " has already been considered "<< Endl; 
+            mowri << hp_string << " has already been considered "<< Endl; 
             continue;
           }
           hyper_front_history.push_back(hp_string);
+
+          bool constraints_satisfied = hp.satisfies_where_source_defined(constraint_params);
+          if (constraints_satisfied == false){
+            mowri << hp_string << " does not satisfy constraints "<< Endl;
+            continue;
+          }
 
           /* filtering out non-deriveables */
           auto deriveability = derivedparams::get_deriveability(hp, gg);
@@ -602,7 +634,7 @@ public:
     }
     
     if (path_of_best_solns.size() == 0){
-      throw tinygemm_error("\nThere were no solutions found. This suggests that the initial kernel did not work (could not derive hyper parameters, required too much memory, or did not compile. Maybe there is some preceding warning printed which sheds light on this? Probably with a modification to the start_string or the constraint_string, this should be resolved. For example, the unroll UNR can be reduced if the problem is memory. TODO(jn) catch certain problems in architests ");
+      throw tinygemm_error("\nThere were no solutions found. This suggests that the initial kernel did not work (could not derive hyper parameters, required too much memory, or did not compile. Maybe there is some preceding warning printed which sheds light on this? Probably with a modification to the FindStartType or the constraint_string, this should be resolved. For example, the unroll UNR can be reduced if the problem is memory. TODO(jn) catch certain problems in architests ");
     }
   
     mowri << "\nstart kernel : " << hyper_param_start.get_string() << Endl;
@@ -652,7 +684,7 @@ cl_mem b,
 cl_mem c,
 cl_mem workspace,
 const std::string constraint_string,
-const std::string start_string,
+FindStartType fst,
 const tinygemm::TinyGemmGeometry & gg,
 const tinygemm::TinyGemmOffsets & toff,
 bool verbose, 
@@ -670,12 +702,12 @@ bool c_is_const){
   
     openclutil::SafeClMem c_copied = get_copy(command_queue, c, gg, toff, "copy of c in find");
     OpenCLGemmEncapsulator oger(command_queue, gg, toff, a, b, c_copied.clmem, workspace, logfile, verbose); 
-    return oger.find(allotted_time, constraint_string, start_string, n_runs_per_kernel);
+    return oger.find(allotted_time, constraint_string, fst, n_runs_per_kernel);
   }
   
   else{
     OpenCLGemmEncapsulator oger(command_queue, gg, toff, a, b, c, workspace, logfile, verbose); 
-    return oger.find(allotted_time, constraint_string, start_string, n_runs_per_kernel);
+    return oger.find(allotted_time, constraint_string, fst, n_runs_per_kernel);
   }
 }
 

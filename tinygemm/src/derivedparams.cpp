@@ -115,6 +115,15 @@ get_deriveability(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmG
   return dp.set_fragile();
 }
 
+//void deriveability_test(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg){
+  //auto deriveability = derivedparams::get_deriveability(hp, gg);
+  //if (std::get<0>(deriveability) == false){
+    //std::stringstream sserr;
+    //sserr << "in deriveability_test. \n" << hp.get_string() << " is not deriveable, because " << std::get<1>(deriveability) << "\nThis should have already been checked.";
+    //throw tinygemm_error(sserr.str());
+  //}
+//}
+
 DerivedParams::DerivedParams(const hyperparams::HyperParams & hp_, const tinygemm::TinyGemmGeometry & gg_, std::string s):hp(hp_), gg(gg_){
   if (s.compare("uninitialised") != 0){
     throw tinygemm_error("the only string with which a DerivedParams object can be initialised is `uninitialised'");

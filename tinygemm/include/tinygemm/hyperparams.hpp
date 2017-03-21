@@ -10,6 +10,8 @@
 
 namespace tinygemm{
 
+enum class FindStartType {Default, Random};
+
 
 /* design note: a safer choice than namespacing enums is to use enum class. */ 
 /* but this would involve static casting from the enumerated type to unsigned all the time */
@@ -95,18 +97,23 @@ class XHPs{
 class HyperParams{
 
 private:
-  std::vector<XHPs> v_xhps;
+
   HyperParams(const std::vector<std::vector<unsigned>> & params); 
+  std::vector<XHPs> v_xhps;
 
   
 
   
   
+
   
 public:
 
+   
   void replace_undefined_randomly();
-  void update(const std::vector<std::vector<unsigned>> & params);
+  void replace(const std::vector<std::vector<unsigned>> & partial_params);
+  void replace_where_source_defined(const std::vector<std::vector<unsigned>> & params);
+  bool satisfies_where_source_defined(const std::vector<std::vector<unsigned>> & params);
  
   const XHPs & at(nsHP::eMatrix matX) const {return  v_xhps[matX]; }
   XHPs & at(nsHP::eMatrix matX) {return  v_xhps[matX]; }
@@ -139,7 +146,9 @@ public:
 
 
 //HyperParams get_default(const tinygemm::TinyGemmGeometry & gg, std::string constraint_string);
-HyperParams get_hp_start(std::string start_string, std::string constraint_string, const tinygemm::TinyGemmGeometry & gg);
+HyperParams get_hp_start(FindStartType fst, std::string constraint_string, const tinygemm::TinyGemmGeometry & gg);
+
+std::vector<std::vector<unsigned>> get_params_from_string(const std::string & hyperstring, bool expect_full_hyperstring);
 
 }
 }

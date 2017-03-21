@@ -12,6 +12,8 @@
 
 namespace tinygemm{
 
+enum class PinklePuff {Doob};
+
 
 
 static const double default_alpha = 0.415693029182345929;
@@ -30,8 +32,8 @@ cl_mem workspace,
 /* a substring of a hyperstring, defines hyper-parameters with fixed values */
 const std::string constraint_string,
 
-/* one of "default", "random" and a valid hyperstring */
-const std::string start_string,
+/* one of Default and Random */
+FindStartType fst,
 
 /* see tinygemm/include/tinygemmgeometry.hpp for TinyGemmGeometry parameters */
 const tinygemm::TinyGemmGeometry & gg,
