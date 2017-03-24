@@ -424,24 +424,20 @@ public:
   }
 
 
-  hyperparams::HyperParams get_hyper_param_start(std::string constraint_string, FindStartType fst){
+  hyperparams::HyperParams get_hyper_param_start(std::string constraint_string, FindStartType fst, const hyperparams::Graph & graphs){
 
-    hyperparams::HyperParams hyper_param_start;
+    hyperparams::HyperParams hyper_param_start; //(graphs);
     bool found_a_deriveable_hp = false;
     unsigned deriveable_search_iteration = 0;
     std::stringstream deriveablesearch_ss;
     
     /* the number of attempts at finding a deriveable HyperParams given the constraint string */
     const unsigned n_trials = fst == FindStartType::Random ? 1000 : 1;
-
-
-    ////set-up the search graphs based on gg. //TODO : pass constraint_string in here, so that no elimination of strings later. 
-    //auto graphs = hyperparams::get_graphs(gg);
-
     
     while (found_a_deriveable_hp == false && deriveable_search_iteration < n_trials){
       
-      hyper_param_start = hyperparams::get_hp_start(fst, constraint_string, gg);
+      //TODO graphs should already have constraint_string in it...
+      hyper_param_start = hyperparams::get_hp_start(fst, constraint_string, graphs);
       auto deriveability = derivedparams::get_deriveability(hyper_param_start, gg);
       if (std::get<0>(deriveability) == false){
         deriveablesearch_ss << hyper_param_start.get_string() << " is not deriveable, because " << std::get<1>(deriveability) << "\n";            
@@ -475,11 +471,14 @@ public:
     unsigned global_counter = 0;
 
     
+
+    hyperparams::Graph graphs(gg);
+
     //TODO : get_params_from_full_hyperstring would be clearer that ", false". 
-    auto constraint_params = hyperparams::get_params_from_string(constraint_string, false);
+    auto constraint_params = graphs.get_params_from_string(constraint_string, false);
 
     
-    hyperparams::HyperParams hyper_param_start = get_hyper_param_start(constraint_string, fst);
+    hyperparams::HyperParams hyper_param_start = get_hyper_param_start(constraint_string, fst, graphs);
 
     /* we track the best TinyGemmSolution found during the search  */    
     std::vector<tinygemm::TinyGemmSolution> path_of_best_solns;
