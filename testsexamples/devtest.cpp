@@ -23,11 +23,10 @@
 tinygemm::hyperparams::HyperParams get_hp(std::string hyperstring = ""){
 
   if (hyperstring.compare("") == 0){
-                   
-                   
-    hyperstring = "A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN0_ICE1_NAW64_UFO0_MAC5";
+    
+    //hyperstring = "A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN0_ICE1_NAW64_UFO0_MAC5";
         
-    //hyperstring = "A_MIC8_PAD2_PLU1_LIW1_MIW0_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL2_PUN1_ICE3_NAW16_UFO1_MAC5";
+    hyperstring = "A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN0_ICE1_NAW64_UFO0_MAC5";
   }
   return tinygemm::hyperparams::HyperParams(hyperstring);
 }
@@ -35,9 +34,8 @@ tinygemm::hyperparams::HyperParams get_hp(std::string hyperstring = ""){
 template <typename TFloat>
 tinygemm::TinyGemmGeometry get_geometry(){
 
-//true, false, true, false, 2560, 7133, 2560, 2560, 7133, 2560, 0
-//7680, 16, 2560
-
+  bool goodsolly = false;
+  
   bool isColMajor = true;
   bool tA = false;
   bool tB = true;
@@ -45,6 +43,20 @@ tinygemm::TinyGemmGeometry get_geometry(){
   unsigned m = 128*(32) - 6; 
   unsigned n = 96*(55) - 4; 
   unsigned k = 16*229;           
+
+
+
+  
+  if (goodsolly == false){
+    isColMajor = true;
+    tA = false;
+    tB = true;
+    tC = false;
+    m = 2560;
+    n = 7133;
+    k = 2560;
+  }    
+
 
     
   unsigned lda = ( tA == isColMajor ? k : m ) + 0;
@@ -103,15 +115,20 @@ int main(){
   std::cout << "in main of devtest " << std::endl;
 
 
-  //A_MIC5_PAD1_PLU1_LIW0_MIW1_WOS0__B_MIC8_PAD1_PLU1_LIW0_MIW0_WOS0__C_UNR16_GAL2_PUN0_ICE1_NAW64_UFO0_MAC5	
 
-  std::string constraint_string("A_LIW0_MIW1_PAD1__B_LIW0_MIW1_PAD1__C_ICE1_UFO0"); 
-  
-                                 //A_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL1_PUN1_ICE1_NAW64_UFO0_MAC5  
-  
-      //hyperstring = "A_MAC MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MAC96_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__U16_GA3_PU0_ICE1_NAW16_UFO0";
-  //std::string constraint_string("A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN0_ICE1_NAW16_UFO0_MAC5");
-  //A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN0_ICE1_NAW64_UFO0_MAC5");
+  //std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, true, false, 2560, 7133, 2560, 2560, 7133, 2560, 0, 'f'},  "A_MAC128_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MAC128_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__U8_GA1_PU1_ICE1_NAW64_UFO1"), 
+  //A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR8_GAL1_PUN1_ICE1_NAW64_UFO1_MAC5
+
+  //A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR8_GAL1_PUN1_ICE1_NAW64_UFO1_MAC5
+  //A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC8_PAD1_PLU0_LIW0_MIW0_WOS0__C_UNR8_GAL2_PUN1_ICE1_NAW64_UFO1_MAC5
+  //"A_MIC8_PAD2_PLU0_LIW0_MIW1_WOS0__B_MIC8_PAD2_PLU0_LIW0_MIW0_WOS0__C_UNR8_GAL2_PUN1_ICE1_NAW64_UFO1_MAC5"); //"A_LIW0_MIW1__B_LIW0_MIW1__C_ICE1_UFO0");
+
+
+          
+        //A_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN1_ICE1_NAW16_UFO0_MAC5
+  //5604: A_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN1_ICE1_NAW64_UFO0_MAC5
+
+  std::string constraint_string("");
 
   tinygemm::FindStartType fst(tinygemm::FindStartType::Random);
 
@@ -156,11 +173,11 @@ int main(){
     
     std::cout << "in devtest, about to benchgemm" << std::endl;
       
-    tinygemm::dev::benchgemm({hp}, 8, gg, toff, v_a.data(), v_b.data(), v_c.data(), true, "");
+    tinygemm::dev::benchgemm({hp}, 7, gg, toff, v_a.data(), v_b.data(), v_c.data(), true, "");
   }
   
   if (test_find){
-    float allotted_time = 100;
+    float allotted_time = 30.1;
     tinygemm::dev::find(allotted_time, v_a.data(), v_b.data(), v_c.data(), constraint_string, fst, gg, toff, true, "/home/james/output.txt");
   }
   
@@ -210,6 +227,7 @@ void bingbing(){
   std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1760, 1760, 1760, 1760, 64, 1760, 0, 'f'},  "A_MAC64_MIC4_PAD1_PLU1_LIW0_MIW1_WOS0__B_MAC64_MIC4_PAD1_PLU0_LIW0_MIW1_WOS0__U32_GA2_PU0_ICE4_NAW64_UFO0"), 
   std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, true, false, 1760, 7133, 1760, 1760, 7133, 1760, 0, 'f'},  "A_MAC128_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MAC128_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__U16_GA1_PU0_ICE1_NAW64_UFO0"), 
   std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, true, false, 4096, 7133, 4096, 4096, 7133, 4096, 0, 'f'},  "A_MAC128_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MAC128_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__U8_GA1_PU1_ICE1_NAW64_UFO1"), 
+  
   std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1760, 1760, 5124, 5124, 9124, 1760, 0, 'f'},  "A_MAC128_MIC8_PAD1_PLU1_LIW0_MIW1_WOS0__B_MAC128_MIC8_PAD1_PLU1_LIW0_MIW1_WOS0__U8_GA3_PU1_ICE1_NAW64_UFO1"), 
   std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1024, 1024, 3072, 3072, 128, 1024, 0, 'f'},  "A_MAC32_MIC2_PAD1_PLU0_LIW0_MIW1_WOS0__B_MAC64_MIC4_PAD1_PLU0_LIW0_MIW1_WOS0__U48_GA2_PU1_ICE3_NAW64_UFO0"), 
   std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, true, false, false, 1760, 1760, 1760, 1760, 7000, 1760, 0, 'f'},  "A_MAC128_MIC8_PAD1_PLU0_LIW1_MIW1_WOS0__B_MAC128_MIC8_PAD1_PLU0_LIW1_MIW1_WOS0__U16_GA1_PU0_ICE1_NAW64_UFO0"), 

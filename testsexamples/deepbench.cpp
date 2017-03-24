@@ -115,12 +115,12 @@ int main(){
   bool tC = false;
   //double alpha = 1.43235342345;
   //double beta = 0.45348379373;
-  float allotted_time = 0.003; 
-  bool verbose = false;
+  float allotted_time = 30.00; 
+  bool verbose = true;
   
   /* constraint_string, ldx_offset */
   std::vector<std::tuple<std::string, unsigned>> run_settings = {
-    std::make_tuple("",0), 
+    std::make_tuple("C_UFO0",0), 
   }; 
   
   /* We're just tracking the overall run time with these */
@@ -143,7 +143,7 @@ int main(){
     
     //for (unsigned prob_i = 0; prob_i < problems.size(); ++prob_i){
     
-   for (unsigned prob_i = 0; prob_i < 10; ++prob_i){
+   for (unsigned prob_i = 0; prob_i < 1; ++prob_i){
     
       auto problem = problems[prob_i];
       int m, n, k;
@@ -176,18 +176,19 @@ int main(){
       unsigned tail_off_c = 0;
 
       
-      unsigned n_postfind_runs = 11;
+      unsigned n_postfind_runs = 0;
       bool do_cpu_test = false;
       
       unsigned workspace_size = 3;
       unsigned workspace_offset = 4;      
   
+      tinygemm::FindStartType fst(tinygemm::FindStartType::Random);
 
       char floattype = 'f';
       tinygemm::TinyGemmGeometry gg (isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype);
       tinygemm::TinyGemmOffsets offsets (a_offset, b_offset, c_offset, workspace_offset, tail_off_a, tail_off_b, tail_off_c);
 
-      basicfind<float>(gg, offsets, allotted_time, verbose, ss_logfile.str(), constraint_string, n_postfind_runs, do_cpu_test);    
+      basicfind<float>(gg, offsets, allotted_time, verbose, ss_logfile.str(), constraint_string, fst,  n_postfind_runs, do_cpu_test);    
     }
   }
   

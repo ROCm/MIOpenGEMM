@@ -20,9 +20,9 @@
 #include <tinygemm/architests.hpp>
 #include <tinygemm/kernelstring.hpp>
 
-namespace tinygemm{
+/* TODO : float4 */
 
-/* TODO TODO TODO : float4 */
+namespace tinygemm{
 
 class MultiFloatType{
 
@@ -37,21 +37,6 @@ public:
   }
   
 };
-
-
-/* TODO : this is exactly like that example from Scott Meyers, return type index by map */
-template <typename V>
-auto safe_at(const std::map<std::string,V> & m, const std::string & k, std::string hash = "") -> decltype(m.at(k)) {
-  
-  if (m.count(k) == 0){
-    throw tinygemm_error("unrecognised key, " + k + "  (" + hash + ")");
-  }
-  
-  else{
-    return m.at(k);
-  }
-
-}
 
 static const MultiFloatType m_alpha(default_alpha);
 static const MultiFloatType m_beta(default_beta);
@@ -106,11 +91,8 @@ private:
   std::vector<float> v_t_total;
 
   std::map<std::string, TinyGemmKernel > tk_kernels_map;
-  std::vector <TinyGemmKernel *> tk_kernels_active;
-
+  std::vector <TinyGemmKernel *> tk_kernels_active;  
   std::vector<std::vector <unsigned > > v_wait_indices;
-
-
 
 public:
   OpenCLGemmEncapsulator(
@@ -131,9 +113,7 @@ public:
   gpum(a_gpu_, b_gpu_, c_gpu_, workspace_gpu_),
   mowri(verbose_, outputfilename.compare("") != 0, outputfilename_)
   {
-    
 
-    
     for (auto & x : possible_basic_types){
       tk_kernels_map[x] = TinyGemmKernel(command_queue, x);
     }
@@ -172,7 +152,7 @@ private:
   }
 
 
-  void run_checks(){    
+  void run_checks(){
     sizingup::check_sizes_ok_for_unsigned(gg, toff);
   }  
 
@@ -182,7 +162,6 @@ private:
     /* parameter order rule: {a, oa, b, ob, c, oc, ws, ows}, alpha, beta */
     std::vector<std::pair<size_t, const void *> > arg_sizes_values;
     
-  
     for (auto & x : {'a', 'b', 'c', 'w'}){
       if (type.uses(x) == true){
         arg_sizes_values.emplace_back(sizeof(cl_mem), (void *)&(gpum[x]));
@@ -199,18 +178,12 @@ private:
     }
     
     tk_kernels_map.at(type.basic).set_kernel_args(arg_sizes_values);
-    
   }
 
 
-
-  
-    
-    
-
   bool refresh_needed(const std::string & type, const hyperparams::HyperParams & new_hp, const derivedparams::DerivedParams & new_dp){
     
-    //TODO here : check hyper parameters to see if needed a new 
+    /* TODO : check (here) hyper parameters to see if needed anew */
             
     if (type.compare("betac") == 0){
        if (tk_kernels_map.at("betac").is_set() == false && new_dp.main_does_beta_c_inc == 0){
@@ -243,12 +216,9 @@ private:
        }
     }
 
-    
-    
     else{
       throw tinygemm_error("what is the type of this kernel? Don't recognise it : " + type);
     }
-    
   }
   
   void refresh_kernel(const KernelString & ks, const hyperparams::HyperParams & hp, const derivedparams::DerivedParams & dp){
@@ -260,19 +230,11 @@ private:
     }
   }
 
-    
- 
-  //TODO : move kernstr in (rvalue ref)
+
   void setup_tinykernels(const hyperparams::HyperParams & hp, const kerngen::Bundle & bundle ){
     
-    
-    
     v_wait_indices = bundle.v_wait_indices;
-    
-
     tk_kernels_active.resize(0);
-    
-    
     
     for (unsigned ksi = 0; ksi < bundle.v_tgks.size(); ++ksi){
       std::string basic = bundle.v_tgks[ksi].type.basic;
@@ -286,7 +248,6 @@ private:
   void update_run_times(cl_int status){
     
     if (status == CL_SUCCESS){
-      
       for (auto & ptr_tk_kernel : tk_kernels_active){
         ptr_tk_kernel->update_times();
       }
@@ -317,7 +278,6 @@ private:
 
   void reset_v_times(){
     v_t_total.resize(0);
-    
     for (auto & ptr_tk_kernel : tk_kernels_active){
       ptr_tk_kernel->reset_times();
     }
@@ -330,8 +290,10 @@ private:
     
     for (size_t kqq = 0; kqq < n_runs; ++kqq){
 
-      /* This pause should have zero effect, but mysteriously it smooths out the run times between runs when working with certain gpu drivers
-       * something to do with overheating  */        
+      /* This pause should have zero effect but
+       * mysteriously it smooths out the run times 
+       * between runs when working with certain 
+       * drivers, something to do with overheating  */        
       if (n_runs > 1){
         std::this_thread::sleep_for(std::chrono::milliseconds(0));
       }
@@ -360,9 +322,9 @@ private:
            * typedef struct _cl_event *          cl_event,
            * that is cl_event is a pointer to a _cl_event. 
            * when a cl_event address is passed to enqueue,
-           * the value if it changes. that is it points to a different _cl_event.
+           * the value of it changes. that is it points to a different _cl_event.
            * thus ev_a = ev_b, enqueue(..., ev_b) 
-           * leaves ev_a pointing to a bad place 
+           * leaves ev_a pointing to the wrong (old) place 
            * checking the event is safe:
            * clGetEventInfo takes cl_events by value. 
            * So the moral of the story is : 
@@ -394,9 +356,8 @@ private:
         }
       }
       
-      /* I'm not really sure when to use cl Flush TODO : find out. */
+      /* TODO : find out when exactly to use cl Flush  */
       openclutil::cl_flush(command_queue, "cl flushing in core gemm loop");      
-      
       
       
       if (status == CL_SUCCESS){
@@ -435,7 +396,6 @@ public:
 
     for ( unsigned i = 0; i < hps.size(); ++i) {
 
-      
       mowri << "\nSource kernel " << "(" << i + 1 << "/" << hps.size() << ") "  << hps[i].get_string() << Endl;      
       
       deriveability_test(hps[i], "in benchgemm");
@@ -464,18 +424,27 @@ public:
   }
 
 
-  hyperparams::HyperParams  get_hyper_param_start(std::string constraint_string, FindStartType fst){
+  hyperparams::HyperParams get_hyper_param_start(std::string constraint_string, FindStartType fst){
+
     hyperparams::HyperParams hyper_param_start;
     bool found_a_deriveable_hp = false;
     unsigned deriveable_search_iteration = 0;
     std::stringstream deriveablesearch_ss;
-    while (found_a_deriveable_hp == false && deriveable_search_iteration < 1000){
-      hyper_param_start = hyperparams::get_hp_start(fst, constraint_string, gg);
-      //deriveability_test(hyper_param_start, "test of hyper_param_start in start");
-      auto deriveability = derivedparams::get_deriveability(hyper_param_start, gg);
+    
+    /* the number of attempts at finding a deriveable HyperParams given the constraint string */
+    const unsigned n_trials = fst == FindStartType::Random ? 1000 : 1;
+
+
+    ////set-up the search graphs based on gg. //TODO : pass constraint_string in here, so that no elimination of strings later. 
+    //auto graphs = hyperparams::get_graphs(gg);
+
+    
+    while (found_a_deriveable_hp == false && deriveable_search_iteration < n_trials){
       
+      hyper_param_start = hyperparams::get_hp_start(fst, constraint_string, gg);
+      auto deriveability = derivedparams::get_deriveability(hyper_param_start, gg);
       if (std::get<0>(deriveability) == false){
-        deriveablesearch_ss << hyper_param_start.get_string() << " is not deriveable, because " << std::get<1>(deriveability) << "\n\n";            
+        deriveablesearch_ss << hyper_param_start.get_string() << " is not deriveable, because " << std::get<1>(deriveability) << "\n";            
       }
       else{
         found_a_deriveable_hp = true;
@@ -484,12 +453,12 @@ public:
     }
     
     if (found_a_deriveable_hp == false){
-      deriveablesearch_ss << "\n\nStruggling to find a deriveable set of hyper parameters which satisfy the geometry and constraints, throwing an error\n";
-      //should rather return nosolution ? or one which we know to be deriveable ?
+      deriveablesearch_ss << "\n\nStruggling to find a deriveable set of hyper parameters which satisfy the geometry and constraints. THe number of attempts made is " << n_trials << "\n throwing an error\n";
+      //should rather return no solution ? or one which we know to be deriveable ? Yes. throwing an error should not be stochastic!
       throw tinygemm_error(deriveablesearch_ss.str());
     }
     return hyper_param_start;
-  }  
+  }
   
   tinygemm::TinyGemmSolution find(float allotted_time, std::string constraint_string, FindStartType fst, unsigned n_runs_per_kernel){
     
@@ -505,12 +474,13 @@ public:
     /* we will count how many kernels are successfully generated AND compiled AND benchmarked */
     unsigned global_counter = 0;
 
-
+    
+    //TODO : get_params_from_full_hyperstring would be clearer that ", false". 
     auto constraint_params = hyperparams::get_params_from_string(constraint_string, false);
-    /* This is a VERY elegant solution !!! */
-    hyperparams::HyperParams hyper_param_start = get_hyper_param_start(constraint_string, fst);
 
     
+    hyperparams::HyperParams hyper_param_start = get_hyper_param_start(constraint_string, fst);
+
     /* we track the best TinyGemmSolution found during the search  */    
     std::vector<tinygemm::TinyGemmSolution> path_of_best_solns;
     /* In here, we will store all previously considered HyperParams strings, used to check and ensure that we do not consider a HyperParam more than once */
@@ -538,27 +508,16 @@ public:
       unsigned hfi = 0;
       while (hfi < hyper_front.size() && improvement_found_on_front == false && elapsed_seconds < allotted_time){
         hyperparams::HyperParams hp = hyper_front[hfi];
-        
-
-
         std::string hp_string = hp.get_string();
-
-
         hyper_front_history.push_back(hp_string);
-
-
         /* extra precaution, should be able to remove this */
-        deriveability_test(hp, "in find loop");
-        
+        deriveability_test(hp, "in find loop");        
         auto bundle = tinygemm::kerngen::get_bundle(hp,gg);
         /* the OpenCL string was succesfully generated, we can now attempt to compile and benchmark it */
-        
         ++global_counter;
-        mowri << "\nglobal gen-com-bench : " << global_counter  <<  ".\n" << hp.get_string() << Endl;        
+        mowri << "\nglobal gen-com-bench : " << global_counter  <<  ".\n" << hp.get_string() << Endl;
         setup_tinykernels(hp, bundle);  
-        mowri << "Entering the core gemm loops" << Endl; 
         core_gemm_loop(n_runs_per_kernel);
-
         std::sort(v_t_total.begin(), v_t_total.end());
         /* Taking the fastest or median? */ 
         float median_time = v_t_total[0];//[v_t_total.size()/2]; 
@@ -567,8 +526,8 @@ public:
         }
         
         update_elapsed_seconds();                        
-        mowri << "median time  : " << median_time << "\t m-Gflops/s : " << 2.0 * gg.m * gg.n * gg.k / (median_time * 1e6) << Endl;
-        mowri << "elapsed seconds : " << elapsed_seconds << Endl;
+        mowri << "median time  : " << median_time << "\t m-Gflops/s : " << 2.0 * gg.m * gg.n * gg.k / (median_time * 1e6);
+        mowri << "  \ttotal elapsed seconds : " << elapsed_seconds << Endl;
 
         /* A new best kernel found */
         if (median_time < 1.000*best_time){
@@ -576,8 +535,11 @@ public:
           best_time = median_time;
           float median_gflops = (2. * gg.m * gg.n * gg.k) / (median_time * 10e5);
           best_hp = hp;
-          mowri << "NEW BEST MEDIAN TIME FOUND, median gflops  : " << median_gflops << Endl;
-          mowri << "breaking from current hyper front " << Endl;
+          mowri << "********************************************" << Endl;
+          mowri << "\tNEW BEST MEDIAN TIME FOUND" << Endl;
+          mowri << "\tmedian gflops  : " << median_gflops << Endl;
+          mowri << "\tbreaking from hyper front " << Endl;
+          mowri << "********************************************" << Endl;
           update_elapsed_seconds();
           tinygemm::TinyGemmSolutionStatistics tgss(median_time, median_gflops, elapsed_seconds);               
           path_of_best_solns.emplace_back( hp, gg, bundle.dp, tgss, bundle.v_tgks  );
@@ -588,45 +550,45 @@ public:
       
   
       if (improvement_found_on_front == true && allotted_time > elapsed_seconds){
-        mowri << "creating new current hyper front " << Endl;
+        mowri << "creating new current hyper front \t(";// << Endl;
         /* getting all `one-away's */        
         auto one_aways = best_hp.get_one_aways();
-        
+        char front_insertion_type;
         /* refreshing hyper front */
         hyper_front.resize(0);
 
         for (auto & hp : one_aways){
            
           auto hp_string = hp.get_string();
-        
-          
-          /* filtering out if it has already been considered */
-          if (std::find(hyper_front_history.begin(), hyper_front_history.end(), hp_string) != hyper_front_history.end()){
-            mowri << hp_string << " has already been considered "<< Endl; 
-            continue;
-          }
-          
-          
+
           if (std::count(one_aways.begin(), one_aways.end(), hp_string) > 1){
             throw tinygemm_error("duplicates in one_aways not allowed, or filter out here ");
+          }        
+          
+          /* filtering out if it has already been considered */
+          else if (std::find(hyper_front_history.begin(), hyper_front_history.end(), hp_string) != hyper_front_history.end()){
+            front_insertion_type =  's'; 
           }
 
-          bool constraints_satisfied = hp.satisfies_where_source_defined(constraint_params);
-          if (constraints_satisfied == false){
-            mowri << hp_string << " does not satisfy constraints "<< Endl;
-            continue;
+          /* filtering out if it does not satisfy the constraints */
+          else if (hp.satisfies_where_source_defined(constraint_params) == false){
+            front_insertion_type = 'c';
           }
 
           /* filtering out non-deriveables */
-          auto deriveability = derivedparams::get_deriveability(hp, gg);
-          if (std::get<0>(deriveability) == false){
-            mowri << hp.get_string() << " is not deriveable, because " << std::get<1>(deriveability) << Endl;            
-            continue;
+          else if (std::get<0>(derivedparams::get_deriveability(hp, gg)) == false){
+            front_insertion_type = 'd';
           }
-          hyper_front.push_back(hp); 
+          
+          /* looks ok, adding it to the hyper-front */
+          else{
+            front_insertion_type = '+';
+            hyper_front.push_back(hp_string);
+          }
+          mowri << front_insertion_type;
         }
         
-        mowri << "\n" << "new hyper front size : " << hyper_front.size() << Endl;
+        mowri << ")\n" << "new hyper front size : " << hyper_front.size() << Endl;
       }
     }
     

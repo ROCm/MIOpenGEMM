@@ -9,7 +9,6 @@
 #include <limits>
 
 #include <tinygemm/stringutilbase.hpp>
-#include <tinygemm/stringutilbase.hpp>
 #include <tinygemm/hyperparams.hpp>
 #include <tinygemm/tinygemmerror.hpp>
 #include <tinygemm/stringutilbase.hpp>
@@ -21,7 +20,7 @@ namespace tinygemm{
 
 namespace hyperparams{
 
-
+/* TODO : move this out and make constructor which takes seed */
 class RandomUtil {
 
 private:
@@ -66,11 +65,12 @@ std::map<T, unsigned> getVals(unsigned nVals, const std::vector<T> & keys, const
 SUHP::SUHP(){
 
   ChiralKeys.resize(nsHP::nChiralHPs);
-  NonChiralKeys.resize(nsHP::nNonChiralKeys);
+  NonChiralKeys.resize(nsHP::nNonChiralHPs);
   MatKeys.resize(nsHP::nMatrices);
   HPVals.resize(nsHP::nMatrices);
   HPKeys.resize(nsHP::nMatrices);
   nHPs.resize(nsHP::nMatrices);  
+  //GraphKeys.resize(nsHP::nGraphTypes);
   
   
   ChiralKeys[nsHP::MIC] = "MIC";
@@ -89,7 +89,7 @@ SUHP::SUHP(){
   NonChiralKeys[nsHP::NAW] = "NAW";
   NonChiralKeys[nsHP::UFO] = "UFO"; 
   NonChiralKeys[nsHP::MAC] = "MAC"; 
-  NonChiralVals = getVals(nsHP::nNonChiralKeys, NonChiralKeys, "NonChiralKeys");
+  NonChiralVals = getVals(nsHP::nNonChiralHPs, NonChiralKeys, "NonChiralKeys");
   
 
   MatKeys[nsHP::matA] = 'A';
@@ -109,15 +109,13 @@ SUHP::SUHP(){
 
   nHPs[nsHP::matA] = nsHP::nChiralHPs;
   nHPs[nsHP::matB] = nsHP::nChiralHPs;
-  nHPs[nsHP::matC] = nsHP::nNonChiralKeys;  
-
-
-///* for example, we want to couple [matA][MIC] with [matB][MIC]  */
-//std::vector<std::tuple< std::tuple<unsigned, unsigned>, std::tuple<unsigned, unsigned> > > 
+  nHPs[nsHP::matC] = nsHP::nNonChiralHPs;  
 
   coupled_parameters.push_back( { {nsHP::matA, nsHP::MIC}, {nsHP::matB, nsHP::MIC} } );
+  coupled_parameters.push_back( { {nsHP::matC, nsHP::UFO}, {nsHP::matC, nsHP::PUN} } );
 
-
+  //GraphKeys[nsHP::ChiralType] = ChiralKeys;
+  //GraphKeys[nsHP::NonChiralType] = NonChiralKeys;
 
 }
 
@@ -140,12 +138,80 @@ void Graph::update_range(){
   }
 }
 
-Graph get_g_chiral(){
 
-  Graph hpg;
-  hpg.graph.resize(nsHP::nChiralHPs);
+std::vector<unsigned> Graph::get_start_range(unsigned hpi, const tinygemm::TinyGemmGeometry & gg) const{
   
-  hpg.graph[nsHP::MIC] =
+  if ((gg_start_range[hpi] == false) == (default_start_range[hpi].size() == 0)){
+    std::stringstream errm;
+    errm << "Either one of gg_start_range or defalut_start_range should be defined for " << (*ptr_graphkeys)[hpi] << ". Not 0 or 2, but 1 of them.";
+    throw tinygemm_error(errm.str());
+  }
+  
+  if (default_start_range[hpi].size() != 0){
+    return default_start_range[hpi];
+  }
+  
+  else{
+    if (!gg_start_range[hpi]){
+      throw tinygemm_error("default_start_range not defined here");
+    }
+    return gg_start_range[hpi](gg);
+  }
+}
+
+
+Graph::Graph(unsigned size): graph (size), default_start_range (size), gg_start_range (size) {}
+
+void Graph::initialise(){
+  set_ptr_graphkeys();
+  set_edges();
+  update_range();
+  set_start_range();
+  confirm_start_is_subset();
+}
+
+void Graph::confirm_start_is_subset(){
+  //TODO
+}
+
+ChiralGraph::ChiralGraph() : Graph(nsHP::nChiralHPs){}
+
+NonChiralGraph::NonChiralGraph() : Graph(nsHP::nNonChiralHPs){}
+
+//AChiralGraph::NonChiralGraph() : Graph(nsHP::nNonChiralHPs){}
+
+void ChiralGraph::set_ptr_graphkeys(){ ptr_graphkeys = &suHP.ChiralKeys; }
+void NonChiralGraph::set_ptr_graphkeys(){ ptr_graphkeys = &suHP.NonChiralKeys; }
+
+
+
+void AChiralGraph::set_chirality_specific(){
+  gg_start_range[nsHP::MIC] = [](const tinygemm::TinyGemmGeometry & gg){ return std::vector<unsigned> {8}; };  
+}
+
+void BChiralGraph::set_chirality_specific(){
+  gg_start_range[nsHP::MIC] = [](const tinygemm::TinyGemmGeometry & gg){ return std::vector<unsigned> {8}; };  
+}
+
+
+
+
+void ChiralGraph::set_start_range(){
+  
+  default_start_range[nsHP::MIC] = {};
+  default_start_range[nsHP::PAD] = {1};    
+  default_start_range[nsHP::PLU] = {nsHP::no, nsHP::yes};  
+  default_start_range[nsHP::LIW] = {nsHP::no};  
+  default_start_range[nsHP::MIW] = {nsHP::yes};
+  default_start_range[nsHP::WOS] = {0};
+
+  set_chirality_specific();
+
+}
+
+void ChiralGraph::set_edges(){
+  
+  graph[nsHP::MIC] =
   { {1, {2,3} },
     {2, {1,3,4} },
     {3, {1,2,4} },
@@ -153,47 +219,59 @@ Graph get_g_chiral(){
     {5, {2,4,6} },
     {6, {4,5,8} },
     {8, {4,6} }    };
-  
-  hpg.graph[nsHP::PAD] = 
+    
+  graph[nsHP::PAD] = 
   { {0, {1}   },
-    {1, {0}   }     };
+    {1, {0, 2}}, 
+    {2, {1},  }     };
   
-  hpg.graph[nsHP::PLU] = 
+  graph[nsHP::PLU] = 
   {  graph_binary  };
 
-  hpg.graph[nsHP::LIW] = 
+
+  graph[nsHP::LIW] = 
   {  graph_binary  };
 
-  hpg.graph[nsHP::MIW] = 
+
+  graph[nsHP::MIW] = 
   {  graph_binary  };
+
   
-  hpg.graph[nsHP::WOS] = 
+  graph[nsHP::WOS] = 
   {  {0, {}}   };// for now, no copying TODO(jn) incorporate
-  
-  hpg.update_range();
-  return hpg;
 }
 
-Graph get_g_non_chiral(){
 
-  Graph hpg;
-  hpg.graph.resize(nsHP::nNonChiralKeys);
+void NonChiralGraph::set_start_range(){
+
+  default_start_range[nsHP::UNR]= {8, 16};
+  default_start_range[nsHP::NAW]= {16, 64};
+  default_start_range[nsHP::GAL]= {nsGAL::byrow, nsGAL::bycol, nsGAL::sucol};
+  default_start_range[nsHP::MAC]= {nsMAC::a8b8, nsMAC::a16b16};
+  default_start_range[nsHP::ICE] = {1};
+  default_start_range[nsHP::PUN] = {nsHP::no, nsHP::yes};
+  default_start_range[nsHP::UFO] = {nsHP::no};
+
+}
+
+void NonChiralGraph::set_edges(){
   
-  hpg.graph[nsHP::UNR] = 
+  graph[nsHP::UNR] = 
   { {8, {16} },
     {16, {8,32} },
     {32, {16, 64} },
     {64, {16, 32} }  };
   
-  hpg.graph[nsHP::NAW] = 
-  { {64, {} }  };
+  graph[nsHP::NAW] = 
+  { {64, {16} },
+    {16, {64} }  };
   
-  hpg.graph[nsHP::GAL] = 
+  graph[nsHP::GAL] = 
   { {nsGAL::byrow, {nsGAL::bycol, nsGAL::sucol}   },
     {nsGAL::bycol, {nsGAL::byrow, nsGAL::sucol}   },
     {nsGAL::sucol, {nsGAL::byrow, nsGAL::bycol}   }   };
 
-  hpg.graph[nsHP::MAC] = 
+  graph[nsHP::MAC] = 
   {
     // to be added foe 32 in work group GPUs
     //{nsMAC::a4b8, {nsMAC::a8b8}},
@@ -208,34 +286,54 @@ Graph get_g_non_chiral(){
     {nsMAC::a16b16, {nsMAC::a8b8}},
   };
   
-  hpg.graph[nsHP::ICE] = 
+  graph[nsHP::ICE] = 
   { {1,  {2}},
     {2,  {1,3,4}},
     {3,  {1,2,4,6}},
     {4,  {1,3,5,7}},
     {5,  {1,2,4,6,8}},
     {6,  {1,3,5,7,9}},
-    {7,  {1,4,6,8,10}},
+    {7,  {4,6,8,10}},
     {8,  {1,5,7,9,11}},
-    {9,  {1,6,8,10,12}},
+    {9,  {6,8,10,12}},
     {10, {1,7,9,11,13}},
-    {11, {1,8,10,12,14}},
+    {11, {8,10,12,14}},
     {12, {1,9,11,13,14}},
-    {13, {1,10,12,14}},
+    {13, {10,12,14}},
     {14, {1,11,13}}   };
-  
-  hpg.graph[nsHP::PUN] = 
-  {  graph_binary  };
-  
-  hpg.graph[nsHP::UFO] =
-  {  graph_binary  };
 
-  hpg.update_range();
-  return hpg;
+  graph[nsHP::PUN] = 
+  {  graph_binary  };
+  
+  graph[nsHP::UFO] =
+  {  graph_binary  };
+  
 }
 
-Graph g_chiral(get_g_chiral());
-Graph g_non_chiral(get_g_non_chiral());
+
+
+AChiralGraph get_graph_a(){
+  AChiralGraph graph_a;
+  graph_a.initialise();
+  return graph_a;
+}
+AChiralGraph a_graph(get_graph_a());
+
+
+BChiralGraph get_graph_b(){
+  BChiralGraph graph_b;
+  graph_b.initialise();
+  return graph_b;
+}
+BChiralGraph b_graph(get_graph_b());
+
+
+NonChiralGraph get_non_chiral_graph(){
+  NonChiralGraph non_chiral_graph;
+  non_chiral_graph.initialise();
+  return non_chiral_graph;
+}
+NonChiralGraph non_chiral_graph(get_non_chiral_graph());
 
 std::vector<std::vector<unsigned>> get_params_from_string(const std::string & hyperstring, bool expect_full_hyperstring){
 
@@ -260,11 +358,7 @@ std::vector<std::vector<unsigned>> get_params_from_string(const std::string & hy
       params[mi][hpi] = nsHP::undefined;
     }
   }
-  
-  //if (hyperstring == ""){
-    //throw tinygemm_error("In get_params_from_string with hyperstring as empty string, not good");
-  //}
-  
+    
   auto megafrags = stringutil::split(hyperstring, "__");
   
   for (auto & megafrag : megafrags){
@@ -363,23 +457,30 @@ void HyperParams::replace_where_source_defined(const std::vector<std::vector<uns
   }
 }
 
-void HyperParams::replace_undefined_randomly(){
+void HyperParams::replace_undefined_randomly(const tinygemm::TinyGemmGeometry & gg){
   for (unsigned mi = 0; mi < nsHP::nMatrices; ++mi){
     for (unsigned hpi = 0; hpi < suHP.nHPs[mi]; ++hpi){
       if (v_xhps[mi].vs[hpi] == nsHP::undefined){
-        //select randomly from ptr_hpgraph->range. 
-        unsigned index = radu.get_from_range (v_xhps[mi].ptr_hpgraph->range[hpi].size());
-        v_xhps[mi].vs[hpi] = v_xhps[mi].ptr_hpgraph->range[hpi][index];
+        //select randomly from ptr_hpgraph->default_start_range. Not quite random as it depends on gg. 
+        
+        
+
+        auto a_range = v_xhps[mi].ptr_hpgraph->get_start_range(hpi, gg);
+        unsigned index = radu.get_from_range (a_range.size());
+        v_xhps[mi].vs[hpi] = a_range[index];
       }
     }
   }
 }
 
 
+
+
 HyperParams::HyperParams():
-v_xhps {{&suHP.ChiralKeys, &g_chiral, nsHP::nChiralHPs}, 
-{&suHP.ChiralKeys, &g_chiral, nsHP::nChiralHPs}, 
-{&suHP.NonChiralKeys, &g_non_chiral, nsHP::nNonChiralKeys}} 
+v_xhps {
+{&suHP.ChiralKeys, &a_graph, nsHP::nChiralHPs}, 
+{&suHP.ChiralKeys, &b_graph, nsHP::nChiralHPs}, 
+{&suHP.NonChiralKeys, &non_chiral_graph, nsHP::nNonChiralHPs}} 
 {
   for (unsigned mi = 0; mi < nsHP::nMatrices; ++mi){
     for (unsigned hpi = 0; hpi < suHP.nHPs[mi]; ++hpi){
@@ -403,9 +504,7 @@ HyperParams::HyperParams(const std::string & hyperstring):HyperParams(get_params
 
 HyperParams get_cacheless_default(const tinygemm::TinyGemmGeometry & gg){
   HyperParams hp("A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN0_ICE1_NAW64_UFO0_MAC5");
-  
-  //whittle ?
-  
+  //whittle for now ?  
   return hp;
 }
 
@@ -419,11 +518,8 @@ HyperParams get_default(const tinygemm::TinyGemmGeometry & gg){
     
   /* TODO : rather get default from cache, based on gg (?) */
   auto hp = get_cacheless_default(gg);
-
-
-
-
-  throw tinygemm_error("get_default not yet enabled (not needed for paper)");
+  
+  throw tinygemm_error("get_default not yet enabled (in paper writing mode)");
   return hp;  
 }
   
@@ -440,7 +536,8 @@ std::string HyperParams::get_string() const{
   return ss.str();
 }
 
-std::vector<HyperParams> HyperParams::get_one_aways(){ //const tinygemm::TinyGemmGeometry & gg){
+std::vector<HyperParams> HyperParams::get_one_aways(){
+  
   std::vector<HyperParams> one_aways;
   for (unsigned mi = 0; mi < nsHP::nMatrices; ++mi){
     for (unsigned hpi = 0; hpi < suHP.nHPs[mi]; ++hpi){
@@ -452,7 +549,6 @@ std::vector<HyperParams> HyperParams::get_one_aways(){ //const tinygemm::TinyGem
       }
     }
   }
-  
   unsigned n_uncoupled = one_aways.size();
   
   
@@ -481,10 +577,6 @@ std::vector<HyperParams> HyperParams::get_one_aways(){ //const tinygemm::TinyGem
   }
   
   unsigned n_total = one_aways.size();
-  
- 
- 
-  
 
   /* shuffle them, which bounds the expected time to finding an improvement 
    * (prevents pathological case of all improving kernels at end of vector)  */
@@ -515,8 +607,7 @@ std::vector<HyperParams> HyperParams::get_one_aways(){ //const tinygemm::TinyGem
 HyperParams get_hp_start(FindStartType fst, std::string constraint_string, const tinygemm::TinyGemmGeometry & gg){
 
   auto constraint_params = get_params_from_string(constraint_string, false);
-  /* we initialise the `hyper-front' with a single HyperParams, */
-  /* selected based on problem dimension, constraints and start type  */    
+
   HyperParams hyper_param_start;
   if (fst == FindStartType::Default){
     hyper_param_start = get_default(gg);
@@ -525,7 +616,7 @@ HyperParams get_hp_start(FindStartType fst, std::string constraint_string, const
   
   else if (fst == FindStartType::Random){
     hyper_param_start.replace(constraint_params);
-    hyper_param_start.replace_undefined_randomly();
+    hyper_param_start.replace_undefined_randomly(gg);
   }
   
   hyper_param_start.checks();  

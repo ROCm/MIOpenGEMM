@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include <random>
+#include <functional>
 
 #include <tinygemm/tinygemmgeometry.hpp>
 #include <tinygemm/tinygemmerror.hpp>
@@ -27,9 +28,11 @@ namespace nsGAL{
 namespace nsHP{
   /* if you're going to add a parameter here, make sure to add it BEFORE the final count */
   enum eChiral {MIC = 0, PAD, PLU, LIW, MIW, WOS, nChiralHPs};
-  enum eNonChiral {UNR = 0, GAL, PUN, ICE, NAW, UFO, MAC, nNonChiralKeys};  
+  enum eNonChiral {UNR = 0, GAL, PUN, ICE, NAW, UFO, MAC, nNonChiralHPs};  
   enum eMatrix {matA = 0, matB, matC, nMatrices};
   enum eSpecial {undefined = -1};
+  enum eBinary {no = 0, yes = 1};
+  enum eGraphType {ChiralType, NonChiralType, nGraphTypes};
 }
 
 namespace hyperparams{
@@ -53,6 +56,9 @@ std::vector<unsigned> nHPs;
 /* design choice : going with pairs as opposed to tuples as they have nicer initializer_list behavioUr*/
 std::vector<std::pair< std::pair<unsigned, unsigned>, std::pair<unsigned, unsigned> > > coupled_parameters;
 
+
+//std::vector<std::vector<std::string>> GraphKeys;
+
 SUHP();
 };
 
@@ -61,14 +67,75 @@ extern const SUHP suHP;
 
 
 class Graph{
+
+protected:
+  const std::vector<std::string> * ptr_graphkeys;
+  virtual void set_ptr_graphkeys() = 0;
   
 public:
-  /* example : graph[nsHP::MIC] is a map; graph[nsHP::MIC][1] --> {2,3,4} */
-  std::vector<std::map<unsigned, std::vector<unsigned> > > graph;
+
+  
+  Graph(unsigned size);
+  
+  /* all the possible values of a hyper parameter */
   /* example : range[nsHP::MIC] --> {1,2,3,4,5,6,7,8} */
   std::vector<std::vector<unsigned> > range;  
+
+  /* all the possible edges from all the possible hyper parameter */
+  /* example : graph[nsHP::MIC] is a map; graph[nsHP::MIC][1] --> {2,3,4} */
+  std::vector<std::map<unsigned, std::vector<unsigned> > > graph;
+
+  /* a subset of range, the possible values returned on a request for a random value */  
+  /* example : default_start_range[nsHP::MIC] --> {2,8}. Note that if the default start range 
+   * is dependent on geometry, the gg_start_range will be used instead, with default_start_range element empty*/  
+  std::vector<std::vector<unsigned> > default_start_range;  
+  
+  std::vector<std::function<std::vector<unsigned>(const tinygemm::TinyGemmGeometry & gg)>> gg_start_range;
+  
+  std::vector<unsigned> get_start_range(unsigned hpi, const tinygemm::TinyGemmGeometry & gg) const;
+
   void update_range();
+  
+  void initialise();
+  
+  void confirm_start_is_subset();
+
+  virtual void set_edges() = 0;
+
+  virtual void set_start_range() = 0;
+
 };
+
+class NonChiralGraph : public Graph{
+  public:
+    NonChiralGraph();
+    virtual void set_ptr_graphkeys() override final;
+    virtual void set_edges() override final;
+    virtual void set_start_range() override final;
+
+};
+
+class ChiralGraph : public Graph{
+  public: 
+    ChiralGraph();  
+    virtual void set_ptr_graphkeys() override final;
+    virtual void set_edges() override final;
+    virtual void set_start_range() override final;
+    virtual void set_chirality_specific() = 0;
+};
+
+class AChiralGraph : public ChiralGraph{
+  public:
+    //AChiralGraph();
+    virtual void set_chirality_specific() override final;
+};
+
+class BChiralGraph : public ChiralGraph{
+  public:
+    //BChiralGraph();
+    virtual void set_chirality_specific() override final;
+};
+
 
 
 
@@ -116,7 +183,7 @@ private:
 public:
 
    
-  void replace_undefined_randomly();
+  void replace_undefined_randomly(const tinygemm::TinyGemmGeometry & gg);
   void replace(const std::vector<std::vector<unsigned>> & partial_params);
   void replace_where_source_defined(const std::vector<std::vector<unsigned>> & params);
   bool satisfies_where_source_defined(const std::vector<std::vector<unsigned>> & params);
@@ -141,6 +208,9 @@ public:
  
   /* take in hyper-parameter string and return a HyperParam object */
   HyperParams(const std::string & hyperstring);
+  
+  
+
   
   HyperParams();  
   bool operator == (const HyperParams & hpr);
