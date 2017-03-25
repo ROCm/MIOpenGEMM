@@ -72,23 +72,23 @@ int main(){
     std::make_tuple(1760, 7000, 1760, true, false),
     
     
-    /* The dodgey cases */
-    std::make_tuple(7680, 16, 2560, true, false),
-    std::make_tuple(7680, 32, 2560, true, false),
-    std::make_tuple(7680, 64, 2560, true, false),
-    std::make_tuple(7680, 128, 2560, true, false),
-    std::make_tuple(5124, 9124, 1760, true, false),
-    std::make_tuple(35, 8457, 1760, true, false),
-    std::make_tuple(5124, 9124, 2048, true, false),
-    std::make_tuple(35, 8457, 2048, true, false),
-    std::make_tuple(5124, 9124, 2560, true, false),
-    std::make_tuple(35, 8457, 2560, true, false),
-    std::make_tuple(5124, 9124, 4096, true, false),
-    std::make_tuple(35, 8457, 4096, true, false),
-    std::make_tuple(3072, 16, 1024, true, false),
-    std::make_tuple(3072, 32, 1024, true, false),
-    std::make_tuple(3072, 64, 1024, true, false),
-    std::make_tuple(3072, 128, 1024, true, false),
+    /////* The dodgey cases */
+    //std::make_tuple(7680, 16, 2560, true, false),
+    //std::make_tuple(7680, 32, 2560, true, false),
+    //std::make_tuple(7680, 64, 2560, true, false),
+    //std::make_tuple(7680, 128, 2560, true, false),
+    //std::make_tuple(5124, 9124, 1760, true, false),
+    //std::make_tuple(35, 8457, 1760, true, false),
+    //std::make_tuple(5124, 9124, 2048, true, false),
+    //std::make_tuple(35, 8457, 2048, true, false),
+    //std::make_tuple(5124, 9124, 2560, true, false),
+    //std::make_tuple(35, 8457, 2560, true, false),
+    //std::make_tuple(5124, 9124, 4096, true, false),
+    //std::make_tuple(35, 8457, 4096, true, false),
+    //std::make_tuple(3072, 16, 1024, true, false),
+    //std::make_tuple(3072, 32, 1024, true, false),
+    //std::make_tuple(3072, 64, 1024, true, false),
+    //std::make_tuple(3072, 128, 1024, true, false),
     
     
     /* dodgeys fixed */
@@ -115,13 +115,13 @@ int main(){
   bool tC = false;
   //double alpha = 1.43235342345;
   //double beta = 0.45348379373;
-  float allotted_time = 30.00; 
+  float allotted_time = 100.00; 
   bool verbose = true;
   
   /* constraint_string, ldx_offset */
   std::vector<std::tuple<std::string, unsigned>> run_settings = {
-    std::make_tuple("C_UFO0",0), 
-  }; 
+    std::make_tuple("",0), 
+  };  //A_LIW0_MIW1_PAD1__B_LIW0_MIW1_PAD1__C_UFO0
   
   /* We're just tracking the overall run time with these */
   auto start = std::chrono::high_resolution_clock::now();
@@ -142,53 +142,85 @@ int main(){
     
     
     //for (unsigned prob_i = 0; prob_i < problems.size(); ++prob_i){
-    
-   for (unsigned prob_i = 0; prob_i < 1; ++prob_i){
-    
+
+  std::vector<unsigned> areas;
+
+   for (unsigned prob_i = 0; prob_i < problems.size(); ++prob_i){
       auto problem = problems[prob_i];
       int m, n, k;
       bool tA, tB;
       std::tie(m, n, k, tA, tB) = problem;
+      areas.push_back(m*n);      
+    }
+    
+    std::sort(areas.begin(), areas.end());
+    for (unsigned prob_i = 0; prob_i < problems.size(); ++prob_i){
+      std::cout << areas[prob_i] << std::endl;
+    }
       
-      end = std::chrono::high_resolution_clock::now();
-      fp_ms = end - start;
-      elapsed_seconds = fp_ms.count();
-      
-      std::cout << (prob_i + 1) <<  "/" <<  problems.size() << " \t m:" << m << " \t n:" << n << " \t k:" << k << " \t tA:" << tA << " \t tB:" << m << "  \t  elapsed time : " << elapsed_seconds << " [s]" << std::endl;    
-      
-      
-      std::stringstream ss_logfile;
-#ifdef DIR_FOR_WRITING
-      ss_logfile << DIR_FOR_WRITING << "/deepbench/" << "at" << int(allotted_time) << "_off" << ldx_offset << "_cs" << constraint_string << "_m" << m  << "_n" << n  << "_k" << k  << "_tA" << tA  << "_tB" << tB << ".txt";   
-#endif
-      
-      unsigned lda = (tA == isColMajor ? k : m) + (ldx_offset == 1 ? 5 : 0);
-      unsigned ldb = (tB == isColMajor ? n : k) + (ldx_offset == 1 ? 7 : 0);
-      unsigned ldc = (tC == isColMajor ? n : m) + (ldx_offset == 1 ? 13 : 0);
-      
-      unsigned a_offset = 0;
-      unsigned b_offset = 0;
-      unsigned c_offset = 0;
- 
- 
-      unsigned tail_off_a = 0;
-      unsigned tail_off_b = 0;
-      unsigned tail_off_c = 0;
 
+    for (unsigned iteration = 0; iteration < 3; ++iteration){
+      for (unsigned prob_i = 0; prob_i < problems.size(); ++prob_i){
       
-      unsigned n_postfind_runs = 0;
-      bool do_cpu_test = false;
-      
-      unsigned workspace_size = 3;
-      unsigned workspace_offset = 4;      
+        auto problem = problems[prob_i];
+        int m, n, k;
+        bool tA, tB;
+        std::tie(m, n, k, tA, tB) = problem;
+        
+        if (m*n < 50000){
+        
+        end = std::chrono::high_resolution_clock::now();
+        fp_ms = end - start;
+        elapsed_seconds = fp_ms.count();
+        
+        std::cout << (prob_i + 1) <<  "/" <<  problems.size() << " \t m:" << m << " \t n:" << n << " \t k:" << k << " \t tA:" << tA << " \t tB:" << tB << "  \t  elapsed time : " << elapsed_seconds << " [s]" << std::endl;    
+        
+        
+        std::stringstream ss_logfile;
   
-      tinygemm::FindStartType fst(tinygemm::FindStartType::Random);
-
-      char floattype = 'f';
-      tinygemm::TinyGemmGeometry gg (isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype);
-      tinygemm::TinyGemmOffsets offsets (a_offset, b_offset, c_offset, workspace_offset, tail_off_a, tail_off_b, tail_off_c);
-
-      basicfind<float>(gg, offsets, allotted_time, verbose, ss_logfile.str(), constraint_string, fst,  n_postfind_runs, do_cpu_test);    
+  //#ifdef DIR_FOR_WRITING
+        //ss_logfile << DIR_FOR_WRITING << "/deepbench/" << "at" << int(allotted_time) << "_off" << ldx_offset << "_cs" << constraint_string << "_m" << m  << "_n" << n  << "_k" << k  << "_tA" << tA  << "_tB" << tB << ".txt";   
+  //#endif
+  
+        std::string dir_for_writing("/home/james/tinygemmout/");
+        std::stringstream fulldir_ss;
+        fulldir_ss << dir_for_writing  << "deepbench" << iteration << "/";
+        std::string fulldir = fulldir_ss.str();
+        std::string syscall = std::string("mkdir ") + fulldir;
+        std::system(syscall.c_str());      
+        ss_logfile << fulldir << "/" << "at" << int(allotted_time) << "_off" << ldx_offset << "_cs" << constraint_string << "_m" << m  << "_n" << n  << "_k" << k  << "_tA" << tA  << "_tB" << tB << ".txt";   
+  
+        
+        unsigned lda = (tA == isColMajor ? k : m) + (ldx_offset == 1 ? 5 : 0);
+        unsigned ldb = (tB == isColMajor ? n : k) + (ldx_offset == 1 ? 7 : 0);
+        unsigned ldc = (tC == isColMajor ? n : m) + (ldx_offset == 1 ? 13 : 0);
+        
+        unsigned a_offset = 0;
+        unsigned b_offset = 0;
+        unsigned c_offset = 0;
+   
+   
+        unsigned tail_off_a = 0;
+        unsigned tail_off_b = 0;
+        unsigned tail_off_c = 0;
+  
+        
+        unsigned n_postfind_runs = 0;
+        bool do_cpu_test = false;
+        
+        unsigned workspace_size = 3;
+        unsigned workspace_offset = 4;      
+    
+        tinygemm::FindStartType fst(tinygemm::FindStartType::Random);
+  
+        char floattype = 'f';
+        tinygemm::TinyGemmGeometry gg (isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype);
+        tinygemm::TinyGemmOffsets offsets (a_offset, b_offset, c_offset, workspace_offset, tail_off_a, tail_off_b, tail_off_c);
+  
+        basicfind<float>(gg, offsets, allotted_time, verbose, ss_logfile.str(), constraint_string, fst,  n_postfind_runs, do_cpu_test);    
+        
+        }
+      }
     }
   }
   

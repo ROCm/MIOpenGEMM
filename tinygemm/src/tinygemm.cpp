@@ -77,6 +77,8 @@ class TinyGemmGPUMems{
 class OpenCLGemmEncapsulator{
 
 public:   
+  bool paperquiet = true;
+
   cl_command_queue command_queue;
   std::string outputfilename;
   const tinygemm::TinyGemmGeometry gg;
@@ -377,7 +379,9 @@ private:
       }
       
       update_run_times(status);
-      print_run_times(status);
+      if (paperquiet == false){
+        print_run_times(status);
+      }
     }
   }
 
@@ -393,13 +397,13 @@ public:
 
     address_check_valid();
 
-    if (n_runs == 0){
-      throw tinygemm_error("n_runs to benchgemm should be a positive integer");
-    }
+    throw tinygemm_error("n_runs to benchgemm should be a positive integer");
 
     for ( unsigned i = 0; i < hps.size(); ++i) {
-
-      mowri << "\nSource kernel " << "(" << i + 1 << "/" << hps.size() << ") "  << hps[i].get_string() << Endl;      
+      
+      if (paperquiet == false){
+        mowri << "\nSource kernel " << "(" << i + 1 << "/" << hps.size() << ") "  << hps[i].get_string() << Endl;      
+      }
       
       deriveability_test(hps[i], "in benchgemm");
       
@@ -434,7 +438,6 @@ public:
     unsigned deriveable_search_iteration = 0;
     std::stringstream deriveablesearch_ss;
 
-    std::cout << "get_hyper_param_start (5)" << std::endl;
     
     /* the number of attempts at finding a deriveable HyperParams given the constraint string */
     const unsigned n_trials = fst == FindStartType::Random ? 1000 : 1;
@@ -478,17 +481,15 @@ public:
     /* we will count how many kernels are successfully generated AND compiled AND benchmarked */
     unsigned global_counter = 0;
    
-   std::cout << "find (9)" << std::endl;
     
     hyperparams::HyperParams hyper_param_start = get_hyper_param_start(fst, graph);
 
-
-    std::cout << "find (10)" << std::endl;
     
     /* we track the best TinyGemmSolution found during the search  */    
     std::vector<tinygemm::TinyGemmSolution> path_of_best_solns;
     /* In here, we will store all previously considered HyperParams strings, used to check and ensure that we do not consider a HyperParam more than once */
     std::vector<std::string> hyper_front_history;
+    std::vector<float> hyper_front_history_gflops;
     /* while generating, compiling and benchmarking kernels, we will keep track of the fastest found thus far */
     float best_time = std::numeric_limits<float>::max();
     hyperparams::HyperParams best_hp = hyper_param_start;
@@ -500,7 +501,7 @@ public:
     float elapsed_seconds;
     auto start = std::chrono::high_resolution_clock::now();
 
-    auto update_elapsed_seconds  =  [&elapsed_seconds, &start]()  {      
+    auto update_elapsed_seconds  =  [&elapsed_seconds, &start]()  {
       auto end = std::chrono::high_resolution_clock::now();
       std::chrono::duration<float> fp_ms = end - start;
       elapsed_seconds = fp_ms.count();          
@@ -513,37 +514,56 @@ public:
       while (hfi < hyper_front.size() && improvement_found_on_front == false && elapsed_seconds < allotted_time){
         hyperparams::HyperParams hp = hyper_front[hfi];
         std::string hp_string = hp.get_string();
+        
         hyper_front_history.push_back(hp_string);
+        hyper_front_history_gflops.push_back(0);
+        
         /* extra precaution, should be able to remove this */
         deriveability_test(hp, "in find loop");        
         auto bundle = tinygemm::kerngen::get_bundle(hp,gg);
         /* the OpenCL string was succesfully generated, we can now attempt to compile and benchmark it */
         ++global_counter;
-        mowri << "\nglobal gen-com-bench : " << global_counter  <<  ".\n" << hp.get_string() << Endl;
+        if (paperquiet == false){
+          mowri << "\nglobal gen-com-bench : " << global_counter  <<  ".\n" << hp.get_string() << Endl;
+        }
+        else {
+          mowri << global_counter << " " << Flush;
+        }
         setup_tinykernels(hp, bundle);  
         core_gemm_loop(n_runs_per_kernel);
         std::sort(v_t_total.begin(), v_t_total.end());
         /* Taking the fastest or median? */ 
         float median_time = v_t_total[0];//[v_t_total.size()/2]; 
-        if (std::abs(v_t_total.back() - median_time) / median_time > 0.2) {
-          mowri << "tinygemm_warning: large variance in times. " <<  Endl;
+        float median_gflops = (2. * gg.m * gg.n * gg.k) / (median_time * 10e5);
+        hyper_front_history_gflops[hyper_front_history_gflops.size() - 1] = median_gflops;
+        
+        if (paperquiet == false){
+          if (std::abs(v_t_total.back() - median_time) / median_time > 0.2) {
+            mowri << "tinygemm_warning: large variance in times. " <<  Endl;
+          }
         }
         
-        update_elapsed_seconds();                        
-        mowri << "median time  : " << median_time << "\t m-Gflops/s : " << 2.0 * gg.m * gg.n * gg.k / (median_time * 1e6);
-        mowri << "  \ttotal elapsed seconds : " << elapsed_seconds << Endl;
+        update_elapsed_seconds();
+        
+        if (paperquiet == false){
+          mowri << "median time  : " << median_time << "\t m-Gflops/s : " << 2.0 * gg.m * gg.n * gg.k / (median_time * 1e6);
+          mowri << "  \ttotal elapsed seconds : " << elapsed_seconds << Endl;
+        }
 
         /* A new best kernel found */
         if (median_time < 1.000*best_time){
           improvement_found_on_front = true;
           best_time = median_time;
-          float median_gflops = (2. * gg.m * gg.n * gg.k) / (median_time * 10e5);
+
           best_hp = hp;
-          mowri << "********************************************" << Endl;
-          mowri << "\tNEW BEST MEDIAN TIME FOUND" << Endl;
-          mowri << "\tmedian gflops  : " << median_gflops << Endl;
-          mowri << "\tbreaking from hyper front " << Endl;
-          mowri << "********************************************" << Endl;
+          
+          if (paperquiet == false){
+            mowri << "********************************************" << Endl;
+            mowri << "\tNEW BEST MEDIAN TIME FOUND" << Endl;
+            mowri << "\tmedian gflops  : " << median_gflops << Endl;
+            mowri << "\tbreaking from hyper front " << Endl;
+            mowri << "********************************************" << Endl;
+          }
           update_elapsed_seconds();
           tinygemm::TinyGemmSolutionStatistics tgss(median_time, median_gflops, elapsed_seconds);               
           path_of_best_solns.emplace_back( hp, gg, bundle.dp, tgss, bundle.v_tgks  );
@@ -554,7 +574,10 @@ public:
       
   
       if (improvement_found_on_front == true && allotted_time > elapsed_seconds){
-        mowri << "creating new current hyper front \t(";// << Endl;
+        
+        if (paperquiet == false){
+          mowri << "creating new current hyper front \t(";// << Endl;
+        }
         /* getting all `one-away's */        
         auto one_aways = best_hp.get_one_aways();
         char front_insertion_type;
@@ -566,18 +589,18 @@ public:
           auto hp_string = hp.get_string();
 
           if (std::count(one_aways.begin(), one_aways.end(), hp) > 1){
-            throw tinygemm_error("duplicates in one_aways not allowed, or filter out here ");
+            throw tinygemm_error("duplicates in one_aways not allowed, should have already been filtered. Could filter out here, but less efficient ");
           }        
+
+          else if (hp.in_graph() == false){
+            throw tinygemm_error("constraint violators not allowed, should have already been filtered. Could filter out here, but less efficient ");
+          }
           
           /* filtering out if it has already been considered */
           else if (std::find(hyper_front_history.begin(), hyper_front_history.end(), hp_string) != hyper_front_history.end()){
             front_insertion_type =  's'; 
           }
 
-          /* filtering out if it does not satisfy the constraints */
-          else if (hp.in_graph() == false){
-            front_insertion_type = 'c';
-          }
 
           /* filtering out non-deriveables */
           else if (std::get<0>(derivedparams::get_deriveability(hp, gg)) == false){
@@ -589,10 +612,15 @@ public:
             front_insertion_type = '+';
             hyper_front.push_back(hp); //hyperparams::HyperParams(graph, hp_string));
           }
-          mowri << front_insertion_type;
+          
+          if (paperquiet == false){
+            mowri << front_insertion_type;
+          }
         }
         
-        mowri << ")\n" << "new hyper front size : " << hyper_front.size() << Endl;
+        if (paperquiet == false){
+          mowri << ")\n" << "new hyper front size : " << hyper_front.size() << Endl;
+        }
       }
     }
     
@@ -612,9 +640,18 @@ public:
       throw tinygemm_error("\nThere were no solutions found. This suggests that the initial kernel did not work (could not derive hyper parameters, required too much memory, or did not compile. Maybe there is some preceding warning printed which sheds light on this? Probably with a modification to the FindStartType or the constraint_string, this should be resolved. For example, the unroll UNR can be reduced if the problem is memory. TODO(jn) catch certain problems in architests ");
     }
   
-    mowri << "\nstart kernel : " << hyper_param_start.get_string() << Endl;
-    mowri << "best kernel  : " << best_hp.get_string() << Endl;
+    if (paperquiet == false){
+      mowri << "\nstart kernel : " << hyper_param_start.get_string() << Endl;
+      mowri << "best kernel  : " << best_hp.get_string() << Endl;
+    }
 
+    
+    mowri << "all the kernels visited : " << Endl;
+
+    for (unsigned xi = 0; xi <  hyper_front_history.size(); ++xi){
+      mowri <<  hyper_front_history[xi] << "  \t   " << hyper_front_history_gflops[xi]  << Endl;
+    }
+    
     mowri << "the kernels along the path the final solution:  " << Endl; 
     mowri << "hyper parameter string                                          \t time when found\t median gflop/s" << Endl;
 

@@ -118,7 +118,7 @@ public:
     }
 
 
-    if (true == true){
+    if (true == false){
       std::cout << "------------ network ------------------- \n";
       for (unsigned i = 0; i < v_tgks.size(); ++i){
         std::cout << "------------ kernel " << i << " ( " << types[i].full << " )  ----- waits for -----> " << std::flush;

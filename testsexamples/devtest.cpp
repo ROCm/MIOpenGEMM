@@ -13,7 +13,7 @@
 
 #include "setabcw.hpp"
 /* Note that currently (13/11/2016) most testing is done through dev/python scripts */
-/* Update (30/01/2017) this is the prefered place for doing testing */
+/* Update (30/01/2017) this is the preferred place for doing testing */
 
 
 
@@ -25,6 +25,7 @@ std::string get_hyperstring(std::string hyperstring = ""){
     //hyperstring = "A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN0_ICE1_NAW64_UFO0_MAC5";        
     hyperstring = "A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN0_ICE1_NAW64_UFO0_MAC5";
   }
+  return hyperstring;
 }
 
 template <typename TFloat>
@@ -45,7 +46,7 @@ tinygemm::TinyGemmGeometry get_geometry(){
     tB = true;
     tC = false;
     m = 2560;
-    n = 7133;
+    n = 33;//7133;
     k = 2560;
   }    
   
@@ -76,7 +77,6 @@ tinygemm::TinyGemmOffsets get_offsets(){
 
 template <typename TFloat>
 void print_kernel(){
-  
   std::string kernel_string;  
   std::string hyperstring = get_hyperstring();
   auto gg = get_geometry<TFloat>();
@@ -134,8 +134,7 @@ int main(){
     
     std::string hyperstring = get_hyperstring();
     tinygemm::hyperparams::Graph graph(gg, hyperstring, true); 
-    tinygemm::hyperparams::HyperParams hp(graph);      
-   
+    tinygemm::hyperparams::HyperParams hp(graph);
     if (test_accuracy){
       tinygemm::dev::accuracy_test(hp, gg, toff, v_a.data(), v_b.data(), v_c.data(), c_true_bla, true, "");
     }
@@ -146,8 +145,8 @@ int main(){
   }
   
   if (test_find){
-    std::string constraint_string("C_UFO0_ICE1");
-    float allotted_time = 30.1;
+    std::string constraint_string("");
+    float allotted_time = 0.1;
     tinygemm::dev::find(allotted_time, v_a.data(), v_b.data(), v_c.data(), constraint_string, fst, gg, toff, true, "/home/james/output.txt");
   }
   

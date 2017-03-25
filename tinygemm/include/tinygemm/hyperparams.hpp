@@ -44,18 +44,21 @@ public:
   
 
 
+  void apply_constraints();
+
   unsigned nHPs; 
   const tinygemm::TinyGemmGeometry * ptr_gg;
   std::vector<std::string> Keys;
   std::map<std::string, unsigned> Vals;
   
-  /* all the possible values of a hyper parameter */
-  /* example : range[nsHP::MIC] --> {1,2,3,4,5,6,7,8} */
-  std::vector<std::vector<unsigned> > range;  
 
   /* all the possible edges from all the possible hyper parameter */
   /* example : edges[nsHP::MIC] is a map; edges[nsHP::MIC][1] --> {2,3,4} */
   std::vector<std::map<unsigned, std::vector<unsigned> > > edges;
+
+  /* all the possible values of a hyper parameter */
+  /* example : range[nsHP::MIC] --> {1,2,3,4,5,6,7,8} */
+  std::vector<std::vector<unsigned> > range;  
 
   /* a subset of range, the possible values returned on a request for a random value */  
   /* example : start_range[nsHP::MIC] --> {2,8}. It can depend on geometry (from initialisation) */  
@@ -68,15 +71,18 @@ public:
     
   void initialise();
   void set_constraints();
-  void initialise_range_from_edges();
+  void initialise_range_from_preconstraint_edges();
   void confirm_start_is_subset();
   virtual void initialise_maps() = 0;
-  virtual void set_edges() = 0;
+  virtual void set_preconstraint_edges() = 0;
   virtual void set_start_range() = 0;
+  virtual char get_char() = 0;
   
   std::string get_string(unsigned hpi);
-
-    
+  std::string get_edges_string(unsigned hpi);
+  //std::string print_x_range_string(unsigned hpi, char x);
+  std::string get_range_string(unsigned hpi);
+  std::string get_start_range_string(unsigned hpi);
 
 };
 
@@ -86,9 +92,9 @@ class CSubG : public SubG{
     CSubG() = default;
     CSubG(const tinygemm::TinyGemmGeometry & gg, std::string cs, bool csfull);
     virtual void initialise_maps() override final;
-    virtual void set_edges() override final;
+    virtual void set_preconstraint_edges() override final;
     virtual void set_start_range() override final;
-
+    virtual char get_char() override final {return 'C';}
 };
 
 
@@ -98,23 +104,30 @@ class ChiralSubG : public SubG{
     ChiralSubG() = default;
     ChiralSubG(const tinygemm::TinyGemmGeometry & gg, std::string cs, bool csfull);  
     virtual void initialise_maps() override final;
-    virtual void set_edges() override final;
+    virtual void set_preconstraint_edges() override final;
     virtual void set_start_range() override final;
-    virtual void set_chirality_specific() = 0;
+    void set_chirality_specific_start_range_base(unsigned non_unroll_dimension);
+    virtual void set_chirality_specific_start_range() = 0;
+    virtual char get_char() = 0;
+
 };
 
 class ASubG : public ChiralSubG{
   public:
     ASubG() = default;
     ASubG(const tinygemm::TinyGemmGeometry & gg, std::string cs, bool csfull):ChiralSubG(gg, cs, csfull){}
-    virtual void set_chirality_specific() override final;
+    virtual void set_chirality_specific_start_range() override final;
+    virtual char get_char() override final {return 'A';}
+    
 };
 
 class BSubG : public ChiralSubG{
   public:
     BSubG() = default;
     BSubG(const tinygemm::TinyGemmGeometry & gg, std::string cs, bool csfull):ChiralSubG(gg, cs, csfull){}
-    virtual void set_chirality_specific() override final;
+    virtual void set_chirality_specific_start_range() override final;
+    virtual char get_char() override final {return 'B';}
+
 };
 
 
@@ -158,7 +171,6 @@ class HyperParams{
 private:
   const Graph * p_graph;
   std::vector<XHPs> v_xhps;
-  //HyperParams(const std::vector<std::vector<unsigned>> & params); 
  
 public:
   void replace_undefined_randomly();

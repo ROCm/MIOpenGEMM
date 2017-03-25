@@ -78,12 +78,13 @@ Graph::Graph(const tinygemm::TinyGemmGeometry & gg, std::string constraints_stri
 
   coupled_parameters.push_back( { {nsHP::matA, nsHP::MIC}, {nsHP::matB, nsHP::MIC} } );
   coupled_parameters.push_back( { {nsHP::matC, nsHP::UFO}, {nsHP::matC, nsHP::PUN} } );
-
+  coupled_parameters.push_back( { {nsHP::matC, nsHP::UNR}, {nsHP::matC, nsHP::ICE} } );
 
 
 }
 
 void SubG::set_constraints(){
+  
   constraints = std::vector<unsigned> (nHPs, nsHP::undefined);
   
   std::vector<std::string> keyvalfrags;
@@ -102,8 +103,8 @@ void SubG::set_constraints(){
     auto end  = Keys.end();
     if(std::find(start, end, key) == end) {
       std::stringstream ss;
-      ss << "While processing frag section " << "(some v func to determine which subg)" << ",\n";
-      ss << "in get constrains in hyperparams.cpp,  unrecognised : " + key << ".\n";
+      ss << "While processing the constraint string for SubG `" << get_char() << "', ";
+      ss << "the key `" + key << "' was not recognised. In set_constraints(). \n";
       throw tinygemm_error(ss.str());
     }
 
@@ -115,19 +116,16 @@ void SubG::set_constraints(){
     else{
       throw tinygemm_error("in get constrains, strange out of bounds error, come and investigate");
     }
-    
   }
 
 
-  
-  
-  /* Are constraints supposed to be comprehensive ? */
+  /* A special test in the case that constraints are supposed to be comprehensive */
   if (subg_csfull == true)  {
     for (unsigned hpi = 0; hpi < nHPs; ++hpi){
       if (constraints[hpi] == nsHP::undefined){
         std::stringstream ss;
-        ss << "While processing constraints string of " << "(some v func to determine which subg)" << ",\n";
-        ss << "parameter " << Keys[hpi] << " appears not to be set \n";
+        ss << "While processing the constraints string of SubG `" << get_char() << "', ";
+        ss << "the parameter `" << Keys[hpi] << "' appeared to be unset. The constraints must all be set (subg_csfull is true) \n";
         throw tinygemm_error(ss.str()); 
       }
     }
@@ -163,11 +161,11 @@ const std::map<unsigned, std::vector<unsigned> > graph_binary =
 {   {0, {1}},
     {1, {0}}    };
 
-void SubG::initialise_range_from_edges(){
+void SubG::initialise_range_from_preconstraint_edges(){
   range.resize(edges.size());
-  for (unsigned i = 0; i < edges.size(); ++i){
-    for (auto & x : edges[i]){
-      range[i].push_back(x.first);
+  for (unsigned hpi = 0; hpi < edges.size(); ++hpi){
+    for (auto & x : edges[hpi]){
+      range[hpi].push_back(x.first);
     }
   }
 }
@@ -181,13 +179,15 @@ SubG::SubG(unsigned nHPs_, const tinygemm::TinyGemmGeometry & gg, std::string cs
 void SubG::initialise(){
   initialise_maps();
   set_constraints();
-  set_edges();
-  initialise_range_from_edges();
+  set_preconstraint_edges();
+  initialise_range_from_preconstraint_edges();
   set_start_range();
+  apply_constraints();
   confirm_start_is_subset();
 }
 
-std::string SubG::get_string(unsigned hpi){
+
+std::string SubG::get_edges_string(unsigned hpi){
   std::stringstream ss;
   ss << "Edges : \n";
   for (auto & key_vec : edges[hpi]){
@@ -197,26 +197,48 @@ std::string SubG::get_string(unsigned hpi){
     }
     ss << "\n";
   }
-  
+  return ss.str();
+}
+
+std::string SubG::get_range_string(unsigned hpi){
+  std::stringstream ss;
   ss << "Range : \n";
   for (auto & x : range[hpi]){
     ss << x << " ";
   }
   ss << "\n";
+  return ss.str();
+}
+
+//TODO : remove code duplication from above
+std::string SubG::get_start_range_string(unsigned hpi){
+  std::stringstream ss;
+  ss << "Start Range : \n";
+  for (auto & x : start_range[hpi]){
+    ss << x << " ";
+  }
+  ss << "\n";
+  return ss.str();
+}
+
+
+std::string SubG::get_string(unsigned hpi){
+  std::stringstream ss;
+  ss << get_edges_string(hpi);
+  ss << get_range_string(hpi);
+  ss << get_start_range_string(hpi);  
 
   ss << "Start Range : \n";
   for (auto & x : start_range[hpi]){
     ss << x << " ";
   }
-  ss << "\n";  
-  
-
+  ss << "\n"; 
   return ss.str();
 }
 
 void SubG::confirm_start_is_subset(){
-  for (unsigned hpi = 0; hpi < nHPs; ++hpi){
-    
+  
+  for (unsigned hpi = 0; hpi < nHPs; ++hpi){    
     if (start_range[hpi].size() == 0){
       std::stringstream ss;
       ss << "no valid value to start from in " << Keys[hpi];
@@ -235,33 +257,75 @@ void SubG::confirm_start_is_subset(){
   }
 }
 
-ChiralSubG::ChiralSubG(const tinygemm::TinyGemmGeometry & gg, std::string cs, bool csfull) : SubG(nsHP::nChiralHPs, gg, cs, csfull){}
 
 CSubG::CSubG(const tinygemm::TinyGemmGeometry & gg, std::string cs, bool csfull) : SubG(nsHP::nNonChiralHPs, gg, cs, csfull){}
 
-void ASubG::set_chirality_specific(){
-  start_range[nsHP::MIC] = {8};  
+ChiralSubG::ChiralSubG(const tinygemm::TinyGemmGeometry & gg, std::string cs, bool csfull) : SubG(nsHP::nChiralHPs, gg, cs, csfull){}
+
+
+void ChiralSubG::set_chirality_specific_start_range_base(unsigned non_unroll_dimension){
+  start_range[nsHP::MIC] = {8,6};
+  if (non_unroll_dimension  < 256){
+    start_range[nsHP::MIC].push_back(5);
+    start_range[nsHP::MIC].push_back(4);
+  }
+  
+  if (non_unroll_dimension < 128){
+    start_range[nsHP::MIC].push_back(3);
+    start_range[nsHP::MIC].push_back(2);
+  }
+  
+  if (non_unroll_dimension < 64){
+    start_range[nsHP::MIC].push_back(1);
+  }
 }
 
-void BSubG::set_chirality_specific(){
-  start_range[nsHP::MIC] = {8};  
+void ASubG::set_chirality_specific_start_range(){
+  set_chirality_specific_start_range_base(ptr_gg->m);
+}
+
+void BSubG::set_chirality_specific_start_range(){
+  set_chirality_specific_start_range_base(ptr_gg->n);
 }
 
 
 
 void ChiralSubG::set_start_range(){
   
-  start_range[nsHP::PAD] = {1};    
+  start_range[nsHP::PAD] = {1,2};
   start_range[nsHP::PLU] = {nsHP::no, nsHP::yes};  
   start_range[nsHP::LIW] = {nsHP::no};  
   start_range[nsHP::MIW] = {nsHP::yes};
   start_range[nsHP::WOS] = {0};
 
-  set_chirality_specific();
+  set_chirality_specific_start_range();
 
 }
 
-void ChiralSubG::set_edges(){
+
+void SubG::apply_constraints(){
+  for (unsigned hpi = 0; hpi < nHPs; ++hpi){
+    if (constraints.at(hpi) != nsHP::undefined){
+      
+      if (std::find(range[hpi].begin(), range[hpi].end(), constraints.at(hpi)) == range[hpi].end()){
+        std::stringstream errm;
+        errm << "the constraint on " << Keys[hpi] << " of " << constraints.at(hpi) << " is not in the pre-constraint range:  \n" << get_range_string(hpi);
+        errm << "this is not currently allowed";
+        throw tinygemm_error(errm.str());
+      }
+      
+      /* we don't worry if it's not in start_range */
+      
+      
+
+      edges[hpi] = { {constraints.at(hpi), {} } };
+      range[hpi] = { constraints.at(hpi) };
+      start_range[hpi] = { constraints.at(hpi) };
+    }
+  }
+}
+
+void ChiralSubG::set_preconstraint_edges(){
   
   edges[nsHP::MIC] =
   { {1, {2,3} },
@@ -291,13 +355,13 @@ void ChiralSubG::set_edges(){
   
   edges[nsHP::WOS] = 
   {  {0, {}}   };// for now, no copying TODO(jn) incorporate
+  
+
 }
 
 
 void CSubG::set_start_range(){
 
-  //(void)gg;
-  
   start_range[nsHP::UNR]= {8, 16};
   start_range[nsHP::NAW]= {16, 64};
   start_range[nsHP::GAL]= {nsGAL::byrow, nsGAL::bycol, nsGAL::sucol};
@@ -308,7 +372,7 @@ void CSubG::set_start_range(){
 
 }
 
-void CSubG::set_edges(){
+void CSubG::set_preconstraint_edges(){
 
   
   edges[nsHP::UNR] = 
@@ -439,12 +503,9 @@ HyperParams::HyperParams(const Graph & graph):p_graph(&graph) {
   for (unsigned mi = 0; mi < nsHP::nSubGs; ++mi){
     v_xhps.emplace_back (  XHPs ( p_graph->p_subgs[mi]->nHPs  )  );
     for (unsigned hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi){
-
       auto & a_range = p_graph->p_subgs[mi]->start_range[hpi];
       unsigned index = radu.get_from_range (a_range.size());
       v_xhps[mi].vs[hpi] = a_range[index];
-
-      //v_xhps[mi].vs[hpi] = nsHP::undefined;
     }
   }
   checks();
@@ -467,7 +528,6 @@ std::string HyperParams::get_part_string(char X) const{
 }
 
 std::string HyperParams::get_string() const{
-  
   std::stringstream ss;
   ss << get_part_string('A') << "__" << get_part_string('B') << "__" << get_part_string('C');  
   return ss.str();
@@ -502,13 +562,15 @@ std::vector<HyperParams> HyperParams::get_one_aways(){
     auto second_value = v_xhps[second_m].vs[second_p];
 
     for (auto & new_first_val : p_graph->p_subgs[first_m]->edges[first_p].at(first_value)){
-      for (auto & new_second_val : p_graph->p_subgs[second_m]->edges[second_p].at(second_value)){      
-        HyperParams hp(*this);
+      for (auto & new_second_val : p_graph->p_subgs[second_m]->edges[second_p].at(second_value)){
         
-        hp.v_xhps[first_m].vs[first_p] = new_first_val;
-        hp.v_xhps[second_m].vs[second_p] = new_second_val;
-        one_aways.push_back(hp);
-      
+        /* only if one increases and one decreases */
+        if ((new_second_val > second_value) != (new_first_val > first_value)){
+          HyperParams hp(*this);        
+          hp.v_xhps[first_m].vs[first_p] = new_first_val;
+          hp.v_xhps[second_m].vs[second_p] = new_second_val;
+          one_aways.push_back(hp);
+        }
       }
     }
   }
