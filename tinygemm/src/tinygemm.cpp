@@ -22,6 +22,9 @@
 
 /* TODO : float4 */
 
+
+//TODO : tinygemmsolution should not contain a HyperParams, as it has a dangling pointer on leaving (hyperparams::Graph). rather just return the hyperstring. 
+
 namespace tinygemm{
 
 class MultiFloatType{
@@ -415,29 +418,31 @@ public:
   
   
   tinygemm::TinyGemmSolution
-  get_default(std::string constraint_string){
-    hyperparams::HyperParams hp = hyperparams::get_hp_start(FindStartType::Default, constraint_string, gg);
+  get_default(hyperparams::Graph & graph){
+    hyperparams::HyperParams hp = hyperparams::get_hp_start(FindStartType::Default, graph);
     deriveability_test(hp, "in get_default");    
-    auto bundle = tinygemm::kerngen::get_bundle(hp,gg); 
+    auto bundle = tinygemm::kerngen::get_bundle(hp, gg); 
     tinygemm::TinyGemmSolutionStatistics tgss(std::numeric_limits<float>::max(), 0, 0);    
     return { hp, gg, bundle.dp, tgss, bundle.v_tgks };
   }
 
 
-  hyperparams::HyperParams get_hyper_param_start(std::string constraint_string, FindStartType fst, const hyperparams::Graph & graphs){
+  hyperparams::HyperParams get_hyper_param_start(FindStartType fst, const hyperparams::Graph & graph){
 
-    hyperparams::HyperParams hyper_param_start; //(graphs);
+    hyperparams::HyperParams hyper_param_start(graph);
     bool found_a_deriveable_hp = false;
     unsigned deriveable_search_iteration = 0;
     std::stringstream deriveablesearch_ss;
+
+    std::cout << "get_hyper_param_start (5)" << std::endl;
     
     /* the number of attempts at finding a deriveable HyperParams given the constraint string */
     const unsigned n_trials = fst == FindStartType::Random ? 1000 : 1;
     
     while (found_a_deriveable_hp == false && deriveable_search_iteration < n_trials){
       
-      //TODO graphs should already have constraint_string in it...
-      hyper_param_start = hyperparams::get_hp_start(fst, constraint_string, graphs);
+      //TODO graph should already have constraint_string in it...
+      hyper_param_start = hyperparams::get_hp_start(fst, graph);
       auto deriveability = derivedparams::get_deriveability(hyper_param_start, gg);
       if (std::get<0>(deriveability) == false){
         deriveablesearch_ss << hyper_param_start.get_string() << " is not deriveable, because " << std::get<1>(deriveability) << "\n";            
@@ -457,29 +462,29 @@ public:
   }
   
   tinygemm::TinyGemmSolution find(float allotted_time, std::string constraint_string, FindStartType fst, unsigned n_runs_per_kernel){
-    
+
+
+    hyperparams::Graph graph(gg, constraint_string, false);
+          
     mowri << "(find) geometry : " << gg.get_string()  << Endl;
 
     if (allotted_time <= 0){
       mowri << "allotted_time (" << allotted_time << ") is insufficient for benchmarking, returning default TinyGemmSolution based on gg and constraint_string without bencing/searching" << Endl;
-      return get_default(constraint_string);
+      return get_default(graph);
     }
 
     address_check_valid_and_reliable();
 
     /* we will count how many kernels are successfully generated AND compiled AND benchmarked */
     unsigned global_counter = 0;
-
+   
+   std::cout << "find (9)" << std::endl;
     
+    hyperparams::HyperParams hyper_param_start = get_hyper_param_start(fst, graph);
 
-    hyperparams::Graph graphs(gg);
 
-    //TODO : get_params_from_full_hyperstring would be clearer that ", false". 
-    auto constraint_params = graphs.get_params_from_string(constraint_string, false);
-
+    std::cout << "find (10)" << std::endl;
     
-    hyperparams::HyperParams hyper_param_start = get_hyper_param_start(constraint_string, fst, graphs);
-
     /* we track the best TinyGemmSolution found during the search  */    
     std::vector<tinygemm::TinyGemmSolution> path_of_best_solns;
     /* In here, we will store all previously considered HyperParams strings, used to check and ensure that we do not consider a HyperParam more than once */
@@ -554,13 +559,13 @@ public:
         auto one_aways = best_hp.get_one_aways();
         char front_insertion_type;
         /* refreshing hyper front */
-        hyper_front.resize(0);
+        hyper_front.clear();
 
         for (auto & hp : one_aways){
            
           auto hp_string = hp.get_string();
 
-          if (std::count(one_aways.begin(), one_aways.end(), hp_string) > 1){
+          if (std::count(one_aways.begin(), one_aways.end(), hp) > 1){
             throw tinygemm_error("duplicates in one_aways not allowed, or filter out here ");
           }        
           
@@ -570,7 +575,7 @@ public:
           }
 
           /* filtering out if it does not satisfy the constraints */
-          else if (hp.satisfies_where_source_defined(constraint_params) == false){
+          else if (hp.in_graph() == false){
             front_insertion_type = 'c';
           }
 
@@ -582,7 +587,7 @@ public:
           /* looks ok, adding it to the hyper-front */
           else{
             front_insertion_type = '+';
-            hyper_front.push_back(hp_string);
+            hyper_front.push_back(hp); //hyperparams::HyperParams(graph, hp_string));
           }
           mowri << front_insertion_type;
         }
@@ -688,8 +693,12 @@ const tinygemm::TinyGemmGeometry & gg,
 bool verbose, 
 std::string logfile){
   
-  OpenCLGemmEncapsulator oger({}, gg, {0,0,0,0,0,0,0}, {}, {}, {}, {}, logfile, verbose); 
-  return oger.get_default(constraint_string);
+  
+  throw tinygemm_error("get default not ready");
+  
+  //hyperparams::Graph(gg, constraint_string);
+  //OpenCLGemmEncapsulator oger({}, gg, {0,0,0,0,0,0,0}, {}, {}, {}, {}, logfile, verbose); 
+  //return oger.get_default(constraint_string);
  
 }
   
@@ -727,44 +736,3 @@ void benchgemm(
 }
   
 } //namespace
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      
-      //if (improvement_found_on_front == false && front_search_horizon == 1 && elapsed_seconds < allotted_time){
-        //++front_search_horizon;
-
-        ///* TODO : if you WANT to go onto front 2, set the following to true. This should be finalised TODO TODO TODO  */        
-        //const bool jump_to_front_horizon_size_2 = true;
-        
-        //if (jump_to_front_horizon_size_2 == true){
-          //improvement_found_on_front = true;
-          //mowri << "\n\n----------SWITCHING TO FRONT HORIZON SIZE 2-------------\n\n" << Endl;
-        //}
-      //}
-      
-      //if (improvement_found_on_front == true && front_search_horizon == 2){        
-        ///* getting all `two-aways' */
-        ////hyper_front = best_hp.get_two_aways(gg);
-      //}
-      
-      //if (improvement_found_on_front == false && front_search_horizon == 2){
-        ///* this is going to cause the end of the search */
-      //}
-      
-      //if (front_search_horizon != 1 && front_search_horizon != 2){
-        //throw std::logic_error("front_search_horizon is neither 1 nor 2. This is currently not possible, Broken algorithm, come fix.");        
-      //}

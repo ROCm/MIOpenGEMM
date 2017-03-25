@@ -20,22 +20,17 @@
 
 
 
-tinygemm::hyperparams::HyperParams get_hp(std::string hyperstring = ""){
-
+std::string get_hyperstring(std::string hyperstring = ""){
   if (hyperstring.compare("") == 0){
-    
-    //hyperstring = "A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN0_ICE1_NAW64_UFO0_MAC5";
-        
+    //hyperstring = "A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN0_ICE1_NAW64_UFO0_MAC5";        
     hyperstring = "A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN0_ICE1_NAW64_UFO0_MAC5";
   }
-  return tinygemm::hyperparams::HyperParams(hyperstring);
 }
 
 template <typename TFloat>
 tinygemm::TinyGemmGeometry get_geometry(){
 
-  bool goodsolly = false;
-  
+  bool goodsolly = false;  
   bool isColMajor = true;
   bool tA = false;
   bool tB = true;
@@ -44,9 +39,6 @@ tinygemm::TinyGemmGeometry get_geometry(){
   unsigned n = 96*(55) - 4; 
   unsigned k = 16*229;           
 
-
-
-  
   if (goodsolly == false){
     isColMajor = true;
     tA = false;
@@ -56,15 +48,12 @@ tinygemm::TinyGemmGeometry get_geometry(){
     n = 7133;
     k = 2560;
   }    
-
-
-    
+  
   unsigned lda = ( tA == isColMajor ? k : m ) + 0;
   unsigned ldb = ( tB == isColMajor ? n : k ) + 0;
   unsigned ldc = ( tC == isColMajor ? n : m ) + 0;
   unsigned workspace_size =  1;
   char floattype = sizeof(TFloat) == sizeof(double) ? 'd' : 'f';
-
   return { isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype };
     
 }
@@ -87,15 +76,13 @@ tinygemm::TinyGemmOffsets get_offsets(){
 
 template <typename TFloat>
 void print_kernel(){
-
-  std::string kernel_string;
-  auto hp = get_hp();
+  
+  std::string kernel_string;  
+  std::string hyperstring = get_hyperstring();
   auto gg = get_geometry<TFloat>();
-  
+  tinygemm::hyperparams::Graph graph(gg, hyperstring, true); 
+  tinygemm::hyperparams::HyperParams hp(graph);
   auto bundle = tinygemm::kerngen::get_bundle(hp, gg);
-  
-  //std::cout << bundle.v_tgks[0].kernstr; //.back()
-  //std::ofstream floper ("/home/idiap/tinygemm/examplekernels/example1.cl", std::ios::out); 
   
   for (auto & x :  bundle.v_tgks){
     auto fname = "/home/james/dub_akernel_" +  x.type.full +  ".cl";
@@ -104,7 +91,6 @@ void print_kernel(){
     floper << x.kernstr;
     floper.close();
     std::cout << "done." << std::endl;
-    
   }
 }
   
@@ -114,24 +100,7 @@ int main(){
   
   std::cout << "in main of devtest " << std::endl;
 
-
-
-  //std::make_tuple<tinygemm::TinyGemmGeometry, std::string> ( {true, false, true, false, 2560, 7133, 2560, 2560, 7133, 2560, 0, 'f'},  "A_MAC128_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MAC128_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__U8_GA1_PU1_ICE1_NAW64_UFO1"), 
-  //A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR8_GAL1_PUN1_ICE1_NAW64_UFO1_MAC5
-
-  //A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR8_GAL1_PUN1_ICE1_NAW64_UFO1_MAC5
-  //A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC8_PAD1_PLU0_LIW0_MIW0_WOS0__C_UNR8_GAL2_PUN1_ICE1_NAW64_UFO1_MAC5
-  //"A_MIC8_PAD2_PLU0_LIW0_MIW1_WOS0__B_MIC8_PAD2_PLU0_LIW0_MIW0_WOS0__C_UNR8_GAL2_PUN1_ICE1_NAW64_UFO1_MAC5"); //"A_LIW0_MIW1__B_LIW0_MIW1__C_ICE1_UFO0");
-
-
-          
-        //A_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN1_ICE1_NAW16_UFO0_MAC5
-  //5604: A_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN1_ICE1_NAW64_UFO0_MAC5
-
-  std::string constraint_string("");
-
   tinygemm::FindStartType fst(tinygemm::FindStartType::Random);
-
 
   bool test_print = false;
   bool test_benchgemm = false;
@@ -142,13 +111,8 @@ int main(){
   typedef float tfloat;
   srand(time(NULL));
   
-  std::cout << "about to do   tinygemm::hyperparams::HyperParams hp(get_hp());  " << std::endl;
-    
-  tinygemm::hyperparams::HyperParams hp(get_hp());
-  
   tinygemm::TinyGemmGeometry gg = get_geometry<tfloat>();
   tinygemm::TinyGemmOffsets toff = get_offsets();
-
 
 
   std::cout << "generating cpu data ... " << std::flush;
@@ -160,33 +124,35 @@ int main(){
     
   const tfloat * c_true_bla = nullptr; 
 
-      
+  
+  
   if (test_print){
     print_kernel<tfloat>();
   }
   
-  if (test_accuracy){
-    tinygemm::dev::accuracy_test(hp, gg, toff, v_a.data(), v_b.data(), v_c.data(), c_true_bla, true, "");
-  }
-
-  if (test_benchgemm){
+  if (test_accuracy || test_benchgemm){
     
-    std::cout << "in devtest, about to benchgemm" << std::endl;
-      
-    tinygemm::dev::benchgemm({hp}, 7, gg, toff, v_a.data(), v_b.data(), v_c.data(), true, "");
+    std::string hyperstring = get_hyperstring();
+    tinygemm::hyperparams::Graph graph(gg, hyperstring, true); 
+    tinygemm::hyperparams::HyperParams hp(graph);      
+   
+    if (test_accuracy){
+      tinygemm::dev::accuracy_test(hp, gg, toff, v_a.data(), v_b.data(), v_c.data(), c_true_bla, true, "");
+    }
+
+    if (test_benchgemm){
+      tinygemm::dev::benchgemm({hp}, 7, gg, toff, v_a.data(), v_b.data(), v_c.data(), true, "");
+    }
   }
   
   if (test_find){
+    std::string constraint_string("C_UFO0_ICE1");
     float allotted_time = 30.1;
     tinygemm::dev::find(allotted_time, v_a.data(), v_b.data(), v_c.data(), constraint_string, fst, gg, toff, true, "/home/james/output.txt");
   }
   
   if (test_default){
-
-    auto bla = tinygemm::get_default(constraint_string, get_geometry<tfloat>(), true, "");
-    for (auto & x : bla.v_tgks){
-      std::cout << x.kernstr << std::endl;
-    }
+    throw tinygemm::tinygemm_error("cannot test default currently, bla");
   }
   
   return 0;

@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <cmath>
 #include <algorithm>
-#include <random>
 #include <limits>
 
 #include <tinygemm/stringutilbase.hpp>
@@ -13,131 +12,14 @@
 #include <tinygemm/tinygemmerror.hpp>
 #include <tinygemm/stringutilbase.hpp>
 #include <tinygemm/mapkeycheck.hpp>
-
+#include <tinygemm/randomutil.hpp>
 
 namespace tinygemm{
 
 
 namespace hyperparams{
 
-/* TODO : move this out and make constructor which takes seed */
-class RandomUtil {
-
-private:
-  std::random_device rd;
-  std::default_random_engine gen;
-  std::uniform_int_distribution<unsigned> unidis;
-
-public:
-  RandomUtil():rd(), gen(rd()) {} 
-  unsigned get_from_range(unsigned upper){
-    return unidis(gen) % upper;
-  }
-  
-  template <typename T>
-  void shuffle(unsigned start_index, unsigned end_index, T & t){
-    if (end_index > t.size() || start_index > end_index){
-      throw tinygemm_error("problem in shuffle");
-    }
-    std::shuffle(t.begin() + start_index, t.begin() + end_index, gen);
-  }
-};
-
 RandomUtil radu;
-
-
-Graph::Graph(const tinygemm::TinyGemmGeometry & gg) : ptr_gg(&gg), asubg(gg), bsubg(gg), csubg(gg)  {
-
-  p_subgs.resize(nsHP::nGraph);
-  p_subgs[nsHP::SubGChiralA] = &asubg;
-  p_subgs[nsHP::SubGChiralB] = &bsubg;
-  p_subgs[nsHP::SubGNonChiral] = &csubg;
-
-  graphind['A'] = nsHP::SubGChiralA;
-  graphind['B'] = nsHP::SubGChiralB;
-  graphind['C'] = nsHP::SubGNonChiral;
-  
-  coupled_parameters.push_back( { {nsHP::matA, nsHP::MIC}, {nsHP::matB, nsHP::MIC} } );
-  coupled_parameters.push_back( { {nsHP::matC, nsHP::UFO}, {nsHP::matC, nsHP::PUN} } );
-
-}
-
-
-
-
-
-
-std::vector<std::vector<unsigned>> Graph::get_params_from_string(const std::string & hyperstring, bool expect_full_hyperstring){
-
-  /* TODO only generate this when an error emerges */
-  std::stringstream ssghe;
-  ssghe << "the " << (expect_full_hyperstring == true ? "`full'" : "`partial'") << " hyperstring received here is :\n";
-  ssghe << "         " << hyperstring << "\n";
-  ssghe << "an example of a full hyperstring correctly formated is:\n";
-  ssghe << "         ";
-  ssghe << "A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN0_ICE1_NAW64_UFO0_MAC2\n";
-  std::string generic_hyperstring_errm = ssghe.str();
-
-  /* MIC, etc. */
-  std::string key; 
-  /* 6, etc */
-  unsigned val;  
-
-  /* set params to be of the correct shape, filled with nsHP::undefined */
-  std::vector<std::vector<unsigned>> params (nsHP::nGraph);
-  for (unsigned mi = 0; mi < nsHP::nGraph; ++mi){
-    params[mi] = std::vector<unsigned> (p_subgs[mi]->nHPs, nsHP::undefined);
-  }
-    
-  auto megafrags = stringutil::split(hyperstring, "__");
-  
-  for (auto & megafrag : megafrags){
-    
-    char graphchar = megafrag[0];
-    if (graphchar != 'A' && graphchar != 'B' && graphchar != 'C'){
-      std::stringstream ss;
-      ss << "\nWhile reading hyperstring in get-params-from-string. `graphchar' should be A,B or C, not `" << graphchar << "'.\n";
-      ss << generic_hyperstring_errm;
-      throw tinygemm_error(ss.str());
-    }
-
-    unsigned graphnum = graphind[graphchar];
-    auto & subg = *(p_subgs[graphnum]);
-    auto keyvalfrags = stringutil::split(megafrag.substr(2), "_");
-    auto expected_nHPs = subg.nHPs;
-    
-    if (expect_full_hyperstring && (keyvalfrags.size() < expected_nHPs)){
-      std::stringstream ss;
-      ss << "While processing frag section " << graphchar << ".\n";
-      ss << "There appear to be too few parameters (" << keyvalfrags.size() << " as opposed to " << expected_nHPs << ")";
-      ss << generic_hyperstring_errm;
-      throw tinygemm_error(ss.str());
-    }
-    
-    for (auto & x : keyvalfrags){
-      std::tie(key, val) = stringutil::splitnumeric(x);
-      auto start = subg.Keys.begin();
-      auto end  = subg.Keys.end();
-      if(std::find(start, end, key) == end) {
-        std::stringstream ss;
-        ss << "While processing frag section " << graphchar << ".\n";
-        ss << "in get-params-from-string in hyperparams.cpp.  Unrecognised : " + key << ".\n";
-        ss << generic_hyperstring_errm;
-        throw tinygemm_error(ss.str());
-      }
-      /* We have confirmed that key is valid, this is safe */
-      auto keyindex = subg.Vals.at(key);
-      if (keyindex < params[graphnum].size()){
-        params[graphnum][keyindex] = val;
-      }
-      else{
-        throw tinygemm_error("in get-params-from-string, cannot insert as out of bounds.");
-      }
-    }
-  }
-  return params;
-}
-
 
 template <typename T>
 std::map<T, unsigned> getVals(unsigned nVals, const std::vector<T> & keys, const std::string & hash){
@@ -151,6 +33,107 @@ std::map<T, unsigned> getVals(unsigned nVals, const std::vector<T> & keys, const
   }
   return vals;
 }
+
+
+Graph::Graph(const tinygemm::TinyGemmGeometry & gg, std::string constraints_string, bool full_cs): ptr_gg(&gg) {
+
+
+  graphchar.resize(nsHP::nSubGs);
+  graphchar[nsHP::matA] = 'A';
+  graphchar[nsHP::matB] = 'B';
+  graphchar[nsHP::matC] = 'C';
+  
+  graphind = getVals(nsHP::nSubGs, graphchar, "graphind");
+
+  std::vector<std::string> sub_constraints(nsHP::nSubGs, "");
+  auto megafrags = stringutil::split(constraints_string, "__");
+
+  
+  for (auto & megafrag : megafrags){
+    if (graphind.count(megafrag[0]) == 0){
+      std::stringstream ss;
+      ss << "\nWhile reading hyperstring in get-params-from-string,\n";
+      ss << "the leading char should be A,B or C, not `" << megafrag[0] << "'.\n";
+      throw tinygemm_error(ss.str());
+    }
+    if (megafrag.size() < 3){
+      std::stringstream ss;
+      ss << "sub constraint " << megafrag << " is too short, something is wrong. \n";
+      throw tinygemm_error(ss.str());
+    }
+    sub_constraints[graphind[megafrag[0]]] = megafrag.substr(2);
+  }
+  
+  asubg = ASubG(gg, sub_constraints[nsHP::matA], full_cs);
+  asubg.initialise();
+  bsubg = BSubG(gg, sub_constraints[nsHP::matB], full_cs);
+  bsubg.initialise();
+  csubg = CSubG(gg, sub_constraints[nsHP::matC], full_cs);
+  csubg.initialise();
+
+  p_subgs.resize(nsHP::nSubGs);
+  p_subgs[nsHP::matA] = &asubg;
+  p_subgs[nsHP::matB] = &bsubg;
+  p_subgs[nsHP::matC] = &csubg;
+
+  coupled_parameters.push_back( { {nsHP::matA, nsHP::MIC}, {nsHP::matB, nsHP::MIC} } );
+  coupled_parameters.push_back( { {nsHP::matC, nsHP::UFO}, {nsHP::matC, nsHP::PUN} } );
+
+
+
+}
+
+void SubG::set_constraints(){
+  constraints = std::vector<unsigned> (nHPs, nsHP::undefined);
+  
+  std::vector<std::string> keyvalfrags;
+  if (subg_cs.compare("")){
+    keyvalfrags = stringutil::split(subg_cs, "_");
+  }
+  
+  
+  /* MIC, etc. */
+  std::string key; 
+  /* 6, etc */
+  unsigned val;  
+  for (auto & x : keyvalfrags){
+    std::tie(key, val) = stringutil::splitnumeric(x);
+    auto start = Keys.begin();
+    auto end  = Keys.end();
+    if(std::find(start, end, key) == end) {
+      std::stringstream ss;
+      ss << "While processing frag section " << "(some v func to determine which subg)" << ",\n";
+      ss << "in get constrains in hyperparams.cpp,  unrecognised : " + key << ".\n";
+      throw tinygemm_error(ss.str());
+    }
+
+    unsigned keyindex = Vals.at(key);
+    if (keyindex < constraints.size()){
+      constraints[keyindex] = val;
+    }
+
+    else{
+      throw tinygemm_error("in get constrains, strange out of bounds error, come and investigate");
+    }
+    
+  }
+
+
+  
+  
+  /* Are constraints supposed to be comprehensive ? */
+  if (subg_csfull == true)  {
+    for (unsigned hpi = 0; hpi < nHPs; ++hpi){
+      if (constraints[hpi] == nsHP::undefined){
+        std::stringstream ss;
+        ss << "While processing constraints string of " << "(some v func to determine which subg)" << ",\n";
+        ss << "parameter " << Keys[hpi] << " appears not to be set \n";
+        throw tinygemm_error(ss.str()); 
+      }
+    }
+  }  
+}
+
 
 
 void ChiralSubG::initialise_maps(){
@@ -171,7 +154,7 @@ void CSubG::initialise_maps(){
   Keys[nsHP::NAW] = "NAW";
   Keys[nsHP::UFO] = "UFO"; 
   Keys[nsHP::MAC] = "MAC"; 
-  NonChiralVals = getVals(nsHP::nNonChiralHPs, Keys, "NonChiralKeys");
+  Vals = getVals(nsHP::nNonChiralHPs, Keys, "NonChiralKeys");
 }
 
 
@@ -181,8 +164,8 @@ const std::map<unsigned, std::vector<unsigned> > graph_binary =
     {1, {0}}    };
 
 void SubG::initialise_range_from_edges(){
-  range.resize(graph.size());
-  for (unsigned i = 0; i < graph.size(); ++i){
+  range.resize(edges.size());
+  for (unsigned i = 0; i < edges.size(); ++i){
     for (auto & x : edges[i]){
       range[i].push_back(x.first);
     }
@@ -190,25 +173,71 @@ void SubG::initialise_range_from_edges(){
 }
 
 
+SubG::SubG(unsigned nHPs_, const tinygemm::TinyGemmGeometry & gg, std::string cs, bool csfull): nHPs(nHPs_), ptr_gg(&gg), Keys(nHPs_), edges (nHPs_), start_range (nHPs_), subg_cs(cs), subg_csfull(csfull) {
+  
+  
+}
 
-
-SubG::SubG(unsigned nHPs_, const tinygemm::TinyGemmGeometry & gg): nHPs(nHPs_), ptr_gg(&gg), Keys(size), Vals(size), graph (size), start_range (size), gg_start_range (size) {}
-
-void SubG::initialise(const tinygemm::TinyGemmGeometry & gg){
+void SubG::initialise(){
   initialise_maps();
+  set_constraints();
   set_edges();
   initialise_range_from_edges();
   set_start_range();
   confirm_start_is_subset();
 }
 
-void SubG::confirm_start_is_subset(){
-  //TODO
+std::string SubG::get_string(unsigned hpi){
+  std::stringstream ss;
+  ss << "Edges : \n";
+  for (auto & key_vec : edges[hpi]){
+    ss << key_vec.first << " :  ";
+    for (auto v : key_vec.second){
+      ss << v << " ";
+    }
+    ss << "\n";
+  }
+  
+  ss << "Range : \n";
+  for (auto & x : range[hpi]){
+    ss << x << " ";
+  }
+  ss << "\n";
+
+  ss << "Start Range : \n";
+  for (auto & x : start_range[hpi]){
+    ss << x << " ";
+  }
+  ss << "\n";  
+  
+
+  return ss.str();
 }
 
-ChiralSubG::ChiralSubG(const tinygemm::TinyGemmGeometry & gg) : SubG(nsHP::nChiralHPs, gg){}
+void SubG::confirm_start_is_subset(){
+  for (unsigned hpi = 0; hpi < nHPs; ++hpi){
+    
+    if (start_range[hpi].size() == 0){
+      std::stringstream ss;
+      ss << "no valid value to start from in " << Keys[hpi];
+      throw tinygemm_error(ss.str());
+    }
+    
+    for (auto & x : start_range[hpi]){
+      if (std::count(range[hpi].begin(), range[hpi].end(), x) == 0){
+        std::stringstream ss;
+        ss << "It seems like the start_range element `" << x << "' is not in the range of " << Keys[hpi] << ".";
+        ss << "The full setup of " << Keys[hpi] << " is\n ";
+        ss << get_string(hpi);
+        throw tinygemm_error(ss.str());
+      }
+    }
+  }
+}
 
-CSubG::CSubG(const tinygemm::TinyGemmGeometry & gg) : SubG(nsHP::nNonChiralHPs, gg){}
+ChiralSubG::ChiralSubG(const tinygemm::TinyGemmGeometry & gg, std::string cs, bool csfull) : SubG(nsHP::nChiralHPs, gg, cs, csfull){}
+
+CSubG::CSubG(const tinygemm::TinyGemmGeometry & gg, std::string cs, bool csfull) : SubG(nsHP::nNonChiralHPs, gg, cs, csfull){}
 
 void ASubG::set_chirality_specific(){
   start_range[nsHP::MIC] = {8};  
@@ -220,9 +249,8 @@ void BSubG::set_chirality_specific(){
 
 
 
-void ChiralSubG::set_start_range(const tinygemm::TinyGemmGeometry & gg){
+void ChiralSubG::set_start_range(){
   
-  start_range[nsHP::MIC] = {};
   start_range[nsHP::PAD] = {1};    
   start_range[nsHP::PLU] = {nsHP::no, nsHP::yes};  
   start_range[nsHP::LIW] = {nsHP::no};  
@@ -233,7 +261,7 @@ void ChiralSubG::set_start_range(const tinygemm::TinyGemmGeometry & gg){
 
 }
 
-void ChiralSubG::set_edges(const tinygemm::TinyGemmGeometry & gg){
+void ChiralSubG::set_edges(){
   
   edges[nsHP::MIC] =
   { {1, {2,3} },
@@ -266,10 +294,9 @@ void ChiralSubG::set_edges(const tinygemm::TinyGemmGeometry & gg){
 }
 
 
-void CSubG::set_start_range(const tinygemm::TinyGemmGeometry & gg){
+void CSubG::set_start_range(){
 
-  //gg currently not used for non-chiral
-  (void)gg;
+  //(void)gg;
   
   start_range[nsHP::UNR]= {8, 16};
   start_range[nsHP::NAW]= {16, 64};
@@ -281,10 +308,8 @@ void CSubG::set_start_range(const tinygemm::TinyGemmGeometry & gg){
 
 }
 
-void CSubG::set_edges(const tinygemm::TinyGemmGeometry & gg){
+void CSubG::set_edges(){
 
-  //gg currently not used for non-chiral
-  (void)gg;
   
   edges[nsHP::UNR] = 
   { {8, {16} },
@@ -346,21 +371,29 @@ void CSubG::set_edges(const tinygemm::TinyGemmGeometry & gg){
 
 
 void HyperParams::checks() const{
-  //for (auto & x : v_xhps){
-  for (unsigned gi = 0; gi < nsHP::nGraph; ++gi){
-    XHPs & x = v_xhps[gi];
-    SubG & graph = *(ptr_graphs->ptr_graphs[gi]);
-    for (unsigned i = 0; i < graph.nHPs; ++i){
-      auto start = graph.range[i].begin();
-      auto end = graph.range[i].end();
-      if (vs[i] == nsHP::undefined || (std::find(start, end, x.vs[i]) == end)) {
+  for (unsigned gi = 0; gi < nsHP::nSubGs; ++gi){
+    if (gi > v_xhps.size()){
+      throw tinygemm_error("strange error : gi > v_xhps.size()");
+    }
+    
+    const XHPs & x = v_xhps[gi];
+    SubG & graph = *(p_graph->p_subgs[gi]);
+    for (unsigned hpi = 0; hpi < graph.nHPs; ++hpi){
+      if (hpi >= graph.range.size()){
         std::stringstream errm;
-        errm << "\nIn XHPs::check(). It appears as though `" << x.vs[i] << "' is not a valid value for " << graph.Keys[i] << ".\n"; 
-        errm << "The valid values are,\n         [";
-        for (auto & valid_value : graph.range[i]){
-          errm << " " <<  valid_value << " ";
-        }
-        errm << "]\n";
+        errm << "strange error : hpi >= graph.range.size()\n";
+        errm << "specifically, " << hpi << " >= " << graph.range.size();
+        throw tinygemm_error(errm.str());
+      }
+
+      auto start = graph.range[hpi].begin();
+      auto end = graph.range[hpi].end();
+      
+      if (x.vs[hpi] == nsHP::undefined || (std::find(start, end, x.vs[hpi]) == end)) {
+
+        std::stringstream errm;
+        errm << "\nIn HyperParams::checks(). It appears as though `" << x.vs[hpi] << "' is not a valid value for " << graph.Keys[hpi] << ".\n"; 
+        errm << "the relevant graph looks like this: \n" << graph.get_string(hpi);
         throw tinygemm_error(errm.str());
       }
     }
@@ -369,8 +402,8 @@ void HyperParams::checks() const{
 
 
 void HyperParams::replace(const std::vector<std::vector<unsigned>> & params){
-  for (unsigned mi = 0; mi < nsHP::nGraph; ++mi){
-    for (unsigned hpi = 0; hpi < ptr_graphs->ptr_graphs[mi].nHPs; ++hpi){
+  for (unsigned mi = 0; mi < nsHP::nSubGs; ++mi){
+    for (unsigned hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi){
       v_xhps[mi].vs[hpi] = params.at(mi).at(hpi);
     }
   }
@@ -378,8 +411,8 @@ void HyperParams::replace(const std::vector<std::vector<unsigned>> & params){
 
 /* go through the params, and where it is not nHP::undefined, use its value to replace this */
 void HyperParams::replace_where_source_defined(const std::vector<std::vector<unsigned>> & params){
-  for (unsigned mi = 0; mi < nsHP::nGraph; ++mi){
-    for (unsigned hpi = 0; hpi < ptr_graphs->ptr_graphs[mi].nHPs[mi]; ++hpi){
+  for (unsigned mi = 0; mi < nsHP::nSubGs; ++mi){
+    for (unsigned hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi){
       if (params[mi][hpi] != nsHP::undefined){
         v_xhps[mi].vs[hpi] = params[mi][hpi];
       }
@@ -388,10 +421,10 @@ void HyperParams::replace_where_source_defined(const std::vector<std::vector<uns
 }
 
 void HyperParams::replace_undefined_randomly(){
-  for (unsigned mi = 0; mi < nsHP::nGraph; ++mi){
-    for (unsigned hpi = 0; hpi < ptr_graphs->ptr_graphs[mi].nHPs[mi]; ++hpi){
+  for (unsigned mi = 0; mi < nsHP::nSubGs; ++mi){
+    for (unsigned hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi){
       if (v_xhps[mi].vs[hpi] == nsHP::undefined){
-        auto & a_range = ptr_graphs->ptr_graphs[mi]->start_range[hpi];
+        auto & a_range = p_graph->p_subgs[mi]->start_range[hpi];
         unsigned index = radu.get_from_range (a_range.size());
         v_xhps[mi].vs[hpi] = a_range[index];
       }
@@ -402,30 +435,20 @@ void HyperParams::replace_undefined_randomly(){
 
 
 
-HyperParams::HyperParams(const Graph & graphs):ptr_graphs(&graphs) {
-  for (unsigned mi = 0; mi < nsHP::nMatrices; ++mi){
-    v_xhps.emplace_back {graphs->ptr_graphs.nHPs};
-    for (unsigned hpi = 0; hpi < suHP.nHPs[mi]; ++hpi){
-      v_xhps[mi].vs[hpi] = nsHP::undefined;
+HyperParams::HyperParams(const Graph & graph):p_graph(&graph) {
+  for (unsigned mi = 0; mi < nsHP::nSubGs; ++mi){
+    v_xhps.emplace_back (  XHPs ( p_graph->p_subgs[mi]->nHPs  )  );
+    for (unsigned hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi){
+
+      auto & a_range = p_graph->p_subgs[mi]->start_range[hpi];
+      unsigned index = radu.get_from_range (a_range.size());
+      v_xhps[mi].vs[hpi] = a_range[index];
+
+      //v_xhps[mi].vs[hpi] = nsHP::undefined;
     }
   }
-}  
-
-HyperParams::HyperParams(const Graph & graphs, const std::vector<std::vector<unsigned>> & params):HyperParams(graphs)
-{
-  replace(params);
   checks();
 }
-
-
-HyperParams::HyperParams(const Graph & graphs, const std::string & hyperstring): HyperParams(graphs, get_params_from_string(hyperstring, true)){}
-
-
-
-
-
-
-
 
   
 bool HyperParams::operator == (const HyperParams & hpr){
@@ -433,37 +456,30 @@ bool HyperParams::operator == (const HyperParams & hpr){
 }
 
 
+std::string HyperParams::get_part_string(char X) const{
+  unsigned mi = p_graph->graphind.at(X);
+  std::stringstream ss;
+  ss << X;
+  for (unsigned hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi){
+    ss << "_" << p_graph->p_subgs[mi]->Keys[hpi] << v_xhps[mi].vs[hpi];
+  }
+  return ss.str();
+}
 
 std::string HyperParams::get_string() const{
   
-  
-  throw tinygemm_error("can't fo string sm oys");
-//std::string XHPs::get_string() const{  
-  //std::stringstream ss;
-  //for (unsigned hpi = 0; hpi < vs.size() - 1; ++hpi){
-    //ss << (*ptr_hpkeys)[hpi] << vs[hpi] << "_";
-  //}
-  //ss << (*ptr_hpkeys).back() << vs.back();
-  //return ss.str();
-//}
-
-
-
-  //std::stringstream ss;
-  //for (unsigned mi : {nsHP::matA, nsHP::matB}){
-    //ss << suHP.MatKeys[mi] << "_" << v_xhps[mi].get_string() << "__";
-  //}
-  //ss << 'C' << "_" << v_xhps[nsHP::matC].get_string();
-  //return ss.str();
+  std::stringstream ss;
+  ss << get_part_string('A') << "__" << get_part_string('B') << "__" << get_part_string('C');  
+  return ss.str();
 }
 
 std::vector<HyperParams> HyperParams::get_one_aways(){
   
   std::vector<HyperParams> one_aways;
-  for (unsigned mi = 0; mi < nsHP::nMatrices; ++mi){
-    for (unsigned hpi = 0; hpi < ptr_graphs->ptr_graphs[mi].nHPs; ++hpi){
+  for (unsigned mi = 0; mi < nsHP::nSubGs; ++mi){
+    for (unsigned hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi){
       unsigned value = v_xhps[mi].vs[hpi];
-      for (auto & newval : ptr_hpgraphs.ptr_hpgraphs[mi]->edges[hpi].at(value)){
+      for (auto & newval : p_graph->p_subgs[mi]->edges[hpi].at(value)){
         HyperParams hp(*this);
         hp.v_xhps[mi].vs[hpi] = newval;
         one_aways.push_back(hp);        
@@ -473,7 +489,7 @@ std::vector<HyperParams> HyperParams::get_one_aways(){
   unsigned n_uncoupled = one_aways.size();
   
   
-  for (auto & couple_p : ptr_graphs->coupled_parameters){
+  for (auto & couple_p : p_graph->coupled_parameters){
 
     auto first = std::get<0>(couple_p);
     auto first_m = std::get<0>(first);
@@ -485,8 +501,8 @@ std::vector<HyperParams> HyperParams::get_one_aways(){
     auto second_p = std::get<1>(second);
     auto second_value = v_xhps[second_m].vs[second_p];
 
-    for (auto & new_first_val : ptr_graphs->ptr_graphs[first_m]->edges[first_p].at(first_value)){
-      for (auto & new_second_val : ptr_graphs->ptr_graphs[second_m]->edges[second_p].at(second_value)){      
+    for (auto & new_first_val : p_graph->p_subgs[first_m]->edges[first_p].at(first_value)){
+      for (auto & new_second_val : p_graph->p_subgs[second_m]->edges[second_p].at(second_value)){      
         HyperParams hp(*this);
         
         hp.v_xhps[first_m].vs[first_p] = new_first_val;
@@ -525,20 +541,22 @@ std::vector<HyperParams> HyperParams::get_one_aways(){
 
 
      
-HyperParams get_hp_start(FindStartType fst, std::string constraint_string, const Graph & graphs){
+HyperParams get_hp_start(FindStartType fst, const Graph & graph){
 
-  auto constraint_params = graphs.get_params_from_string(constraint_string, false);
+  HyperParams hyper_param_start(graph);
 
-  HyperParams hyper_param_start(graphs);
   if (fst == FindStartType::Default){
-    hyper_param_start = graphs.get_default();
-    hyper_param_start.replace_where_source_defined(constraint_params);
+    std::stringstream ss;
+    ss << "getting default in get_hp_start not enabled. Also small matrices will break tinygemm (again) default should return something like\n";
+    ss << "A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN0_ICE1_NAW64_UFO0_MAC5  here.\n";
+    throw tinygemm_error(ss.str());
   }
-  
-  else if (fst == FindStartType::Random){
-    hyper_param_start.replace(constraint_params);
-    hyper_param_start.replace_undefined_randomly(graphs);
-  }
+
+  //else if (fst == FindStartType::Random){
+    //auto constraint_params = graph.get_params_from_string(constraint_string, false);
+    //hyper_param_start.replace(constraint_params);
+    //hyper_param_start.replace_undefined_randomly();
+  //}
   
   hyper_param_start.checks();  
   return hyper_param_start;
@@ -547,12 +565,12 @@ HyperParams get_hp_start(FindStartType fst, std::string constraint_string, const
 
 
 
-bool HyperParams::satisfies_where_source_defined(const std::vector<std::vector<unsigned>> & params){
+bool HyperParams::in_graph(){   //satisfies_where_source_defined(const std::vector<std::vector<unsigned>> & params){
   /* filtering out if violates the constraint string */
   bool constraints_satisfied = true;
-  for (unsigned mi = 0; mi < nsHP::nMatrices; ++mi){
-    for (unsigned hpi = 0; hpi < suHP.nHPs[mi]; ++hpi){
-      if (params[mi][hpi] != nsHP::undefined && v_xhps[mi].vs[hpi] != params[mi][hpi]){
+  for (unsigned mi = 0; mi < nsHP::nSubGs; ++mi){
+    for (unsigned hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi){
+      if (std::count(p_graph->p_subgs[mi]->range[hpi].begin(), p_graph->p_subgs[mi]->range[hpi].end(), v_xhps[mi].vs[hpi]) == 0){
         constraints_satisfied = false;
         break;
       }
@@ -561,55 +579,6 @@ bool HyperParams::satisfies_where_source_defined(const std::vector<std::vector<u
   return constraints_satisfied;
 }
 
-tinygemm::HyperParams get_default(Graph & graph){
-  if (graph.ptr_gg->m < 8 || graph.ptr_gg->n < 8){
-    std::cout << "really skinny/thin matrix, returning a default TinyGemmSolution based on gg and constraint_string without searching/benching " << std::endl;
-    throw tinygemm_error("sort this out");
-  }
-    
-  /* TODO : rather get default from cache, based on gg (?) */
-  auto hp = HyperParams hp("A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN0_ICE1_NAW64_UFO0_MAC5");
-  
-  throw tinygemm_error("get_default not yet enabled (in paper writing mode)");
-  return hp;  
-}
-
-
 } 
 }
 
-
-
-
-
-
-
-
-//SUHP::SUHP(){
-
-  //MatKeys.resize(nsHP::nMatrices);
-  //HPVals.resize(nsHP::nMatrices);
-  //HPKeys.resize(nsHP::nMatrices);
-  
-
-
-  //MatVals = getVals(nsHP::nMatrices, MatKeys, "MatKeys");
-  
-  //HPVals[nsHP::matA] = ChiralVals;
-  //HPVals[nsHP::matB] = ChiralVals;
-  //HPVals[nsHP::matC] = NonChiralVals;
-
-
-  //HPKeys[nsHP::matA] = ChiralKeys;
-  //HPKeys[nsHP::matB] = ChiralKeys;
-  //HPKeys[nsHP::matC] = NonChiralKeys;
-
-
-
-
-  ////SubGKeys[nsHP::ChiralType] = ChiralKeys;
-  ////SubGKeys[nsHP::NonChiralType] = NonChiralKeys;
-
-//}
-
-//const SUHP suHP;
