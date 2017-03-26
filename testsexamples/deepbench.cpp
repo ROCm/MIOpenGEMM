@@ -130,7 +130,7 @@ int main(){
   
   /* constraint_string, ldx_offset */
   std::vector<std::tuple<std::string, unsigned>> run_settings = {
-    std::make_tuple("",0), 
+    std::make_tuple("C_ICE1",0), 
   };  //A_LIW0_MIW1_PAD1__B_LIW0_MIW1_PAD1__C_UFO0
   
   /* We're just tracking the overall run time with these */
@@ -165,7 +165,16 @@ int main(){
     
     std::sort(areas.begin(), areas.end());      
 
-    for (unsigned iteration = 0; iteration < 1; ++iteration){
+    for (unsigned iteration = 0; iteration < 10; ++iteration){
+
+      std::string dir_for_writing("/home/james/tinygemmout/");
+      std::stringstream fulldir_ss;
+      fulldir_ss << dir_for_writing  << "deepbench" << iteration << "/";
+      std::string fulldir = fulldir_ss.str();
+      std::string syscall = std::string("mkdir -p  ") + fulldir;
+      std::system(syscall.c_str());
+
+
       for (unsigned prob_i = 0; prob_i < problems.size(); ++prob_i){
       
         auto problem = problems[prob_i];
@@ -175,24 +184,16 @@ int main(){
         
         if (m*n < 50000){
         
-        end = std::chrono::high_resolution_clock::now();
-        fp_ms = end - start;
-        elapsed_seconds = fp_ms.count();
         
         //std::cout << (prob_i + 1) <<  "/" <<  problems.size() << " \t m:" << m << " \t n:" << n << " \t k:" << k << " \t tA:" << tA << " \t tB:" << tB << "  \t  elapsed time : " << elapsed_seconds << " [s]" << std::endl;    
         
         
-        std::stringstream ss_logfile;  
         
-        if (false){
-          std::string dir_for_writing("/home/james/tinygemmout/");
-          std::stringstream fulldir_ss;
-          fulldir_ss << dir_for_writing  << "deepbench" << iteration << "/";
-          std::string fulldir = fulldir_ss.str();
-          std::string syscall = std::string("mkdir ") + fulldir;
-          std::system(syscall.c_str());      
-          ss_logfile << fulldir << "/" << "at" << int(allotted_time) << "_off" << ldx_offset << "_cs" << constraint_string << "_m" << m  << "_n" << n  << "_k" << k  << "_tA" << tA  << "_tB" << tB << ".txt";   
-        }
+        
+        
+        std::stringstream ss_logfile;        
+        ss_logfile << fulldir << "/" << "at" << int(allotted_time) << "_off" << ldx_offset << "_cs" << constraint_string << "_m" << m  << "_n" << n  << "_k" << k  << "_tA" << tA  << "_tB" << tB << ".txt";   
+        
   
         
         unsigned lda = (tA == isColMajor ? k : m) + (ldx_offset == 1 ? 5 : 0);
@@ -223,8 +224,12 @@ int main(){
   
         auto soln = basicfind<float>(gg, offsets, allotted_time, verbose, ss_logfile.str(), constraint_string, fst,  n_postfind_runs, do_cpu_test);    
 
+        end = std::chrono::high_resolution_clock::now();
+        fp_ms = end - start;
+        elapsed_seconds = fp_ms.count();
 
         std::cout << (prob_i + 1) <<  "/" <<  problems.size() << " \t m:" << get_padded(m) << " \t n:" << get_padded(n) << " \t k:" << get_padded(k) << " \t tA:" << tA << " \t tB:" << tB << " \tsoln median gflops :  " << soln.statistics.median_benchmark_gflops << "  \t soln median time : " << soln.statistics.median_benchmark_time << "  \t  elapsed time : " << elapsed_seconds << " [s] " << std::endl;
+        
                 
         }
       }

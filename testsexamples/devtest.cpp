@@ -146,7 +146,7 @@ int main(){
   
   if (test_find){
     std::string constraint_string("");
-    float allotted_time = 0.1;
+    float allotted_time = 2.1;
     tinygemm::dev::find(allotted_time, v_a.data(), v_b.data(), v_c.data(), constraint_string, fst, gg, toff, true, "/home/james/output.txt");
   }
   

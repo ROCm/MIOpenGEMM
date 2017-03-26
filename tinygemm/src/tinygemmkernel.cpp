@@ -3,8 +3,9 @@
 #include <tinygemm/openclutil.hpp>
 #include <tinygemm/tinygemmerror.hpp>
 
-
 #include <chrono>
+#include <iomanip>
+
 namespace tinygemm{
   
 
@@ -31,7 +32,7 @@ void TinyGemmKernel::update(const KernelString & ks, outputwriting::OutputWriter
 
   tgk_strings = ks;
   
-  mowri << "compiling " << ks.type.basic << " ( " << ks.type.full << " ) ... " << Flush;
+  mowri << "compiling " << ks.type.basic << ". " << Flush;
 
 
   auto start = std::chrono::high_resolution_clock::now();
@@ -43,7 +44,7 @@ void TinyGemmKernel::update(const KernelString & ks, outputwriting::OutputWriter
   float elapsed_seconds = fp_ms.count();
 
 
-  mowri << "done in " << elapsed_seconds << " [s]" << Endl;
+  mowri << "Done in " << std::setprecision(3) << elapsed_seconds << std::setprecision(6) << " [s]" << Endl;
 
 }
 

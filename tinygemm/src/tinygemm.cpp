@@ -5,6 +5,7 @@
 #include <vector> 
 #include <algorithm>
 #include <map>
+#include <iomanip>
 
 #include <tinygemm/tinygemmerror.hpp>
 #include <tinygemm/tinygemm.hpp>
@@ -77,7 +78,7 @@ class TinyGemmGPUMems{
 class OpenCLGemmEncapsulator{
 
 public:   
-  bool paperquiet = true;
+  bool paperquiet = false;
 
   cl_command_queue command_queue;
   std::string outputfilename;
@@ -94,6 +95,11 @@ private:
   outputwriting::OutputWriter mowri;
   /* vector of times over a set of runs on core loop */
   std::vector<float> v_t_total;
+  float median_time;
+  float median_gflops;
+  /* (for find) while generating, compiling and benchmarking kernels, we will keep track of the fastest found thus far */
+  std::vector<tinygemm::TinyGemmSolution> best_solns_path;
+
 
   std::map<std::string, TinyGemmKernel > tk_kernels_map;
   std::vector <TinyGemmKernel *> tk_kernels_active;  
@@ -127,6 +133,21 @@ public:
   }
   
 private:
+
+  void set_medians(){
+    
+    auto v_t_total_copy = v_t_total;
+    
+    std::sort(v_t_total_copy.begin(), v_t_total_copy.end());
+    /* Taking the fastest or median? */ 
+    median_time = v_t_total_copy[0];//[v_t_total.size()/2]; 
+    median_gflops = get_gflops(median_time);
+  }
+  
+  float get_gflops(float timems){
+    return  (2. * gg.m * gg.n * gg.k) / (timems * 10e5);  
+  }
+
   void address_check_valid(){
     if (gpum['c'] == gpum['a'] || gpum['c'] == gpum['b']){
       throw tinygemm_error("c should be distinct from a and b for gemm, otherwise race condition arises (one thread writes its result to c before another one has finished reading from c)");
@@ -264,20 +285,31 @@ private:
       v_t_total.push_back(std::numeric_limits<float>::max());
     }
   }
+
+  std::string get_run_times_heading(){
+    std::stringstream ss;
+    ss << "tt: \t";
+    for (unsigned k_ind = 0; k_ind < tk_kernels_active.size(); ++k_ind){
+      ss << " k" << k_ind <<  ":\t";
+    }
+    ss << " Gflops/s:\n";    
+    return ss.str();
+  }
   
-  void print_run_times(cl_int status){
-    
-    if (status == CL_SUCCESS){
-      mowri << "total time : " <<  v_t_total.back() << "\t (";
+  std::string get_run_time_string(cl_int status){
+    std::stringstream ss;
+    if (status == CL_SUCCESS){      
+      ss << std::fixed << std::setprecision(3) << v_t_total.back() << "\t";
       for (unsigned k_ind = 0; k_ind < tk_kernels_active.size(); ++k_ind){
-        mowri << " k" << k_ind << ": " << tk_kernels_active[k_ind]->v_times.back() << " ";
+        ss << " " << tk_kernels_active[k_ind]->v_times.back() << "\t";
       }
-      mowri << ") " << "\tGflops/s : " << 2.0 * gg.m * gg.n * gg.k / (v_t_total.back() * 1e6) << Endl;
+      ss  << " " << 2.0 * gg.m * gg.n * gg.k / (v_t_total.back() * 1e6) << std::defaultfloat << std::setprecision(6);
     }
 
     else{
-      mowri << "elapsed time : " <<  " (max float) \n";
+      ss << "(failed run)";
     }
+    return ss.str();
   }
 
 
@@ -289,10 +321,18 @@ private:
   }
   
   
-  void core_gemm_loop(size_t n_runs){
+  void core_gemm_loop(size_t n_runs, bool print_asap){
     
     reset_v_times();
     
+    std::vector<std::string> indi_run_strings;
+
+    if (print_asap == true){
+      mowri << get_run_times_heading();
+    }
+      
+
+
     for (size_t kqq = 0; kqq < n_runs; ++kqq){
 
       /* This pause should have zero effect but
@@ -379,8 +419,30 @@ private:
       }
       
       update_run_times(status);
-      if (paperquiet == false){
-        print_run_times(status);
+      indi_run_strings.push_back(get_run_time_string(status));
+      if (print_asap == true){
+        mowri << indi_run_strings[kqq] << "\n";
+      }
+
+    }
+    
+    set_medians();
+    
+    
+    if (print_asap == false){
+      mowri << get_run_times_heading();
+      for (size_t kqq = 0; kqq < n_runs; ++kqq){
+        mowri << indi_run_strings[kqq];
+        if (median_time == v_t_total[kqq]){
+          mowri << " (median) ";
+          if (best_solns_path.size() > 0 && (best_solns_path.back().statistics.median_benchmark_time >= median_time)){
+            mowri << " (NEW FASTEST) ";
+          }
+        }
+        
+
+              
+        mowri << "\n";
       }
     }
   }
@@ -416,7 +478,7 @@ public:
       setup_tinykernels(hps[i], bundle); 
       
       mowri << "(benchgemm) geometry  \t:" << gg.get_string()  << "\nEntering the core gemm loops" << Endl;
-      core_gemm_loop(n_runs);
+      core_gemm_loop(n_runs, true);
     }
   }
   
@@ -444,7 +506,6 @@ public:
     
     while (found_a_deriveable_hp == false && deriveable_search_iteration < n_trials){
       
-      //TODO graph should already have constraint_string in it...
       hyper_param_start = hyperparams::get_hp_start(fst, graph);
       auto deriveability = derivedparams::get_deriveability(hyper_param_start, gg);
       if (std::get<0>(deriveability) == false){
@@ -458,7 +519,7 @@ public:
     
     if (found_a_deriveable_hp == false){
       deriveablesearch_ss << "\n\nStruggling to find a deriveable set of hyper parameters which satisfy the geometry and constraints. THe number of attempts made is " << n_trials << "\n throwing an error\n";
-      //should rather return no solution ? or one which we know to be deriveable ? Yes. throwing an error should not be stochastic!
+      //should rather return no solution ? or one which we know to be deriveable ? Yes. throwing an error should not be stochastic....
       throw tinygemm_error(deriveablesearch_ss.str());
     }
     return hyper_param_start;
@@ -480,19 +541,13 @@ public:
 
     /* we will count how many kernels are successfully generated AND compiled AND benchmarked */
     unsigned global_counter = 0;
-   
-    
+       
     hyperparams::HyperParams hyper_param_start = get_hyper_param_start(fst, graph);
-
-    
-    /* we track the best TinyGemmSolution found during the search  */    
-    std::vector<tinygemm::TinyGemmSolution> path_of_best_solns;
     /* In here, we will store all previously considered HyperParams strings, used to check and ensure that we do not consider a HyperParam more than once */
     std::vector<std::string> hyper_front_history;
-    std::vector<float> hyper_front_history_gflops;
-    /* while generating, compiling and benchmarking kernels, we will keep track of the fastest found thus far */
-    float best_time = std::numeric_limits<float>::max();
-    hyperparams::HyperParams best_hp = hyper_param_start;
+ 
+    best_solns_path.clear();
+    
     std::vector<hyperparams::HyperParams> hyper_front = { hyper_param_start };
 
     bool improvement_found_on_front = true;    
@@ -506,67 +561,36 @@ public:
       std::chrono::duration<float> fp_ms = end - start;
       elapsed_seconds = fp_ms.count();          
     };
-    update_elapsed_seconds();
+    
     
     while (improvement_found_on_front == true){
+      update_elapsed_seconds();
       improvement_found_on_front = false;
       unsigned hfi = 0;
       while (hfi < hyper_front.size() && improvement_found_on_front == false && elapsed_seconds < allotted_time){
         hyperparams::HyperParams hp = hyper_front[hfi];
-        std::string hp_string = hp.get_string();
-        
+        std::string hp_string = hp.get_string();        
         hyper_front_history.push_back(hp_string);
-        hyper_front_history_gflops.push_back(0);
-        
+
         /* extra precaution, should be able to remove this */
-        deriveability_test(hp, "in find loop");        
+        deriveability_test(hp, "in find loop");     
+           
         auto bundle = tinygemm::kerngen::get_bundle(hp,gg);
         /* the OpenCL string was succesfully generated, we can now attempt to compile and benchmark it */
         ++global_counter;
-        if (paperquiet == false){
-          mowri << "\nglobal gen-com-bench : " << global_counter  <<  ".\n" << hp.get_string() << Endl;
-        }
-        else {
-          mowri << global_counter << " " << Flush;
-        }
+
+        mowri << "\n[" << global_counter  <<  ", " << std::fixed << std::setprecision(2) << elapsed_seconds;
+        mowri << std::setprecision(6) << std::defaultfloat << "s]\t" << hp.get_string() << Endl;
+        
         setup_tinykernels(hp, bundle);  
-        core_gemm_loop(n_runs_per_kernel);
-        std::sort(v_t_total.begin(), v_t_total.end());
-        /* Taking the fastest or median? */ 
-        float median_time = v_t_total[0];//[v_t_total.size()/2]; 
-        float median_gflops = (2. * gg.m * gg.n * gg.k) / (median_time * 10e5);
-        hyper_front_history_gflops[hyper_front_history_gflops.size() - 1] = median_gflops;
-        
-        if (paperquiet == false){
-          if (std::abs(v_t_total.back() - median_time) / median_time > 0.2) {
-            mowri << "tinygemm_warning: large variance in times. " <<  Endl;
-          }
-        }
-        
-        update_elapsed_seconds();
-        
-        if (paperquiet == false){
-          mowri << "median time  : " << median_time << "\t m-Gflops/s : " << 2.0 * gg.m * gg.n * gg.k / (median_time * 1e6);
-          mowri << "  \ttotal elapsed seconds : " << elapsed_seconds << Endl;
-        }
+        core_gemm_loop(n_runs_per_kernel, false);
 
         /* A new best kernel found */
-        if (median_time < 1.000*best_time){
-          improvement_found_on_front = true;
-          best_time = median_time;
-
-          best_hp = hp;
-          
-          if (paperquiet == false){
-            mowri << "********************************************" << Endl;
-            mowri << "\tNEW BEST MEDIAN TIME FOUND" << Endl;
-            mowri << "\tmedian gflops  : " << median_gflops << Endl;
-            mowri << "\tbreaking from hyper front " << Endl;
-            mowri << "********************************************" << Endl;
-          }
+        if (best_solns_path.size() == 0 || median_time < 1.000*best_solns_path.back().statistics.median_benchmark_time){
           update_elapsed_seconds();
-          tinygemm::TinyGemmSolutionStatistics tgss(median_time, median_gflops, elapsed_seconds);               
-          path_of_best_solns.emplace_back( hp, gg, bundle.dp, tgss, bundle.v_tgks  );
+          improvement_found_on_front = true;
+          auto sstats = TinyGemmSolutionStatistics(median_time, median_gflops, elapsed_seconds);
+          best_solns_path.emplace_back (hp, gg, bundle.dp, sstats, bundle.v_tgks );
         }
         ++hfi;
         update_elapsed_seconds();
@@ -575,11 +599,12 @@ public:
   
       if (improvement_found_on_front == true && allotted_time > elapsed_seconds){
         
-        if (paperquiet == false){
-          mowri << "creating new current hyper front \t(";// << Endl;
-        }
+        
+        //mowri << "\n(";     
+        
+        
         /* getting all `one-away's */        
-        auto one_aways = best_hp.get_one_aways();
+        auto one_aways = best_solns_path.back().hp.get_one_aways();
         char front_insertion_type;
         /* refreshing hyper front */
         hyper_front.clear();
@@ -610,17 +635,13 @@ public:
           /* looks ok, adding it to the hyper-front */
           else{
             front_insertion_type = '+';
-            hyper_front.push_back(hp); //hyperparams::HyperParams(graph, hp_string));
+            hyper_front.push_back(hp);
           }
-          
-          if (paperquiet == false){
-            mowri << front_insertion_type;
-          }
+          //mowri << front_insertion_type;
+
         }
-        
-        if (paperquiet == false){
-          mowri << ")\n" << "new hyper front size : " << hyper_front.size() << Endl;
-        }
+        //mowri << ")  [+" << hyper_front.size() << "]" << Endl;
+
       }
     }
     
@@ -636,31 +657,23 @@ public:
       throw tinygemm_error("why did the algorithm stop ? ");
     }
     
-    if (path_of_best_solns.size() == 0){
+    if (best_solns_path.size() == std::numeric_limits<float>::max()){
       throw tinygemm_error("\nThere were no solutions found. This suggests that the initial kernel did not work (could not derive hyper parameters, required too much memory, or did not compile. Maybe there is some preceding warning printed which sheds light on this? Probably with a modification to the FindStartType or the constraint_string, this should be resolved. For example, the unroll UNR can be reduced if the problem is memory. TODO(jn) catch certain problems in architests ");
     }
   
-    if (paperquiet == false){
-      mowri << "\nstart kernel : " << hyper_param_start.get_string() << Endl;
-      mowri << "best kernel  : " << best_hp.get_string() << Endl;
-    }
-
+    auto leading_size = best_solns_path.back().get_hyper_param_string().size() + 2;
     
-    mowri << "all the kernels visited : " << Endl;
+    std::string startstring  = "hyper parameter string:";
+    startstring.resize(leading_size, ' ');
+    mowri << "\n" << startstring <<  "\t time when found:\t median Gflops/s:" << Endl;
 
-    for (unsigned xi = 0; xi <  hyper_front_history.size(); ++xi){
-      mowri <<  hyper_front_history[xi] << "  \t   " << hyper_front_history_gflops[xi]  << Endl;
-    }
-    
-    mowri << "the kernels along the path the final solution:  " << Endl; 
-    mowri << "hyper parameter string                                          \t time when found\t median gflop/s" << Endl;
-
-    for (auto & x : path_of_best_solns){
-      mowri <<  x.get_hyper_param_string() << "\t " << x.statistics.solution_discovery_time << "\t\t " << x.statistics.median_benchmark_gflops  << Endl;
+    for (auto & x : best_solns_path) {
+      std::string solnstring = x.get_hyper_param_string();
+      solnstring.resize(leading_size, ' ');
+      mowri <<  std::fixed <<  solnstring << "\t " << x.statistics.solution_discovery_time << "\t\t " << x.statistics.median_benchmark_gflops  << std::defaultfloat << Endl;
     }
     
-    mowri <<  "\n" << path_of_best_solns.back().get_hyper_param_string() << "\t " << elapsed_seconds << "\t\t " << path_of_best_solns.back().statistics.median_benchmark_gflops  << Endl;
-    return path_of_best_solns.back();
+    return best_solns_path.back();
   }
 }; 
 
