@@ -123,114 +123,89 @@ int main(){
   
   bool isColMajor = true;
   bool tC = false;
-  //double alpha = 1.43235342345;
-  //double beta = 0.45348379373;
-  float allotted_time = 100.00; 
+  float allotted_time = 200.00; 
   bool verbose = false;
   
   /* constraint_string, ldx_offset */
   std::vector<std::tuple<std::string, unsigned>> run_settings = {
-    std::make_tuple("C_ICE1",0), 
-  };  //A_LIW0_MIW1_PAD1__B_LIW0_MIW1_PAD1__C_UFO0
-  
-  /* We're just tracking the overall run time with these */
+    std::make_tuple("",0),
+    std::make_tuple("C_ICE1",0),
+    std::make_tuple("C_UFO0",0),
+    std::make_tuple("A_LIW0__B_LIW0",0), 
+  };
+    
+  /* We're tracking the overall run time with these */
   auto start = std::chrono::high_resolution_clock::now();
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<float> fp_ms = end - start;
   float elapsed_seconds = fp_ms.count();
-  
-  
-  
-  for (const auto & run_setting :  run_settings){
-  
-    std::string constraint_string;
-    unsigned ldx_offset;
-    std::tie(constraint_string, ldx_offset) = run_setting;
-    
-    std::cout << "\n\n\nEntering benchmarking experiment with constraint_string = (" << constraint_string << ") and ldx_offset = " << ldx_offset << std::endl;
-    
-    
-    
-    //for (unsigned prob_i = 0; prob_i < problems.size(); ++prob_i){
 
-  std::vector<unsigned> areas;
-
-   for (unsigned prob_i = 0; prob_i < problems.size(); ++prob_i){
-      auto problem = problems[prob_i];
-      int m, n, k;
-      bool tA, tB;
-      std::tie(m, n, k, tA, tB) = problem;
-      areas.push_back(m*n);      
-    }
-    
-    std::sort(areas.begin(), areas.end());      
-
-    for (unsigned iteration = 0; iteration < 10; ++iteration){
-
-      std::string dir_for_writing("/home/james/tinygemmout/");
+  unsigned n_iterations = 30;
+  for (unsigned iteration = 0; iteration < n_iterations; ++iteration){
+    std::cout << "\n\nEntering iteration " << iteration <<  " of "  << n_iterations << std::endl;
+  
+    for (const auto & run_setting :  run_settings){
+      std::string constraint_string;
+      unsigned ldx_offset;
+      std::tie(constraint_string, ldx_offset) = run_setting;
+      std::cout << "\nEntering benchmarking experiment with constraint_string = (" << constraint_string << ") and ldx_offset = " << ldx_offset << std::endl;
+      std::string dir_for_writing("/home/james/gemmpaper/data/apiless/dbsmall/");
       std::stringstream fulldir_ss;
       fulldir_ss << dir_for_writing  << "deepbench" << iteration << "/";
       std::string fulldir = fulldir_ss.str();
       std::string syscall = std::string("mkdir -p  ") + fulldir;
       std::system(syscall.c_str());
 
-
       for (unsigned prob_i = 0; prob_i < problems.size(); ++prob_i){
-      
+        
         auto problem = problems[prob_i];
         int m, n, k;
         bool tA, tB;
         std::tie(m, n, k, tA, tB) = problem;
+        unsigned area_threshold = 100000;
+        if (m*n > 100000){
+          std::cout << "skipping the problem as m*n > " << area_threshold << std::endl;
+        }
         
-        if (m*n < 50000){
+        else {
         
-        
-        //std::cout << (prob_i + 1) <<  "/" <<  problems.size() << " \t m:" << m << " \t n:" << n << " \t k:" << k << " \t tA:" << tA << " \t tB:" << tB << "  \t  elapsed time : " << elapsed_seconds << " [s]" << std::endl;    
-        
-        
-        
-        
-        
-        std::stringstream ss_logfile;        
-        ss_logfile << fulldir << "/" << "at" << int(allotted_time) << "_off" << ldx_offset << "_cs" << constraint_string << "_m" << m  << "_n" << n  << "_k" << k  << "_tA" << tA  << "_tB" << tB << ".txt";   
-        
-  
-        
-        unsigned lda = (tA == isColMajor ? k : m) + (ldx_offset == 1 ? 5 : 0);
-        unsigned ldb = (tB == isColMajor ? n : k) + (ldx_offset == 1 ? 7 : 0);
-        unsigned ldc = (tC == isColMajor ? n : m) + (ldx_offset == 1 ? 13 : 0);
-        
-        unsigned a_offset = 0;
-        unsigned b_offset = 0;
-        unsigned c_offset = 0;
-   
-   
-        unsigned tail_off_a = 0;
-        unsigned tail_off_b = 0;
-        unsigned tail_off_c = 0;
-  
-        
-        unsigned n_postfind_runs = 0;
-        bool do_cpu_test = false;
-        
-        unsigned workspace_size = 3;
-        unsigned workspace_offset = 4;      
+          std::stringstream ss_logfile;        
+          ss_logfile << fulldir << "/" << "at" << int(allotted_time) << "_off" << ldx_offset << "_cs" << constraint_string << "_m" << m  << "_n" << n  << "_k" << k  << "_tA" << tA  << "_tB" << tB << ".txt";
+          
+          unsigned lda = (tA == isColMajor ? k : m) + (ldx_offset == 1 ? 5 : 0);
+          unsigned ldb = (tB == isColMajor ? n : k) + (ldx_offset == 1 ? 7 : 0);
+          unsigned ldc = (tC == isColMajor ? n : m) + (ldx_offset == 1 ? 13 : 0);
+          
+          unsigned a_offset = 0;
+          unsigned b_offset = 0;
+          unsigned c_offset = 0;
+     
+     
+          unsigned tail_off_a = 0;
+          unsigned tail_off_b = 0;
+          unsigned tail_off_c = 0;
     
-        tinygemm::FindStartType fst(tinygemm::FindStartType::Random);
+          
+          unsigned n_postfind_runs = 0;
+          bool do_cpu_test = false;
+          
+          unsigned workspace_size = 3;
+          unsigned workspace_offset = 4;      
+      
+          tinygemm::FindStartType fst(tinygemm::FindStartType::Random);
+    
+          char floattype = 'f';
+          tinygemm::TinyGemmGeometry gg (isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype);
+          tinygemm::TinyGemmOffsets offsets (a_offset, b_offset, c_offset, workspace_offset, tail_off_a, tail_off_b, tail_off_c);
+    
+          auto soln = basicfind<float>(gg, offsets, allotted_time, verbose, ss_logfile.str(), constraint_string, fst,  n_postfind_runs, do_cpu_test);    
   
-        char floattype = 'f';
-        tinygemm::TinyGemmGeometry gg (isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype);
-        tinygemm::TinyGemmOffsets offsets (a_offset, b_offset, c_offset, workspace_offset, tail_off_a, tail_off_b, tail_off_c);
+          end = std::chrono::high_resolution_clock::now();
+          fp_ms = end - start;
+          elapsed_seconds = fp_ms.count();
   
-        auto soln = basicfind<float>(gg, offsets, allotted_time, verbose, ss_logfile.str(), constraint_string, fst,  n_postfind_runs, do_cpu_test);    
+          std::cout << (prob_i + 1) <<  "/" <<  problems.size() << " \t m:" << get_padded(m) << " \t n:" << get_padded(n) << " \t k:" << get_padded(k) << " \t tA:" << tA << " \t tB:" << tB << " \tsoln median gflops :  " << soln.statistics.median_benchmark_gflops << "  \t soln median time : " << soln.statistics.median_benchmark_time << "  \t  elapsed time : " << elapsed_seconds << " [s] " << std::endl;
 
-        end = std::chrono::high_resolution_clock::now();
-        fp_ms = end - start;
-        elapsed_seconds = fp_ms.count();
-
-        std::cout << (prob_i + 1) <<  "/" <<  problems.size() << " \t m:" << get_padded(m) << " \t n:" << get_padded(n) << " \t k:" << get_padded(k) << " \t tA:" << tA << " \t tB:" << tB << " \tsoln median gflops :  " << soln.statistics.median_benchmark_gflops << "  \t soln median time : " << soln.statistics.median_benchmark_time << "  \t  elapsed time : " << elapsed_seconds << " [s] " << std::endl;
-        
-                
         }
       }
     }
