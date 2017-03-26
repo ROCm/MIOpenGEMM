@@ -2,6 +2,16 @@
 #include <sstream>
 #include <chrono>
 
+std::string get_padded(unsigned x, unsigned length = 4){
+  auto n_pads = length + 1 - unsigned(std::log10(x + 1.));
+  std::string padded = std::to_string(x);
+  for (auto sp = 0; sp < n_pads; ++sp){
+    padded = padded + " ";
+  }
+  return padded;
+}
+
+
 int main(){
 
   std::vector<std::tuple<int, int, int, bool, bool>> problems = {
@@ -116,7 +126,7 @@ int main(){
   //double alpha = 1.43235342345;
   //double beta = 0.45348379373;
   float allotted_time = 100.00; 
-  bool verbose = true;
+  bool verbose = false;
   
   /* constraint_string, ldx_offset */
   std::vector<std::tuple<std::string, unsigned>> run_settings = {
@@ -153,11 +163,7 @@ int main(){
       areas.push_back(m*n);      
     }
     
-    std::sort(areas.begin(), areas.end());
-    for (unsigned prob_i = 0; prob_i < problems.size(); ++prob_i){
-      std::cout << areas[prob_i] << std::endl;
-    }
-      
+    std::sort(areas.begin(), areas.end());      
 
     for (unsigned iteration = 0; iteration < 1; ++iteration){
       for (unsigned prob_i = 0; prob_i < problems.size(); ++prob_i){
@@ -173,7 +179,7 @@ int main(){
         fp_ms = end - start;
         elapsed_seconds = fp_ms.count();
         
-        std::cout << (prob_i + 1) <<  "/" <<  problems.size() << " \t m:" << m << " \t n:" << n << " \t k:" << k << " \t tA:" << tA << " \t tB:" << tB << "  \t  elapsed time : " << elapsed_seconds << " [s]" << std::endl;    
+        //std::cout << (prob_i + 1) <<  "/" <<  problems.size() << " \t m:" << m << " \t n:" << n << " \t k:" << k << " \t tA:" << tA << " \t tB:" << tB << "  \t  elapsed time : " << elapsed_seconds << " [s]" << std::endl;    
         
         
         std::stringstream ss_logfile;  
@@ -218,7 +224,7 @@ int main(){
         auto soln = basicfind<float>(gg, offsets, allotted_time, verbose, ss_logfile.str(), constraint_string, fst,  n_postfind_runs, do_cpu_test);    
 
 
-        std::cout << (prob_i + 1) <<  "/" <<  problems.size() << " \t m:" << get_padded(m) << " \t n:" << get_padded(n) << " \t k:" << get_padded(k) << " \t tA:" << tA << " \t tB:" << tB << " \tsoln median gflops :  " << soln.statistics.median_benchmark_gflops << "  \t soln median time : " << soln.statistics.median_benchmark_time << "  \t  elapsed time : " << elapsed_seconds << " [s]\n" << std::endl;
+        std::cout << (prob_i + 1) <<  "/" <<  problems.size() << " \t m:" << get_padded(m) << " \t n:" << get_padded(n) << " \t k:" << get_padded(k) << " \t tA:" << tA << " \t tB:" << tB << " \tsoln median gflops :  " << soln.statistics.median_benchmark_gflops << "  \t soln median time : " << soln.statistics.median_benchmark_time << "  \t  elapsed time : " << elapsed_seconds << " [s] " << std::endl;
                 
         }
       }
