@@ -159,7 +159,7 @@ int main(){
     }
       
 
-    for (unsigned iteration = 0; iteration < 3; ++iteration){
+    for (unsigned iteration = 0; iteration < 1; ++iteration){
       for (unsigned prob_i = 0; prob_i < problems.size(); ++prob_i){
       
         auto problem = problems[prob_i];
@@ -176,19 +176,17 @@ int main(){
         std::cout << (prob_i + 1) <<  "/" <<  problems.size() << " \t m:" << m << " \t n:" << n << " \t k:" << k << " \t tA:" << tA << " \t tB:" << tB << "  \t  elapsed time : " << elapsed_seconds << " [s]" << std::endl;    
         
         
-        std::stringstream ss_logfile;
-  
-  //#ifdef DIR_FOR_WRITING
-        //ss_logfile << DIR_FOR_WRITING << "/deepbench/" << "at" << int(allotted_time) << "_off" << ldx_offset << "_cs" << constraint_string << "_m" << m  << "_n" << n  << "_k" << k  << "_tA" << tA  << "_tB" << tB << ".txt";   
-  //#endif
-  
-        std::string dir_for_writing("/home/james/tinygemmout/");
-        std::stringstream fulldir_ss;
-        fulldir_ss << dir_for_writing  << "deepbench" << iteration << "/";
-        std::string fulldir = fulldir_ss.str();
-        std::string syscall = std::string("mkdir ") + fulldir;
-        std::system(syscall.c_str());      
-        ss_logfile << fulldir << "/" << "at" << int(allotted_time) << "_off" << ldx_offset << "_cs" << constraint_string << "_m" << m  << "_n" << n  << "_k" << k  << "_tA" << tA  << "_tB" << tB << ".txt";   
+        std::stringstream ss_logfile;  
+        
+        if (false){
+          std::string dir_for_writing("/home/james/tinygemmout/");
+          std::stringstream fulldir_ss;
+          fulldir_ss << dir_for_writing  << "deepbench" << iteration << "/";
+          std::string fulldir = fulldir_ss.str();
+          std::string syscall = std::string("mkdir ") + fulldir;
+          std::system(syscall.c_str());      
+          ss_logfile << fulldir << "/" << "at" << int(allotted_time) << "_off" << ldx_offset << "_cs" << constraint_string << "_m" << m  << "_n" << n  << "_k" << k  << "_tA" << tA  << "_tB" << tB << ".txt";   
+        }
   
         
         unsigned lda = (tA == isColMajor ? k : m) + (ldx_offset == 1 ? 5 : 0);
@@ -217,8 +215,11 @@ int main(){
         tinygemm::TinyGemmGeometry gg (isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype);
         tinygemm::TinyGemmOffsets offsets (a_offset, b_offset, c_offset, workspace_offset, tail_off_a, tail_off_b, tail_off_c);
   
-        basicfind<float>(gg, offsets, allotted_time, verbose, ss_logfile.str(), constraint_string, fst,  n_postfind_runs, do_cpu_test);    
-        
+        auto soln = basicfind<float>(gg, offsets, allotted_time, verbose, ss_logfile.str(), constraint_string, fst,  n_postfind_runs, do_cpu_test);    
+
+
+        std::cout << (prob_i + 1) <<  "/" <<  problems.size() << " \t m:" << get_padded(m) << " \t n:" << get_padded(n) << " \t k:" << get_padded(k) << " \t tA:" << tA << " \t tB:" << tB << " \tsoln median gflops :  " << soln.statistics.median_benchmark_gflops << "  \t soln median time : " << soln.statistics.median_benchmark_time << "  \t  elapsed time : " << elapsed_seconds << " [s]\n" << std::endl;
+                
         }
       }
     }

@@ -28,7 +28,7 @@
   
 template <typename TFloat> 
 
-void basicfind(const tinygemm::TinyGemmGeometry & geometry, const tinygemm::TinyGemmOffsets & toff, float allotted_time, bool verbose, std::string logfile, std::string constraint_string, tinygemm::FindStartType fst, unsigned n_postfind_runs, bool do_cpu_test){
+tinygemm::TinyGemmSolution basicfind(const tinygemm::TinyGemmGeometry & geometry, const tinygemm::TinyGemmOffsets & toff, float allotted_time, bool verbose, std::string logfile, std::string constraint_string, tinygemm::FindStartType fst, unsigned n_postfind_runs, bool do_cpu_test){
   
   /* just checking that geometry floattype is correct */
   if (!((geometry.floattype == 'f' && sizeof(TFloat) == 4) || (geometry.floattype == 'd' && sizeof(TFloat) == 8))) {
@@ -244,6 +244,7 @@ void basicfind(const tinygemm::TinyGemmGeometry & geometry, const tinygemm::Tiny
     }
   }
   
+  
   /* Cleaning up, closing shop. */
   tinygemm::openclutil::cl_release_mem_object(c_gpu, "c_gpu in basicfind.hpp");
   tinygemm::openclutil::cl_release_mem_object(a_gpu, "a_gpu in basicfind.hpp");
@@ -252,6 +253,9 @@ void basicfind(const tinygemm::TinyGemmGeometry & geometry, const tinygemm::Tiny
 
   tinygemm::openclutil::cl_release_command_queue(command_queue, "command queue in basicfind.hpp");
   tinygemm::openclutil::cl_release_context(context, "context in basicfind.hpp");
+
+
+  return soln;
   
 
 }
