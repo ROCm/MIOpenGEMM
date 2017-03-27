@@ -8,6 +8,9 @@ namespace architests{
 
 std::tuple<bool, std::string> architecture_specific_tests(cl_command_queue command_queue, const tinygemm::hyperparams::HyperParams & hp, const tinygemm::derivedparams::DerivedParams & dp){
 
+  //not used currently
+  (void)hp;
+  
   std::stringstream status_ss;
   
   

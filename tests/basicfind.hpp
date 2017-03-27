@@ -9,9 +9,6 @@
 #include <chrono>
 #include <sstream>
 
-/* Required for basic error check performed */
-#include <algorithm>
-
 /* Required header for using tinygemm */
 #include <tinygemm/tinygemm.hpp>
 
@@ -27,7 +24,6 @@
 #include "setabcw.hpp"
   
 template <typename TFloat> 
-
 tinygemm::TinyGemmSolution basicfind(const tinygemm::TinyGemmGeometry & geometry, const tinygemm::TinyGemmOffsets & toff, float allotted_time, bool verbose, std::string logfile, std::string constraint_string, tinygemm::FindStartType fst, unsigned n_postfind_runs, bool do_cpu_test){
   
   /* just checking that geometry floattype is correct */
@@ -182,10 +178,6 @@ tinygemm::TinyGemmSolution basicfind(const tinygemm::TinyGemmGeometry & geometry
     auto enqueue_kernels_serial = [&soln, &clevents, &command_queue, &clkernels] (std::string hash) {
 
       for (unsigned ki = 0; ki < soln.v_tgks.size(); ++ki){
-        
-        
-
-
         size_t n_events_to_wait_on = ki == 0 ? 0 : 1;
         cl_event * events_to_wait_on = ki == 0 ? nullptr : &clevents[ki - 1];
         tinygemm::openclutil::cl_enqueue_ndrange_kernel(
@@ -250,7 +242,6 @@ tinygemm::TinyGemmSolution basicfind(const tinygemm::TinyGemmGeometry & geometry
   tinygemm::openclutil::cl_release_mem_object(a_gpu, "a_gpu in basicfind.hpp");
   tinygemm::openclutil::cl_release_mem_object(b_gpu, "b_gpu  in basicfind.hpp");
   tinygemm::openclutil::cl_release_mem_object(workspace_gpu, "workspace_gpu  in basicfind.hpp");
-
   tinygemm::openclutil::cl_release_command_queue(command_queue, "command queue in basicfind.hpp");
   tinygemm::openclutil::cl_release_context(context, "context in basicfind.hpp");
 

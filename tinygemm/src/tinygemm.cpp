@@ -458,8 +458,10 @@ public:
   void benchgemm(const std::vector<hyperparams::HyperParams> & hps, unsigned n_runs){
 
     address_check_valid();
-
-    throw tinygemm_error("n_runs to benchgemm should be a positive integer");
+    
+    if (n_runs == 0){
+      throw tinygemm_error("n_runs to benchgemm should be a positive integer");
+    }
 
     for ( unsigned i = 0; i < hps.size(); ++i) {
       
@@ -605,7 +607,7 @@ public:
         
         /* getting all `one-away's */        
         auto one_aways = best_solns_path.back().hp.get_one_aways();
-        char front_insertion_type;
+        
         /* refreshing hyper front */
         hyper_front.clear();
 
@@ -623,18 +625,18 @@ public:
           
           /* filtering out if it has already been considered */
           else if (std::find(hyper_front_history.begin(), hyper_front_history.end(), hp_string) != hyper_front_history.end()){
-            front_insertion_type =  's'; 
+            //front_insertion_type =  's'; 
           }
 
 
           /* filtering out non-deriveables */
           else if (std::get<0>(derivedparams::get_deriveability(hp, gg)) == false){
-            front_insertion_type = 'd';
+            //front_insertion_type = 'd';
           }
           
           /* looks ok, adding it to the hyper-front */
           else{
-            front_insertion_type = '+';
+            //front_insertion_type = '+';
             hyper_front.push_back(hp);
           }
           //mowri << front_insertion_type;
@@ -738,13 +740,15 @@ bool c_is_const){
 
 tinygemm::TinyGemmSolution
 get_default(
-const std::string constraint_string,
+std::string constraint_string,
 const tinygemm::TinyGemmGeometry & gg,
 bool verbose, 
 std::string logfile){
   
-  
-  throw tinygemm_error("get default not ready");
+  constraint_string = "";
+  int bla = gg.m;
+  bla += 1;
+  throw tinygemm_error("get default not ready" + constraint_string + std::to_string(bla) + std::to_string(verbose) + logfile);
   
   //hyperparams::Graph(gg, constraint_string);
   //OpenCLGemmEncapsulator oger({}, gg, {0,0,0,0,0,0,0}, {}, {}, {}, {}, logfile, verbose); 

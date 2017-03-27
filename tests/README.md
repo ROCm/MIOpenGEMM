@@ -1,3 +1,5 @@
+#OUT OF DATE !
+
 # smallgeometrytests.cpp
 
 Runs the full find-then-run pipeline for all 32 possible (a,b,c transposes, column major, m > n)  cases, but only for small matrices. 

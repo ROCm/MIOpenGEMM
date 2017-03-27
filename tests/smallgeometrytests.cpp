@@ -15,8 +15,6 @@ void geometrytest(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsign
   unsigned tail_off_b = 121;
   unsigned tail_off_c = 121;
 
-
-   
   /* These must be double, irrespective of the float type of the matrices */
   float allotted_time = 0.001;
   /* set verbose to true if you want output to terminal */
@@ -27,15 +25,15 @@ void geometrytest(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsign
   unsigned n_postfind_runs = 1;
   bool do_cpu_test = true;
 
-
-
-
   unsigned workspace_size = 3;
   unsigned workspace_offset = 4;      
   char floattype = sizeof(TFloat) == 4 ? 'f' : 'd';
   tinygemm::TinyGemmGeometry gg (isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype);
   tinygemm::TinyGemmOffsets offsets (a_offset, b_offset, c_offset, workspace_offset, tail_off_a, tail_off_b, tail_off_c);    
-  basicfind<TFloat>(gg, offsets, allotted_time, verbose, logfile, constraint_string, n_postfind_runs, do_cpu_test);
+
+  /* TODO : this should not be random, but default */
+  tinygemm::FindStartType fst(tinygemm::FindStartType::Random);
+  basicfind<TFloat>(gg, offsets, allotted_time, verbose, logfile, constraint_string, fst, n_postfind_runs, do_cpu_test);
 }
 
 int main(){
