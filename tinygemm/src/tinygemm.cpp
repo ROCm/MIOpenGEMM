@@ -303,7 +303,8 @@ private:
       for (unsigned k_ind = 0; k_ind < tk_kernels_active.size(); ++k_ind){
         ss << " " << tk_kernels_active[k_ind]->v_times.back() << "\t";
       }
-      ss  << " " << 2.0 * gg.m * gg.n * gg.k / (v_t_total.back() * 1e6) << std::defaultfloat << std::setprecision(6);
+      //ss  << " " << 2.0 * gg.m * gg.n * gg.k / (v_t_total.back() * 1e6) <<  std::defaultfloat <<  std::setprecision(6); 
+      ss  << " " << 2.0 * gg.m * gg.n * gg.k / (v_t_total.back() * 1e6) << std::setprecision(6); 
     }
 
     else{
@@ -582,7 +583,8 @@ public:
         ++global_counter;
 
         mowri << "\n[" << global_counter  <<  ", " << std::fixed << std::setprecision(2) << elapsed_seconds;
-        mowri << std::setprecision(6) << std::defaultfloat << "s]\t" << hp.get_string() << Endl;
+        //mowri << std::setprecision(6) << std::defaultfloat << "s]\t" << hp.get_string() << Endl;
+        mowri << std::setprecision(6) << "s]\t" << hp.get_string() << Endl;
         
         setup_tinykernels(hp, bundle);  
         core_gemm_loop(n_runs_per_kernel, false);
@@ -672,7 +674,8 @@ public:
     for (auto & x : best_solns_path) {
       std::string solnstring = x.get_hyper_param_string();
       solnstring.resize(leading_size, ' ');
-      mowri <<  std::fixed <<  solnstring << "\t " << x.statistics.solution_discovery_time << "\t\t " << x.statistics.median_benchmark_gflops  << std::defaultfloat << Endl;
+      //mowri <<  std::fixed <<  solnstring << "\t " << x.statistics.solution_discovery_time << "\t\t " << x.statistics.median_benchmark_gflops  << std::defaultfloat << Endl;
+      mowri <<  std::fixed <<  solnstring << "\t " << x.statistics.solution_discovery_time << "\t\t " << x.statistics.median_benchmark_gflops  << Endl;
     }
     
     return best_solns_path.back();

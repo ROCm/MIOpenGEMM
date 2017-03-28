@@ -292,6 +292,8 @@ std::vector<tinygemm::TinyGemmGeometry> get_small_growing_geometries(unsigned wo
     std::make_tuple(250, 250, 6400, false, false),
     std::make_tuple(250, 250, 12800, false, false),
     std::make_tuple(250, 250, 25600, false, false),
+    std::make_tuple(250, 250, 51200, false, false),
+    std::make_tuple(250, 250, 102400, false, false),
   };
   
   return get_from_m_n_k_tA_tB(scalingproblems, workspace_size);
@@ -301,31 +303,12 @@ std::vector<tinygemm::TinyGemmGeometry> get_small_growing_geometries(unsigned wo
 
 std::vector<tinygemm::TinyGemmGeometry> get_square_geometries(unsigned workspace_size = 1){
 
-  std::vector<std::tuple<unsigned, unsigned, unsigned, bool, bool>> squareproblems = {
-
-    std::make_tuple(1000, 1000, 1000, false, false),
-    std::make_tuple(1000, 1000, 1000, false, true),
-    std::make_tuple(1000, 1000, 1000, true, false),
-
-    std::make_tuple(2000, 2000, 2000, false, false),
-    std::make_tuple(2000, 2000, 2000, false, true),
-    std::make_tuple(2000, 2000, 2000, true, false),
-
-    std::make_tuple(3000, 3000, 3000, false, false),
-    std::make_tuple(3000, 3000, 3000, false, true),
-    std::make_tuple(3000, 3000, 3000, true, false),
-
-    std::make_tuple(4000, 4000, 4000, false, false),
-    std::make_tuple(4000, 4000, 4000, false, true),
-    std::make_tuple(4000, 4000, 4000, true, false),
-
-    std::make_tuple(5000, 5000, 5000, false, false),
-    std::make_tuple(5000, 5000, 5000, false, true),
-    std::make_tuple(5000, 5000, 5000, true, false),
-        
+  std::vector<std::tuple<unsigned, unsigned, unsigned, bool, bool>> squareproblems;
   
-
-
+  for (unsigned dim = 100; dim < 6500; dim += 100){
+    squareproblems.push_back( std::make_tuple(dim, dim, dim, false, false) );
+    squareproblems.push_back( std::make_tuple(dim, dim, dim, false, true) );
+    squareproblems.push_back( std::make_tuple(dim, dim, dim, true, true) );
   };
 
   return get_from_m_n_k_tA_tB(squareproblems, workspace_size);
