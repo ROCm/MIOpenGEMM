@@ -12,7 +12,7 @@ int main(){
 
 
 
-  unsigned n_iterations_ex1 = 10;       // at 25 seconds each
+  unsigned n_iterations_ex1 = 20;       // at 25 seconds each
   unsigned n_iterations_ex2 = 1;        // at 6000 seconds each
   unsigned n_iterations_ex3 = 30;       // at 250 seconds each
   unsigned n_iterations_ex4 = 10;       // at 1100 seconds each
@@ -41,7 +41,7 @@ int main(){
   run_find_experiments(geometries, allotted_time, verbose, v_constraints, n_iterations_ex2, subdir);
 
   
-  unsigned small_threshold = 1000*1000*128;
+  unsigned small_threshold = 1000*1000*200;
   
   std::cout << "\nTHIRD EXPERIMENTS : HOW DO WE DO ON THE SMALL DEEPBENCH PROBLEMS (WITH AND WITHOUT ICE ALLOWED) ? " << std::endl;
   geometries = get_small_deepbench_geometries(small_threshold);
