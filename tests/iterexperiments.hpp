@@ -305,10 +305,10 @@ std::vector<tinygemm::TinyGemmGeometry> get_square_geometries(unsigned workspace
 
   std::vector<std::tuple<unsigned, unsigned, unsigned, bool, bool>> squareproblems;
   
-  for (unsigned dim = 100; dim < 6500; dim += 100){
+  for (unsigned dim = 100; dim < 6400; dim += 100){
     squareproblems.push_back( std::make_tuple(dim, dim, dim, false, false) );
     squareproblems.push_back( std::make_tuple(dim, dim, dim, false, true) );
-    squareproblems.push_back( std::make_tuple(dim, dim, dim, true, true) );
+    squareproblems.push_back( std::make_tuple(dim, dim, dim, true, false) );
   };
 
   return get_from_m_n_k_tA_tB(squareproblems, workspace_size);
