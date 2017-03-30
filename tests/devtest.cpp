@@ -18,7 +18,7 @@
 
 std::string get_hyperstring(std::string hyperstring = ""){
   if (hyperstring.compare("") == 0){
-    hyperstring = "A_MIC8_PAD2_PLU0_LIW0_MIW1_WOS0__B_MIC4_PAD2_PLU0_LIW1_MIW1_WOS0__C_UNR16_GAL2_PUN0_ICE1_NAW64_UFO0_MAC5";
+    hyperstring = "A_MIC5_PAD2_PLU0_LIW1_MIW0_WOS0__B_MIC2_PAD1_PLU1_LIW0_MIW1_WOS0__C_UNR32_GAL3_PUN1_ICE1_NAW64_UFO0_MAC2";
   }
   return hyperstring;
 }
@@ -26,14 +26,18 @@ std::string get_hyperstring(std::string hyperstring = ""){
 template <typename TFloat>
 tinygemm::TinyGemmGeometry get_geometry(){
 
+
+//m4096_n7133_k4096_tA0_tB1
+
+
   //bool goodsolly = false;  
   bool isColMajor = true;
   bool tA = false;
-  bool tB = false;
+  bool tB = true;
   bool tC = false;
-  unsigned m = 1000; //1760;//128*(32) - 6; 
-  unsigned n = 1000; //32;//96*(55) - 4; 
-  unsigned k = 1000; //1760;//16*229;           
+  unsigned m = 7133; //1760;//128*(32) - 6; 
+  unsigned n = 4096; //32;//96*(55) - 4; 
+  unsigned k = 4096; //1760;//16*229;           
 
   //if (goodsolly == false){
     //isColMajor = true;
@@ -92,12 +96,12 @@ void print_kernel(){
 int main(){
 
   bool test_print = false;
-  bool test_benchgemm = true;  
-  bool test_find = false;
+  bool test_benchgemm = false;  
+  bool test_find = true;
   bool test_accuracy = false;
   bool test_default = false;
 
-  std::string constraint_string("A_MIC8_PAD1_PLU0_LIW1_MIW1_WOS0__B_MIC6_PAD1_PLU1_LIW0_MIW0_WOS0__C_UNR8_GAL1_PUN1_ICE1_NAW64_UFO0_MAC5");
+  std::string constraint_string(""); //A_MIC8_PAD1_PLU0_LIW1_MIW1_WOS0__B_MIC6_PAD1_PLU1_LIW0_MIW0_WOS0__C_UNR8_GAL1_PUN1_ICE1_NAW64_UFO0_MAC5");
   float allotted_find_time = 200.1;
   unsigned n_runs_benchgemm = 1000;
   

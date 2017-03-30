@@ -124,12 +124,20 @@ public:
   gpum(a_gpu_, b_gpu_, c_gpu_, workspace_gpu_),
   mowri(verbose_, outputfilename.compare("") != 0, outputfilename_)
   {
-
+    
+    mowri << "Just entered OpenCLGemmEncapsulator constructor" << Endl;
+    
     for (auto & x : possible_basic_types){
       tk_kernels_map[x] = TinyGemmKernel(command_queue, x);
     }
+  
+    mowri << "TinyGemmKernels constructed (in OpenCLGemmEncapsulator)" << Endl;
     
     run_checks();
+   
+   mowri << "checks passed (in OpenCLGemmEncapsulator)" << Endl;
+   
+    
   }
   
 private:
