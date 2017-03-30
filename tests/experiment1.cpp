@@ -12,9 +12,9 @@ int main(){
 
 
 
-  unsigned n_iterations_ex1 = 20;       // at 25 seconds each
-  unsigned n_iterations_ex2 = 1;        // at 6000 seconds each
-  unsigned n_iterations_ex3 = 30;       // at 250 seconds each
+  unsigned n_iterations_ex1 = 0;       // at 25 seconds each
+  unsigned n_iterations_ex2 = 0;        // at 6000 seconds each
+  unsigned n_iterations_ex3 = 0;       // at 250 seconds each
   unsigned n_iterations_ex4 = 10;       // at 1100 seconds each
   
   std::cout << "\nFIRST EXPERIMENTS : HOW DOES PERFORMANCE SCALE AS K INCREASES  ?  " << std::endl;
