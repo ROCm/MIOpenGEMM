@@ -10,16 +10,16 @@ namespace dev{
 
 template <typename TFloat>
 void benchgemm(const std::vector<hyperparams::HyperParams> & hps,         
-unsigned n_runs, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff,  const TFloat * a, const TFloat * b, const TFloat * c, bool verbose, std::string logfile);
+unsigned n_runs, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff,  const TFloat * a, const TFloat * b, const TFloat * c, outputwriting::OutputWriter & mowri);
 
 
 template <typename TFloat>
 void accuracy_test(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, const TFloat * a, const TFloat * b,
-const TFloat * c, const TFloat * c_true_for_test, bool verbose, std::string logfile);
+const TFloat * c, const TFloat * c_true_for_test, outputwriting::OutputWriter & mowri);
 
 
 template <typename TFloat>
-tinygemm::TinyGemmSolution find(float allotted_time, const TFloat * a, const TFloat * b, const TFloat * c, std::string constraint_string, FindStartType fst, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, bool verbose, std::string logfile);
+tinygemm::TinyGemmSolution find(float allotted_time, const TFloat * a, const TFloat * b, const TFloat * c, std::string constraint_string, FindStartType fst, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, outputwriting::OutputWriter & mowri);
 
 }
 }

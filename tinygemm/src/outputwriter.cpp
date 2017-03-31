@@ -9,17 +9,15 @@ namespace outputwriting{
 
 OutputWriter::OutputWriter(bool to_terminal_, bool to_file_, std::string filename_):to_terminal(to_terminal_), to_file(to_file_), filename(filename_){
 
-  std::cout << "a std::cout from the start of the OutputWriter constructor" << std::endl;
+
   if (to_file == true){
     if (filename.compare("") == 0){
       throw tinygemm_error("empty filename passed to OutputWrite, with to_file flag true. This is not possible.");
     }
     
     
-    std::cout << "about to open file " << filename << "..." << std::endl;
     file.open(filename, std::ios::out);
- 
-    std::cout << "done. " << std::endl;
+    (*this) << "(DEBUGTEST) successfully opened " << filename << "." << Endl;
      
     //std::ofstream file(filename, std::ios::out);
     if (file.good() == false){
@@ -30,12 +28,14 @@ OutputWriter::OutputWriter(bool to_terminal_, bool to_file_, std::string filenam
     }
   }
   
+  (*this) << "(DEBUGTEST) leaving OutputWriter constructor" << Endl;
 
 }
 
 //make default destructor.
 
 OutputWriter::~OutputWriter(){
+  (*this) << "(DEBUGTEST) outputwriter destructor (" << filename << ")" << Endl;
   file.close();
 }
 

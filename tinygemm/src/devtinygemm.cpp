@@ -59,8 +59,7 @@ public:
 private:
   std::vector<TFloat> c_copy;
   std::vector<TFloat> c_for_cpu_compute;
-  std::string outputfilename;
-  outputwriting::OutputWriter mowri;
+  outputwriting::OutputWriter & mowri;
 
   openclutil::TinyGemmCommandQueueInContext tgcq;
   openclutil::SafeClMem a_gpu_safemem;
@@ -72,8 +71,8 @@ private:
   
 public:
   
-  Gemini(tinygemm::TinyGemmGeometry gg_, tinygemm::TinyGemmOffsets toff_, const TFloat * a_, const TFloat * b_, const TFloat * c_, bool verbose_, std::string outputfilename_):
-  gg(gg_), toff(toff_), a(a_), b(b_), c(c_), outputfilename(outputfilename_), mowri(verbose_, outputfilename_.compare("") != 0, outputfilename_), tgcq(mowri, "tiny gemm command queue in devtinygemm"),  a_gpu_safemem("a_gpu_safemem, of Gemini"), b_gpu_safemem("b_gpu_safemem, of Gemini"), c_gpu_safemem("c_gpu_safemem, of Gemini"), workspace_safemem("workspace_safemem, of Gemini")
+  Gemini(tinygemm::TinyGemmGeometry gg_, tinygemm::TinyGemmOffsets toff_, const TFloat * a_, const TFloat * b_, const TFloat * c_, outputwriting::OutputWriter & mowri_):
+  gg(gg_), toff(toff_), a(a_), b(b_), c(c_), mowri(mowri_), tgcq(mowri, "tiny gemm command queue in devtinygemm"),  a_gpu_safemem("a_gpu_safemem, of Gemini"), b_gpu_safemem("b_gpu_safemem, of Gemini"), c_gpu_safemem("c_gpu_safemem, of Gemini"), workspace_safemem("workspace_safemem, of Gemini")
   
   {
     consistencychecks::check_ldx_mnk_consistent(gg);
@@ -131,15 +130,16 @@ public:
     
     
 
-    tinygemm::benchgemm(tgcq.command_queue, hps, number_of_runs, gg, toff, a_gpu_safemem.clmem, b_gpu_safemem.clmem, c_gpu_safemem.clmem, workspace_safemem.clmem, true, mowri.filename, false);
+    tinygemm::benchgemm(tgcq.command_queue, hps, number_of_runs, gg, toff, a_gpu_safemem.clmem, b_gpu_safemem.clmem, c_gpu_safemem.clmem, workspace_safemem.clmem, mowri);
   }
   
   tinygemm::TinyGemmSolution find(float allotted_time, std::string constraint_string, FindStartType fst){
     /* dev code's connection to tinygemm */
     tinygemm::TinyGemmSolution tgs = tinygemm::find(
       allotted_time, tgcq.command_queue, a_gpu_safemem.clmem, b_gpu_safemem.clmem, c_gpu_safemem.clmem, workspace_safemem.clmem, constraint_string, fst, gg, toff, 
-      true, // yes, write to terminal (may be captured further upstream)
-      outputfilename, // file where to write the output (if "", nowhere). A new mowri will be created in the function called. 
+      //true, // yes, write to terminal (may be captured further upstream)
+      //outputfilename, // file where to write the output (if "", nowhere). A new mowri will be created in the function called. 
+      mowri,
       false); 
    return tgs;
   }
@@ -166,42 +166,42 @@ public:
 
 template <typename TFloat>
 void benchgemm(const std::vector<hyperparams::HyperParams> & hps,         
-unsigned n_runs, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, const TFloat * a, const TFloat * b, const TFloat * c, bool verbose, std::string logfile){
+unsigned n_runs, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, const TFloat * a, const TFloat * b, const TFloat * c, outputwriting::OutputWriter & mowri){
   
   
-  Gemini <TFloat> gem(gg, toff, a, b, c, verbose, logfile);
+  Gemini <TFloat> gem(gg, toff, a, b, c, mowri);
   gem.benchgemm(hps, n_runs);
 }
-template void benchgemm(const std::vector<hyperparams::HyperParams> & hps, unsigned n_runs, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, const float * a, const float * b, const float * c, bool verbose, std::string logfile);
+template void benchgemm(const std::vector<hyperparams::HyperParams> & hps, unsigned n_runs, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, const float * a, const float * b, const float * c, outputwriting::OutputWriter & mowri);
 
-template void benchgemm(const std::vector<hyperparams::HyperParams> & hps, unsigned n_runs, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, const double * a, const double * b, const double * c, bool verbose, std::string logfile);
+template void benchgemm(const std::vector<hyperparams::HyperParams> & hps, unsigned n_runs, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, const double * a, const double * b, const double * c, outputwriting::OutputWriter & mowri);
 
 
 
 template <typename TFloat>
 void accuracy_test(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, const TFloat * a, const TFloat * b,
-const TFloat * c, const TFloat * c_true_for_test, bool verbose, std::string logfile){
+const TFloat * c, const TFloat * c_true_for_test, outputwriting::OutputWriter & mowri){
   
-  Gemini <TFloat> gem(gg, toff, a, b, c, verbose, logfile);
+  Gemini <TFloat> gem(gg, toff, a, b, c, mowri);
   gem.accuracy_test(hp, c_true_for_test);
 }
-template void accuracy_test(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, const float * a, const float * b, const float * c, const float * c_true_for_test, bool verbose, std::string logfile);
+template void accuracy_test(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, const float * a, const float * b, const float * c, const float * c_true_for_test, outputwriting::OutputWriter & mowri);
 
-template void accuracy_test(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, const double * a, const double * b, const double * c, const double * c_true_for_test, bool verbose, std::string logfile);
+template void accuracy_test(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, const double * a, const double * b, const double * c, const double * c_true_for_test, outputwriting::OutputWriter & mowri);
 
 
 
 
 template <typename TFloat>
-tinygemm::TinyGemmSolution find(float allotted_time, const TFloat * a, const TFloat * b, const TFloat * c, std::string constraint_string, FindStartType fst, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff,  bool verbose, std::string logfile){
+tinygemm::TinyGemmSolution find(float allotted_time, const TFloat * a, const TFloat * b, const TFloat * c, std::string constraint_string, FindStartType fst, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff,  outputwriting::OutputWriter & mowri){
   
-  Gemini <TFloat> gem(gg, toff, a, b, c, verbose, logfile);
+  Gemini <TFloat> gem(gg, toff, a, b, c, mowri);
   return gem.find(allotted_time, constraint_string, fst);
 }
 
-template tinygemm::TinyGemmSolution find(float allotted_time, const double * a, const double * b, const double * c, std::string constraint_string, FindStartType fst, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, bool verbose, std::string logfile);
+template tinygemm::TinyGemmSolution find(float allotted_time, const double * a, const double * b, const double * c, std::string constraint_string, FindStartType fst, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, outputwriting::OutputWriter & mowri);
 
-template tinygemm::TinyGemmSolution find(float allotted_time, const float * a, const float * b, const float * c, std::string constraint_string, FindStartType fst, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, bool verbose, std::string logfile);
+template tinygemm::TinyGemmSolution find(float allotted_time, const float * a, const float * b, const float * c, std::string constraint_string, FindStartType fst, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, outputwriting::OutputWriter & mowri);
 
 
 }

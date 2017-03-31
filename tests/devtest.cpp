@@ -10,6 +10,7 @@
 #include <tinygemm/stringutilbase.hpp>
 #include <tinygemm/hyperparams.hpp>
 #include <tinygemm/tinygemmgeometry.hpp>
+#include <tinygemm/outputwriter.hpp>
 
 #include "setabcw.hpp"
 /* Note that currently (13/11/2016) most testing is done through dev/python scripts */
@@ -95,6 +96,10 @@ void print_kernel(){
 
 int main(){
 
+  std::string fout("");
+  tinygemm::outputwriting::OutputWriter mowri(true, fout != "" , fout);
+
+
   bool test_print = false;
   bool test_benchgemm = false;  
   bool test_find = true;
@@ -102,7 +107,7 @@ int main(){
   bool test_default = false;
 
   std::string constraint_string(""); //A_MIC8_PAD1_PLU0_LIW1_MIW1_WOS0__B_MIC6_PAD1_PLU1_LIW0_MIW0_WOS0__C_UNR8_GAL1_PUN1_ICE1_NAW64_UFO0_MAC5");
-  float allotted_find_time = 200.1;
+  float allotted_find_time = 2.1;
   unsigned n_runs_benchgemm = 1000;
   
   typedef float tfloat;
@@ -110,33 +115,34 @@ int main(){
   
   tinygemm::TinyGemmGeometry gg = get_geometry<tfloat>();
   tinygemm::TinyGemmOffsets toff = get_offsets();
-  std::cout << "generating cpu data ... " << std::flush;
+  mowri << "generating cpu data ... " << std::flush;
   std::vector<tfloat> v_a;
   std::vector<tfloat> v_b;
   std::vector<tfloat> v_c;
   setabcw::set_abc<tfloat>(v_a, v_b, v_c, gg, toff);
-  std::cout << "done." << std::endl;
+  mowri << "done." << std::endl;
   const tfloat * c_true_bla = nullptr; 
   if (test_print){
     print_kernel<tfloat>();
   }
+  
   
   if (test_accuracy || test_benchgemm){
     std::string hyperstring = get_hyperstring();
     tinygemm::hyperparams::Graph graph(gg, hyperstring, true); 
     tinygemm::hyperparams::HyperParams hp(graph);
     if (test_accuracy){
-      tinygemm::dev::accuracy_test(hp, gg, toff, v_a.data(), v_b.data(), v_c.data(), c_true_bla, true, "");
+      tinygemm::dev::accuracy_test(hp, gg, toff, v_a.data(), v_b.data(), v_c.data(), c_true_bla, mowri);
     }
 
     if (test_benchgemm){
-      tinygemm::dev::benchgemm({hp}, n_runs_benchgemm, gg, toff, v_a.data(), v_b.data(), v_c.data(), true, "");
+      tinygemm::dev::benchgemm({hp}, n_runs_benchgemm, gg, toff, v_a.data(), v_b.data(), v_c.data(), mowri);
     }
   }
   
   if (test_find){
     tinygemm::FindStartType fst(tinygemm::FindStartType::Random);
-    tinygemm::dev::find(allotted_find_time, v_a.data(), v_b.data(), v_c.data(), constraint_string, fst, gg, toff, true, "/home/james/output.txt");
+    tinygemm::dev::find(allotted_find_time, v_a.data(), v_b.data(), v_c.data(), constraint_string, fst, gg, toff, mowri);
   }
   
   if (test_default){

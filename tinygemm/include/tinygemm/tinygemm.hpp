@@ -9,6 +9,7 @@
 #include "tinygemmgeometry.hpp"
 #include "tinygemmsolution.hpp"
 #include "tinygemmerror.hpp"
+#include "outputwriter.hpp"
 
 namespace tinygemm{
 
@@ -38,8 +39,7 @@ FindStartType fst,
 /* see tinygemm/include/tinygemmgeometry.hpp for TinyGemmGeometry parameters */
 const tinygemm::TinyGemmGeometry & gg,
 const tinygemm::TinyGemmOffsets & toff,
-bool verbose = false,
-std::string logfile = "", 
+outputwriting::OutputWriter & mowri,
 /* if c_is_const == false, then c will be corrupted */
 bool c_is_const = true);
 
@@ -62,8 +62,7 @@ cl_mem a,
 cl_mem b,
 cl_mem c,
 cl_mem workspace,
-bool verbose = true,
-std::string logfile = "",
+outputwriting::OutputWriter & mowri,
 bool c_is_const = false);
 
 

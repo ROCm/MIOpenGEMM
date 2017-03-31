@@ -242,6 +242,19 @@ std::vector<tinygemm::TinyGemmGeometry> get_large_deepbench_geometries(unsigned 
 }
 
 
+std::vector<tinygemm::TinyGemmGeometry> get_problem_geometries(unsigned workspace_size = 1){
+  auto all_geoms = get_deepbench_geometries(workspace_size);
+  std::vector<tinygemm::TinyGemmGeometry> large_geoms;
+  for (auto & gg : all_geoms){
+    if (gg.m == 4096 && gg.n == 7133 && gg.k == 4096){
+      large_geoms.emplace_back(gg);
+    }
+  }
+  return large_geoms;
+}
+
+
+
 std::vector<tinygemm::TinyGemmGeometry> get_backconvwrw_geometries(unsigned workspace_size = 1){
   
   /*                      m ,  n ,  k , lda ,ldb ,ldc , tA , tB (from Mayank, 25/11/2016) */ 

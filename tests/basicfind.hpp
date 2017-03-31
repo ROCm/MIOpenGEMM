@@ -38,6 +38,7 @@ tinygemm::TinyGemmSolution basicfind(const tinygemm::TinyGemmGeometry & geometry
   
   /* generating cpu copies of data */
   mowri << "generating cpu data ... " << tinygemm::Flush;
+ 
   std::vector<TFloat> v_a;
   std::vector<TFloat> v_b;
   std::vector<TFloat> v_c;
@@ -48,7 +49,11 @@ tinygemm::TinyGemmSolution basicfind(const tinygemm::TinyGemmGeometry & geometry
   size_t n_b = v_b.size();  
   size_t n_c = v_c.size(); 
   size_t n_w = v_workspace.size();  
+ 
   mowri << "done." << tinygemm::Endl;
+
+
+
   
   /* On OpenCL boilerplate. 
    * This might be different depending on your system. 
@@ -89,6 +94,8 @@ tinygemm::TinyGemmSolution basicfind(const tinygemm::TinyGemmGeometry & geometry
   gpum['c'] = &c_gpu;
   gpum['w'] = &workspace_gpu;
   
+  
+  
   /* ******************************************************************
   * ******************************************************************
   * ******************************************************************/
@@ -99,7 +106,9 @@ tinygemm::TinyGemmSolution basicfind(const tinygemm::TinyGemmGeometry & geometry
   /* *****************
    * Find a solution *
    * *****************/
-  tinygemm::TinyGemmSolution soln = tinygemm::find(allotted_time, command_queue, a_gpu, b_gpu, c_gpu, workspace_gpu, constraint_string, fst, geometry, toff, verbose, logfile);
+  mowri << "(DEBUGTEST) Entering tinygemm::find" << tinygemm::Endl;
+  tinygemm::TinyGemmSolution soln = tinygemm::find(allotted_time, command_queue, a_gpu, b_gpu, c_gpu, workspace_gpu, constraint_string, fst, geometry, toff, mowri);
+  mowri << "(DEBUGTEST) tinygemm::find complete" << tinygemm::Endl;
   
     
   if (do_cpu_test == true && n_postfind_runs < 1){

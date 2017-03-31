@@ -92,7 +92,7 @@ public:
   
 
 private:
-  outputwriting::OutputWriter mowri;
+  outputwriting::OutputWriter & mowri;
   /* vector of times over a set of runs on core loop */
   std::vector<float> v_t_total;
   float median_time;
@@ -114,28 +114,26 @@ public:
   cl_mem b_gpu_, 
   cl_mem c_gpu_,
   cl_mem workspace_gpu_,
-  std::string outputfilename_,
-  bool verbose_):
+  outputwriting::OutputWriter & mowri_):
   
   command_queue(command_queue_), 
-  outputfilename(outputfilename_),
   gg(gg_),
   toff(toff_),
   gpum(a_gpu_, b_gpu_, c_gpu_, workspace_gpu_),
-  mowri(verbose_, outputfilename.compare("") != 0, outputfilename_)
+  mowri(mowri_)
   {
     
-    mowri << "Just entered OpenCLGemmEncapsulator constructor" << Endl;
+    mowri << "(DEBUGTEST) Just entered OpenCLGemmEncapsulator constructor" << Endl;
     
     for (auto & x : possible_basic_types){
       tk_kernels_map[x] = TinyGemmKernel(command_queue, x);
     }
   
-    mowri << "TinyGemmKernels constructed (in OpenCLGemmEncapsulator)" << Endl;
+    mowri << "(DEBUGTEST) TinyGemmKernels constructed (in OpenCLGemmEncapsulator)" << Endl;
     
     run_checks();
    
-   mowri << "checks passed (in OpenCLGemmEncapsulator)" << Endl;
+   mowri << "(DEBUGTEST) checks passed (in OpenCLGemmEncapsulator)" << Endl;
    
     
   }
@@ -725,8 +723,7 @@ const std::string constraint_string,
 FindStartType fst,
 const tinygemm::TinyGemmGeometry & gg,
 const tinygemm::TinyGemmOffsets & toff,
-bool verbose, 
-std::string logfile, 
+outputwriting::OutputWriter & mowri,
 bool c_is_const){
   
   
@@ -736,30 +733,33 @@ bool c_is_const){
 
   tinygemm::consistencychecks::check_ldx_mnk_consistent(gg);  
 
+  mowri << "(DEBUGTEST) in non-call find" << Endl;
   if (c_is_const == true){
   
     openclutil::SafeClMem c_copied = get_copy(command_queue, c, gg, toff, "copy of c in find");
-    OpenCLGemmEncapsulator oger(command_queue, gg, toff, a, b, c_copied.clmem, workspace, logfile, verbose); 
+    OpenCLGemmEncapsulator oger(command_queue, gg, toff, a, b, c_copied.clmem, workspace, mowri); 
     return oger.find(allotted_time, constraint_string, fst, n_runs_per_kernel);
   }
   
   else{
-    OpenCLGemmEncapsulator oger(command_queue, gg, toff, a, b, c, workspace, logfile, verbose); 
+    OpenCLGemmEncapsulator oger(command_queue, gg, toff, a, b, c, workspace, mowri); 
     return oger.find(allotted_time, constraint_string, fst, n_runs_per_kernel);
   }
+  
+  mowri << "(DEBUGTEST) exiting non-call find " << Endl;
 }
 
 tinygemm::TinyGemmSolution
 get_default(
 std::string constraint_string,
 const tinygemm::TinyGemmGeometry & gg,
-bool verbose, 
-std::string logfile){
+outputwriting::OutputWriter & mowri){
   
   constraint_string = "";
   int bla = gg.m;
   bla += 1;
-  throw tinygemm_error("get default not ready" + constraint_string + std::to_string(bla) + std::to_string(verbose) + logfile);
+  mowri << "oops";
+  throw tinygemm_error("get default not ready" + constraint_string + std::to_string(bla));
   
   //hyperparams::Graph(gg, constraint_string);
   //OpenCLGemmEncapsulator oger({}, gg, {0,0,0,0,0,0,0}, {}, {}, {}, {}, logfile, verbose); 
@@ -781,21 +781,20 @@ void benchgemm(
   cl_mem b_gpu, 
   cl_mem c_gpu,
   cl_mem workspace_gpu,  
-  bool verbose,
-  std::string logfile,
+  outputwriting::OutputWriter & mowri,
   bool c_is_const){
   
   
-  std::cout << "in tinygemm's benchgemm" << std::endl;
+  mowri << " (DEBUGTEST) in tinygemm's benchgemm" << Endl;
   tinygemm::consistencychecks::check_ldx_mnk_consistent(gg);
   if (c_is_const == true){
     openclutil::SafeClMem c_copied = get_copy(command_queue, c_gpu, gg, toff, "copy of c in benchgemm");
-    OpenCLGemmEncapsulator oger(command_queue, gg, toff, a_gpu, b_gpu, c_copied.clmem, workspace_gpu, logfile, verbose);
+    OpenCLGemmEncapsulator oger(command_queue, gg, toff, a_gpu, b_gpu, c_copied.clmem, workspace_gpu, mowri);
     oger.benchgemm(hps, n_runs);
   }
   
   else{
-    OpenCLGemmEncapsulator oger(command_queue, gg, toff, a_gpu, b_gpu, c_gpu, workspace_gpu, logfile, verbose);
+    OpenCLGemmEncapsulator oger(command_queue, gg, toff, a_gpu, b_gpu, c_gpu, workspace_gpu, mowri);
     oger.benchgemm(hps, n_runs);
   }
 }

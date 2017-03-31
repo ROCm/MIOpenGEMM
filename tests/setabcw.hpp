@@ -6,16 +6,13 @@ namespace setabcw{
 template <typename TFloat>
 void fill_uni(std::vector<TFloat> & v, unsigned r_small, unsigned r_big){
 
-  //std::cout << "\nx" << std::flush;
   for (size_t i = 0; i < r_small; ++i){
     v[i] = TFloat(rand() % 1000) / 1000. - 0.5;
   }
   
-  //std::cout << "y" << std::flush;
   for (size_t i = r_small; i < r_big; ++i){
     v[i] = 1e9*(TFloat(rand() % 1000) / 1000. - 0.5);
   }
-  //std::cout << "z" << std::endl;
 }
 
 
