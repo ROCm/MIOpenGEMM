@@ -15,7 +15,7 @@ int main(){
   unsigned n_iterations_smalldeep = 0;       // at 250 seconds each
   unsigned n_iterations_largedeep = 10;       // at 1100 seconds each
   unsigned n_iterations_problem_geometries = 0;//1000;
-  float allotted_time = 10;
+  float allotted_time = 200.00;
   
   std::cout << "\nFIRST EXPERIMENTS : HOW DOES PERFORMANCE SCALE AS K INCREASES  ?  " << std::endl;
   auto geometries = get_small_growing_geometries();
