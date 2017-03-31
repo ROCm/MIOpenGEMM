@@ -175,7 +175,7 @@ std::vector<tinygemm::TinyGemmGeometry> get_deepbench_geometries(unsigned worksp
     std::make_tuple(1760, 7133, 1760, false, true),
     std::make_tuple(2048, 7133, 2048, false, true),
     std::make_tuple(2560, 7133, 2560, false, true),
-    std::make_tuple(4096, 7133, 4096, false, true),
+   // std::make_tuple(4096, 7133, 4096, false, true),
     std::make_tuple(5124, 9124, 1760, false, false),
     std::make_tuple(35, 8457, 1760, false, false),
     std::make_tuple(5124, 9124, 2048, false, false),
@@ -242,8 +242,8 @@ std::vector<tinygemm::TinyGemmGeometry> get_large_deepbench_geometries(unsigned 
 }
 
 
-std::vector<tinygemm::TinyGemmGeometry> get_problem_geometries(unsigned workspace_size = 1){
-  auto all_geoms = get_deepbench_geometries(workspace_size);
+std::vector<tinygemm::TinyGemmGeometry> get_problem_geometries(){
+  auto all_geoms = get_deepbench_geometries(1);
   std::vector<tinygemm::TinyGemmGeometry> large_geoms;
   for (auto & gg : all_geoms){
     if (gg.m == 4096 && gg.n == 7133 && gg.k == 4096){

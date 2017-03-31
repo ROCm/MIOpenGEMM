@@ -4,17 +4,17 @@ int main(){
 
 
   /* Mayank : change this to some directory on your system where the results can be written */ 
-  std::string basedir = "/home/james/gemmpaper/data/apiless3/";
+  std::string basedir = "/home/james/gemmpaper/data/apiless4/";
 
   if (basedir.back() != '/'){
     basedir += "/";
   }
 
-  unsigned n_iterations_smallgrowing = 0;       // at 25 seconds each
-  unsigned n_iterations_square = 0;        // at 6000 seconds each
-  unsigned n_iterations_smalldeep = 0;       // at 250 seconds each
-  unsigned n_iterations_largedeep = 10;       // at 1100 seconds each
-  unsigned n_iterations_problem_geometries = 0;//1000;
+  unsigned n_iterations_smallgrowing = 0;      // at 25 seconds each
+  unsigned n_iterations_square = 0;            // at 6000 seconds each
+  unsigned n_iterations_smalldeep = 0;         // at 250 seconds each
+  unsigned n_iterations_largedeep = 10;          // at 1100 seconds each
+  unsigned n_iterations_problem_geometries = 0;  // 1000;
   float allotted_time = 200.00;
   
   std::cout << "\nFIRST EXPERIMENTS : HOW DOES PERFORMANCE SCALE AS K INCREASES  ?  " << std::endl;
@@ -55,7 +55,7 @@ int main(){
   
 
   std::cout << "\nFIFTH EXPERIMENTS : FOR GEOMETRIES WHICH ARE GIVING US A HARD TIME :-{|>" << std::endl;
-  geometries = get_problem_geometries(small_threshold);
+  geometries = get_problem_geometries();
   v_constraints = {""};
   subdir = basedir + "problemgeoms/";
   run_find_experiments(geometries, allotted_time, verbose, v_constraints, n_iterations_problem_geometries, subdir);  

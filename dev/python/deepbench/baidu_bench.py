@@ -230,3 +230,22 @@ def post_process_baidu():
   #return kernel_dict
        
   
+
+
+def make_old_txt():
+  X = get_data("./data/gemm_old_results.ods")
+  X = X['Sheet3'] 
+  
+  write_fn = os.path.join(write_directories.baidu_base_directory, "old_results", "previous.txt")
+  filly = open(write_fn, 'w')
+  for x in X[0]:
+    filly.write("%s\t"%(x,))
+  filly.write("\n")
+  
+  for x in X[1:-1]:
+    if len(x) == 7:
+      for c in x:
+        filly.write("%s\t"%(c,))
+      filly.write("\n")
+        
+  
