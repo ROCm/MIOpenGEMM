@@ -729,7 +729,7 @@ R"(
 /* (strides same, or tiles parallel to contiguous), and so put it on hold. However, with normal form matrices, it should work in all situations.  */
 /* TODO : remove final barrier, not nec. Check performance is not mysteriously hit! */
 /* TODO : beta = 1 optimisation */
-/* TODO : investigate mad. When should one use this instead of standard overloads, += and *. see tensile branch. 
+/* TODO : investigate mad. When should one use this instead of standard overloads, += and *. see tensile branch. */
 /* TODO : rerereconsider assignment of workitems to load and math regions, there may be some sweet overlap spot where values automatically in registers for math (?) */
 
 )"; // << genutil::get_how_string() << "\n";

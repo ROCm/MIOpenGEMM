@@ -577,6 +577,7 @@ public:
       improvement_found_on_front = false;
       unsigned hfi = 0;
       while (hfi < hyper_front.size() && improvement_found_on_front == false && elapsed_seconds < allotted_time){
+        std::cout << "." << std::flush;
         hyperparams::HyperParams hp = hyper_front[hfi];
         std::string hp_string = hp.get_string();        
         hyper_front_history.push_back(hp_string);
@@ -684,6 +685,7 @@ public:
       mowri <<  std::fixed <<  solnstring << "\t " << x.statistics.solution_discovery_time << "\t\t " << x.statistics.median_benchmark_gflops  << Endl;
     }
     
+    std::cout << "*" << std::endl;
     return best_solns_path.back();
   }
 }; 
