@@ -19,7 +19,8 @@
 
 std::string get_hyperstring(std::string hyperstring = ""){
   if (hyperstring.compare("") == 0){
-    hyperstring = "A_MIC5_PAD2_PLU0_LIW1_MIW0_WOS0__B_MIC2_PAD1_PLU1_LIW0_MIW1_WOS0__C_UNR32_GAL3_PUN1_ICE1_NAW64_UFO0_MAC2";
+    hyperstring = //"A_MIC5_PAD2_PLU0_LIW1_MIW0_WOS0__B_MIC2_PAD1_PLU1_LIW0_MIW1_WOS0__C_UNR32_GAL3_PUN1_ICE1_NAW64_UFO0_MAC2";
+    hyperstring = "A_MIC8_PAD1_PLU0_LIW0_MIW0_WOS0__B_MIC8_PAD1_PLU0_LIW0_MIW0_WOS0__C_UNR16_GAL1_PUN0_ICE1_NAW64_UFO0_MAC5";
   }
   return hyperstring;
 }
@@ -28,27 +29,14 @@ template <typename TFloat>
 tinygemm::TinyGemmGeometry get_geometry(){
 
 
-//m4096_n7133_k4096_tA0_tB1
-
-
-  //bool goodsolly = false;  
   bool isColMajor = true;
-  bool tA = false;
-  bool tB = true;
+  bool tA = true;
+  bool tB = false;
   bool tC = false;
-  unsigned m = 7133; //1760;//128*(32) - 6; 
-  unsigned n = 4096; //32;//96*(55) - 4; 
-  unsigned k = 4096; //1760;//16*229;           
+  unsigned m = 1024; 
+  unsigned n = 1024; 
+  unsigned k = 1024;           
 
-  //if (goodsolly == false){
-    //isColMajor = true;
-    //tA = false;
-    //tB = true;
-    //tC = false;
-    //m = 2560;
-    //n = 33;//7133;
-    //k = 2560;
-  //}    
   
   unsigned lda = ( tA == isColMajor ? k : m ) + 0;
   unsigned ldb = ( tB == isColMajor ? n : k ) + 0;
@@ -61,10 +49,10 @@ tinygemm::TinyGemmGeometry get_geometry(){
 
 tinygemm::TinyGemmOffsets get_offsets(){
 
-  unsigned a_offset = 33;//3e6;//5;
-  unsigned b_offset = 55;//2e6;//7;
-  unsigned c_offset = 77;//1e6;//11;
-  unsigned workspace_offset = 99;//1e6;//17;
+  unsigned a_offset = 0;//33;//3e6;//5;
+  unsigned b_offset = 0;//55;//2e6;//7;
+  unsigned c_offset = 0;//77;//1e6;//11;
+  unsigned workspace_offset = 0;//99;//1e6;//17;
   unsigned tail_off_a = 0;//1e6 + 123;
   unsigned tail_off_b = 0;//1e6 + 97;
   unsigned tail_off_c = 0;//1e6 + 67;
@@ -83,7 +71,7 @@ void print_kernel(){
   auto bundle = tinygemm::kerngen::get_bundle(hp, gg);
   
   for (auto & x :  bundle.v_tgks){
-    auto fname = "/home/james/dub_akernel_" +  x.type.full +  ".cl";
+    auto fname = "/home/james/akernel_" +  x.type.full +  ".cl";
     std::cout << "writing " << fname << " ... " << std::flush;
     std::ofstream floper (fname, std::ios::out); 
     floper << x.kernstr;
@@ -100,9 +88,9 @@ int main(){
   tinygemm::outputwriting::OutputWriter mowri(true, fout != "" , fout);
 
 
-  bool test_print = false;
+  bool test_print = true;
   bool test_benchgemm = false;  
-  bool test_find = true;
+  bool test_find = false;
   bool test_accuracy = false;
   bool test_default = false;
 
@@ -115,12 +103,12 @@ int main(){
   
   tinygemm::TinyGemmGeometry gg = get_geometry<tfloat>();
   tinygemm::TinyGemmOffsets toff = get_offsets();
-  mowri << "generating cpu data ... " << std::flush;
+  mowri << "generating cpu data ... " << tinygemm::Flush;
   std::vector<tfloat> v_a;
   std::vector<tfloat> v_b;
   std::vector<tfloat> v_c;
   setabcw::set_abc<tfloat>(v_a, v_b, v_c, gg, toff);
-  mowri << "done." << std::endl;
+  mowri << "done." << tinygemm::Endl;
   const tfloat * c_true_bla = nullptr; 
   if (test_print){
     print_kernel<tfloat>();

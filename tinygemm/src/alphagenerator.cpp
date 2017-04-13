@@ -424,7 +424,7 @@ void append_load_to_register_string(char x, std::stringstream & ss){
 
 
 void append_group_allocation_defn_string(std::stringstream & ss){
-  ss << "#define GROUP_ALLOCATION " << hp.at(nsHP::matC).vs[nsHP::GAL];
+  ss << "#define GROUP_ALLOCATION " << hp.at(nsHP::matC).vs[nsHP::GAL] << "\n";
   if (hp.at(nsHP::matC).vs[nsHP::GAL] == 3){
     ss << "/* this variable is declared because we have GROUP_ALLOCATION type 3. */\n";
     ss << "/* It should define how many workgroups we expect to have active simulantaneuosly. */\n";

@@ -23,7 +23,7 @@
 
 /* TODO : float4 */
 
-/* TODO  volatile int id (Nugteren) to prevent unrolling
+/* TODO  volatile int id (Nugteren) to prevent unrolling */
 
 //TODO : tinygemmsolution should not contain a HyperParams, as it has a dangling pointer on leaving (hyperparams::Graph). rather just return the hyperstring. 
 
