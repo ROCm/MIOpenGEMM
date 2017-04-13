@@ -9,6 +9,12 @@
 #include <tinygemm/kernelstring.hpp>
 
 namespace tinygemm{
+
+  
+  
+const std::vector<std::string> possible_basic_types = {"wsa", "wsb", "betac", "main"};
+
+
 namespace kerngen{
 
 

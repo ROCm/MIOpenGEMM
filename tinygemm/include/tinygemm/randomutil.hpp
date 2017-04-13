@@ -7,7 +7,6 @@
 
 namespace tinygemm{
 
-  /* TODO : move this out and make constructor which takes seed */
   class RandomUtil {
   
   private:
@@ -17,7 +16,6 @@ namespace tinygemm{
   
   public:
     RandomUtil();
-    
     
     unsigned get_from_range(unsigned upper);
     

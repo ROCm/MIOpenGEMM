@@ -67,22 +67,23 @@ void BaseGenerator::append_parameter_list_from_usage(std::stringstream & ss){
 
 
 void BaseGenerator::append_stride_definitions(char x, std::stringstream & ss, unsigned workspace_type, bool withcomments, std::string macro_prefix, bool with_x_in_name){
+  
+  nsHP::eMat emat_x = hp.get_eMat_from_char(x);
+ 
   if (withcomments) ss << "/* strides parallel to k (unroll) in " << x << ". MACRO_STRIDE_" << x << " is between unroll tiles, STRIDE_" << x << " is within unroll tiles  */\n"; 
   
   std::string x_bit = with_x_in_name ? "_" + std::string(1, x) : "";
   for (std::string orth :  {"PLL", "PERP"}){
     bool pll_k = ("PLL" == orth);
-    ss << "#define " << macro_prefix << "STRIDE_" << orth << "_K" << x_bit << " " << dp.get_stride(x, pll_k, false, workspace_type) << "\n";
-    ss << "#define " << macro_prefix << "MACRO_STRIDE_" << orth << "_K" << x_bit << " " << dp.get_stride(x, pll_k, true, workspace_type) << "\n";
+    ss << "#define " << macro_prefix << "STRIDE_" << orth << "_K" << x_bit << " " << dp.get_stride(emat_x, pll_k, false, workspace_type) << "\n";
+    ss << "#define " << macro_prefix << "MACRO_STRIDE_" << orth << "_K" << x_bit << " " << dp.get_stride(emat_x, pll_k, true, workspace_type) << "\n";
   }
 }
 
 
 void BaseGenerator::append_unroll_block_geometry(char x, std::stringstream & ss, bool withcomments, bool with_x_string){
 
-
   nsHP::eMat emat_x = hp.get_eMat_from_char(x);
- 
   
   std::string x_string = with_x_string ? "_" + std::string(1, x) : "";
   x = (x == 'a' ? 'A' : (x == 'b' ? 'B' : x));

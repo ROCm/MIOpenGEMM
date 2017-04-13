@@ -39,11 +39,11 @@ void PrepGenerator::set_usage_from_matrixchar(){
 
 void PrepGenerator::append_basic_what_definitions(std::stringstream & ss){
   ss << "#define TFLOAT  "  << dp.t_float << "\n";
-  ss << "#define LD" << MATRIXCHAR << " " << gg.get_ld(matrixchar) << "\n";
+  ss << "#define LD" << MATRIXCHAR << " " << gg.ldX.at(emat_x) << "\n";
   ss << "/* less than or equal to LD" << MATRIXCHAR << ", DIM_COAL is size in the contiguous direction (m for c matrix if col contiguous and not transposed) */ \n" << 
-"#define DIM_COAL " << gg.get_coal(matrixchar) << "\n" <<
+"#define DIM_COAL " << gg.get_coal(emat_x) << "\n" <<
 "/* DIM_UNCOAL is the other dimension of the matrix */ \n" << 
-"#define DIM_UNCOAL " << gg.get_uncoal(matrixchar) << "\n\n";
+"#define DIM_UNCOAL " << gg.get_uncoal(emat_x) << "\n\n";
 }
 
 

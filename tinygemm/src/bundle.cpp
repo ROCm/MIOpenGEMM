@@ -41,8 +41,9 @@ private:
 
 public: 
   BundleGenerator(const hyperparams::HyperParams & hp_, const tinygemm::TinyGemmGeometry & gg_): hp(hp_), gg(gg_), dp(hp, gg) {
+
+
     
-    //TODO: should be static:    
     depmap["wsa"] = {};
     depmap["wsb"] = {};
     depmap["betac"] = {};

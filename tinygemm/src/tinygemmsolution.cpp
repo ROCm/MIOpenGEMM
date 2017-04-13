@@ -18,7 +18,7 @@ std::string TinyGemmSolution::get_networkconfig_string() const{
 }
 
 std::string TinyGemmSolution::get_hyper_param_string() const{
-  return hp.get_string();
+  return hyper_param_string;
 }
 
 

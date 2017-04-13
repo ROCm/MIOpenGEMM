@@ -17,7 +17,6 @@ const unsigned uninitialised_unsigned = std::numeric_limits<unsigned>::max();
 
 std::tuple<bool, std::string>
 get_deriveability(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg);
-//void deriveability_test(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg);
 
 class ChiralDerivedParams{
 public:
@@ -75,7 +74,8 @@ private:
   void initialise_chis();
 
   void reset_ga3_params();
-  void reset_cw_params(char x);
+
+  void reset_cw_params(nsHP::eMat emat_x);
   
 public:
   
@@ -88,9 +88,6 @@ public:
 
   std::vector<ChiralDerivedParams * > chis;
   
-  //ChiralDerivedParams & at(char x);
-  //const ChiralDerivedParams & at(char x) const;
-
   ChiralDerivedParams & at(nsHP::eMat emat_x){
     return *chis[emat_x];
   }
@@ -101,7 +98,6 @@ public:
   /* does the minimum setting to confirm compatibitily. called by get_deriveability */
   std::tuple<bool, std::string> set_fragile();
   
-  /* TODO : write descriptions */
   unsigned main_macro_tile_area = uninitialised_unsigned;
   unsigned main_micro_tile_area = uninitialised_unsigned;
   
@@ -136,18 +132,19 @@ public:
   /* GA 3 specific derived parameters */
   unsigned ga3_super_column_width = uninitialised_unsigned;
   unsigned ga3_last_super_column_width = uninitialised_unsigned;
-  
-  unsigned get_target_ld(char c) const;
+
+
+  unsigned get_target_ld(nsHP::eMat emat_x)  const;
 
   unsigned get_n_elements_in_x_unroll(char x);  
   
-  unsigned get_stride(char x, bool pll_k, bool is_macro, unsigned workspace_type) const;
+  unsigned get_stride(nsHP::eMat emat_x, bool pll_k, bool is_macro, unsigned workspace_type) const;
 
-  unsigned get_stride_cw0(char x, bool pll_k) const;
+  unsigned get_stride_cw0(nsHP::eMat emat_x, bool pll_k) const;
 
-  unsigned get_stride_cw1(char x, bool pll_k) const;
+  unsigned get_stride_cw1(nsHP::eMat emat_x, bool pll_k) const;
 
-  unsigned get_stride_cw2(char x, bool pll_k, bool is_macro) const;
+  unsigned get_stride_cw2(nsHP::eMat emat_x, bool pll_k, bool is_macro) const;
 
   void set_should_be_hyperparams();
 

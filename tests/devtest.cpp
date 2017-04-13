@@ -19,8 +19,8 @@
 
 std::string get_hyperstring(std::string hyperstring = ""){
   if (hyperstring.compare("") == 0){
-    hyperstring = //"A_MIC5_PAD2_PLU0_LIW1_MIW0_WOS0__B_MIC2_PAD1_PLU1_LIW0_MIW1_WOS0__C_UNR32_GAL3_PUN1_ICE1_NAW64_UFO0_MAC2";
-    hyperstring = "A_MIC4_PAD2_PLU1_LIW1_MIW1_WOS0__B_MIC8_PAD1_PLU0_LIW0_MIW0_WOS0__C_UNR16_GAL1_PUN0_ICE1_NAW64_UFO0_MAC5";
+    hyperstring = //"A_MIC5_PAD2_PLU0_LIW1_MIW0_WOS1__B_MIC2_PAD1_PLU1_LIW0_MIW1_WOS0__C_UNR32_GAL3_PUN1_ICE1_NAW64_UFO0_MAC2";
+    hyperstring = "A_MIC4_PAD2_PLU1_LIW1_MIW1_WOS1__B_MIC8_PAD1_PLU0_LIW0_MIW0_WOS0__C_UNR16_GAL1_PUN0_ICE1_NAW64_UFO0_MAC5";
   }
   return hyperstring;
 }
@@ -41,7 +41,7 @@ tinygemm::TinyGemmGeometry get_geometry(){
   unsigned lda = ( tA == isColMajor ? k : m ) + 0;
   unsigned ldb = ( tB == isColMajor ? n : k ) + 0;
   unsigned ldc = ( tC == isColMajor ? n : m ) + 0;
-  unsigned workspace_size =  1;
+  unsigned workspace_size =  1e8;
   char floattype = sizeof(TFloat) == sizeof(double) ? 'd' : 'f';
   return { isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype };
     

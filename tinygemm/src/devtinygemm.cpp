@@ -88,16 +88,16 @@ public:
   }
 
   size_t get_c_memsize(){
-    auto c_memsize = sizingup::get_n_elements_padded(gg.m, gg.n, gg.ldc, gg.isColMajor, gg.tC, toff.oc, toff.tail_off_c)*sizeof(TFloat);
+    auto c_memsize = sizingup::get_n_elements_padded(gg.m, gg.n, gg.ldX[nsHP::matC], gg.isColMajor, gg.tX[nsHP::matC], toff.oc, toff.tail_off_c)*sizeof(TFloat);
     return c_memsize;
   }
 
   size_t get_a_memsize(){
-    return sizingup::get_n_elements_padded(gg.m, gg.k, gg.lda, gg.isColMajor, gg.tA, toff.oa, toff.tail_off_a)*sizeof(TFloat);
+    return sizingup::get_n_elements_padded(gg.m, gg.k, gg.ldX[nsHP::matA], gg.isColMajor, gg.tX[nsHP::matA], toff.oa, toff.tail_off_a)*sizeof(TFloat);
   }
   
   size_t get_b_memsize(){
-    return sizingup::get_n_elements_padded(gg.k, gg.n, gg.ldb, gg.isColMajor, gg.tB, toff.ob, toff.tail_off_b)*sizeof(TFloat);
+    return sizingup::get_n_elements_padded(gg.k, gg.n, gg.ldX[nsHP::matB], gg.isColMajor, gg.tX[nsHP::matB], toff.ob, toff.tail_off_b)*sizeof(TFloat);
   }
   
   size_t get_workspace_memsize(){

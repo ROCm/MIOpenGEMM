@@ -9,6 +9,9 @@
 #include <tinygemm/tinygemmgeometry.hpp>
 #include <tinygemm/tinygemmerror.hpp>
 
+
+/* TODO : hyperparams caching */
+
 namespace tinygemm{
 
 enum class FindStartType {Default, Random};
@@ -30,8 +33,8 @@ namespace nsHP{
   enum eNonChiral {UNR = 0, GAL, PUN, ICE, NAW, UFO, MAC, nNonChiralHPs};  
   enum eSpecial {undefined = -1};
   enum eBinary {no = 0, yes = 1};
-  enum eMat {matA, matB, matC, nSubGs};
 }
+
 
 namespace hyperparams{
 

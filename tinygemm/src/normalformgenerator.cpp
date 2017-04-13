@@ -35,11 +35,14 @@ public:
     if (type.compare("nforma") == 0){
       matrixchar = 'a';
       MATRIXCHAR = 'A';
+      emat_x = nsHP::matA;
+
     }
     
     else if (type.compare("nformb") == 0){
       matrixchar = 'b';
       MATRIXCHAR = 'B';
+      emat_x = nsHP::matB;
     }
   
     else{
@@ -52,16 +55,11 @@ public:
   
   size_t get_local_work_size() override final{
     /* should be made into a hyper param */
-    
-    
-    nsHP::eMat emat_x = hp.get_eMat_from_char(matrixchar);
     return dp.at(emat_x).cw2_local_work_size;
   }
 
   size_t get_n_work_groups() override final{
     //here.
-
-    nsHP::eMat emat_x = hp.get_eMat_from_char(matrixchar);
     return dp.cw2_n_macro_tiles_pll_unroll * dp.at(emat_x).n_groups;
   }
 
@@ -79,9 +77,6 @@ public:
 
 KernelString get_kernelstring(){
   std::stringstream ss;
-  
-  
-  nsHP::eMat emat_x = hp.get_eMat_from_char(MATRIXCHAR);
 
   ss << "#define TFLOAT " << dp.t_float << "\n";
   ss << "#define " << "N_WORK_ITEMS_PER_GROUP " << dp.at(emat_x).cw2_local_work_size << "\n";

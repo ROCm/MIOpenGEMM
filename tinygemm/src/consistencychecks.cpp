@@ -8,7 +8,7 @@ namespace consistencychecks{
 
 
   void check_ldx_mnk_consistent(const tinygemm::TinyGemmGeometry  & gg){
-      check_ldx_mnk_consistent(gg.isColMajor, gg.tA, gg.tB, gg.tC, gg.lda, gg.ldb, gg.ldc, gg.m, gg.n, gg.k);
+      check_ldx_mnk_consistent(gg.isColMajor, gg.tX[nsHP::matA], gg.tX[nsHP::matB], gg.tX[nsHP::matC], gg.ldX[nsHP::matA], gg.ldX[nsHP::matB], gg.ldX[nsHP::matC], gg.m, gg.n, gg.k);
   }
 
   void check_ldx_mnk_consistent(bool isColMajor, bool tA, bool tB, bool tC, unsigned lda, unsigned ldb, unsigned ldc, unsigned m, unsigned n, unsigned k){

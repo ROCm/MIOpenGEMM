@@ -18,12 +18,12 @@ namespace bylinegen{
 void ByLineGenerator::setup(){
 
   setup_additional();
-  n_full_work_items_per_line = gg.get_coal(matrixchar) / get_work_per_thread();
-  n_work_items_per_line = n_full_work_items_per_line + (gg.get_coal(matrixchar) % get_work_per_thread() != 0);
-  n_full_work_items = n_full_work_items_per_line*gg.get_uncoal(matrixchar);
-  n_work_items = n_work_items_per_line*gg.get_uncoal(matrixchar);
+  n_full_work_items_per_line = gg.get_coal(emat_x) / get_work_per_thread();
+  n_work_items_per_line = n_full_work_items_per_line + (gg.get_coal(emat_x) % get_work_per_thread() != 0);
+  n_full_work_items = n_full_work_items_per_line*gg.get_uncoal(emat_x);
+  n_work_items = n_work_items_per_line*gg.get_uncoal(emat_x);
   start_in_coal_last_work_item = get_work_per_thread()*n_full_work_items_per_line;
-  work_for_last_item_in_coal = gg.get_coal(matrixchar) % get_work_per_thread();
+  work_for_last_item_in_coal = gg.get_coal(emat_x) % get_work_per_thread();
   set_usage_from_matrixchar();
 }
 

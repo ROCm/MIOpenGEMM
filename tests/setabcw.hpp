@@ -1,6 +1,7 @@
 #ifndef SETABCW_HPP
 #define SETABCW_HPP
 
+#include <tinygemm/tinygemmgeometry.hpp>
 namespace setabcw{
 
 template <typename TFloat>
@@ -19,9 +20,9 @@ void fill_uni(std::vector<TFloat> & v, unsigned r_small, unsigned r_big){
 template <typename TFloat>
 void set_abc(std::vector<TFloat> & v_a, std::vector<TFloat> & v_b, std::vector<TFloat> & v_c, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff){
 
-  size_t n_a = gg.lda * (gg.tA == gg.isColMajor ? gg.m : gg.k) + toff.oa + toff.tail_off_a;
-  size_t n_b = gg.ldb * (gg.tB == gg.isColMajor ? gg.k : gg.n) + toff.ob + toff.tail_off_b;
-  size_t n_c = gg.ldc * (gg.tC == gg.isColMajor ? gg.m : gg.n) + toff.oc + toff.tail_off_c; 
+  size_t n_a = gg.ldX[tinygemm::nsHP::matA] * (gg.tX[tinygemm::nsHP::matA] == gg.isColMajor ? gg.m : gg.k) + toff.oa + toff.tail_off_a;
+  size_t n_b = gg.ldX[tinygemm::nsHP::matB] * (gg.tX[tinygemm::nsHP::matB] == gg.isColMajor ? gg.k : gg.n) + toff.ob + toff.tail_off_b;
+  size_t n_c = gg.ldX[tinygemm::nsHP::matC] * (gg.tX[tinygemm::nsHP::matC] == gg.isColMajor ? gg.m : gg.n) + toff.oc + toff.tail_off_c; 
 
   /* fill matrices with random floats. It is important to fill them with random floats, 
    * as if they're integers, the kernel can, and does, cheat! (runs faster) */

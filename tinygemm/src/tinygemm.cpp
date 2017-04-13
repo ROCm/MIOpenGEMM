@@ -22,10 +22,10 @@
 #include <tinygemm/kernelstring.hpp>
 
 /* TODO : float4 */
+/* TODO : volatile int id (Nugteren) to prevent unrolling */
 
-/* TODO  volatile int id (Nugteren) to prevent unrolling */
 
-//TODO : tinygemmsolution should not contain a HyperParams, as it has a dangling pointer on leaving (hyperparams::Graph). rather just return the hyperstring. 
+//TODO TODO TODO TODO enum out tk_kernels_map
 
 namespace tinygemm{
 
@@ -88,9 +88,6 @@ public:
   
   TinyGemmGPUMems gpum;
   
-  /* TODO : this belongs somewhere else */
-  const std::vector<std::string> possible_basic_types = {"wsa", "wsb", "betac", "main"};
-  
 
 private:
   outputwriting::OutputWriter & mowri;
@@ -103,6 +100,7 @@ private:
 
 
   std::map<std::string, TinyGemmKernel > tk_kernels_map;
+  
   std::vector <TinyGemmKernel *> tk_kernels_active;  
   std::vector<std::vector <unsigned > > v_wait_indices;
 
@@ -310,7 +308,6 @@ private:
       for (unsigned k_ind = 0; k_ind < tk_kernels_active.size(); ++k_ind){
         ss << " " << tk_kernels_active[k_ind]->v_times.back() << "\t";
       }
-      //ss  << " " << 2.0 * gg.m * gg.n * gg.k / (v_t_total.back() * 1e6) <<  std::defaultfloat <<  std::setprecision(6); 
       ss  << " " << 2.0 * gg.m * gg.n * gg.k / (v_t_total.back() * 1e6) << std::setprecision(6); 
     }
 
@@ -409,7 +406,6 @@ private:
         }
       }
       
-      /* TODO : find out when exactly to use cl Flush  */
       openclutil::cl_flush(command_queue, "cl flushing in core gemm loop");      
       
       
@@ -447,9 +443,6 @@ private:
             mowri << " (NEW FASTEST) ";
           }
         }
-        
-
-              
         mowri << "\n";
       }
     }
@@ -499,7 +492,8 @@ public:
     deriveability_test(hp, "in get_default");    
     auto bundle = tinygemm::kerngen::get_bundle(hp, gg); 
     tinygemm::TinyGemmSolutionStatistics tgss(std::numeric_limits<float>::max(), 0, 0);    
-    return { hp, gg, bundle.dp, tgss, bundle.v_tgks };
+    
+    return { gg, tgss, bundle.v_tgks, hp.get_string() };
   }
 
 
@@ -529,7 +523,7 @@ public:
     
     if (found_a_deriveable_hp == false){
       deriveablesearch_ss << "\n\nStruggling to find a deriveable set of hyper parameters which satisfy the geometry and constraints. THe number of attempts made is " << n_trials << "\n throwing an error\n";
-      //should rather return no solution ? or one which we know to be deriveable ? Yes. throwing an error should not be stochastic....
+      // TODO should rather return no solution ? or one which we know to be deriveable ? Yes. throwing an error should not be stochastic....
       throw tinygemm_error(deriveablesearch_ss.str());
     }
     return hyper_param_start;
@@ -551,14 +545,15 @@ public:
 
     /* we will count how many kernels are successfully generated AND compiled AND benchmarked */
     unsigned global_counter = 0;
-       
-    hyperparams::HyperParams hyper_param_start = get_hyper_param_start(fst, graph);
+
+    hyperparams::HyperParams hyper_param_current = get_hyper_param_start(fst, graph);
+    
     /* In here, we will store all previously considered HyperParams strings, used to check and ensure that we do not consider a HyperParam more than once */
     std::vector<std::string> hyper_front_history;
  
     best_solns_path.clear();
     
-    std::vector<hyperparams::HyperParams> hyper_front = { hyper_param_start };
+    std::vector<hyperparams::HyperParams> hyper_front = { hyper_param_current };
 
     bool improvement_found_on_front = true;    
     mowri << "allotted time : " << allotted_time << Endl;
@@ -579,22 +574,21 @@ public:
       unsigned hfi = 0;
       while (hfi < hyper_front.size() && improvement_found_on_front == false && elapsed_seconds < allotted_time){
         std::cout << "." << std::flush;
-        hyperparams::HyperParams hp = hyper_front[hfi];
-        std::string hp_string = hp.get_string();        
+        hyper_param_current = hyper_front[hfi];
+        std::string hp_string = hyper_param_current.get_string();        
         hyper_front_history.push_back(hp_string);
 
         /* extra precaution, should be able to remove this */
-        deriveability_test(hp, "in find loop");     
+        deriveability_test(hyper_param_current, "in find loop");     
            
-        auto bundle = tinygemm::kerngen::get_bundle(hp,gg);
+        auto bundle = tinygemm::kerngen::get_bundle(hyper_param_current,gg);
         /* the OpenCL string was succesfully generated, we can now attempt to compile and benchmark it */
         ++global_counter;
 
         mowri << "\n[" << global_counter  <<  ", " << std::fixed << std::setprecision(2) << elapsed_seconds;
-        //mowri << std::setprecision(6) << std::defaultfloat << "s]\t" << hp.get_string() << Endl;
-        mowri << std::setprecision(6) << "s]\t" << hp.get_string() << Endl;
+        mowri << std::setprecision(6) << "s]\t" << hyper_param_current.get_string() << Endl;
         
-        setup_tinykernels(hp, bundle);  
+        setup_tinykernels(hyper_param_current, bundle);  
         core_gemm_loop(n_runs_per_kernel, false);
 
         /* A new best kernel found */
@@ -602,7 +596,7 @@ public:
           update_elapsed_seconds();
           improvement_found_on_front = true;
           auto sstats = TinyGemmSolutionStatistics(median_time, median_gflops, elapsed_seconds);
-          best_solns_path.emplace_back (hp, gg, bundle.dp, sstats, bundle.v_tgks );
+          best_solns_path.emplace_back (gg, sstats, bundle.v_tgks, hyper_param_current.get_string() );
         }
         ++hfi;
         update_elapsed_seconds();
@@ -611,12 +605,8 @@ public:
   
       if (improvement_found_on_front == true && allotted_time > elapsed_seconds){
         
-        
-        //mowri << "\n(";     
-        
-        
         /* getting all `one-away's */        
-        auto one_aways = best_solns_path.back().hp.get_one_aways();
+        auto one_aways = hyper_param_current.get_one_aways();
         
         /* refreshing hyper front */
         hyper_front.clear();
@@ -670,10 +660,10 @@ public:
     }
     
     if (best_solns_path.size() == std::numeric_limits<float>::max()){
-      throw tinygemm_error("\nThere were no solutions found. This suggests that the initial kernel did not work (could not derive hyper parameters, required too much memory, or did not compile. Maybe there is some preceding warning printed which sheds light on this? Probably with a modification to the FindStartType or the constraint_string, this should be resolved. For example, the unroll UNR can be reduced if the problem is memory. TODO(jn) catch certain problems in architests ");
+      throw tinygemm_error("\nThere were no solutions found. This suggests that the initial kernel did not work (could not derive hyper parameters, required too much memory, or did not compile. Maybe there is some preceding warning printed which sheds light on this? Probably with a modification to the FindStartType or the constraint_string, this should be resolved. For example, the unroll UNR can be reduced if the problem is memory. jn should catch certain problems in architests ");
     }
   
-    auto leading_size = best_solns_path.back().get_hyper_param_string().size() + 2;
+    auto leading_size = best_solns_path.back().hyper_param_string.size() + 2;
     
     std::string startstring  = "hyper parameter string:";
     startstring.resize(leading_size, ' ');
@@ -682,7 +672,6 @@ public:
     for (auto & x : best_solns_path) {
       std::string solnstring = x.get_hyper_param_string();
       solnstring.resize(leading_size, ' ');
-      //mowri <<  std::fixed <<  solnstring << "\t " << x.statistics.solution_discovery_time << "\t\t " << x.statistics.median_benchmark_gflops  << std::defaultfloat << Endl;
       mowri <<  std::fixed <<  solnstring << "\t " << x.statistics.solution_discovery_time << "\t\t " << x.statistics.median_benchmark_gflops  << Endl;
     }
     
@@ -700,7 +689,7 @@ const std::string & hash
 ){
   openclutil::SafeClMem c_copied(hash);
   cl_event c_copy_event; 
-  size_t n_c = gg.ldc * (gg.tC == gg.isColMajor ? gg.m : gg.n) + toff.oc;
+  size_t n_c = gg.ldX[nsHP::matC] * (gg.tX[nsHP::matC] == gg.isColMajor ? gg.m : gg.n) + toff.oc;
   size_t c_memsize = gg.derived.float_size_bytes*n_c;
   c_copied.clmem = openclutil::cl_create_buffer_from_command_queue(command_queue, CL_MEM_READ_WRITE, c_memsize, NULL, hash + ", in function get_copy of tinygemm");
   openclutil::cl_enqueue_copy_buffer(command_queue, c, c_copied.clmem, 0, 0, c_memsize, 0, NULL, &c_copy_event, hash + ", in function get_copy of tinygemm");
@@ -764,16 +753,9 @@ outputwriting::OutputWriter & mowri){
   mowri << "oops";
   throw tinygemm_error("get default not ready" + constraint_string + std::to_string(bla));
   
-  //hyperparams::Graph(gg, constraint_string);
-  //OpenCLGemmEncapsulator oger({}, gg, {0,0,0,0,0,0,0}, {}, {}, {}, {}, logfile, verbose); 
-  //return oger.get_default(constraint_string);
- 
 }
   
   
-
-
-
 void benchgemm(
   cl_command_queue command_queue,
   const std::vector<hyperparams::HyperParams> & hps,

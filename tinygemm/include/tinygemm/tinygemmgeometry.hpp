@@ -2,8 +2,16 @@
 #define PROBLEMGEOMETRY_HPP
 
 #include <string>
+#include <vector>
 
 namespace tinygemm{
+
+
+namespace nsHP{
+  enum eMat {matA, matB, matC, nMats};
+}
+
+
 
 class TinyGemmOffsets{
   public:
@@ -15,7 +23,6 @@ class TinyGemmOffsets{
     unsigned tail_off_b;
     unsigned tail_off_c;
 
-//TinyGemmOffsets::TinyGemmOffsets(unsigned oa_, unsigned ob_, unsigned oc_, unsigned oworkspace_, unsigned tail_off_c_):oa(oa_), ob(ob_), oc(oc_), oworkspace(oworkspace_), tail_off_c(tail_off_c_)
     
     TinyGemmOffsets(unsigned oa, unsigned ob, unsigned oc, unsigned oworkspace, unsigned tail_off_a, unsigned tail_off_b, unsigned tail_off_c);
     
@@ -25,12 +32,9 @@ class TinyGemmOffsets{
 
 class TinyGemmGeometryDerived{
 public:
-  //unsigned dim_c_coal;
-  //unsigned dim_c_uncoal;
   unsigned float_size_bits;
   unsigned float_size_bytes;
-  
-  void reset(char floattype); //bool tC, bool isColMajor, unsigned n, unsigned m, 
+  void reset(char floattype);
   
 };
 
@@ -38,15 +42,18 @@ class TinyGemmGeometry{
 public:
   /* */
   bool isColMajor; 
-  bool tA;
-  bool tB;
-  bool tC;
-  unsigned lda;
-  unsigned ldb;
-  unsigned ldc;
+  
+  
+  /* indexed by eMat  (for A, B and C) */
+  std::vector<bool> tX;
+  
+  /* indexed by eMat (for A, B and C) */
+  std::vector<unsigned> ldX;
+      
   unsigned m;
   unsigned n;
   unsigned k; 
+  
   unsigned workspace_size;
 //* 'f' : 32-bit single precision
 //* 'd' : 64-bit double precision 
@@ -61,20 +68,16 @@ public:
   
   TinyGemmGeometry & operator= (const TinyGemmGeometry & ) = default;
   
-  unsigned get_padless_dim(char x, bool isCoal) const;
-  
-  unsigned get_coal(char x) const;
-  
-  unsigned get_uncoal(char x) const;
-  
-  unsigned get_ld(char x) const;
-  
-  unsigned get_non_k_dim(char x) const;
-  
-  bool coal_is_pll_k(char x) const;
+  unsigned get_padless_dim(nsHP::eMat emat_x, bool isCoal) const;
     
-  bool get_tX(char x) const;
+  unsigned get_coal(nsHP::eMat emat_x) const;
   
+  unsigned get_uncoal(nsHP::eMat emat_x) const;
+    
+  unsigned get_non_k_dim(nsHP::eMat emat_x) const;
+    
+  bool coal_is_pll_k(nsHP::eMat emat_x) const;
+      
   std::string get_string() const;
   
   std::string get_networkconfig_string() const;

@@ -502,9 +502,9 @@ const unsigned group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
 
 void append_stride_c_defn(std::stringstream & ss){
   
-  unsigned transposed_xor_is_col_major = (gg.tC + gg.isColMajor) % 2;
-  ss << "#define STRIDE_PLL_M_C " << (transposed_xor_is_col_major == 1 ? 1 : gg.ldc) << "\n";
-  ss << "#define STRIDE_PLL_N_C " << (transposed_xor_is_col_major == 0 ? 1 : gg.ldc) << "\n";
+  unsigned transposed_xor_is_col_major = (gg.tX[nsHP::matC] + gg.isColMajor) % 2;
+  ss << "#define STRIDE_PLL_M_C " << (transposed_xor_is_col_major == 1 ? 1 : gg.ldX[nsHP::matC]) << "\n";
+  ss << "#define STRIDE_PLL_N_C " << (transposed_xor_is_col_major == 0 ? 1 : gg.ldX[nsHP::matC]) << "\n";
 }
 
 
@@ -573,6 +573,9 @@ void append_id_string_sym(std::stringstream & ss, char x){
   X = (x == 'a') ? 'A' : ((x == 'b') ? 'B' : x);
   x = (x == 'B') ? 'b' : ((x == 'A') ? 'a' : x);
 
+  nsHP::eMat emat_x = hp.get_eMat_from_char(x);
+
+
   ss << "\n";  
   
   if (X == 'A') ss << "/* LDS memory */\n";
@@ -594,7 +597,6 @@ void append_id_string_sym(std::stringstream & ss, char x){
   ss << "\n\n\n"; 
   
   
-  nsHP::eMat emat_x = hp.get_eMat_from_char(x);
   if (hp.at(emat_x).vs[nsHP::WOS] == 1 || hp.at(emat_x).vs[nsHP::WOS] == 2){    
     if (X == 'A') ss << "/* from workspace */\n";
     ss << "const TFLOAT * restrict " << x << " = w + w_offset + GLOBAL_OFFSET_" << X << ";\n";

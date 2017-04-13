@@ -38,14 +38,14 @@ std::map<T, unsigned> getVals(unsigned nVals, const std::vector<T> & keys, const
 Graph::Graph(const tinygemm::TinyGemmGeometry & gg, std::string constraints_string, bool full_cs): ptr_gg(&gg) {
 
 
-  graphchar.resize(nsHP::nSubGs);
+  graphchar.resize(nsHP::nMats);
   graphchar[nsHP::matA] = 'A';
   graphchar[nsHP::matB] = 'B';
   graphchar[nsHP::matC] = 'C';
   
-  graphind = getVals(nsHP::nSubGs, graphchar, "graphind");
+  graphind = getVals(nsHP::nMats, graphchar, "graphind");
 
-  std::vector<std::string> sub_constraints(nsHP::nSubGs, "");
+  std::vector<std::string> sub_constraints(nsHP::nMats, "");
   auto megafrags = stringutil::split(constraints_string, "__");
 
   
@@ -71,7 +71,7 @@ Graph::Graph(const tinygemm::TinyGemmGeometry & gg, std::string constraints_stri
   csubg = CSubG(gg, sub_constraints[nsHP::matC], full_cs);
   csubg.initialise();
 
-  p_subgs.resize(nsHP::nSubGs);
+  p_subgs.resize(nsHP::nMats);
   p_subgs[nsHP::matA] = &asubg;
   p_subgs[nsHP::matB] = &bsubg;
   p_subgs[nsHP::matC] = &csubg;
@@ -200,25 +200,23 @@ std::string SubG::get_edges_string(unsigned hpi){
   return ss.str();
 }
 
-std::string SubG::get_range_string(unsigned hpi){
+
+std::string get_generic_range_string(std::string opener, const std::vector<unsigned> & generic_range_hpi){
   std::stringstream ss;
-  ss << "Range : \n";
-  for (auto & x : range[hpi]){
+  ss << opener << " : \n";
+  for (auto & x : generic_range_hpi){
     ss << x << " ";
   }
   ss << "\n";
   return ss.str();
 }
 
-//TODO : remove code duplication from above
+std::string SubG::get_range_string(unsigned hpi){
+  return get_generic_range_string("Range", range[hpi]);
+}
+
 std::string SubG::get_start_range_string(unsigned hpi){
-  std::stringstream ss;
-  ss << "Start Range : \n";
-  for (auto & x : start_range[hpi]){
-    ss << x << " ";
-  }
-  ss << "\n";
-  return ss.str();
+  return get_generic_range_string("Start Range", start_range[hpi]);
 }
 
 
@@ -296,7 +294,7 @@ void ChiralSubG::set_start_range(){
   start_range[nsHP::PLU] = {nsHP::no, nsHP::yes};  
   start_range[nsHP::LIW] = {nsHP::no};  
   start_range[nsHP::MIW] = {nsHP::yes};
-  start_range[nsHP::WOS] = {0};
+  start_range[nsHP::WOS] = {0,1,2};
 
   set_chirality_specific_start_range();
 
@@ -353,8 +351,12 @@ void ChiralSubG::set_preconstraint_edges(){
   {  graph_binary  };
 
   
+  // TODO : add edges TODO : namespace copy types 
   edges[nsHP::WOS] = 
-  {  {0, {}}   };// for now, no copying TODO(jn) incorporate
+  {  {0, {}},
+     {1, {}},
+     {2, {}}
+   };
   
 
 }
@@ -435,7 +437,7 @@ void CSubG::set_preconstraint_edges(){
 
 
 void HyperParams::checks() const{
-  for (unsigned gi = 0; gi < nsHP::nSubGs; ++gi){
+  for (unsigned gi = 0; gi < nsHP::nMats; ++gi){
     if (gi > v_xhps.size()){
       throw tinygemm_error("strange error : gi > v_xhps.size()");
     }
@@ -466,7 +468,7 @@ void HyperParams::checks() const{
 
 
 void HyperParams::replace(const std::vector<std::vector<unsigned>> & params){
-  for (unsigned mi = 0; mi < nsHP::nSubGs; ++mi){
+  for (unsigned mi = 0; mi < nsHP::nMats; ++mi){
     for (unsigned hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi){
       v_xhps[mi].vs[hpi] = params.at(mi).at(hpi);
     }
@@ -475,7 +477,7 @@ void HyperParams::replace(const std::vector<std::vector<unsigned>> & params){
 
 /* go through the params, and where it is not nHP::undefined, use its value to replace this */
 void HyperParams::replace_where_source_defined(const std::vector<std::vector<unsigned>> & params){
-  for (unsigned mi = 0; mi < nsHP::nSubGs; ++mi){
+  for (unsigned mi = 0; mi < nsHP::nMats; ++mi){
     for (unsigned hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi){
       if (params[mi][hpi] != nsHP::undefined){
         v_xhps[mi].vs[hpi] = params[mi][hpi];
@@ -485,7 +487,7 @@ void HyperParams::replace_where_source_defined(const std::vector<std::vector<uns
 }
 
 void HyperParams::replace_undefined_randomly(){
-  for (unsigned mi = 0; mi < nsHP::nSubGs; ++mi){
+  for (unsigned mi = 0; mi < nsHP::nMats; ++mi){
     for (unsigned hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi){
       if (v_xhps[mi].vs[hpi] == nsHP::undefined){
         auto & a_range = p_graph->p_subgs[mi]->start_range[hpi];
@@ -500,7 +502,7 @@ void HyperParams::replace_undefined_randomly(){
 
 
 HyperParams::HyperParams(const Graph & graph):p_graph(&graph) {
-  for (unsigned mi = 0; mi < nsHP::nSubGs; ++mi){
+  for (unsigned mi = 0; mi < nsHP::nMats; ++mi){
     v_xhps.emplace_back (  XHPs ( p_graph->p_subgs[mi]->nHPs  )  );
     for (unsigned hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi){
       auto & a_range = p_graph->p_subgs[mi]->start_range[hpi];
@@ -536,7 +538,7 @@ std::string HyperParams::get_string() const{
 std::vector<HyperParams> HyperParams::get_one_aways(){
   
   std::vector<HyperParams> one_aways;
-  for (unsigned mi = 0; mi < nsHP::nSubGs; ++mi){
+  for (unsigned mi = 0; mi < nsHP::nMats; ++mi){
     for (unsigned hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi){
       unsigned value = v_xhps[mi].vs[hpi];
       for (auto & newval : p_graph->p_subgs[mi]->edges[hpi].at(value)){
@@ -594,14 +596,6 @@ std::vector<HyperParams> HyperParams::get_one_aways(){
 }
   
 
-//std::make_tuple(100, 32, 26939, 26939, 26939, 100, true, false), 
-/* see dev/python/deepbench/deepbench_results.py : this is generated by get_kernel_cache_string, based on results running find with allotted_time =  30 seconds per problem, with three starting kernels for
- * small, medium, large: On a Fiji! 
- * TODO : regenerate with longer runs and more problems.
- * TODO : should not be a single vector, this has linear find time. At least seperate out isColMajor, tA, tB  
- * TODO : figure out how to make cache contain only reduced problems .... very important! */
-
-
      
 HyperParams get_hp_start(FindStartType fst, const Graph & graph){
 
@@ -613,13 +607,11 @@ HyperParams get_hp_start(FindStartType fst, const Graph & graph){
     ss << "A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN0_ICE1_NAW64_UFO0_MAC5  here.\n";
     throw tinygemm_error(ss.str());
   }
-
-  //else if (fst == FindStartType::Random){
-    //auto constraint_params = graph.get_params_from_string(constraint_string, false);
-    //hyper_param_start.replace(constraint_params);
-    //hyper_param_start.replace_undefined_randomly();
-  //}
   
+  //else{
+    //throw tinygemm_error("only default currently supported in get_hp_start");
+  //}
+     
   hyper_param_start.checks();  
   return hyper_param_start;
 }
@@ -627,10 +619,10 @@ HyperParams get_hp_start(FindStartType fst, const Graph & graph){
 
 
 
-bool HyperParams::in_graph(){   //satisfies_where_source_defined(const std::vector<std::vector<unsigned>> & params){
+bool HyperParams::in_graph(){
   /* filtering out if violates the constraint string */
   bool constraints_satisfied = true;
-  for (unsigned mi = 0; mi < nsHP::nSubGs; ++mi){
+  for (unsigned mi = 0; mi < nsHP::nMats; ++mi){
     for (unsigned hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi){
       if (std::count(p_graph->p_subgs[mi]->range[hpi].begin(), p_graph->p_subgs[mi]->range[hpi].end(), v_xhps[mi].vs[hpi]) == 0){
         constraints_satisfied = false;

@@ -31,7 +31,7 @@ size_t get_n_elements_padded(unsigned h, unsigned w, unsigned ldx, bool isColMaj
 void check_sizes_ok_for_unsigned(const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff){
   
   
-  check_sizes_ok_for_unsigned(gg.isColMajor, gg.tA, gg.tB, gg.tC, gg.m, gg.n, gg.k, gg.lda, gg.ldb, gg.ldc, gg.workspace_size, toff.oa, toff.ob, toff.oc, toff.oworkspace, toff.tail_off_a, toff.tail_off_b, toff.tail_off_c);
+  check_sizes_ok_for_unsigned(gg.isColMajor, gg.tX[nsHP::matA], gg.tX[nsHP::matB], gg.tX[nsHP::matC], gg.m, gg.n, gg.k, gg.ldX[nsHP::matA], gg.ldX[nsHP::matB], gg.ldX[nsHP::matC], gg.workspace_size, toff.oa, toff.ob, toff.oc, toff.oworkspace, toff.tail_off_a, toff.tail_off_b, toff.tail_off_c);
   
 }
 
