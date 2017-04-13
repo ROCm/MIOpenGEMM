@@ -13,11 +13,15 @@ CopyGenerator::CopyGenerator(const tinygemm::hyperparams::HyperParams & hp_,  co
 
 
 size_t CopyGenerator::get_local_work_size(){
-  return dp.at(matrixchar).cw1_local_work_size;
+  
+  nsHP::eMat emat_x = hp.get_eMat_from_char(matrixchar);
+  return dp.at(emat_x).cw1_local_work_size;
 }
 
 size_t CopyGenerator::get_work_per_thread(){
-  return dp.at(matrixchar).cw1_work_per_thread;
+
+  nsHP::eMat emat_x = hp.get_eMat_from_char(matrixchar);
+  return dp.at(emat_x).cw1_work_per_thread;
 }
 
 void CopyGenerator::setup_additional() {
@@ -46,8 +50,11 @@ void CopyGenerator::append_derived_definitions_additional(std::stringstream & ss
   if (matrixchar != 'a' && matrixchar != 'b'){
     throw tinygemm_error(std::string("this is unexpected, call to append_derived_definitions_additional but matrixchar is neither a not b, but rather  ") + matrixchar);
   }
-  ss << "#define LDW " << dp.get_target_ld(matrixchar) << "\n";
-  ss << "#define GLOBAL_OFFSET_W " << dp.at(matrixchar).cw_global_offset << "\n";
+  
+  nsHP::eMat emat_x = hp.get_eMat_from_char(matrixchar);
+
+  ss << "#define LDW " << dp.get_target_ld(emat_x) << "\n";
+  ss << "#define GLOBAL_OFFSET_W " << dp.at(emat_x).cw_global_offset << "\n";
 }
 
 

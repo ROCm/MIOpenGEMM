@@ -69,7 +69,11 @@ class DerivedParams{
 private:
   const hyperparams::HyperParams & hp;
   const tinygemm::TinyGemmGeometry & gg;
-  
+
+  ChiralDerivedParams adps;
+  ChiralDerivedParams bdps;
+  void initialise_chis();
+
   void reset_ga3_params();
   void reset_cw_params(char x);
   
@@ -81,12 +85,19 @@ public:
   
   DerivedParams(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg, std::string s);
   
-  ChiralDerivedParams adps;
-  ChiralDerivedParams bdps;
+
+  std::vector<ChiralDerivedParams * > chis;
   
-  ChiralDerivedParams & at(char x);
-  const ChiralDerivedParams & at(char x) const;
-  
+  //ChiralDerivedParams & at(char x);
+  //const ChiralDerivedParams & at(char x) const;
+
+  ChiralDerivedParams & at(nsHP::eMat emat_x){
+    return *chis[emat_x];
+  }
+  const ChiralDerivedParams & at(nsHP::eMat emat_x) const{
+    return *chis[emat_x];
+  }
+    
   /* does the minimum setting to confirm compatibitily. called by get_deriveability */
   std::tuple<bool, std::string> set_fragile();
   

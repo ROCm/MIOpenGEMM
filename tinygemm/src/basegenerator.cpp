@@ -80,15 +80,19 @@ void BaseGenerator::append_stride_definitions(char x, std::stringstream & ss, un
 
 void BaseGenerator::append_unroll_block_geometry(char x, std::stringstream & ss, bool withcomments, bool with_x_string){
 
+
+  nsHP::eMat emat_x = hp.get_eMat_from_char(x);
+ 
+  
   std::string x_string = with_x_string ? "_" + std::string(1, x) : "";
   x = (x == 'a' ? 'A' : (x == 'b' ? 'B' : x));
   
   ss << "\n";
   if (withcomments) ss << "/* macro tiles define the pattern of C that workgroups (threads with shared local memory) process */\n";
-  ss << "#define " << "MACRO_TILE_LENGTH" << x_string << " " << dp.at(x).macro_tile_length << "\n";
+  ss << "#define " << "MACRO_TILE_LENGTH" << x_string << " " << dp.at(emat_x   ).macro_tile_length << "\n";
 
   if (withcomments) ss << "/* number of elements in load block : MACRO_TILE_LENGTH" << x_string << " * UNROLL */\n";
-  ss << "#define " << "N_ELEMENTS_IN" << x_string << "_UNROLL "<< dp.at(x).n_elements_in_unroll <<"\n";
+  ss << "#define " << "N_ELEMENTS_IN" << x_string << "_UNROLL "<< dp.at(emat_x   ).n_elements_in_unroll <<"\n";
 
   if (withcomments) {
     ss << "/* number of groups covering " << (x == 'A' ? 'M': 'N') <<  " / MACRO_TILE_LENGTH" << x_string;
@@ -97,11 +101,11 @@ void BaseGenerator::append_unroll_block_geometry(char x, std::stringstream & ss,
     }
     ss << " */" << "\n";
   }
-  ss << "#define " << "N_GROUPS" << x_string << " " <<  dp.at(x).n_groups << "\n";
+  ss << "#define " << "N_GROUPS" << x_string << " " <<  dp.at(emat_x   ).n_groups << "\n";
 
   if (dp.main_use_edge_trick != 0){
     if (withcomments) ss <<  "/* 1 + ("  << (x == 'A' ? 'M': 'N') << " - 1) % MACRO_TILE_LENGTH" << x_string << ". somewhere in 1 ... MACRO_TILE_LENGTH" << x_string << "  */ \n";
-    ss << "#define " << "PRESHIFT_FINAL_TILE" << x_string << " " << dp.at(x).preshift_final_tile << "\n";
+    ss << "#define " << "PRESHIFT_FINAL_TILE" << x_string << " " << dp.at(emat_x   ).preshift_final_tile << "\n";
   }
 }
 

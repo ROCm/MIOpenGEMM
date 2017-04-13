@@ -641,6 +641,18 @@ bool HyperParams::in_graph(){   //satisfies_where_source_defined(const std::vect
   return constraints_satisfied;
 }
 
+
+nsHP::eMat HyperParams::get_eMat_from_char(char X) const{
+  X = (X == 'a' ? 'A' : X);
+  X = (X == 'b' ? 'B' : X); 
+  X = (X == 'c' ? 'C' : X);
+  
+  if (X != 'A' && X != 'B' && X != 'C'){
+    throw tinygemm_error("Problem converting X (char) to nsHP::eMat enumerated type in get_eMat_from_char : " + std::to_string(X) );
+  }
+  return static_cast<nsHP::eMat> (p_graph->graphind.at(X));
+} 
+
 } 
 }
 

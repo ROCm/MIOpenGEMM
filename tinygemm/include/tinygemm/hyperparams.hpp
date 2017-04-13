@@ -168,6 +168,7 @@ class XHPs{
 
 class HyperParams{
 
+
 private:
   const Graph * p_graph;
   std::vector<XHPs> v_xhps;
@@ -182,20 +183,7 @@ public:
   const XHPs & at(nsHP::eMat subgtype) const {return  v_xhps[subgtype]; }
   XHPs & at(nsHP::eMat subgtype) {return  v_xhps[subgtype]; }
   
-  //TODO : deprecate these
-  const XHPs & at(char X) const {
-    X = (X == 'a' ? 'A' : X);
-    X = (X == 'b' ? 'B' : X); 
-    X = (X == 'c' ? 'C' : X);     
-    return v_xhps[p_graph->graphind.at(X)]; 
-  }
-  
-  XHPs & at(char X) {
-    X = (X == 'a' ? 'A' : X);
-    X = (X == 'b' ? 'B' : X); 
-    X = (X == 'c' ? 'C' : X);     
-    return v_xhps[p_graph->graphind.at(X)]; 
-  }
+  nsHP::eMat get_eMat_from_char(char X) const;
     
   HyperParams(const Graph & graph);
   

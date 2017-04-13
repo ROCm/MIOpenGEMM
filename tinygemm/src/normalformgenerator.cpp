@@ -52,12 +52,17 @@ public:
   
   size_t get_local_work_size() override final{
     /* should be made into a hyper param */
-    return dp.at(matrixchar).cw2_local_work_size;
+    
+    
+    nsHP::eMat emat_x = hp.get_eMat_from_char(matrixchar);
+    return dp.at(emat_x).cw2_local_work_size;
   }
 
   size_t get_n_work_groups() override final{
     //here.
-    return dp.cw2_n_macro_tiles_pll_unroll * dp.at(matrixchar).n_groups;
+
+    nsHP::eMat emat_x = hp.get_eMat_from_char(matrixchar);
+    return dp.cw2_n_macro_tiles_pll_unroll * dp.at(emat_x).n_groups;
   }
 
 
@@ -75,8 +80,11 @@ public:
 KernelString get_kernelstring(){
   std::stringstream ss;
   
+  
+  nsHP::eMat emat_x = hp.get_eMat_from_char(MATRIXCHAR);
+
   ss << "#define TFLOAT " << dp.t_float << "\n";
-  ss << "#define " << "N_WORK_ITEMS_PER_GROUP " << dp.at(MATRIXCHAR).cw2_local_work_size << "\n";
+  ss << "#define " << "N_WORK_ITEMS_PER_GROUP " << dp.at(emat_x).cw2_local_work_size << "\n";
   ss << "#define UNROLL " << hp.at(nsHP::matC).vs[nsHP::UNR] << "\n";
   ss << "#define __K__ " << gg.k << "\n";
   
@@ -88,23 +96,23 @@ KernelString get_kernelstring(){
 
   ss << "\n";
   
-  ss << "#define LOAD_PLL_TO_UNROLL " << dp.at(MATRIXCHAR).cw2_load_pll_to_unroll << "\n";
+  ss << "#define LOAD_PLL_TO_UNROLL " << dp.at(emat_x).cw2_load_pll_to_unroll << "\n";
 
   ss << "\n/* MICRO_TILE_PLL_UNROLL * MICRO_TILE_PERP_UNROLL = N_ELEMENTS_TO_LOAD_PER_WORKITEM */\n";  
-  ss << "#define MICRO_TILE_PLL_UNROLL " << dp.at(MATRIXCHAR).cw2_micro_tile_pll_unroll << " \n";
-  ss << "#define MICRO_TILE_PERP_UNROLL " << dp.at(MATRIXCHAR).cw2_micro_tile_perp_unroll << "\n";
+  ss << "#define MICRO_TILE_PLL_UNROLL " << dp.at(emat_x).cw2_micro_tile_pll_unroll << " \n";
+  ss << "#define MICRO_TILE_PERP_UNROLL " << dp.at(emat_x).cw2_micro_tile_perp_unroll << "\n";
   
-  ss << "#define N_MICRO_TILES_PLL_UNROLL " << dp.at(MATRIXCHAR).cw2_n_micro_tiles_pll_unroll << "\n";
-  ss << "#define N_MICRO_TILES_PERP_UNROLL " << dp.at(MATRIXCHAR).cw2_n_micro_tiles_perp_unroll << "\n";
+  ss << "#define N_MICRO_TILES_PLL_UNROLL " << dp.at(emat_x).cw2_n_micro_tiles_pll_unroll << "\n";
+  ss << "#define N_MICRO_TILES_PERP_UNROLL " << dp.at(emat_x).cw2_n_micro_tiles_perp_unroll << "\n";
 
-  ss << "#define N_ELEMENTS_PERP_UNROLL " << dp.at(MATRIXCHAR).cw2_n_elements_perp_unroll << "\n";
-  ss << "#define N_ELEMENTS_PER_WORK_ITEM " << dp.at(MATRIXCHAR).cw2_n_elements_to_load_per_workitem << "\n";
+  ss << "#define N_ELEMENTS_PERP_UNROLL " << dp.at(emat_x).cw2_n_elements_perp_unroll << "\n";
+  ss << "#define N_ELEMENTS_PER_WORK_ITEM " << dp.at(emat_x).cw2_n_elements_to_load_per_workitem << "\n";
 
   ss << "\n#define N_MACRO_TILES_PLL_UNROLL " << dp.cw2_n_macro_tiles_pll_unroll << "\n";
   
-  ss << "\n#define GLOBAL_WORKSPACE_OFFSET " << dp.at(MATRIXCHAR).cw_global_offset << "\n";
+  ss << "\n#define GLOBAL_WORKSPACE_OFFSET " << dp.at(emat_x).cw_global_offset << "\n";
   
-  ss << "\n#define PRESHIFT_FINAL_TILE " << dp.at(MATRIXCHAR).preshift_final_tile << "\n";
+  ss << "\n#define PRESHIFT_FINAL_TILE " << dp.at(emat_x).preshift_final_tile << "\n";
   unsigned final_unroll_depth = gg.k%hp.at(nsHP::matC).vs[nsHP::UNR];
   final_unroll_depth = (final_unroll_depth == 0 ? hp.at(nsHP::matC).vs[nsHP::UNR] : final_unroll_depth);
   

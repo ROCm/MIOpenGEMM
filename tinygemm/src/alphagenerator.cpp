@@ -135,14 +135,23 @@ void append_loop_var_bound_incr(std::stringstream & ss, std::string varname, std
 
 
 void append_load_for_perp(char X, std::stringstream & ss){
-  std::string bound_string = hp.at(X).vs[nsHP::LIW] == 0 ? std::string("MICRO_") + X + "_TILE_PERP_UNROLL" : std::string("MACRO_TILE_LENGTH_") + X;
-  std::string increment_string = hp.at(X).vs[nsHP::LIW] == 0 ? "++mu_perp_i" : std::string("mu_perp_i += MACRO_TILE_LENGTH_") + X + "/MICRO_" + X + "_TILE_PERP_UNROLL";
+  
+  
+  nsHP::eMat emat_x = hp.get_eMat_from_char(X);
+
+
+  std::string bound_string = hp.at(emat_x).vs[nsHP::LIW] == 0 ? std::string("MICRO_") + X + "_TILE_PERP_UNROLL" : std::string("MACRO_TILE_LENGTH_") + X;
+  std::string increment_string = hp.at(emat_x).vs[nsHP::LIW] == 0 ? "++mu_perp_i" : std::string("mu_perp_i += MACRO_TILE_LENGTH_") + X + "/MICRO_" + X + "_TILE_PERP_UNROLL";
   append_loop_var_bound_incr(ss, "mu_perp_i", bound_string, increment_string);
 }
 
 void append_load_for_pll(char X, std::stringstream & ss){
-  std::string bound_string = hp.at(X).vs[nsHP::LIW] == 0 ? std::string("MICRO_") + X + "_TILE_PLL_UNROLL" : "UNROLL";
-  std::string increment_string = hp.at(X).vs[nsHP::LIW] == 0 ? "++mu_pll_i" : std::string("mu_pll_i += UNROLL/MICRO_") + X + "_TILE_PLL_UNROLL";
+
+  nsHP::eMat emat_x = hp.get_eMat_from_char(X);
+
+
+  std::string bound_string = hp.at(emat_x).vs[nsHP::LIW] == 0 ? std::string("MICRO_") + X + "_TILE_PLL_UNROLL" : "UNROLL";
+  std::string increment_string = hp.at(emat_x).vs[nsHP::LIW] == 0 ? "++mu_pll_i" : std::string("mu_pll_i += UNROLL/MICRO_") + X + "_TILE_PLL_UNROLL";
   append_loop_var_bound_incr(ss, "mu_pll_i", bound_string, increment_string);
 }
 
@@ -179,14 +188,14 @@ void append_for_loops_for_c_write_open(std::stringstream & ss){
   
   ss << dp.pragma_unroll_string;
   append_loop_var_bound_incr(ss, "row", 
-  hp.at('A').vs[nsHP::MIW] == 0 ? "MICRO_TILE_LENGTH_A" : "MACRO_TILE_LENGTH_A", 
-  hp.at('A').vs[nsHP::MIW] == 0 ? "++row" : "row += N_MICRO_IN_MACRO_A");
+  hp.at(nsHP::matA).vs[nsHP::MIW] == 0 ? "MICRO_TILE_LENGTH_A" : "MACRO_TILE_LENGTH_A", 
+  hp.at(nsHP::matA).vs[nsHP::MIW] == 0 ? "++row" : "row += N_MICRO_IN_MACRO_A");
   ss << " {\n";
   
   ss  << dp.pragma_unroll_string;
   append_loop_var_bound_incr(ss, "col",
-  hp.at('B').vs[nsHP::MIW] == 0 ? "MICRO_TILE_LENGTH_B" : "MACRO_TILE_LENGTH_B", 
-  hp.at('B').vs[nsHP::MIW] == 0 ? "++col" : "col += N_MICRO_IN_MACRO_B");
+  hp.at(nsHP::matB).vs[nsHP::MIW] == 0 ? "MICRO_TILE_LENGTH_B" : "MACRO_TILE_LENGTH_B", 
+  hp.at(nsHP::matB).vs[nsHP::MIW] == 0 ? "++col" : "col += N_MICRO_IN_MACRO_B");
   ss << " {\n";
 }
   
@@ -277,7 +286,13 @@ barrier(CLK_LOCAL_MEM_FENCE); )";
 /* simple for loops. Could consider unrolling like Cobalt, but for the moment I use the optional pragma unroll */
 void append_load_into_LDS_string(char x, std::stringstream & ss, unsigned final_unroll, unsigned special_first_unroll){
   
+  
   char X = (x == 'a') ? 'A' : 'B';
+  
+  
+  //x = (x == 'a') ? 'A' : x;
+  //x = (x == 'b') ? 'B' : x;
+  //nsHP::eMat X = static_cast<nsHP::eMat>(hp.p_graph->graphind.at(x));
   
   std::string n_jumps_string = dp.main_split_on_k == 0 ? "UNROLL" : "G_UNROLL";
   
@@ -327,7 +342,10 @@ void append_load_into_LDS_string(char x, std::stringstream & ss, unsigned final_
     
 
 std::string get_c_work_item_next(char X){
-  return (hp.at(X).vs[nsHP::MIW] != 0) ? "1" : (std::string("MICRO_TILE_LENGTH_") + X);
+  
+  nsHP::eMat emat_x = hp.get_eMat_from_char(X);
+  
+  return (hp.at(emat_x).vs[nsHP::MIW] != 0) ? "1" : (std::string("MICRO_TILE_LENGTH_") + X);
 }
 
 
@@ -576,15 +594,12 @@ void append_id_string_sym(std::stringstream & ss, char x){
   ss << "\n\n\n"; 
   
   
-  
-  if (hp.at(x).vs[nsHP::WOS] == 1 || hp.at(x).vs[nsHP::WOS] == 2){
+  nsHP::eMat emat_x = hp.get_eMat_from_char(x);
+  if (hp.at(emat_x).vs[nsHP::WOS] == 1 || hp.at(emat_x).vs[nsHP::WOS] == 2){    
     if (X == 'A') ss << "/* from workspace */\n";
     ss << "const TFLOAT * restrict " << x << " = w + w_offset + GLOBAL_OFFSET_" << X << ";\n";
   }
 
-  //else if (hp.at(x).vs[nsHP::WOS] == 2){
-    //throw tinygemm_error("Currently, copy type == 2 is not permitted");
-  //}
     
   else{
     ss << x << " += " << x << "_offset;\n";
@@ -597,7 +612,7 @@ void append_id_string_sym(std::stringstream & ss, char x){
 
   if (X == 'A') ss << "/* Define which part of A this thread will read from process (% / or / % ? doesn't seem to make much difference) */\n";
   ss << "unsigned read_macro_tile_start_" << x << " = group_id_" << x << "*MACRO_TILE_LENGTH_" << X << "; \n";  
-  if (dp.main_use_edge_trick != 0 && hp.at(x).vs[nsHP::WOS] != 2 ) {
+  if (dp.main_use_edge_trick != 0 && hp.at(emat_x).vs[nsHP::WOS] != 2 ) {
     if (X == 'A') ss << "/* tile on edge and A is not normal form: pulling in read zone so no C overflow */\n";
     ss << "if (group_id_" << x << " == N_GROUPS_" << X << " - 1){\n";
     ss << "read_macro_tile_start_" << x << " -= (MACRO_TILE_LENGTH_" << X << " - PRESHIFT_FINAL_TILE_" << X << ");\n";
@@ -623,7 +638,7 @@ void append_id_string_sym(std::stringstream & ss, char x){
   
   std::string str_n_pll(""); 
   std::string str_n_perp(""); 
-  if (hp.at(X).vs[nsHP::LIW] == 0){
+  if (hp.at(emat_x).vs[nsHP::LIW] == 0){
     str_n_pll = std::string("MICRO_") + X + "_TILE_PLL_UNROLL *";
     str_n_perp = std::string("MICRO_") + X + "_TILE_PERP_UNROLL *";
   }
@@ -651,6 +666,8 @@ void append_transpose_note(std::stringstream & ss){
 
 void add_predefine_chiral(char x, std::stringstream & ss){
   
+  nsHP::eMat emat_x = hp.get_eMat_from_char(x);
+  
   auto defcom = [x, &ss](std::string && comment){
     if (x == 'A') ss << "/*" << " " << comment << " : */\n";
   };    
@@ -659,46 +676,48 @@ void add_predefine_chiral(char x, std::stringstream & ss){
   bool withcomments = x == 'A';
   bool with_x_in_name = true;
   append_unroll_block_geometry(x, ss, withcomments, with_x_in_name);
+
+    
   
-  append_stride_definitions(x, ss, hp.at(x).vs[nsHP::WOS], withcomments, "", with_x_in_name);    
+  append_stride_definitions(x, ss, hp.at(emat_x).vs[nsHP::WOS], withcomments, "", with_x_in_name);    
     
     
     
   
   if (x == 'A') ss << "/* micro tiles define the pattern of C that individual threads process */\n";
-  ss << "#define MICRO_TILE_LENGTH_" << x << " " << hp.at(x).vs[nsHP::MIC] << "\n";
+  ss << "#define MICRO_TILE_LENGTH_" << x << " " << hp.at(emat_x).vs[nsHP::MIC] << "\n";
 
   if (x == 'A') ss << "/* the amount of padding of " << x << " in LDS (local) memory, to avoid bank comflicts */\n";
-  ss << "#define PAD_LDS_" << x << "  " << hp.at(x).vs[nsHP::PAD] << "\n";
+  ss << "#define PAD_LDS_" << x << "  " << hp.at(emat_x).vs[nsHP::PAD] << "\n";
   if (x == 'A') ss << "/* whether loading of " << x << " from global should try to be long in direction of unroll (1) or perpendicular to it (0) */\n";
-  ss << "#define WORK_ITEM_LOAD_" << x << "_PLL_TO_UNROLL " << hp.at(x).vs[nsHP::PLU] << "\n"; 
+  ss << "#define WORK_ITEM_LOAD_" << x << "_PLL_TO_UNROLL " << hp.at(emat_x).vs[nsHP::PLU] << "\n"; 
   defcom("MACRO_TILE_LENGTH_A + PAD_LDS_A");  
-  ss << "#define MACRO_TILE_LENGTH_" << x << "_AND_PAD "<< dp.at(x).main_macro_tile_length_and_pad << "\n";
+  ss << "#define MACRO_TILE_LENGTH_" << x << "_AND_PAD "<< dp.at(emat_x).main_macro_tile_length_and_pad << "\n";
 
   defcom("MACRO_TILE_LENGTH_A_AND_PAD * UNROLL");
-  ss << "#define N_ELEMENTS_IN_PADDED_" << x << "_UNROLL "<< dp.at(x).main_n_elements_in_padded_unroll <<"\n";
+  ss << "#define N_ELEMENTS_IN_PADDED_" << x << "_UNROLL "<< dp.at(emat_x).main_n_elements_in_padded_unroll <<"\n";
   defcom("N_ELEMENTS_IN_A_UNROLL / N_WORK_ITEMS_PER_WORKGROUP");
-  ss << "#define N_ELEMENTS_OF_" << x << "_TO_LOAD_PER_WORKITEM "<< dp.at(x).main_n_elements_to_load_per_workitem <<"\n";
+  ss << "#define N_ELEMENTS_OF_" << x << "_TO_LOAD_PER_WORKITEM "<< dp.at(emat_x).main_n_elements_to_load_per_workitem <<"\n";
   defcom("MACRO_TILE_LENGTH_A / MICRO_TILE_LENGTH_A");
-  ss << "#define N_MICRO_IN_MACRO_" << x << "  " << dp.at(x).main_n_micro_in_macro << "\n"; 
+  ss << "#define N_MICRO_IN_MACRO_" << x << "  " << dp.at(emat_x).main_n_micro_in_macro << "\n"; 
   defcom("MICRO_A_TILE_PLL_UNROLL * MICRO_A_TILE_PERP_UNROLL = N_ELEMENTS_OF_A_TO_LOAD_PER_WORKITEM");  
-  ss << "#define MICRO_" << x << "_TILE_PLL_UNROLL " << dp.at(x).main_micro_tile_pll_unroll << " \n";
-  ss << "#define MICRO_" << x << "_TILE_PERP_UNROLL " << dp.at(x).main_micro_tile_perp_unroll << "\n";
+  ss << "#define MICRO_" << x << "_TILE_PLL_UNROLL " << dp.at(emat_x).main_micro_tile_pll_unroll << " \n";
+  ss << "#define MICRO_" << x << "_TILE_PERP_UNROLL " << dp.at(emat_x).main_micro_tile_perp_unroll << "\n";
   
   defcom("MACRO_TILE_LENGTH_A / MICRO_A_TILE_PLL_UNROLL");  
-  ss << "#define N_MICRO_" << x << "_TILES_PLL_UNROLL " << dp.at(x).main_n_micro_tiles_pll_unroll << " \n";
+  ss << "#define N_MICRO_" << x << "_TILES_PLL_UNROLL " << dp.at(emat_x).main_n_micro_tiles_pll_unroll << " \n";
   if (x == 'A') ss << "/* Whether the load tiles are interwoven (ala Cobalt, (1)) or if the load tiles are truly contiguous tiles (0) */\n";
-  ss << "#define LOAD_TO_LDS_INTERWOVEN_" << x << " " << hp.at(x).vs[nsHP::LIW] << "\n";
+  ss << "#define LOAD_TO_LDS_INTERWOVEN_" << x << " " << hp.at(emat_x).vs[nsHP::LIW] << "\n";
   if (x == 'A') ss << "/* Whether micro tile being processed by a compute item is interwoven with other micro tiles (ala Cobalt, (1)) or if the micro tiles are contiguous in C */\n";
-  ss << "#define C_MICRO_TILES_INTERWOVEN_" << x << " " << hp.at(x).vs[nsHP::MIW] << "\n";
+  ss << "#define C_MICRO_TILES_INTERWOVEN_" << x << " " << hp.at(emat_x).vs[nsHP::MIW] << "\n";
 
 
   if (x == 'A') ss << "/* depending on whether loads to c are interwoven, set as MIW == 0 ? 1 : N_MICRO_IN_MACRO_A */\n";
-  ss << "#define C_INTERWEAVE_STRIDE_" << x << " " << dp.at(x).main_c_interweave_stride << "\n";
+  ss << "#define C_INTERWEAVE_STRIDE_" << x << " " << dp.at(emat_x).main_c_interweave_stride << "\n";
   
-  if (hp.at(x).vs[nsHP::WOS] != 0){
+  if (hp.at(emat_x).vs[nsHP::WOS] != 0){
     if (x == 'A') ss << "/* global memory offset, depends on type of copy of both a,b */\n";
-    ss << "#define GLOBAL_OFFSET_" << x << " " << dp.at(x).cw_global_offset;
+    ss << "#define GLOBAL_OFFSET_" << x << " " << dp.at(emat_x).cw_global_offset;
   }
 
   ss << "\n";
