@@ -135,6 +135,11 @@ void cl_get_device_info(cl_device_id device, cl_device_info param_name, size_t p
 }
 
 
+void cl_get_event_profiling_info(cl_event event, cl_profiling_info param_name, size_t param_value_size, void *param_value, size_t *param_value_size_ret, const std::string & hash){
+  cl_int ret = clGetEventProfilingInfo(event, param_name, param_value_size, param_value, param_value_size_ret);
+  confirm_cl_status(ret, hash, "cl_get_event_profiling_info");  
+}
+
 void get_device_info_from_command_queue(cl_command_queue command_queue, cl_device_info param_name, size_t param_value_size, void *param_value, size_t *param_value_size_ret, const std::string & hash){
   cl_device_id device;
   cl_get_command_queue_info(command_queue, CL_QUEUE_DEVICE, sizeof(cl_device_id), &device, nullptr, hash + " + (in get_device_info_from_command_queue)");
@@ -161,15 +166,26 @@ cl_program cl_create_program_with_source(cl_context context, cl_uint count, cons
 }
 
 
-void cl_build_program(cl_program program,cl_uint num_devices,const cl_device_id *device_list,const char *options,void (*pfn_notify)(cl_program, void *user_data),void *user_data, const std::string & hash){
+void cl_build_program(cl_program program,cl_uint num_devices,const cl_device_id *device_list,const char *options,void (*pfn_notify)(cl_program, void *user_data),void *user_data, outputwriting::OutputWriter & mowri, const std::string & hash){
   
   cl_int ret = clBuildProgram(program, num_devices, device_list, options, pfn_notify, user_data);
 
-  if (ret != CL_SUCCESS){
+  //clGetProgramBuildInfo(program, device_list[0], CL_PROGRAM_BUILD_STATUS, sizeof(buffer), buffer, NULL);
     
-    char buffer[10240];
-    clGetProgramBuildInfo(program, device_list[0], CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer, NULL);
+  char buffer[10240];
+  clGetProgramBuildInfo(program, device_list[0], CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer, NULL);
+
+  if (ret != CL_SUCCESS){
     fprintf(stderr, "CL Compilation failed:\n%s", buffer);
+  }
+  
+  else{
+    if (buffer[0] != '\0'){
+      std::stringstream ss_comp_warning;
+      ss_comp_warning << "\n                  warning during compilation of tinygemm kernel:\n ";
+      ss_comp_warning << buffer;
+      mowri << ss_comp_warning.str();
+    }
   }
 
   confirm_cl_status(ret, hash, "cl_build_program");
@@ -199,16 +215,6 @@ const cl_event *event_wait_list,cl_event *event, const std::string & hash){
 }
   
   
-
-
-
-
-
-
-
-
-
-/* TODO : get rid of these of these raw calls to cl_* */
 void set_platform_etc(cl_platform_id & platform, cl_uint & num_platforms, cl_context & context, cl_device_id & device_id_to_use, outputwriting::OutputWriter & mowri){
   
   
@@ -280,21 +286,14 @@ void set_platform_etc(cl_platform_id & platform, cl_uint & num_platforms, cl_con
 
 
 
-void set_program_and_kernel(const cl_command_queue & command_queue, const std::string & kernel_string, const std::string & kernel_function_name, cl_program & program, cl_kernel & kernel){
-  
-  //std::string & kernel_function_name, 
-  
+void set_program_and_kernel(const cl_command_queue & command_queue, const std::string & kernel_string, const std::string & kernel_function_name, cl_program & program, cl_kernel & kernel, outputwriting::OutputWriter & mowri){
   
   cl_context context;
   cl_get_command_queue_info(command_queue, CL_QUEUE_CONTEXT, sizeof(cl_context), &context, NULL, "getting context from queue in set_program_and_kernel");
   
   cl_device_id device_id_to_use;
   cl_get_command_queue_info(command_queue, CL_QUEUE_DEVICE, sizeof(cl_device_id), &device_id_to_use, NULL, "getting device id from queue in set_program_and_kernel");
-        
-//  kernel_function_name = kernelutil::get_kernel_function_name(kernel_string);
-  
-  
-  
+          
   auto kernel_cstr = kernel_string.c_str();
   
   auto kernel_string_size = kernel_string.size();
@@ -307,45 +306,21 @@ void set_program_and_kernel(const cl_command_queue & command_queue, const std::s
   auto buildOptions = buildOptions_11.c_str();
 
 
-
-
-  cl_build_program(program, 1, &device_id_to_use, buildOptions, NULL, NULL, "building program in set_program_and_kernel"); 
-  
-  
-  
-  /* writing binary : from http://www.cs.bris.ac.uk/home/simonm/montblanc/AdvancedOpenCL_full.pdf */
-  //if (false){
-    /* TODOEVENTUALLY This will break if more than one device used */
-    //size_t size; 
-    ///* the size of the binary is ridiculous. 60 MB!! */
-    //cl_get_program_info(program, CL_PROGRAM_BINARY_SIZES, 0, &size, NULL,  "getting CL_PROGRAM_BINARY_SIZES ");
-    //std::vector<unsigned char> v_binary (size + 10);
-    //cl_get_program_info(program, CL_PROGRAM_BINARIES, size, v_binary.data(), NULL, "getting CL_PROGRAM_BINARIES "); 
-    ////std::string filename_bin(filename);
-    //std::string filename_bin = "bladibla_bin";
-    //FILE *filebinary = fopen(filename_bin.c_str(), "w");
-    //fwrite(v_binary.data(), 1, size, filebinary);
-    ///* the binary file has been written to filename_bin */ 
-    //throw tinygemm_error("go look at created binary file!");
-    /* done */
-  //}
-  
-
+  cl_build_program(program, 1, &device_id_to_use, buildOptions, NULL, NULL, mowri, "building program in set_program_and_kernel"); 
+    
+  /* the store as binary option removed here */ 
   
   kernel = cl_create_kernel(program, kernel_function_name.c_str(), "getting kernel in set_program_and_kernel");  
 }
   
-
-
-SafeClMem::SafeClMem(const std::string & hash_):clmem(nullptr),hash(hash_) {};
+  
+SafeClMem::SafeClMem(const std::string & hash_):clmem(nullptr),hash(hash_) {}
 
 SafeClMem::~SafeClMem(){
   if (clmem != nullptr){
     openclutil::cl_release_mem_object(clmem, hash);
   }
 }
-
-
 
   /* properties = CL_QUEUE_PROFILING_ENABLE : 
    * create an inorder command queue with profiling enabled. Profiling is enabled so that we can get start and end times for kernels*/
@@ -360,17 +335,9 @@ cl_command_queue auto_get_command_queue(outputwriting::OutputWriter & mowri, 	cl
   
   openclutil::set_platform_etc(platform, num_platforms, context, device_id_to_use, mowri);
 
-
   return clCreateCommandQueue(context, device_id_to_use, properties, &locret);
 }
 
-
-
-
-
-
-  
-  
 TinyGemmCommandQueueInContext::TinyGemmCommandQueueInContext(outputwriting::OutputWriter & mowri, const std::string & hash_):command_queue(auto_get_command_queue(mowri)), hash(hash_) {}
 
 TinyGemmCommandQueueInContext::~TinyGemmCommandQueueInContext(){

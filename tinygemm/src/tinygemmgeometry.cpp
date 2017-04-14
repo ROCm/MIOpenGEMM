@@ -52,6 +52,7 @@ void TinyGemmGeometryDerived::reset(char floattype){
  * (false == false) == true  evaluates to true, so gate is true, so m is returned */
 unsigned TinyGemmGeometry::get_padless_dim(nsHP::eMat emat_x, bool isCoal) const{
 
+
   bool gate = (tX.at(emat_x) == isColMajor) == isCoal;
 
   if (emat_x == nsHP::matA){
@@ -93,7 +94,7 @@ unsigned TinyGemmGeometry::get_uncoal(nsHP::eMat emat_x) const{
  
 unsigned TinyGemmGeometry::get_coal(nsHP::eMat emat_x) const{
   return get_padless_dim(emat_x, true);
-} 
+}
 
 
 bool TinyGemmGeometry::coal_is_pll_k(nsHP::eMat emat_x) const{

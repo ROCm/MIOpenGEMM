@@ -19,7 +19,7 @@ void set_platform_etc(cl_platform_id & platform, cl_uint & num_platforms, cl_con
 
 //std::string & kernel_function_name, 
 
-void set_program_and_kernel(const cl_command_queue & command_queue, const std::string & kernel_string, const std::string & kernel_function_name, cl_program & program, cl_kernel & kernel);
+void set_program_and_kernel(const cl_command_queue & command_queue, const std::string & kernel_string, const std::string & kernel_function_name, cl_program & program, cl_kernel & kernel, outputwriting::OutputWriter & mowri);
   
 void cl_release_kernel(cl_kernel kernel, const std::string & hash);
 
@@ -55,6 +55,8 @@ void  cl_get_context_info(cl_context context, cl_context_info param_name, size_t
 
 void cl_get_device_info(cl_device_id device, cl_device_info param_name, size_t param_value_size, void *param_value, size_t *param_value_size_ret, const std::string & hash);
 
+void cl_get_event_profiling_info(cl_event event, cl_profiling_info param_name, size_t param_value_size, void *param_value, size_t *param_value_size_ret, const std::string & hash);
+  
 void get_device_info_from_command_queue(cl_command_queue command_queue, cl_device_info param_name, size_t param_value_size, void *param_value, size_t *param_value_size_ret, const std::string & hash);
 
 cl_program cl_create_program_with_source(cl_context context, cl_uint count, const char **strings, const size_t *lengths, const std::string & hash);
@@ -73,7 +75,7 @@ void cl_enqueue_read_buffer(cl_command_queue command_queue,cl_mem buffer,cl_bool
 const cl_event *event_wait_list,cl_event *event, const std::string & hash);
 
 
-void cl_build_program(cl_program program,cl_uint num_devices,const cl_device_id *device_list,const char *options,void (*pfn_notify)(cl_program, void *user_data),void *user_data, const std::string & hash);
+void cl_build_program(cl_program program,cl_uint num_devices,const cl_device_id *device_list,const char *options,void (*pfn_notify)(cl_program, void *user_data),void *user_data, outputwriting::OutputWriter & mowri, const std::string & hash);
 
 class SafeClMem{
   public:

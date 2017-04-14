@@ -10,6 +10,16 @@
 #include <tuple>
 #include <fstream>
 
+/* TODO : reconsider half threads loading A to LDS, others B to LDS, even though will only work in unusual cirmumstances */
+/* (strides same, or tiles parallel to contiguous). With normal form matrices, it should work in all situations  */
+/* TODO : remove final barrier, not nec */
+/* TODO : beta = 1 optimisation */
+/* TODO : mad as hyper-parameter, figure out slows kernels down (see tensile branch) */
+/* TODO : float4 */
+/* TODO : volatile int id (Nugteren) to prevent unrolling */
+/* TODO : play with restrict keyword */
+
+
 
 
 
@@ -87,20 +97,42 @@ R"(
 unsigned group_id_b;
 unsigned group_id_a;
 unsigned wg_super_column = group_id_xy / (SUPER_COLUMN_WIDTH*N_GROUPS_A);
-
-  
-if (group_id_xy < (N_GROUPS_B - LAST_SUPER_COLUMN_WIDTH)*N_GROUPS_A){
-group_id_b = wg_super_column * SUPER_COLUMN_WIDTH + group_id_xy % SUPER_COLUMN_WIDTH;
-group_id_a = (group_id_xy / SUPER_COLUMN_WIDTH) % N_GROUPS_A;
-}
-else{
-group_id_b = wg_super_column * SUPER_COLUMN_WIDTH + group_id_xy % LAST_SUPER_COLUMN_WIDTH;
-group_id_a = (group_id_xy  - (N_GROUPS_B - LAST_SUPER_COLUMN_WIDTH)*N_GROUPS_A) / LAST_SUPER_COLUMN_WIDTH;
-}
 )";
 
-  }
+
+    std::string full_sucol_string = R"(
+group_id_b = wg_super_column * SUPER_COLUMN_WIDTH + group_id_xy % SUPER_COLUMN_WIDTH;
+group_id_a = (group_id_xy / SUPER_COLUMN_WIDTH) % N_GROUPS_A;
+)";
+
+    std::string partial_sucol_string = R"(
+group_id_b = wg_super_column * SUPER_COLUMN_WIDTH + group_id_xy % LAST_SUPER_COLUMN_WIDTH;
+group_id_a = (group_id_xy  - (N_GROUPS_B - LAST_SUPER_COLUMN_WIDTH)*N_GROUPS_A) / LAST_SUPER_COLUMN_WIDTH;
+)";
+
   
+    /* super column width perfectly fits across B */
+    if (dp.ga3_last_super_column_width == 0){
+      ss << full_sucol_string;
+    }
+    
+    else {
+      
+      /* there is just one column */    
+      if (dp.ga3_last_super_column_width == dp.at(nsHP::matB).n_groups){
+        ss << partial_sucol_string;
+      }
+      
+      else{
+        ss << "\n" << "if (group_id_xy < (N_GROUPS_B - LAST_SUPER_COLUMN_WIDTH)*N_GROUPS_A){";
+        ss << full_sucol_string << "}\n";
+
+        ss << "else{";
+        ss << partial_sucol_string << "}\n";      
+      }
+    }
+  }
+
   else{
     std::stringstream err_ss;
     err_ss << "Invalid group_allocation parameter : " << hp.at(nsHP::matC).vs[nsHP::GAL] << ". It should be one of 1/2/3.";
@@ -114,8 +146,7 @@ void append_super_column_width_defn(std::stringstream & ss){
   
     ss <<  "\n\n" << "/* This variable defines the width of super-columns (we have GROUP_ALLOCATION 3). It is ~ sqrt (N_TARGET_ACTIVE_WORKGROUPS / N_WORK_ITEMS_PER_C_ELM) */\n" << "#define SUPER_COLUMN_WIDTH " << dp.ga3_super_column_width;   
     ss << "\n/* LAST_SUPER_COLUMN_WIDTH : N_GROUPS_B % SUPER_COLUMN_WIDTH  */";
-    ss << "\n#define LAST_SUPER_COLUMN_WIDTH " << dp.ga3_last_super_column_width;
-    
+    ss << "\n#define LAST_SUPER_COLUMN_WIDTH " << dp.ga3_last_super_column_width;    
   }
 }
 
@@ -462,18 +493,62 @@ void append_final_write_all(std::stringstream & ss){
   }
   
   else{
-    ss << 
-R"(
-/* the case where this is not an edge tile : will write to all cells */
-if ((group_id_b != N_GROUPS_B - 1 || PRESHIFT_FINAL_TILE_B == MACRO_TILE_LENGTH_B) 
-&&  (group_id_a != N_GROUPS_A - 1 || PRESHIFT_FINAL_TILE_A == MACRO_TILE_LENGTH_A)){
-)";
-    append_final_write_loops_no_check(ss);
-    ss << "\n}\n\nelse{";
-    append_final_write_loops_with_check(ss);
-    ss << "\n}";
+        
+    std::string cond_a("");
+    if (dp.at(nsHP::matA).preshift_final_tile != dp.at(nsHP::matA).macro_tile_length){
+      cond_a = "(group_id_a != N_GROUPS_A - 1)";
+    }
+
+
+    std::string cond_b("");
+    if (dp.at(nsHP::matB).preshift_final_tile != dp.at(nsHP::matB).macro_tile_length){
+      cond_b = "(group_id_b != N_GROUPS_B - 1)";
+    }
+
+    
+    if (cond_a == "" && cond_b == ""){
+      append_final_write_loops_no_check(ss);
+    }
+    
+    else{
+      
+      if (dp.main_use_edge_trick == 0){
+        throw tinygemm_error("in alphagenerator, dp.main_use_edge_trick == 0. however, non-perfectly tilable");
+      }
+      
+      ss << "\n/* the case where this is not an edge tile : will write to all cells */ \n";
+      if (cond_a != "" && cond_b != ""){
+        ss << "if (" << cond_a << " && " << cond_b << "){ \n";
+      }
+      else if (cond_a != ""){
+        ss << "if  " << cond_a << "{ \n";
+      }
+      else{
+        ss << "if  " << cond_b << "{ \n";
+      }
+      append_final_write_loops_no_check(ss);
+      ss << "\n}";      
+      ss << "\n\nelse{";
+      append_final_write_loops_with_check(ss);
+      ss << "\n}";      
+    }
   }
-}
+}    
+    
+    //ss << 
+//R"(
+///* the case where this is not an edge tile : will write to all cells */
+//if (((PRESHIFT_FINAL_TILE_B == MACRO_TILE_LENGTH_B) || (group_id_b != N_GROUPS_B - 1 )) 
+//&&  ((PRESHIFT_FINAL_TILE_A == MACRO_TILE_LENGTH_A) || (group_id_a != N_GROUPS_A - 1 )) ){
+//)";
+    //append_final_write_loops_no_check(ss);
+    //ss << "\n}";
+    
+    //ss << "\n\nelse{";
+    //append_final_write_loops_with_check(ss);
+    //ss << "\n}";
+  //}
+
 
 
 void append_split_on_k_defns_string(std::stringstream & ss){
@@ -746,14 +821,8 @@ KernelString get_kernelstring(){
   
   ss << 
 R"(
-/* TODO : I started working on half threads load A to LDS, others B to LDS, but realised it'd only work in unusual cirmumstances */
-/* (strides same, or tiles parallel to contiguous), and so put it on hold. However, with normal form matrices, it should work in all situations.  */
-/* TODO : remove final barrier, not nec. Check performance is not mysteriously hit! */
-/* TODO : beta = 1 optimisation */
-/* TODO : investigate mad. When should one use this instead of standard overloads, += and *. see tensile branch. */
-/* TODO : rerereconsider assignment of workitems to load and math regions, there may be some sweet overlap spot where values automatically in registers for math (?) */
 
-)"; // << genutil::get_how_string() << "\n";
+)";
 
   for (auto x : {'A', 'B'}){
     ss << "\n/* ********************************** specific to " << x << " *************************************** */";
@@ -768,7 +837,7 @@ R"(
   
   ss << "/* How much a workgroup loads (global -> LDS) in the k-direction at each iteration of the outer-most loop */\n";
   ss << "#define UNROLL " << hp.at(nsHP::matC).vs[nsHP::UNR]  << "\n";
-  ss << "/* whether or not this kernel uses the edge trick (see documentation : (TODO, currently internal AMD document)) */\n";
+  ss << "/* whether or not this kernel uses the edge trick (SC17 submission) */\n";
   ss << "/* this precompiler defn has no direct influence on the running the kernel, implementation already done in make_kernel.py */\n";
   ss << "#define EDGETRICK " << dp.main_use_edge_trick << "\n";  
   ss << "/* the number of work items working on the same c element. if this is 1, there will be just one thread doing all k multiply-adds, */\n";

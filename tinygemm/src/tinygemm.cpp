@@ -21,11 +21,7 @@
 #include <tinygemm/architests.hpp>
 #include <tinygemm/kernelstring.hpp>
 
-/* TODO : float4 */
-/* TODO : volatile int id (Nugteren) to prevent unrolling */
 
-
-//TODO TODO TODO TODO enum out tk_kernels_map
 
 namespace tinygemm{
 
@@ -98,8 +94,7 @@ private:
   /* (for find) while generating, compiling and benchmarking kernels, we will keep track of the fastest found thus far */
   std::vector<tinygemm::TinyGemmSolution> best_solns_path;
 
-
-  std::map<std::string, TinyGemmKernel > tk_kernels_map;
+  std::vector<TinyGemmKernel> tk_kernels;  
   
   std::vector <TinyGemmKernel *> tk_kernels_active;  
   std::vector<std::vector <unsigned > > v_wait_indices;
@@ -122,19 +117,12 @@ public:
   mowri(mowri_)
   {
     
-    mowri << "(DEBUGTEST) Just entered OpenCLGemmEncapsulator constructor" << Endl;
-    
-    for (auto & x : possible_basic_types){
-      tk_kernels_map[x] = TinyGemmKernel(command_queue, x);
+    tk_kernels.resize(nBasicKernelTypes);
+    for (unsigned i = 0; i < nBasicKernelTypes; ++ i){
+      tk_kernels[i] = TinyGemmKernel(command_queue, basic_kernel_type_strings[i]);
     }
   
-    mowri << "(DEBUGTEST) TinyGemmKernels constructed (in OpenCLGemmEncapsulator)" << Endl;
-    
-    run_checks();
-   
-   mowri << "(DEBUGTEST) checks passed (in OpenCLGemmEncapsulator)" << Endl;
-   
-    
+    run_checks();    
   }
   
 private:
@@ -208,16 +196,16 @@ private:
       arg_sizes_values.emplace_back(gg.derived.float_size_bytes, m_beta[gg.floattype]);      
     }
     
-    tk_kernels_map.at(type.basic).set_kernel_args(arg_sizes_values);
+    tk_kernels.at(type.basic_kernel_type).set_kernel_args(arg_sizes_values);
   }
 
 
-  bool refresh_needed(const std::string & type, const hyperparams::HyperParams & new_hp, const derivedparams::DerivedParams & new_dp){
+  bool refresh_needed(bkt type, const hyperparams::HyperParams & new_hp, const derivedparams::DerivedParams & new_dp){
     
     /* TODO : check (here) hyper parameters to see if needed anew */
             
-    if (type.compare("betac") == 0){
-       if (tk_kernels_map.at("betac").is_set() == false && new_dp.main_does_beta_c_inc == 0){
+    if (type == bkt::betac){
+       if (tk_kernels.at(bkt::betac).is_set() == false && new_dp.main_does_beta_c_inc == 0){
          return true;
        }
        else{
@@ -225,12 +213,12 @@ private:
        }
     }
     
-    else if (type.compare("main") == 0){
+    else if (type == bkt::main){
       return true;
     }
     
-    else if (type.compare("wsa") == 0){
-      if (tk_kernels_map.at("wsa").is_set() == false && new_hp.at(nsHP::matA).vs[nsHP::WOS] != 0){
+    else if (type == bkt::wsa){
+      if (tk_kernels.at(bkt::wsa).is_set() == false && new_hp.at(nsHP::matA).vs[nsHP::WOS] != 0){
          return true;
        }
        else{
@@ -238,8 +226,8 @@ private:
        }
     }
 
-    else if (type.compare("wsb") == 0){
-      if (tk_kernels_map.at("wsb").is_set() == false && new_hp.at(nsHP::matB).vs[nsHP::WOS] != 0){
+    else if (type == bkt::wsb){
+      if (tk_kernels.at(bkt::wsb).is_set() == false && new_hp.at(nsHP::matB).vs[nsHP::WOS] != 0){
          return true;
        }
        else{
@@ -251,12 +239,14 @@ private:
       throw tinygemm_error("what is the type of this kernel? Don't recognise it : " + type);
     }
   }
+
+
   
   void refresh_kernel(const KernelString & ks, const hyperparams::HyperParams & hp, const derivedparams::DerivedParams & dp){
 
     auto type = ks.type;
-    if (refresh_needed(type.basic, hp, dp) == true){
-      tk_kernels_map.at(type.basic).update(ks, mowri);
+    if (refresh_needed(type.basic_kernel_type, hp, dp) == true){
+      tk_kernels.at(type.basic_kernel_type).update(ks, mowri);
       set_kern_args(type);
     }
   }
@@ -268,9 +258,9 @@ private:
     tk_kernels_active.resize(0);
     
     for (unsigned ksi = 0; ksi < bundle.v_tgks.size(); ++ksi){
-      std::string basic = bundle.v_tgks[ksi].type.basic;
+      bkt basic = bundle.v_tgks[ksi].type.basic_kernel_type;
       refresh_kernel(bundle.v_tgks[ksi], hp, bundle.dp);
-      tk_kernels_active.push_back(&tk_kernels_map[basic]);
+      tk_kernels_active.push_back(&tk_kernels[basic]);
     }
   }
   
@@ -523,7 +513,7 @@ public:
     
     if (found_a_deriveable_hp == false){
       deriveablesearch_ss << "\n\nStruggling to find a deriveable set of hyper parameters which satisfy the geometry and constraints. THe number of attempts made is " << n_trials << "\n throwing an error\n";
-      // TODO should rather return no solution ? or one which we know to be deriveable ? Yes. throwing an error should not be stochastic....
+      /* TODO : should rather return null-solution, as throwing an error should not be stochastic */
       throw tinygemm_error(deriveablesearch_ss.str());
     }
     return hyper_param_start;

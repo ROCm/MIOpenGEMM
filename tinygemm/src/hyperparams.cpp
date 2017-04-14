@@ -351,7 +351,8 @@ void ChiralSubG::set_preconstraint_edges(){
   {  graph_binary  };
 
   
-  // TODO : add edges TODO : namespace copy types 
+  /* TODO : add edges */
+  /* TODO : namespace the copy types */
   edges[nsHP::WOS] = 
   {  {0, {}},
      {1, {}},
@@ -607,10 +608,7 @@ HyperParams get_hp_start(FindStartType fst, const Graph & graph){
     ss << "A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN0_ICE1_NAW64_UFO0_MAC5  here.\n";
     throw tinygemm_error(ss.str());
   }
-  
-  //else{
-    //throw tinygemm_error("only default currently supported in get_hp_start");
-  //}
+
      
   hyper_param_start.checks();  
   return hyper_param_start;

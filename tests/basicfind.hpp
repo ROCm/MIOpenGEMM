@@ -100,9 +100,6 @@ tinygemm::TinyGemmSolution basicfind(const tinygemm::TinyGemmGeometry & geometry
   * ******************************************************************
   * ******************************************************************/
   
-
-  
-
   /* *****************
    * Find a solution *
    * *****************/
@@ -146,20 +143,20 @@ tinygemm::TinyGemmSolution basicfind(const tinygemm::TinyGemmGeometry & geometry
       size_t source_size = ks.kernstr.size();
 
       clprograms.emplace_back (
-        tinygemm::openclutil::cl_create_program_with_source(context, 1, &kernel_cstr, &source_size, ks.type.basic + " ( " + ks.type.full + " ) " + ": creating program (in basicfind.hpp)")
+        tinygemm::openclutil::cl_create_program_with_source(context, 1, &kernel_cstr, &source_size, ks.type.bkt_string + " ( " + ks.type.full + " ) " + ": creating program (in basicfind.hpp)")
       );
       
-      tinygemm::openclutil::cl_build_program(clprograms.back(), 1, &device_id_to_use, buildOptions, NULL, NULL, ks.type.basic + " ( " + ks.type.full + " ) " + ": building program (in basicfind.hpp)");     
+      tinygemm::openclutil::cl_build_program(clprograms.back(), 1, &device_id_to_use, buildOptions, NULL, NULL, mowri, ks.type.bkt_string + " ( " + ks.type.full + " ) " + ": building program (in basicfind.hpp)");     
       
       clkernels.emplace_back (
-        tinygemm::openclutil::cl_create_kernel(clprograms.back(), fname_cstr, ks.type.basic + " ( " + ks.type.full + " ) " + "creating kernel (in basicfind.hpp)")
+        tinygemm::openclutil::cl_create_kernel(clprograms.back(), fname_cstr, ks.type.bkt_string + " ( " + ks.type.full + " ) " + "creating kernel (in basicfind.hpp)")
       );
       
       clevents.emplace_back ();
 
 
       /* set parameters. easy, as parameters to kernels have a strict ordering */
-      std::string enqhash = std::string("basicfind.hpp") + ks.type.basic;
+      std::string enqhash = std::string("basicfind.hpp") + tinygemm::basic_kernel_type_strings[ks.type.basic_kernel_type];
       unsigned parameter_index = 0;      
 
       for (auto & x : {'a', 'b', 'c', 'w'}){
@@ -190,13 +187,13 @@ tinygemm::TinyGemmSolution basicfind(const tinygemm::TinyGemmGeometry & geometry
         size_t n_events_to_wait_on = ki == 0 ? 0 : 1;
         cl_event * events_to_wait_on = ki == 0 ? nullptr : &clevents[ki - 1];
         tinygemm::openclutil::cl_enqueue_ndrange_kernel(
-        command_queue, clkernels[ki], 1, NULL, &soln.v_tgks[ki].global_work_size, &soln.v_tgks[ki].local_work_size, n_events_to_wait_on, events_to_wait_on, &clevents[ki], "Error in basicfind.hpp, enqueueing " + soln.v_tgks[ki].type.basic + " in call to enqueue_kernels with hash : " + hash);
+        command_queue, clkernels[ki], 1, NULL, &soln.v_tgks[ki].global_work_size, &soln.v_tgks[ki].local_work_size, n_events_to_wait_on, events_to_wait_on, &clevents[ki], "Error in basicfind.hpp, enqueueing " + soln.v_tgks[ki].type.bkt_string + " in call to enqueue_kernels with hash : " + hash);
       }
     };
     
     enqueue_kernels_serial("first enqueue");
     
-    tinygemm::openclutil::cl_wait_for_events(1, &clevents.back(), "basicfind.hpp, waiting for " + soln.v_tgks.back().type.basic + " in call to enqueue_kernels after postfind first enq.");
+    tinygemm::openclutil::cl_wait_for_events(1, &clevents.back(), "basicfind.hpp, waiting for " + soln.v_tgks.back().type.bkt_string + " in call to enqueue_kernels after postfind first enq.");
     
     if (do_cpu_test == true){
 
@@ -215,7 +212,7 @@ tinygemm::TinyGemmSolution basicfind(const tinygemm::TinyGemmGeometry & geometry
       mowri.to_terminal = old_to_terminal;      
     }
 
-    /* That's all you need to know, and don't forget those clReleases! */
+    /* That's all you need to know, don't forget the clReleases */
 
     if (n_postfind_runs > 1){
       /* We now take a look at how the times reported in benchmarking, 
@@ -229,7 +226,7 @@ tinygemm::TinyGemmSolution basicfind(const tinygemm::TinyGemmGeometry & geometry
         }
 
         /* Wait for the final kernel to complete, then record the elapsed time */
-        tinygemm::openclutil::cl_wait_for_events(1, &clevents.back(), "basicfind.hpp, waiting for " + soln.v_tgks.back().type.basic + " in call to enqueue_kernels after postfind runs");
+        tinygemm::openclutil::cl_wait_for_events(1, &clevents.back(), "basicfind.hpp, waiting for " + soln.v_tgks.back().type.bkt_string + " in call to enqueue_kernels after postfind runs");
         
         auto end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<float> fp_ms = end - start;
@@ -240,7 +237,7 @@ tinygemm::TinyGemmSolution basicfind(const tinygemm::TinyGemmGeometry & geometry
       
       float difference_in_times = host_times[n_postfind_runs + 1] - host_times[1];
       std::cout << "Difference in times : " << difference_in_times << " [s]. This corresponds to  " << 1e-9*(2.*geometry.m*geometry.n*geometry.k*n_postfind_runs) / difference_in_times << " gflop/s. " << std::endl;
-      /* std::cout << "Note to self and MLOpeners : we need to decide how to proceed with the DeepBench benchmarking, baidu's approach  (run 10 times after warm-up, no subtraction as above) *might* underestimate cudnn performance. For many problems (generally the large ones), tinygemm and host times are the same. Occasionally (for small problems it seems), the host time is 20% slower." << std::endl; */
+      /* Timing is fickle. Occasionally (for small problems), the host time is 20% slower." */
       std::cout << soln.get_hyper_param_string() << std::endl;
     }
   }

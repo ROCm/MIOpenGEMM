@@ -7,10 +7,8 @@
 
 #include <tinygemm/prepgenerator.hpp>
 
-
-/* TODO : (more for alpha kernel : consider using the keyword restrict more liberally). Some initial thought suggests to me that it more be more approprialtely pult on c. where did the use og restrict inherit from anywayt??? TODO TODO TODO */
-
-/* TODO : could interwoven be faster ? */
+/* TODO : interwoven hyper-parameter */
+/* TODO : work-group size hyper-parameter (32 for vega) */
 
 namespace tinygemm{
 namespace bylinegen{
@@ -18,6 +16,18 @@ namespace bylinegen{
 void ByLineGenerator::setup(){
 
   setup_additional();
+  
+
+  if (static_cast<unsigned>(emat_x) >= static_cast<unsigned>(nsHP::nMats)){
+    std::stringstream ss;
+    ss  << "in ByLineGenerator::setup, invalid emat_x : " << emat_x;
+    ss << "\nMATRIXCHAR is " << MATRIXCHAR;
+    ss << "\nmatrixchar is " << matrixchar;
+    throw tinygemm_error(ss.str());
+  } 
+
+  
+  
   n_full_work_items_per_line = gg.get_coal(emat_x) / get_work_per_thread();
   n_work_items_per_line = n_full_work_items_per_line + (gg.get_coal(emat_x) % get_work_per_thread() != 0);
   n_full_work_items = n_full_work_items_per_line*gg.get_uncoal(emat_x);
@@ -39,8 +49,7 @@ void ByLineGenerator::append_how_definitions(std::stringstream & ss){
   ss << 
 R"(/* The number of values from C which each non-edge work-item will scale by beta */
 #define WORK_PER_THREAD  )" << get_work_per_thread() << R"(
-/* The number of work items per work group
- * TODO : generalise for vega support */
+/* The number of work items per work group */
 #define N_WORK_ITEMS_PER_GROUP )" << get_local_work_size() << "\n\n";
 }
 

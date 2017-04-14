@@ -103,7 +103,7 @@ DerivedParams::set_fragile(){
   set_should_be_hyperparams();
 
   
-  //TODO : tidy this up, compactify
+  /* TODO : tidy this up, make compact */
   if (hp.at(nsHP::matC).vs[nsHP::MAC] == nsMAC::a4b8)  {
     at(nsHP::matA).macro_tile_length = 4;
     at(nsHP::matB).macro_tile_length = 8;
@@ -330,6 +330,7 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams & hp_, const tinygem
   
 }
 
+/* TODO : move to hyper params */
 void DerivedParams::set_should_be_hyperparams(){
   
   betac_local_work_size = 256;

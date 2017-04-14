@@ -10,9 +10,22 @@
 
 
 #include <string>
+#include <vector>
+
+
+
 
 
 namespace tinygemm{
+
+enum bkt {wsa = 0, wsb, betac, main, nBasicKernelTypes };
+/* maps bkt to a string */
+extern const std::vector<std::string> basic_kernel_type_strings;
+
+/*maps dependencies of execution order of kernels */
+extern const std::vector<std::vector<unsigned>> kernel_dependencies;
+
+
 
 
 
@@ -25,7 +38,9 @@ public:
 std::string full;
 
 /* one of wsa, wsb, betac, main */
-std::string basic;
+std::string bkt_string;
+
+bkt basic_kernel_type;
 
 bool uses_a;
 bool uses_b;

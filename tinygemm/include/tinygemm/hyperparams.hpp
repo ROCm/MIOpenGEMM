@@ -11,6 +11,7 @@
 
 
 /* TODO : hyperparams caching */
+/* TODO : 1x1 support */
 
 namespace tinygemm{
 

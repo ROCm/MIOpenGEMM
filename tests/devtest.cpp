@@ -33,8 +33,8 @@ tinygemm::TinyGemmGeometry get_geometry(){
   bool tA = true;
   bool tB = false;
   bool tC = false;
-  unsigned m = 344; 
-  unsigned n = 334; 
+  unsigned m = 401; 
+  unsigned n = 129; 
   unsigned k = 324;           
 
   
@@ -95,7 +95,7 @@ int main(){
   bool test_default = false;
 
   std::string constraint_string(""); //A_MIC8_PAD1_PLU0_LIW1_MIW1_WOS0__B_MIC6_PAD1_PLU1_LIW0_MIW0_WOS0__C_UNR8_GAL1_PUN1_ICE1_NAW64_UFO0_MAC5");
-  float allotted_find_time = 5;
+  float allotted_find_time = 15;
   unsigned n_runs_benchgemm = 1000;
   
   typedef float tfloat;
@@ -129,8 +129,11 @@ int main(){
   }
   
   if (test_find){
-    tinygemm::FindStartType fst(tinygemm::FindStartType::Random);
-    tinygemm::dev::find(allotted_find_time, v_a.data(), v_b.data(), v_c.data(), constraint_string, fst, gg, toff, mowri);
+    
+    while (true){
+      tinygemm::FindStartType fst(tinygemm::FindStartType::Random);
+      tinygemm::dev::find(allotted_find_time, v_a.data(), v_b.data(), v_c.data(), constraint_string, fst, gg, toff, mowri);
+    }
   }
   
   if (test_default){

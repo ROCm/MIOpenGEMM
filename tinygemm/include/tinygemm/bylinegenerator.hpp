@@ -36,12 +36,10 @@ public:
 private:
 
   void append_description_string(std::stringstream & ss);
-  //void append_what_definitions(std::stringstream & ss);
   void append_how_definitions(std::stringstream & ss);
   void append_copy_preprocessor(std::stringstream & ss);
   void append_derived_definitions(std::stringstream & ss);
 
-  //void append_function_definition(std::stringstream & ss);
   void append_setup_coordinates(std::stringstream & ss);
   void append_positioning_x_string(std::stringstream & ss);
   void append_inner_work(std::stringstream & ss);
@@ -53,12 +51,6 @@ protected:
   virtual void append_derived_definitions_additional(std::stringstream & ss) = 0;
 
 };
-
-//KernelString get_beta_kernelstring(const tinygemm::hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg, const tinygemm::derivedparams::DerivedParams & dp);
-
-//KernelString get_copya_kernelstring(const tinygemm::hyperparams::HyperParams & hp,  const tinygemm::TinyGemmGeometry & gg, const tinygemm::derivedparams::DerivedParams & dp);
-
-//KernelString get_copyb_kernelstring(const tinygemm::hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg, const tinygemm::derivedparams::DerivedParams & dp);
 
 }
 }

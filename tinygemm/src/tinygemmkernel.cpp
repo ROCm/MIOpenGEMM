@@ -25,20 +25,13 @@ void TinyGemmKernel::try_release(){
 
 void TinyGemmKernel::update(const KernelString & ks, outputwriting::OutputWriter & mowri){
 
-
   try_release();
-  
-
-
   tgk_strings = ks;
-  
-  mowri << "compiling " << ks.type.basic << ". " << Flush;
-
+  mowri << "compiling " << ks.type.bkt_string << ". " << Flush;
 
   auto start = std::chrono::high_resolution_clock::now();
 
-
-  openclutil::set_program_and_kernel(command_queue, tgk_strings.kernstr, tgk_strings.fname, clprog, clkern);
+  openclutil::set_program_and_kernel(command_queue, tgk_strings.kernstr, tgk_strings.fname, clprog, clkern, mowri);
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<float> fp_ms = end - start;
   float elapsed_seconds = fp_ms.count();
@@ -74,16 +67,7 @@ void TinyGemmKernel::set_kernel_args(std::vector<std::pair<size_t, const void *>
 
 int TinyGemmKernel::enqueue(cl_uint num_events_in_wait_list, const cl_event *event_wait_list){
 
-  
-
-  cl_int ret;
-  
-
-
-
-  //std::cout << "\n" << tgk_strings.global_work_size << "\n" << tgk_strings.local_work_size << "\n" << std::endl;
-
-  
+  cl_int ret;  
   ret = clEnqueueNDRangeKernel(command_queue, clkern, 1, NULL, &tgk_strings.global_work_size, &tgk_strings.local_work_size, num_events_in_wait_list, event_wait_list, &clevent);
     
   if (ret != CL_OUT_OF_RESOURCES){
@@ -99,9 +83,9 @@ int TinyGemmKernel::enqueue(){
 
 
 void TinyGemmKernel::update_times(){
-  //TODO : wrap clGetEventProfilingInfo in safety layer
-  clGetEventProfilingInfo(clevent, CL_PROFILING_COMMAND_START, sizeof(size_t), &t_start, nullptr);
-  clGetEventProfilingInfo(clevent, CL_PROFILING_COMMAND_END, sizeof(size_t), &t_end, nullptr);
+  
+  openclutil::cl_get_event_profiling_info(clevent, CL_PROFILING_COMMAND_START, sizeof(size_t), &t_start, nullptr, "in update_times");
+  openclutil::cl_get_event_profiling_info(clevent, CL_PROFILING_COMMAND_END, sizeof(size_t), &t_end, nullptr, "in update_times");
   v_times.push_back(1e-6*(t_end-t_start));    
 }
 

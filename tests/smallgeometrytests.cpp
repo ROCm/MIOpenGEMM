@@ -31,7 +31,7 @@ void geometrytest(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsign
   tinygemm::TinyGemmGeometry gg (isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype);
   tinygemm::TinyGemmOffsets offsets (a_offset, b_offset, c_offset, workspace_offset, tail_off_a, tail_off_b, tail_off_c);    
 
-  /* TODO : this should not be random, but default */
+  /* TODO : this should not be random, but still comprehensive somehow */
   tinygemm::FindStartType fst(tinygemm::FindStartType::Random);
   basicfind<TFloat>(gg, offsets, allotted_time, verbose, logfile, constraint_string, fst, n_postfind_runs, do_cpu_test);
 }

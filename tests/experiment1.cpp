@@ -1,8 +1,5 @@
 #include "iterexperiments.hpp"
 
-
-//TODO : OpenCL compiler warnings. Line 168 of openclutil.cpp. 
-
 int main(){
 
   bool write_to_dir = false;

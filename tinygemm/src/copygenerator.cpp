@@ -25,15 +25,11 @@ size_t CopyGenerator::get_work_per_thread(){
 void CopyGenerator::setup_additional() {
     
   if (type.compare("copya") == 0){
-    matrixchar = 'a';
-    MATRIXCHAR = 'A';
-    emat_x = nsHP::matA;
+    initialise_matrixtype('a');
   }
   
   else if (type.compare("copyb") == 0){
-    matrixchar = 'b';
-    MATRIXCHAR = 'B';
-    emat_x = nsHP::matB;
+    initialise_matrixtype('b');
   }
 
   else{

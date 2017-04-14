@@ -20,8 +20,7 @@ size_t BetacGenerator::get_work_per_thread(){
 
 
 void BetacGenerator::setup_additional(){
-  matrixchar = 'c';
-  MATRIXCHAR = 'C';
+  initialise_matrixtype('c');
 
   description_string = R"(
 /* ****************************************************

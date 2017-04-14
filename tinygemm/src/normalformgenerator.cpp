@@ -4,19 +4,15 @@
 #include <tinygemm/normalformgenerator.hpp>
 #include <tinygemm/tinygemmerror.hpp>
 
-//TODO : inheritence, for forallgenerator, alphagenerator and normalformgenerator. 
-
 namespace tinygemm{
 namespace nformgen{
 
-//const size_t n_work_items_per_group = 256;
 
 class NormalFormGenerator : public prepgen::PrepGenerator{
 
 private:
 
-  /* these should all go to derived params. That way, is_deriveable can be called first to ensure tileability. */
-
+  /* TODO : these should all go to derived params. That way, is_deriveable can be called first to ensure tileability. */
   
   unsigned stride_pll_unroll;
   unsigned stride_perp_unroll;
@@ -33,16 +29,11 @@ public:
     
 
     if (type.compare("nforma") == 0){
-      matrixchar = 'a';
-      MATRIXCHAR = 'A';
-      emat_x = nsHP::matA;
-
+      initialise_matrixtype('a');
     }
     
     else if (type.compare("nformb") == 0){
-      matrixchar = 'b';
-      MATRIXCHAR = 'B';
-      emat_x = nsHP::matB;
+      initialise_matrixtype('b');
     }
   
     else{
@@ -54,24 +45,17 @@ public:
   }
   
   size_t get_local_work_size() override final{
-    /* should be made into a hyper param */
     return dp.at(emat_x).cw2_local_work_size;
   }
 
   size_t get_n_work_groups() override final{
-    //here.
     return dp.cw2_n_macro_tiles_pll_unroll * dp.at(emat_x).n_groups;
   }
-
-
 
 
  void append_copy_string(std::stringstream & ss){
    ss << "w[mu_pll_i*WRITE_STRIDE_PLL_K + mu_perp_i*WRITE_STRIDE_PERP_K] = " << matrixchar << "[mu_pll_i*READ_STRIDE_PLL_K + mu_perp_i*READ_STRIDE_PERP_K];";
  }
-
-
-
 
 
 
@@ -145,11 +129,7 @@ unsigned micro_id_perp_unroll = micro_id % N_MICRO_TILES_PERP_UNROLL;
   ss << matrixchar << " -= READ_MACRO_STRIDE_PERP_K*(MACRO_TILE_LENGTH - PRESHIFT_FINAL_TILE)";
   ss << ";\n}\n";
 
-
-
-
   ss << matrixchar << " += " << matrixchar << "_offset;\n\n";
-  
   
   ss << "w += GLOBAL_WORKSPACE_OFFSET;\n";
   ss << "w += macro_id_pll_unroll  *WRITE_MACRO_STRIDE_PLL_K   *UNROLL;\n";
@@ -157,8 +137,6 @@ unsigned micro_id_perp_unroll = micro_id % N_MICRO_TILES_PERP_UNROLL;
   ss << "w += micro_id_pll_unroll  *WRITE_STRIDE_PLL_K         *MICRO_TILE_PLL_UNROLL;\n";
   ss << "w += micro_id_perp_unroll *WRITE_STRIDE_PERP_K        *MICRO_TILE_PERP_UNROLL;\n";
   ss << "w += w_offset;\n";
-  
-    
 
   ss << R"(
 if (macro_id_pll_unroll == N_MACRO_TILES_PLL_UNROLL - 1){

@@ -160,7 +160,12 @@ void check_cpu_algs(std::vector<std::string> cpu_algs){
     gg.tX[nsHP::matA] = tA;
     gg.tX[nsHP::matB] = tB;
     gg.tX[nsHP::matC] = tC;
-    
+  
+  
+  //.terminate called after throwing an instance of 'std::out_of_range'
+  //what():  vector<bool>::_M_range_check: __n (which is 32764) >= this->size() (which is 3)
+
+  
     redirection::confirm_redirection(gg.isColMajor, gg.tX[nsHP::matA], gg.tX[nsHP::matB], gg.m, gg.n);
     tinygemm::consistencychecks::check_ldx_mnk_consistent(gg);
     

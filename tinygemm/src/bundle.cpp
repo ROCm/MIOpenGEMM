@@ -23,32 +23,19 @@ namespace tinygemm{
 namespace kerngen{
 
 
-
-
 class BundleGenerator{
-
-
 
 
 private:
   const hyperparams::HyperParams & hp;
   const tinygemm::TinyGemmGeometry & gg;
-  /* to be set in constructor based on parameters provided */
+  /* to be set in constructor, based on parameters provided */
   const derivedparams::DerivedParams dp;
   
-  //TODO: should be static:
-  std::map <std::string, std::vector<std::string> > depmap;
 
 public: 
   BundleGenerator(const hyperparams::HyperParams & hp_, const tinygemm::TinyGemmGeometry & gg_): hp(hp_), gg(gg_), dp(hp, gg) {
-
-
     
-    depmap["wsa"] = {};
-    depmap["wsb"] = {};
-    depmap["betac"] = {};
-    depmap["main"] = {"betac", "wsa", "wsb"};
-
   }
 
   Bundle generate(){
@@ -99,7 +86,7 @@ public:
     
     v_tgks.emplace_back( alphagen::get_alpha_kernelstring(hp, gg, dp) );
 
-    /* indent the kernel strings, in case someone wants to print them. Performance addicts would not do this */
+    /* indent the kernel strings, in case someone wants to print them. For (xx-minorly) better performance, this should not be done */
     for (auto & x : v_tgks){
       stringutil::indentify(x.kernstr);
     }
@@ -112,7 +99,7 @@ public:
     for (unsigned i = 0; i < v_tgks.size(); ++i){
       v_wait_indices.push_back({});
       for (unsigned j = 0; j < v_tgks.size(); ++j){
-        if (std::find(depmap.at(types[i].basic).begin(), depmap.at(types[i].basic).end(), types[j].basic) != depmap.at(types[i].basic).end()) {
+        if (std::find(kernel_dependencies.at(types[i].basic_kernel_type).begin(), kernel_dependencies.at(types[i].basic_kernel_type).end(), types[j].basic_kernel_type) != kernel_dependencies.at(types[i].basic_kernel_type).end()) {
           v_wait_indices.back().push_back(j);
         }
       }
@@ -129,11 +116,7 @@ public:
         std::cout << std::endl;
       }
     }
-    
 
-
-
-    
     return { std::move(v_tgks), std::move(v_wait_indices), std::move(dp) };
   }
 };
@@ -151,10 +134,4 @@ Bundle get_bundle(const hyperparams::HyperParams & hp,  const tinygemm::TinyGemm
 
 }
 }
-
-
-      //KernelString get_copya_kernelstring(const tinygemm::TinyGemmGeometry & gg, const tinygemm::derivedparams::DerivedParams & dp){
- //ForallGenerator fg(gg, dp, "copya");
- //return fg.get_forall_kernelstring();
-//}
 

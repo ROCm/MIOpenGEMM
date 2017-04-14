@@ -20,13 +20,35 @@ protected:
   void append_basic_what_definitions(std::stringstream & ss);
 
   virtual size_t get_local_work_size() = 0;
-
   virtual size_t get_n_work_groups() = 0;
-
 
   size_t get_global_work_size(){
     size_t forall_global_work_size = get_n_work_groups() * get_local_work_size();
     return forall_global_work_size;
+  }
+
+  void initialise_matrixtype(char matrixchar_in){
+    if (matrixchar_in == 'a'){
+      matrixchar = 'a';
+      MATRIXCHAR = 'A';
+      emat_x = nsHP::matA;
+    }
+    
+    else if (matrixchar_in == 'b'){
+      matrixchar = 'b';
+      MATRIXCHAR = 'B';
+      emat_x = nsHP::matB;
+    }
+
+    else if (matrixchar_in == 'c'){
+      matrixchar = 'c';
+      MATRIXCHAR = 'C';
+      emat_x = nsHP::matC;
+    }
+    
+    else{
+      throw tinygemm_error("in PrepGenerator : unrecognised matrixtype " + std::to_string(matrixchar_in));
+    }
   }
 
 
