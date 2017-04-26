@@ -1,5 +1,12 @@
 cmake_minimum_required(VERSION 3.0)
 
+# Default installation path
+if(WIN32)
+    set(CMAKE_INSTALL_PREFIX "/opt/rocm/x86_64-w64-mingw32" CACHE PATH "Installation path")
+else()
+    set(CMAKE_INSTALL_PREFIX "/opt/rocm" CACHE PATH "Installation path")
+endif()
+
 project(tinygemm)
 
 set(${PROJECT_NAME}_VERSION 0.1)

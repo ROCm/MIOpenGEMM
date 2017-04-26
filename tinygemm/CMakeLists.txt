@@ -1,10 +1,21 @@
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -pedantic " )
 
+include(InstallSymlinks)
 include(GNUInstallDirs)
-set( LIB_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR} )
-set( INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_INCLUDEDIR} )
-set( DATA_INSTALL_DIR ${CMAKE_INSTALL_FULL_DATAROOTDIR}/tinygemm )
+set( TINYGEMM_INSTALL_DIR tinygemm)
+set( BIN_INSTALL_DIR ${TINYGEMM_INSTALL_DIR}/${CMAKE_INSTALL_BINDIR} )
+set( LIB_INSTALL_DIR ${TINYGEMM_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR} )
+set( INCLUDE_INSTALL_DIR ${TINYGEMM_INSTALL_DIR}/${CMAKE_INSTALL_INCLUDEDIR} )
+set( DATA_INSTALL_DIR ${TINYGEMM_INSTALL_DIR}/${CMAKE_INSTALL_DATAROOTDIR}/tinygemm )
 set( CONFIG_PACKAGE_INSTALL_DIR ${LIB_INSTALL_DIR}/cmake/tinygemm )
+
+include(CreatePackage)
+create_package(
+    NAME tinygemm
+    DESCRIPTION "A tool for generating OpenCL matrix multiplication (GEMM) kernels"
+    MAINTAINER "Paul Fultz II <paul.fultz@amd.com>"
+    LDCONFIG ${LIB_INSTALL_DIR}
+)
 
 option(BUILD_DEV OFF)
 
@@ -53,7 +64,9 @@ write_basic_package_version_file(
 
 install(TARGETS tinygemm 
     EXPORT tinygemm-targets
-    DESTINATION ${LIB_INSTALL_DIR})
+    RUNTIME DESTINATION ${BIN_INSTALL_DIR}
+    LIBRARY DESTINATION ${LIB_INSTALL_DIR}
+    ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
 
 install(DIRECTORY include/tinygemm DESTINATION ${INCLUDE_INSTALL_DIR})
 
@@ -76,4 +89,6 @@ install(DIRECTORY
   PATTERN "*.py"
   PATTERN "*.cl"
 )
+
+install_symlink_subdir(${TINYGEMM_INSTALL_DIR})
 
