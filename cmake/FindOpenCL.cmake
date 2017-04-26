@@ -43,13 +43,16 @@ else( )
 		/usr/lib
 		/usr/local/cuda/lib
 		/opt/cuda/lib
-		/opt/rocm/opencl/lib
 		)
 endif( )
 mark_as_advanced( OPENCL_LIBRARIES )
 
 include( FindPackageHandleStandardArgs )
-FIND_PACKAGE_HANDLE_STANDARD_ARGS( OPENCL DEFAULT_MSG OPENCL_LIBRARIES OPENCL_INCLUDE_DIRS )
+find_package_handle_standard_args( OPENCL DEFAULT_MSG OPENCL_LIBRARIES OPENCL_INCLUDE_DIRS )
+
+set(OpenCL_FOUND ${OPENCL_FOUND} CACHE INTERNAL "")
+set(OpenCL_LIBRARIES ${OPENCL_LIBRARIES} CACHE INTERNAL "")
+set(OpenCL_INCLUDE_DIRS ${OPENCL_INCLUDE_DIRS} CACHE INTERNAL "")
 
 if( NOT OPENCL_FOUND )
 	message( STATUS "FindOpenCL looked for libraries named: OpenCL" )

@@ -64,7 +64,6 @@ if (NOT _CMakeFindDependencyMacro_FOUND)
 endif()
 
 find_dependency(OpenCL)
-find_dependency(PythonInterp)
 
 set_and_check( tinygemm_INCLUDE_DIR "@PACKAGE_INCLUDE_INSTALL_DIR@" )
 set_and_check( tinygemm_INCLUDE_DIRS "${tinygemm_INCLUDE_DIR}" )
