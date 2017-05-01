@@ -7,6 +7,7 @@
 #include <tinygemm/redirection.hpp>
 #include <tinygemm/consistencychecks.hpp>
 
+/* TODO : add option to use OpenBLAS instead of this slow gemm code */
 
 namespace tinygemm{
 namespace slowcpugemm{
