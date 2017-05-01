@@ -10,17 +10,6 @@ namespace nformgen{
 
 class NormalFormGenerator : public prepgen::PrepGenerator{
 
-private:
-
-  /* TODO : these should all go to derived params. That way, is_deriveable can be called first to ensure tileability. */
-  
-  unsigned stride_pll_unroll;
-  unsigned stride_perp_unroll;
-  unsigned n_micro_pll_unroll;
-  unsigned n_micro_perp_unroll;
-  unsigned global_offset_y;
-
-
 
 public:
   NormalFormGenerator(const tinygemm::hyperparams::HyperParams & hp_,  const tinygemm::TinyGemmGeometry & gg_, const tinygemm::derivedparams::DerivedParams & dp_, std::string type_): prepgen::PrepGenerator(hp_, gg_, dp_, type_){}
