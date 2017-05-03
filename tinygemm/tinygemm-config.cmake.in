@@ -69,7 +69,7 @@ set_and_check( tinygemm_INCLUDE_DIR "@PACKAGE_INCLUDE_INSTALL_DIR@" )
 set_and_check( tinygemm_INCLUDE_DIRS "${tinygemm_INCLUDE_DIR}" )
 set_and_check( tinygemm_LIB_INSTALL_DIR "@PACKAGE_LIB_INSTALL_DIR@" )
 
-include( "${CMAKE_CURRENT_LIST_DIR}/tinygemm-targets.cmake" )
+include( "@PACKAGE_CONFIG_PACKAGE_INSTALL_DIR@/tinygemm-targets.cmake" )
 
 set( tinygemm_LIBRARY tinygemm)
 set( tinygemm_LIBRARIES tinygemm)

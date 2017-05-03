@@ -42,7 +42,7 @@ target_include_directories (tinygemm SYSTEM INTERFACE $<INSTALL_INTERFACE:$<INST
 # The following is cmake code to generate a config file package for Tensile
 # Documentation for how to use the following package:
 # https://cmake.org/cmake/help/v3.0/module/CMakePackageConfigHelpers.html
-include( CMakePackageConfigHelpers )
+include( PackageConfigHelpers )
 
 
 
@@ -50,7 +50,7 @@ configure_package_config_file(
   tinygemm-config.cmake.in
   ${CMAKE_CURRENT_BINARY_DIR}/tinygemm-config.cmake
   INSTALL_DESTINATION ${CONFIG_PACKAGE_INSTALL_DIR}
-  PATH_VARS LIB_INSTALL_DIR INCLUDE_INSTALL_DIR
+  PATH_VARS LIB_INSTALL_DIR INCLUDE_INSTALL_DIR CONFIG_PACKAGE_INSTALL_DIR
 )
 
 write_basic_package_version_file(
