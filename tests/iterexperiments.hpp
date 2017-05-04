@@ -108,7 +108,7 @@ int run_find_experiments(const std::vector<tinygemm::TinyGemmGeometry> & geometr
         tinygemm::TinyGemmGeometry gg = geometries[prob_i];
         std::stringstream ss_logfile;        
         if (basedir != ""){
-          ss_logfile << fulldir << "m" << gg.m  << "_n" << gg.n  << "_k" << gg.k  << "_tA" << gg.tA  << "_tB" << gg.tB << ".txt";  
+          ss_logfile << fulldir << "m" << gg.m  << "_n" << gg.n  << "_k" << gg.k  << "_tA" << gg.tX[tinygemm::nsHP::matA]  << "_tB" << gg.tX[tinygemm::nsHP::matB] << ".txt";  
         }
         
         auto soln = basicfind<float>(gg, offsets, allotted_time, verbose, ss_logfile.str(), constraints, fst,  n_postfind_runs, do_cpu_test);    
@@ -116,7 +116,7 @@ int run_find_experiments(const std::vector<tinygemm::TinyGemmGeometry> & geometr
         fp_ms = end - start;
         elapsed_seconds = fp_ms.count();
 
-        std::cout << (prob_i + 1) <<  "/" <<  geometries.size() << " \t m:" << get_padded(gg.m) << " \t n:" << get_padded(gg.n) << " \t k:" << get_padded(gg.k) << " \t tA:" << gg.tA << " \t tB:" << gg.tB << " \tsoln median gflops :  " << soln.statistics.median_benchmark_gflops << "  \t soln median time : " << soln.statistics.median_benchmark_time << "  \t  elapsed time : " << elapsed_seconds << " [s] " << std::endl;
+        std::cout << (prob_i + 1) <<  "/" <<  geometries.size() << " \t m:" << get_padded(gg.m) << " \t n:" << get_padded(gg.n) << " \t k:" << get_padded(gg.k) << " \t tA:" << gg.tX[tinygemm::nsHP::matA] << " \t tB:" << gg.tX[tinygemm::nsHP::matB] << " \tsoln median gflops :  " << soln.statistics.median_benchmark_gflops << "  \t soln median time : " << soln.statistics.median_benchmark_time << "  \t  elapsed time : " << elapsed_seconds << " [s] " << std::endl;
         
       }
     }
