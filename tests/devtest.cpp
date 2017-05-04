@@ -29,13 +29,15 @@ template <typename TFloat>
 tinygemm::TinyGemmGeometry get_geometry(){
 
 
+  //m1760n64k1760tA1tB0
+
   bool isColMajor = true;
   bool tA = true;
   bool tB = false;
   bool tC = false;
-  unsigned m = 401; 
-  unsigned n = 129; 
-  unsigned k = 324;           
+  unsigned m = 1760; 
+  unsigned n = 64; 
+  unsigned k = 1760;           
 
   
   unsigned lda = ( tA == isColMajor ? k : m ) + 0;
@@ -88,13 +90,13 @@ int main(){
   tinygemm::outputwriting::OutputWriter mowri(true, fout != "" , fout);
 
 
-  bool test_print = true;
+  bool test_print = false;
   bool test_benchgemm = false;  
   bool test_find = true;
-  bool test_accuracy = true;
+  bool test_accuracy = false;
   bool test_default = false;
 
-  std::string constraint_string(""); //A_MIC8_PAD1_PLU0_LIW1_MIW1_WOS0__B_MIC6_PAD1_PLU1_LIW0_MIW0_WOS0__C_UNR8_GAL1_PUN1_ICE1_NAW64_UFO0_MAC5");
+  std::string constraint_string("A_WOS0__B_WOS0"); //A_MIC8_PAD1_PLU0_LIW1_MIW1_WOS0__B_MIC6_PAD1_PLU1_LIW0_MIW0_WOS0__C_UNR8_GAL1_PUN1_ICE1_NAW64_UFO0_MAC5");
   float allotted_find_time = 15;
   unsigned n_runs_benchgemm = 1000;
   
