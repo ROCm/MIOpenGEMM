@@ -18,43 +18,51 @@ namespace tinygemm{
 
 namespace nsMAC{
 
-void confirm_all_mac_nx_set(const std::array<unsigned, nsMAC::neMACs> & mnop, std::string name){
-  for (unsigned i = 0; i < nsMAC::neMACs; ++i){
-    if (mnop[i] == 0)  {
-      std::stringstream errm;
-      errm <<  name << "[" << i << "] is zero, it has probably not been set"; 
-      throw tinygemm_error(errm.str());
-    }
+std::array<unsigned, 2> get_mac_grid(unsigned mac, unsigned skew){
+
+  unsigned skew0 = 10;  
+  
+  double dbl_lg2_mac = std::log2 (static_cast<double> (mac));
+  unsigned lg2_mac = static_cast<unsigned> (dbl_lg2_mac);
+  
+  
+  
+  /* at skew = skew0, (64, 256) are a:b = 1:1 and (32, 128) have a:b = 2:1 */
+  double na = std::exp2(lg2_mac/2 + lg2_mac%2);
+  double nb = static_cast<double> (mac) / na;
+
+  /* at skew = skew0 + 1, (64, 256) are a:b = 1:4 and (32, 128) have a:b = 1:2 */
+  for (unsigned i = skew0; i < skew; ++i){
+    na /= 2.;
+    nb *= 2.;
+  }   
+  
+  /* at skew0 = skew + 1, (64, 256) are a:b = 4:1 and (32, 128) have a:b = 8:1 */
+  for (unsigned i = skew; i < skew0; ++i){
+    na *= 2.;
+    nb /= 2.;
   }
-}
+
+  unsigned u_na = static_cast<unsigned> (na);
+  unsigned u_nb = static_cast<unsigned> (nb);
   
-std::array<unsigned, nsMAC::neMACs> get_mac_na(){
-  std::array<unsigned, nsMAC::neMACs> mnop {0};
-  mnop[a4b8] = 4;
-  mnop[a8b4] = 8;
-  mnop[a8b8] = 8;
-  mnop[a8b16] = 8;
-  mnop[a16b8] = 16;
-  mnop[a16b16] = 16;
-  confirm_all_mac_nx_set(mnop, "mac_na");
-  return mnop;
+  if (std::abs (na*nb - static_cast<double> (u_na*u_nb)) > 1e-7){
+    throw tinygemm_error("error in getting mac sizes, casting non-ints ");
+  }
+  
+  
+  std::array<unsigned, 2> mac_grid;
+  
+  if (nsHP::matA >= 2 || nsHP::matB >= 2){
+    throw tinygemm_error("the std::array returned in get_mac_grid is too small");
+  }
+  
+  mac_grid[nsHP::matA] = u_na;
+  mac_grid[nsHP::matB] = u_nb;
+      
+  return mac_grid;
 }
 
-std::array<unsigned, nsMAC::neMACs> get_mac_nb(){
-  std::array<unsigned, nsMAC::neMACs> mnop {0};
-  mnop[a4b8] = 8;
-  mnop[a8b4] = 4;
-  mnop[a8b8] = 8;
-  mnop[a8b16] = 16;
-  mnop[a16b8] = 8;
-  mnop[a16b16] = 16;
-  confirm_all_mac_nx_set(mnop, "mac_nb");
-  return mnop;
-}
-
-  
-  const std::array<unsigned, nsMAC::neMACs> mac_na = get_mac_na();
-  const std::array<unsigned, nsMAC::neMACs> mac_nb = get_mac_nb();
 
 }
 
@@ -192,7 +200,8 @@ void CSubG::initialise_maps(){
   Keys[nsHP::ICE] = "ICE";
   Keys[nsHP::NAW] = "NAW";
   Keys[nsHP::UFO] = "UFO"; 
-  Keys[nsHP::MAC] = "MAC"; 
+  Keys[nsHP::MAC] = "MAC";
+  Keys[nsHP::SKW] = "SKW"; 
   Vals = getVals(nsHP::nNonChiralHPs, Keys, "NonChiralKeys");
 }
 
@@ -409,7 +418,12 @@ void CSubG::set_start_range(){
   start_range[nsHP::UNR]= {8, 16};
   start_range[nsHP::NAW]= {16, 64};
   start_range[nsHP::GAL]= {nsGAL::byrow, nsGAL::bycol, nsGAL::sucol};
-  start_range[nsHP::MAC]= {nsMAC::a8b8, nsMAC::a16b16};
+  
+  
+  /* TODO : put this inside an if on geom and gpu */
+  start_range[nsHP::MAC] = {64, 256};
+  start_range[nsHP::SKW] = {10};
+  
   start_range[nsHP::ICE] = {1};
   start_range[nsHP::PUN] = {nsHP::no, nsHP::yes};
   start_range[nsHP::UFO] = {nsHP::no};
@@ -434,20 +448,20 @@ void CSubG::set_preconstraint_edges(){
     {nsGAL::bycol, {nsGAL::byrow, nsGAL::sucol}   },
     {nsGAL::sucol, {nsGAL::byrow, nsGAL::bycol}   }   };
 
+  
+  /* TODO : put this inside an if on geom and gpu */
   edges[nsHP::MAC] = 
   {
-    // to be added foe 32 in work group GPUs
-    //{nsMAC::a4b8, {nsMAC::a8b8}},
-    //{nsMAC::a8b4, {nsMAC::a8b8}},
-
-    //{nsMAC::a8b16, {nsMAC::a8b8, nsMAC::a16b16}},
-    //{nsMAC::a16b8, {nsMAC::a8b8, nsMAC::a16b16}},
-
-    //{nsMAC::a1b1, {nsMAC::a4b4}},
-    //{nsMAC::a4b4, {nsMAC::a8b8, nsMAC::a8b8}},
-    {nsMAC::a8b8, {nsMAC::a16b16}},
-    {nsMAC::a16b16, {nsMAC::a8b8}},
+    //{32, {}},
+    {64, {256}},
+    {256, {64}},    
   };
+  
+  edges[nsHP::SKW] = 
+  {
+    {10, {}},
+  };
+  
   
   edges[nsHP::ICE] = 
   { {1,  {2}},
@@ -579,7 +593,10 @@ std::string HyperParams::get_string() const{
 
 std::vector<HyperParams> HyperParams::get_one_aways(){
   
+  
   std::vector<HyperParams> one_aways;
+  
+  /* by changing just one hyper-parameter */
   for (unsigned mi = 0; mi < nsHP::nMats; ++mi){
     for (unsigned hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi){
       unsigned value = v_xhps[mi].vs[hpi];
@@ -590,8 +607,57 @@ std::vector<HyperParams> HyperParams::get_one_aways(){
       }
     }
   }
-  unsigned n_uncoupled = one_aways.size();
+  
+  
+  /* by changing MAC and one or both MICs, so as to semi-preserve the overall shape of the macro tile */
+  unsigned curr_mac = v_xhps[nsHP::matC].vs[nsHP::MAC];
+  for (auto & newmac : p_graph->p_subgs[nsHP::matC]->edges[nsHP::MAC].at(curr_mac)){
+
+    /* ratios of new to current tile grid sizes */
     
+    
+    auto curr_grid_size = nsMAC::get_mac_grid(curr_mac, v_xhps[nsHP::matC].vs[nsHP::SKW]);
+    auto new_grid_size = nsMAC::get_mac_grid(newmac, v_xhps[nsHP::matC].vs[nsHP::SKW]);
+    
+    double delta_na = static_cast<double>(new_grid_size[nsHP::matA]) / static_cast<double>(curr_grid_size[nsHP::matA]);
+    double delta_nb = static_cast<double>(new_grid_size[nsHP::matB]) / static_cast<double>(curr_grid_size[nsHP::matB]);
+    
+    /* mica scaled so that the macro tile remains ~ the same in the a dimension */
+    unsigned curr_mica = v_xhps[nsHP::matA].vs[nsHP::MIC];
+    unsigned new_mica = static_cast<unsigned> ( static_cast<double> ( curr_mica ) / delta_na );
+
+    /* micb scaled so that the macro tile remains the same in the b dimension */
+    unsigned curr_micb = v_xhps[nsHP::matB].vs[nsHP::MIC];
+    unsigned new_micb = static_cast<unsigned> ( static_cast<double> ( curr_micb ) / delta_nb );
+    
+    /* if the new micro tile (a) is different and valid, add it */
+    if (new_mica != curr_mica && in_graph(nsHP::matA, nsHP::MIC, new_mica)){
+      HyperParams hp(*this);    
+      hp.v_xhps[nsHP::matC].vs[nsHP::MAC] = newmac;
+      hp.v_xhps[nsHP::matA].vs[nsHP::MIC] = new_mica;
+      one_aways.push_back(hp);
+    }
+
+    if (new_micb != curr_micb && in_graph(nsHP::matB, nsHP::MIC, new_micb)){
+      HyperParams hp(*this);    
+      hp.v_xhps[nsHP::matC].vs[nsHP::MAC] = newmac;
+      hp.v_xhps[nsHP::matB].vs[nsHP::MIC] = new_micb;
+      one_aways.push_back(hp);
+
+      if (new_mica != curr_mica && in_graph(nsHP::matA, nsHP::MIC, new_mica)){
+        HyperParams hp2(hp);
+        hp2.v_xhps[nsHP::matA].vs[nsHP::MIC] = new_mica;
+        one_aways.push_back(hp2);
+      }
+    }
+  }
+  
+
+  unsigned n_uncoupled = one_aways.size();  
+  
+  
+  
+  /* by changing two hyper-parameters */  
   for (auto & couple_p : p_graph->coupled_parameters){
 
     auto first = std::get<0>(couple_p);
@@ -656,13 +722,19 @@ HyperParams get_hp_start(FindStartType fst, const Graph & graph){
 
 
 
+bool HyperParams::in_graph(unsigned mi, unsigned hpi, unsigned value){
+  return std::count(p_graph->p_subgs[mi]->range[hpi].begin(), p_graph->p_subgs[mi]->range[hpi].end(), value) != 0;
+}
+
 
 bool HyperParams::in_graph(){
   /* filtering out if violates the constraint string */
   bool constraints_satisfied = true;
   for (unsigned mi = 0; mi < nsHP::nMats; ++mi){
     for (unsigned hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi){
-      if (std::count(p_graph->p_subgs[mi]->range[hpi].begin(), p_graph->p_subgs[mi]->range[hpi].end(), v_xhps[mi].vs[hpi]) == 0){
+      if (in_graph(mi, hpi, v_xhps[mi].vs[hpi]) == false){
+      
+      //std::count(p_graph->p_subgs[mi]->range[hpi].begin(), p_graph->p_subgs[mi]->range[hpi].end(), v_xhps[mi].vs[hpi]) == 0){
         constraints_satisfied = false;
         break;
       }

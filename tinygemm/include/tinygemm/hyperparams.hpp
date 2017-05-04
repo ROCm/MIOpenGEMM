@@ -22,14 +22,13 @@ enum class FindStartType {Default, Random};
 /* design note: a safer choice than namespacing enums is to use enum class. */ 
 /* but this would involve static casting from the enumerated type to unsigned all the time */
 
+
 namespace nsMAC{
-  enum eMAC {a4b8 = 0, a8b4 = 1, a8b8 = 2, a8b16 = 3, a16b8 = 4, a16b16 = 5, neMACs};
 
-  extern const std::array<unsigned, nsMAC::neMACs> mac_na;
-  extern const std::array<unsigned, nsMAC::neMACs> mac_nb;
-
+std::array<unsigned, 2> get_mac_grid(unsigned mac, unsigned skew);
 
 }
+
 
 
 namespace nsGAL{
@@ -39,12 +38,12 @@ namespace nsGAL{
 namespace nsHP{
   /* if you're going to add a parameter here, make sure to add it BEFORE the final count */
   enum eChiral {MIC = 0, PAD, PLU, LIW, MIW, WOS, nChiralHPs};
-  enum eNonChiral {UNR = 0, GAL, PUN, ICE, NAW, UFO, MAC, nNonChiralHPs};  
+  enum eNonChiral {UNR = 0, GAL, PUN, ICE, NAW, UFO, MAC, SKW, nNonChiralHPs};  
   enum eSpecial {undefined = -1};
   enum eBinary {no = 0, yes = 1};
 }
 
-//unsigned get_n_a_of_mac(nsMAC::eMAC x);
+
 
 namespace hyperparams{
 
@@ -54,8 +53,6 @@ public:
   SubG(unsigned nHPs, const tinygemm::TinyGemmGeometry & gg, std::string cs, bool csfull);
  
   SubG() = default;
-  
-
 
   void apply_constraints();
 
@@ -190,6 +187,7 @@ public:
   void replace_undefined_randomly();
   void replace(const std::vector<std::vector<unsigned>> & partial_params);
   void replace_where_source_defined(const std::vector<std::vector<unsigned>> & params);
+  bool in_graph(unsigned mi, unsigned hpi, unsigned value);
   bool in_graph();
    
  

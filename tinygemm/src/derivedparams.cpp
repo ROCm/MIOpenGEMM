@@ -102,13 +102,21 @@ DerivedParams::set_fragile(){
   
   set_should_be_hyperparams();
 
-  if (hp.at(nsHP::matC).vs[nsHP::MAC] >= nsMAC::neMACs){
-    throw tinygemm_error("unrecognised MAC (macro tile sizes cannot be set)");
-  }
+  //if (hp.at(nsHP::matC).vs[nsHP::MAC] >= nsMAC::neMACs){
+    //throw tinygemm_error("unrecognised MAC (macro tile sizes cannot be set)");
+  //}
+
+
+
+  auto grid_size = nsMAC::get_mac_grid(hp.at(nsHP::matC).vs[nsHP::MAC], hp.at(nsHP::matC).vs[nsHP::SKW]);
   
-  at(nsHP::matA).macro_tile_length = nsMAC::mac_na[hp.at(nsHP::matC).vs[nsHP::MAC]] * hp.at(nsHP::matA).vs[nsHP::MIC];
-  at(nsHP::matB).macro_tile_length = nsMAC::mac_nb[hp.at(nsHP::matC).vs[nsHP::MAC]] * hp.at(nsHP::matB).vs[nsHP::MIC];
+   
+  at(nsHP::matA).macro_tile_length = grid_size[nsHP::matA] * hp.at(nsHP::matA).vs[nsHP::MIC];
+  at(nsHP::matB).macro_tile_length = grid_size[nsHP::matB] * hp.at(nsHP::matB).vs[nsHP::MIC];
   
+  
+      
+      
   for (auto emat_x : {nsHP::matA, nsHP::matB}){
     at(emat_x).preshift_final_tile = 1 + (gg.get_non_k_dim(emat_x) - 1) % at(emat_x).macro_tile_length;
     at(emat_x).n_groups = gg.get_non_k_dim(emat_x) / at(emat_x).macro_tile_length + (at(emat_x).preshift_final_tile != at(emat_x).macro_tile_length);
