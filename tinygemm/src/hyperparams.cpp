@@ -16,6 +16,47 @@
 
 namespace tinygemm{
 
+namespace nsMAC{
+
+void confirm_all_mac_nx_set(const std::array<unsigned, nsMAC::neMACs> & mnop, std::string name){
+  for (unsigned i = 0; i < nsMAC::neMACs; ++i){
+    if (mnop[i] == 0)  {
+      std::stringstream errm;
+      errm <<  name << "[" << i << "] is zero, it has probably not been set"; 
+      throw tinygemm_error(errm.str());
+    }
+  }
+}
+  
+std::array<unsigned, nsMAC::neMACs> get_mac_na(){
+  std::array<unsigned, nsMAC::neMACs> mnop {0};
+  mnop[a4b8] = 4;
+  mnop[a8b4] = 8;
+  mnop[a8b8] = 8;
+  mnop[a8b16] = 8;
+  mnop[a16b8] = 16;
+  mnop[a16b16] = 16;
+  confirm_all_mac_nx_set(mnop, "mac_na");
+  return mnop;
+}
+
+std::array<unsigned, nsMAC::neMACs> get_mac_nb(){
+  std::array<unsigned, nsMAC::neMACs> mnop {0};
+  mnop[a4b8] = 8;
+  mnop[a8b4] = 4;
+  mnop[a8b8] = 8;
+  mnop[a8b16] = 16;
+  mnop[a16b8] = 8;
+  mnop[a16b16] = 16;
+  confirm_all_mac_nx_set(mnop, "mac_nb");
+  return mnop;
+}
+
+  
+  const std::array<unsigned, nsMAC::neMACs> mac_na = get_mac_na();
+  const std::array<unsigned, nsMAC::neMACs> mac_nb = get_mac_nb();
+
+}
 
 namespace hyperparams{
 
@@ -550,8 +591,7 @@ std::vector<HyperParams> HyperParams::get_one_aways(){
     }
   }
   unsigned n_uncoupled = one_aways.size();
-  
-  
+    
   for (auto & couple_p : p_graph->coupled_parameters){
 
     auto first = std::get<0>(couple_p);

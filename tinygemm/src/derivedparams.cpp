@@ -102,46 +102,13 @@ DerivedParams::set_fragile(){
   
   set_should_be_hyperparams();
 
-  
-  /* TODO : tidy this up, make compact */
-  if (hp.at(nsHP::matC).vs[nsHP::MAC] == nsMAC::a4b8)  {
-    at(nsHP::matA).macro_tile_length = 4;
-    at(nsHP::matB).macro_tile_length = 8;
-  }
-
-  else if (hp.at(nsHP::matC).vs[nsHP::MAC] == nsMAC::a8b4)  {
-    at(nsHP::matA).macro_tile_length = 8;
-    at(nsHP::matB).macro_tile_length = 4;
-  }
-
-  
-  else if (hp.at(nsHP::matC).vs[nsHP::MAC] == nsMAC::a8b8)  {
-    at(nsHP::matA).macro_tile_length = 8;
-    at(nsHP::matB).macro_tile_length = 8;
-  }
-  
-  else if (hp.at(nsHP::matC).vs[nsHP::MAC] == nsMAC::a8b16)  {
-    at(nsHP::matA).macro_tile_length = 8;
-    at(nsHP::matB).macro_tile_length = 16;
-  }
-
-  else if (hp.at(nsHP::matC).vs[nsHP::MAC] == nsMAC::a16b8)  {
-    at(nsHP::matA).macro_tile_length = 16;
-    at(nsHP::matB).macro_tile_length = 8;
-  }
-   
-  else if (hp.at(nsHP::matC).vs[nsHP::MAC] == nsMAC::a16b16)  {
-    at(nsHP::matA).macro_tile_length = 16;
-    at(nsHP::matB).macro_tile_length = 16;
-  }
-  
-  else{
+  if (hp.at(nsHP::matC).vs[nsHP::MAC] >= nsMAC::neMACs){
     throw tinygemm_error("unrecognised MAC (macro tile sizes cannot be set)");
   }
   
-  at(nsHP::matA).macro_tile_length *= hp.at(nsHP::matA).vs[nsHP::MIC];
-  at(nsHP::matB).macro_tile_length *= hp.at(nsHP::matB).vs[nsHP::MIC];
-
+  at(nsHP::matA).macro_tile_length = nsMAC::mac_na[hp.at(nsHP::matC).vs[nsHP::MAC]] * hp.at(nsHP::matA).vs[nsHP::MIC];
+  at(nsHP::matB).macro_tile_length = nsMAC::mac_nb[hp.at(nsHP::matC).vs[nsHP::MAC]] * hp.at(nsHP::matB).vs[nsHP::MIC];
+  
   for (auto emat_x : {nsHP::matA, nsHP::matB}){
     at(emat_x).preshift_final_tile = 1 + (gg.get_non_k_dim(emat_x) - 1) % at(emat_x).macro_tile_length;
     at(emat_x).n_groups = gg.get_non_k_dim(emat_x) / at(emat_x).macro_tile_length + (at(emat_x).preshift_final_tile != at(emat_x).macro_tile_length);

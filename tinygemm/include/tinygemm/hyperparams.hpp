@@ -2,6 +2,7 @@
 #define HYPERKERNELPARAMS_HPP
 
 #include <vector>
+#include <array>
 #include <map>
 
 #include <functional>
@@ -9,6 +10,7 @@
 #include <tinygemm/tinygemmgeometry.hpp>
 #include <tinygemm/tinygemmerror.hpp>
 
+#include <array>
 
 /* TODO : hyperparams caching */
 /* TODO : 1x1 support */
@@ -21,8 +23,14 @@ enum class FindStartType {Default, Random};
 /* but this would involve static casting from the enumerated type to unsigned all the time */
 
 namespace nsMAC{
-  enum eMAC {a4b8 = 0, a8b4 = 1, a8b8 = 2, a8b16 = 3, a16b8 = 4, a16b16 = 5};
+  enum eMAC {a4b8 = 0, a8b4 = 1, a8b8 = 2, a8b16 = 3, a16b8 = 4, a16b16 = 5, neMACs};
+
+  extern const std::array<unsigned, nsMAC::neMACs> mac_na;
+  extern const std::array<unsigned, nsMAC::neMACs> mac_nb;
+
+
 }
+
 
 namespace nsGAL{
   enum eGAL {byrow = 1, bycol = 2, sucol = 3};
@@ -36,6 +44,7 @@ namespace nsHP{
   enum eBinary {no = 0, yes = 1};
 }
 
+//unsigned get_n_a_of_mac(nsMAC::eMAC x);
 
 namespace hyperparams{
 
