@@ -84,6 +84,8 @@ std::map<T, unsigned> getVals(unsigned nVals, const std::vector<T> & keys, const
 }
 
 
+
+
 Graph::Graph(const tinygemm::TinyGemmGeometry & gg, const openclutil::OpenCLDeviceInfo & devinfo, std::string constraints_string, bool full_cs): ptr_gg(&gg) {
 
   graphchar.resize(nsHP::nMats);
@@ -112,11 +114,11 @@ Graph::Graph(const tinygemm::TinyGemmGeometry & gg, const openclutil::OpenCLDevi
     sub_constraints[graphind[megafrag[0]]] = megafrag.substr(2);
   }
   
-  asubg = ASubG(gg, sub_constraints[nsHP::matA], full_cs);
+  asubg = ASubG(gg, sub_constraints[nsHP::matA], full_cs, &devinfo);
   asubg.initialise();
-  bsubg = BSubG(gg, sub_constraints[nsHP::matB], full_cs);
+  bsubg = BSubG(gg, sub_constraints[nsHP::matB], full_cs, &devinfo);
   bsubg.initialise();
-  csubg = CSubG(gg, sub_constraints[nsHP::matC], full_cs);
+  csubg = CSubG(gg, sub_constraints[nsHP::matC], full_cs, &devinfo);
   csubg.initialise();
 
   p_subgs.resize(nsHP::nMats);
@@ -220,7 +222,7 @@ void SubG::initialise_range_from_preconstraint_edges(){
 }
 
 
-SubG::SubG(unsigned nHPs_, const tinygemm::TinyGemmGeometry & gg, std::string cs, bool csfull): nHPs(nHPs_), ptr_gg(&gg), Keys(nHPs_), edges (nHPs_), start_range (nHPs_), subg_cs(cs), subg_csfull(csfull) {
+SubG::SubG(unsigned nHPs_, const tinygemm::TinyGemmGeometry & gg, std::string cs, bool csfull, const openclutil::OpenCLDeviceInfo * ptr_devinfo_): nHPs(nHPs_), ptr_gg(&gg), Keys(nHPs_), edges (nHPs_), start_range (nHPs_), subg_cs(cs), subg_csfull(csfull), ptr_devinfo(ptr_devinfo_) {
   
   
 }
@@ -305,9 +307,11 @@ void SubG::confirm_start_is_subset(){
 }
 
 
-CSubG::CSubG(const tinygemm::TinyGemmGeometry & gg, std::string cs, bool csfull) : SubG(nsHP::nNonChiralHPs, gg, cs, csfull){}
+CSubG::CSubG(const tinygemm::TinyGemmGeometry & gg, std::string cs, bool csfull, const openclutil::OpenCLDeviceInfo * ptr_devinfo_) : SubG(nsHP::nNonChiralHPs, gg, cs, csfull, ptr_devinfo_){}
 
-ChiralSubG::ChiralSubG(const tinygemm::TinyGemmGeometry & gg, std::string cs, bool csfull) : SubG(nsHP::nChiralHPs, gg, cs, csfull){}
+
+
+ChiralSubG::ChiralSubG(const tinygemm::TinyGemmGeometry & gg, std::string cs, bool csfull, const openclutil::OpenCLDeviceInfo * ptr_devinfo_) : SubG(nsHP::nChiralHPs, gg, cs, csfull, ptr_devinfo_){}
 
 
 void ChiralSubG::set_chirality_specific_start_range_base(unsigned non_unroll_dimension){
@@ -420,6 +424,8 @@ void CSubG::set_start_range(){
   
   
   /* TODO : put this inside an if on geom and gpu */
+  
+  
   start_range[nsHP::MAC] = {64, 256};
   start_range[nsHP::SKW] = {10};
   
