@@ -16,18 +16,18 @@
 
 namespace tinygemm{
 
+/* macro tile shape */
+/* at skew = skew0, (64, 256) are a:b = 1:1 and (32, 128) have a:b = 2:1 */
+unsigned skew0 = 10;  
+  
 namespace nsMAC{
 
 std::array<unsigned, 2> get_mac_grid(unsigned mac, unsigned skew){
 
-  unsigned skew0 = 10;  
-  
   double dbl_lg2_mac = std::log2 (static_cast<double> (mac));
   unsigned lg2_mac = static_cast<unsigned> (dbl_lg2_mac);
   
-  
-  
-  /* at skew = skew0, (64, 256) are a:b = 1:1 and (32, 128) have a:b = 2:1 */
+
   double na = std::exp2(lg2_mac/2 + lg2_mac%2);
   double nb = static_cast<double> (mac) / na;
 
