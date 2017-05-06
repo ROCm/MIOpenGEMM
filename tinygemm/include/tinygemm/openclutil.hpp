@@ -97,19 +97,37 @@ class TinyGemmCommandQueueInContext{
     ~TinyGemmCommandQueueInContext();
     
 };
+
   
+class OpenCLPlatformInfo{
+  public:
+    std::string profile;
+    std::string version;
+    std::string name;
+    std::string vendor;    
+
+    OpenCLPlatformInfo(cl_platform_id platform_id);
+    OpenCLPlatformInfo() = default;
+    std::string get_string();
+
+};
+
+
 
 class OpenCLDeviceInfo{
   public:
 
-    std::string platform_vendor;
-    std::string platform_profile;
-    std::string platform_version;
-    std::string platform_name;
+
+    OpenCLPlatformInfo platinfo;
+
+    //std::string platform_vendor;
+    //std::string platform_profile;
+    //std::string platform_version;
+    //std::string platform_name;
+    
     std::string device_name;  
     std::string device_version;  
-    std::string driver_version;  
-
+    std::string driver_version;
     bool device_available;
     size_t device_global_mem_size;
     unsigned device_max_clock_frequency;

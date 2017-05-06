@@ -238,7 +238,26 @@ void set_platform_etc(cl_platform_id & platform, cl_uint & num_platforms, cl_con
   
   
   /* Get the platform(s) */
-  cl_get_platform_ids(1, &platform, &num_platforms, "in set_platform_etc");
+  
+  std::vector<cl_platform_id> platforms (10);
+  cl_get_platform_ids(platforms.size(), &platforms[0], &num_platforms, "in set_platform_etc");
+  
+  
+  if (num_platforms > 1){
+    
+    std::stringstream errm;
+    errm << num_platforms << " platforms detected\n-----------------";
+    for (unsigned i = 0; i < num_platforms; ++i){
+      OpenCLPlatformInfo platinfo(platforms[i]);
+      errm << platinfo.get_string();
+      errm << "-----------------\n";
+    }
+    std::string errmessage = errm.str();
+    throw std::runtime_error(errmessage);
+  }
+  
+  platform = platforms[0];
+  
   
   /* Create context */
   cl_context_properties cps[3] = { CL_CONTEXT_PLATFORM, reinterpret_cast<cl_context_properties>(platform), 0 };
@@ -308,7 +327,7 @@ void set_platform_etc(cl_platform_id & platform, cl_uint & num_platforms, cl_con
     /* if not nv-id-ia, and fewer than 40 compute units */
     else if (max_max_compute_units < 40){
       std::string errm = device_compute_unit_count_string;
-      errm += "As this is less than 40, an error is being thrown. \nIf you wish to use a device with fewer than 64 CUs, please make changes here (in openclutil.cpp)";
+      errm += "As this is less than 40, an error is being thrown. \nIf you wish to use a device with fewer than 40 CUs, please make changes here (in openclutil.cpp)";
       throw tinygemm_error(errm);
     }
   }
@@ -383,6 +402,26 @@ TinyGemmCommandQueueInContext::~TinyGemmCommandQueueInContext(){
     cl_release_command_queue(command_queue, "in destructor of TinyGemmCommandQueueInContext");
   }
 }
+
+
+OpenCLPlatformInfo::OpenCLPlatformInfo(cl_platform_id platform_id){
+  std::string info_st ("");
+  info_st.resize (2048, '-');
+  size_t info_size;
+
+  cl_get_platform_info(platform_id, CL_PLATFORM_PROFILE, info_st.size() ,&info_st[0], &info_size, "getting CL_PLATFORM_PROFILE for OpenCLPlatformInfo");
+  profile = info_st.substr(0, info_size - 1);
+
+  
+  cl_get_platform_info(platform_id, CL_PLATFORM_VERSION, info_st.size() ,&info_st[0], &info_size, "getting CL_PLATFORM_VERSION for OpenCLPlatformInfo");
+  version = info_st.substr(0, info_size - 1);
+
+  cl_get_platform_info(platform_id, CL_PLATFORM_NAME, info_st.size() ,&info_st[0], &info_size, "getting CL_PLATFORM_NAME for OpenCLPlatformInfo");
+  name = info_st.substr(0, info_size -1 );
+
+  cl_get_platform_info(platform_id, CL_PLATFORM_VENDOR, info_st.size() ,&info_st[0], &info_size, "getting CL_PLATFORM_VENDOR for OpenCLPlatformInfo");
+  vendor = info_st.substr(0, info_size - 1);
+}
   
 
 
@@ -395,23 +434,14 @@ OpenCLDeviceInfo::OpenCLDeviceInfo(const cl_command_queue & command_queue){
   cl_ulong a_ulong;
   cl_uint a_uint;
   
-
   
-
-  openclutil::get_platform_info_from_command_queue(command_queue, CL_PLATFORM_VENDOR, info_st.size(), &info_st[0], &info_size, "obtaining CL_PLATFORM_VENDOR");
-  platform_vendor = info_st.substr(0, info_size);
-
-  openclutil::get_platform_info_from_command_queue(command_queue, CL_PLATFORM_PROFILE, info_st.size(), &info_st[0], &info_size, "obtaining CL_PLATFORM_PROFILE");
-  platform_profile = info_st.substr(0, info_size);
-     
-  openclutil::get_platform_info_from_command_queue(command_queue, CL_PLATFORM_VERSION, info_st.size(), &info_st[0], &info_size, "obtaining CL_PLATFORM_VERSION");
-  platform_version = info_st.substr(0, info_size);
-
-  openclutil::get_platform_info_from_command_queue(command_queue, CL_PLATFORM_NAME, info_st.size(), &info_st[0], &info_size, "obtaining CL_PLATFORM_NAME");
-  platform_name = info_st.substr(0, info_size);
+  cl_platform_id platform;
+  get_device_info_from_command_queue(command_queue, CL_DEVICE_PLATFORM, sizeof(cl_platform_id), &platform, NULL, "getting CL_DEVICE_PLATFORM in get_platform_info_from_command_queue");
   
+  platinfo = OpenCLPlatformInfo(platform);
+    
   openclutil::get_device_info_from_command_queue(command_queue, CL_DEVICE_NAME, info_st.size(), &info_st[0], &info_size, "obtaining CL_DEVICE_NAME");
-  device_name = info_st.substr(0, info_size);  
+  device_name = info_st.substr(0, info_size - 1);  
 
   openclutil::get_device_info_from_command_queue(command_queue, CL_DEVICE_AVAILABLE, sizeof(cl_bool), &a_bool, NULL, "obtaining CL_DEVICE_AVAILABLE");
   device_available = a_bool;
@@ -433,18 +463,18 @@ OpenCLDeviceInfo::OpenCLDeviceInfo(const cl_command_queue & command_queue){
   device_max_work_group_size = a_ulong;
 
   openclutil::get_device_info_from_command_queue(command_queue, CL_DEVICE_VERSION, info_st.size(), &info_st[0], &info_size, "obtaining CL_DEVICE_VERSION");
-  device_version = info_st.substr(0, info_size);  
+  device_version = info_st.substr(0, info_size -1);  
 
   openclutil::get_device_info_from_command_queue(command_queue, CL_DRIVER_VERSION, info_st.size(), &info_st[0], &info_size, "obtaining CL_DRIVER_VERSION");
-  driver_version = info_st.substr(0, info_size);  
+  driver_version = info_st.substr(0, info_size -1);  
 
 
 
-  if (platform_vendor.find("vidia") != std::string::npos || platform_vendor.find("NVIDIA") != std::string::npos) {
+  if (platinfo.vendor.find("vidia") != std::string::npos || platinfo.vendor.find("NVIDIA") != std::string::npos) {
     wg_atom_size = 32;
   }
   
-  else if (platform_vendor.find("Advanced Micro") != std::string::npos || platform_vendor.find("Advanced Micro") != std::string::npos || platform_vendor.find("AMD") != std::string::npos ){
+  else if (platinfo.vendor.find("Advanced Micro") != std::string::npos || platinfo.vendor.find("Advanced Micro") != std::string::npos || platinfo.vendor.find("AMD") != std::string::npos ){
     /* TODO : the logic here should be : if Vega, then 32 else 64 */
     if (device_name.find("Fiji") != std::string::npos){
       wg_atom_size = 64;
@@ -457,7 +487,7 @@ OpenCLDeviceInfo::OpenCLDeviceInfo(const cl_command_queue & command_queue){
   
   else{
     wg_atom_size = 32;
-    throw tinygemm_error("Tinygemm has not been tested on any platform from vendor " + platform_vendor + " yet. Are you sure you want to try this ? If so, remove error message hyiar"); 
+    throw tinygemm_error("Tinygemm has not been tested on any platform from vendor " + platinfo.vendor + " yet. Are you sure you want to try this ? If so, remove error message hyiar"); 
   }
 }
 
@@ -465,13 +495,19 @@ OpenCLDeviceInfo::OpenCLDeviceInfo(){
   device_name = "unknown_tinygemm_default_constructed";
 }
 
+std::string OpenCLPlatformInfo::get_string() {
+  std::stringstream ss;
+  ss << "\n";
+  ss << "platform profile : " << profile << "\n";
+  ss << "platform vendor : " << vendor << "\n";
+  ss << "platform version : " << version << "\n";
+  ss << "platform name : " << name << "\n";
+  return ss.str();
+}
 
 std::string OpenCLDeviceInfo::get_string() {
   std::stringstream ss;
-  ss << "\npatform vendor : " << platform_vendor << "\n";
-  ss << "patform profile : " << platform_profile << "\n";
-  ss << "patform version : " << platform_version << "\n";
-  ss << "patform name : " << platform_name << "\n";
+  ss << platinfo.get_string();
   ss << "device name : " << device_name << "\n";
   ss << "device version : " << device_version << "\n";
   ss << "driver version : " << driver_version << "\n";
