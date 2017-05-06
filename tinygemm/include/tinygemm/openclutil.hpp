@@ -100,6 +100,8 @@ class OpenCLDeviceInfo{
   public:
     std::string device_name;    
     OpenCLDeviceInfo(const cl_command_queue & command_queue);
+    
+    OpenCLDeviceInfo() = default;
 };
 
 

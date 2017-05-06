@@ -84,8 +84,7 @@ std::map<T, unsigned> getVals(unsigned nVals, const std::vector<T> & keys, const
 }
 
 
-Graph::Graph(const tinygemm::TinyGemmGeometry & gg, std::string constraints_string, bool full_cs): ptr_gg(&gg) {
-
+Graph::Graph(const tinygemm::TinyGemmGeometry & gg, const openclutil::OpenCLDeviceInfo & devinfo, std::string constraints_string, bool full_cs): ptr_gg(&gg) {
 
   graphchar.resize(nsHP::nMats);
   graphchar[nsHP::matA] = 'A';

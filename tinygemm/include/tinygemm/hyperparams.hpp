@@ -9,6 +9,7 @@
 
 #include <tinygemm/tinygemmgeometry.hpp>
 #include <tinygemm/tinygemmerror.hpp>
+#include <tinygemm/openclutil.hpp>
 
 #include <array>
 
@@ -158,7 +159,7 @@ class Graph{
     
     std::vector<std::pair< std::pair<unsigned, unsigned>, std::pair<unsigned, unsigned> > > coupled_parameters;
 
-    Graph(const tinygemm::TinyGemmGeometry & gg, std::string constraint_string, bool full_constraints_expected);
+    Graph(const tinygemm::TinyGemmGeometry & gg, const openclutil::OpenCLDeviceInfo & devinfo, std::string constraint_string, bool full_constraints_expected);
 
 };
 

@@ -68,9 +68,12 @@ void print_kernel(){
   std::string kernel_string;  
   std::string hyperstring = get_hyperstring();
   auto gg = get_geometry<TFloat>();
-  tinygemm::hyperparams::Graph graph(gg, hyperstring, true); 
+
+  tinygemm::openclutil::OpenCLDeviceInfo devinfo;
+  tinygemm::hyperparams::Graph graph(gg, devinfo, hyperstring, true); 
   tinygemm::hyperparams::HyperParams hp(graph);
   auto bundle = tinygemm::kerngen::get_bundle(hp, gg);
+  
   
   for (auto & x :  bundle.v_tgks){
     auto fname = "/home/james/akernel_" +  x.type.full +  ".cl";
@@ -119,14 +122,19 @@ int main(){
   
   if (test_accuracy || test_benchgemm){
     std::string hyperstring = get_hyperstring();
-    tinygemm::hyperparams::Graph graph(gg, hyperstring, true); 
-    tinygemm::hyperparams::HyperParams hp(graph);
+    //tinygemm::hyperparams::Graph graph(gg, hyperstring, true); 
+    //tinygemm::hyperparams::HyperParams hp(graph);
     if (test_accuracy){
-      tinygemm::dev::accuracy_test(hp, gg, toff, v_a.data(), v_b.data(), v_c.data(), c_true_bla, mowri);
+      
+      tinygemm::dev::accuracy_test(hyperstring, gg, toff, v_a.data(), v_b.data(), v_c.data(), c_true_bla, mowri);
+      
+      //tinygemm::dev::accuracy_test(hp, gg, toff, v_a.data(), v_b.data(), v_c.data(), c_true_bla, mowri);
     }
 
     if (test_benchgemm){
-      tinygemm::dev::benchgemm({hp}, n_runs_benchgemm, gg, toff, v_a.data(), v_b.data(), v_c.data(), mowri);
+      //tinygemm::dev::benchgemm({hp}, n_runs_benchgemm, gg, toff, v_a.data(), v_b.data(), v_c.data(), mowri);
+      
+      tinygemm::dev::benchgemm({hyperstring}, n_runs_benchgemm, gg, toff, v_a.data(), v_b.data(), v_c.data(), mowri);
     }
   }
   

@@ -50,7 +50,8 @@ std::string logfile = "");
 
 void benchgemm(
 cl_command_queue command_queue, 
-const std::vector<hyperparams::HyperParams> & hps,         
+const std::string & hyperstring,
+//const std::vector<hyperparams::HyperParams> & hps,         
 unsigned n_runs,
 
 const tinygemm::TinyGemmGeometry & gg,

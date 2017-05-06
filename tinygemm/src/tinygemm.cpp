@@ -84,7 +84,9 @@ public:
   const tinygemm::TinyGemmGeometry gg;
   const tinygemm::TinyGemmOffsets toff;
   TinyGemmGPUMems gpum;
-  const openclutil::OpenCLDeviceInfo devinfo;  
+  const openclutil::OpenCLDeviceInfo devinfo;
+  const hyperparams::Graph graph;
+
 
 private:
   outputwriting::OutputWriter & mowri;
@@ -94,9 +96,7 @@ private:
   float median_gflops;
   /* (for find) while generating, compiling and benchmarking kernels, we will keep track of the fastest found thus far */
   std::vector<tinygemm::TinyGemmSolution> best_solns_path;
-
   std::vector<TinyGemmKernel> tk_kernels;  
-  
   std::vector <TinyGemmKernel *> tk_kernels_active;  
   std::vector<std::vector <unsigned > > v_wait_indices;
   
@@ -113,13 +113,18 @@ public:
   cl_mem b_gpu_, 
   cl_mem c_gpu_,
   cl_mem workspace_gpu_,
+  std::string constraint_string,
+  bool full_constraints_expected,
   outputwriting::OutputWriter & mowri_):
   
   command_queue(command_queue_), 
   gg(gg_),
   toff(toff_),
   gpum(a_gpu_, b_gpu_, c_gpu_, workspace_gpu_),
+
   devinfo(command_queue_),
+  graph(gg, devinfo, constraint_string, full_constraints_expected),
+
   mowri(mowri_)
   {
     
@@ -452,7 +457,7 @@ private:
   }
 
 public:
-  void benchgemm(const std::vector<hyperparams::HyperParams> & hps, unsigned n_runs){
+  void benchgemm(unsigned n_runs){ //(const std::vector<hyperparams::HyperParams> & hps, unsigned n_runs){
 
     address_check_valid();
     
@@ -460,29 +465,39 @@ public:
       throw tinygemm_error("n_runs to benchgemm should be a positive integer");
     }
 
-    for ( unsigned i = 0; i < hps.size(); ++i) {
+    //for ( unsigned i = 0; i < hps.size(); ++i) {
       
 
-      mowri << "\nSource kernel " << "(" << i + 1 << "/" << hps.size() << ") "  << hps[i].get_string() << Endl;      
-       
-      deriveability_test(hps[i], "in benchgemm");
-      
-      auto bundle = tinygemm::kerngen::get_bundle(hps[i],gg); 
-      auto atr = architests::architecture_specific_tests(command_queue, hps[i], bundle.dp);
-      if (std::get<0>(atr) == false){
-        throw tinygemm_error(std::get<1>(atr));
-      }
+      //mowri << "\nSource kernel " << "(" << i + 1 << "/" << hps.size() << ") "  << hps[i].get_string() << Endl;      
+   
+      //mowri << "hyperstring : " << hps[i].get_string() << Endl;      
+   
+    hyperparams::HyperParams hp(graph);
+     
+    //deriveability_test(hps[i], "in benchgemm");
 
-      setup_tinykernels(hps[i], bundle); 
-      
-      mowri << "(benchgemm) geometry  \t:" << gg.get_string()  << "\nEntering the core gemm loops" << Endl;
-      core_gemm_loop(n_runs, true);
+    deriveability_test(hp, "in benchgemm");
+    
+    //auto bundle = tinygemm::kerngen::get_bundle(hps[i],gg); 
+    //auto atr = architests::architecture_specific_tests(command_queue, hps[i], bundle.dp);
+
+    auto bundle = tinygemm::kerngen::get_bundle(hp,gg); 
+    auto atr = architests::architecture_specific_tests(command_queue, hp, bundle.dp);
+    
+    if (std::get<0>(atr) == false){
+      throw tinygemm_error(std::get<1>(atr));
     }
+
+    //setup_tinykernels(hps[i], bundle); 
+    setup_tinykernels(hp, bundle); 
+    
+    mowri << "(benchgemm) geometry  \t:" << gg.get_string()  << "\nEntering the core gemm loops" << Endl;
+    core_gemm_loop(n_runs, true);
+    //}
   }
   
   
-  tinygemm::TinyGemmSolution
-  get_default(hyperparams::Graph & graph){
+  tinygemm::TinyGemmSolution get_default(){ //hyperparams::Graph & graph){
     hyperparams::HyperParams hp = hyperparams::get_hp_start(FindStartType::Default, graph);
     deriveability_test(hp, "in get_default");    
     auto bundle = tinygemm::kerngen::get_bundle(hp, gg); 
@@ -492,7 +507,7 @@ public:
   }
 
 
-  hyperparams::HyperParams get_hyper_param_start(FindStartType fst, const hyperparams::Graph & graph){
+  hyperparams::HyperParams get_hyper_param_start(FindStartType fst){ //, const hyperparams::Graph & graph){
 
     hyperparams::HyperParams hyper_param_start(graph);
     bool found_a_deriveable_hp = false;
@@ -524,18 +539,20 @@ public:
     return hyper_param_start;
   }
   
-  tinygemm::TinyGemmSolution find(float allotted_time, std::string constraint_string, FindStartType fst, unsigned n_runs_per_kernel){
+  //tinygemm::TinyGemmSolution find(float allotted_time, std::string constraint_string, FindStartType fst, unsigned n_runs_per_kernel){
 
+
+  tinygemm::TinyGemmSolution find(float allotted_time, FindStartType fst, unsigned n_runs_per_kernel){
     
 
 
-    hyperparams::Graph graph(gg, constraint_string, false);
+    //hyperparams::Graph graph(gg, constraint_string, false);
           
     mowri << "(find) geometry : " << gg.get_string()  << Endl;
 
     if (allotted_time <= 0){
       mowri << "allotted_time (" << allotted_time << ") is insufficient for benchmarking, returning default TinyGemmSolution based on gg and constraint_string without bencing/searching" << Endl;
-      return get_default(graph);
+      return get_default();
     }
 
     address_check_valid_and_reliable();
@@ -543,7 +560,7 @@ public:
     /* we will count how many kernels are successfully generated AND compiled AND benchmarked */
     unsigned global_counter = 0;
 
-    hyperparams::HyperParams hyper_param_current = get_hyper_param_start(fst, graph);
+    hyperparams::HyperParams hyper_param_current = get_hyper_param_start(fst);//, graph);
     
     /* In here, we will store all previously considered HyperParams strings, used to check and ensure that we do not consider a HyperParam more than once */
     std::vector<std::string> hyper_front_history;
@@ -722,20 +739,18 @@ bool c_is_const){
 
   tinygemm::consistencychecks::check_ldx_mnk_consistent(gg);  
 
-  mowri << "(DEBUGTEST) in non-call find" << Endl;
+  bool full_constraints_expected = false;
+
   if (c_is_const == true){
-  
     openclutil::SafeClMem c_copied = get_copy(command_queue, c, gg, toff, "copy of c in find");
-    OpenCLGemmEncapsulator oger(command_queue, gg, toff, a, b, c_copied.clmem, workspace, mowri); 
-    return oger.find(allotted_time, constraint_string, fst, n_runs_per_kernel);
+    OpenCLGemmEncapsulator oger(command_queue, gg, toff, a, b, c_copied.clmem, workspace, constraint_string, full_constraints_expected, mowri); 
+    return oger.find(allotted_time, fst, n_runs_per_kernel);
   }
   
   else{
-    OpenCLGemmEncapsulator oger(command_queue, gg, toff, a, b, c, workspace, mowri); 
-    return oger.find(allotted_time, constraint_string, fst, n_runs_per_kernel);
+    OpenCLGemmEncapsulator oger(command_queue, gg, toff, a, b, c, workspace, constraint_string, full_constraints_expected, mowri); 
+    return oger.find(allotted_time, fst, n_runs_per_kernel);
   }
-  
-  mowri << "(DEBUGTEST) exiting non-call find " << Endl;
 }
 
 tinygemm::TinyGemmSolution
@@ -755,7 +770,7 @@ outputwriting::OutputWriter & mowri){
   
 void benchgemm(
   cl_command_queue command_queue,
-  const std::vector<hyperparams::HyperParams> & hps,
+  const std::string & hyperstring, //std::vector<hyperparams::HyperParams> & hps,
   unsigned n_runs,
   const tinygemm::TinyGemmGeometry & gg,
   const tinygemm::TinyGemmOffsets & toff, 
@@ -768,16 +783,22 @@ void benchgemm(
   
   
   mowri << " (DEBUGTEST) in tinygemm's benchgemm" << Endl;
+  bool full_constraints_expected = true;
   tinygemm::consistencychecks::check_ldx_mnk_consistent(gg);
   if (c_is_const == true){
     openclutil::SafeClMem c_copied = get_copy(command_queue, c_gpu, gg, toff, "copy of c in benchgemm");
-    OpenCLGemmEncapsulator oger(command_queue, gg, toff, a_gpu, b_gpu, c_copied.clmem, workspace_gpu, mowri);
-    oger.benchgemm(hps, n_runs);
+    //for (auto & hyperstring : hyperstrings){
+    OpenCLGemmEncapsulator oger(command_queue, gg, toff, a_gpu, b_gpu, c_copied.clmem, workspace_gpu, hyperstring, full_constraints_expected, mowri);
+    oger.benchgemm(n_runs);
+    //}
   }
   
   else{
-    OpenCLGemmEncapsulator oger(command_queue, gg, toff, a_gpu, b_gpu, c_gpu, workspace_gpu, mowri);
-    oger.benchgemm(hps, n_runs);
+    //OpenCLGemmEncapsulator oger(command_queue, gg, toff, a_gpu, b_gpu, c_gpu, workspace_gpu, mowri);
+    //for (auto & hyperstring : hyperstrings){
+    OpenCLGemmEncapsulator oger(command_queue, gg, toff, a_gpu, b_gpu, c_gpu, workspace_gpu, hyperstring, full_constraints_expected, mowri);
+    oger.benchgemm(n_runs);
+    //}
   }
 }
   
