@@ -192,22 +192,36 @@ void cl_build_program(cl_program program,cl_uint num_devices,const cl_device_id 
   //clGetProgramBuildInfo(program, device_list[0], CL_PROGRAM_BUILD_STATUS, sizeof(buffer), buffer, NULL);
     
   char buffer[10240];
-  clGetProgramBuildInfo(program, device_list[0], CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer, NULL);
+  size_t buffer_size;
+  clGetProgramBuildInfo(program, device_list[0], CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer, &buffer_size);
 
   if (ret != CL_SUCCESS){
     fprintf(stderr, "CL Compilation failed:\n%s", buffer);
   }
   
+  
   else{
-    if (buffer[0] != '\0'){
+
+    bool iswhitespace = true;
+    for (unsigned i = 0; i < buffer_size - 1; ++i){
+      if (std::isspace(buffer[i]) == false){
+        iswhitespace = false;
+        break;
+      }
+    }
+
+
+    if (iswhitespace == false){//(buffer[0] != '\0'){
       std::stringstream ss_comp_warning;
       ss_comp_warning << "\n                  warning during compilation of tinygemm kernel:\n ";
-      ss_comp_warning << buffer;
+      ss_comp_warning << ">>" << buffer << "<<";
       mowri << ss_comp_warning.str();
     }
+
+    confirm_cl_status(ret, hash, "cl_build_program");
+
   }
 
-  confirm_cl_status(ret, hash, "cl_build_program");
   
 }
 
@@ -243,6 +257,7 @@ void set_platform_etc(cl_platform_id & platform, cl_uint & num_platforms, cl_con
   cl_get_platform_ids(platforms.size(), &platforms[0], &num_platforms, "in set_platform_etc");
   
   
+  bool multi_platforms_resolved = false;
   if (num_platforms > 1){
     std::stringstream errm;
     errm << num_platforms << " platforms detected\n-----------------";
@@ -250,13 +265,16 @@ void set_platform_etc(cl_platform_id & platform, cl_uint & num_platforms, cl_con
       OpenCLPlatformInfo platinfo(platforms[i]);
       if (platinfo.vendor.find("NVIDIA") != std::string::npos || platinfo.vendor.find("vidia") != std::string::npos){
         platform = platforms[i];
-        break;
+        multi_platforms_resolved = true;
       }
       errm << platinfo.get_string();
       errm << "-----------------\n";
     }
-    std::string errmessage = errm.str();
-    throw std::runtime_error(errmessage);
+    
+    if (multi_platforms_resolved == false){
+      std::string errmessage = errm.str();
+      throw std::runtime_error(errmessage);
+    }
   }
   
   else{
@@ -325,7 +343,7 @@ void set_platform_etc(cl_platform_id & platform, cl_uint & num_platforms, cl_con
     //openclutil::get_platform_info(command_queue, CL_PLATFORM_VENDOR, info_st.size(), &info_st[0], &info_size, "obtaining CL_PLATFORM_VENDOR");
     std::string platform_vendor = info_st.substr(0, info_size);
     /* assuming that if it's nv-id-ia, it's correct */
-    if (platform_vendor.find("vidia") != std::string::npos &&  platform_vendor.find("NVIDIA") != std::string::npos){
+    if (platform_vendor.find("vidia") != std::string::npos ||  platform_vendor.find("NVIDIA") != std::string::npos){
     
     }
     
