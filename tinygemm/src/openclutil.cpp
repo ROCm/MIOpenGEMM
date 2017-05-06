@@ -351,6 +351,14 @@ TinyGemmCommandQueueInContext::~TinyGemmCommandQueueInContext(){
   
 
 
+OpenCLDeviceInfo::OpenCLDeviceInfo(const cl_command_queue & command_queue){    
+  std::string info_st ("");
+  info_st.resize (2048, '-');
+  size_t info_size;
+  openclutil::get_device_info_from_command_queue(command_queue, CL_DEVICE_NAME, info_st.size(), &info_st[0], &info_size, "obtaining CL_DEVICE_NAME in find");
+  device_name = info_st.substr(0, info_size);
+}
+
 
     
 }

@@ -72,18 +72,19 @@ class TinyGemmGPUMems{
     }
 };  
 
+
+
+
 class OpenCLGemmEncapsulator{
 
 public:   
-  bool paperquiet = false;
 
   cl_command_queue command_queue;
   std::string outputfilename;
   const tinygemm::TinyGemmGeometry gg;
   const tinygemm::TinyGemmOffsets toff;
-  
   TinyGemmGPUMems gpum;
-  
+  const openclutil::OpenCLDeviceInfo devinfo;  
 
 private:
   outputwriting::OutputWriter & mowri;
@@ -98,6 +99,10 @@ private:
   
   std::vector <TinyGemmKernel *> tk_kernels_active;  
   std::vector<std::vector <unsigned > > v_wait_indices;
+  
+
+  
+
 
 public:
   OpenCLGemmEncapsulator(
@@ -114,6 +119,7 @@ public:
   gg(gg_),
   toff(toff_),
   gpum(a_gpu_, b_gpu_, c_gpu_, workspace_gpu_),
+  devinfo(command_queue_),
   mowri(mowri_)
   {
     
@@ -456,10 +462,9 @@ public:
 
     for ( unsigned i = 0; i < hps.size(); ++i) {
       
-      if (paperquiet == false){
-        mowri << "\nSource kernel " << "(" << i + 1 << "/" << hps.size() << ") "  << hps[i].get_string() << Endl;      
-      }
-      
+
+      mowri << "\nSource kernel " << "(" << i + 1 << "/" << hps.size() << ") "  << hps[i].get_string() << Endl;      
+       
       deriveability_test(hps[i], "in benchgemm");
       
       auto bundle = tinygemm::kerngen::get_bundle(hps[i],gg); 
@@ -520,6 +525,8 @@ public:
   }
   
   tinygemm::TinyGemmSolution find(float allotted_time, std::string constraint_string, FindStartType fst, unsigned n_runs_per_kernel){
+
+    
 
 
     hyperparams::Graph graph(gg, constraint_string, false);
