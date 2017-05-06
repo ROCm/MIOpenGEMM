@@ -244,11 +244,14 @@ void set_platform_etc(cl_platform_id & platform, cl_uint & num_platforms, cl_con
   
   
   if (num_platforms > 1){
-    
     std::stringstream errm;
     errm << num_platforms << " platforms detected\n-----------------";
     for (unsigned i = 0; i < num_platforms; ++i){
       OpenCLPlatformInfo platinfo(platforms[i]);
+      if (platinfo.vendor.find("NVIDIA") != std::string::npos || platinfo.vendor.find("vidia") != std::string::npos){
+        platform = platforms[i];
+        break;
+      }
       errm << platinfo.get_string();
       errm << "-----------------\n";
     }
@@ -256,7 +259,9 @@ void set_platform_etc(cl_platform_id & platform, cl_uint & num_platforms, cl_con
     throw std::runtime_error(errmessage);
   }
   
-  platform = platforms[0];
+  else{
+    platform = platforms[0];
+  }
   
   
   /* Create context */
@@ -412,7 +417,6 @@ OpenCLPlatformInfo::OpenCLPlatformInfo(cl_platform_id platform_id){
   cl_get_platform_info(platform_id, CL_PLATFORM_PROFILE, info_st.size() ,&info_st[0], &info_size, "getting CL_PLATFORM_PROFILE for OpenCLPlatformInfo");
   profile = info_st.substr(0, info_size - 1);
 
-  
   cl_get_platform_info(platform_id, CL_PLATFORM_VERSION, info_st.size() ,&info_st[0], &info_size, "getting CL_PLATFORM_VERSION for OpenCLPlatformInfo");
   version = info_st.substr(0, info_size - 1);
 
