@@ -287,19 +287,35 @@ void set_platform_etc(cl_platform_id & platform, cl_uint & num_platforms, cl_con
     device_compute_unit_count_string +=  " compute units\n";
   }
   
+
   
   bool only_good_hardware = true;
-  if (only_good_hardware == true && max_max_compute_units < 40){
-    std::string errm = device_compute_unit_count_string;
-    errm += "As this is less than 64, an error is being thrown. \nIf you wish to use a device with fewer than 64 CUs, please make changes here (in openclutil.cpp)";
-    throw tinygemm_error(errm);
+  if (only_good_hardware == true){
+    /* getting vendor */
+    std::string info_st ("");
+    info_st.resize (2048, '-');
+    size_t info_size;
+    
+    cl_get_platform_info(platform, CL_PLATFORM_VENDOR, info_st.size(), &info_st[0], &info_size, "obtaining CL_PLATFORM_VENDOR");
+    
+    //openclutil::get_platform_info(command_queue, CL_PLATFORM_VENDOR, info_st.size(), &info_st[0], &info_size, "obtaining CL_PLATFORM_VENDOR");
+    std::string platform_vendor = info_st.substr(0, info_size);
+    /* assuming that if it's nv-id-ia, it's correct */
+    if (platform_vendor.find("vidia") != std::string::npos &&  platform_vendor.find("NVIDIA") != std::string::npos){
+    
+    }
+    
+    /* if not nv-id-ia, and fewer than 40 compute units */
+    else if (max_max_compute_units < 40){
+      std::string errm = device_compute_unit_count_string;
+      errm += "As this is less than 40, an error is being thrown. \nIf you wish to use a device with fewer than 64 CUs, please make changes here (in openclutil.cpp)";
+      throw tinygemm_error(errm);
+    }
   }
   
   
-  else{
-    mowri << "Will use device " << bestDeviceName << ", which has " << max_max_compute_units << " CUs. \nTo use a different device, consider modifying set_platform_etc in openclutil.cpp (or write custom OpenCL boilerplate)." << Endl;
-    device_id_to_use = bestDeviceId;
-  }
+  mowri << "Will use device " << bestDeviceName << ", which has " << max_max_compute_units << " CUs. \nTo use a different device, consider modifying set_platform_etc in openclutil.cpp (or write custom OpenCL boilerplate)." << Endl;
+  device_id_to_use = bestDeviceId;
 
 }
 
