@@ -5,6 +5,7 @@
 #include "outputwriter.hpp"
 #include <CL/cl.h>
 
+
 namespace tinygemm{
 namespace openclutil{
 
@@ -59,6 +60,8 @@ void cl_get_event_profiling_info(cl_event event, cl_profiling_info param_name, s
   
 void get_device_info_from_command_queue(cl_command_queue command_queue, cl_device_info param_name, size_t param_value_size, void *param_value, size_t *param_value_size_ret, const std::string & hash);
 
+void get_platform_info_from_command_queue(cl_command_queue command_queue, cl_platform_info param_name, size_t param_value_size, void *param_value, size_t *param_value_size_ret, const std::string & hash);
+
 cl_program cl_create_program_with_source(cl_context context, cl_uint count, const char **strings, const size_t *lengths, const std::string & hash);
 
 cl_kernel cl_create_kernel(cl_program program, const char *kernel_name, const std::string & hash);
@@ -98,10 +101,24 @@ class TinyGemmCommandQueueInContext{
 
 class OpenCLDeviceInfo{
   public:
-    std::string device_name;    
+
+    std::string platform_vendor;
+    std::string platform_profile;
+    std::string platform_version;
+    std::string platform_name;
+    std::string device_name;  
+    std::string device_version;  
+    std::string driver_version;  
+
+    bool device_available;
+    size_t device_global_mem_size;
+    unsigned device_max_clock_frequency;
+    unsigned device_max_compute_units;
+    unsigned device_max_work_group_size;
+
+    std::string get_string();
     OpenCLDeviceInfo(const cl_command_queue & command_queue);
-    
-    OpenCLDeviceInfo() = default;
+    OpenCLDeviceInfo();
 };
 
 

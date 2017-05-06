@@ -135,6 +135,14 @@ void cl_get_device_info(cl_device_id device, cl_device_info param_name, size_t p
 }
 
 
+void cl_get_platform_info(cl_platform_id platform, cl_platform_info param_name, size_t param_value_size, void *param_value, size_t *param_value_size_ret, const std::string & hash){
+  cl_int ret = clGetPlatformInfo(platform, param_name, param_value_size, param_value, param_value_size_ret);
+  confirm_cl_status(ret, hash, "cl_get_platform_info");
+}
+
+//clGetPlatformInfo(platform_ids[i], CL_PLATFORM_NAME, info_st.size() ,&info_st[0], &info_size);
+
+
 void cl_get_event_profiling_info(cl_event event, cl_profiling_info param_name, size_t param_value_size, void *param_value, size_t *param_value_size_ret, const std::string & hash){
   cl_int ret = clGetEventProfilingInfo(event, param_name, param_value_size, param_value, param_value_size_ret);
   confirm_cl_status(ret, hash, "cl_get_event_profiling_info");  
@@ -144,6 +152,17 @@ void get_device_info_from_command_queue(cl_command_queue command_queue, cl_devic
   cl_device_id device;
   cl_get_command_queue_info(command_queue, CL_QUEUE_DEVICE, sizeof(cl_device_id), &device, nullptr, hash + " + (in get_device_info_from_command_queue)");
   cl_get_device_info(device, param_name, param_value_size, param_value, param_value_size_ret, hash + " + (in get_device_info_from_command_queue)");
+}
+
+
+
+void get_platform_info_from_command_queue(cl_command_queue command_queue, cl_platform_info param_name, size_t param_value_size, void *param_value, size_t *param_value_size_ret, const std::string & hash){
+
+
+  cl_platform_id platform;
+  get_device_info_from_command_queue(command_queue, CL_DEVICE_PLATFORM, sizeof(cl_platform_id), &platform, NULL, "getting CL_DEVICE_PLATFORM in get_platform_info_from_command_queue");
+  cl_get_platform_info(platform, param_name, param_value_size, param_value, param_value_size_ret, hash + " + (in get_device_info_from_command_queue)");
+
 }
 
 
@@ -355,10 +374,86 @@ OpenCLDeviceInfo::OpenCLDeviceInfo(const cl_command_queue & command_queue){
   std::string info_st ("");
   info_st.resize (2048, '-');
   size_t info_size;
-  openclutil::get_device_info_from_command_queue(command_queue, CL_DEVICE_NAME, info_st.size(), &info_st[0], &info_size, "obtaining CL_DEVICE_NAME in find");
-  device_name = info_st.substr(0, info_size);
+
+  cl_bool a_bool;
+  cl_ulong a_ulong;
+  cl_uint a_uint;
+  
+
+  openclutil::get_platform_info_from_command_queue(command_queue, CL_PLATFORM_VENDOR, info_st.size(), &info_st[0], &info_size, "obtaining CL_PLATFORM_VENDOR");
+  platform_vendor = info_st.substr(0, info_size);
+
+  openclutil::get_platform_info_from_command_queue(command_queue, CL_PLATFORM_PROFILE, info_st.size(), &info_st[0], &info_size, "obtaining CL_PLATFORM_PROFILE");
+  platform_profile = info_st.substr(0, info_size);
+     
+  openclutil::get_platform_info_from_command_queue(command_queue, CL_PLATFORM_VERSION, info_st.size(), &info_st[0], &info_size, "obtaining CL_PLATFORM_VERSION");
+  platform_version = info_st.substr(0, info_size);
+
+  openclutil::get_platform_info_from_command_queue(command_queue, CL_PLATFORM_NAME, info_st.size(), &info_st[0], &info_size, "obtaining CL_PLATFORM_NAME");
+  platform_name = info_st.substr(0, info_size);
+  
+  openclutil::get_device_info_from_command_queue(command_queue, CL_DEVICE_NAME, info_st.size(), &info_st[0], &info_size, "obtaining CL_DEVICE_NAME");
+  device_name = info_st.substr(0, info_size);  
+
+  openclutil::get_device_info_from_command_queue(command_queue, CL_DEVICE_AVAILABLE, sizeof(cl_bool), &a_bool, NULL, "obtaining CL_DEVICE_AVAILABLE");
+  device_available = a_bool;
+
+  openclutil::get_device_info_from_command_queue(command_queue, CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(cl_ulong), &a_ulong, NULL, "obtaining CL_DEVICE_GLOBAL_MEM_SIZE");
+  device_global_mem_size = a_ulong;
+
+  openclutil::get_device_info_from_command_queue(command_queue, CL_DEVICE_MAX_CLOCK_FREQUENCY, sizeof(cl_uint), &a_uint, NULL, "obtaining CL_DEVICE_MAX_CLOCK_FREQUENCY");
+  device_max_clock_frequency = a_uint;
+
+  openclutil::get_device_info_from_command_queue(command_queue, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(cl_uint), &a_uint, NULL, "obtaining CL_DEVICE_MAX_COMPUTE_UNITS");
+  device_max_compute_units = a_uint;
+
+
+  openclutil::get_device_info_from_command_queue(command_queue, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(cl_ulong), &a_ulong, NULL, "obtaining CL_DEVICE_MAX_WORK_GROUP_SIZE");
+  device_max_work_group_size = a_ulong;
+
+  openclutil::get_device_info_from_command_queue(command_queue, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(cl_ulong), &a_ulong, NULL, "obtaining CL_DEVICE_MAX_WORK_GROUP_SIZE");
+  device_max_work_group_size = a_ulong;
+
+  openclutil::get_device_info_from_command_queue(command_queue, CL_DEVICE_VERSION, info_st.size(), &info_st[0], &info_size, "obtaining CL_DEVICE_VERSION");
+  device_version = info_st.substr(0, info_size);  
+
+  openclutil::get_device_info_from_command_queue(command_queue, CL_DRIVER_VERSION, info_st.size(), &info_st[0], &info_size, "obtaining CL_DRIVER_VERSION");
+  driver_version = info_st.substr(0, info_size);  
+
+
+  // TODO : get platform info from command queue
+  if (device_name == "Fiji"){
+    
+  }
+
+
+  std::cout << get_string();
+  std::abort();  
 }
 
+OpenCLDeviceInfo::OpenCLDeviceInfo(){
+  device_name = "unknown_tinygemm_default_constructed";
+}
+
+
+std::string OpenCLDeviceInfo::get_string() {
+  std::stringstream ss;
+  ss << "\npatform vendor : " << platform_vendor << "\n";
+  ss << "patform profile : " << platform_profile << "\n";
+  ss << "patform version : " << platform_version << "\n";
+  ss << "patform name : " << platform_name << "\n";
+  ss << "device name : " << device_name << "\n";
+  ss << "device version : " << device_version << "\n";
+  ss << "driver version : " << driver_version << "\n";
+  ss << "device_available : " << device_available << "\n";
+  ss << "device_global_mem_size : " << device_global_mem_size << "\n";
+  ss << "device_max_clock_frequency : " << device_max_clock_frequency << "\n";
+  ss << "device_max_compute_units : " << device_max_compute_units << "\n";
+  ss << "device_max_work_group_size : " << device_max_work_group_size << "\n";  
+  ss << "\n";
+
+  return ss.str();
+}
 
     
 }
