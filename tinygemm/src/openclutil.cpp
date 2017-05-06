@@ -380,6 +380,8 @@ OpenCLDeviceInfo::OpenCLDeviceInfo(const cl_command_queue & command_queue){
   cl_uint a_uint;
   
 
+  
+
   openclutil::get_platform_info_from_command_queue(command_queue, CL_PLATFORM_VENDOR, info_st.size(), &info_st[0], &info_size, "obtaining CL_PLATFORM_VENDOR");
   platform_vendor = info_st.substr(0, info_size);
 
@@ -421,14 +423,26 @@ OpenCLDeviceInfo::OpenCLDeviceInfo(const cl_command_queue & command_queue){
   driver_version = info_st.substr(0, info_size);  
 
 
-  // TODO : get platform info from command queue
-  if (device_name == "Fiji"){
-    
+
+  if (platform_vendor.find("vidia") != std::string::npos || platform_vendor.find("NVIDIA") != std::string::npos) {
+    wg_atom_size = 32;
   }
-
-
-  std::cout << get_string();
-  std::abort();  
+  
+  else if (platform_vendor.find("Advanced Micro") != std::string::npos || platform_vendor.find("Advanced Micro") != std::string::npos || platform_vendor.find("AMD") != std::string::npos ){
+    /* TODO : the logic here should be : if Vega, then 32 else 64 */
+    if (device_name.find("Fiji") != std::string::npos){
+      wg_atom_size = 64;
+    }
+        
+    else{
+      wg_atom_size = 32;
+    }
+  }
+  
+  else{
+    wg_atom_size = 32;
+    throw tinygemm_error("Tinygemm has not been tested on any platform from vendor " + platform_vendor + " yet. Are you sure you want to try this ? If so, remove error message hyiar"); 
+  }
 }
 
 OpenCLDeviceInfo::OpenCLDeviceInfo(){

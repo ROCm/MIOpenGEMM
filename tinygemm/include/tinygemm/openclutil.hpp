@@ -115,6 +115,7 @@ class OpenCLDeviceInfo{
     unsigned device_max_clock_frequency;
     unsigned device_max_compute_units;
     unsigned device_max_work_group_size;
+    unsigned wg_atom_size;
 
     std::string get_string();
     OpenCLDeviceInfo(const cl_command_queue & command_queue);
