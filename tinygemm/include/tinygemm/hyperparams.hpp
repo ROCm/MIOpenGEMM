@@ -14,7 +14,6 @@
 #include <array>
 
 /* TODO : hyperparams caching */
-/* TODO : 1x1 support */
 
 namespace tinygemm{
 
@@ -26,7 +25,7 @@ enum class FindStartType {Default, Random};
 
 namespace nsMAC{
 
-std::array<unsigned, 2> get_mac_grid(unsigned mac, unsigned skew);
+std::tuple<bool, std::string, std::array<unsigned, 2>> get_mac_grid(unsigned mac, unsigned skew);
 
 }
 
@@ -86,15 +85,16 @@ public:
   void initialise();
   void set_constraints();
   void initialise_range_from_preconstraint_edges();
+  void initialise_start_range_from_range();    
   void confirm_start_is_subset();
   virtual void initialise_maps() = 0;
   virtual void set_preconstraint_edges() = 0;
-  virtual void set_start_range() = 0;
+  /* used if start range should be a strict subset of range */
+  virtual void manual_override_start_range() = 0;
   virtual char get_char() = 0;
   
   std::string get_string(unsigned hpi);
   std::string get_edges_string(unsigned hpi);
-  //std::string print_x_range_string(unsigned hpi, char x);
   std::string get_range_string(unsigned hpi);
   std::string get_start_range_string(unsigned hpi);
 
@@ -107,7 +107,7 @@ class CSubG : public SubG{
     CSubG(const tinygemm::TinyGemmGeometry & gg, std::string cs, bool csfull, const openclutil::OpenCLDeviceInfo * ptr_devinfo);
     virtual void initialise_maps() override final;
     virtual void set_preconstraint_edges() override final;
-    virtual void set_start_range() override final;
+    virtual void manual_override_start_range() override final;
     virtual char get_char() override final {return 'C';}
 };
 
@@ -119,7 +119,7 @@ class ChiralSubG : public SubG{
     ChiralSubG(const tinygemm::TinyGemmGeometry & gg, std::string cs, bool csfull, const openclutil::OpenCLDeviceInfo * ptr_devinfo);  
     virtual void initialise_maps() override final;
     virtual void set_preconstraint_edges() override final;
-    virtual void set_start_range() override final;
+    virtual void manual_override_start_range() override final;
     void set_chirality_specific_start_range_base(unsigned non_unroll_dimension);
     virtual void set_chirality_specific_start_range() = 0;
     virtual char get_char() = 0;
@@ -192,7 +192,7 @@ public:
   void replace(const std::vector<std::vector<unsigned>> & partial_params);
   void replace_where_source_defined(const std::vector<std::vector<unsigned>> & params);
   bool in_graph(unsigned mi, unsigned hpi, unsigned value);
-  bool in_graph();
+  std::tuple<bool, std::string> in_graph();
    
  
   const XHPs & at(nsHP::eMat subgtype) const {return  v_xhps[subgtype]; }

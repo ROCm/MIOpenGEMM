@@ -32,18 +32,18 @@ tinygemm::TinyGemmGeometry get_geometry(){
   //m1760n64k1760tA1tB0
 
   bool isColMajor = true;
-  bool tA = true;
+  bool tA = false;
   bool tB = false;
   bool tC = false;
-  unsigned m = 1760; 
-  unsigned n = 64; 
-  unsigned k = 1760;           
+  unsigned m = 8000; 
+  unsigned n = 400; 
+  unsigned k = 3000;           
 
   
   unsigned lda = ( tA == isColMajor ? k : m ) + 0;
   unsigned ldb = ( tB == isColMajor ? n : k ) + 0;
   unsigned ldc = ( tC == isColMajor ? n : m ) + 0;
-  unsigned workspace_size =  1e8;
+  unsigned workspace_size =  1e1;
   char floattype = sizeof(TFloat) == sizeof(double) ? 'd' : 'f';
   return { isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype };
     
@@ -99,8 +99,8 @@ int main(){
   bool test_accuracy = false;
   bool test_default = false;
 
-  std::string constraint_string("A_WOS0__B_WOS0"); //A_MIC8_PAD1_PLU0_LIW1_MIW1_WOS0__B_MIC6_PAD1_PLU1_LIW0_MIW0_WOS0__C_UNR8_GAL1_PUN1_ICE1_NAW64_UFO0_MAC5");
-  float allotted_find_time = 15;
+  std::string constraint_string("");//A_WOS0__B_WOS0");//A_MIC8_PAD2_PLU0_LIW1_MIW1_WOS0__B_MIC2_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN0_ICE1_NAW16_UFO0_MAC256_SKW9"); //"A_PAD1_PLU0_LIW1_MIW1_WOS0__B_PAD1_PLU1_LIW0_MIW0_WOS0__C_UNR8_GAL1_PUN1_ICE1_NAW64_UFO0"); //A_MIC8_PAD1_PLU0_LIW1_MIW1_WOS0__B_MIC6_PAD1_PLU1_LIW0_MIW0_WOS0__C_UNR8_GAL1_PUN1_ICE1_NAW64_UFO0_MAC5");
+  float allotted_find_time = 100;
   unsigned n_runs_benchgemm = 1000;
   
   typedef float tfloat;

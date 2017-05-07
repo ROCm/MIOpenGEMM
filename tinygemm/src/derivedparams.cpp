@@ -108,7 +108,12 @@ DerivedParams::set_fragile(){
 
 
 
-  auto grid_size = nsMAC::get_mac_grid(hp.at(nsHP::matC).vs[nsHP::MAC], hp.at(nsHP::matC).vs[nsHP::SKW]);
+  auto grid_size_tuple = nsMAC::get_mac_grid(hp.at(nsHP::matC).vs[nsHP::MAC], hp.at(nsHP::matC).vs[nsHP::SKW]);
+  if (std::get<0> (grid_size_tuple) == false){
+    return std::make_tuple(false, std::get<1> (grid_size_tuple)); 
+  }
+  
+  auto grid_size = std::get<2>(grid_size_tuple);
   
    
   at(nsHP::matA).macro_tile_length = grid_size[nsHP::matA] * hp.at(nsHP::matA).vs[nsHP::MIC];

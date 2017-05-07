@@ -120,11 +120,6 @@ class OpenCLDeviceInfo{
 
     OpenCLPlatformInfo platinfo;
 
-    //std::string platform_vendor;
-    //std::string platform_profile;
-    //std::string platform_version;
-    //std::string platform_name;
-    
     std::string device_name;  
     std::string device_version;  
     std::string driver_version;

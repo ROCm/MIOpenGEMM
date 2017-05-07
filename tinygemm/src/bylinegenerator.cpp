@@ -98,6 +98,10 @@ unsigned start_uncoal = 0;
 unsigned start_coal = 0;
 
 bool is_in_full_zone = (global_id < N_FULL_WORK_ITEMS);
+)";
+
+  if (n_full_work_items != 0){
+  ss << R"(
 if (is_in_full_zone){   
 start_uncoal = global_id / N_FULL_WORK_ITEMS_PER_LINE;
 start_coal = WORK_PER_THREAD * (global_id % N_FULL_WORK_ITEMS_PER_LINE);
@@ -109,6 +113,12 @@ start_coal = START_IN_COAL_LAST_WORK_ITEM;
 }
 
 )";
+  }
+
+  else{
+    ss << "start_uncoal = (global_id)% DIM_UNCOAL;\n";
+    ss << "start_coal = 0;";
+  }
 }
 
 void ByLineGenerator::append_positioning_x_string(std::stringstream & ss){

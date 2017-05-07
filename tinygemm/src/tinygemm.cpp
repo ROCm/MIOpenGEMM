@@ -516,7 +516,7 @@ public:
 
     
     /* the number of attempts at finding a deriveable HyperParams given the constraint string */
-    const unsigned n_trials = fst == FindStartType::Random ? 1000 : 1;
+    const unsigned n_trials = fst == FindStartType::Random ? 10000 : 1;
     
     while (found_a_deriveable_hp == false && deriveable_search_iteration < n_trials){
       
@@ -629,12 +629,17 @@ public:
            
           auto hp_string = hp.get_string();
 
+          auto in_graph_tuple = hp.in_graph();
           if (std::count(one_aways.begin(), one_aways.end(), hp) > 1){
             throw tinygemm_error("duplicates in one_aways not allowed, should have already been filtered. Could filter out here, but less efficient ");
           }        
 
-          else if (hp.in_graph() == false){
-            throw tinygemm_error("constraint violators not allowed, should have already been filtered. Could filter out here, but less efficient ");
+          else if (std::get<0>(in_graph_tuple) == false){
+            std::stringstream errmss;
+            errmss << "constraint violators not allowed, should have already been filtered. Could filter out here, but less efficient. \nThe hyperstring is\n" << hp.get_string();
+            errmss << "\nrecall the geometry is\n" << gg.get_string();
+            errmss << "\nthe constraint violations string is:\n" << std::get<1>(in_graph_tuple);
+            throw tinygemm_error(errmss.str());
           }
           
           /* filtering out if it has already been considered */
@@ -645,6 +650,9 @@ public:
 
           /* filtering out non-deriveables */
           else if (std::get<0>(derivedparams::get_deriveability(hp, gg)) == false){
+            
+            //std::cout << "----------------------------- non derivable ----------------------" << std::endl;
+            //std::cout << std::get<1>(derivedparams::get_deriveability(hp, gg));
             //front_insertion_type = 'd';
           }
           

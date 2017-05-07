@@ -17,12 +17,12 @@
 namespace tinygemm{
 
 /* macro tile shape */
-/* at skew = skew0, (64, 256) are a:b = 1:1 and (32, 128) have a:b = 2:1 */
+/* at skew = skew0, MAC in (64, 256, ...) have a:b = 1:1 and MAC in (32, 128, ...) have a:b = 2:1 */
 unsigned skew0 = 10;  
   
 namespace nsMAC{
 
-std::array<unsigned, 2> get_mac_grid(unsigned mac, unsigned skew){
+std::tuple<bool, std::string, std::array<unsigned, 2>> get_mac_grid(unsigned mac, unsigned skew){
 
   double dbl_lg2_mac = std::log2 (static_cast<double> (mac));
   unsigned lg2_mac = static_cast<unsigned> (dbl_lg2_mac);
@@ -30,6 +30,8 @@ std::array<unsigned, 2> get_mac_grid(unsigned mac, unsigned skew){
 
   double na = std::exp2(lg2_mac/2 + lg2_mac%2);
   double nb = static_cast<double> (mac) / na;
+
+  /* at skew = skew0, (64, 256) are a:b = 1:1 and (32, 128) have a:b = 2:1 */
 
   /* at skew = skew0 + 1, (64, 256) are a:b = 1:4 and (32, 128) have a:b = 1:2 */
   for (unsigned i = skew0; i < skew; ++i){
@@ -43,24 +45,43 @@ std::array<unsigned, 2> get_mac_grid(unsigned mac, unsigned skew){
     nb /= 2.;
   }
 
+  std::stringstream errm_ss;
+  
+  errm_ss << "problem getting mac sizes: ";
+  std::array<unsigned, 2> null_array = {0,0};
+  
   unsigned u_na = static_cast<unsigned> (na);
   unsigned u_nb = static_cast<unsigned> (nb);
   
+  
   if (std::abs (na*nb - static_cast<double> (u_na*u_nb)) > 1e-7){
-    throw tinygemm_error("error in getting mac sizes, casting non-ints ");
+    errm_ss << "  casting non-ints. ";
+    errm_ss << "na: " << na << " nb:" << nb << " u_na:" << u_na << " u_nb:" << u_nb << "  ";
+    return std::make_tuple(false, errm_ss.str(), null_array);
   }
   
+  if (u_na < 1 || u_nb < 1){
+    errm_ss << "  it appears that one of the lengths is zero. It could be that the skewness requested is too extreme. ";    
+    return std::make_tuple(false, errm_ss.str(), null_array);
+  }
+  
+  if (u_na * u_nb != mac){
+    errm_ss << "  it appears as though the product of the computed edge lengths is not MAC.  ";    
+    return std::make_tuple(false, errm_ss.str(), null_array);
+  }
   
   std::array<unsigned, 2> mac_grid;
   
   if (nsHP::matA >= 2 || nsHP::matB >= 2){
-    throw tinygemm_error("the std::array returned in get_mac_grid is too small");
+    errm_ss << "the std::array returned in get_mac_grid is too small";
+    throw tinygemm_error(errm_ss.str());
   }
   
   mac_grid[nsHP::matA] = u_na;
   mac_grid[nsHP::matB] = u_nb;
-      
-  return mac_grid;
+    
+  return std::make_tuple(true, "no error", mac_grid);
+  
 }
 
 
@@ -129,7 +150,6 @@ Graph::Graph(const tinygemm::TinyGemmGeometry & gg, const openclutil::OpenCLDevi
   coupled_parameters.push_back( { {nsHP::matA, nsHP::MIC}, {nsHP::matB, nsHP::MIC} } );
   coupled_parameters.push_back( { {nsHP::matC, nsHP::UFO}, {nsHP::matC, nsHP::PUN} } );
   coupled_parameters.push_back( { {nsHP::matC, nsHP::UNR}, {nsHP::matC, nsHP::ICE} } );
-
 
 }
 
@@ -222,6 +242,17 @@ void SubG::initialise_range_from_preconstraint_edges(){
 }
 
 
+void SubG::initialise_start_range_from_range(){
+  start_range.resize(range.size());
+  for (unsigned hpi = 0; hpi < range.size(); ++hpi){
+    for (auto & x : range[hpi]){
+      start_range[hpi].push_back(x);
+    }
+  }
+}
+
+
+
 SubG::SubG(unsigned nHPs_, const tinygemm::TinyGemmGeometry & gg, std::string cs, bool csfull, const openclutil::OpenCLDeviceInfo * ptr_devinfo_): nHPs(nHPs_), ptr_gg(&gg), Keys(nHPs_), edges (nHPs_), start_range (nHPs_), subg_cs(cs), subg_csfull(csfull), ptr_devinfo(ptr_devinfo_) {
   
   
@@ -232,7 +263,8 @@ void SubG::initialise(){
   set_constraints();
   set_preconstraint_edges();
   initialise_range_from_preconstraint_edges();
-  set_start_range();
+  initialise_start_range_from_range();
+  manual_override_start_range();
   apply_constraints();
   confirm_start_is_subset();
 }
@@ -329,6 +361,7 @@ void ChiralSubG::set_chirality_specific_start_range_base(unsigned non_unroll_dim
   if (non_unroll_dimension < 64){
     start_range[nsHP::MIC].push_back(1);
   }
+    
 }
 
 void ASubG::set_chirality_specific_start_range(){
@@ -341,14 +374,13 @@ void BSubG::set_chirality_specific_start_range(){
 
 
 
-void ChiralSubG::set_start_range(){
+void ChiralSubG::manual_override_start_range(){
   
-  start_range[nsHP::PAD] = {1,2};
-  start_range[nsHP::PLU] = {nsHP::no, nsHP::yes};  
+  start_range[nsHP::PAD] = {1,2};  
   start_range[nsHP::LIW] = {nsHP::no};  
   start_range[nsHP::MIW] = {nsHP::yes};
-  start_range[nsHP::WOS] = {0,1,2};
-
+  start_range[nsHP::WOS] = {0,1,2};  
+  
   set_chirality_specific_start_range();
 
 }
@@ -365,10 +397,6 @@ void SubG::apply_constraints(){
         throw tinygemm_error(errm.str());
       }
       
-      /* we don't worry if it's not in start_range */
-      
-      
-
       edges[hpi] = { {constraints.at(hpi), {} } };
       range[hpi] = { constraints.at(hpi) };
       start_range[hpi] = { constraints.at(hpi) };
@@ -404,34 +432,26 @@ void ChiralSubG::set_preconstraint_edges(){
   {  graph_binary  };
 
   
-  /* TODO : add edges */
   /* TODO : namespace the copy types */
   edges[nsHP::WOS] = 
-  {  {0, {}},
-     {1, {}},
-     {2, {}}
+  {  {0, {1,2}},
+     {1, {0,2}},
+     {2, {0,1}}
    };
   
 
 }
 
 
-void CSubG::set_start_range(){
+void CSubG::manual_override_start_range(){
 
   start_range[nsHP::UNR]= {8, 16};
-  start_range[nsHP::NAW]= {16, 64};
-  start_range[nsHP::GAL]= {nsGAL::byrow, nsGAL::bycol, nsGAL::sucol};
-  
-  
-  /* TODO : put this inside an if on geom and gpu */
-  
-  
-  start_range[nsHP::MAC] = {64, 256};
-  start_range[nsHP::SKW] = {10};
-  
   start_range[nsHP::ICE] = {1};
-  start_range[nsHP::PUN] = {nsHP::no, nsHP::yes};
   start_range[nsHP::UFO] = {nsHP::no};
+
+  if ((ptr_gg->m) > 200 && (ptr_gg->n) > 200){
+    start_range[nsHP::SKW] = {skew0};
+  }
 
 }
 
@@ -453,20 +473,75 @@ void CSubG::set_preconstraint_edges(){
     {nsGAL::bycol, {nsGAL::byrow, nsGAL::sucol}   },
     {nsGAL::sucol, {nsGAL::byrow, nsGAL::bycol}   }   };
 
+
+  /* MAC and SKW */
   
-  /* TODO : put this inside an if on geom and gpu */
-  edges[nsHP::MAC] = 
-  {
-    //{32, {}},
-    {64, {256}},
-    {256, {64}},    
-  };
+  if (ptr_devinfo->wg_atom_size != 64 && ptr_devinfo->wg_atom_size != 32){  
+    throw tinygemm_error("Setting up the edge search graph in set_preconstraint_edges, and it seems like the atomic wg size is neither 32 or 64. Is this correct ?? If so, consider changing here or raise an issue");
+  }
+      
+  /* very small / thin matrices */
+  if (ptr_gg -> m * ptr_gg -> n < 32*32 || ptr_gg -> m < 16 || ptr_gg -> n < 16) {
+    edges[nsHP::MAC] = 
+    {
+      {1, {4, 16}},
+      {4, {1, 16, 64}},
+      {16, {4, 64}},
+      {64, {16, 256}},
+      {256, {64}},
+    };
+    
+    edges[nsHP::SKW] = 
+    {
+
+      {7,  {8}},
+      {8,  {7,9}},
+      {9,  {8,10}},
+      {10, {9,11}},
+      {11, {10,12}},
+      {12, {11,13}},
+      {13, {12}},
+
+    };
+  }
   
-  edges[nsHP::SKW] = 
-  {
-    {10, {}},
-  };
   
+  else if (ptr_devinfo->wg_atom_size == 64){
+    edges[nsHP::MAC] = 
+    {
+      {64, {256}},
+      {256, {64}}
+    };
+    
+    edges[nsHP::SKW] = 
+    {
+      {9, {10}},
+      {10, {9,11}},
+      {11, {10}}
+    };
+  }
+  
+  else if (ptr_devinfo->wg_atom_size == 32) {  
+    edges[nsHP::MAC] = 
+    {
+      {32, {64, 256}},
+      {64, {32, 128, 256}},
+      {128, {64, 256}},
+      {256, {64}}
+    };
+    
+    edges[nsHP::SKW] = 
+    {
+      {9, {10}},
+      {10, {9,11}},
+      {11, {10,12}},
+      {12, {10,11}}
+    };   
+  }
+  
+  else {
+    throw tinygemm_error("wg_atom_size is neither 32 or 64, how can this be? I thought we'd already checked this. (Logic error)");
+  }
   
   edges[nsHP::ICE] = 
   { {1,  {2}},
@@ -621,8 +696,15 @@ std::vector<HyperParams> HyperParams::get_one_aways(){
     /* ratios of new to current tile grid sizes */
     
     
-    auto curr_grid_size = nsMAC::get_mac_grid(curr_mac, v_xhps[nsHP::matC].vs[nsHP::SKW]);
-    auto new_grid_size = nsMAC::get_mac_grid(newmac, v_xhps[nsHP::matC].vs[nsHP::SKW]);
+    auto curr_grid_size_tuple = nsMAC::get_mac_grid(curr_mac, v_xhps[nsHP::matC].vs[nsHP::SKW]);
+    auto curr_grid_size = std::get<2> (curr_grid_size_tuple);
+    
+    auto new_grid_size_tuple = nsMAC::get_mac_grid(newmac, v_xhps[nsHP::matC].vs[nsHP::SKW]);
+    if (std::get<0>(new_grid_size_tuple) == false){
+      continue;
+    }
+    auto new_grid_size = std::get<2> (new_grid_size_tuple);
+
     
     double delta_na = static_cast<double>(new_grid_size[nsHP::matA]) / static_cast<double>(curr_grid_size[nsHP::matA]);
     double delta_nb = static_cast<double>(new_grid_size[nsHP::matB]) / static_cast<double>(curr_grid_size[nsHP::matB]);
@@ -732,20 +814,23 @@ bool HyperParams::in_graph(unsigned mi, unsigned hpi, unsigned value){
 }
 
 
-bool HyperParams::in_graph(){
+std::tuple<bool, std::string> HyperParams::in_graph(){
+  std::string in_graph_string("in graph");
   /* filtering out if violates the constraint string */
   bool constraints_satisfied = true;
   for (unsigned mi = 0; mi < nsHP::nMats; ++mi){
     for (unsigned hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi){
       if (in_graph(mi, hpi, v_xhps[mi].vs[hpi]) == false){
       
-      //std::count(p_graph->p_subgs[mi]->range[hpi].begin(), p_graph->p_subgs[mi]->range[hpi].end(), v_xhps[mi].vs[hpi]) == 0){
+        std::stringstream sstr;
+        sstr << "hyper param : " << p_graph->p_subgs[mi]->Keys[hpi] << ", and value " <<  v_xhps[mi].vs[hpi] << ".";
+        in_graph_string = sstr.str();
         constraints_satisfied = false;
         break;
       }
     }
   }
-  return constraints_satisfied;
+  return std::make_tuple(constraints_satisfied, in_graph_string);
 }
 
 
