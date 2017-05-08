@@ -450,7 +450,14 @@ void CSubG::manual_override_start_range(){
   start_range[nsHP::UFO] = {nsHP::no};
 
   if ((ptr_gg->m) > 200 && (ptr_gg->n) > 200){
-    start_range[nsHP::SKW] = {skew0};
+    
+    if (ptr_devinfo->wg_atom_size == 32){
+      start_range[nsHP::SKW] = {skew0, skew0 +1};
+    }
+    
+    else{
+      start_range[nsHP::SKW] = {skew0};
+    }
   }
 
 }
@@ -542,6 +549,7 @@ void CSubG::set_preconstraint_edges(){
   else {
     throw tinygemm_error("wg_atom_size is neither 32 or 64, how can this be? I thought we'd already checked this. (Logic error)");
   }
+
   
   edges[nsHP::ICE] = 
   { {1,  {2}},
