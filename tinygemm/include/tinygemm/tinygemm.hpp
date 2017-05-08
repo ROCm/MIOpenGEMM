@@ -42,8 +42,7 @@ get_default(
 /* use this to extract device info */
 cl_command_queue command_queue,
 std::string constraint_string,
-const tinygemm::TinyGemmGeometry & gg,
-outputwriting::OutputWriter & mowri);
+const tinygemm::TinyGemmGeometry & gg);
 
 
 void benchgemm(

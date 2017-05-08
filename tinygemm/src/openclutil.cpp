@@ -514,10 +514,10 @@ OpenCLDeviceInfo::OpenCLDeviceInfo(const cl_command_queue & command_queue){
   
   /* setting identifier */
   std::stringstream idss;
-  idss << "devi_";
+  idss << "";
   for (const std::string & st : {device_name, device_version, driver_version}){
     for (char c : st){
-      std::cout << c << ' ' << std::flush;
+
       if ((bool)std::isalnum(c) == true){
         idss << c;
       }
@@ -525,9 +525,8 @@ OpenCLDeviceInfo::OpenCLDeviceInfo(const cl_command_queue & command_queue){
         idss << 'p';
       }
     }
-    idss << '_';
   }
-  idss << "ived";  
+  //idss << "xyz";  
   identifier = idss.str();
 }
 

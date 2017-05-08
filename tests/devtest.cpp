@@ -99,7 +99,8 @@ int main(){
   bool test_accuracy = false;
   bool test_default = false;
 
-  std::string constraint_string("");//A_WOS0__B_WOS0");//A_MIC8_PAD2_PLU0_LIW1_MIW1_WOS0__B_MIC2_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN0_ICE1_NAW16_UFO0_MAC256_SKW9"); //"A_PAD1_PLU0_LIW1_MIW1_WOS0__B_PAD1_PLU1_LIW0_MIW0_WOS0__C_UNR8_GAL1_PUN1_ICE1_NAW64_UFO0"); //A_MIC8_PAD1_PLU0_LIW1_MIW1_WOS0__B_MIC6_PAD1_PLU1_LIW0_MIW0_WOS0__C_UNR8_GAL1_PUN1_ICE1_NAW64_UFO0_MAC5");
+  std::string constraint_string("");
+  
   float allotted_find_time = 100;
   unsigned n_runs_benchgemm = 1000;
   
@@ -119,31 +120,19 @@ int main(){
     print_kernel<tfloat>();
   }
   
-  
   if (test_accuracy || test_benchgemm){
     std::string hyperstring = get_hyperstring();
-    //tinygemm::hyperparams::Graph graph(gg, hyperstring, true); 
-    //tinygemm::hyperparams::HyperParams hp(graph);
     if (test_accuracy){
-      
       tinygemm::dev::accuracy_test(hyperstring, gg, toff, v_a.data(), v_b.data(), v_c.data(), c_true_bla, mowri);
-      
-      //tinygemm::dev::accuracy_test(hp, gg, toff, v_a.data(), v_b.data(), v_c.data(), c_true_bla, mowri);
     }
 
     if (test_benchgemm){
-      //tinygemm::dev::benchgemm({hp}, n_runs_benchgemm, gg, toff, v_a.data(), v_b.data(), v_c.data(), mowri);
-      
       tinygemm::dev::benchgemm({hyperstring}, n_runs_benchgemm, gg, toff, v_a.data(), v_b.data(), v_c.data(), mowri);
     }
   }
   
   if (test_find){
-    
-    //while (true){
-      //tinygemm::FindStartType fst(tinygemm::FindStartType::Random);
-      tinygemm::dev::find(allotted_find_time, v_a.data(), v_b.data(), v_c.data(), constraint_string, gg, toff, mowri);
-    //}
+    tinygemm::dev::find(allotted_find_time, v_a.data(), v_b.data(), v_c.data(), constraint_string, gg, toff, mowri);
   }
   
   if (test_default){

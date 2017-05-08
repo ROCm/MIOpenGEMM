@@ -20,17 +20,13 @@
 #include <tinygemm/derivedparams.hpp>
 #include <tinygemm/architests.hpp>
 #include <tinygemm/kernelstring.hpp>
+#include <tinygemm/tinygemmkernelcache.hpp>
 
 
 
 namespace tinygemm{
 
 
-class TinygemmCachedSolution {
-  public:
-    std::string hyperstring;
-    std::string stats_string;
-};
 
 
 class MultiFloatType{
@@ -78,7 +74,7 @@ class TinyGemmGPUMems{
         throw tinygemm_error(std::string("unrecognised char passed to operator[] of TinyGemmGPUMems. Should be one of a,b,c,w, not ") + x);
       }
     }
-};  
+};
 
 
 
@@ -105,7 +101,7 @@ private:
   /* (for find) while generating, compiling and benchmarking kernels, we will keep track of the fastest found thus far */
   std::vector<tinygemm::TinyGemmSolution> best_solns_path;
   std::vector<TinyGemmKernel> tk_kernels;  
-  std::vector <TinyGemmKernel *> tk_kernels_active;  
+  std::vector<TinyGemmKernel *> tk_kernels_active;  
   std::vector<std::vector <unsigned > > v_wait_indices;
   
 
@@ -493,14 +489,13 @@ public:
   }
   
   
-  tinygemm::TinyGemmSolution get_default(){
-    hyperparams::HyperParams hp = hyperparams::get_hp_start(graph);
-    deriveability_test(hp, "in get_default");    
-    auto bundle = tinygemm::kerngen::get_bundle(hp, gg); 
-    tinygemm::TinyGemmSolutionStatistics tgss(std::numeric_limits<float>::max(), 0, 0, {});    
-    
-    return { gg, tgss, bundle.v_tgks, hp.get_string() };
-  }
+  //tinygemm::TinyGemmSolution get_default(){
+    //hyperparams::HyperParams hp = hyperparams::get_hp_start(graph);
+    //deriveability_test(hp, "in get_default");    
+    //auto bundle = tinygemm::kerngen::get_bundle(hp, gg); 
+    //tinygemm::TinyGemmSolutionStatistics tgss(std::numeric_limits<float>::max(), 0, 0, {});
+    //return { gg, tgss, bundle.v_tgks, hp.get_string() };
+  //}
 
 
   hyperparams::HyperParams get_hyper_param_start(){
@@ -601,17 +596,22 @@ public:
 
     mowri << "geometry : " << gg.get_string()  << Endl;
 
-    if (allotted_time <= 0){
-      mowri << "allotted_time (" << allotted_time << ") is insufficient for benchmarking, returning default TinyGemmSolution based on gg and constraint_string without bencing/searching" << Endl;
-      return get_default();
-    }
-
     address_check_valid_and_reliable();
 
     /* we will count how many kernels are successfully generated AND compiled AND benchmarked */
     unsigned global_counter = 0;
 
     hyperparams::HyperParams hyper_param_current = get_hyper_param_start();//fst);
+
+
+    if (allotted_time <= 0){
+      mowri << "allotted_time (" << allotted_time << ") is insufficient for running any kernels, returning a TinyGemmSolution based on gg and constraint_string without searching" << Endl;
+      deriveability_test(hyper_param_current, "in allotted_time <= 0");    
+      auto bundle = tinygemm::kerngen::get_bundle(hyper_param_current, gg); 
+      tinygemm::TinyGemmSolutionStatistics tgss(std::numeric_limits<float>::max(), 0, 0, {});
+      return { gg, tgss, bundle.v_tgks, hyper_param_current.get_string() };
+    }
+
     
     /* In here, we will store all previously considered HyperParams strings, used to check and ensure that we do not consider a HyperParam more than once */
     std::vector<std::string> hyper_front_history;
@@ -791,8 +791,11 @@ const tinygemm::TinyGemmGeometry & gg,
 const tinygemm::TinyGemmOffsets & toff,
 outputwriting::OutputWriter & mowri,
 bool c_is_const){
+
+
   
-  //auto bla = get_default(command_queue, constraint_string, gg, mowri);
+  auto bla = get_default(command_queue, constraint_string, gg);
+
   /* The number of times each kernel is run in find. 
    * consider adding this parameter to user API. */
   unsigned n_runs_per_kernel = 3;
@@ -819,39 +822,35 @@ cl_command_queue command_queue,
 std::string constraint_string,
 const tinygemm::TinyGemmGeometry & gg){
 
-  std::map<std::string, std::map<std::string, tinygemm::TinygemmCachedSolution> > kernel_cache;
   openclutil::OpenCLDeviceInfo devinfo(command_queue);
   
-  std::string cache_key = devinfo.identifier + "_cnstr_" + constraint_string + "_rtsnc";
+  std::string k_dev = devinfo.identifier;
+  std::string k_con = constraint_string;
+  std::string k_geo = gg.get_string();
   
-  if (kernel_cache.count(cache_key) == 0){
-    std::stringstream ss;
-    ss << "Unrecognised cache_key `" << cache_key << "' in kernel_cache.\n";
-    /* is devinfo.identifier in one of the cache_keys ? */
-    
-    for (const auto & k : kernel_cache){
-      if (k.first.find(devinfo.identifier) != std::string::npos){
-        ss << "Note that the device identifier `"<< devinfo.identifier << "' does appear in cache key, " << k.first << "\n";
-      }
-      if (k.first.find(constraint_string) != std::string::npos){
-        ss << "Note that the device identifier `"<< constraint_string << "' does appear in cache key, " << k.first << "\n";
-      }
-    }
-    
-    /* is constraint_string in one of the keys ? */
-    
+  std::stringstream ss;
+  ss << "\n";
+  ss << "a problem arose in get_default, with keys\n";
+  ss << "devinfo.identifier:\n-----> " << devinfo.identifier << "\n";
+  ss << "constraint_string:\n-----> " << constraint_string << "\n";
+  ss << "gg.get_string():\n-----> " << gg.get_string() << "\n";
+  
+  if (kernel_cache.count(k_dev) == 0){
+    ss << "\nUnrecognised device identifier in cache";
     throw tinygemm_error(ss.str());
   }
   
-  if (kernel_cache[cache_key].count(gg.get_string()) == 0){
-    std::stringstream ss;
-    /* TODO : find a default even though none in cache */
-    ss << "Unrecognised geometry " << gg.get_string() << " in cache `" << cache_key << "'.";
+  if (kernel_cache.at(k_dev).count(k_con) == 0){
+    ss << "\nUnrecognised constraint_string in cache";
     throw tinygemm_error(ss.str());
   }
-  
 
-  tinygemm::TinygemmCachedSolution cached_soln(kernel_cache[cache_key][gg.get_string()]);
+  if (kernel_cache.at(k_dev).at(k_con).count(k_geo) == 0){
+    ss << "\nUnrecognised gg.get_string (geometry string) in cache";
+    throw tinygemm_error(ss.str());
+  }
+
+  tinygemm::TinygemmCachedSolution cached_soln(kernel_cache.at(k_dev).at(k_con).at(k_geo));
   
   /* generating source files from cache */
   hyperparams::Graph graph(gg, devinfo, cached_soln.hyperstring, false);
