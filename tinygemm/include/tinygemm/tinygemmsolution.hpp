@@ -4,7 +4,7 @@
 
 #include <string> 
 #include <map>
-
+#include <chrono>
 
 #include <tinygemm/tinygemmgeometry.hpp>
 #include <tinygemm/hyperparams.hpp>
@@ -20,11 +20,21 @@ class TinyGemmSolutionStatistics{
     float median_benchmark_time;
     float median_benchmark_gflops;
 
-    /* the time in seconds at which this solution was discovered  */
+    /* the time in seconds at which this solution was discovered  (from start of descent)  */
     float solution_discovery_time;
     
-    TinyGemmSolutionStatistics(float median_benchmark_time, float median_benchmark_gflops, float solution_discovery_time);
-     
+    /* timestamp (date) when found */
+    std::string date;
+    
+    TinyGemmSolutionStatistics(float median_benchmark_time, float median_benchmark_gflops, float solution_discovery_time, std::string date);
+    TinyGemmSolutionStatistics(std::string cache_string);
+
+    std::string get_string(){
+      std::stringstream ss;
+      ss << "runtime_" << median_benchmark_time << "__gflops_" << median_benchmark_gflops << "__date_" << date;
+      return ss.str();
+    }
+
 };
 
 /* Note 01 feb 2017: A TinyGemmSolution is only valid for a fixed geometry */

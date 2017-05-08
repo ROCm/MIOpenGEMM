@@ -47,6 +47,24 @@ namespace nsHP{
 
 namespace hyperparams{
 
+
+
+class KeysVals{
+  public:
+    std::vector<std::string> keys;
+    std::map <std::string, unsigned> vals;
+    unsigned nHPs; 
+};
+
+std::vector<unsigned> get_constraints(std::string subg_cs, bool subg_csfull, const KeysVals * p_kv, char subg_hash);
+
+extern const std::map <char, unsigned> graphind;  
+extern const std::vector<char> graphchar;
+
+extern const KeysVals chiral_kv;
+extern const KeysVals non_chiral_kv;
+
+
 class SubG{
 
 public:
@@ -58,8 +76,10 @@ public:
 
   unsigned nHPs; 
   const tinygemm::TinyGemmGeometry * ptr_gg;
-  std::vector<std::string> Keys;
-  std::map<std::string, unsigned> Vals;
+  //const std::vector<std::string> * 
+  
+  const KeysVals * ptr_keys_vals;
+  //const std::map<std::string, unsigned> * ptr_vals;
   
 
   /* all the possible edges from all the possible hyper parameter */
@@ -145,6 +165,8 @@ class BSubG : public ChiralSubG{
 };
 
 
+
+
 class Graph{
 
   private:
@@ -157,8 +179,6 @@ class Graph{
 
     std::vector<SubG * > p_subgs;
     
-    std::map <char, unsigned> graphind;  
-    std::vector<char> graphchar;
     
     std::vector<std::pair< std::pair<unsigned, unsigned>, std::pair<unsigned, unsigned> > > coupled_parameters;
 
@@ -211,7 +231,7 @@ public:
 };  
 
 
-HyperParams get_hp_start(FindStartType fst, const Graph & graph);
+HyperParams get_hp_start(const Graph & graph); //FindStartType fst, 
 
 
 

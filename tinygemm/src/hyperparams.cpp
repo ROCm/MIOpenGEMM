@@ -18,6 +18,9 @@ namespace tinygemm{
 
 /* macro tile shape */
 /* at skew = skew0, MAC in (64, 256, ...) have a:b = 1:1 and MAC in (32, 128, ...) have a:b = 2:1 */
+/* at skew = skew0, (64, 256) are a:b = 1:1 and (32, 128) have a:b = 2:1 */
+/* at skew = skew0 + 1, (64, 256) are a:b = 1:4 and (32, 128) have a:b = 1:2 */
+/* at skew0 = skew + 1, (64, 256) are a:b = 4:1 and (32, 128) have a:b = 8:1 */
 unsigned skew0 = 10;  
   
 namespace nsMAC{
@@ -27,19 +30,13 @@ std::tuple<bool, std::string, std::array<unsigned, 2>> get_mac_grid(unsigned mac
   double dbl_lg2_mac = std::log2 (static_cast<double> (mac));
   unsigned lg2_mac = static_cast<unsigned> (dbl_lg2_mac);
   
-
   double na = std::exp2(lg2_mac/2 + lg2_mac%2);
   double nb = static_cast<double> (mac) / na;
-
-  /* at skew = skew0, (64, 256) are a:b = 1:1 and (32, 128) have a:b = 2:1 */
-
-  /* at skew = skew0 + 1, (64, 256) are a:b = 1:4 and (32, 128) have a:b = 1:2 */
   for (unsigned i = skew0; i < skew; ++i){
     na /= 2.;
     nb *= 2.;
   }   
   
-  /* at skew0 = skew + 1, (64, 256) are a:b = 4:1 and (32, 128) have a:b = 8:1 */
   for (unsigned i = skew; i < skew0; ++i){
     na *= 2.;
     nb /= 2.;
@@ -49,11 +46,8 @@ std::tuple<bool, std::string, std::array<unsigned, 2>> get_mac_grid(unsigned mac
   
   errm_ss << "problem getting mac sizes: ";
   std::array<unsigned, 2> null_array = {0,0};
-  
   unsigned u_na = static_cast<unsigned> (na);
   unsigned u_nb = static_cast<unsigned> (nb);
-  
-  
   if (std::abs (na*nb - static_cast<double> (u_na*u_nb)) > 1e-7){
     errm_ss << "  casting non-ints. ";
     errm_ss << "na: " << na << " nb:" << nb << " u_na:" << u_na << " u_nb:" << u_nb << "  ";
@@ -92,7 +86,7 @@ namespace hyperparams{
 RandomUtil radu;
 
 template <typename T>
-std::map<T, unsigned> getVals(unsigned nVals, const std::vector<T> & keys, const std::string & hash){
+std::map<T, unsigned> get_vals(unsigned nVals, const std::vector<T> & keys, const std::string & hash){
   std::map<T, unsigned> vals;    
   for (unsigned val = 0; val < nVals; ++val){
     if (keys[val] == T()){
@@ -105,21 +99,58 @@ std::map<T, unsigned> getVals(unsigned nVals, const std::vector<T> & keys, const
 }
 
 
+std::vector <char> get_graphchar(){
+  std::vector<char> gchar;
+  gchar.resize(nsHP::nMats);
+  gchar[nsHP::matA] = 'A';
+  gchar[nsHP::matB] = 'B';
+  gchar[nsHP::matC] = 'C';
+  return gchar;
+}  
+const std::vector<char> graphchar = get_graphchar();
+const std::map <char, unsigned> graphind = get_vals(nsHP::nMats, graphchar, "getting graphind"); 
 
 
-Graph::Graph(const tinygemm::TinyGemmGeometry & gg, const openclutil::OpenCLDeviceInfo & devinfo, std::string constraints_string, bool full_cs): ptr_gg(&gg) {
 
-  graphchar.resize(nsHP::nMats);
-  graphchar[nsHP::matA] = 'A';
-  graphchar[nsHP::matB] = 'B';
-  graphchar[nsHP::matC] = 'C';
-  
-  graphind = getVals(nsHP::nMats, graphchar, "graphind");
+KeysVals get_chiral_kv(){
+  KeysVals ckv;
+  ckv.keys.resize(nsHP::nChiralHPs);
+  ckv.keys[nsHP::MIC] = "MIC";
+  ckv.keys[nsHP::PAD] = "PAD";
+  ckv.keys[nsHP::PLU] = "PLU";
+  ckv.keys[nsHP::LIW] = "LIW";
+  ckv.keys[nsHP::MIW] = "MIW";
+  ckv.keys[nsHP::WOS] = "WOS";
+  ckv.vals = get_vals(nsHP::nChiralHPs, ckv.keys, "getting chiral vals");
+  ckv.nHPs = nsHP::nChiralHPs;
+  return ckv;
+}
 
+const KeysVals chiral_kv = get_chiral_kv();
+
+
+KeysVals get_non_chiral_kv(){
+  KeysVals ckv;
+  ckv.keys.resize(nsHP::nNonChiralHPs);
+  ckv.keys[nsHP::UNR] = "UNR";
+  ckv.keys[nsHP::GAL] = "GAL";
+  ckv.keys[nsHP::PUN] = "PUN";
+  ckv.keys[nsHP::ICE] = "ICE";
+  ckv.keys[nsHP::NAW] = "NAW";
+  ckv.keys[nsHP::UFO] = "UFO"; 
+  ckv.keys[nsHP::MAC] = "MAC";
+  ckv.keys[nsHP::SKW] = "SKW"; 
+  ckv.vals = get_vals(nsHP::nNonChiralHPs, ckv.keys, "getting non_chiral_keys");
+  ckv.nHPs = nsHP::nNonChiralHPs;
+  return ckv;
+}
+
+const KeysVals non_chiral_kv = get_non_chiral_kv();
+
+
+std::vector<std::string> get_sub_constraints(std::string constraints_string) {
   std::vector<std::string> sub_constraints(nsHP::nMats, "");
   auto megafrags = stringutil::split(constraints_string, "__");
-
-  
   for (auto & megafrag : megafrags){
     if (graphind.count(megafrag[0]) == 0){
       std::stringstream ss;
@@ -132,13 +163,23 @@ Graph::Graph(const tinygemm::TinyGemmGeometry & gg, const openclutil::OpenCLDevi
       ss << "sub constraint " << megafrag << " is too short, something is wrong. \n";
       throw tinygemm_error(ss.str());
     }
-    sub_constraints[graphind[megafrag[0]]] = megafrag.substr(2);
+    sub_constraints[graphind.at(megafrag[0])] = megafrag.substr(2);
   }
+  return sub_constraints;
+}
+
+
+Graph::Graph(const tinygemm::TinyGemmGeometry & gg, const openclutil::OpenCLDeviceInfo & devinfo, std::string constraints_string, bool full_cs): ptr_gg(&gg) {
+
+  
+  std::vector<std::string> sub_constraints = get_sub_constraints(constraints_string);
   
   asubg = ASubG(gg, sub_constraints[nsHP::matA], full_cs, &devinfo);
   asubg.initialise();
+  
   bsubg = BSubG(gg, sub_constraints[nsHP::matB], full_cs, &devinfo);
   bsubg.initialise();
+  
   csubg = CSubG(gg, sub_constraints[nsHP::matC], full_cs, &devinfo);
   csubg.initialise();
 
@@ -153,15 +194,16 @@ Graph::Graph(const tinygemm::TinyGemmGeometry & gg, const openclutil::OpenCLDevi
 
 }
 
-void SubG::set_constraints(){
+
+
+std::vector<unsigned> get_constraints(std::string subg_cs, bool subg_csfull, const KeysVals * p_kv, char subg_hash){
   
-  constraints = std::vector<unsigned> (nHPs, nsHP::undefined);
+  std::vector<unsigned> constraints (p_kv->nHPs, nsHP::undefined);
   
   std::vector<std::string> keyvalfrags;
   if (subg_cs.compare("")){
     keyvalfrags = stringutil::split(subg_cs, "_");
   }
-  
   
   /* MIC, etc. */
   std::string key; 
@@ -169,16 +211,16 @@ void SubG::set_constraints(){
   unsigned val;  
   for (auto & x : keyvalfrags){
     std::tie(key, val) = stringutil::splitnumeric(x);
-    auto start = Keys.begin();
-    auto end  = Keys.end();
+    auto start = p_kv->keys.begin();
+    auto end  = p_kv->keys.end();
     if(std::find(start, end, key) == end) {
       std::stringstream ss;
-      ss << "While processing the constraint string for SubG `" << get_char() << "', ";
+      ss << "While processing the constraint string for SubG `" << subg_hash << "', ";
       ss << "the key `" + key << "' was not recognised. In set_constraints(). \n";
       throw tinygemm_error(ss.str());
     }
 
-    unsigned keyindex = Vals.at(key);
+    unsigned keyindex = p_kv->vals.at(key);
     if (keyindex < constraints.size()){
       constraints[keyindex] = val;
     }
@@ -187,44 +229,30 @@ void SubG::set_constraints(){
       throw tinygemm_error("in get constrains, strange out of bounds error, come and investigate");
     }
   }
-
+  
 
   /* A special test in the case that constraints are supposed to be comprehensive */
   if (subg_csfull == true)  {
-    for (unsigned hpi = 0; hpi < nHPs; ++hpi){
+    for (unsigned hpi = 0; hpi < p_kv->nHPs; ++hpi){
       if (constraints[hpi] == nsHP::undefined){
         std::stringstream ss;
-        ss << "While processing the constraints string of SubG `" << get_char() << "', ";
-        ss << "the parameter `" << Keys[hpi] << "' appeared to be unset. The constraints must all be set (subg_csfull is true) \n";
+        ss << "While processing the constraints string of SubG `" << subg_hash << "', ";
+        ss << "the parameter `" << p_kv->keys[hpi] << "' appeared to be unset. The constraints must all be set (subg_csfull is true) \n";
         throw tinygemm_error(ss.str()); 
       }
     }
-  }  
+  }
+  
+  return constraints;
+}
+
+ 
+void SubG::set_constraints(){
+  constraints = get_constraints(subg_cs, subg_csfull, ptr_keys_vals, get_char());
 }
 
 
 
-void ChiralSubG::initialise_maps(){
-  Keys[nsHP::MIC] = "MIC";
-  Keys[nsHP::PAD] = "PAD";
-  Keys[nsHP::PLU] = "PLU";
-  Keys[nsHP::LIW] = "LIW";
-  Keys[nsHP::MIW] = "MIW";
-  Keys[nsHP::WOS] = "WOS";
-  Vals = getVals(nsHP::nChiralHPs, Keys, "ChiralKeys");
-}
-
-void CSubG::initialise_maps(){
-  Keys[nsHP::UNR] = "UNR";
-  Keys[nsHP::GAL] = "GAL";
-  Keys[nsHP::PUN] = "PUN";
-  Keys[nsHP::ICE] = "ICE";
-  Keys[nsHP::NAW] = "NAW";
-  Keys[nsHP::UFO] = "UFO"; 
-  Keys[nsHP::MAC] = "MAC";
-  Keys[nsHP::SKW] = "SKW"; 
-  Vals = getVals(nsHP::nNonChiralHPs, Keys, "NonChiralKeys");
-}
 
 
 
@@ -253,9 +281,17 @@ void SubG::initialise_start_range_from_range(){
 
 
 
-SubG::SubG(unsigned nHPs_, const tinygemm::TinyGemmGeometry & gg, std::string cs, bool csfull, const openclutil::OpenCLDeviceInfo * ptr_devinfo_): nHPs(nHPs_), ptr_gg(&gg), Keys(nHPs_), edges (nHPs_), start_range (nHPs_), subg_cs(cs), subg_csfull(csfull), ptr_devinfo(ptr_devinfo_) {
+SubG::SubG(unsigned nHPs_, const tinygemm::TinyGemmGeometry & gg, std::string cs, bool csfull, const openclutil::OpenCLDeviceInfo * ptr_devinfo_): nHPs(nHPs_), ptr_gg(&gg), edges (nHPs_), start_range (nHPs_), subg_cs(cs), subg_csfull(csfull), ptr_devinfo(ptr_devinfo_) {
   
   
+}
+
+void ChiralSubG::initialise_maps(){
+  ptr_keys_vals = &chiral_kv;
+}
+
+void CSubG::initialise_maps(){
+  ptr_keys_vals = &non_chiral_kv;
 }
 
 void SubG::initialise(){
@@ -322,15 +358,15 @@ void SubG::confirm_start_is_subset(){
   for (unsigned hpi = 0; hpi < nHPs; ++hpi){    
     if (start_range[hpi].size() == 0){
       std::stringstream ss;
-      ss << "no valid value to start from in " << Keys[hpi];
+      ss << "no valid value to start from in " << ptr_keys_vals->keys[hpi];
       throw tinygemm_error(ss.str());
     }
     
     for (auto & x : start_range[hpi]){
       if (std::count(range[hpi].begin(), range[hpi].end(), x) == 0){
         std::stringstream ss;
-        ss << "It seems like the start_range element `" << x << "' is not in the range of " << Keys[hpi] << ".";
-        ss << "The full setup of " << Keys[hpi] << " is\n ";
+        ss << "It seems like the start_range element `" << x << "' is not in the range of " << ptr_keys_vals->keys[hpi] << ".";
+        ss << "The full setup of " << ptr_keys_vals->keys[hpi] << " is\n ";
         ss << get_string(hpi);
         throw tinygemm_error(ss.str());
       }
@@ -392,7 +428,7 @@ void SubG::apply_constraints(){
       
       if (std::find(range[hpi].begin(), range[hpi].end(), constraints.at(hpi)) == range[hpi].end()){
         std::stringstream errm;
-        errm << "the constraint on " << Keys[hpi] << " of " << constraints.at(hpi) << " is not in the pre-constraint range:  \n" << get_range_string(hpi);
+        errm << "the constraint on " << ptr_keys_vals->keys[hpi] << " of " << constraints.at(hpi) << " is not in the pre-constraint range:  \n" << get_range_string(hpi);
         errm << "this is not currently allowed";
         throw tinygemm_error(errm.str());
       }
@@ -587,23 +623,23 @@ void HyperParams::checks() const{
     }
     
     const XHPs & x = v_xhps[gi];
-    SubG & graph = *(p_graph->p_subgs[gi]);
-    for (unsigned hpi = 0; hpi < graph.nHPs; ++hpi){
-      if (hpi >= graph.range.size()){
+    SubG & sub_g = *(p_graph->p_subgs[gi]);
+    for (unsigned hpi = 0; hpi < sub_g.nHPs; ++hpi){
+      if (hpi >= sub_g.range.size()){
         std::stringstream errm;
         errm << "strange error : hpi >= graph.range.size()\n";
-        errm << "specifically, " << hpi << " >= " << graph.range.size();
+        errm << "specifically, " << hpi << " >= " << sub_g.range.size();
         throw tinygemm_error(errm.str());
       }
 
-      auto start = graph.range[hpi].begin();
-      auto end = graph.range[hpi].end();
+      auto start = sub_g.range[hpi].begin();
+      auto end = sub_g.range[hpi].end();
       
       if (x.vs[hpi] == nsHP::undefined || (std::find(start, end, x.vs[hpi]) == end)) {
 
         std::stringstream errm;
-        errm << "\nIn HyperParams::checks(). It appears as though `" << x.vs[hpi] << "' is not a valid value for " << graph.Keys[hpi] << ".\n"; 
-        errm << "the relevant graph looks like this: \n" << graph.get_string(hpi);
+        errm << "\nIn HyperParams::checks(). It appears as though `" << x.vs[hpi] << "' is not a valid value for " << sub_g.ptr_keys_vals->keys[hpi] << ".\n"; 
+        errm << "the relevant graph looks like this: \n" << sub_g.get_string(hpi);
         throw tinygemm_error(errm.str());
       }
     }
@@ -620,6 +656,9 @@ void HyperParams::replace(const std::vector<std::vector<unsigned>> & params){
 }
 
 /* go through the params, and where it is not nHP::undefined, use its value to replace this */
+
+
+
 void HyperParams::replace_where_source_defined(const std::vector<std::vector<unsigned>> & params){
   for (unsigned mi = 0; mi < nsHP::nMats; ++mi){
     for (unsigned hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi){
@@ -664,11 +703,11 @@ bool HyperParams::operator == (const HyperParams & hpr){
 
 
 std::string HyperParams::get_part_string(char X) const{
-  unsigned mi = p_graph->graphind.at(X);
+  unsigned mi = graphind.at(X);
   std::stringstream ss;
   ss << X;
   for (unsigned hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi){
-    ss << "_" << p_graph->p_subgs[mi]->Keys[hpi] << v_xhps[mi].vs[hpi];
+    ss << "_" << p_graph->p_subgs[mi]->ptr_keys_vals->keys[hpi] << v_xhps[mi].vs[hpi];
   }
   return ss.str();
 }
@@ -798,19 +837,9 @@ std::vector<HyperParams> HyperParams::get_one_aways(){
 }
   
 
-     
-HyperParams get_hp_start(FindStartType fst, const Graph & graph){
-
+/* TODO : is this function nec ? */
+HyperParams get_hp_start(const Graph & graph){
   HyperParams hyper_param_start(graph);
-
-  if (fst == FindStartType::Default){
-    std::stringstream ss;
-    ss << "getting default in get_hp_start not enabled. Also small matrices will break tinygemm (again) default should return something like\n";
-    ss << "A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL3_PUN0_ICE1_NAW64_UFO0_MAC5  here.\n";
-    throw tinygemm_error(ss.str());
-  }
-
-     
   hyper_param_start.checks();  
   return hyper_param_start;
 }
@@ -831,7 +860,7 @@ std::tuple<bool, std::string> HyperParams::in_graph(){
       if (in_graph(mi, hpi, v_xhps[mi].vs[hpi]) == false){
       
         std::stringstream sstr;
-        sstr << "hyper param : " << p_graph->p_subgs[mi]->Keys[hpi] << ", and value " <<  v_xhps[mi].vs[hpi] << ".";
+        sstr << "hyper param : " << p_graph->p_subgs[mi]->ptr_keys_vals->keys[hpi] << ", and value " <<  v_xhps[mi].vs[hpi] << ".";
         in_graph_string = sstr.str();
         constraints_satisfied = false;
         break;
@@ -850,7 +879,7 @@ nsHP::eMat HyperParams::get_eMat_from_char(char X) const{
   if (X != 'A' && X != 'B' && X != 'C'){
     throw tinygemm_error("Problem converting X (char) to nsHP::eMat enumerated type in get_eMat_from_char : " + std::to_string(X) );
   }
-  return static_cast<nsHP::eMat> (p_graph->graphind.at(X));
+  return static_cast<nsHP::eMat> (graphind.at(X));
 } 
 
 } 

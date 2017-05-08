@@ -25,6 +25,14 @@
 
 namespace tinygemm{
 
+
+class TinygemmCachedSolution {
+  public:
+    std::string hyperstring;
+    std::string stats_string;
+};
+
+
 class MultiFloatType{
 
 private:
@@ -138,6 +146,7 @@ public:
   
 private:
 
+  /* TODO : option for median / max / mean */
   void set_medians(){
     
     auto v_t_total_copy = v_t_total;
@@ -441,7 +450,7 @@ private:
         if (median_time == v_t_total[kqq]){
           mowri << " (median) ";
           if (best_solns_path.size() > 0 && (best_solns_path.back().statistics.median_benchmark_time >= median_time)){
-            mowri << " (NEW FASTEST) ";
+            mowri << " (NEW BEST) ";
           }
         }
         mowri << "\n";
@@ -457,30 +466,18 @@ private:
   }
 
 public:
-  void benchgemm(unsigned n_runs){ //(const std::vector<hyperparams::HyperParams> & hps, unsigned n_runs){
+  void benchgemm(unsigned n_runs){
 
     address_check_valid();
     
     if (n_runs == 0){
       throw tinygemm_error("n_runs to benchgemm should be a positive integer");
     }
-
-    //for ( unsigned i = 0; i < hps.size(); ++i) {
-      
-
-      //mowri << "\nSource kernel " << "(" << i + 1 << "/" << hps.size() << ") "  << hps[i].get_string() << Endl;      
-   
-      //mowri << "hyperstring : " << hps[i].get_string() << Endl;      
    
     hyperparams::HyperParams hp(graph);
-     
-    //deriveability_test(hps[i], "in benchgemm");
-
+    
     deriveability_test(hp, "in benchgemm");
     
-    //auto bundle = tinygemm::kerngen::get_bundle(hps[i],gg); 
-    //auto atr = architests::architecture_specific_tests(command_queue, hps[i], bundle.dp);
-
     auto bundle = tinygemm::kerngen::get_bundle(hp,gg); 
     auto atr = architests::architecture_specific_tests(command_queue, hp, bundle.dp);
     
@@ -488,39 +485,38 @@ public:
       throw tinygemm_error(std::get<1>(atr));
     }
 
-    //setup_tinykernels(hps[i], bundle); 
     setup_tinykernels(hp, bundle); 
     
     mowri << "(benchgemm) geometry  \t:" << gg.get_string()  << "\nEntering the core gemm loops" << Endl;
     core_gemm_loop(n_runs, true);
-    //}
+
   }
   
   
-  tinygemm::TinyGemmSolution get_default(){ //hyperparams::Graph & graph){
-    hyperparams::HyperParams hp = hyperparams::get_hp_start(FindStartType::Default, graph);
+  tinygemm::TinyGemmSolution get_default(){
+    hyperparams::HyperParams hp = hyperparams::get_hp_start(graph);
     deriveability_test(hp, "in get_default");    
     auto bundle = tinygemm::kerngen::get_bundle(hp, gg); 
-    tinygemm::TinyGemmSolutionStatistics tgss(std::numeric_limits<float>::max(), 0, 0);    
+    tinygemm::TinyGemmSolutionStatistics tgss(std::numeric_limits<float>::max(), 0, 0, {});    
     
     return { gg, tgss, bundle.v_tgks, hp.get_string() };
   }
 
 
-  hyperparams::HyperParams get_hyper_param_start(FindStartType fst){ //, const hyperparams::Graph & graph){
+  hyperparams::HyperParams get_hyper_param_start(){
 
-    hyperparams::HyperParams hyper_param_start(graph);
+    hyperparams::HyperParams hyper_param_start  = hyperparams::get_hp_start(graph);
     bool found_a_deriveable_hp = false;
     unsigned deriveable_search_iteration = 0;
     std::stringstream deriveablesearch_ss;
 
     
     /* the number of attempts at finding a deriveable HyperParams given the constraint string */
-    const unsigned n_trials = fst == FindStartType::Random ? 10000 : 1;
+    const unsigned n_trials = 10000;
     
     while (found_a_deriveable_hp == false && deriveable_search_iteration < n_trials){
       
-      hyper_param_start = hyperparams::get_hp_start(fst, graph);
+      hyper_param_start = hyperparams::get_hp_start(graph);
       auto deriveability = derivedparams::get_deriveability(hyper_param_start, gg);
       if (std::get<0>(deriveability) == false){
         deriveablesearch_ss << hyper_param_start.get_string() << " is not deriveable, because " << std::get<1>(deriveability) << "\n";            
@@ -531,24 +527,79 @@ public:
       ++deriveable_search_iteration;
     }
     
+    /* TODO : should rather return null-solution, as throwing an error should not be stochastic */
     if (found_a_deriveable_hp == false){
-      deriveablesearch_ss << "\n\nStruggling to find a deriveable set of hyper parameters which satisfy the geometry and constraints. THe number of attempts made is " << n_trials << "\n throwing an error\n";
-      /* TODO : should rather return null-solution, as throwing an error should not be stochastic */
-      throw tinygemm_error(deriveablesearch_ss.str());
+      std::stringstream base_ss;
+      base_ss << "\n\nStruggling to find a deriveable set of hyper parameters which satisfy the geometry and constraints. The number of attempts made is " << n_trials << "\n throwing an error. To view the full output of the hyper parameters tried and their reasons for not being derivable, modify the code here (add deriveablesearch_ss.str()). \n";
+      throw tinygemm_error(base_ss.str());
     }
     return hyper_param_start;
   }
+
   
-  //tinygemm::TinyGemmSolution find(float allotted_time, std::string constraint_string, FindStartType fst, unsigned n_runs_per_kernel){
+  
+  tinygemm::TinyGemmSolution find(float allotted_time, unsigned n_runs_per_kernel){
+    
+    unsigned allotted_descents  = 10;
+    allotted_time = 1000.;
+    
+    float elapsed_seconds = 0;
+    unsigned elapsed_descents = 0;
+    auto start = std::chrono::high_resolution_clock::now();
+    
+    std::vector<tinygemm::TinyGemmSolution> v_tgsolns;
 
+    std::string stars("");    
+    while (elapsed_seconds < allotted_time && elapsed_descents < allotted_descents){
+      
+      std::stringstream sss;
+      sss << "Entering single_descent_find, at t = " << elapsed_seconds << " [s] ( < " << allotted_time << " [s]) and iteration = " << elapsed_descents << " ( < " << allotted_descents << " )";
+      std::string titlestring = sss.str();
 
-  tinygemm::TinyGemmSolution find(float allotted_time, FindStartType fst, unsigned n_runs_per_kernel){
+      stars.resize(titlestring.size(), '*');
+      mowri << "\n" << stars << "\n" << titlestring << "\n" << stars << Endl;
+      
+      v_tgsolns.emplace_back(single_descent_find(allotted_time - elapsed_seconds, n_runs_per_kernel)); //fst, 
+      auto end = std::chrono::high_resolution_clock::now();
+      std::chrono::duration<float> fp_ms = end - start;
+      elapsed_seconds = fp_ms.count();          
+      ++elapsed_descents;
+    }
+    
+    
+    float best_gflops = 0;
+    unsigned best_soln_index = 0;
+    std::vector<float> soln_gflops;
+    for (unsigned si = 0; si < v_tgsolns.size(); ++si){
+      
+      float gflops = v_tgsolns[si].statistics.median_benchmark_gflops;
+      soln_gflops.push_back(gflops);
+      if (gflops > best_gflops){
+        best_gflops = gflops;
+        best_soln_index = si;
+      }
+      
+    }
+    
+    std::string header("The gflops found by single descents:");
+    stars.resize(header.size(), '*');
+    
+    mowri << "\n"  << header << "\n" << stars << "\n"; 
+    std::sort(soln_gflops.begin(), soln_gflops.end());
+    for (auto & x : soln_gflops){
+      mowri << x << "  ";
+    }
+    mowri << "\n";
+        
+    return v_tgsolns[best_soln_index];
     
 
+  }
+  
+  tinygemm::TinyGemmSolution single_descent_find(float allotted_time, unsigned n_runs_per_kernel){ //, FindStartType fst
+              
 
-    //hyperparams::Graph graph(gg, constraint_string, false);
-          
-    mowri << "(find) geometry : " << gg.get_string()  << Endl;
+    mowri << "geometry : " << gg.get_string()  << Endl;
 
     if (allotted_time <= 0){
       mowri << "allotted_time (" << allotted_time << ") is insufficient for benchmarking, returning default TinyGemmSolution based on gg and constraint_string without bencing/searching" << Endl;
@@ -560,7 +611,7 @@ public:
     /* we will count how many kernels are successfully generated AND compiled AND benchmarked */
     unsigned global_counter = 0;
 
-    hyperparams::HyperParams hyper_param_current = get_hyper_param_start(fst);//, graph);
+    hyperparams::HyperParams hyper_param_current = get_hyper_param_start();//fst);
     
     /* In here, we will store all previously considered HyperParams strings, used to check and ensure that we do not consider a HyperParam more than once */
     std::vector<std::string> hyper_front_history;
@@ -587,7 +638,6 @@ public:
       improvement_found_on_front = false;
       unsigned hfi = 0;
       while (hfi < hyper_front.size() && improvement_found_on_front == false && elapsed_seconds < allotted_time){
-        std::cout << "." << std::flush;
         hyper_param_current = hyper_front[hfi];
         std::string hp_string = hyper_param_current.get_string();        
         hyper_front_history.push_back(hp_string);
@@ -609,7 +659,11 @@ public:
         if (best_solns_path.size() == 0 || median_time < 1.000*best_solns_path.back().statistics.median_benchmark_time){
           update_elapsed_seconds();
           improvement_found_on_front = true;
-          auto sstats = TinyGemmSolutionStatistics(median_time, median_gflops, elapsed_seconds);
+          
+          //std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+          
+          std::time_t generation_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+          auto sstats = TinyGemmSolutionStatistics(median_time, median_gflops, elapsed_seconds, std::ctime(&generation_time));
           best_solns_path.emplace_back (gg, sstats, bundle.v_tgks, hyper_param_current.get_string() );
         }
         ++hfi;
@@ -696,8 +750,7 @@ public:
       solnstring.resize(leading_size, ' ');
       mowri <<  std::fixed <<  solnstring << "\t " << x.statistics.solution_discovery_time << "\t\t " << x.statistics.median_benchmark_gflops  << Endl;
     }
-    
-    std::cout << "*" << std::endl;
+
     return best_solns_path.back();
   }
 }; 
@@ -734,13 +787,12 @@ cl_mem b,
 cl_mem c,
 cl_mem workspace,
 const std::string constraint_string,
-FindStartType fst,
 const tinygemm::TinyGemmGeometry & gg,
 const tinygemm::TinyGemmOffsets & toff,
 outputwriting::OutputWriter & mowri,
 bool c_is_const){
   
-  
+  //auto bla = get_default(command_queue, constraint_string, gg, mowri);
   /* The number of times each kernel is run in find. 
    * consider adding this parameter to user API. */
   unsigned n_runs_per_kernel = 3;
@@ -752,33 +804,68 @@ bool c_is_const){
   if (c_is_const == true){
     openclutil::SafeClMem c_copied = get_copy(command_queue, c, gg, toff, "copy of c in find");
     OpenCLGemmEncapsulator oger(command_queue, gg, toff, a, b, c_copied.clmem, workspace, constraint_string, full_constraints_expected, mowri); 
-    return oger.find(allotted_time, fst, n_runs_per_kernel);
+    return oger.find(allotted_time, n_runs_per_kernel);
   }
   
   else{
     OpenCLGemmEncapsulator oger(command_queue, gg, toff, a, b, c, workspace, constraint_string, full_constraints_expected, mowri); 
-    return oger.find(allotted_time, fst, n_runs_per_kernel);
+    return oger.find(allotted_time, n_runs_per_kernel);
   }
 }
 
 tinygemm::TinyGemmSolution
 get_default(
+cl_command_queue command_queue,
 std::string constraint_string,
-const tinygemm::TinyGemmGeometry & gg,
-outputwriting::OutputWriter & mowri){
+const tinygemm::TinyGemmGeometry & gg){
+
+  std::map<std::string, std::map<std::string, tinygemm::TinygemmCachedSolution> > kernel_cache;
+  openclutil::OpenCLDeviceInfo devinfo(command_queue);
   
-  constraint_string = "";
-  int bla = gg.m;
-  bla += 1;
-  mowri << "oops";
-  throw tinygemm_error("get default not ready" + constraint_string + std::to_string(bla));
+  std::string cache_key = devinfo.identifier + "_cnstr_" + constraint_string + "_rtsnc";
   
+  if (kernel_cache.count(cache_key) == 0){
+    std::stringstream ss;
+    ss << "Unrecognised cache_key `" << cache_key << "' in kernel_cache.\n";
+    /* is devinfo.identifier in one of the cache_keys ? */
+    
+    for (const auto & k : kernel_cache){
+      if (k.first.find(devinfo.identifier) != std::string::npos){
+        ss << "Note that the device identifier `"<< devinfo.identifier << "' does appear in cache key, " << k.first << "\n";
+      }
+      if (k.first.find(constraint_string) != std::string::npos){
+        ss << "Note that the device identifier `"<< constraint_string << "' does appear in cache key, " << k.first << "\n";
+      }
+    }
+    
+    /* is constraint_string in one of the keys ? */
+    
+    throw tinygemm_error(ss.str());
+  }
+  
+  if (kernel_cache[cache_key].count(gg.get_string()) == 0){
+    std::stringstream ss;
+    /* TODO : find a default even though none in cache */
+    ss << "Unrecognised geometry " << gg.get_string() << " in cache `" << cache_key << "'.";
+    throw tinygemm_error(ss.str());
+  }
+  
+
+  tinygemm::TinygemmCachedSolution cached_soln(kernel_cache[cache_key][gg.get_string()]);
+  
+  /* generating source files from cache */
+  hyperparams::Graph graph(gg, devinfo, cached_soln.hyperstring, false);
+  hyperparams::HyperParams hp(graph);
+  auto bundle = tinygemm::kerngen::get_bundle(hp,gg);
+ 
+  return { gg, tinygemm::TinyGemmSolutionStatistics(cached_soln.stats_string), bundle.v_tgks, hp.get_string() };
+
 }
   
   
 void benchgemm(
   cl_command_queue command_queue,
-  const std::string & hyperstring, //std::vector<hyperparams::HyperParams> & hps,
+  const std::string & hyperstring,
   unsigned n_runs,
   const tinygemm::TinyGemmGeometry & gg,
   const tinygemm::TinyGemmOffsets & toff, 
@@ -790,23 +877,17 @@ void benchgemm(
   bool c_is_const){
   
   
-  mowri << " (DEBUGTEST) in tinygemm's benchgemm" << Endl;
   bool full_constraints_expected = true;
   tinygemm::consistencychecks::check_ldx_mnk_consistent(gg);
   if (c_is_const == true){
     openclutil::SafeClMem c_copied = get_copy(command_queue, c_gpu, gg, toff, "copy of c in benchgemm");
-    //for (auto & hyperstring : hyperstrings){
     OpenCLGemmEncapsulator oger(command_queue, gg, toff, a_gpu, b_gpu, c_copied.clmem, workspace_gpu, hyperstring, full_constraints_expected, mowri);
     oger.benchgemm(n_runs);
-    //}
   }
   
   else{
-    //OpenCLGemmEncapsulator oger(command_queue, gg, toff, a_gpu, b_gpu, c_gpu, workspace_gpu, mowri);
-    //for (auto & hyperstring : hyperstrings){
     OpenCLGemmEncapsulator oger(command_queue, gg, toff, a_gpu, b_gpu, c_gpu, workspace_gpu, hyperstring, full_constraints_expected, mowri);
     oger.benchgemm(n_runs);
-    //}
   }
 }
   

@@ -35,9 +35,9 @@ tinygemm::TinyGemmGeometry get_geometry(){
   bool tA = false;
   bool tB = false;
   bool tC = false;
-  unsigned m = 8000; 
-  unsigned n = 400; 
-  unsigned k = 3000;           
+  unsigned m = 500; 
+  unsigned n = 500; 
+  unsigned k = 256;           
 
   
   unsigned lda = ( tA == isColMajor ? k : m ) + 0;
@@ -140,10 +140,10 @@ int main(){
   
   if (test_find){
     
-    while (true){
-      tinygemm::FindStartType fst(tinygemm::FindStartType::Random);
-      tinygemm::dev::find(allotted_find_time, v_a.data(), v_b.data(), v_c.data(), constraint_string, fst, gg, toff, mowri);
-    }
+    //while (true){
+      //tinygemm::FindStartType fst(tinygemm::FindStartType::Random);
+      tinygemm::dev::find(allotted_find_time, v_a.data(), v_b.data(), v_c.data(), constraint_string, gg, toff, mowri);
+    //}
   }
   
   if (test_default){

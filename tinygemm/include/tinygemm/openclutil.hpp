@@ -123,6 +123,7 @@ class OpenCLDeviceInfo{
     std::string device_name;  
     std::string device_version;  
     std::string driver_version;
+    std::string identifier;
     bool device_available;
     size_t device_global_mem_size;
     unsigned device_max_clock_frequency;

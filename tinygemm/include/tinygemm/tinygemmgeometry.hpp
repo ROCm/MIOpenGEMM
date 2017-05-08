@@ -54,9 +54,9 @@ public:
   unsigned n;
   unsigned k; 
   
+  /* the usable amount of workspace */
   unsigned workspace_size;
-//* 'f' : 32-bit single precision
-//* 'd' : 64-bit double precision 
+  /* 'f' : 32-bit single precision or 'd' : 64-bit double precision */
   const char floattype;
   /* */
   TinyGemmGeometryDerived derived;

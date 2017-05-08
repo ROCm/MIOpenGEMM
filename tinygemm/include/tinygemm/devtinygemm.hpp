@@ -22,7 +22,7 @@ const TFloat * c, const TFloat * c_true_for_test, outputwriting::OutputWriter & 
 
 
 template <typename TFloat>
-tinygemm::TinyGemmSolution find(float allotted_time, const TFloat * a, const TFloat * b, const TFloat * c, std::string constraint_string, FindStartType fst, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, outputwriting::OutputWriter & mowri);
+tinygemm::TinyGemmSolution find(float allotted_time, const TFloat * a, const TFloat * b, const TFloat * c, std::string constraint_string, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, outputwriting::OutputWriter & mowri);
 
 }
 }

@@ -144,10 +144,10 @@ public:
     }
   }
   
-  tinygemm::TinyGemmSolution find(float allotted_time, std::string constraint_string, FindStartType fst){
+  tinygemm::TinyGemmSolution find(float allotted_time, std::string constraint_string){//, FindStartType fst){
     /* dev code's connection to tinygemm */
     tinygemm::TinyGemmSolution tgs = tinygemm::find(
-      allotted_time, tgcq.command_queue, a_gpu_safemem.clmem, b_gpu_safemem.clmem, c_gpu_safemem.clmem, workspace_safemem.clmem, constraint_string, fst, gg, toff, 
+      allotted_time, tgcq.command_queue, a_gpu_safemem.clmem, b_gpu_safemem.clmem, c_gpu_safemem.clmem, workspace_safemem.clmem, constraint_string /*, fst*/, gg, toff, 
       //true, // yes, write to terminal (may be captured further upstream)
       //outputfilename, // file where to write the output (if "", nowhere). A new mowri will be created in the function called. 
       mowri,
@@ -220,15 +220,15 @@ const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, c
 
 
 template <typename TFloat>
-tinygemm::TinyGemmSolution find(float allotted_time, const TFloat * a, const TFloat * b, const TFloat * c, std::string constraint_string, FindStartType fst, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff,  outputwriting::OutputWriter & mowri){
+tinygemm::TinyGemmSolution find(float allotted_time, const TFloat * a, const TFloat * b, const TFloat * c, std::string constraint_string /*, FindStartType fst*/, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff,  outputwriting::OutputWriter & mowri){
   
   Gemini <TFloat> gem(gg, toff, a, b, c, mowri);
-  return gem.find(allotted_time, constraint_string, fst);
+  return gem.find(allotted_time, constraint_string);//, fst);
 }
 
-template tinygemm::TinyGemmSolution find(float allotted_time, const double * a, const double * b, const double * c, std::string constraint_string, FindStartType fst, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, outputwriting::OutputWriter & mowri);
+template tinygemm::TinyGemmSolution find(float allotted_time, const double * a, const double * b, const double * c, std::string constraint_string, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, outputwriting::OutputWriter & mowri);
 
-template tinygemm::TinyGemmSolution find(float allotted_time, const float * a, const float * b, const float * c,    std::string constraint_string, FindStartType fst, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, outputwriting::OutputWriter & mowri);
+template tinygemm::TinyGemmSolution find(float allotted_time, const float * a, const float * b, const float * c,    std::string constraint_string, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, outputwriting::OutputWriter & mowri);
 
 
 }

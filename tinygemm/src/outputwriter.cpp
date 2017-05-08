@@ -17,7 +17,6 @@ OutputWriter::OutputWriter(bool to_terminal_, bool to_file_, std::string filenam
     
     
     file.open(filename, std::ios::out);
-    (*this) << "(DEBUGTEST) successfully opened " << filename << "." << Endl;
      
     //std::ofstream file(filename, std::ios::out);
     if (file.good() == false){
@@ -28,14 +27,13 @@ OutputWriter::OutputWriter(bool to_terminal_, bool to_file_, std::string filenam
     }
   }
   
-  (*this) << "(DEBUGTEST) leaving OutputWriter constructor" << Endl;
 
 }
 
 //make default destructor.
 
 OutputWriter::~OutputWriter(){
-  (*this) << "(DEBUGTEST) outputwriter destructor (" << filename << ")" << Endl;
+
   file.close();
 }
 

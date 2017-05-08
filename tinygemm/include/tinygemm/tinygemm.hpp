@@ -26,15 +26,11 @@ cl_mem a,
 cl_mem b,
 cl_mem c,
 cl_mem workspace,
-
 /* a substring of a hyperstring, defines hyper-parameters with fixed values */
 const std::string constraint_string,
-
-/* one of Default and Random */
-FindStartType fst,
-
 /* see tinygemm/include/tinygemmgeometry.hpp for TinyGemmGeometry parameters */
 const tinygemm::TinyGemmGeometry & gg,
+/* this is nec so that we know where in a,b,c and workspace to start */
 const tinygemm::TinyGemmOffsets & toff,
 outputwriting::OutputWriter & mowri,
 /* if c_is_const == false, then c will be corrupted */
@@ -43,17 +39,17 @@ bool c_is_const = true);
 
 tinygemm::TinyGemmSolution
 get_default(
+/* use this to extract device info */
+cl_command_queue command_queue,
 std::string constraint_string,
 const tinygemm::TinyGemmGeometry & gg,
-bool verbose = false, 
-std::string logfile = "");
+outputwriting::OutputWriter & mowri);
+
 
 void benchgemm(
 cl_command_queue command_queue, 
 const std::string & hyperstring,
-//const std::vector<hyperparams::HyperParams> & hps,         
 unsigned n_runs,
-
 const tinygemm::TinyGemmGeometry & gg,
 const tinygemm::TinyGemmOffsets & toff,
 cl_mem a,

@@ -511,6 +511,24 @@ OpenCLDeviceInfo::OpenCLDeviceInfo(const cl_command_queue & command_queue){
     wg_atom_size = 32;
     throw tinygemm_error("Tinygemm has not been tested on any platform from vendor " + platinfo.vendor + " yet. Are you sure you want to try this ? If so, remove error message hyiar"); 
   }
+  
+  /* setting identifier */
+  std::stringstream idss;
+  idss << "devi_";
+  for (const std::string & st : {device_name, device_version, driver_version}){
+    for (char c : st){
+      std::cout << c << ' ' << std::flush;
+      if ((bool)std::isalnum(c) == true){
+        idss << c;
+      }
+      else if (c == '.'){
+        idss << 'p';
+      }
+    }
+    idss << '_';
+  }
+  idss << "ived";  
+  identifier = idss.str();
 }
 
 OpenCLDeviceInfo::OpenCLDeviceInfo(){
@@ -538,6 +556,7 @@ std::string OpenCLDeviceInfo::get_string() {
   ss << "device_max_clock_frequency : " << device_max_clock_frequency << "\n";
   ss << "device_max_compute_units : " << device_max_compute_units << "\n";
   ss << "device_max_work_group_size : " << device_max_work_group_size << "\n";  
+  ss << "(identifier) : " << identifier << "\n";  
   ss << "\n";
 
   return ss.str();
