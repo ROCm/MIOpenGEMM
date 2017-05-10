@@ -17,11 +17,16 @@ namespace tinygemm{
 static const double default_alpha = 0.415693029182345929;
 static const double default_beta = 0.273539340934809345;
 
+enum SummaryStat {Mean=0, Median, Max};
+
 tinygemm::TinyGemmSolution
 find(
 /* in seconds */
-float allotted_time, 
 cl_command_queue command_queue,
+float allotted_time,
+unsigned allotted_descents,
+unsigned n_runs_per_kernel,
+tinygemm::SummaryStat sumstat,
 cl_mem a,   
 cl_mem b,
 cl_mem c,
@@ -42,7 +47,8 @@ get_default(
 /* use this to extract device info */
 cl_command_queue command_queue,
 std::string constraint_string,
-const tinygemm::TinyGemmGeometry & gg);
+const tinygemm::TinyGemmGeometry & gg, 
+std::string k_comment);
 
 
 void benchgemm(

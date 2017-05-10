@@ -231,8 +231,6 @@ public:
 };  
 
 
-HyperParams get_hp_start(const Graph & graph); //FindStartType fst, 
-
 
 
 }

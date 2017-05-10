@@ -17,7 +17,7 @@ std::string get_padded(unsigned x, unsigned length = 4){
   return padded;
 }
 
-std::vector<tinygemm::TinyGemmGeometry> get_from_m_n_k_tA_tB( const std::vector<std::tuple<unsigned, unsigned, unsigned, bool, bool>> &  basicgeos, unsigned workspace_size ){
+std::vector<tinygemm::TinyGemmGeometry> get_from_m_n_k_tA_tB(const std::vector<std::tuple<unsigned, unsigned, unsigned, bool, bool>> &  basicgeos, unsigned workspace_size ){
   
   std::vector<tinygemm::TinyGemmGeometry> geometries;
   bool isColMajor = true;
@@ -70,13 +70,12 @@ std::vector<tinygemm::TinyGemmGeometry> get_from_m_n_k_ldaABC_tA_tB(const std::v
 }
 
 
-int run_find_experiments(const std::vector<tinygemm::TinyGemmGeometry> & geometries, float allotted_time, bool verbose, std::vector<std::string> & v_constraints, unsigned n_iterations, std::string basedir){
+int run_find_experiments(const std::vector<tinygemm::TinyGemmGeometry> & geometries, float allotted_time, unsigned allotted_descents, unsigned n_runs_per_kernel, tinygemm::SummaryStat sumstat, bool verbose, std::vector<std::string> & v_constraints, std::string basedir){
 
   tinygemm::TinyGemmOffsets offsets (13,24,35,46,57,67,79);
-  tinygemm::FindStartType fst(tinygemm::FindStartType::Random);
   unsigned n_postfind_runs = 0;
   bool do_cpu_test = false;
-              
+
   /* We're tracking the overall run time with these */
   auto start = std::chrono::high_resolution_clock::now();
   auto end = std::chrono::high_resolution_clock::now();
@@ -84,41 +83,40 @@ int run_find_experiments(const std::vector<tinygemm::TinyGemmGeometry> & geometr
   float elapsed_seconds = fp_ms.count();
 
   for (auto & constraints :  v_constraints){
-    for (unsigned iteration = 0; iteration < n_iterations; ++iteration){
+      
+    std::string fulldir;
+    if (basedir != ""){
+      if (basedir.back() != '/'){
+        basedir += "/";
+      }
+       
+      std::stringstream fulldir_ss;
+      fulldir_ss << basedir << "cs" << constraints << "/";
+      fulldir = fulldir_ss.str();       
+      /* WARNING : only works on Linux (makes directory) */
+      std::string syscall = std::string("mkdir -p  ") + fulldir;
+      std::system(syscall.c_str());  
+    }
     
-      std::cout << "\nIteration (" << iteration + 1 <<  "/"  << n_iterations << ")" << std::endl;
-      
-      
-      std::string fulldir;
+    std::cout << "\nEntering experiment with constraint_string = `" << constraints << "'" << std::endl;    
+
+    for (unsigned prob_i = 0; prob_i < geometries.size(); ++prob_i){
+      tinygemm::TinyGemmGeometry gg = geometries[prob_i];
+      std::stringstream ss_logfile;        
       if (basedir != ""){
-        if (basedir.back() != '/'){
-          basedir += "/";
-        }
-        std::stringstream fulldir_ss;
-        fulldir_ss << basedir << "iteration" << iteration << "/cs" << constraints << "/";
-        fulldir = fulldir_ss.str();       
-        /* WARNING : only works on Linux (makes directory) */
-        std::string syscall = std::string("mkdir -p  ") + fulldir;
-        std::system(syscall.c_str());  
+        ss_logfile << fulldir << gg.get_string() << ".txt";
       }
       
-      std::cout << "\nEntering experiment with constraint_string = `" << constraints << "'" << std::endl;    
+      auto soln = basicfind<float>(gg, offsets, allotted_time, allotted_descents, n_runs_per_kernel, sumstat, verbose, ss_logfile.str(), constraints,  n_postfind_runs, do_cpu_test);  
+      end = std::chrono::high_resolution_clock::now();
+      
+      /* TODO here : write the solution, ready to stick in cache. */
+      
+      fp_ms = end - start;
+      elapsed_seconds = fp_ms.count();
 
-      for (unsigned prob_i = 0; prob_i < geometries.size(); ++prob_i){
-        tinygemm::TinyGemmGeometry gg = geometries[prob_i];
-        std::stringstream ss_logfile;        
-        if (basedir != ""){
-          ss_logfile << fulldir << "m" << gg.m  << "_n" << gg.n  << "_k" << gg.k  << "_tA" << gg.tX[tinygemm::nsHP::matA]  << "_tB" << gg.tX[tinygemm::nsHP::matB] << ".txt";  
-        }
-        
-        auto soln = basicfind<float>(gg, offsets, allotted_time, verbose, ss_logfile.str(), constraints, fst,  n_postfind_runs, do_cpu_test);    
-        end = std::chrono::high_resolution_clock::now();
-        fp_ms = end - start;
-        elapsed_seconds = fp_ms.count();
-
-        std::cout << (prob_i + 1) <<  "/" <<  geometries.size() << " \t m:" << get_padded(gg.m) << " \t n:" << get_padded(gg.n) << " \t k:" << get_padded(gg.k) << " \t tA:" << gg.tX[tinygemm::nsHP::matA] << " \t tB:" << gg.tX[tinygemm::nsHP::matB] << " \tsoln median gflops :  " << soln.statistics.median_benchmark_gflops << "  \t soln median time : " << soln.statistics.median_benchmark_time << "  \t  elapsed time : " << elapsed_seconds << " [s] " << std::endl;
-        
-      }
+      std::cout << (prob_i + 1) <<  "/" <<  geometries.size() << " \t m:" << get_padded(gg.m) << " \t n:" << get_padded(gg.n) << " \t k:" << get_padded(gg.k) << " \t tA:" << gg.tX[tinygemm::nsHP::matA] << " \t tB:" << gg.tX[tinygemm::nsHP::matB] << " \tsoln median gflops :  " << soln.statistics.median_benchmark_gflops << "  \t soln median time : " << soln.statistics.median_benchmark_time << "  \t  elapsed time : " << elapsed_seconds << " [s] " << std::endl;
+      
     }
   }
   
@@ -129,8 +127,31 @@ int run_find_experiments(const std::vector<tinygemm::TinyGemmGeometry> & geometr
 
 std::vector<tinygemm::TinyGemmGeometry> get_deepbench_geometries(unsigned workspace_size = 1){
 
+
+
+
+  //std::vector<std::tuple<unsigned, unsigned, unsigned, bool, bool>> baiduproblems = {
+
+    //std::make_tuple(40000, 10000, 1000, false, false),    
+    //std::make_tuple(40000, 10000, 1000, false, false),    
+    //std::make_tuple(40000, 10000, 1000, false, false),    
+    //std::make_tuple(40000, 10000, 1000, false, false),    
+
+    //std::make_tuple(40000, 10000, 1000, false, false),    
+    //std::make_tuple(40000, 10000, 1000, false, false),    
+    //std::make_tuple(40000, 10000, 1000, false, false),    
+    //std::make_tuple(40000, 10000, 1000, false, false),    
+    
+    //std::make_tuple(40000, 10000, 1000, false, false),    
+    //std::make_tuple(40000, 10000, 1000, false, false),    
+    //std::make_tuple(40000, 10000, 1000, false, false),    
+    //std::make_tuple(40000, 10000, 1000, false, false),        
+  //};
+
   /* directly from from https://github.com/baidu-research/DeepBench/blob/master/code/nvidia/gemm_bench.cu */
-  /*                m     n    k    tA      tB              isColMajor is true, tC is false               */
+  /*                m     n    k    tA      tB     (isColMajor is true, tC is false)    */
+
+  
   std::vector<std::tuple<unsigned, unsigned, unsigned, bool, bool>> baiduproblems = {
     std::make_tuple(5124, 9124, 1760, false, false),
     std::make_tuple(35, 8457, 1760, false, false),

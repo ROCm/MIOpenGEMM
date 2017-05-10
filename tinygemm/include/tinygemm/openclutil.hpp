@@ -84,9 +84,11 @@ class SafeClMem{
   public:
     cl_mem clmem;
     std::string hash;
+    //void update(cl_meme clmem_, std::string hash_);
     SafeClMem(const std::string & hash); 
+    
     ~SafeClMem();
-    SafeClMem(const SafeClMem &) = default;
+    //SafeClMem(const SafeClMem &) = default;
 };
 
 class TinyGemmCommandQueueInContext{

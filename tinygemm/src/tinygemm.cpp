@@ -197,6 +197,7 @@ private:
     /* parameter order rule: {a, oa, b, ob, c, oc, ws, ows}, alpha, beta */
     std::vector<std::pair<size_t, const void *> > arg_sizes_values;
     
+    
     for (auto & x : {'a', 'b', 'c', 'w'}){
       if (type.uses(x) == true){
         arg_sizes_values.emplace_back(sizeof(cl_mem), (void *)&(gpum[x]));
@@ -204,9 +205,11 @@ private:
       }
     }
     
+    
     if (type.uses_alpha){
       arg_sizes_values.emplace_back(gg.derived.float_size_bytes, m_alpha[gg.floattype]);
     }
+    
     
     if (type.uses_beta){
       arg_sizes_values.emplace_back(gg.derived.float_size_bytes, m_beta[gg.floattype]);      
@@ -274,6 +277,7 @@ private:
     tk_kernels_active.resize(0);
     
     for (unsigned ksi = 0; ksi < bundle.v_tgks.size(); ++ksi){
+
       bkt basic = bundle.v_tgks[ksi].type.basic_kernel_type;
       refresh_kernel(bundle.v_tgks[ksi], hp, bundle.dp);
       tk_kernels_active.push_back(&tk_kernels[basic]);
@@ -488,19 +492,15 @@ public:
 
   }
   
-  
-  //tinygemm::TinyGemmSolution get_default(){
-    //hyperparams::HyperParams hp = hyperparams::get_hp_start(graph);
-    //deriveability_test(hp, "in get_default");    
-    //auto bundle = tinygemm::kerngen::get_bundle(hp, gg); 
-    //tinygemm::TinyGemmSolutionStatistics tgss(std::numeric_limits<float>::max(), 0, 0, {});
-    //return { gg, tgss, bundle.v_tgks, hp.get_string() };
-  //}
 
 
   hyperparams::HyperParams get_hyper_param_start(){
 
-    hyperparams::HyperParams hyper_param_start  = hyperparams::get_hp_start(graph);
+  
+  hyperparams::HyperParams hyper_param_start(graph);
+  hyper_param_start.checks();  
+  
+
     bool found_a_deriveable_hp = false;
     unsigned deriveable_search_iteration = 0;
     std::stringstream deriveablesearch_ss;
@@ -511,7 +511,9 @@ public:
     
     while (found_a_deriveable_hp == false && deriveable_search_iteration < n_trials){
       
-      hyper_param_start = hyperparams::get_hp_start(graph);
+      hyper_param_start = hyperparams::HyperParams(graph);
+      hyper_param_start.checks();  
+      
       auto deriveability = derivedparams::get_deriveability(hyper_param_start, gg);
       if (std::get<0>(deriveability) == false){
         deriveablesearch_ss << hyper_param_start.get_string() << " is not deriveable, because " << std::get<1>(deriveability) << "\n";            
@@ -533,10 +535,11 @@ public:
 
   
   
-  tinygemm::TinyGemmSolution find(float allotted_time, unsigned n_runs_per_kernel){
+  tinygemm::TinyGemmSolution find(float allotted_time, unsigned allotted_descents, tinygemm::SummaryStat sumstat, unsigned n_runs_per_kernel){
     
-    unsigned allotted_descents  = 10;
-    allotted_time = 1000.;
+    (void)sumstat;
+    //unsigned allotted_descents  = 10;
+    //allotted_time = 1000.;
     
     float elapsed_seconds = 0;
     unsigned elapsed_descents = 0;
@@ -562,6 +565,10 @@ public:
     }
     
     
+    
+    
+    
+    
     float best_gflops = 0;
     unsigned best_soln_index = 0;
     std::vector<float> soln_gflops;
@@ -579,12 +586,13 @@ public:
     std::string header("The gflops found by single descents:");
     stars.resize(header.size(), '*');
     
-    mowri << "\n"  << header << "\n" << stars << "\n"; 
+    mowri << "\n" << "(find finished) elapsed seconds: " << elapsed_seconds << "    elapsed descents: " <<  elapsed_descents << Endl;
+    mowri << header << "\n" << stars << "\n"; 
     std::sort(soln_gflops.begin(), soln_gflops.end());
     for (auto & x : soln_gflops){
       mowri << x << "  ";
     }
-    mowri << "\n";
+    mowri << "\n\n";
         
     return v_tgsolns[best_soln_index];
     
@@ -644,6 +652,7 @@ public:
 
         /* extra precaution, should be able to remove this */
         deriveability_test(hyper_param_current, "in find loop");     
+        
            
         auto bundle = tinygemm::kerngen::get_bundle(hyper_param_current,gg);
         /* the OpenCL string was succesfully generated, we can now attempt to compile and benchmark it */
@@ -653,6 +662,7 @@ public:
         mowri << std::setprecision(6) << "s]\t" << hyper_param_current.get_string() << Endl;
         
         setup_tinykernels(hyper_param_current, bundle);  
+
         core_gemm_loop(n_runs_per_kernel, false);
 
         /* A new best kernel found */
@@ -755,19 +765,23 @@ public:
   }
 }; 
 
-openclutil::SafeClMem get_copy(
+//openclutil::SafeClMem 
+
+cl_mem get_copy(
 cl_command_queue command_queue,
 cl_mem c,   
 const tinygemm::TinyGemmGeometry & gg,
 const tinygemm::TinyGemmOffsets & toff,
 const std::string & hash
 ){
-  openclutil::SafeClMem c_copied(hash);
+  //openclutil::SafeClMem c_copied(hash);
+  
+  cl_mem c_copied;
   cl_event c_copy_event; 
   size_t n_c = gg.ldX[nsHP::matC] * (gg.tX[nsHP::matC] == gg.isColMajor ? gg.m : gg.n) + toff.oc;
   size_t c_memsize = gg.derived.float_size_bytes*n_c;
-  c_copied.clmem = openclutil::cl_create_buffer_from_command_queue(command_queue, CL_MEM_READ_WRITE, c_memsize, NULL, hash + ", in function get_copy of tinygemm");
-  openclutil::cl_enqueue_copy_buffer(command_queue, c, c_copied.clmem, 0, 0, c_memsize, 0, NULL, &c_copy_event, hash + ", in function get_copy of tinygemm");
+  c_copied = openclutil::cl_create_buffer_from_command_queue(command_queue, CL_MEM_READ_WRITE, c_memsize, NULL, hash + ", in function get_copy of tinygemm");
+  openclutil::cl_enqueue_copy_buffer(command_queue, c, c_copied, 0, 0, c_memsize, 0, NULL, &c_copy_event, hash + ", in function get_copy of tinygemm");
   openclutil::cl_wait_for_events(1, &c_copy_event, "in function find of tinygemm");
   return c_copied;
 }
@@ -780,8 +794,11 @@ const std::string & hash
 
 tinygemm::TinyGemmSolution
 find(
-float allotted_time,
 cl_command_queue command_queue,
+float allotted_time,
+unsigned allotted_descents,
+unsigned n_runs_per_kernel, //or time per kernel ? Hmmm.
+tinygemm::SummaryStat sumstat,
 cl_mem a,   
 cl_mem b,
 cl_mem c,
@@ -792,35 +809,32 @@ const tinygemm::TinyGemmOffsets & toff,
 outputwriting::OutputWriter & mowri,
 bool c_is_const){
 
-
-  
-  auto bla = get_default(command_queue, constraint_string, gg);
-
-  /* The number of times each kernel is run in find. 
-   * consider adding this parameter to user API. */
-  unsigned n_runs_per_kernel = 3;
-
   tinygemm::consistencychecks::check_ldx_mnk_consistent(gg);  
 
   bool full_constraints_expected = false;
 
+  cl_mem c_to_use (nullptr);
+  openclutil::SafeClMem c_copied("to be used in the case that c_is_const");
   if (c_is_const == true){
-    openclutil::SafeClMem c_copied = get_copy(command_queue, c, gg, toff, "copy of c in find");
-    OpenCLGemmEncapsulator oger(command_queue, gg, toff, a, b, c_copied.clmem, workspace, constraint_string, full_constraints_expected, mowri); 
-    return oger.find(allotted_time, n_runs_per_kernel);
+    c_to_use = get_copy(command_queue, c, gg, toff, "c_is_const is true, making the copy");
+    c_copied.clmem = c_to_use;
   }
   
   else{
-    OpenCLGemmEncapsulator oger(command_queue, gg, toff, a, b, c, workspace, constraint_string, full_constraints_expected, mowri); 
-    return oger.find(allotted_time, n_runs_per_kernel);
+    c_to_use = c;
   }
+
+  OpenCLGemmEncapsulator oger(command_queue, gg, toff, a, b, c, workspace, constraint_string, full_constraints_expected, mowri); 
+  return oger.find(allotted_time, allotted_descents, sumstat, n_runs_per_kernel);
 }
+
 
 tinygemm::TinyGemmSolution
 get_default(
 cl_command_queue command_queue,
 std::string constraint_string,
-const tinygemm::TinyGemmGeometry & gg){
+const tinygemm::TinyGemmGeometry & gg, 
+std::string k_comment){
 
   openclutil::OpenCLDeviceInfo devinfo(command_queue);
   
@@ -850,7 +864,12 @@ const tinygemm::TinyGemmGeometry & gg){
     throw tinygemm_error(ss.str());
   }
 
-  tinygemm::TinygemmCachedSolution cached_soln(kernel_cache.at(k_dev).at(k_con).at(k_geo));
+  if (kernel_cache.at(k_dev).at(k_con).at(k_geo).count(k_comment) == 0){
+    ss << "\nUnrecognised k_comment in cache";
+    throw tinygemm_error(ss.str());
+  }
+
+  tinygemm::TinygemmCachedSolution cached_soln(kernel_cache.at(k_dev).at(k_con).at(k_geo).at(k_comment));
   
   /* generating source files from cache */
   hyperparams::Graph graph(gg, devinfo, cached_soln.hyperstring, false);
@@ -879,7 +898,13 @@ void benchgemm(
   bool full_constraints_expected = true;
   tinygemm::consistencychecks::check_ldx_mnk_consistent(gg);
   if (c_is_const == true){
-    openclutil::SafeClMem c_copied = get_copy(command_queue, c_gpu, gg, toff, "copy of c in benchgemm");
+    //openclutil::SafeClMem c_copied = get_copy(command_queue, c_gpu, gg, toff, "copy of c in benchgemm");
+    
+    
+    cl_mem c_cop = get_copy(command_queue, c_gpu, gg, toff, "copy of c in benchgemm");
+    openclutil::SafeClMem c_copied("copy of c in find");
+    c_copied.clmem = c_cop;
+    
     OpenCLGemmEncapsulator oger(command_queue, gg, toff, a_gpu, b_gpu, c_copied.clmem, workspace_gpu, hyperstring, full_constraints_expected, mowri);
     oger.benchgemm(n_runs);
   }

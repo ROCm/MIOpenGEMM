@@ -837,14 +837,6 @@ std::vector<HyperParams> HyperParams::get_one_aways(){
 }
   
 
-/* TODO : is this function nec ? */
-HyperParams get_hp_start(const Graph & graph){
-  HyperParams hyper_param_start(graph);
-  hyper_param_start.checks();  
-  return hyper_param_start;
-}
-
-
 
 bool HyperParams::in_graph(unsigned mi, unsigned hpi, unsigned value){
   return std::count(p_graph->p_subgs[mi]->range[hpi].begin(), p_graph->p_subgs[mi]->range[hpi].end(), value) != 0;
