@@ -27,6 +27,18 @@
 namespace tinygemm{
 
 
+FindParams::FindParams(float allotted_time_, unsigned allotted_descents_, unsigned n_runs_per_kernel_, SummaryStat sumstat_):allotted_time(allotted_time_), allotted_descents(allotted_descents_), n_runs_per_kernel(n_runs_per_kernel_), sumstat(sumstat_) {
+
+  if (allotted_time <= 0){
+    throw tinygemm::tinygemm_error("allotted_time should be strictly positive, in FindParams constructor");
+  }
+  
+  if (allotted_descents == 0){
+    throw tinygemm::tinygemm_error("allotted_descents should be strictly positive, in FindParams constructor");
+  }
+  
+  
+}
 
 
 class MultiFloatType{
@@ -89,6 +101,7 @@ public:
   const tinygemm::TinyGemmOffsets toff;
   TinyGemmGPUMems gpum;
   const openclutil::OpenCLDeviceInfo devinfo;
+  std::string constraints_string;
   const hyperparams::Graph graph;
 
 
@@ -117,7 +130,7 @@ public:
   cl_mem b_gpu_, 
   cl_mem c_gpu_,
   cl_mem workspace_gpu_,
-  std::string constraint_string,
+  std::string constraints_string_,
   bool full_constraints_expected,
   outputwriting::OutputWriter & mowri_):
   
@@ -127,7 +140,8 @@ public:
   gpum(a_gpu_, b_gpu_, c_gpu_, workspace_gpu_),
 
   devinfo(command_queue_),
-  graph(gg, devinfo, constraint_string, full_constraints_expected),
+  constraints_string(constraints_string_),
+  graph(gg, devinfo, constraints_string_, full_constraints_expected),
 
   mowri(mowri_)
   {
@@ -535,11 +549,23 @@ public:
 
   
   
-  tinygemm::TinyGemmSolution find(float allotted_time, unsigned allotted_descents, tinygemm::SummaryStat sumstat, unsigned n_runs_per_kernel){
+  tinygemm::TinyGemmSolution find(const FindParams & find_params){
+  
+    float allotted_time = find_params.allotted_time;
+    unsigned allotted_descents = find_params.allotted_descents;
+    tinygemm::SummaryStat sumstat = find_params.sumstat;
+    unsigned n_runs_per_kernel = find_params.n_runs_per_kernel;
     
     (void)sumstat;
     //unsigned allotted_descents  = 10;
     //allotted_time = 1000.;
+    
+    
+    if (allotted_time <= 0 || allotted_descents == 0){
+      std::string k_comment("");
+      mowri << "in find with allotted time = " << allotted_time << " and allotted_descents = " << allotted_descents << ", returning default" <<  Endl;
+      return get_default(command_queue, constraints_string, gg, k_comment);
+    }
     
     float elapsed_seconds = 0;
     unsigned elapsed_descents = 0;
@@ -548,7 +574,7 @@ public:
     std::vector<tinygemm::TinyGemmSolution> v_tgsolns;
 
     std::string stars("");    
-    while (elapsed_seconds < allotted_time && elapsed_descents < allotted_descents){
+    while (elapsed_seconds <= allotted_time && elapsed_descents < allotted_descents){
       
       std::stringstream sss;
       sss << "Entering single_descent_find, at t = " << elapsed_seconds << " [s] ( < " << allotted_time << " [s]) and iteration = " << elapsed_descents << " ( < " << allotted_descents << " )";
@@ -613,11 +639,12 @@ public:
 
 
     if (allotted_time <= 0){
-      mowri << "allotted_time (" << allotted_time << ") is insufficient for running any kernels, returning a TinyGemmSolution based on gg and constraint_string without searching" << Endl;
-      deriveability_test(hyper_param_current, "in allotted_time <= 0");    
-      auto bundle = tinygemm::kerngen::get_bundle(hyper_param_current, gg); 
-      tinygemm::TinyGemmSolutionStatistics tgss(std::numeric_limits<float>::max(), 0, 0, {});
-      return { gg, tgss, bundle.v_tgks, hyper_param_current.get_string() };
+      throw tinygemm_error("in single_descent_find with allotted_time <= 0, this should never happen (logic error)");
+      //mowri << "allotted_time (" << allotted_time << ") is insufficient for running any kernels, returning a TinyGemmSolution based on gg and constraints_string without searching" << Endl;
+      //deriveability_test(hyper_param_current, "in allotted_time <= 0");    
+      //auto bundle = tinygemm::kerngen::get_bundle(hyper_param_current, gg); 
+      //tinygemm::TinyGemmSolutionStatistics tgss(std::numeric_limits<float>::max(), 0, 0, {});
+      //return { gg, tgss, bundle.v_tgks, hyper_param_current.get_string(), devinfo, constraints_string };
     }
 
     
@@ -674,7 +701,7 @@ public:
           
           std::time_t generation_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
           auto sstats = TinyGemmSolutionStatistics(median_time, median_gflops, elapsed_seconds, std::ctime(&generation_time));
-          best_solns_path.emplace_back (gg, sstats, bundle.v_tgks, hyper_param_current.get_string() );
+          best_solns_path.emplace_back (gg, sstats, bundle.v_tgks, hyper_param_current.get_string(), devinfo, constraints_string );
         }
         ++hfi;
         update_elapsed_seconds();
@@ -746,7 +773,7 @@ public:
     }
     
     if (best_solns_path.size() == std::numeric_limits<float>::max()){
-      throw tinygemm_error("\nThere were no solutions found. This suggests that the initial kernel did not work (could not derive hyper parameters, required too much memory, or did not compile. Maybe there is some preceding warning printed which sheds light on this? Probably with a modification to the FindStartType or the constraint_string, this should be resolved. For example, the unroll UNR can be reduced if the problem is memory. jn should catch certain problems in architests ");
+      throw tinygemm_error("\nThere were no solutions found. This suggests that the initial kernel did not work (could not derive hyper parameters, required too much memory, or did not compile. Maybe there is some preceding warning printed which sheds light on this? Probably with a modification to the FindStartType or the constraints_string, this should be resolved. For example, the unroll UNR can be reduced if the problem is memory. jn should catch certain problems in architests ");
     }
   
     auto leading_size = best_solns_path.back().hyper_param_string.size() + 2;
@@ -795,15 +822,16 @@ const std::string & hash
 tinygemm::TinyGemmSolution
 find(
 cl_command_queue command_queue,
-float allotted_time,
-unsigned allotted_descents,
-unsigned n_runs_per_kernel, //or time per kernel ? Hmmm.
-tinygemm::SummaryStat sumstat,
+const FindParams & find_params,
+//float allotted_time,
+//unsigned allotted_descents,
+//unsigned n_runs_per_kernel, //or time per kernel ? Hmmm.
+//tinygemm::SummaryStat sumstat,
 cl_mem a,   
 cl_mem b,
 cl_mem c,
 cl_mem workspace,
-const std::string constraint_string,
+const std::string constraints_string,
 const tinygemm::TinyGemmGeometry & gg,
 const tinygemm::TinyGemmOffsets & toff,
 outputwriting::OutputWriter & mowri,
@@ -824,30 +852,31 @@ bool c_is_const){
     c_to_use = c;
   }
 
-  OpenCLGemmEncapsulator oger(command_queue, gg, toff, a, b, c, workspace, constraint_string, full_constraints_expected, mowri); 
-  return oger.find(allotted_time, allotted_descents, sumstat, n_runs_per_kernel);
+  OpenCLGemmEncapsulator oger(command_queue, gg, toff, a, b, c_to_use, workspace, constraints_string, full_constraints_expected, mowri); 
+  return oger.find(find_params);//allotted_time, allotted_descents, sumstat, n_runs_per_kernel);
 }
 
 
 tinygemm::TinyGemmSolution
 get_default(
 cl_command_queue command_queue,
-std::string constraint_string,
+std::string constraints_string,
 const tinygemm::TinyGemmGeometry & gg, 
 std::string k_comment){
 
   openclutil::OpenCLDeviceInfo devinfo(command_queue);
   
   std::string k_dev = devinfo.identifier;
-  std::string k_con = constraint_string;
+  std::string k_con = constraints_string;
   std::string k_geo = gg.get_string();
   
   std::stringstream ss;
   ss << "\n";
   ss << "a problem arose in get_default, with keys\n";
-  ss << "devinfo.identifier:\n-----> " << devinfo.identifier << "\n";
-  ss << "constraint_string:\n-----> " << constraint_string << "\n";
-  ss << "gg.get_string():\n-----> " << gg.get_string() << "\n";
+  ss << "\ndevinfo.identifier\n  -----> `" << devinfo.identifier << "'\n";
+  ss << "\nconstraints_string\n  -----> `" << constraints_string << "'\n";
+  ss << "\ngg.get_string()\n  -----> `" << gg.get_string() << "'\n";
+  ss << "\nk_comment\n  -----> `" << k_comment << "'\n";
   
   if (kernel_cache.count(k_dev) == 0){
     ss << "\nUnrecognised device identifier in cache";
@@ -855,7 +884,7 @@ std::string k_comment){
   }
   
   if (kernel_cache.at(k_dev).count(k_con) == 0){
-    ss << "\nUnrecognised constraint_string in cache";
+    ss << "\nUnrecognised constraints_string in cache";
     throw tinygemm_error(ss.str());
   }
 
@@ -876,7 +905,7 @@ std::string k_comment){
   hyperparams::HyperParams hp(graph);
   auto bundle = tinygemm::kerngen::get_bundle(hp,gg);
  
-  return { gg, tinygemm::TinyGemmSolutionStatistics(cached_soln.stats_string), bundle.v_tgks, hp.get_string() };
+  return { gg, tinygemm::TinyGemmSolutionStatistics(cached_soln.stats_string), bundle.v_tgks, hp.get_string(), devinfo, constraints_string};
 
 }
   

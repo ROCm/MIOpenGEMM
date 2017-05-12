@@ -11,6 +11,29 @@
 
 namespace tinygemm{
 
+std::string TinyGemmSolutionStatistics::get_string() const {
+  std::stringstream ss;
+  ss << "runtime:" << median_benchmark_time << "  gflops:" << median_benchmark_gflops << "  date:" << date;
+  std::string stroo("");
+  for (char x : ss.str()){
+    if (x != '\n'){
+      //if (x == '.'){
+        //stroo += 'p';
+      //}
+      //else if (std::isspace(x) != 0){
+        //stroo += '_';
+      //}
+      //else if (x == ':'){
+        //stroo += '_';
+      //}
+      //else{
+      stroo += x;
+      //}
+    }
+  }
+  
+  return stroo;
+}
 
 TinyGemmSolutionStatistics::TinyGemmSolutionStatistics(float median_benchmark_time_, float median_benchmark_gflops_, float solution_discovery_time_, std::string date_): 
   median_benchmark_time(median_benchmark_time_), median_benchmark_gflops(median_benchmark_gflops_), solution_discovery_time(solution_discovery_time_), date(date_) {}

@@ -36,7 +36,7 @@ void basicexample(){
   std::string logfile("basicexample-findlog.txt");
   /* enforce that the kernel is deterministic, or not. Note that 
    * for small problems, non-deterministic kernels are significantly (2x) faster */
-  std::string constraint_string = "";
+  std::string constraints_string = "";
   unsigned n_postfind_runs = 5; 
   bool do_cpu_test = true;  
 
@@ -47,7 +47,7 @@ void basicexample(){
   tinygemm::TinyGemmGeometry gg (isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype);
   tinygemm::TinyGemmOffsets offsets (a_offset, b_offset, c_offset, workspace_offset, tail_off_a, tail_off_b, tail_off_c);    
   tinygemm::FindStartType fst(tinygemm::FindStartType::Random);
-  basicfind<float>(gg, offsets, allotted_time, verbose, logfile, constraint_string, fst, n_postfind_runs, do_cpu_test);    
+  basicfind<float>(gg, offsets, allotted_time, verbose, logfile, constraints_string, fst, n_postfind_runs, do_cpu_test);    
 }
 
 int main(){

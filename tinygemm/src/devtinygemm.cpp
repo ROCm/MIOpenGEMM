@@ -144,15 +144,17 @@ public:
     }
   }
   
-  tinygemm::TinyGemmSolution find(float allotted_time, unsigned allotted_iterations, unsigned n_runs_per_kernel, tinygemm::SummaryStat sumstat, std::string constraint_string){//, FindStartType fst){
+  //float allotted_time, unsigned allotted_iterations, unsigned n_runs_per_kernel, tinygemm::SummaryStat sumstat
+  tinygemm::TinyGemmSolution find(const tinygemm::FindParams & find_params, std::string constraints_string){//, FindStartType fst){
     /* dev code's connection to tinygemm */
     tinygemm::TinyGemmSolution tgs = tinygemm::find(
       tgcq.command_queue, 
-      allotted_time, 
-      allotted_iterations, 
-      n_runs_per_kernel,
-      sumstat, 
-       a_gpu_safemem.clmem, b_gpu_safemem.clmem, c_gpu_safemem.clmem, workspace_safemem.clmem, constraint_string, gg, toff, 
+      find_params,
+      //allotted_time, 
+      //allotted_iterations, 
+      //n_runs_per_kernel,
+      //sumstat, 
+       a_gpu_safemem.clmem, b_gpu_safemem.clmem, c_gpu_safemem.clmem, workspace_safemem.clmem, constraints_string, gg, toff, 
       mowri, false); 
    return tgs;
   }
@@ -171,6 +173,8 @@ public:
     if (c_true_for_test == nullptr){
       c_for_cpu_compute.resize(get_c_memsize()/sizeof(TFloat));
       std::memcpy(c_for_cpu_compute.data(), c, get_c_memsize());
+
+      
       slowcpugemm::gemms_cpu<TFloat>(gg, toff, a, b, c_for_cpu_compute.data(), tinygemm::default_alpha, tinygemm::default_beta, {"3fors"}, mowri);
       c_true_for_test = c_for_cpu_compute.data();
     }
@@ -222,15 +226,19 @@ const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, c
 
 
 template <typename TFloat>
-tinygemm::TinyGemmSolution find(float allotted_time, unsigned allotted_iterations, unsigned n_runs_per_kernel, SummaryStat sumstat, const TFloat * a, const TFloat * b, const TFloat * c, std::string constraint_string /*, FindStartType fst*/, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff,  outputwriting::OutputWriter & mowri){
+tinygemm::TinyGemmSolution find(//float allotted_time, unsigned allotted_iterations, unsigned n_runs_per_kernel, SummaryStat sumstat, 
+
+const tinygemm::FindParams & find_params, const TFloat * a, const TFloat * b, const TFloat * c, std::string constraints_string /*, FindStartType fst*/, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff,  outputwriting::OutputWriter & mowri){
   
   Gemini <TFloat> gem(gg, toff, a, b, c, mowri);
-  return gem.find(allotted_time, allotted_iterations, n_runs_per_kernel, sumstat, constraint_string);//, fst);
+  return gem.find(find_params, constraints_string);//, fst);
 }
 
-template tinygemm::TinyGemmSolution find(float allotted_time, unsigned allotted_iterations, unsigned n_runs_per_kernel, SummaryStat sumstat, const double * a, const double * b, const double * c, std::string constraint_string, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, outputwriting::OutputWriter & mowri);
+template tinygemm::TinyGemmSolution find(const tinygemm::FindParams & find_params, const double * a, const double * b, const double * c, std::string constraints_string, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, outputwriting::OutputWriter & mowri);
 
-template tinygemm::TinyGemmSolution find(float allotted_time, unsigned allotted_iterations, unsigned n_runs_per_kernel, SummaryStat sumstat, const float * a, const float * b, const float * c,    std::string constraint_string, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, outputwriting::OutputWriter & mowri);
+template tinygemm::TinyGemmSolution find(const tinygemm::FindParams & find_params, const float * a, const float * b, const float * c,    std::string constraints_string, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, outputwriting::OutputWriter & mowri);
+
+
 
 
 }

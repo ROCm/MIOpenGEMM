@@ -12,7 +12,7 @@
 #include <tinygemm/tinygemmgeometry.hpp>
 #include <tinygemm/outputwriter.hpp>
 
-#include "setabcw.hpp"
+#include <tinygemm/setabcw.hpp>
 /* Note that currently (13/11/2016) most testing is done through dev/python scripts */
 /* Update (30/01/2017) this is the preferred place for doing testing */
 
@@ -20,7 +20,7 @@
 std::string get_hyperstring(std::string hyperstring = ""){
   if (hyperstring.compare("") == 0){
     //hyperstring = "A_MIC5_PAD2_PLU0_LIW1_MIW0_WOS1__B_MIC2_PAD1_PLU1_LIW0_MIW1_WOS0__C_UNR32_GAL3_PUN1_ICE1_NAW64_UFO0_MAC2";
-    hyperstring = "A_MIC4_PAD2_PLU1_LIW1_MIW1_WOS1__B_MIC8_PAD1_PLU0_LIW0_MIW0_WOS0__C_UNR16_GAL1_PUN0_ICE1_NAW64_UFO0_MAC5";
+    hyperstring = "A_MIC4_PAD2_PLU1_LIW1_MIW1_WOS0__B_MIC8_PAD1_PLU0_LIW0_MIW0_WOS0__C_UNR16_GAL1_PUN0_ICE3_NAW64_UFO0_MAC256_SKW9";
   }
   return hyperstring;
 }
@@ -35,9 +35,9 @@ tinygemm::TinyGemmGeometry get_geometry(){
   bool tA = false;
   bool tB = false;
   bool tC = false;
-  unsigned m = 500; 
+  unsigned m = 200; 
   unsigned n = 500; 
-  unsigned k = 256;           
+  unsigned k = 10000;           
 
   
   unsigned lda = ( tA == isColMajor ? k : m ) + 0;
@@ -94,19 +94,19 @@ int main(){
 
 
   bool test_print = false;
-  bool test_benchgemm = false;  
-  bool test_find = true;
-  bool test_accuracy = false;
+  bool test_benchgemm = true;  
+  bool test_find = false;
+  bool test_accuracy = true;
   bool test_default = false;
 
-  std::string constraint_string("");
+  std::string constraints_string("");
   
   float allotted_find_time = 1000;
   unsigned allotted_find_descents = 10;
   unsigned n_runs_per_kernel = 3;
   tinygemm::SummaryStat sumstat(tinygemm::Max);
   
-  unsigned n_runs_benchgemm = 1000;
+  unsigned n_runs_benchgemm = 2;
   
   typedef float tfloat;
   
@@ -135,12 +135,19 @@ int main(){
     }
   }
   
+  
+  tinygemm::FindParams find_params(allotted_find_time, allotted_find_descents, n_runs_per_kernel, sumstat);
+  
   if (test_find){
-    tinygemm::dev::find(allotted_find_time, allotted_find_descents, n_runs_per_kernel, sumstat, v_a.data(), v_b.data(), v_c.data(), constraint_string, gg, toff, mowri);
+    tinygemm::dev::find(find_params, v_a.data(), v_b.data(), v_c.data(), constraints_string, gg, toff, mowri);
   }
   
   if (test_default){
-    throw tinygemm::tinygemm_error("cannot test default currently, bla");
+    std::string k_comment("");  
+    tinygemm::openclutil::TinyGemmCommandQueueInContext tgcq(mowri, "TinyGemmCommandQueueInContext in get_default in devtingemm.cpp");
+    auto soln = tinygemm::get_default(tgcq.command_queue, constraints_string, gg, k_comment);
+  
+    //throw tinygemm::tinygemm_error("cannot test default currently, bla");
   }
   
   return 0;

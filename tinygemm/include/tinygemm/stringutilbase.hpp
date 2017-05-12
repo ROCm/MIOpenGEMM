@@ -21,6 +21,8 @@ std::string getdirfromfn(const std::string & fn);
 //split something like QWE111 into QWE and 111.
 std::tuple<std::string, unsigned> splitnumeric(std::string alphanum);
 
+std::string get_padded(unsigned x, unsigned length = 4);
+
 }
 }
 

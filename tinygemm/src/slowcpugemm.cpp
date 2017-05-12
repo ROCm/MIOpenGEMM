@@ -65,6 +65,8 @@ void gemm_3fors_generic_cpu(const tinygemm::TinyGemmGeometry & gg, const tinygem
   
   FInner finner;
   
+
+
   /* For rows of C */
   for (unsigned  x = 0; x < gg.m; ++x){
     /* For columns of C */
@@ -82,12 +84,17 @@ void gemm_3fors_generic_cpu(const tinygemm::TinyGemmGeometry & gg, const tinygem
       c[target_index] += alpha*finner(a, b, x, y, gg.ldX[nsHP::matA], gg.ldX[nsHP::matB], gg.k);
     }
   }
+  
+  //std::abort();
+
+
 }
 
 
 //bool tA, bool tB, bool tC, unsigned m, unsigned n, unsigned k, unsigned lda, unsigned ldb, unsigned ldc
 template <typename TFloat>
 void gemm_3fors_cpu(const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, const TFloat * a, const TFloat * b, TFloat * c, TFloat alpha, TFloat beta){
+  
   
   
   

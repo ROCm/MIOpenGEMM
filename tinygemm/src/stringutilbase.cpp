@@ -2,6 +2,7 @@
 #include <tinygemm/tinygemmerror.hpp>
 #include <iostream>
 #include <tuple>
+#include <cmath>
 
 namespace tinygemm{
 namespace stringutil{
@@ -139,6 +140,16 @@ std::string getdirfromfn(const std::string & fn){
   
   return dir;
 }
+
+std::string get_padded(unsigned x, unsigned length){
+  auto n_pads = length + 1 - unsigned(std::log10(x + 1.));
+  std::string padded = std::to_string(x);
+  for (auto sp = 0; sp < n_pads; ++sp){
+    padded = padded + " ";
+  }
+  return padded;
+}
+
 
 
 }

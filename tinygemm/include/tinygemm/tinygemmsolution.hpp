@@ -29,11 +29,10 @@ class TinyGemmSolutionStatistics{
     TinyGemmSolutionStatistics(float median_benchmark_time, float median_benchmark_gflops, float solution_discovery_time, std::string date);
     TinyGemmSolutionStatistics(std::string cache_string);
 
-    std::string get_string(){
-      std::stringstream ss;
-      ss << "runtime_" << median_benchmark_time << "__gflops_" << median_benchmark_gflops << "__date_" << date;
-      return ss.str();
-    }
+    std::string get_string() const;
+    
+    
+
 
 };
 
@@ -51,8 +50,12 @@ public:
   std::vector<KernelString> v_tgks;
 
   std::string hyper_param_string;
+  
+  openclutil::OpenCLDeviceInfo devinfo;
 
-  TinyGemmSolution(const tinygemm::TinyGemmGeometry & geometry_, TinyGemmSolutionStatistics tgss_, const std::vector<KernelString> & v_tgks_, std::string hyper_param_string_): geometry(geometry_), statistics(tgss_), v_tgks(v_tgks_), hyper_param_string(hyper_param_string_) {}
+  std::string constraints_string;
+  
+  TinyGemmSolution(const tinygemm::TinyGemmGeometry & geometry_, TinyGemmSolutionStatistics tgss_, const std::vector<KernelString> & v_tgks_, std::string hyper_param_string_, openclutil::OpenCLDeviceInfo devinfo_, std::string constraints_string_): geometry(geometry_), statistics(tgss_), v_tgks(v_tgks_), hyper_param_string(hyper_param_string_), devinfo(devinfo_), constraints_string(constraints_string_) {}
 
   /* return a string summarising the TinyGemmGeometry, less offsets (a request from MLOpen) */
   std::string get_networkconfig_string() const;

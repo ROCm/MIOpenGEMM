@@ -10,23 +10,25 @@ namespace accuracytests {
 template <typename TFloat>
 void elementwise_compare(const TFloat * c_before, double beta, const TFloat * c_cpu, const TFloat * c_gpu, unsigned nels, tinygemm::outputwriting::OutputWriter & mowri){
   
-  // 1 in 100.
-  float threshold = 0.01;
   
-  float max_relerr = 0;
+  // 1 in 100.
+  double threshold = 0.01;
+  double max_relerr = 0.;
   unsigned i_max = 0;
   
   std::vector<unsigned> violating_indices = {};
-  std::vector<float> violating_margins = {};
+  std::vector<double> violating_margins = {};
  
   
   for (unsigned i = 0; i < nels; ++i){
     
     //std::cout << c_before[i] << std::endl;
-    float absdifference = std::abs(c_cpu[i] - c_gpu[i]);
-    float sumabs = 0.3333*(std::abs(c_cpu[i]) + std::abs(c_gpu[i]) + beta*std::abs(c_before[i]));
-    float relerr = absdifference / std::max<float>(1e-9, sumabs);
-  
+    double absdifference = std::abs(c_cpu[i] - c_gpu[i]);
+    
+    double sumabs = 0.3333*(std::abs(c_cpu[i]) + std::abs(c_gpu[i]) + beta*std::abs(c_before[i]));
+    double relerr = absdifference / std::max<double>(1e-9, sumabs);
+    
+    
     if (relerr > threshold){
       violating_indices.push_back(i);
       violating_margins.push_back(relerr);
@@ -45,7 +47,13 @@ void elementwise_compare(const TFloat * c_before, double beta, const TFloat * c_
       ss << "the first violating indices (above the threshold of " << threshold << ") were: \n";
       for (unsigned bl= 0; bl < std::min<size_t>(10, violating_indices.size()); ++bl){
         ss << " " << violating_indices[bl] << " (" << violating_margins[bl] << ") ";
-      } 
+      }
+      
+      
+      ss << "\n{c before}  (cpu)  [gpu]\n";
+      for (unsigned i = 0; i < std::min<unsigned>(nels, 16); ++i){
+        ss << "{" << c_before[i] << "}  (" <<  c_cpu[i]  << ")  ["  << c_gpu[i] << "]" << "\n"; 
+       } 
       
       throw tinygemm::tinygemm_error(ss.str());
     }

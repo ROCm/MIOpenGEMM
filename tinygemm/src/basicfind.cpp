@@ -1,6 +1,3 @@
-#ifndef BASICFIND_HPP
-#define BASICFIND_HPP
-
 #include <vector>
 #include <thread>
 #include <chrono>
@@ -21,16 +18,16 @@
 #include <tinygemm/slowcpugemm.hpp>
 
 /* used to populate data with random values */
-#include "setabcw.hpp"
+#include <tinygemm/setabcw.hpp>
+
+namespace tinygemm{
   
 template <typename TFloat> 
-tinygemm::TinyGemmSolution basicfind(const tinygemm::TinyGemmGeometry & geometry, const tinygemm::TinyGemmOffsets & toff, float allotted_time, 
+tinygemm::TinyGemmSolution base_basicfind(const tinygemm::TinyGemmGeometry & geometry, const tinygemm::TinyGemmOffsets & toff, const tinygemm::FindParams & find_params,
+//float allotted_time, unsigned allotted_descents, unsigned n_runs_per_kernel, tinygemm::SummaryStat sumstat, 
 
-unsigned allotted_descents,
-unsigned n_runs_per_kernel,
-tinygemm::SummaryStat sumstat,
 
-bool verbose, std::string logfile, std::string constraint_string, unsigned n_postfind_runs, bool do_cpu_test){ //tinygemm::FindStartType fst, 
+bool verbose, std::string logfile, std::string constraints_string, unsigned n_postfind_runs, bool do_cpu_test){ 
   
   /* just checking that geometry floattype is correct */
   if (!((geometry.floattype == 'f' && sizeof(TFloat) == 4) || (geometry.floattype == 'd' && sizeof(TFloat) == 8))) {
@@ -110,9 +107,9 @@ bool verbose, std::string logfile, std::string constraint_string, unsigned n_pos
    * Find a solution *
    * *****************/
 
-  tinygemm::TinyGemmSolution soln = tinygemm::find(command_queue, allotted_time, allotted_descents, n_runs_per_kernel, sumstat, a_gpu, b_gpu, c_gpu, workspace_gpu, constraint_string, geometry, toff, mowri); 
-
-  
+//, allotted_time, allotted_descents, n_runs_per_kernel sumstat,
+  tinygemm::TinyGemmSolution soln = tinygemm::find(command_queue, find_params, a_gpu, b_gpu, c_gpu, workspace_gpu, constraints_string, geometry, toff, mowri); 
+   
     
   if (do_cpu_test == true && n_postfind_runs < 1){
     throw tinygemm::tinygemm_error("(in basicfind.hpp, part of example/test suite) do_cpu_test is true, and n_postfind_runs < 1. If you wish to run the cpu test, n_postfind_runs should take a positive integral value");
@@ -143,8 +140,12 @@ bool verbose, std::string logfile, std::string constraint_string, unsigned n_pos
     std::vector<cl_event> clevents;
 
     for (auto & ks : soln.v_tgks){
+      
             
+
       auto kernel_cstr = ks.kernstr.c_str();
+
+
       auto fname_cstr = ks.fname.c_str();
       size_t source_size = ks.kernstr.size();
 
@@ -175,15 +176,18 @@ bool verbose, std::string logfile, std::string constraint_string, unsigned n_pos
       }
       
       if (ks.type.uses_alpha){
+        
+
         tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), parameter_index, sizeof(TFloat), &alpha_true_type, enqhash + " alpha");
         ++parameter_index;
       }
       
-      if (ks.type.uses_beta){
+       if (ks.type.uses_beta){
         tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), parameter_index, sizeof(TFloat), &beta_true_type, enqhash + " beta");
         ++parameter_index;
       }
     }
+    
     
     
     /* Enqueueing the kernel(s)  */
@@ -202,19 +206,39 @@ bool verbose, std::string logfile, std::string constraint_string, unsigned n_pos
     tinygemm::openclutil::cl_wait_for_events(1, &clevents.back(), "basicfind.hpp, waiting for " + soln.v_tgks.back().type.bkt_string + " in call to enqueue_kernels after postfind first enq.");
     
     if (do_cpu_test == true){
+      
+      
+            //slowcpugemm::gemms_cpu<TFloat>(gg, toff, a, b, c_for_cpu_compute.data(), tinygemm::default_alpha, tinygemm::default_beta, {"3fors"}, mowri);
+            
 
       /* We do a check with cpu */
       std::vector<std::string> algs {"3fors"};
-      auto c_cpu_final = v_c;
+      std::vector<TFloat> c_cpu_final (v_c.size());
+      for (unsigned i = 0; i < v_c.size(); ++i){
+        c_cpu_final[i] = v_c[i];
+      }
+      
+      
       tinygemm::slowcpugemm::gemms_cpu<TFloat>(geometry, toff, v_a.data(), v_b.data(), c_cpu_final.data(), alpha, beta, algs, mowri);
+
+
       auto c_copied_from_gpu = std::vector<TFloat>(v_c.size(), 0);
       cl_event event_read_c_back;
+
+
+
+
       tinygemm::openclutil::cl_enqueue_read_buffer(command_queue, c_gpu, CL_TRUE, 0, sizeof(TFloat)*c_copied_from_gpu.size(), c_copied_from_gpu.data(), 0, NULL, &event_read_c_back, "read in basicfind.hpp s.");  
+      
+            
       clWaitForEvents(1, &event_read_c_back);
 
       bool old_to_terminal = mowri.to_terminal;
       mowri.to_terminal = true;
-      tinygemm::accuracytests::elementwise_compare<TFloat>(v_c.data(), beta, c_copied_from_gpu.data(), c_cpu_final.data(), v_c.size(), mowri);
+
+
+
+      tinygemm::accuracytests::elementwise_compare<TFloat>(v_c.data(), beta, c_cpu_final.data(), c_copied_from_gpu.data(), v_c.size(), mowri);
       mowri.to_terminal = old_to_terminal;      
     }
 
@@ -264,4 +288,23 @@ bool verbose, std::string logfile, std::string constraint_string, unsigned n_pos
 }
 
 
-#endif
+tinygemm::TinyGemmSolution basicfind(const tinygemm::TinyGemmGeometry & geometry, const tinygemm::TinyGemmOffsets & toff, 
+
+const tinygemm::FindParams & find_params,
+//float allotted_time, unsigned allotted_descents, unsigned n_runs_per_kernel, tinygemm::SummaryStat sumstat, 
+
+bool verbose, std::string logfile, std::string constraints_string, unsigned n_postfind_runs, bool do_cpu_test){
+  if (geometry.floattype == 'f'){
+    return base_basicfind<float>(geometry, toff, find_params, verbose, logfile, constraints_string, n_postfind_runs, do_cpu_test);
+  }
+  else if (geometry.floattype == 'd'){
+    return base_basicfind<double>(geometry, toff, find_params, verbose, logfile, constraints_string, n_postfind_runs, do_cpu_test);    
+  }
+  else{
+    throw tinygemm::tinygemm_error("unrecognised geometry floattype");
+  } 
+}
+
+}
+
+

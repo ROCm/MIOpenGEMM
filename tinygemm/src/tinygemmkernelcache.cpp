@@ -34,7 +34,10 @@ const KernelCache kernel_cache = get_kernel_cache();
 
 KernelCache get_kernel_cache(){
 KernelCache kc;
-add_entry(kc, "FijiOpenCL1p2AMDAPP2264p102264p10", "", "tC0_tA0_tB0_colMaj1_m500_n500_k256_lda500_ldb256_ldc500_ws10_f32", "", {"kernelstring", "kyoolbananas"});
+
+add_entry(kc, "FijiOpenCL1p2AMDAPP2264p102264p10",  "A_WOS0__B_WOS0",  "tC0_tA0_tB0_colMaj1_m5124_n9124_k1760_lda5124_ldb1760_ldc5124_ws1_f32",  "", {"A_MIC8_PAD2_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD2_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL2_PUN1_ICE1_NAW64_UFO0_MAC256_SKW10", "runtime:41.415  gflops:3973.55  date:Thu May 11 16:25:59 2017"});
+
+
 return kc;
 }
 

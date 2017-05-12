@@ -19,20 +19,31 @@ static const double default_beta = 0.273539340934809345;
 
 enum SummaryStat {Mean=0, Median, Max};
 
+class FindParams{
+public:
+  float allotted_time;
+  unsigned allotted_descents;
+  unsigned n_runs_per_kernel;
+  SummaryStat sumstat;
+  FindParams(float allotted_time, unsigned allotted_descents, unsigned n_runs_per_kernel, SummaryStat sumstat);
+};
+
+
 tinygemm::TinyGemmSolution
 find(
 /* in seconds */
 cl_command_queue command_queue,
-float allotted_time,
-unsigned allotted_descents,
-unsigned n_runs_per_kernel,
-tinygemm::SummaryStat sumstat,
+const FindParams & find_params,
+//float allotted_time,
+//unsigned allotted_descents,
+//unsigned n_runs_per_kernel,
+//tinygemm::SummaryStat sumstat,
 cl_mem a,   
 cl_mem b,
 cl_mem c,
 cl_mem workspace,
 /* a substring of a hyperstring, defines hyper-parameters with fixed values */
-const std::string constraint_string,
+const std::string constraints_string,
 /* see tinygemm/include/tinygemmgeometry.hpp for TinyGemmGeometry parameters */
 const tinygemm::TinyGemmGeometry & gg,
 /* this is nec so that we know where in a,b,c and workspace to start */
@@ -46,7 +57,7 @@ tinygemm::TinyGemmSolution
 get_default(
 /* use this to extract device info */
 cl_command_queue command_queue,
-std::string constraint_string,
+std::string constraints_string,
 const tinygemm::TinyGemmGeometry & gg, 
 std::string k_comment);
 

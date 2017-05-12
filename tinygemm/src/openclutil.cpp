@@ -571,7 +571,7 @@ OpenCLDeviceInfo::OpenCLDeviceInfo(){
   device_name = "unknown_tinygemm_default_constructed";
 }
 
-std::string OpenCLPlatformInfo::get_string() {
+std::string OpenCLPlatformInfo::get_string() const {
   std::stringstream ss;
   ss << "\n";
   ss << "platform profile : " << profile << "\n";
@@ -581,7 +581,7 @@ std::string OpenCLPlatformInfo::get_string() {
   return ss.str();
 }
 
-std::string OpenCLDeviceInfo::get_string() {
+std::string OpenCLDeviceInfo::get_string() const {
   std::stringstream ss;
   ss << platinfo.get_string();
   ss << "device name : " << device_name << "\n";

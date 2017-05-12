@@ -1,8 +1,9 @@
-#ifndef SETABCW_HPP
-#define SETABCW_HPP
+#include <tinygemm/setabcw.hpp>
 
-#include <tinygemm/tinygemmgeometry.hpp>
+
 namespace setabcw{
+
+
 
 template <typename TFloat>
 void fill_uni(std::vector<TFloat> & v, unsigned r_small, unsigned r_big){
@@ -49,6 +50,12 @@ void set_abcw(std::vector<TFloat> & v_a, std::vector<TFloat> & v_b, std::vector<
 }
 
 
-}
+template void set_abc(std::vector<double> & v_a, std::vector<double> & v_b, std::vector<double> & v_c, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff);
 
-#endif
+template void set_abc(std::vector<float> & v_a, std::vector<float> & v_b, std::vector<float> & v_c, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff);
+
+template void set_abcw(std::vector<double> & v_a, std::vector<double> & v_b, std::vector<double> & v_c, std::vector<double> & v_workspace, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff);
+
+template void set_abcw(std::vector<float> & v_a, std::vector<float> & v_b, std::vector<float> & v_c, std::vector<float> & v_workspace, const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff);
+
+}

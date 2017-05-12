@@ -110,7 +110,7 @@ class OpenCLPlatformInfo{
 
     OpenCLPlatformInfo(cl_platform_id platform_id);
     OpenCLPlatformInfo() = default;
-    std::string get_string();
+    std::string get_string() const;
 
 };
 
@@ -133,7 +133,7 @@ class OpenCLDeviceInfo{
     unsigned device_max_work_group_size;
     unsigned wg_atom_size;
 
-    std::string get_string();
+    std::string get_string() const;
     OpenCLDeviceInfo(const cl_command_queue & command_queue);
     OpenCLDeviceInfo();
 };
