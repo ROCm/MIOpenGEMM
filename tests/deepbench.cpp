@@ -8,14 +8,16 @@ int main(){
   unsigned allotted_iterations = 2;
   unsigned n_runs_per_kernel = 1;
   tinygemm::SummaryStat sumstat(tinygemm::Max);
-  bool verbose = true;
+  bool verbose = false;
   std::vector<std::string> v_constraints = {"A_WOS0__B_WOS0"};
   std::string basedir("/home/james/tinygemmout/test1");
   
   tinygemm::FindParams find_params(allotted_time, allotted_iterations, n_runs_per_kernel, sumstat);
   
-  
-  tinygemm::run_find_experiments(geometries, find_params, verbose, v_constraints, basedir);
+ 
+  bool verbose_outer = true;
+  std::string fn_outer("");
+  tinygemm::run_find_experiments(geometries, v_constraints, find_params, verbose, basedir, verbose_outer, fn_outer);
   
 
   return 0;

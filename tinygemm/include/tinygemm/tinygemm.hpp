@@ -34,10 +34,6 @@ find(
 /* in seconds */
 cl_command_queue command_queue,
 const FindParams & find_params,
-//float allotted_time,
-//unsigned allotted_descents,
-//unsigned n_runs_per_kernel,
-//tinygemm::SummaryStat sumstat,
 cl_mem a,   
 cl_mem b,
 cl_mem c,
@@ -59,7 +55,9 @@ get_default(
 cl_command_queue command_queue,
 std::string constraints_string,
 const tinygemm::TinyGemmGeometry & gg, 
-std::string k_comment);
+std::string k_comment,
+outputwriting::OutputWriter & mowri
+);
 
 
 void benchgemm(

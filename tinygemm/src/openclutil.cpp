@@ -53,9 +53,6 @@ void cl_release_program(cl_program program, const std::string & hash){
 
 void cl_set_kernel_arg(cl_kernel & kernel, cl_uint arg_index, size_t arg_size, const void * arg_value, const std::string & hash){
   
-  //size_t kernel_nparms;
-  //cl_int rooby = clGetKernelInfo (kernel, CL_KERNEL_NUM_ARGS, sizeof(size_t) , &kernel_nparms, nullptr);
-  //std::cout << rooby << "  " << kernel_nparms << std::endl;
 
   cl_int ret = clSetKernelArg(kernel, arg_index, arg_size, arg_value);
 
@@ -401,18 +398,6 @@ void set_program_and_kernel(const cl_command_queue & command_queue, const std::s
 SafeClMem::SafeClMem(const std::string & hash_):clmem(nullptr),hash(hash_) {}
 
 SafeClMem::~SafeClMem(){
-  //std::cout << "~SafeClMem of " << hash << std::endl;
-
-
-  //cl_uint counter;
-  //cl_uint reso = clGetMemObjectInfo (clmem,
- 	//CL_MEM_REFERENCE_COUNT,
- 	//sizeof(cl_uint),
- 	//&counter,
- 	//NULL);
-  //cl_mem blabla = clmem;
-  //cl_mem dingdong = clmem;
-
 
 
   if (clmem != nullptr){
@@ -420,21 +405,12 @@ SafeClMem::~SafeClMem(){
   }
 
   
-  //reso = clGetMemObjectInfo (clmem,
- 	//CL_MEM_REFERENCE_COUNT,
- 	//sizeof(cl_uint),
- 	//&counter,
- 	//NULL);
-
 
 
 
 }
 
-//void SafeClMem::update(cl_meme clmem_, std::string hash_){
-  //clmem = clmem_;
-  //hash = hash_;
-//}
+
 
   /* properties = CL_QUEUE_PROFILING_ENABLE : 
    * create an inorder command queue with profiling enabled. Profiling is enabled so that we can get start and end times for kernels*/

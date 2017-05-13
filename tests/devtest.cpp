@@ -72,7 +72,11 @@ void print_kernel(){
   tinygemm::openclutil::OpenCLDeviceInfo devinfo;
   tinygemm::hyperparams::Graph graph(gg, devinfo, hyperstring, true); 
   tinygemm::hyperparams::HyperParams hp(graph);
-  auto bundle = tinygemm::kerngen::get_bundle(hp, gg);
+  bool mowri_verbose = true;
+  bool verbose_get_bundle = true;
+  std::string mowri_out("");
+  tinygemm::outputwriting::OutputWriter mowri(mowri_verbose, mowri_out != "" , mowri_out);
+  auto bundle = tinygemm::kerngen::get_bundle(hp, gg, mowri, verbose_get_bundle);
   
   
   for (auto & x :  bundle.v_tgks){
@@ -145,7 +149,7 @@ int main(){
   if (test_default){
     std::string k_comment("");  
     tinygemm::openclutil::TinyGemmCommandQueueInContext tgcq(mowri, "TinyGemmCommandQueueInContext in get_default in devtingemm.cpp");
-    auto soln = tinygemm::get_default(tgcq.command_queue, constraints_string, gg, k_comment);
+    auto soln = tinygemm::get_default(tgcq.command_queue, constraints_string, gg, k_comment, mowri);
   
     //throw tinygemm::tinygemm_error("cannot test default currently, bla");
   }

@@ -262,13 +262,12 @@ bool verbose, std::string logfile, std::string constraints_string, unsigned n_po
         std::chrono::duration<float> fp_ms = end - start;
         float elapsed_seconds = fp_ms.count();
         host_times[npr] = elapsed_seconds;  
-        std::cout << "Time to complete " << npr << " run(s) : " << elapsed_seconds << " [s]." << " This corresponds to " << 1e-9*(2.*geometry.m*geometry.n*geometry.k*npr) / elapsed_seconds << " gflop/s. " << std::endl;
+        mowri << "Time to complete " << npr << " run(s) : " << elapsed_seconds << " [s]." << " This corresponds to " << 1e-9*(2.*geometry.m*geometry.n*geometry.k*npr) / elapsed_seconds << " gflop/s. " << Endl;
       }
       
       float difference_in_times = host_times[n_postfind_runs + 1] - host_times[1];
-      std::cout << "Difference in times : " << difference_in_times << " [s]. This corresponds to  " << 1e-9*(2.*geometry.m*geometry.n*geometry.k*n_postfind_runs) / difference_in_times << " gflop/s. " << std::endl;
+      mowri << "Difference in times : " << difference_in_times << " [s]. This corresponds to  " << 1e-9*(2.*geometry.m*geometry.n*geometry.k*n_postfind_runs) / difference_in_times << " gflop/s. " << Endl;
       /* Timing is fickle. Occasionally (for small problems), the host time is 20% slower." */
-      std::cout << soln.get_hyper_param_string() << std::endl;
     }
   }
   

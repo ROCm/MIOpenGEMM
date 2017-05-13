@@ -29,12 +29,12 @@ class BundleGenerator{
 private:
   const hyperparams::HyperParams & hp;
   const tinygemm::TinyGemmGeometry & gg;
-  /* to be set in constructor, based on parameters provided */
   const derivedparams::DerivedParams dp;
-  
+  outputwriting::OutputWriter & mowri;
+  bool bundle_verbose;
 
 public: 
-  BundleGenerator(const hyperparams::HyperParams & hp_, const tinygemm::TinyGemmGeometry & gg_): hp(hp_), gg(gg_), dp(hp, gg) {
+  BundleGenerator(const hyperparams::HyperParams & hp_, const tinygemm::TinyGemmGeometry & gg_, outputwriting::OutputWriter & mowri_, bool bundle_verbose_): hp(hp_), gg(gg_), dp(hp, gg), mowri(mowri_), bundle_verbose(bundle_verbose_) {
     
   }
 
@@ -106,15 +106,29 @@ public:
     }
 
 
-    if (true == false){
-      std::cout << "------------ network ------------------- \n";
+    if (bundle_verbose == true){
+      mowri << "\n";
+      mowri << "network of of kernel dependencies: \n";
       for (unsigned i = 0; i < v_tgks.size(); ++i){
-        std::cout << "------------ kernel " << i << " ( " << types[i].full << " )  ----- waits for -----> " << std::flush;
-        for (unsigned j = 0; j < v_wait_indices[i].size(); ++j){
-          std::cout << "------------ " << v_wait_indices[i][j] << " ( " << types[v_wait_indices[i][j]].full << " )   " << std::flush;
+        std::stringstream pre_waits_for_ss;
+        pre_waits_for_ss << "kernel " << i << " ( " << types[i].full << " )";
+        std::string pre_waits_for = pre_waits_for_ss.str();
+        mowri << pre_waits_for;
+        int base_space (26);
+        std::string space1 (std::max(1, base_space - static_cast<int>(pre_waits_for.size())), ' ');
+        mowri << space1 << "waits for   " << Flush;
+        
+        if (v_wait_indices[i].size() == 0){
+          mowri << "(nothing)";
         }
-        std::cout << std::endl;
+        
+        for (unsigned j = 0; j < v_wait_indices[i].size(); ++j){
+          mowri << "(kernel " << v_wait_indices[i][j] << " ( " << types[v_wait_indices[i][j]].full << " ))   " << Flush;
+        }
+        mowri << Endl;
       }
+      mowri << "\n";
+
     }
 
     return { std::move(v_tgks), std::move(v_wait_indices), std::move(dp) };
@@ -124,9 +138,9 @@ public:
 
 
 
-Bundle get_bundle(const hyperparams::HyperParams & hp,  const tinygemm::TinyGemmGeometry & gg){
+Bundle get_bundle(const hyperparams::HyperParams & hp,  const tinygemm::TinyGemmGeometry & gg, outputwriting::OutputWriter & mowri, bool bundle_verbose){
   
-  BundleGenerator ksbg(hp, gg);
+  BundleGenerator ksbg(hp, gg, mowri, bundle_verbose);
   return ksbg.generate();
 }
 

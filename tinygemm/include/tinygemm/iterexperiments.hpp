@@ -5,7 +5,7 @@
 
 namespace tinygemm{
   
-int run_find_experiments(const std::vector<tinygemm::TinyGemmGeometry> & geometries, const tinygemm::FindParams & find_params, bool verbose, std::vector<std::string> & v_constraints, std::string basedir);
+int run_find_experiments(const std::vector<tinygemm::TinyGemmGeometry> & geometries, std::vector<std::string> & v_constraints, const tinygemm::FindParams & find_params, bool verbose_inner, std::string basedir_inner, bool verbose_outer, std::string fn_outer);
 
 std::vector<tinygemm::TinyGemmGeometry> get_deepbench_geometries(unsigned workspace_size = 1);
 

@@ -13,7 +13,6 @@
 
 #include <array>
 
-/* TODO : hyperparams caching */
 
 namespace tinygemm{
 

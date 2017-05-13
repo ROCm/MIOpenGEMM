@@ -116,7 +116,7 @@ private:
   std::vector<TinyGemmKernel> tk_kernels;  
   std::vector<TinyGemmKernel *> tk_kernels_active;  
   std::vector<std::vector <unsigned > > v_wait_indices;
-  
+  bool bundle_verbose = false;
 
   
 
@@ -492,7 +492,7 @@ public:
     
     deriveability_test(hp, "in benchgemm");
     
-    auto bundle = tinygemm::kerngen::get_bundle(hp,gg); 
+    auto bundle = tinygemm::kerngen::get_bundle(hp,gg, mowri, bundle_verbose); 
     auto atr = architests::architecture_specific_tests(command_queue, hp, bundle.dp);
     
     if (std::get<0>(atr) == false){
@@ -564,7 +564,7 @@ public:
     if (allotted_time <= 0 || allotted_descents == 0){
       std::string k_comment("");
       mowri << "in find with allotted time = " << allotted_time << " and allotted_descents = " << allotted_descents << ", returning default" <<  Endl;
-      return get_default(command_queue, constraints_string, gg, k_comment);
+      return get_default(command_queue, constraints_string, gg, k_comment, mowri);
     }
     
     float elapsed_seconds = 0;
@@ -640,11 +640,6 @@ public:
 
     if (allotted_time <= 0){
       throw tinygemm_error("in single_descent_find with allotted_time <= 0, this should never happen (logic error)");
-      //mowri << "allotted_time (" << allotted_time << ") is insufficient for running any kernels, returning a TinyGemmSolution based on gg and constraints_string without searching" << Endl;
-      //deriveability_test(hyper_param_current, "in allotted_time <= 0");    
-      //auto bundle = tinygemm::kerngen::get_bundle(hyper_param_current, gg); 
-      //tinygemm::TinyGemmSolutionStatistics tgss(std::numeric_limits<float>::max(), 0, 0, {});
-      //return { gg, tgss, bundle.v_tgks, hyper_param_current.get_string(), devinfo, constraints_string };
     }
 
     
@@ -681,7 +676,7 @@ public:
         deriveability_test(hyper_param_current, "in find loop");     
         
            
-        auto bundle = tinygemm::kerngen::get_bundle(hyper_param_current,gg);
+        auto bundle = tinygemm::kerngen::get_bundle(hyper_param_current,gg, mowri, bundle_verbose);
         /* the OpenCL string was succesfully generated, we can now attempt to compile and benchmark it */
         ++global_counter;
 
@@ -742,8 +737,8 @@ public:
           /* filtering out non-deriveables */
           else if (std::get<0>(derivedparams::get_deriveability(hp, gg)) == false){
             
-            //std::cout << "----------------------------- non derivable ----------------------" << std::endl;
-            //std::cout << std::get<1>(derivedparams::get_deriveability(hp, gg));
+            // << "----------------------------- non derivable ----------------------" << std::endl;
+            // << std::get<1>(derivedparams::get_deriveability(hp, gg));
             //front_insertion_type = 'd';
           }
           
@@ -862,7 +857,8 @@ get_default(
 cl_command_queue command_queue,
 std::string constraints_string,
 const tinygemm::TinyGemmGeometry & gg, 
-std::string k_comment){
+std::string k_comment,
+outputwriting::OutputWriter & mowri){
 
   openclutil::OpenCLDeviceInfo devinfo(command_queue);
   
@@ -903,7 +899,8 @@ std::string k_comment){
   /* generating source files from cache */
   hyperparams::Graph graph(gg, devinfo, cached_soln.hyperstring, false);
   hyperparams::HyperParams hp(graph);
-  auto bundle = tinygemm::kerngen::get_bundle(hp,gg);
+  bool bundle_verbose_get_default = true;
+  auto bundle = tinygemm::kerngen::get_bundle(hp,gg, mowri, bundle_verbose_get_default);
  
   return { gg, tinygemm::TinyGemmSolutionStatistics(cached_soln.stats_string), bundle.v_tgks, hp.get_string(), devinfo, constraints_string};
 

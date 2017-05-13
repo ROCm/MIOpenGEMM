@@ -22,7 +22,6 @@ void elementwise_compare(const TFloat * c_before, double beta, const TFloat * c_
   
   for (unsigned i = 0; i < nels; ++i){
     
-    //std::cout << c_before[i] << std::endl;
     double absdifference = std::abs(c_cpu[i] - c_gpu[i]);
     
     double sumabs = 0.3333*(std::abs(c_cpu[i]) + std::abs(c_gpu[i]) + beta*std::abs(c_before[i]));

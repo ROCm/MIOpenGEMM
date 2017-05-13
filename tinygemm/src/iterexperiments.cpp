@@ -10,8 +10,12 @@
 namespace tinygemm{
 
 
-int run_find_experiments(const std::vector<tinygemm::TinyGemmGeometry> & geometries, const tinygemm::FindParams & find_params, bool verbose, std::vector<std::string> & v_constraints, std::string basedir){
-
+int run_find_experiments(const std::vector<tinygemm::TinyGemmGeometry> & geometries, std::vector<std::string> & v_constraints, const tinygemm::FindParams & find_params, bool verbose_inner, std::string basedir_inner, bool verbose_outer, std::string fn_outer){
+  
+  
+  
+  tinygemm::outputwriting::OutputWriter mowri_outer(verbose_outer, fn_outer != "" , fn_outer);
+  
   std::string cache_write_string("");
   
   tinygemm::TinyGemmOffsets offsets (13,24,35,46,57,67,79);
@@ -26,36 +30,45 @@ int run_find_experiments(const std::vector<tinygemm::TinyGemmGeometry> & geometr
 
   for (auto & constraints :  v_constraints){
       
-    std::string fulldir;
-    if (basedir != ""){
-      if (basedir.back() != '/'){
-        basedir += "/";
+    std::string fulldir_inner;
+    if (basedir_inner != ""){
+      if (basedir_inner.back() != '/'){
+        basedir_inner += "/";
       }
        
-      std::stringstream fulldir_ss;
-      fulldir_ss << basedir << "cs" << constraints << "/";
-      fulldir = fulldir_ss.str();       
+      std::stringstream fulldir_inner_ss;
+      fulldir_inner_ss << basedir_inner << "cs" << constraints << "/";
+      fulldir_inner = fulldir_inner_ss.str();       
       /* WARNING : only works on Linux (makes directory) */
-      std::string syscall = std::string("mkdir -p  ") + fulldir;
+      std::string syscall = std::string("mkdir -p  ") + fulldir_inner;
       int v_sys = std::system(syscall.c_str());
       
       if (v_sys != 0){
         std::stringstream ss;
-        ss << "The following call to std::system failed:\n" << syscall << "\nIs the OS posix? If not this, call to std::system should be different.\nPlease raise an issue if you see this, and ideally suggest a fix";
+        ss << "The following call to std::system failed:\n" << syscall << "\nIs the operating system posix? If not so, call to std::system should be different.\nPlease raise an issue if you see this, and ideally propose a fix";
         throw tinygemm::tinygemm_error(ss.str());
       }
     }
     
-    std::cout << "\nEntering experiment with constraints_string = `" << constraints << "'" << std::endl;    
+    mowri_outer << "\nEntering experiment with constraints_string = `" << constraints << "'" << Endl;    
 
     for (unsigned prob_i = 0; prob_i < geometries.size(); ++prob_i){
       tinygemm::TinyGemmGeometry gg = geometries[prob_i];
       std::stringstream ss_logfile;        
-      if (basedir != ""){
-        ss_logfile << fulldir << gg.get_string() << ".txt";
+      if (basedir_inner != ""){
+        ss_logfile << fulldir_inner << gg.get_string() << ".txt";
+      }
+
+
+      mowri_outer << (prob_i + 1) <<  "/" <<  geometries.size() << " \t m:" << tinygemm::stringutil::get_padded(gg.m) << " \t n:" << tinygemm::stringutil::get_padded(gg.n) << " \t k:" << tinygemm::stringutil::get_padded(gg.k) << " \t tA:" << gg.tX[tinygemm::nsHP::matA] << " \t tB:" << gg.tX[tinygemm::nsHP::matB] << Flush;
+
+      std::string logfile = ss_logfile.str();
+  
+      if (basedir_inner != ""){
+        mowri_outer << "\n" << logfile << Endl;
       }
       
-      auto soln = tinygemm::basicfind(gg, offsets, find_params, verbose, ss_logfile.str(), constraints,  n_postfind_runs, do_cpu_test);  
+      auto soln = tinygemm::basicfind(gg, offsets, find_params, verbose_inner, logfile, constraints,  n_postfind_runs, do_cpu_test);  
       end = std::chrono::high_resolution_clock::now();
       
       
@@ -64,24 +77,28 @@ int run_find_experiments(const std::vector<tinygemm::TinyGemmGeometry> & geometr
       cache_write_ss << R"(add_entry(kc, ")" <<  soln.devinfo.identifier << R"(",  ")" << soln.constraints_string << R"(",  ")" << soln.geometry.get_string() << R"(",  ")" << k_comment << R"(", {")" <<  soln.hyper_param_string << R"(", ")" << soln.statistics.get_string() << R"("});)"  << "\n\n";
       cache_write_string += cache_write_ss.str();
       
-      /* TODO here : write the solution, ready to stick in cache. */
       
       fp_ms = end - start;
       elapsed_seconds = fp_ms.count();
 
-      std::cout << (prob_i + 1) <<  "/" <<  geometries.size() << " \t m:" << tinygemm::stringutil::get_padded(gg.m) << " \t n:" << tinygemm::stringutil::get_padded(gg.n) << " \t k:" << tinygemm::stringutil::get_padded(gg.k) << " \t tA:" << gg.tX[tinygemm::nsHP::matA] << " \t tB:" << gg.tX[tinygemm::nsHP::matB] << " \tsoln median gflops :  " << soln.statistics.median_benchmark_gflops << "  \t soln median time : " << soln.statistics.median_benchmark_time << "  \t  elapsed time : " << elapsed_seconds << " [s] " << std::endl;
+
+      if (basedir_inner == ""){
+        mowri_outer << " \t " << Endl;
+      }
       
+      mowri_outer << "soln median gflops :  " << soln.statistics.median_benchmark_gflops << "  \t soln median time : " << soln.statistics.median_benchmark_time << "  \t  elapsed time : " << elapsed_seconds << " [s] " << Endl;
+      
+      if (basedir_inner != ""){
+        mowri_outer << "\n";
+      }
     }
   }
 
-  std::cout << "\nAll experiments have completed. To cache the best kernels found, copy the following string (between the `snips') into tinygemmkernelcache.cpp" << std::endl;
-
-
-  std::cout << "\nEntries are add_entry(global cache map, device key, kernel constraint key, geometry key, comment key, { hyper parameter string (best kernel), kernel info }) " << std::endl;
-  
-  std::cout << "\n\n-- snip -- snip -- snip -- \n\n\n"; 
-  std::cout << cache_write_string << std::flush;
-    std::cout << "\n-- snip -- snip -- snip -- \n " << std::endl; 
+  mowri_outer << "\nAll experiments have completed. To cache the best kernels found, copy the following string (between the `snips') into tinygemmkernelcache.cpp" << Endl;
+  mowri_outer << "\nEntries are add_entry(global cache map, device key, kernel constraint key, geometry key, comment key, { hyper parameter string (best kernel), kernel info }) " << Endl;
+  mowri_outer << "\n\n-- snip -- snip -- snip -- \n\n\n"; 
+  mowri_outer << cache_write_string << Flush;
+  mowri_outer << "\n-- snip -- snip -- snip -- \n " << Endl; 
   
   return 0;
 }
