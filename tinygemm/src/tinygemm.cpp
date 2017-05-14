@@ -23,6 +23,7 @@ namespace tinygemm{
   
 static const std::string generickernelname = "tg_generated_gemm";
 static const std::string betackernelname = "tg_betac";
+developb
 
 
 class MultiFloatType{
