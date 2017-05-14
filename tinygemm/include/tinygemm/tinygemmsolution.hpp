@@ -4,11 +4,13 @@
 
 #include <string> 
 #include <map>
-
+#include <chrono>
 
 #include <tinygemm/tinygemmgeometry.hpp>
 #include <tinygemm/hyperparams.hpp>
 #include <tinygemm/derivedparams.hpp>
+#include <tinygemm/kernelstring.hpp>
+#include <tinygemm/tinygemmfindparams.hpp>
 
 namespace tinygemm{
 
@@ -18,60 +20,46 @@ class TinyGemmSolutionStatistics{
     float median_benchmark_time;
     float median_benchmark_gflops;
 
-    /* the time in seconds at which this solution was discovered  */
+    /* the time in seconds at which this solution was discovered  (from start of descent)  */
     float solution_discovery_time;
     
-    TinyGemmSolutionStatistics(float median_benchmark_time, float median_benchmark_gflops, float solution_discovery_time);
-     
+    /* timestamp (date) when found */
+    std::string date;
+    
+    tinygemm::FindParams find_params;
+    
+    TinyGemmSolutionStatistics(float median_benchmark_time, float median_benchmark_gflops, float solution_discovery_time, std::string date, const tinygemm::FindParams & find_params);
+    TinyGemmSolutionStatistics(std::string cache_string);
+
+    TinyGemmSolutionStatistics() = default;
+    
+    std::string get_string() const;
+    
+    
+
+
 };
 
+/* Note 01 feb 2017: A TinyGemmSolution is only valid for a fixed geometry */
 class TinyGemmSolution{
 
 public:
 
-  /* Either an empty string, or the kernel to perform the C <- beta C part of GEMM */
-  std::string betac_kernel;
-
-  /* The name of the betac kernel, ie __kernel void THIS_STRING_HERE */
-  std::string betac_kernel_function_name;
-
-  /* if betac_kernel (above) is empty, this is a full GEMM kernel which performs  
-   * C <- C + alpha A*B + beta C. Otherwise, if betac_kernel is not empty, 
-   * this is a kernel which just does C <- C + alpha A*B */  
-  std::string main_kernel;
-
-  /* The name of the main kernel, ie __kernel void THIS_STRING_HERE */
-  std::string main_kernel_function_name;
-
-  /* all hyper-parameters (unroll, tile size, etc)
-   * these are also defined as preprocessor flags in main_kernel
-   * NOTE : these are NOT needed to run kernels, 
-   * just here to describle what the kernel does under the hood  */
-  hyperparams::HyperParams hp;
-
-  /* all derived parameters (derived from hyper-parameters) */
-  derivedparams::DerivedParams dp;
-  
-  /* the geometry used in the benchmark */
+  /* the geometry on which this solution was obtained */
   tinygemm::TinyGemmGeometry geometry;
 
-  /* currently 'f' or 'd' for single and double precision, respectively */
-  char floattype;  
-  
   TinyGemmSolutionStatistics statistics;
+  
+  /* the kernels of which the solution is comprised */
+  std::vector<KernelString> v_tgks;
 
+  std::string hyper_param_string;
   
-  TinyGemmSolution(const std::string & betac_kernel, const std::string & betac_kernel_function_name,  const std::string &  main_kernel, const std::string & main_kernel_function_name, const hyperparams::HyperParams & hp, const derivedparams::DerivedParams & dp, const tinygemm::TinyGemmGeometry & geometry, char floattype, TinyGemmSolutionStatistics tgss);
+  openclutil::OpenCLDeviceInfo devinfo;
+
+  std::string constraints_string;
   
-  
-  /* A TinyGemmSolution is only valid for a fixed basic geometry (tA, tB, etc) , but can be used for any size m,n,k, 
-   * as long as the kernel macro tile size is not larger than m x n. This function should be used to determine
-   * n_work_groups, local_work_size and global_work_size, which are needed when enqueueing main_kernel. See example TODO.
-   *   */
-  std::map<std::string, size_t> get_main_kernel_worksize_params(unsigned m, unsigned n);
-  
-  /* ditto the above comment, but for betac_kernel */
-  std::map<std::string, size_t> get_betac_kernel_worksize_params(unsigned m, unsigned n);
+  TinyGemmSolution(const tinygemm::TinyGemmGeometry & geometry_, TinyGemmSolutionStatistics tgss_, const std::vector<KernelString> & v_tgks_, std::string hyper_param_string_, openclutil::OpenCLDeviceInfo devinfo_, std::string constraints_string_): geometry(geometry_), statistics(tgss_), v_tgks(v_tgks_), hyper_param_string(hyper_param_string_), devinfo(devinfo_), constraints_string(constraints_string_) {}
 
   /* return a string summarising the TinyGemmGeometry, less offsets (a request from MLOpen) */
   std::string get_networkconfig_string() const;

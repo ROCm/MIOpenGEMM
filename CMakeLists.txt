@@ -31,7 +31,7 @@ option(BUILD_SHARED_LIBS "Build shared library" ON)
 include(EnableCompilerWarnings)
 
 add_subdirectory(tinygemm)
-add_subdirectory(testsexamples)
+add_subdirectory(tests)
 
 # development code. It requires cython (and only builds with certain versions. You probably want to comment this out.
 #add_subdirectory(dev)

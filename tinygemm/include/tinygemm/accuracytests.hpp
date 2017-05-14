@@ -37,7 +37,6 @@ void accuracy_test(bool isColMajor, bool tC, unsigned m, unsigned n, unsigned ld
     
   
   c_computed += c_offset;
-  //c_true += c_offset;
   
   /* The different cases of tC, isColMajor are handled in this block */
   if (isColMajor == false){

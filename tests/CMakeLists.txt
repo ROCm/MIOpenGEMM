@@ -21,20 +21,22 @@ function(add_test_executable TEST_NAME)
     set_tests_properties(${TEST_NAME} PROPERTIES FAIL_REGULAR_EXPRESSION "FAILED")
 endfunction(add_test_executable)
 
+
+
 function(add_example_executable EX_NAME)
     add_executable (${EX_NAME} EXCLUDE_FROM_ALL ${ARGN})
     target_link_libraries(${EX_NAME} tinygemm)
     add_dependencies(examples ${EX_NAME})
 endfunction(add_example_executable)
 
-add_example_executable(basicexample basicexample.cpp)
-
-add_example_executable(deepbench deepbench.cpp)
-
-add_example_executable(backconvwrw backconvwrw.cpp)
 
 add_test_executable(smallgeometrytests smallgeometrytests.cpp)
 
-add_test_executable(redirectionexample redirectionexample.cpp)
 
+add_example_executable(basicexample basicexample.cpp)
+add_example_executable(deepbench deepbench.cpp)
+add_example_executable(redirectionexample redirectionexample.cpp)
 add_example_executable(devtest devtest.cpp)
+add_example_executable(experiment1 experiment1.cpp)
+add_example_executable(initialisationdemo initialisationdemo.cpp)
+add_example_executable(gencache gencache.cpp)

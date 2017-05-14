@@ -8,14 +8,15 @@ namespace tinygemm{
 namespace outputwriting{
 
 OutputWriter::OutputWriter(bool to_terminal_, bool to_file_, std::string filename_):to_terminal(to_terminal_), to_file(to_file_), filename(filename_){
+
+
   if (to_file == true){
     if (filename.compare("") == 0){
       throw tinygemm_error("empty filename passed to OutputWrite, with to_file flag true. This is not possible.");
     }
     
     file.open(filename, std::ios::out);
- 
-    //std::ofstream file(filename, std::ios::out);
+     
     if (file.good() == false){
       std::string errm = "bad filename in constructor of OutputWriter object. The filename provided is `";
       errm += filename;
@@ -23,11 +24,13 @@ OutputWriter::OutputWriter(bool to_terminal_, bool to_file_, std::string filenam
       throw tinygemm_error(errm);
     }
   }
+  
+
 }
 
-//make default destructor.
 
 OutputWriter::~OutputWriter(){
+
   file.close();
 }
 

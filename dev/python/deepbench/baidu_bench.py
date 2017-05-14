@@ -1,11 +1,13 @@
 import os
+import sys
 
+sys.path.append("../experiments")
 import write_directories
 reload(write_directories)
 
 baidu_txt_fn = os.path.join(write_directories.baidu_base_directory, "baidu_cudnn_results", "cublas_results_from_baidu.txt")
-titanx_ods_fn = os.path.join("./baidu_benchmark", "DeepBench_NV_TitanX.ods")
-titanx_pascal_ods_fn = os.path.join("./baidu_benchmark", "DeepBench_NV_TitanX_Pascal.ods")
+titanx_ods_fn = os.path.join("./data", "DeepBench_NV_TitanX.ods")
+titanx_pascal_ods_fn = os.path.join("./data", "DeepBench_NV_TitanX_Pascal.ods")
 
 
 
@@ -227,4 +229,23 @@ def post_process_baidu():
   #print titleline    
   #return kernel_dict
        
+  
+
+
+def make_old_txt():
+  X = get_data("./data/gemm_old_results.ods")
+  X = X['Sheet3'] 
+  
+  write_fn = os.path.join(write_directories.baidu_base_directory, "old_results", "previous.txt")
+  filly = open(write_fn, 'w')
+  for x in X[0]:
+    filly.write("%s\t"%(x,))
+  filly.write("\n")
+  
+  for x in X[1:-1]:
+    if len(x) == 7:
+      for c in x:
+        filly.write("%s\t"%(c,))
+      filly.write("\n")
+        
   

@@ -9,8 +9,11 @@ if socket.gethostname() == "duffy":
 elif socket.gethostname() =='james-All-Series':
   write_base_directory = "/home/james/tinygemmout/"
 
+elif socket.gethostname() =='inky':
+  write_base_directory = "/home/james/tinygemmout/"
+
 else:
-  raise RuntimeError("Unrecognised hostname, please append write_base_directory info in write_directories")
+  raise RuntimeError("Unrecognised hostname: " + socket.gethostname() + ", please append write_base_directory info in write_directories")
 
 
 output_base_directory = os.path.join(write_base_directory, "output")
