@@ -10,7 +10,6 @@ namespace basegen{
       
 BaseGenerator::BaseGenerator(const tinygemm::hyperparams::HyperParams & hp_, const tinygemm::TinyGemmGeometry & gg_, const tinygemm::derivedparams::DerivedParams & dp_, const std::string & type_): hp(hp_), gg(gg_), dp(dp_), type(type_), kernelname("tg_" + type_) {
 
-  //kernelname = get_generic_kernelname(type);
 }
   
 
@@ -36,7 +35,7 @@ void BaseGenerator::append_parameter_list_from_usage(std::stringstream & ss){
 
   if (uses_workspace == true){
     
-    //if using c, workspace is const. this is a bit hacky, might have a kernel which uses c and modifies w too. 
+    /* if using c, workspace is const. this is a bit hacky, might have a kernel which uses c and modifies w too.  */
     if (uses_c == true){
       ss << first_char << "\n__global const TFLOAT * restrict w,\n";
     }

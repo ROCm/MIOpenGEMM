@@ -6,27 +6,17 @@
 
 #include  <CL/cl.h> 
 
-#include "tinygemmgeometry.hpp"
+#include <tinygemm/tinygemmgeometry.hpp>
 #include "tinygemmsolution.hpp"
 #include "tinygemmerror.hpp"
 #include "outputwriter.hpp"
+#include <tinygemm/tinygemmfindparams.hpp>
 
 namespace tinygemm{
 
 
 static const double default_alpha = 0.415693029182345929;
 static const double default_beta = 0.273539340934809345;
-
-enum SummaryStat {Mean=0, Median, Max};
-
-class FindParams{
-public:
-  float allotted_time;
-  unsigned allotted_descents;
-  unsigned n_runs_per_kernel;
-  SummaryStat sumstat;
-  FindParams(float allotted_time, unsigned allotted_descents, unsigned n_runs_per_kernel, SummaryStat sumstat);
-};
 
 
 tinygemm::TinyGemmSolution
@@ -49,6 +39,8 @@ outputwriting::OutputWriter & mowri,
 bool c_is_const = true);
 
 
+
+
 tinygemm::TinyGemmSolution
 get_default(
 /* use this to extract device info */
@@ -59,6 +51,11 @@ std::string k_comment,
 outputwriting::OutputWriter & mowri
 );
 
+std::tuple<bool, std::string> check_for_default(
+cl_command_queue command_queue,
+std::string constraints_string,
+const tinygemm::TinyGemmGeometry & gg, 
+std::string k_comment);
 
 void benchgemm(
 cl_command_queue command_queue, 
@@ -72,6 +69,11 @@ cl_mem c,
 cl_mem workspace,
 outputwriting::OutputWriter & mowri,
 bool c_is_const = false);
+
+
+/* reduced form, patch for miopen */
+tinygemm::TinyGemmSolution
+find(float allotted_time, cl_command_queue command_queue, cl_mem a, cl_mem b, cl_mem c, bool enforce_determinism, const tinygemm::TinyGemmGeometry & tgg);
 
 
 } //namespace

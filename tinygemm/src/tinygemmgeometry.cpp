@@ -140,7 +140,4 @@ std::string TinyGemmGeometry::get_networkconfig_string() const{
 }
 
 
-
-
-
 }

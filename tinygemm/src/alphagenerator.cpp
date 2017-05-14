@@ -321,11 +321,6 @@ void append_load_into_LDS_string(char x, std::stringstream & ss, unsigned final_
   
   char X = (x == 'a') ? 'A' : 'B';
   
-  
-  //x = (x == 'a') ? 'A' : x;
-  //x = (x == 'b') ? 'B' : x;
-  //nsHP::eMat X = static_cast<nsHP::eMat>(hp.p_graph->graphind.at(x));
-  
   std::string n_jumps_string = dp.main_split_on_k == 0 ? "UNROLL" : "G_UNROLL";
   
   
@@ -536,20 +531,6 @@ void append_final_write_all(std::stringstream & ss){
   }
 }    
     
-    //ss << 
-//R"(
-///* the case where this is not an edge tile : will write to all cells */
-//if (((PRESHIFT_FINAL_TILE_B == MACRO_TILE_LENGTH_B) || (group_id_b != N_GROUPS_B - 1 )) 
-//&&  ((PRESHIFT_FINAL_TILE_A == MACRO_TILE_LENGTH_A) || (group_id_a != N_GROUPS_A - 1 )) ){
-//)";
-    //append_final_write_loops_no_check(ss);
-    //ss << "\n}";
-    
-    //ss << "\n\nelse{";
-    //append_final_write_loops_with_check(ss);
-    //ss << "\n}";
-  //}
-
 
 
 void append_split_on_k_defns_string(std::stringstream & ss){
@@ -810,7 +791,7 @@ KernelString get_kernelstring(){
   
   std::stringstream ss;
   ss << get_time_string();
-  ss <<  "\n\n"; // << genutil::get_what_string() << "\n";
+  ss <<  "\n\n"; 
   ss << "/* this kernel was generated for starting geometry : */\n";
   ss << "/* " << gg.get_string() << "*/\n";  
   ss << "#define __K__ " << gg.k << "\n";

@@ -57,12 +57,14 @@ public:
   /* the usable amount of workspace */
   unsigned workspace_size;
   /* 'f' : 32-bit single precision or 'd' : 64-bit double precision */
-  const char floattype;
+  char floattype;
   /* */
   TinyGemmGeometryDerived derived;
   
 
   TinyGemmGeometry(bool isColMajor, bool tA, bool tB, bool tC, unsigned lda, unsigned ldb, unsigned ldc, unsigned m, unsigned n, unsigned k, unsigned workspace_size, char floattype);
+  
+  TinyGemmGeometry() = default;
   
   TinyGemmGeometry (const TinyGemmGeometry & ) = default;
   
@@ -82,9 +84,6 @@ public:
   
   std::string get_networkconfig_string() const;
   
-  /* how far away is gg ? Note that this is not a true distance: it is not symmetrical */
-  float get_distance(const TinyGemmGeometry & gg) const;
-
 };
 
 

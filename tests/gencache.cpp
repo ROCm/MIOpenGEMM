@@ -1,4 +1,5 @@
-#include "iterexperiments.hpp"
+#include <tinygemm/iterexperiments.hpp>
+#include <tinygemm/tggeometryutil.hpp>
 
 int main(){
   
@@ -12,17 +13,23 @@ int main(){
   
   unsigned ws_size = 1;
     
-  auto geometries = get_from_m_n_k_ldaABC_tA_tB(geotuples, ws_size);    
+  auto geometries = tinygemm::get_from_m_n_k_ldaABC_tA_tB(geotuples, ws_size);    
 
-  float allotted_time = 100.00; 
-  unsigned allotted_iterations = 1;
-  unsigned n_runs_per_kernel = 3;
+  float allotted_time = 3.00; 
+  unsigned allotted_iterations = 2;
+  unsigned n_runs_per_kernel = 1;
   tinygemm::SummaryStat sumstat(tinygemm::Max);
-  bool verbose = true;
+  bool verbose = false;
   std::vector<std::string> v_constraints = {"A_WOS0__B_WOS0"};
+  std::string basedir("/home/james/tinygemmout/test1");
+  
+  tinygemm::FindParams find_params(allotted_time, allotted_iterations, n_runs_per_kernel, sumstat);
+  
+ 
+  bool verbose_outer = true;
+  std::string fn_outer("");
+  tinygemm::run_find_experiments(geometries, v_constraints, find_params, verbose, basedir, verbose_outer, fn_outer);
 
-  std::string basedir("");
-  run_find_experiments(geometries, allotted_time, allotted_iterations, n_runs_per_kernel, sumstat, verbose, v_constraints, basedir);
 
   
 

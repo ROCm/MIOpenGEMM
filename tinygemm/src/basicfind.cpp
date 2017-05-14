@@ -8,6 +8,7 @@
 
 /* Required header for using tinygemm */
 #include <tinygemm/tinygemm.hpp>
+#include <tinygemm/tinygemmfindparams.hpp>
 
 /* The following two header files define functions which help with opencl boilerplating on my systems, they are not necessary */
 #include <tinygemm/outputwriter.hpp>
@@ -24,8 +25,6 @@ namespace tinygemm{
   
 template <typename TFloat> 
 tinygemm::TinyGemmSolution base_basicfind(const tinygemm::TinyGemmGeometry & geometry, const tinygemm::TinyGemmOffsets & toff, const tinygemm::FindParams & find_params,
-//float allotted_time, unsigned allotted_descents, unsigned n_runs_per_kernel, tinygemm::SummaryStat sumstat, 
-
 
 bool verbose, std::string logfile, std::string constraints_string, unsigned n_postfind_runs, bool do_cpu_test){ 
   
@@ -145,6 +144,7 @@ bool verbose, std::string logfile, std::string constraints_string, unsigned n_po
 
       auto kernel_cstr = ks.kernstr.c_str();
 
+      
 
       auto fname_cstr = ks.fname.c_str();
       size_t source_size = ks.kernstr.size();
@@ -207,9 +207,6 @@ bool verbose, std::string logfile, std::string constraints_string, unsigned n_po
     
     if (do_cpu_test == true){
       
-      
-            //slowcpugemm::gemms_cpu<TFloat>(gg, toff, a, b, c_for_cpu_compute.data(), tinygemm::default_alpha, tinygemm::default_beta, {"3fors"}, mowri);
-            
 
       /* We do a check with cpu */
       std::vector<std::string> algs {"3fors"};
@@ -290,7 +287,6 @@ bool verbose, std::string logfile, std::string constraints_string, unsigned n_po
 tinygemm::TinyGemmSolution basicfind(const tinygemm::TinyGemmGeometry & geometry, const tinygemm::TinyGemmOffsets & toff, 
 
 const tinygemm::FindParams & find_params,
-//float allotted_time, unsigned allotted_descents, unsigned n_runs_per_kernel, tinygemm::SummaryStat sumstat, 
 
 bool verbose, std::string logfile, std::string constraints_string, unsigned n_postfind_runs, bool do_cpu_test){
   if (geometry.floattype == 'f'){

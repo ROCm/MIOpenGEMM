@@ -74,9 +74,18 @@ int run_find_experiments(const std::vector<tinygemm::TinyGemmGeometry> & geometr
       
       std::stringstream cache_write_ss;
       std::string k_comment = "";
-      cache_write_ss << R"(add_entry(kc, ")" <<  soln.devinfo.identifier << R"(",  ")" << soln.constraints_string << R"(",  ")" << soln.geometry.get_string() << R"(",  ")" << k_comment << R"(", {")" <<  soln.hyper_param_string << R"(", ")" << soln.statistics.get_string() << R"("});)"  << "\n\n";
-      cache_write_string += cache_write_ss.str();
       
+      
+      cache_write_ss << "add_entry(kc, \"" << soln.devinfo.identifier << "\", /* device key */\n";
+      cache_write_ss << "\"" << soln.constraints_string << "\", /* constraint key */\n";
+      cache_write_ss << "\"" << soln.geometry.get_string() << "\", /* geometry key */\n";
+      cache_write_ss << "\"" << k_comment << "\", /* comment key */\n";
+      cache_write_ss << "{\"" << soln.hyper_param_string << "\", /* solution hyper string */\n";
+      cache_write_ss << "{" << soln.statistics.median_benchmark_time << ", " << soln.statistics.median_benchmark_gflops << ", " << soln.statistics.solution_discovery_time;
+      cache_write_ss << ", \"" << soln.statistics.date << "\"" << ", /* solution stats (time [ms], gflops, time found (within descent), date found */\n";
+      cache_write_ss << "{" << soln.statistics.find_params.allotted_time <<", " << soln.statistics.find_params.allotted_descents << ", " << soln.statistics.find_params.n_runs_per_kernel << ", " << tinygemm::get_sumstatkey(soln.statistics.find_params.sumstat) << "}}}); /* find param: allotted time, allotted descents, n runs per kernel, summmary over runs */\n\n";
+      
+      cache_write_string += cache_write_ss.str();
       
       fp_ms = end - start;
       elapsed_seconds = fp_ms.count();
@@ -95,7 +104,6 @@ int run_find_experiments(const std::vector<tinygemm::TinyGemmGeometry> & geometr
   }
 
   mowri_outer << "\nAll experiments have completed. To cache the best kernels found, copy the following string (between the `snips') into tinygemmkernelcache.cpp" << Endl;
-  mowri_outer << "\nEntries are add_entry(global cache map, device key, kernel constraint key, geometry key, comment key, { hyper parameter string (best kernel), kernel info }) " << Endl;
   mowri_outer << "\n\n-- snip -- snip -- snip -- \n\n\n"; 
   mowri_outer << cache_write_string << Flush;
   mowri_outer << "\n-- snip -- snip -- snip -- \n " << Endl; 

@@ -18,8 +18,6 @@ void confirm_cl_status(cl_int ret, const std::string & hash = "", const std::str
 
 void set_platform_etc(cl_platform_id & platform, cl_uint & num_platforms, cl_context & context, cl_device_id & device_id_to_use, outputwriting::OutputWriter & mowri);
 
-//std::string & kernel_function_name, 
-
 void set_program_and_kernel(const cl_command_queue & command_queue, const std::string & kernel_string, const std::string & kernel_function_name, cl_program & program, cl_kernel & kernel, outputwriting::OutputWriter & mowri);
   
 void cl_release_kernel(cl_kernel kernel, const std::string & hash);
@@ -84,11 +82,9 @@ class SafeClMem{
   public:
     cl_mem clmem;
     std::string hash;
-    //void update(cl_meme clmem_, std::string hash_);
     SafeClMem(const std::string & hash); 
     
     ~SafeClMem();
-    //SafeClMem(const SafeClMem &) = default;
 };
 
 class TinyGemmCommandQueueInContext{

@@ -8,11 +8,7 @@
 namespace tinygemm{
 namespace derivedparams{
 
-
-
-
 unsigned DerivedParams::get_target_ld(nsHP::eMat emat_x) const{
-
   return at(emat_x).cw1_target_ldx;
 }
 
@@ -101,12 +97,6 @@ std::tuple<bool, std::string>
 DerivedParams::set_fragile(){
   
   set_should_be_hyperparams();
-
-  //if (hp.at(nsHP::matC).vs[nsHP::MAC] >= nsMAC::neMACs){
-    //throw tinygemm_error("unrecognised MAC (macro tile sizes cannot be set)");
-  //}
-
-
 
   auto grid_size_tuple = nsMAC::get_mac_grid(hp.at(nsHP::matC).vs[nsHP::MAC], hp.at(nsHP::matC).vs[nsHP::SKW]);
   if (std::get<0> (grid_size_tuple) == false){

@@ -88,7 +88,7 @@ uses_a(uses_a_), uses_b(uses_b_), uses_c(uses_c_), uses_workspace(uses_workspace
     full += "_beta";
   }
   
-  /*  are we assume here that the main kernel will always use alpha */
+  /*  we assume here that the main kernel will always use alpha */
   if (uses_alpha){
     basic_kernel_type = bkt::main;
     bkt_string = basic_kernel_type_strings[bkt::main];

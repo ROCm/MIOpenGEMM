@@ -23,7 +23,6 @@ protected:
 
   std::string type;
   std::string kernelname;
-  //std::string function_definition;
   
   bool uses_a; 
   bool uses_b;
@@ -32,9 +31,8 @@ protected:
   bool uses_alpha;
   bool uses_beta;
 
-  //std::string get_generic_kernelname(const std::string & type);
   
-  std::string get_time_string();//const std::string & type); 
+  std::string get_time_string();
   
   std::string get_what_string();
   

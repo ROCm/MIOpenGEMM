@@ -14,34 +14,31 @@ namespace tinygemm{
 std::string TinyGemmSolutionStatistics::get_string() const {
   std::stringstream ss;
   ss << "runtime:" << median_benchmark_time << "  gflops:" << median_benchmark_gflops << "  date:" << date;
+  ss << "  (find_params) " << find_params.get_string();
+  
   std::string stroo("");
   for (char x : ss.str()){
     if (x != '\n'){
-      //if (x == '.'){
-        //stroo += 'p';
-      //}
-      //else if (std::isspace(x) != 0){
-        //stroo += '_';
-      //}
-      //else if (x == ':'){
-        //stroo += '_';
-      //}
-      //else{
       stroo += x;
-      //}
     }
   }
   
   return stroo;
 }
 
-TinyGemmSolutionStatistics::TinyGemmSolutionStatistics(float median_benchmark_time_, float median_benchmark_gflops_, float solution_discovery_time_, std::string date_): 
-  median_benchmark_time(median_benchmark_time_), median_benchmark_gflops(median_benchmark_gflops_), solution_discovery_time(solution_discovery_time_), date(date_) {}
+TinyGemmSolutionStatistics::TinyGemmSolutionStatistics(float median_benchmark_time_, float median_benchmark_gflops_, float solution_discovery_time_, std::string date_, const tinygemm::FindParams & find_params_): 
+  median_benchmark_time(median_benchmark_time_), median_benchmark_gflops(median_benchmark_gflops_), solution_discovery_time(solution_discovery_time_),  find_params(find_params_) {
+    date = date_;
+    if (date.size() > 1){
+      if (date[date.size() - 1] == '\n'){
+       date.resize(date.size() - 1);
+      }
+    }    
+}
 
 TinyGemmSolutionStatistics::TinyGemmSolutionStatistics(std::string cache_string){
   auto megafrags = stringutil::split(cache_string, "__");
 
-  
   if (megafrags.size() < 3){
     throw tinygemm_error("problem constructing tinygemm solution stats from string");
   }
@@ -53,7 +50,6 @@ TinyGemmSolutionStatistics::TinyGemmSolutionStatistics(std::string cache_string)
     }
     return X[1];
   };
-  
   
   median_benchmark_time = std::stof(get_X(0));
   median_benchmark_gflops = std::stof(get_X(1));

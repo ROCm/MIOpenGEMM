@@ -18,7 +18,6 @@ std::vector<unsigned> get_multiples(unsigned N){
   return multiples;
 }
 
-
 void set_tile_dimensions_no_checks(unsigned & tH, unsigned & tW, unsigned TH, unsigned TW, unsigned tS){
   for (auto & multiple_of_TH : get_multiples(TH)){
     if ((tS % multiple_of_TH == 0) && ((tS / multiple_of_TH) <= TW)){
@@ -28,7 +27,6 @@ void set_tile_dimensions_no_checks(unsigned & tH, unsigned & tW, unsigned TH, un
     }
   }
 }
-
 
 std::tuple<bool, std::string> get_tileability(unsigned TH, unsigned TW, unsigned tS){
   

@@ -10,7 +10,7 @@
 #include <tinygemm/hyperparams.hpp>
 #include <tinygemm/derivedparams.hpp>
 #include <tinygemm/kernelstring.hpp>
-
+#include <tinygemm/tinygemmfindparams.hpp>
 
 namespace tinygemm{
 
@@ -26,9 +26,13 @@ class TinyGemmSolutionStatistics{
     /* timestamp (date) when found */
     std::string date;
     
-    TinyGemmSolutionStatistics(float median_benchmark_time, float median_benchmark_gflops, float solution_discovery_time, std::string date);
+    tinygemm::FindParams find_params;
+    
+    TinyGemmSolutionStatistics(float median_benchmark_time, float median_benchmark_gflops, float solution_discovery_time, std::string date, const tinygemm::FindParams & find_params);
     TinyGemmSolutionStatistics(std::string cache_string);
 
+    TinyGemmSolutionStatistics() = default;
+    
     std::string get_string() const;
     
     

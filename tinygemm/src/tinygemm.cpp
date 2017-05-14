@@ -2,6 +2,7 @@
 #include <limits>
 #include <chrono>
 #include <sstream>
+#include <tuple>
 #include <vector> 
 #include <algorithm>
 #include <map>
@@ -21,25 +22,10 @@
 #include <tinygemm/architests.hpp>
 #include <tinygemm/kernelstring.hpp>
 #include <tinygemm/tinygemmkernelcache.hpp>
-
+#include <tinygemm/tinygemmfindparams.hpp>
 
 
 namespace tinygemm{
-
-
-FindParams::FindParams(float allotted_time_, unsigned allotted_descents_, unsigned n_runs_per_kernel_, SummaryStat sumstat_):allotted_time(allotted_time_), allotted_descents(allotted_descents_), n_runs_per_kernel(n_runs_per_kernel_), sumstat(sumstat_) {
-
-  if (allotted_time <= 0){
-    throw tinygemm::tinygemm_error("allotted_time should be strictly positive, in FindParams constructor");
-  }
-  
-  if (allotted_descents == 0){
-    throw tinygemm::tinygemm_error("allotted_descents should be strictly positive, in FindParams constructor");
-  }
-  
-  
-}
-
 
 class MultiFloatType{
 
@@ -119,8 +105,6 @@ private:
   bool bundle_verbose = false;
 
   
-
-
 public:
   OpenCLGemmEncapsulator(
   cl_command_queue command_queue_, 
@@ -551,15 +535,9 @@ public:
   
   tinygemm::TinyGemmSolution find(const FindParams & find_params){
   
+    /* TODO : use sumstat */
     float allotted_time = find_params.allotted_time;
     unsigned allotted_descents = find_params.allotted_descents;
-    tinygemm::SummaryStat sumstat = find_params.sumstat;
-    unsigned n_runs_per_kernel = find_params.n_runs_per_kernel;
-    
-    (void)sumstat;
-    //unsigned allotted_descents  = 10;
-    //allotted_time = 1000.;
-    
     
     if (allotted_time <= 0 || allotted_descents == 0){
       std::string k_comment("");
@@ -583,17 +561,12 @@ public:
       stars.resize(titlestring.size(), '*');
       mowri << "\n" << stars << "\n" << titlestring << "\n" << stars << Endl;
       
-      v_tgsolns.emplace_back(single_descent_find(allotted_time - elapsed_seconds, n_runs_per_kernel)); //fst, 
+      v_tgsolns.emplace_back(single_descent_find(allotted_time - elapsed_seconds, find_params)); //fst, 
       auto end = std::chrono::high_resolution_clock::now();
       std::chrono::duration<float> fp_ms = end - start;
       elapsed_seconds = fp_ms.count();          
       ++elapsed_descents;
     }
-    
-    
-    
-    
-    
     
     float best_gflops = 0;
     unsigned best_soln_index = 0;
@@ -625,7 +598,7 @@ public:
 
   }
   
-  tinygemm::TinyGemmSolution single_descent_find(float allotted_time, unsigned n_runs_per_kernel){ //, FindStartType fst
+  tinygemm::TinyGemmSolution single_descent_find(float allotted_time, const FindParams & find_params){ //, FindStartType fst
               
 
     mowri << "geometry : " << gg.get_string()  << Endl;
@@ -642,7 +615,6 @@ public:
       throw tinygemm_error("in single_descent_find with allotted_time <= 0, this should never happen (logic error)");
     }
 
-    
     /* In here, we will store all previously considered HyperParams strings, used to check and ensure that we do not consider a HyperParam more than once */
     std::vector<std::string> hyper_front_history;
  
@@ -685,17 +657,15 @@ public:
         
         setup_tinykernels(hyper_param_current, bundle);  
 
-        core_gemm_loop(n_runs_per_kernel, false);
+        core_gemm_loop(find_params.n_runs_per_kernel, false);
 
         /* A new best kernel found */
         if (best_solns_path.size() == 0 || median_time < 1.000*best_solns_path.back().statistics.median_benchmark_time){
           update_elapsed_seconds();
-          improvement_found_on_front = true;
-          
-          //std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+          improvement_found_on_front = true;          
           
           std::time_t generation_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-          auto sstats = TinyGemmSolutionStatistics(median_time, median_gflops, elapsed_seconds, std::ctime(&generation_time));
+          auto sstats = TinyGemmSolutionStatistics(median_time, median_gflops, elapsed_seconds, std::ctime(&generation_time), find_params);
           best_solns_path.emplace_back (gg, sstats, bundle.v_tgks, hyper_param_current.get_string(), devinfo, constraints_string );
         }
         ++hfi;
@@ -787,17 +757,13 @@ public:
   }
 }; 
 
-//openclutil::SafeClMem 
-
 cl_mem get_copy(
 cl_command_queue command_queue,
 cl_mem c,   
 const tinygemm::TinyGemmGeometry & gg,
 const tinygemm::TinyGemmOffsets & toff,
 const std::string & hash
-){
-  //openclutil::SafeClMem c_copied(hash);
-  
+){  
   cl_mem c_copied;
   cl_event c_copy_event; 
   size_t n_c = gg.ldX[nsHP::matC] * (gg.tX[nsHP::matC] == gg.isColMajor ? gg.m : gg.n) + toff.oc;
@@ -808,20 +774,20 @@ const std::string & hash
   return c_copied;
 }
 
-
-
-
-
+cl_mem get_single(
+cl_command_queue command_queue,
+const std::string & hash
+){
+  size_t c_memsize = 1;
+  cl_mem single = openclutil::cl_create_buffer_from_command_queue(command_queue, CL_MEM_READ_WRITE, c_memsize, NULL, hash + ", in function cl_mem get_single of tinygemm");
+  return single;
+}
 
 
 tinygemm::TinyGemmSolution
 find(
 cl_command_queue command_queue,
 const FindParams & find_params,
-//float allotted_time,
-//unsigned allotted_descents,
-//unsigned n_runs_per_kernel, //or time per kernel ? Hmmm.
-//tinygemm::SummaryStat sumstat,
 cl_mem a,   
 cl_mem b,
 cl_mem c,
@@ -848,9 +814,52 @@ bool c_is_const){
   }
 
   OpenCLGemmEncapsulator oger(command_queue, gg, toff, a, b, c_to_use, workspace, constraints_string, full_constraints_expected, mowri); 
-  return oger.find(find_params);//allotted_time, allotted_descents, sumstat, n_runs_per_kernel);
+  return oger.find(find_params);
 }
 
+
+std::tuple<bool, std::string> check_for_default(
+cl_command_queue command_queue,
+std::string constraints_string,
+const tinygemm::TinyGemmGeometry & gg, 
+std::string k_comment){
+
+  openclutil::OpenCLDeviceInfo devinfo(command_queue);
+  std::string k_dev = devinfo.identifier;
+  std::string k_con = constraints_string;
+  std::string k_geo = gg.get_string();
+  
+  std::stringstream ss;
+  ss << "\n";
+  ss << "\nfailure in check_for_default, with keys\n";
+  ss << get_cache_keys_string(k_dev, k_con, k_geo, k_comment);
+  
+  std::string final_comment("see tests/gencache.cpp for an example of generating a cache entry.\n");
+  
+  if (kernel_cache.count(k_dev) == 0){
+    ss << "\nUnrecognised device identifier in cache, maybe the cache needs to be built for this device? \n" << final_comment;
+    return std::make_tuple(false, ss.str());
+  }
+  
+  if (kernel_cache.at(k_dev).count(k_con) == 0){
+    ss << "\nUnrecognised constraints_string in cache, maybe the cache needs to be built with these constraints? \n" << final_comment;
+    return std::make_tuple(false, ss.str());
+  }
+
+  if (kernel_cache.at(k_dev).at(k_con).count(k_geo) == 0){
+    ss << "\nUnrecognised gg.get_string() (geometry string) in cache, maybe a cache entry needs to be generated with this geometry? \n" << final_comment;
+    return std::make_tuple(false, ss.str());
+  }
+
+  if (kernel_cache.at(k_dev).at(k_con).at(k_geo).count(k_comment) == 0){
+    ss << "\nUnrecognised k_comment in cache\n";
+    return std::make_tuple(false, ss.str());
+  }  
+  
+  return std::make_tuple(true, "");
+}
+  
+  
 
 tinygemm::TinyGemmSolution
 get_default(
@@ -866,34 +875,11 @@ outputwriting::OutputWriter & mowri){
   std::string k_con = constraints_string;
   std::string k_geo = gg.get_string();
   
-  std::stringstream ss;
-  ss << "\n";
-  ss << "a problem arose in get_default, with keys\n";
-  ss << "\ndevinfo.identifier\n  -----> `" << devinfo.identifier << "'\n";
-  ss << "\nconstraints_string\n  -----> `" << constraints_string << "'\n";
-  ss << "\ngg.get_string()\n  -----> `" << gg.get_string() << "'\n";
-  ss << "\nk_comment\n  -----> `" << k_comment << "'\n";
-  
-  if (kernel_cache.count(k_dev) == 0){
-    ss << "\nUnrecognised device identifier in cache";
-    throw tinygemm_error(ss.str());
+  auto pair = check_for_default(command_queue, constraints_string, gg, k_comment);
+  if (std::get<0>(pair) == false){
+    throw tinygemm_error(std::get<1>(pair));
   }
   
-  if (kernel_cache.at(k_dev).count(k_con) == 0){
-    ss << "\nUnrecognised constraints_string in cache";
-    throw tinygemm_error(ss.str());
-  }
-
-  if (kernel_cache.at(k_dev).at(k_con).count(k_geo) == 0){
-    ss << "\nUnrecognised gg.get_string (geometry string) in cache";
-    throw tinygemm_error(ss.str());
-  }
-
-  if (kernel_cache.at(k_dev).at(k_con).at(k_geo).count(k_comment) == 0){
-    ss << "\nUnrecognised k_comment in cache";
-    throw tinygemm_error(ss.str());
-  }
-
   tinygemm::TinygemmCachedSolution cached_soln(kernel_cache.at(k_dev).at(k_con).at(k_geo).at(k_comment));
   
   /* generating source files from cache */
@@ -902,7 +888,7 @@ outputwriting::OutputWriter & mowri){
   bool bundle_verbose_get_default = true;
   auto bundle = tinygemm::kerngen::get_bundle(hp,gg, mowri, bundle_verbose_get_default);
  
-  return { gg, tinygemm::TinyGemmSolutionStatistics(cached_soln.stats_string), bundle.v_tgks, hp.get_string(), devinfo, constraints_string};
+  return { gg, cached_soln.stats, bundle.v_tgks, hp.get_string(), devinfo, constraints_string};
 
 }
   
@@ -924,8 +910,6 @@ void benchgemm(
   bool full_constraints_expected = true;
   tinygemm::consistencychecks::check_ldx_mnk_consistent(gg);
   if (c_is_const == true){
-    //openclutil::SafeClMem c_copied = get_copy(command_queue, c_gpu, gg, toff, "copy of c in benchgemm");
-    
     
     cl_mem c_cop = get_copy(command_queue, c_gpu, gg, toff, "copy of c in benchgemm");
     openclutil::SafeClMem c_copied("copy of c in find");
@@ -940,5 +924,45 @@ void benchgemm(
     oger.benchgemm(n_runs);
   }
 }
+
+
+tinygemm::TinyGemmSolution
+find(float allotted_time, cl_command_queue command_queue, cl_mem a, cl_mem b, cl_mem c, bool enforce_determinism, const tinygemm::TinyGemmGeometry & tgg){
+
+  float min_time_without_cache = 60.00;
   
+  SummaryStat sumstat (tinygemm::Median);
+  unsigned allotted_descents = 1000; /* letting time be the termination condition */
+  unsigned n_runs_per_kernel = 3; 
+  FindParams find_params(allotted_time, allotted_descents, n_runs_per_kernel, sumstat);
+
+  cl_mem workspace = nullptr;
+
+  std::string constraints_string = "A_WOS0__B_WOS0"; /* no workspace */
+  if (enforce_determinism == true){
+    constraints_string += "__C_ICE1";
+  }
+  
+  tinygemm::TinyGemmOffsets toff(0,0,0,0,0,0,0);
+  outputwriting::OutputWriter mowri(true, false, "");
+  bool c_is_const = true;
+  
+  std::string k_comment = "";
+  auto pair = check_for_default(command_queue, constraints_string, tgg, k_comment);
+    
+  if (std::get<0>(pair) == false && allotted_time < min_time_without_cache){
+    
+    std::stringstream ss;
+    ss << "\nin tinygemm find (version without workspace), with the following:\n";
+    ss << "(1) allotted_time (" << allotted_time << ") is less than min_time_without_cache (" << min_time_without_cache << ")\n";
+    ss << "(2) there is not cache entry : ";
+    ss <<  std::get<1>(pair);
+    ss << "\nEither set allotted_time to be greater than min_time_without_cache, or generate a cache entry, otherwise you will get a poor solution\n";
+    
+    throw tinygemm_error(ss.str());
+  }
+  
+  return find(command_queue, find_params, a, b, c, workspace, constraints_string, tgg, toff, mowri, c_is_const);  
+}
+
 } //namespace

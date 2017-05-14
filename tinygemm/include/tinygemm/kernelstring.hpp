@@ -61,7 +61,6 @@ KernelType() = default;
 class KernelString{
 public:
   /*type : betac_alphab, betac_workspace, etc.*/
-  // std::string type;  
   KernelType type;
   std::string kernstr;
   std::string fname;

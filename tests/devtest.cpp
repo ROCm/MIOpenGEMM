@@ -70,6 +70,7 @@ void print_kernel(){
   auto gg = get_geometry<TFloat>();
 
   tinygemm::openclutil::OpenCLDeviceInfo devinfo;
+  devinfo.wg_atom_size = 32;
   tinygemm::hyperparams::Graph graph(gg, devinfo, hyperstring, true); 
   tinygemm::hyperparams::HyperParams hp(graph);
   bool mowri_verbose = true;
@@ -97,10 +98,10 @@ int main(){
   tinygemm::outputwriting::OutputWriter mowri(true, fout != "" , fout);
 
 
-  bool test_print = false;
-  bool test_benchgemm = true;  
+  bool test_print = true;
+  bool test_benchgemm = false;  
   bool test_find = false;
-  bool test_accuracy = true;
+  bool test_accuracy = false;
   bool test_default = false;
 
   std::string constraints_string("");

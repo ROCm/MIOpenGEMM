@@ -8,6 +8,7 @@ int main(){
   unsigned allotted_iterations = 2;
   unsigned n_runs_per_kernel = 1;
   tinygemm::SummaryStat sumstat(tinygemm::Max);
+
   bool verbose = false;
   std::vector<std::string> v_constraints = {"A_WOS0__B_WOS0"};
   std::string basedir("/home/james/tinygemmout/test1");

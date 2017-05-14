@@ -1,5 +1,5 @@
-#include "basicfind.hpp"
-
+#include <tinygemm/tinygemm.hpp>
+#include <tinygemm/basicfind.hpp>
 
 
 template <typename TFloat>
@@ -29,6 +29,12 @@ void basicexample(){
    
   /* define how long to search for, in seconds. No kernels will be compiled after this allotted time. */
   float allotted_time = 1.01;
+  unsigned allotted_descents = 1;
+  unsigned n_runs_per_kernel = 3;
+  tinygemm::SummaryStat sumstat = tinygemm::Max;
+  
+  tinygemm::FindParams find_params(allotted_time, allotted_descents, n_runs_per_kernel, sumstat);
+  
   /* print output to terminal (true) or complete silence to terminal (false) */
   bool verbose = true;
   /* print output to logfile (non-empty string) or not (empty string) */
@@ -46,9 +52,11 @@ void basicexample(){
   
   tinygemm::TinyGemmGeometry gg (isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype);
   tinygemm::TinyGemmOffsets offsets (a_offset, b_offset, c_offset, workspace_offset, tail_off_a, tail_off_b, tail_off_c);    
-  tinygemm::FindStartType fst(tinygemm::FindStartType::Random);
-  basicfind<float>(gg, offsets, allotted_time, verbose, logfile, constraints_string, fst, n_postfind_runs, do_cpu_test);    
+  tinygemm::basicfind(gg, offsets, find_params, verbose, logfile, constraints_string, n_postfind_runs, do_cpu_test);    
 }
+
+
+
 
 int main(){
   basicexample<float>(); /* or example<double> for dgemm example */

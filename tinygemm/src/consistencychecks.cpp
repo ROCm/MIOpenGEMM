@@ -18,7 +18,6 @@ namespace consistencychecks{
     bool isproblem = false;
     
   
-    //isColMajor, lda, ldb, ldc, tA, tB, m, n, k, (tC?) 
     if (isColMajor == true){
       if (tC == false && ldc  < m){        
         errm += "column major, tC = false, ldc < m\n";

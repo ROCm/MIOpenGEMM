@@ -144,8 +144,6 @@ void cl_get_platform_info(cl_platform_id platform, cl_platform_info param_name, 
   confirm_cl_status(ret, hash, "cl_get_platform_info");
 }
 
-//clGetPlatformInfo(platform_ids[i], CL_PLATFORM_NAME, info_st.size() ,&info_st[0], &info_size);
-
 
 void cl_get_event_profiling_info(cl_event event, cl_profiling_info param_name, size_t param_value_size, void *param_value, size_t *param_value_size_ret, const std::string & hash){
   cl_int ret = clGetEventProfilingInfo(event, param_name, param_value_size, param_value, param_value_size_ret);
@@ -192,8 +190,6 @@ cl_program cl_create_program_with_source(cl_context context, cl_uint count, cons
 void cl_build_program(cl_program program,cl_uint num_devices,const cl_device_id *device_list,const char *options,void (*pfn_notify)(cl_program, void *user_data),void *user_data, outputwriting::OutputWriter & mowri, const std::string & hash){
   
   cl_int ret = clBuildProgram(program, num_devices, device_list, options, pfn_notify, user_data);
-
-  //clGetProgramBuildInfo(program, device_list[0], CL_PROGRAM_BUILD_STATUS, sizeof(buffer), buffer, NULL);
     
   char buffer[10240];
   size_t buffer_size;
@@ -539,7 +535,7 @@ OpenCLDeviceInfo::OpenCLDeviceInfo(const cl_command_queue & command_queue){
       }
     }
   }
-  //idss << "xyz";  
+
   identifier = idss.str();
 }
 

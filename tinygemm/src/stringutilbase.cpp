@@ -7,8 +7,6 @@
 namespace tinygemm{
 namespace stringutil{
 
-
-
 void indentify(std::string & source){
   std::string newsource;
   newsource.reserve(source.length());
@@ -52,14 +50,14 @@ void indentify(std::string & source){
 
 
 
-//split the string tosplit by delim. With x appearances of delim in tosplit, the returned vector will have length x + 1 (even if appearances at the start, end, contiguous.
+/* split the string tosplit by delim. With x appearances of delim in tosplit, the returned vector will have length x + 1 (even if appearances at the start, end, contiguous. */
 std::vector<std::string> split(const std::string & tosplit, const std::string & delim){
 
-  std::vector<std::string> spv; //vector to return
+  /* vector to return */
+  std::vector<std::string> spv; 
   if (delim.length() > tosplit.length()){
     return spv;
   }
-
 
   std::vector<size_t> splitposstarts {0};		
   std::vector<size_t> splitposends;
@@ -117,9 +115,6 @@ std::vector<std::string> split(const std::string & tosplit){
       spv2.push_back(tosplit.substr(start, end - start));
     }
   }
-  
-  
-  
   
   return spv2;
 } 
