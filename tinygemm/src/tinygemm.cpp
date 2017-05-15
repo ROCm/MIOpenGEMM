@@ -873,7 +873,7 @@ std::string k_comment){
   ss << "\nfailed to find cache entry from keys:\n";
   ss << get_cache_keys_string(k_dev, k_con, k_geo, k_comment);
   
-  std::string final_comment("(see tests/gencache.cpp for an example of generating a cache entry.\n");
+  std::string final_comment("(see tests/gencache.cpp for an example of generating a cache entry)\n");
   
   if (kernel_cache.count(k_dev) == 0){
     ss << "Unrecognised device identifier in cache\nmaybe the cache needs to be built for this device? \n" << final_comment;
