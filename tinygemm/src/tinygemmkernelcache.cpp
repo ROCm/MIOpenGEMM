@@ -77,28 +77,6 @@ add_entry(kc, "FijiOpenCL1p2AMDAPP2264p102264p10", /* device key */
 
 
 
-
-add_entry(kc, "FijiOpenCL1p2AMDAPP2264p102264p10", /* device key */
-"A_WOS0__B_WOS0", /* constraint key */
-"tC0_tA0_tB0_colMaj1_m16_n64_k800_lda16_ldb800_ldc16_ws0_f32", /* geometry key */
-"", /* comment key */
-{"A_MIC2_PAD1_PLU1_LIW0_MIW1_WOS0__B_MIC1_PAD1_PLU1_LIW0_MIW0_WOS0__C_UNR16_GAL1_PUN1_ICE2_NAW16_UFO0_MAC256_SKW11", /* solution hyper string */
-{0.24576, 6.66667, 0.952173, "Mon May 15 15:18:29 2017", /* solution stats (time [ms], gflops, time found (within descent), date found */
-{1, 100, 3, Max}}}); /* find param: allotted time, allotted descents, n runs per kernel, summmary over runs */
-
-
-add_entry(kc, "FijiOpenCL1p2AMDAPP2264p102264p10", /* device key */
-"A_WOS0__B_WOS0", /* constraint key */
-"tC0_tA1_tB0_colMaj1_m800_n64_k16_lda16_ldb16_ldc800_ws0_f32", /* geometry key */
-"", /* comment key */
-{"A_MIC6_PAD2_PLU0_LIW1_MIW1_WOS0__B_MIC1_PAD2_PLU1_LIW0_MIW0_WOS0__C_UNR16_GAL2_PUN0_ICE1_NAW16_UFO0_MAC256_SKW10", /* solution hyper string */
-{0.04656, 35.189, 0.670019, "Mon May 15 15:22:25 2017", /* solution stats (time [ms], gflops, time found (within descent), date found */
-{1, 100, 3, Max}}}); /* find param: allotted time, allotted descents, n runs per kernel, summmary over runs */
-
-
-
-
-
       /* or drop them in like so: */
 #include "cacheexample.cachetxt"
 
