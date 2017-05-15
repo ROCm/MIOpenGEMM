@@ -352,9 +352,9 @@ private:
   
   if (mowri.to_terminal == false){
     std::stringstream comment_string_ss;
-    comment_string_ss << "[ T:" << stringutil::get_padded(static_cast<int>(total_elapsed_seconds), 7);
-    comment_string_ss << "  I:" << stringutil::get_padded(total_elapsed_descents, 7);
-    comment_string_ss << "  K:" << stringutil::get_padded(total_kernels_tested, 7) << "]       ";
+    comment_string_ss << "[ TOTAL TIME:" << stringutil::get_padded(static_cast<int>(total_elapsed_seconds), 7);
+    comment_string_ss << "  #RESTARTS:" << stringutil::get_padded(total_elapsed_descents, 7);
+    comment_string_ss << "  #GEMMS CONSIDERED:" << stringutil::get_padded(total_kernels_tested, 7) << "]       ";
     old_comment_string = new_comment_string;
     new_comment_string = comment_string_ss.str();
     std::string backspaces = std::string(old_comment_string.size(), '\b');
