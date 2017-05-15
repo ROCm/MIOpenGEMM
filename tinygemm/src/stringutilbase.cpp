@@ -137,10 +137,27 @@ std::string getdirfromfn(const std::string & fn){
 }
 
 std::string get_padded(unsigned x, unsigned length){
-  auto n_pads = length + 1 - unsigned(std::log10(x + 1.));
+  unsigned x_length = 0;
+  if (x < 10){
+    x_length = 1;
+  }
+  else if (x < 100){
+    x_length = 2;
+  }
+  else if (x < 1000){
+    x_length = 3;
+  }
+  else if (x < 10000){
+    x_length = 4;
+  }
+  else{
+    x_length = unsigned(std::log10(x + 1));
+  }
+  
+  auto n_pads = length + 1 - x_length;
   std::string padded = std::to_string(x);
   for (auto sp = 0; sp < n_pads; ++sp){
-    padded = padded + " ";
+    padded = padded + ' ';
   }
   return padded;
 }

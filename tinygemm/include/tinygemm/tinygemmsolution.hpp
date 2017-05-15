@@ -66,6 +66,8 @@ public:
 
   /* return a string describing the hyper parameters */
   std::string get_hyper_param_string() const;
+
+  std::string get_cache_entry_string(std::string k_comment = "") const;
   
 
 };

@@ -66,4 +66,22 @@ std::string TinyGemmSolution::get_hyper_param_string() const{
 }
 
 
+
+
+
+std::string TinyGemmSolution::get_cache_entry_string(std::string k_comment) const{
+  std::stringstream cache_write_ss;
+  cache_write_ss << "add_entry(kc, \"" << devinfo.identifier << "\", /* device key */\n";
+  cache_write_ss << "\"" << constraints_string << "\", /* constraint key */\n";
+  cache_write_ss << "\"" << geometry.get_string() << "\", /* geometry key */\n";
+  cache_write_ss << "\"" << k_comment << "\", /* comment key */\n";
+  cache_write_ss << "{\"" << hyper_param_string << "\", /* solution hyper string */\n";
+  cache_write_ss << "{" << statistics.median_benchmark_time << ", " << statistics.median_benchmark_gflops << ", " << statistics.solution_discovery_time;
+  cache_write_ss << ", \"" << statistics.date << "\"" << ", /* solution stats (time [ms], gflops, time found (within descent), date found */\n";
+  cache_write_ss << "{" << statistics.find_params.allotted_time <<", " << statistics.find_params.allotted_descents << ", " << statistics.find_params.n_runs_per_kernel << ", " << tinygemm::get_sumstatkey(statistics.find_params.sumstat) << "}}}); /* find param: allotted time, allotted descents, n runs per kernel, summmary over runs */\n\n";  
+  return cache_write_ss.str();
+
+}
+
+
 } //namespace

@@ -72,20 +72,8 @@ int run_find_experiments(const std::vector<tinygemm::TinyGemmGeometry> & geometr
       end = std::chrono::high_resolution_clock::now();
       
       
-      std::stringstream cache_write_ss;
-      std::string k_comment = "";
-      
-      
-      cache_write_ss << "add_entry(kc, \"" << soln.devinfo.identifier << "\", /* device key */\n";
-      cache_write_ss << "\"" << soln.constraints_string << "\", /* constraint key */\n";
-      cache_write_ss << "\"" << soln.geometry.get_string() << "\", /* geometry key */\n";
-      cache_write_ss << "\"" << k_comment << "\", /* comment key */\n";
-      cache_write_ss << "{\"" << soln.hyper_param_string << "\", /* solution hyper string */\n";
-      cache_write_ss << "{" << soln.statistics.median_benchmark_time << ", " << soln.statistics.median_benchmark_gflops << ", " << soln.statistics.solution_discovery_time;
-      cache_write_ss << ", \"" << soln.statistics.date << "\"" << ", /* solution stats (time [ms], gflops, time found (within descent), date found */\n";
-      cache_write_ss << "{" << soln.statistics.find_params.allotted_time <<", " << soln.statistics.find_params.allotted_descents << ", " << soln.statistics.find_params.n_runs_per_kernel << ", " << tinygemm::get_sumstatkey(soln.statistics.find_params.sumstat) << "}}}); /* find param: allotted time, allotted descents, n runs per kernel, summmary over runs */\n\n";
-      
-      cache_write_string += cache_write_ss.str();
+
+      cache_write_string += soln.get_cache_entry_string(); 
       
       fp_ms = end - start;
       elapsed_seconds = fp_ms.count();

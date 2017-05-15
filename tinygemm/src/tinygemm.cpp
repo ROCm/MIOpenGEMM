@@ -23,7 +23,7 @@
 #include <tinygemm/kernelstring.hpp>
 #include <tinygemm/tinygemmkernelcache.hpp>
 #include <tinygemm/tinygemmfindparams.hpp>
-
+#include <tinygemm/stringutilbase.hpp>
 
 namespace tinygemm{
 
@@ -352,10 +352,12 @@ private:
   
   if (mowri.to_terminal == false){
     std::stringstream comment_string_ss;
-    comment_string_ss << "[ T:" << static_cast<int>(total_elapsed_seconds)  << " \t I:" << total_elapsed_descents << " \t K:" << total_kernels_tested << " ]     ";
+    comment_string_ss << "[ T:" << stringutil::get_padded(static_cast<int>(total_elapsed_seconds), 7);
+    comment_string_ss << "  I:" << stringutil::get_padded(total_elapsed_descents, 7);
+    comment_string_ss << "  K:" << stringutil::get_padded(total_kernels_tested, 7) << "]       ";
     old_comment_string = new_comment_string;
     new_comment_string = comment_string_ss.str();
-    std::string backspaces = std::string(old_comment_string.size() + 10, '\b');
+    std::string backspaces = std::string(old_comment_string.size(), '\b');
     std::cout << backspaces << new_comment_string << std::flush;
   }
       
@@ -971,7 +973,7 @@ find(float allotted_time, cl_command_queue command_queue, cl_mem a, cl_mem b, cl
   float min_time_without_cache = 100.00;
   
   SummaryStat sumstat (tinygemm::Median);
-  unsigned allotted_descents = 1000; /* letting time be the termination condition */
+  unsigned allotted_descents = 30;
   unsigned n_runs_per_kernel = 3; 
   FindParams find_params(allotted_time, allotted_descents, n_runs_per_kernel, sumstat);
 
@@ -988,7 +990,7 @@ find(float allotted_time, cl_command_queue command_queue, cl_mem a, cl_mem b, cl
   
   std::string k_comment = "";
   auto pair = check_for_default(command_queue, constraints_string, tgg, k_comment);
-    
+  
   if (std::get<0>(pair) == false && allotted_time < min_time_without_cache){
     
     std::stringstream ss;
@@ -1000,10 +1002,30 @@ find(float allotted_time, cl_command_queue command_queue, cl_mem a, cl_mem b, cl
     ss << "  (1) set allotted_time to be greater than min_time_without_cache, or\n";
     ss << "  (2) generate a cache entry (see tests/gencache.cpp for an example)\n";
     
+    
     throw tinygemm_error(ss.str());
   }
   
-  return find(command_queue, find_params, a, b, c, workspace, constraints_string, tgg, toff, mowri, c_is_const);  
+  
+  if (std::get<0>(pair) == false){
+    return find(command_queue, find_params, a, b, c, workspace, constraints_string, tgg, toff, mowri, c_is_const);  
+  }
+  
+
+  auto found_soln = find(command_queue, find_params, a, b, c, workspace, constraints_string, tgg, toff, mowri, c_is_const);  
+  auto cached_soln = get_default(command_queue,constraints_string, tgg, k_comment, mowri);
+  
+  if (cached_soln.statistics.median_benchmark_gflops > found_soln.statistics.median_benchmark_gflops){
+    mowri << "cached solution has better glops: " << cached_soln.statistics.median_benchmark_gflops << ", returning cached soln" << Endl;
+    return cached_soln;
+  }
+  
+  else{
+    mowri << "cached solution has worse glops: " << cached_soln.statistics.median_benchmark_gflops << ", the new soln will be returned" << Endl;
+    mowri << "consider adding this new solution to the cache, it's entry string is\n" << cached_soln.get_cache_entry_string() << Endl;
+    return found_soln;
+  }    
+
 }
 
 } //namespace

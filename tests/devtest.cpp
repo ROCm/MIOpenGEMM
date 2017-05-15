@@ -100,13 +100,13 @@ int main(){
 
   bool test_print = true;
   bool test_benchgemm = false;  
-  bool test_find = false;
+  bool test_find = true;
   bool test_accuracy = false;
   bool test_default = false;
 
   std::string constraints_string("");
   
-  float allotted_find_time = 1000;
+  float allotted_find_time = 10.00;
   unsigned allotted_find_descents = 10;
   unsigned n_runs_per_kernel = 3;
   tinygemm::SummaryStat sumstat(tinygemm::Max);
