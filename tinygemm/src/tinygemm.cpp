@@ -918,7 +918,11 @@ outputwriting::OutputWriter & mowri){
   
   auto pair = check_for_default(command_queue, constraints_string, gg, k_comment);
   if (std::get<0>(pair) == false){
+
+    
     throw tinygemm_error(std::get<1>(pair));
+    
+    
   }
   
   tinygemm::TinygemmCachedSolution cached_soln(kernel_cache.at(k_dev).at(k_con).at(k_geo).at(k_comment));
@@ -970,6 +974,7 @@ void benchgemm(
 tinygemm::TinyGemmSolution
 find(float allotted_time, cl_command_queue command_queue, cl_mem a, cl_mem b, cl_mem c, bool enforce_determinism, const tinygemm::TinyGemmGeometry & tgg){
 
+  /* TODO : where is a good place to set this ? */
   float min_time_without_cache = 100.00;
   
   SummaryStat sumstat (tinygemm::Median);
@@ -1003,7 +1008,11 @@ find(float allotted_time, cl_command_queue command_queue, cl_mem a, cl_mem b, cl
     ss << "  (2) generate a cache entry (see tests/gencache.cpp for an example)\n";
     
     
+
+
     throw tinygemm_error(ss.str());
+    // mowri << "((((should be error : "<< ss.str() << "))))" <<Endl;
+
   }
   
   
