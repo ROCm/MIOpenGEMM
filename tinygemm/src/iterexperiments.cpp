@@ -60,12 +60,12 @@ int run_find_experiments(const std::vector<tinygemm::TinyGemmGeometry> & geometr
       }
 
 
-      mowri_outer << (prob_i + 1) <<  "/" <<  geometries.size() << " \t m:" << tinygemm::stringutil::get_padded(gg.m) << " \t n:" << tinygemm::stringutil::get_padded(gg.n) << " \t k:" << tinygemm::stringutil::get_padded(gg.k) << " \t tA:" << gg.tX[tinygemm::nsHP::matA] << " \t tB:" << gg.tX[tinygemm::nsHP::matB] << Flush;
+      mowri_outer << (prob_i + 1) <<  "/" <<  geometries.size() << " \t m:" << tinygemm::stringutil::get_padded(gg.m) << " \t n:" << tinygemm::stringutil::get_padded(gg.n) << " \t k:" << tinygemm::stringutil::get_padded(gg.k) << " \t tA:" << gg.tX[tinygemm::nsHP::matA] << " \t tB:" << gg.tX[tinygemm::nsHP::matB] << Endl;
 
       std::string logfile = ss_logfile.str();
   
       if (basedir_inner != ""){
-        mowri_outer << "\n" << logfile << Endl;
+        mowri_outer << logfile << Endl;
       }
       
       auto soln = tinygemm::basicfind(gg, offsets, find_params, verbose_inner, logfile, constraints,  n_postfind_runs, do_cpu_test);  

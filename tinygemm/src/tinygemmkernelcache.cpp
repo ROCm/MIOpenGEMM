@@ -65,7 +65,8 @@ const KernelCache kernel_cache = get_kernel_cache();
 KernelCache get_kernel_cache(){
 KernelCache kc;
 
-/* example */
+      /* add from snip snip here like so: */
+
 add_entry(kc, "FijiOpenCL1p2AMDAPP2264p102264p10", /* device key */
 "A_WOS0__B_WOS0", /* constraint key */
 "tC0_tA0_tB0_colMaj1_m5000_n5000_k5000_lda5000_ldb5000_ldc5000_ws1_f32", /* geometry key */
@@ -74,7 +75,9 @@ add_entry(kc, "FijiOpenCL1p2AMDAPP2264p102264p10", /* device key */
 {59.2006, 4222.93, 3.32959, "Sun May 14 12:29:44 2017", /* solution stats (time [ms], gflops, time found (within descent), date found */
 {3, 2, 1, Max}}}); /* find param: allotted time, allotted descents, n runs per kernel, summmary over runs */
 
-/* add from snip snip here */
+      /* or drop them in like so: */
+#include "cacheexample.cachetxt"
+
 
 return kc;
 }
