@@ -5,15 +5,19 @@ int main(){
   
 
 
-  /* (1) define a vector of geometries which you wish to generate cachfe entries for */
-  /*  m ,  n ,  k , lda ,ldb ,ldc , tA , tB  */ 
+  /* define a vector of geometries which you wish to generate cachfe entries for */
+  /*  m ,  n ,  k , lda ,ldb ,ldc , tA , tB  (here we assume tC = false isColMajor = true)  */ 
   std::vector<std::tuple<unsigned, unsigned, unsigned, unsigned, unsigned, unsigned, bool, bool>> geotuples = {
     //std::make_tuple(1000,1000,1000,1000,1000,1000, false, false), 
-    std::make_tuple(100,200,300,400,500,600, false, false),     
-    std::make_tuple(101,200,300,400,500,600, false, false),         
+    std::make_tuple(2,3,5,7,11,13, true, true),         
+    std::make_tuple(22,33,55,77,111,139, false, false),     
+
   };
-  unsigned ws_size = 1;
+  unsigned ws_size = 0;
   auto geometries = tinygemm::get_from_m_n_k_ldaABC_tA_tB(geotuples, ws_size);    
+  /* for `minimal' ldA, ldB and ldC, consider function get_from_m_n_k_tA_tB */
+  /* for different tC and isColMajor, consider using the TinyGemmGeometry constructor directly  */
+  
 
   /* define how long you want to search for */
   /* the maximum time to search for */

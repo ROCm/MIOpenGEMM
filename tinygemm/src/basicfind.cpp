@@ -52,6 +52,7 @@ bool verbose, std::string logfile, std::string constraints_string, unsigned n_po
   size_t n_c = v_c.size(); 
   size_t n_w = v_workspace.size();  
  
+
   mowri << "done." << tinygemm::Endl;
 
 
@@ -83,18 +84,28 @@ bool verbose, std::string logfile, std::string constraints_string, unsigned n_po
   cl_mem a_gpu = tinygemm::openclutil::cl_create_buffer(context, CL_MEM_READ_ONLY,  sizeof(TFloat)*n_a, NULL, "a_gpu in basicfind.hpp");
   cl_mem b_gpu = tinygemm::openclutil::cl_create_buffer(context, CL_MEM_READ_ONLY,  sizeof(TFloat)*n_b, NULL, "b_gpu in basicfind.hpp");
   cl_mem c_gpu = tinygemm::openclutil::cl_create_buffer(context, CL_MEM_READ_WRITE, sizeof(TFloat)*n_c, NULL, "c_gpu in basicfind.hpp");      
-  cl_mem workspace_gpu = tinygemm::openclutil::cl_create_buffer(context, CL_MEM_READ_WRITE, sizeof(TFloat)*n_w, NULL, "workspace_gpu in basicfind.hpp");
-
+  cl_mem workspace_gpu = nullptr;
+  if (geometry.workspace_size > 0){
+    workspace_gpu = tinygemm::openclutil::cl_create_buffer(context, CL_MEM_READ_WRITE, sizeof(TFloat)*n_w, NULL, "workspace_gpu in basicfind.hpp");
+  }
+  
   tinygemm::openclutil::cl_enqueue_write_buffer(command_queue, a_gpu, CL_TRUE, 0, sizeof(TFloat)*n_a, v_a.data(), 0, NULL, NULL, "a_gpu in basicfind.hpp");
   tinygemm::openclutil::cl_enqueue_write_buffer(command_queue, b_gpu, CL_TRUE, 0, sizeof(TFloat)*n_b, v_b.data(), 0, NULL, NULL, "b_gpu in basicfind.hpp");
   tinygemm::openclutil::cl_enqueue_write_buffer(command_queue, c_gpu, CL_TRUE, 0, sizeof(TFloat)*n_c, v_c.data(), 0, NULL, NULL, "c_gpu in basicfind.hpp");
-  tinygemm::openclutil::cl_enqueue_write_buffer(command_queue, workspace_gpu, CL_TRUE, 0, sizeof(TFloat)*n_w, v_workspace.data(), 0, NULL, NULL, "workspace_gpu in basicfind.hpp");
-
+  if (geometry.workspace_size > 0){
+    tinygemm::openclutil::cl_enqueue_write_buffer(command_queue, workspace_gpu, CL_TRUE, 0, sizeof(TFloat)*n_w, v_workspace.data(), 0, NULL, NULL, "workspace_gpu in basicfind.hpp");
+  }
+  
   std::map<char, void *> gpum;
   gpum['a'] = &a_gpu;
   gpum['b'] = &b_gpu;
   gpum['c'] = &c_gpu;
-  gpum['w'] = &workspace_gpu;
+  if (geometry.workspace_size > 0){
+    gpum['w'] = &workspace_gpu;
+  }
+  else{
+    gpum['w'] = nullptr;
+  }
   
   
   
@@ -273,7 +284,9 @@ bool verbose, std::string logfile, std::string constraints_string, unsigned n_po
   tinygemm::openclutil::cl_release_mem_object(c_gpu, "c_gpu in basicfind.hpp");
   tinygemm::openclutil::cl_release_mem_object(a_gpu, "a_gpu in basicfind.hpp");
   tinygemm::openclutil::cl_release_mem_object(b_gpu, "b_gpu  in basicfind.hpp");
-  tinygemm::openclutil::cl_release_mem_object(workspace_gpu, "workspace_gpu  in basicfind.hpp");
+  if (geometry.workspace_size > 0){
+    tinygemm::openclutil::cl_release_mem_object(workspace_gpu, "workspace_gpu  in basicfind.hpp");
+  }
   tinygemm::openclutil::cl_release_command_queue(command_queue, "command queue in basicfind.hpp");
   tinygemm::openclutil::cl_release_context(context, "context in basicfind.hpp");
 
