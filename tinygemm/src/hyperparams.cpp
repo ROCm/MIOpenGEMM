@@ -194,7 +194,18 @@ Graph::Graph(const tinygemm::TinyGemmGeometry & gg, const openclutil::OpenCLDevi
 
 }
 
+std::vector< std::vector<unsigned> > get_all_constraints(std::string constraints_string){
+  
+  std::vector<std::string> sub_constraints = get_sub_constraints(constraints_string);
+  std::vector< std::vector<unsigned> > all_constraints (nsHP::nMats);
 
+  all_constraints[nsHP::matA] = get_constraints(sub_constraints[nsHP::matA], false, &chiral_kv, 'A');
+  all_constraints[nsHP::matB] = get_constraints(sub_constraints[nsHP::matB], false, &chiral_kv, 'B');
+  all_constraints[nsHP::matC] = get_constraints(sub_constraints[nsHP::matC], false, &non_chiral_kv, 'C');
+
+  return all_constraints;  
+   
+}
 
 std::vector<unsigned> get_constraints(std::string subg_cs, bool subg_csfull, const KeysVals * p_kv, char subg_hash){
   
@@ -426,11 +437,13 @@ void SubG::apply_constraints(){
   for (unsigned hpi = 0; hpi < nHPs; ++hpi){
     if (constraints.at(hpi) != nsHP::undefined){
       
-      if (std::find(range[hpi].begin(), range[hpi].end(), constraints.at(hpi)) == range[hpi].end()){
-        std::stringstream errm;
-        errm << "the constraint on " << ptr_keys_vals->keys[hpi] << " of " << constraints.at(hpi) << " is not in the pre-constraint range:  \n" << get_range_string(hpi);
-        errm << "this is not currently allowed";
-        throw tinygemm_error(errm.str());
+      if (ptr_devinfo->device_name != "unknown_tinygemm_default_constructed"){
+        if (std::find(range[hpi].begin(), range[hpi].end(), constraints.at(hpi)) == range[hpi].end()){
+          std::stringstream errm;
+          errm << "the constraint on " << ptr_keys_vals->keys[hpi] << " of " << constraints.at(hpi) << " is not in the pre-constraint range:  \n" << get_range_string(hpi);
+          errm << "this is not currently allowed";
+          throw tinygemm_error(errm.str());
+        }
       }
       
       edges[hpi] = { {constraints.at(hpi), {} } };
@@ -519,14 +532,18 @@ void CSubG::set_preconstraint_edges(){
 
   /* MAC and SKW */
   
+  if (ptr_devinfo->device_name == "unknown_tinygemm_default_constructed"){
+    //
+  }
 
-  if (ptr_devinfo->wg_atom_size != 64 && ptr_devinfo->wg_atom_size != 32){  
-    throw tinygemm_error("Setting up the edge search graph in set_preconstraint_edges, and it seems like the atomic wg size is neither 32 or 64. Is this correct ?? If so, consider changing here or raise an issue");
-
+  else if (ptr_devinfo->wg_atom_size != 64 && ptr_devinfo->wg_atom_size != 32){  
+    std::stringstream ss;
+    ss << "(device_name : " << ptr_devinfo->device_name << ")  " <<  "Setting up the edge search graph in set_preconstraint_edges, and it seems like the atomic wg size is neither 32 or 64. Is this correct ?? If so, consider changing here or raise an issue";
+    throw tinygemm_error(ss.str());
   }
       
   /* very small / thin matrices */
-  if (ptr_gg -> m * ptr_gg -> n < 32*32 || ptr_gg -> m < 16 || ptr_gg -> n < 16) {
+  else if (ptr_gg -> m * ptr_gg -> n < 32*32 || ptr_gg -> m < 16 || ptr_gg -> n < 16) {
     edges[nsHP::MAC] = 
     {
       {1, {4, 16}},
@@ -658,9 +675,6 @@ void HyperParams::replace(const std::vector<std::vector<unsigned>> & params){
 }
 
 /* go through the params, and where it is not nHP::undefined, use its value to replace this */
-
-
-
 void HyperParams::replace_where_source_defined(const std::vector<std::vector<unsigned>> & params){
   for (unsigned mi = 0; mi < nsHP::nMats; ++mi){
     for (unsigned hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi){

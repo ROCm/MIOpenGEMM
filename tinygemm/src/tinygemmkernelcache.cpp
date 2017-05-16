@@ -7,6 +7,65 @@
 
 namespace tinygemm{
 
+void enforce_constraints(std::string & hps_to_update, const std::string & constraints_string, const tinygemm::TinyGemmGeometry & gg){
+  
+  tinygemm::openclutil::OpenCLDeviceInfo devinfo;
+  hyperparams::Graph graph(gg, devinfo, hps_to_update, true);
+  hyperparams::HyperParams hp(graph);
+  
+  auto all_constraints = hyperparams::get_all_constraints(constraints_string);
+  hp.replace_where_source_defined(all_constraints);
+  hps_to_update = hp.get_string();
+}
+
+  
+
+//add constraint string.
+TinygemmCachedSolution get_generic_cached_solution(const std::string & constraints_string, const tinygemm::TinyGemmGeometry & gg){
+
+      
+  /* the desperate case where there is no cached solution */
+  TinygemmCachedSolution cached_soln;
+  
+  if (gg.m*gg.n > 2000*2000 && gg.m >= 256 && gg.n >= 256){ /* was 5719.51 gflops on Fiji at Tue May 16 08:38:59 2017 */ 
+    cached_soln = {"A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD2_PLU1_LIW1_MIW0_WOS0__C_UNR8_GAL2_PUN0_ICE1_NAW16_UFO0_MAC256_SKW10", {0,0,0, "None", {200, 10, 3, Max}}};
+  }
+  
+  else if (gg.m*gg.n > 800*800 && gg.m >=  256. && gg.n >= 128){ /* was 3095 on a Fiji on Tue May 16 08:46:49 2017  */
+    cached_soln = {"A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC4_PAD0_PLU1_LIW0_MIW0_WOS0__C_UNR16_GAL1_PUN1_ICE1_NAW64_UFO0_MAC256_SKW10", {0,0,0, "None", {200, 10, 3, Max}}};
+  }
+  
+  else if (gg.m*gg.n > 300*300  && gg.m >=  64 && gg.n >= 64){
+    cached_soln = {"A_MIC2_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC4_PAD2_PLU1_LIW0_MIW0_WOS0__C_UNR16_GAL3_PUN0_ICE1_NAW64_UFO0_MAC256_SKW9", {0,0,0, "None", {200, 10, 3, Max}}};
+  }
+  
+  else if (gg.m*gg.n > 128*128 && gg.m >= 16 && gg.n >= 16){ /* Tue May 16 09:07:04 2017 */
+    cached_soln = {"A_MIC1_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC2_PAD2_PLU1_LIW0_MIW0_WOS0__C_UNR32_GAL2_PUN1_ICE1_NAW64_UFO0_MAC64_SKW9", {0,0,0, "None", {200, 10, 3, Max}}};    
+  }
+  
+  else if (gg.m >= 16 && gg.n >= 16){
+    cached_soln = {"A_MIC1_PAD0_PLU1_LIW0_MIW1_WOS0__B_MIC1_PAD0_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL2_PUN1_ICE1_NAW64_UFO0_MAC256_SKW10", {0,0,0, "None", {200, 10, 3, Max}}};    
+ 
+  }
+  
+  else if (gg.m >= 8 && gg.n >= 8){
+    cached_soln = {"A_MIC1_PAD0_PLU1_LIW0_MIW1_WOS0__B_MIC2_PAD1_PLU1_LIW0_MIW0_WOS0__C_UNR16_GAL3_PUN1_ICE1_NAW64_UFO0_MAC16_SKW10", {0,0,0, "None", {200, 10, 3, Max}}};     
+  }
+
+  else if (gg.m >= 4 && gg.n >= 4){
+    cached_soln = {"A_MIC1_PAD2_PLU0_LIW1_MIW1_WOS0__B_MIC1_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL2_PUN0_ICE1_NAW64_UFO0_MAC16_SKW10", {0,0,0, "None", {200, 10, 3, Max}}};     
+  }
+  
+  else{
+    cached_soln = {"A_MIC1_PAD0_PLU0_LIW0_MIW0_WOS0__B_MIC1_PAD2_PLU1_LIW1_MIW1_WOS0__C_UNR16_GAL2_PUN0_ICE1_NAW16_UFO0_MAC1_SKW10", {0,0,0, "None", {200, 10, 3, Max}}};         
+  }
+  
+  enforce_constraints(cached_soln.hyperstring, constraints_string, gg);
+  
+  return cached_soln;
+
+} 
+
 
 std::string TinygemmCachedSolution::get_string(){
   std::stringstream ss;
@@ -65,23 +124,24 @@ const KernelCache kernel_cache = get_kernel_cache();
 KernelCache get_kernel_cache(){
 KernelCache kc;
 
-      /* add from snip snip here like so: */
+    /* There are two ways to add cache snip snips. (1) paste them here like this : */
+add_entry(kc, "some_device_key",
+"some_constraint_string",
+"tC0_tA0_tB0_colMaj1_m5000_n5000_k5000_lda5000_ldb5000_ldc5000_ws1_f32",
+"",
+{"A_MIC8_PAD2_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW1_MIW0_WOS0__C_UNR8_GAL2_PUN0_ICE1_NAW64_UFO0_MAC256_SKW10",
+{59.2006, 4222.93, 3.32959, "Sun May 14 12:29:44 2017",
+{3, 2, 1, Max}}});
 
-add_entry(kc, "FijiOpenCL1p2AMDAPP2264p102264p10", /* device key */
-"A_WOS0__B_WOS0", /* constraint key */
-"tC0_tA0_tB0_colMaj1_m5000_n5000_k5000_lda5000_ldb5000_ldc5000_ws1_f32", /* geometry key */
-"", /* geometry key */
-{"A_MIC8_PAD2_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW1_MIW0_WOS0__C_UNR8_GAL2_PUN0_ICE1_NAW64_UFO0_MAC256_SKW10", /* solution hyper string */
-{59.2006, 4222.93, 3.32959, "Sun May 14 12:29:44 2017", /* solution stats (time [ms], gflops, time found (within descent), date found */
-{3, 2, 1, Max}}}); /* find param: allotted time, allotted descents, n runs per kernel, summmary over runs */
-
-
-
-      /* or drop them in like so: */
+      /* or drop them into a txt file like like this: */
 #include "cacheexample.cachetxt"
+
 
 
 return kc;
 }
+
+
+
 
 }

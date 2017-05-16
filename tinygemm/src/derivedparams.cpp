@@ -215,7 +215,13 @@ DerivedParams::set_fragile(){
       }
     }
   }
-
+  
+  if (hp.at(nsHP::matC).vs[nsHP::UFO] == nsHP::yes){
+    if (gg.k <= hp.at(nsHP::matC).vs[nsHP::UNR]){
+      return std::make_tuple(false, "UFO = yes, so UNR must be greater that k");
+    }
+  }
+  
   /* ran the gauntlet, returning deriveable is true */
   return std::make_tuple(true, "");
 }
@@ -239,7 +245,7 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams & hp_, const tinygem
   auto tup = set_fragile();
 
   if (std::get<0>(tup) == false){
-    throw tinygemm_error("Failure to construct DerivedParams. Problem caught in set_fragile. It is recommended to run use function derivable to check that a valid DerivedParams can be constructed. The message returned in set_fragile is :  " + std::get<1>(tup));
+    throw tinygemm_error("Failure to construct DerivedParams. Problem caught in set_fragile. It is recommended to run function ` derivable ' to check that a valid DerivedParams can be constructed. The message returned in set_fragile is :  " + std::get<1>(tup));
   }
   
   /* do the tiling */  

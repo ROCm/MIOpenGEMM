@@ -10,6 +10,8 @@ class tinygemm_error : public std::runtime_error{
     tinygemm_error(const std::string& what_arg);
 };
 
+void tinygemm_warning(const std::string & warning);
+
 }
 
 

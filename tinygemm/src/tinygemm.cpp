@@ -901,6 +901,26 @@ std::string k_comment){
 }
   
   
+  
+/* fall back solution */
+tinygemm::TinyGemmSolution
+get_default(const tinygemm::TinyGemmGeometry & gg){
+  std::string constraints_string = "";
+  auto cached_soln = get_generic_cached_solution(constraints_string, gg);
+
+  openclutil::OpenCLDeviceInfo devinfo;
+
+  outputwriting::OutputWriter mowri(false, false, "");
+  
+  hyperparams::Graph graph(gg, devinfo, cached_soln.hyperstring, false);
+  hyperparams::HyperParams hp(graph);
+  bool bundle_verbose_get_default = true;
+  auto bundle = tinygemm::kerngen::get_bundle(hp,gg, mowri, bundle_verbose_get_default);
+ 
+  return { gg, cached_soln.stats, bundle.v_tgks, hp.get_string(), devinfo, constraints_string};
+
+
+}
 
 tinygemm::TinyGemmSolution
 get_default(
@@ -916,16 +936,17 @@ outputwriting::OutputWriter & mowri){
   std::string k_con = constraints_string;
   std::string k_geo = gg.get_string();
   
+  tinygemm::TinygemmCachedSolution cached_soln;
   auto pair = check_for_default(command_queue, constraints_string, gg, k_comment);
   if (std::get<0>(pair) == false){
-
-    
-    throw tinygemm_error(std::get<1>(pair));
-    
-    
+    tinygemm_warning(std::get<1>(pair));
+    mowri << std::get<1>(pair);
+    cached_soln = get_generic_cached_solution(constraints_string, gg); 
   }
   
-  tinygemm::TinygemmCachedSolution cached_soln(kernel_cache.at(k_dev).at(k_con).at(k_geo).at(k_comment));
+  else{
+    cached_soln = kernel_cache.at(k_dev).at(k_con).at(k_geo).at(k_comment);
+  }
   
   /* generating source files from cache */
   hyperparams::Graph graph(gg, devinfo, cached_soln.hyperstring, false);
@@ -1007,11 +1028,8 @@ find(float allotted_time, cl_command_queue command_queue, cl_mem a, cl_mem b, cl
     ss << "  (1) set allotted_time to be greater than min_time_without_cache, or\n";
     ss << "  (2) generate a cache entry (see tests/gencache.cpp for an example)\n";
     
-    
-
-
-    throw tinygemm_error(ss.str());
-    // mowri << "((((should be error : "<< ss.str() << "))))" <<Endl;
+    tinygemm_warning(ss.str());
+    mowri << ss.str();
 
   }
   

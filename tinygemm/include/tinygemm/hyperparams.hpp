@@ -230,7 +230,7 @@ public:
 };  
 
 
-
+std::vector< std::vector<unsigned> > get_all_constraints(std::string constraints_string);
 
 }
 }

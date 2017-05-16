@@ -22,6 +22,10 @@ using KernelCache = std::map< std::string, std::map< std::string, std::map<std::
 
 KernelCache get_kernel_cache();
 
+
+TinygemmCachedSolution get_generic_cached_solution(const std::string & constraints_string, const tinygemm::TinyGemmGeometry & gg);
+
+
 /* [device][constraint][further_comment][geometry] -> cached solution */
 extern const KernelCache kernel_cache;
 

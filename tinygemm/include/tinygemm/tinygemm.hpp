@@ -51,7 +51,8 @@ std::string k_comment,
 outputwriting::OutputWriter & mowri
 );
 
-std::tuple<bool, std::string> check_for_default(
+std::tuple<bool, std::string> 
+check_for_default(
 cl_command_queue command_queue,
 std::string constraints_string,
 const tinygemm::TinyGemmGeometry & gg, 
@@ -75,6 +76,8 @@ bool c_is_const = false);
 tinygemm::TinyGemmSolution
 find(float allotted_time, cl_command_queue command_queue, cl_mem a, cl_mem b, cl_mem c, bool enforce_determinism, const tinygemm::TinyGemmGeometry & tgg);
 
+tinygemm::TinyGemmSolution
+get_default(const tinygemm::TinyGemmGeometry & gg);
 
 } //namespace
 #endif
