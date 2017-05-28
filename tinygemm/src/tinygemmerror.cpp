@@ -8,7 +8,7 @@ namespace tinygemm{
   
   std::string tgformat(const std::string& what_arg, std::string prefix, std::string suffix){
     std::stringstream fms;
-    fms << "\n";
+    fms << "\n\n";
     unsigned l_terminal = 95;
     
     auto frags = stringutil::split(what_arg, "\n");
@@ -35,6 +35,8 @@ namespace tinygemm{
       //}
       }
     }
+    
+    fms << "\n";
     
     return fms.str();
   }

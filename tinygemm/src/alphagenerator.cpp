@@ -191,6 +191,7 @@ void append_load_for_pll(char X, std::stringstream & ss){
 
 void append_final_write_element(std::stringstream & ss, unsigned atomic_increment, unsigned with_beta_scaling, unsigned with_alpha_increment){
   
+  /* a good place to break kernel to check error checking. make this 1.11101242345 for example */
   std::string alpha_scaled =  "alpha*rC[row/C_INTERWEAVE_STRIDE_A][col/C_INTERWEAVE_STRIDE_B]";
   
   ss << "\nindex = STRIDE_PLL_M_C*(write_start_a + row) + STRIDE_PLL_N_C*(write_start_b + col);\n";
