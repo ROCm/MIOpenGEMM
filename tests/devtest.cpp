@@ -21,7 +21,7 @@ std::string get_hyperstring(std::string hyperstring = ""){
   if (hyperstring.compare("") == 0){
     //hyperstring = "A_MIC1_PAD0_PLU1_LIW0_MIW1_WOS0__B_MIC2_PAD1_PLU1_LIW0_MIW0_WOS0__C_UNR16_GAL3_PUN1_ICE1_NAW64_UFO1_MAC16_SKW10";
     //hyperstring = "A_MIC1_PAD2_PLU0_LIW1_MIW1_WOS0__B_MIC1_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL2_PUN0_ICE1_NAW64_UFO0_MAC16_SKW10";
-    hyperstring = "A_MIC1_PAD0_PLU1_LIW0_MIW1_WOS0__B_MIC2_PAD1_PLU1_LIW0_MIW0_WOS0__C_UNR16_GAL3_PUN1_ICE1_NAW64_UFO1_MAC64_SKW10";
+    hyperstring = "A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU1_LIW0_MIW1_WOS0__C_UNR8_GAL3_PUN1_ICE1_NAW16_UFO0_MAC256_SKW10";
   }
   return hyperstring;
 }
@@ -36,9 +36,9 @@ tinygemm::TinyGemmGeometry get_geometry(){
   bool tA = false;
   bool tB = false;
   bool tC = false;
-  unsigned m = 1118; 
-  unsigned n = 8; 
-  unsigned k = 1;           
+  unsigned m = 1760; 
+  unsigned n = 7000; 
+  unsigned k = 1760;           
 
   
   unsigned lda = ( tA == isColMajor ? k : m ) + 0;
@@ -101,18 +101,18 @@ int main(){
 
   bool test_print = false;
   bool test_benchgemm = false;  
-  bool test_find = false;
+  bool test_find = true;
   bool test_accuracy = false;
-  bool test_default = true;
+  bool test_default = false;
 
-  std::string constraints_string("A_WOS0__B_WOS0__C_ICE1");
+  std::string constraints_string("A_MIC8_PAD0_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD2_PLU1_LIW1_MIW1_WOS0__C_UNR8_GAL2_PUN0_ICE1_NAW64_UFO0_MAC256_SKW10");
   
   float allotted_find_time = 200.00;
-  unsigned allotted_find_descents = 10;
-  unsigned n_runs_per_kernel = 3;
+  unsigned allotted_find_descents = 1;
+  unsigned n_runs_per_kernel = 5;
   tinygemm::SummaryStat sumstat(tinygemm::Max);
   
-  unsigned n_runs_benchgemm = 2;
+  unsigned n_runs_benchgemm = 5;
   
   typedef float tfloat;
   

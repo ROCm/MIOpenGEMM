@@ -356,7 +356,7 @@ void set_platform_etc(cl_platform_id & platform, cl_uint & num_platforms, cl_con
   }
   
   
-  mowri << "Will use device " << bestDeviceName << ", which has " << max_max_compute_units << " CUs. \nTo use a different device, consider modifying set_platform_etc in openclutil.cpp (or write custom OpenCL boilerplate)." << Endl;
+  mowri << "Will use device with name " << bestDeviceName << "), which has " << max_max_compute_units << " CUs. \nTo use a different device, consider modifying set_platform_etc in openclutil.cpp (or write custom OpenCL boilerplate)." << Endl;
   device_id_to_use = bestDeviceId;
 
 }
