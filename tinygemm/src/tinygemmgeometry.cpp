@@ -24,9 +24,9 @@ const unsigned & TinyGemmOffsets::operator[](char x) const{
   else if (x == 'w'){
     return oworkspace;
   }
-  
+
   else{
-    throw tinygemm_error(std::string("unrecognised char passed to operator[](char x) of TinyGemmOffsets. Should be one of a,b,c,w, not ") + x);
+    throw  tinygemm_error(std::string("unrecognised char passed to operator[](char x) of TinyGemmOffsets. Should be one of a,b,c,w, not ") + x);
   }
 }
 
@@ -40,15 +40,15 @@ void TinyGemmGeometryDerived::reset(char floattype){
     float_size_bytes = sizeof(double);
   }
   else{
-    throw tinygemm_error("what is this floattype : " + floattype + std::string(" ?? in tinygemmgeometry"));
+    throw  tinygemm_error("what is this floattype : " + floattype + std::string(" ?? in tinygemmgeometry"));
   }
   float_size_bits = 8*float_size_bytes;
 }
 
 
 /* return one of the dimensions of matrix a,b,c. this has nothing to do with lda, ldb, ldc. 
- * isCoal : the coalesced dimesion? For example, for 'a' which is is m x k, 
- * if tC = false, isColMajor = false, isCoal = true, then k is returned as k is the coalesced dim. 
+ * isCoal : the coalesced dimesion? For example, for 'a' which is m x k, 
+ * if tA = false, isColMajor = false, isCoal = true, then k is returned as k is the coalesced dim. 
  * (false == false) == true  evaluates to true, so gate is true, so m is returned */
 unsigned TinyGemmGeometry::get_padless_dim(nsHP::eMat emat_x, bool isCoal) const{
 
@@ -68,7 +68,7 @@ unsigned TinyGemmGeometry::get_padless_dim(nsHP::eMat emat_x, bool isCoal) const
   }
   
   else{
-    throw tinygemm_error("unrecognised emat_x passed to get_coal in tinygemm geometry");
+    throw  tinygemm_error("unrecognised emat_x passed to get_coal in tinygemm geometry");
   }
 }
 
@@ -81,10 +81,68 @@ unsigned TinyGemmGeometry::get_non_k_dim(nsHP::eMat emat_x) const{
   else if (emat_x == nsHP::matB){
     return n;
   }
-  
+
   else{
-    throw tinygemm_error("invalid char passed to get_non_k_dim in tinygemm geometry, it should be either a or b");
+    throw  tinygemm_error("invalid char passed to get_non_k_dim in tinygemm geometry, it should be either a or b");
   }  
+}
+
+void TinyGemmGeometry::check_ldx_consistent() const{
+
+  bool error = false;
+  for (auto x : {nsHP::matA, nsHP::matB, nsHP::matC}){
+    if (ldX[x] < get_coal(x)){
+      error = true;
+    }
+  }
+  
+  if (error == true){
+
+    std::stringstream errm_ss;
+    
+
+
+    errm_ss << "Checking that lda, ldb, ldc are consistent with m,n,k. ";
+    errm_ss << "In particulary, checking that ldx is at least as large as coalesced dimension, coal_x (for x in {a,b,c}) given by:  ";
+    errm_ss << "coal_a = (tA == isColMajor ? k : m),  ";
+    errm_ss << "coal_b = (tB == isColMajor ? n : k),  ";
+    errm_ss << "coal_c = (tC == isColMajor ? k : m).  ";
+    errm_ss << "\n\n";
+
+    errm_ss << "ldx = coal_x + pad_x, and so for consisteny it must be true that ldx >= coal_x (can't have negative pad_x).  ";
+    errm_ss << "As an example, if tA = false and isColMajor = false, then coal_a = k.  ";
+    errm_ss << "A full table of the lower bounds of ldx for x in {a,b,c} can be found at, https://software.intel.com/en-us/mkl-developer-reference-c-cblas-gemm.  ";
+    errm_ss << "\n\n";
+    
+    errm_ss << "The particular geometry received by tinygemm is  ";
+    errm_ss << get_string();
+    errm_ss << ", and the problems detected are:  ";
+    
+    
+    std::vector<char> m_chars (nsHP::nMats);
+    m_chars[nsHP::matA] = 'a';
+    m_chars[nsHP::matB] = 'b';
+    m_chars[nsHP::matC] = 'c';
+    
+  
+    
+    for (auto x : {nsHP::matA, nsHP::matB, nsHP::matC}){
+      if (ldX[x] < get_coal(x)){
+        //errm_ss << "--inconsistent gemm geometry, in matrix " << m_chars[x] << ": ";
+        //errm_ss  << R"(
+    //)" << "ld" << m_chars[x] << " (" << ldX[x] << ") <  coal_" << m_chars[x] << " (" << get_coal(x) << ").";
+        errm_ss << "ld" << m_chars[x] << " (" << ldX[x] << ") <  coal_" << m_chars[x] << " (" << get_coal(x) << ").  ";
+      }
+    }
+    
+    //errm_ss << "the full geometry string is:\n";
+    //errm_ss << get_string();
+    
+    throw  tinygemm_error(errm_ss.str());
+  }
+  
+  
+  
 }
 
   
@@ -118,10 +176,12 @@ TinyGemmGeometry::TinyGemmGeometry(bool isColMajor_, bool tA_, bool tB_, bool tC
   
   
   if (floattype != 'd' and floattype != 'f'){
-    throw tinygemm::tinygemm_error("floattype should be one of 'f' and 'd' (in TinyGemmGeometry constructor)");
+    throw  tinygemm::tinygemm_error("floattype should be one of 'f' and 'd' (in TinyGemmGeometry constructor)");
   }
     
-  consistencychecks::check_ldx_mnk_consistent(isColMajor, tX[nsHP::matA], tX[nsHP::matB], tX[nsHP::matC],  ldX[nsHP::matA],  ldX[nsHP::matB],  ldX[nsHP::matC],  m,  n,  k);
+  
+  check_ldx_consistent();
+  //consistencychecks::check_ldx_mnk_consistent(isColMajor, tX[nsHP::matA], tX[nsHP::matB], tX[nsHP::matC],  ldX[nsHP::matA],  ldX[nsHP::matB],  ldX[nsHP::matC],  m,  n,  k);
   
   derived.reset(floattype); 
 

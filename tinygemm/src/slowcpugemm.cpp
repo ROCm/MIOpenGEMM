@@ -5,7 +5,7 @@
 #include <tinygemm/slowcpugemm.hpp>
 #include <tinygemm/outputwriter.hpp>
 #include <tinygemm/redirection.hpp>
-#include <tinygemm/consistencychecks.hpp>
+//#include <tinygemm/consistencychecks.hpp>
 
 /* TODO : add option to use OpenBLAS instead of this slow gemm code */
 
@@ -154,7 +154,8 @@ void check_cpu_algs(std::vector<std::string> cpu_algs){
     gg.tX[nsHP::matC] = tC;
     
     redirection::confirm_redirection(gg.isColMajor, gg.tX[nsHP::matA], gg.tX[nsHP::matB], gg.m, gg.n);
-    tinygemm::consistencychecks::check_ldx_mnk_consistent(gg);
+    //tinygemm::consistencychecks::check_ldx_mnk_consistent(gg);
+    gg.check_ldx_consistent();
     
     for (auto & alg : algs){
       mowri << "launching cpu algorithm : " << alg << Endl;      

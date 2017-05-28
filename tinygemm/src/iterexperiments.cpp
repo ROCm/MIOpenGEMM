@@ -45,7 +45,7 @@ int run_find_experiments(const std::vector<tinygemm::TinyGemmGeometry> & geometr
       
       if (v_sys != 0){
         std::stringstream ss;
-        ss << "The following call to std::system failed:\n" << syscall << "\nIs the operating system posix? If not so, call to std::system should be different.\nPlease raise an issue if you see this, and ideally propose a fix";
+        ss << "The following call to std::system failed:\n" << syscall << "\nIs the operating system posix? If not, the call to std::system should be different.\nPlease raise an issue if you see this, and ideally propose a fix";
         throw tinygemm::tinygemm_error(ss.str());
       }
     }

@@ -1,12 +1,48 @@
 #include <tinygemm/tinygemmerror.hpp>
+#include <tinygemm/stringutilbase.hpp>
 
 #include <iostream>
+#include <sstream>
 
 namespace tinygemm{
-  tinygemm_error::tinygemm_error(const std::string& what_arg):std::runtime_error("from tinygemm. " + what_arg){}
+  
+  std::string tgformat(const std::string& what_arg, std::string prefix, std::string suffix){
+    std::stringstream fms;
+    fms << "\n";
+    unsigned l_terminal = 95;
+    
+    auto frags = stringutil::split(what_arg, "\n");
+    
+    std::string space;
+    space.resize(2*l_terminal, ' ');
+    std::string interspace("   ");
+    
+    unsigned line_current = 1;
+    for (auto & x : frags){
+      if (x.size() == 0){
+        x = " ";
+      }
+      //else{
+      
+        
+      unsigned p_current = 0;
+      while (p_current < x.size()){
+        auto l_current = std::min<unsigned>(l_terminal, x.size() - p_current);
+        fms <<  prefix << interspace << x.substr(p_current, l_current) <<  space.substr(0, l_terminal - l_current) << interspace << suffix <<  " (" << line_current << ")\n";
+        p_current += l_current;
+        ++line_current;
+    
+      //}
+      }
+    }
+    
+    return fms.str();
+  }
+  
+  tinygemm_error::tinygemm_error(const std::string& what_arg):std::runtime_error(tgformat(what_arg, "tinygemm",  "ERROR")){}
 
   void tinygemm_warning(const std::string & warning){
-    std::cerr << "TINYGEMM WARNING:\n" << warning << std::flush;
+    std::cerr << tgformat(warning, "tinygemm",  "WARNING") << std::flush;
   }
 
 }

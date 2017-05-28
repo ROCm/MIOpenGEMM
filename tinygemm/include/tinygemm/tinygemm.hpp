@@ -36,7 +36,9 @@ const tinygemm::TinyGemmGeometry & gg,
 const tinygemm::TinyGemmOffsets & toff,
 outputwriting::OutputWriter & mowri,
 /* if c_is_const == false, then c will be corrupted */
-bool c_is_const = true);
+bool c_is_const,
+
+bool use_mowri_tracker);
 
 
 

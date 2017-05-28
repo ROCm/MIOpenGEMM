@@ -69,7 +69,7 @@ class TinyGemmGPUMems{
       }
       
       else{
-        throw tinygemm_error(std::string("unrecognised char passed to operator[] of TinyGemmGPUMems. Should be one of a,b,c,w, not ") + x);
+        throw  tinygemm_error(std::string("unrecognised char passed to operator[] of TinyGemmGPUMems. Should be one of a,b,c,w, not ") + x);
       }
     }
 };
@@ -93,6 +93,10 @@ public:
 
 private:
   outputwriting::OutputWriter & mowri;
+  
+  //special purpose output.
+  outputwriting::OutputWriter mowri_tracker;
+  
   /* vector of times over a set of runs on core loop */
   std::vector<float> v_t_total;
   float median_time;
@@ -125,7 +129,8 @@ public:
   cl_mem workspace_gpu_,
   std::string constraints_string_,
   bool full_constraints_expected,
-  outputwriting::OutputWriter & mowri_):
+  outputwriting::OutputWriter & mowri_,
+  bool use_mowri_tracker):
   
   command_queue(command_queue_), 
   gg(gg_),
@@ -136,7 +141,8 @@ public:
   constraints_string(constraints_string_),
   graph(gg, devinfo, constraints_string_, full_constraints_expected),
 
-  mowri(mowri_)
+  mowri(mowri_),
+  mowri_tracker(use_mowri_tracker, false, "")
   {
     
     tk_kernels.resize(nBasicKernelTypes);
@@ -166,30 +172,30 @@ private:
 
   void address_check_valid(){
     if (gpum['c'] == gpum['a'] || gpum['c'] == gpum['b']){
-      throw tinygemm_error("c should be distinct from a and b for gemm, otherwise race condition arises (one thread writes its result to c before another one has finished reading from c)");
+      throw  tinygemm_error("c should be distinct from a and b for gemm, otherwise race condition arises (one thread writes its result to c before another one has finished reading from c)");
     }
     
     if (gpum['c'] == nullptr){
-      throw tinygemm_error("c should not be nullptr");
+      throw  tinygemm_error("c should not be nullptr");
     }
     
     if (gpum['w'] == nullptr && gg.workspace_size != 0){
-      throw tinygemm_error("pointer to workspace memory is the nullptr, but workspace_size is not zero");
+      throw  tinygemm_error("pointer to workspace memory is the nullptr, but workspace_size is not zero");
     }
     
     if (gpum['w'] != nullptr && gg.workspace_size == 0){
-      throw tinygemm_error("pointer to workspace memory is not the nullptr, but workspace_size is zero. if workspace_size is zero please set workspace_gpu to the nullptr to make super clear that there will be no workspace used ");      
+      throw  tinygemm_error("pointer to workspace memory is not the nullptr, but workspace_size is zero. if workspace_size is zero please set workspace_gpu to the nullptr to make super clear that there will be no workspace used ");      
     }
     
     if (gpum['w'] != nullptr && (gpum['w'] == gpum['a'] || gpum['w'] == gpum['b'] || gpum['w'] == gpum['c'] ) ){
-      throw tinygemm_error("pointer to workspace memory is not the nullptr, and it is the same as one of the a,b,c pointers ");
+      throw  tinygemm_error("pointer to workspace memory is not the nullptr, and it is the same as one of the a,b,c pointers ");
     }
   }
   
   void address_check_valid_and_reliable(){
     address_check_valid();
     if (gpum['a'] == gpum['b']){
-      throw tinygemm_error( "a and b are the same. this will effect kernel run time, not sure if this should be allowed so throwing"); 
+      throw  tinygemm_error( "a and b are the same. this will effect kernel run time, not sure if this should be allowed so throwing"); 
     }
   }
 
@@ -262,7 +268,7 @@ private:
     }
 
     else{
-      throw tinygemm_error("what is the type of this kernel? Don't recognise it : " + type);
+      throw  tinygemm_error("what is the type of this kernel? Don't recognise it : " + type);
     }
   }
 
@@ -346,11 +352,12 @@ private:
   void core_gemm_loop(size_t n_runs, bool print_asap){
     
 
-  ++total_kernels_tested;
-  update_total_elapsed_seconds();
+    ++total_kernels_tested;
+    update_total_elapsed_seconds();
     
   
-  if (mowri.to_terminal == false){
+  //if (mowri.to_terminal == false){
+
     std::stringstream comment_string_ss;
     comment_string_ss << "[ TOTAL TIME:" << stringutil::get_padded(static_cast<int>(total_elapsed_seconds), 7);
     comment_string_ss << "  #RESTARTS:" << stringutil::get_padded(total_elapsed_descents, 7);
@@ -358,8 +365,9 @@ private:
     old_comment_string = new_comment_string;
     new_comment_string = comment_string_ss.str();
     std::string backspaces = std::string(old_comment_string.size(), '\b');
-    std::cout << backspaces << new_comment_string << std::flush;
-  }
+    
+    /* TODO : determine where to use mowri_tracker, and enable to path to here */
+    mowri_tracker << backspaces << new_comment_string << Flush;
       
     reset_v_times();
     
@@ -484,7 +492,7 @@ private:
   void deriveability_test(const hyperparams::HyperParams & hp, const std::string & hash){
     auto deriveability = derivedparams::get_deriveability(hp, gg);      
     if (std::get<0>(deriveability) == false){
-      throw tinygemm_error(hash + ": the hyper parameters in benchgemm are not consistent, specifically, from get_deriveability \n" + std::get<1>(deriveability));
+      throw  tinygemm_error(hash + ": the hyper parameters in benchgemm are not consistent, specifically, from get_deriveability \n" + std::get<1>(deriveability));
     }
   }
 
@@ -494,7 +502,7 @@ public:
     address_check_valid();
     
     if (n_runs == 0){
-      throw tinygemm_error("n_runs to benchgemm should be a positive integer");
+      throw  tinygemm_error("n_runs to benchgemm should be a positive integer");
     }
    
     hyperparams::HyperParams hp(graph);
@@ -505,7 +513,7 @@ public:
     auto atr = architests::architecture_specific_tests(command_queue, hp, bundle.dp);
     
     if (std::get<0>(atr) == false){
-      throw tinygemm_error(std::get<1>(atr));
+      throw  tinygemm_error(std::get<1>(atr));
     }
 
     setup_tinykernels(hp, bundle); 
@@ -555,7 +563,7 @@ public:
     if (found_a_deriveable_hp == false){
       std::stringstream base_ss;
       base_ss << "\n\nStruggling to find a deriveable set of hyper parameters which satisfy the geometry and constraints. The number of attempts made is " << n_trials << "\n throwing an error. To view the full output of the hyper parameters tried and their reasons for not being derivable, modify the code here (add deriveablesearch_ss.str()). \n";
-      throw tinygemm_error(base_ss.str());
+      throw  tinygemm_error(base_ss.str());
     }
     return hyper_param_start;
   }
@@ -652,7 +660,7 @@ public:
 
 
     if (allotted_time <= 0){
-      throw tinygemm_error("in single_descent_find with allotted_time <= 0, this should never happen (logic error)");
+      throw  tinygemm_error("in single_descent_find with allotted_time <= 0, this should never happen (logic error)");
     }
 
     /* In here, we will store all previously considered HyperParams strings, used to check and ensure that we do not consider a HyperParam more than once */
@@ -838,10 +846,12 @@ const std::string constraints_string,
 const tinygemm::TinyGemmGeometry & gg,
 const tinygemm::TinyGemmOffsets & toff,
 outputwriting::OutputWriter & mowri,
-bool c_is_const){
+bool c_is_const, 
+bool use_mowri_tracker){
 
-  tinygemm::consistencychecks::check_ldx_mnk_consistent(gg);  
+  //tinygemm::consistencychecks::check_ldx_mnk_consistent(gg);  
 
+  gg.check_ldx_consistent();
   bool full_constraints_expected = false;
 
   cl_mem c_to_use (nullptr);
@@ -854,8 +864,10 @@ bool c_is_const){
   else{
     c_to_use = c;
   }
+  
+  //bool use_mowri_tracker = false;
 
-  OpenCLGemmEncapsulator oger(command_queue, gg, toff, a, b, c_to_use, workspace, constraints_string, full_constraints_expected, mowri); 
+  OpenCLGemmEncapsulator oger(command_queue, gg, toff, a, b, c_to_use, workspace, constraints_string, full_constraints_expected, mowri, use_mowri_tracker); 
   return oger.find(find_params);
 }
 
@@ -878,17 +890,17 @@ std::string k_comment){
   std::string final_comment("(see tests/gencache.cpp for an example of generating a cache entry)\n");
   
   if (kernel_cache.count(k_dev) == 0){
-    ss << "Unrecognised device identifier in cache\nmaybe the cache needs to be built for this device? \n" << final_comment;
+    ss << "Unrecognised device identifier in cache.\nMaybe the cache needs to be built for this device? \n" << final_comment;
     return std::make_tuple(false, ss.str());
   }
   
   if (kernel_cache.at(k_dev).count(k_con) == 0){
-    ss << "Unrecognised constraints_string in cache\nmaybe the cache needs to be built with these constraints? \n" << final_comment;
+    ss << "Unrecognised constraints_string in cache.\nMaybe the cache needs to be built with these constraints? \n" << final_comment;
     return std::make_tuple(false, ss.str());
   }
 
   if (kernel_cache.at(k_dev).at(k_con).count(k_geo) == 0){
-    ss << "Unrecognised geometry key (gg.get_string()) in cache\nmaybe a cache entry needs to be generated with this geometry? \n" << final_comment;
+    ss << "Unrecognised geometry key (gg.get_string()) in cache.\nMaybe a cache entry needs to be generated with this geometry? \n" << final_comment;
     return std::make_tuple(false, ss.str());
   }
 
@@ -974,19 +986,23 @@ void benchgemm(
   
   
   bool full_constraints_expected = true;
-  tinygemm::consistencychecks::check_ldx_mnk_consistent(gg);
+  
+  //tinygemm::consistencychecks::check_ldx_mnk_consistent(gg);
+  gg.check_ldx_consistent();
   if (c_is_const == true){
     
     cl_mem c_cop = get_copy(command_queue, c_gpu, gg, toff, "copy of c in benchgemm");
     openclutil::SafeClMem c_copied("copy of c in find");
     c_copied.clmem = c_cop;
-    
-    OpenCLGemmEncapsulator oger(command_queue, gg, toff, a_gpu, b_gpu, c_copied.clmem, workspace_gpu, hyperstring, full_constraints_expected, mowri);
+
+    bool use_mowri_tracker = false;
+    OpenCLGemmEncapsulator oger(command_queue, gg, toff, a_gpu, b_gpu, c_copied.clmem, workspace_gpu, hyperstring, full_constraints_expected, mowri, use_mowri_tracker);
     oger.benchgemm(n_runs);
   }
   
   else{
-    OpenCLGemmEncapsulator oger(command_queue, gg, toff, a_gpu, b_gpu, c_gpu, workspace_gpu, hyperstring, full_constraints_expected, mowri);
+    bool use_mowri_tracker = false;
+    OpenCLGemmEncapsulator oger(command_queue, gg, toff, a_gpu, b_gpu, c_gpu, workspace_gpu, hyperstring, full_constraints_expected, mowri, use_mowri_tracker);
     oger.benchgemm(n_runs);
   }
 }
@@ -1011,7 +1027,12 @@ find(float allotted_time, cl_command_queue command_queue, cl_mem a, cl_mem b, cl
   }
   
   tinygemm::TinyGemmOffsets toff(0,0,0,0,0,0,0);
-  outputwriting::OutputWriter mowri(true, false, "");
+  
+  /* complete silence (other thna warnings and errors) */
+  bool verbose = false;
+  bool use_mowri_tracker = false;  
+  outputwriting::OutputWriter mowri(verbose, false, "");
+
   bool c_is_const = true;
   
   std::string k_comment = "";
@@ -1020,26 +1041,32 @@ find(float allotted_time, cl_command_queue command_queue, cl_mem a, cl_mem b, cl
   if (std::get<0>(pair) == false && allotted_time < min_time_without_cache){
     
     std::stringstream ss;
-    ss << "\nin tinygemm find (version without workspace), and\n";
-    ss << "  (1) allotted_time (" << allotted_time << ") is less than min_time_without_cache (" << min_time_without_cache << ")\n";
-    ss << "  (2) there is not cache entry:";
+    ss << "\n\n";
+    ss << "in tinygemm find (version without workspace), and ";
+    ss << "\n\n(1) allotted_time (" << allotted_time << ") is less than min_time_without_cache (" << min_time_without_cache << ")  ";
+    ss << "\n\n(2) there is no cache entry. The message returned when attempting to obtain a cache entry was,";
+    ss << "\n";
     ss <<  std::get<1>(pair);
-    ss << "\nEither\n";
-    ss << "  (1) set allotted_time to be greater than min_time_without_cache, or\n";
-    ss << "  (2) generate a cache entry (see tests/gencache.cpp for an example)\n";
+    ss << "\n\n";
+    ss << "Either ";
+    ss << "\n\n(1) set allotted_time to be greater than min_time_without_cache, or ";
+    ss << "\n\n(2) generate a cache entry (see tests/gencache.cpp for an example).";
+    ss << "\n\n";
     
     tinygemm_warning(ss.str());
     mowri << ss.str();
 
   }
+
+  
   
   
   if (std::get<0>(pair) == false){
-    return find(command_queue, find_params, a, b, c, workspace, constraints_string, tgg, toff, mowri, c_is_const);  
+    return find(command_queue, find_params, a, b, c, workspace, constraints_string, tgg, toff, mowri, c_is_const, use_mowri_tracker);  
   }
   
 
-  auto found_soln = find(command_queue, find_params, a, b, c, workspace, constraints_string, tgg, toff, mowri, c_is_const);  
+  auto found_soln = find(command_queue, find_params, a, b, c, workspace, constraints_string, tgg, toff, mowri, c_is_const, use_mowri_tracker);  
   auto cached_soln = get_default(command_queue,constraints_string, tgg, k_comment, mowri);
   
   if (cached_soln.statistics.median_benchmark_gflops > found_soln.statistics.median_benchmark_gflops){

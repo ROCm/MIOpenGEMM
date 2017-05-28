@@ -52,16 +52,20 @@ void add_entry(KernelCache & kc, const std::string & k_dev, const std::string & 
     
   else{
     std::stringstream ss;
-    ss << "An attempt to add a cache entry where one already exists, with keys \n";
+    ss << "An attempt to add a cache entry where one already exists, with keys: ";
     ss << get_cache_keys_string(k_dev, k_con, k_geo, k_comment);
-    
-    ss << "\nThe existing entry is,\n";
-    ss << kc[k_dev][k_con][k_geo][k_comment].get_string() << "\n";
-    ss << "\nThe proposed entry is,\n";
+    ss << "\n\n";
+
+    ss << "The existing entry is, ";
+    ss << kc[k_dev][k_con][k_geo][k_comment].get_string();;
+    ss << "\n\n";
+
+    ss << "The proposed entry is, ";
     ss << tgcs.get_string();
-    ss << "\nPlease choose between these and remove one.\n";
+    ss << "\n\n";    
+    ss << "Please choose between these, and remove one.";
     
-    throw tinygemm::tinygemm_error(ss.str());
+    throw  tinygemm::tinygemm_error(ss.str());
   }
 }
 

@@ -118,7 +118,11 @@ bool verbose, std::string logfile, std::string constraints_string, unsigned n_po
    * *****************/
 
 //, allotted_time, allotted_descents, n_runs_per_kernel sumstat,
-  tinygemm::TinyGemmSolution soln = tinygemm::find(command_queue, find_params, a_gpu, b_gpu, c_gpu, workspace_gpu, constraints_string, geometry, toff, mowri); 
+
+
+  bool use_mowri_tracker = true;
+  bool c_is_const = true;
+  tinygemm::TinyGemmSolution soln = tinygemm::find(command_queue, find_params, a_gpu, b_gpu, c_gpu, workspace_gpu, constraints_string, geometry, toff, mowri, c_is_const, use_mowri_tracker); 
    
     
   if (do_cpu_test == true && n_postfind_runs < 1){

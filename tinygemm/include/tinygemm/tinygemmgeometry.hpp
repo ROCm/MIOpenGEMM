@@ -84,6 +84,8 @@ public:
   
   std::string get_networkconfig_string() const;
   
+  void check_ldx_consistent() const;
+  
 };
 
 

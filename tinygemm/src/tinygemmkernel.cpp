@@ -52,7 +52,7 @@ bool TinyGemmKernel::is_set(){
 void TinyGemmKernel::set_kernel_arg(cl_uint arg_index, size_t arg_size, const void *arg_value){
   
   if (clkern == nullptr){
-    throw tinygemm_error("Attempt to set kernel argument of uninitialised kernel");
+    throw  tinygemm_error("Attempt to set kernel argument of uninitialised kernel");
   }
 
   openclutil::cl_set_kernel_arg(clkern, arg_index, arg_size, arg_value, "in set_kernel_arg of TinyGemmKernel, " + hash + " index : " + std::to_string(arg_index));

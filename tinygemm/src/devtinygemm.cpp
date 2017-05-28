@@ -76,7 +76,8 @@ public:
   gg(gg_), toff(toff_), a(a_), b(b_), c(c_), mowri(mowri_), tgcq(mowri, "tiny gemm command queue in devtinygemm"),  a_gpu_safemem("a_gpu_safemem, of Gemini"), b_gpu_safemem("b_gpu_safemem, of Gemini"), c_gpu_safemem("c_gpu_safemem, of Gemini"), workspace_safemem("workspace_safemem, of Gemini")
   
   {
-    consistencychecks::check_ldx_mnk_consistent(gg);
+    //consistencychecks::check_ldx_mnk_consistent(gg);
+    gg.check_ldx_consistent();
     if (gg.derived.float_size_bytes != sizeof(TFloat)){
       throw tinygemm_error("float sizes don't agree in devtinygemm.cpp");
     }
@@ -141,11 +142,14 @@ public:
 
   tinygemm::TinyGemmSolution find(const tinygemm::FindParams & find_params, std::string constraints_string){
     /* dev code's connection to tinygemm */
+    
+    bool c_is_const = false;
+    bool use_mowri_tracker = false;
     tinygemm::TinyGemmSolution tgs = tinygemm::find(
       tgcq.command_queue, 
       find_params,
       a_gpu_safemem.clmem, b_gpu_safemem.clmem, c_gpu_safemem.clmem, workspace_safemem.clmem, constraints_string, gg, toff, 
-      mowri, false); 
+      mowri, c_is_const, use_mowri_tracker); 
    return tgs;
   }
   
