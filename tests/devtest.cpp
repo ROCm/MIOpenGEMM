@@ -21,7 +21,7 @@ std::string get_hyperstring(std::string hyperstring = ""){
   if (hyperstring.compare("") == 0){
     //hyperstring = "A_MIC1_PAD0_PLU1_LIW0_MIW1_WOS0__B_MIC2_PAD1_PLU1_LIW0_MIW0_WOS0__C_UNR16_GAL3_PUN1_ICE1_NAW64_UFO1_MAC16_SKW10";
     //hyperstring = "A_MIC1_PAD2_PLU0_LIW1_MIW1_WOS0__B_MIC1_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL2_PUN0_ICE1_NAW64_UFO0_MAC16_SKW10";
-    hyperstring = "A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU1_LIW0_MIW1_WOS0__C_UNR8_GAL3_PUN1_ICE1_NAW16_UFO0_MAC256_SKW10";
+    hyperstring = "A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC8_PAD1_PLU1_LIW0_MIW1_WOS0__C_UNR8_GAL1_PUN0_ICE1_NAW16_UFO0_MAC256_SKW10";
   }
   return hyperstring;
 }
@@ -36,15 +36,15 @@ tinygemm::TinyGemmGeometry get_geometry(){
   bool tA = false;
   bool tB = false;
   bool tC = false;
-  unsigned m = 1760; 
-  unsigned n = 7000; 
-  unsigned k = 1760;           
+  unsigned m = 512; 
+  unsigned n = 512; 
+  unsigned k = 512;           
 
   
   unsigned lda = ( tA == isColMajor ? k : m ) + 0;
   unsigned ldb = ( tB == isColMajor ? n : k ) + 0;
   unsigned ldc = ( tC == isColMajor ? n : m ) + 0;
-  unsigned workspace_size =  1e1;
+  unsigned workspace_size =  0;
   char floattype = sizeof(TFloat) == sizeof(double) ? 'd' : 'f';
   return { isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype };
     
@@ -82,7 +82,10 @@ void print_kernel(){
   
   
   for (auto & x :  bundle.v_tgks){
-    auto fname = "/home/james/akernel_" +  x.type.full +  ".cl";
+    auto dirname = "/home/james/" + gg.get_string() + "/" + get_hyperstring() + "/";
+    std::string syscall = "mkdir -p " + dirname;
+    std::system(syscall.c_str());
+    auto fname =  dirname +  x.type.full +  ".cl";
     std::cout << "writing " << fname << " ... " << std::flush;
     std::ofstream floper (fname, std::ios::out); 
     floper << x.kernstr;
@@ -99,9 +102,9 @@ int main(){
   tinygemm::outputwriting::OutputWriter mowri(true, fout != "" , fout);
 
 
-  bool test_print = false;
+  bool test_print = true;
   bool test_benchgemm = false;  
-  bool test_find = true;
+  bool test_find = false;
   bool test_accuracy = false;
   bool test_default = false;
 
