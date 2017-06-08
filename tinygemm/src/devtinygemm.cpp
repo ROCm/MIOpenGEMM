@@ -118,8 +118,10 @@ public:
     c_gpu_safemem.clmem = openclutil::cl_create_buffer_from_command_queue(tgcq.command_queue, CL_MEM_READ_WRITE, get_c_memsize(), NULL, "c_gpu in devtinygemm");  
     
     std::stringstream ss_hash;
-    ss_hash << "workspace_gpu in devtinygemm, with workspace_memsize : (" << get_workspace_memsize() << "(bytes) )";
-    workspace_safemem.clmem = openclutil::cl_create_buffer_from_command_queue(tgcq.command_queue, CL_MEM_READ_WRITE, get_workspace_memsize(), NULL, ss_hash.str());     
+    if (get_workspace_memsize() > 0){
+      ss_hash << "workspace_gpu in devtinygemm, with workspace_memsize : (" << get_workspace_memsize() << "(bytes) )";
+      workspace_safemem.clmem = openclutil::cl_create_buffer_from_command_queue(tgcq.command_queue, CL_MEM_READ_WRITE, get_workspace_memsize(), NULL, ss_hash.str());     
+    }
 
 
           
