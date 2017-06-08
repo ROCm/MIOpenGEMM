@@ -3,9 +3,11 @@
 #include <limits>
 #include <string>
 #include <sstream>
+#include <map>
 #include <tinygemm/tinygemmgeometry.hpp>
 #include <tinygemm/consistencychecks.hpp>
 #include <tinygemm/tinygemmerror.hpp>
+#include <tinygemm/stringutilbase.hpp>
 
 namespace tinygemm{
 
@@ -31,7 +33,22 @@ const unsigned & TinyGemmOffsets::operator[](char x) const{
 }
 
  
- 
+
+char get_floattype(unsigned nbits){
+
+  char ft = 'x';
+  if (nbits == 8*sizeof(float)){
+    ft = 'f';
+  }
+  else if (nbits == 8*sizeof(double)){
+    ft = 'd';
+  }
+  else{
+    throw  tinygemm_error("what is the floattype with this many bits : " + std::to_string(nbits) + std::string(" ?? in tinygemmgeometry"));
+  }
+  return ft;
+}
+
 void TinyGemmGeometryDerived::reset(char floattype){
   if (floattype == 'f'){
     float_size_bytes = sizeof(float);
@@ -128,16 +145,10 @@ void TinyGemmGeometry::check_ldx_consistent() const{
     
     for (auto x : {nsHP::matA, nsHP::matB, nsHP::matC}){
       if (ldX[x] < get_coal(x)){
-        //errm_ss << "--inconsistent gemm geometry, in matrix " << m_chars[x] << ": ";
-        //errm_ss  << R"(
-    //)" << "ld" << m_chars[x] << " (" << ldX[x] << ") <  coal_" << m_chars[x] << " (" << get_coal(x) << ").";
         errm_ss << "ld" << m_chars[x] << " (" << ldX[x] << ") <  coal_" << m_chars[x] << " (" << get_coal(x) << ").  ";
       }
     }
-    
-    //errm_ss << "the full geometry string is:\n";
-    //errm_ss << get_string();
-    
+        
     throw  tinygemm_error(errm_ss.str());
   }
   
@@ -159,11 +170,17 @@ bool TinyGemmGeometry::coal_is_pll_k(nsHP::eMat emat_x) const{
   /* proof : false, false, true should give 1 */
   return (static_cast<unsigned>(isColMajor) + static_cast<unsigned>(tX.at(emat_x)) + static_cast<unsigned>(emat_x == nsHP::matA)) % 2;
 }
+
+
+void TinyGemmGeometry::initialise(bool isColMajor_, bool tA_, bool tB_, bool tC_, unsigned lda_, unsigned ldb_, unsigned ldc_, unsigned m_, unsigned n_, unsigned k_, unsigned workspace_size_, char floattype_){
   
-
-TinyGemmGeometry::TinyGemmGeometry(bool isColMajor_, bool tA_, bool tB_, bool tC_, unsigned lda_, unsigned ldb_, unsigned ldc_, unsigned m_, unsigned n_, unsigned k_, unsigned workspace_size_, char floattype_): isColMajor(isColMajor_), m(m_), n(n_), k(k_), workspace_size(workspace_size_), floattype(floattype_) {
-
-
+  isColMajor = isColMajor_;
+  m = m_;
+  n = n_;
+  k = k_;
+  workspace_size = workspace_size_;
+  floattype = floattype_;
+  
   tX.resize(nsHP::nMats);
   tX[nsHP::matA] = tA_;
   tX[nsHP::matB] = tB_;  
@@ -181,11 +198,78 @@ TinyGemmGeometry::TinyGemmGeometry(bool isColMajor_, bool tA_, bool tB_, bool tC
     
   
   check_ldx_consistent();
-  //consistencychecks::check_ldx_mnk_consistent(isColMajor, tX[nsHP::matA], tX[nsHP::matB], tX[nsHP::matC],  ldX[nsHP::matA],  ldX[nsHP::matB],  ldX[nsHP::matC],  m,  n,  k);
   
   derived.reset(floattype); 
 
 }
+  
+
+TinyGemmGeometry::TinyGemmGeometry(bool isColMajor_, bool tA_, bool tB_, bool tC_, unsigned lda_, unsigned ldb_, unsigned ldc_, unsigned m_, unsigned n_, unsigned k_, unsigned workspace_size_, char floattype_) {
+
+  initialise(isColMajor_, tA_, tB_, tC_, lda_, ldb_, ldc_, m_, n_, k_, workspace_size_, floattype_);
+
+
+}
+
+
+std::map<std::string, unsigned> get_key_val_map(std::string geometry_string){
+  auto frags = tinygemm::stringutil::split(geometry_string, "_");
+  std::map<std::string, unsigned> key_val_map;
+  for  (auto & frag : frags){
+    auto key_val = stringutil::splitnumeric(frag);
+    auto key = std::get<0>(key_val);
+    auto val = std::get<1>(key_val);
+    key_val_map[key] = val;
+  }
+  return key_val_map;
+}
+
+
+
+unsigned safeat(std::map<std::string, unsigned> & map, std::string key){
+  if (map.count(key) == 0){
+    std::stringstream errm;
+    errm << "Unrecognised key `";
+    errm << key << "' in safeat in tinygemmgeometry";
+    throw tinygemm::tinygemm_error(errm.str());
+  }
+  return map.at(key);
+}
+
+TinyGemmGeometry::TinyGemmGeometry(std::string geometry_string){
+  
+  auto key_val_map = get_key_val_map(geometry_string);
+  
+  TinyGemmGeometry goldstandard_geometry (false, false, false, false, 100,100,100,100,100,100,100,'f'); 
+  std::string goldstandard_geometry_string = goldstandard_geometry.get_string();
+  auto goldstandard_map = get_key_val_map(goldstandard_geometry_string);
+
+  
+  std::stringstream errm_ss;
+  bool good_string = true;
+  for (auto & x : key_val_map){
+    if (goldstandard_map.count(x.first) == 0){
+      errm_ss << "The key in the geometry string `" << x.first << "' is not valid.  ";
+      good_string = false;
+    }
+  }
+  
+  for (auto & x : goldstandard_map){
+    if (key_val_map.count(x.first) == 0){
+      errm_ss << "The geometry string should contain key `" << x.first << "', but does not.  ";
+      good_string = false;      
+    }
+  }
+
+  if (good_string == false){
+    throw tinygemm::tinygemm_error(errm_ss.str());
+  }
+   
+
+  initialise(safeat(key_val_map, "colMaj"), safeat(key_val_map, "tA"), safeat(key_val_map, "tB"), safeat(key_val_map, "tC"), safeat(key_val_map, "lda"), safeat(key_val_map, "ldb"), safeat(key_val_map, "ldc"), safeat(key_val_map, "m"), safeat(key_val_map, "n"), safeat(key_val_map, "k"), safeat(key_val_map, "ws"), get_floattype(safeat(key_val_map, "f")));
+}
+
+  
 
 std::string TinyGemmGeometry::get_string() const{
   

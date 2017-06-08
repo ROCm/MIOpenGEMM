@@ -39,6 +39,11 @@ public:
 };
 
 class TinyGemmGeometry{
+  
+private:
+
+  void initialise(bool isColMajor_, bool tA_, bool tB_, bool tC_, unsigned lda_, unsigned ldb_, unsigned ldc_, unsigned m_, unsigned n_, unsigned k_, unsigned workspace_size_, char floattype_);
+
 public:
   /* */
   bool isColMajor; 
@@ -67,6 +72,8 @@ public:
   TinyGemmGeometry() = default;
   
   TinyGemmGeometry (const TinyGemmGeometry & ) = default;
+  
+  TinyGemmGeometry(std::string geometry_string);
   
   TinyGemmGeometry & operator= (const TinyGemmGeometry & ) = default;
   
