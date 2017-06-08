@@ -351,24 +351,28 @@ private:
   
   void core_gemm_loop(size_t n_runs, bool print_asap){
     
-
     ++total_kernels_tested;
     update_total_elapsed_seconds();
     
-  
-  //if (mowri.to_terminal == false){
-
-    std::stringstream comment_string_ss;
-    comment_string_ss << "[ TOTAL TIME:" << stringutil::get_padded(static_cast<int>(total_elapsed_seconds), 7);
-    comment_string_ss << "  #RESTARTS:" << stringutil::get_padded(total_elapsed_descents, 7);
-    comment_string_ss << "  #GEMMS CONSIDERED:" << stringutil::get_padded(total_kernels_tested, 7) << "]       ";
-    old_comment_string = new_comment_string;
-    new_comment_string = comment_string_ss.str();
-    std::string backspaces = std::string(old_comment_string.size(), '\b');
-    
-    /* TODO : determine where to use mowri_tracker, and enable to path to here */
-    mowri_tracker << backspaces << new_comment_string << Flush;
+    if (mowri_tracker.to_terminal == true && mowri.to_terminal == true){
+      throw tinygemm::tinygemm_error("either one of mowri_tracker.to_terminal and mowri.to_terminal must be false");
       
+    }
+    
+  
+    if (mowri_tracker.to_terminal == true){
+  
+      std::stringstream comment_string_ss;
+      comment_string_ss << "[ TOTAL TIME:" << stringutil::get_padded(static_cast<int>(total_elapsed_seconds), 7);
+      comment_string_ss << "  #RESTARTS:" << stringutil::get_padded(total_elapsed_descents, 7);
+      comment_string_ss << "  #GEMMS CONSIDERED:" << stringutil::get_padded(total_kernels_tested, 7) << "]       ";
+      old_comment_string = new_comment_string;
+      new_comment_string = comment_string_ss.str();
+      std::string backspaces = std::string(old_comment_string.size(), '\b');
+      /* TODO : determine where to use mowri_tracker, and enable to path to here */
+      mowri_tracker << backspaces << new_comment_string << Flush;
+    }
+    
     reset_v_times();
     
     std::vector<std::string> indi_run_strings;
