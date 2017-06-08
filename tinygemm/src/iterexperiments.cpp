@@ -60,7 +60,9 @@ int run_find_experiments(const std::vector<tinygemm::TinyGemmGeometry> & geometr
       }
 
 
-      mowri_outer << (prob_i + 1) <<  "/" <<  geometries.size() << " \t m:" << tinygemm::stringutil::get_padded(gg.m) << " \t n:" << tinygemm::stringutil::get_padded(gg.n) << " \t k:" << tinygemm::stringutil::get_padded(gg.k) << " \t tA:" << gg.tX[tinygemm::nsHP::matA] << " \t tB:" << gg.tX[tinygemm::nsHP::matB] << Endl;
+      mowri_outer << (prob_i + 1) <<  "/" <<  geometries.size() << "       " << gg.get_string() << Endl;
+      
+      //"    m:" << tinygemm::stringutil::get_padded(gg.m) << "  n:" << tinygemm::stringutil::get_padded(gg.n) << "  k:" << tinygemm::stringutil::get_padded(gg.k) << "  tA:" << gg.tX[tinygemm::nsHP::matA] << "  tB:" << gg.tX[tinygemm::nsHP::matB] << "  tC:" << gg.tX[tinygemm::nsHP::matB] << "  tC:" << gg.tX[tinygemm::nsHP::matB] << Endl;
 
       std::string logfile = ss_logfile.str();
   
