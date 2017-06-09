@@ -99,14 +99,14 @@ int main(){
 
   bool test_print = false;
   bool test_benchgemm = false;  
-  bool test_find = false;
-  bool test_accuracy = true;
+  bool test_find = true;
+  bool test_accuracy = false;
   bool test_default = false;
 
-  std::string constraints_string("A_MIC8_PAD0_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD2_PLU1_LIW1_MIW1_WOS0__C_UNR8_GAL2_PUN0_ICE1_NAW64_UFO0_MAC256_SKW10");
+  std::string constraints_string("A_WOS0__B_WOS0");
   
-  float allotted_find_time = 200.00;
-  unsigned allotted_find_descents = 1;
+  float allotted_find_time = 1.00;
+  unsigned allotted_find_descents = 100;
   unsigned n_runs_per_kernel = 5;
   tinygemm::SummaryStat sumstat(tinygemm::Max);
   
