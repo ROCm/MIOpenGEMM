@@ -1076,10 +1076,10 @@ find(float allotted_time, cl_command_queue command_queue, cl_mem a, cl_mem b, cl
       ss << "Either ";
       ss << "\n(1) set allotted_time to be greater than min_time_without_cache, or ";
       ss << "\n(2) generate a custom cache entry (see tests/gencache.cpp for an example).";
-      ss << "\n\nReturing a generic cache entry\n\n";
+      ss << "\n\nReturing a generic cache entry\n";
 
       mowri << ss.str();
-      tinygemm_warning("\nvery limited search, with no custom cache\n");
+      tinygemm_warning("\nvery limited search with no custom cache : expect a sub-optimal kernel(s) \n");
       solution = get_default(tgg);
     }
     
