@@ -88,7 +88,7 @@ public:
   TinyGemmGPUMems gpum;
   const openclutil::OpenCLDeviceInfo devinfo;
   std::string constraints_string;
-  const hyperparams::Graph graph;
+  hyperparams::Graph graph;
 
 
 private:
@@ -536,8 +536,8 @@ public:
   hyperparams::HyperParams get_hyper_param_start(){
 
   
-  hyperparams::HyperParams hyper_param_start(graph);
-  hyper_param_start.checks();  
+    hyperparams::HyperParams hyper_param_start(graph);
+    hyper_param_start.checks();  
   
 
     bool found_a_deriveable_hp = false;
@@ -546,16 +546,14 @@ public:
 
     
     /* the number of attempts at finding a deriveable HyperParams given the constraint string */
-    const unsigned n_trials = 10000;
+    const unsigned n_trials = 100000;
     
     while (found_a_deriveable_hp == false && deriveable_search_iteration < n_trials){
-      
       hyper_param_start = hyperparams::HyperParams(graph);
-      hyper_param_start.checks();  
-      
+      hyper_param_start.checks();        
       auto deriveability = derivedparams::get_deriveability(hyper_param_start, gg);
       if (std::get<0>(deriveability) == false){
-        deriveablesearch_ss << hyper_param_start.get_string() << " is not deriveable, because " << std::get<1>(deriveability) << "\n";            
+        deriveablesearch_ss << hyper_param_start.get_string() << " is not deriveable, because : " << std::get<1>(deriveability) << "\n\n";            
       }
       else{
         found_a_deriveable_hp = true;
@@ -563,12 +561,27 @@ public:
       ++deriveable_search_iteration;
     }
     
-    /* TODO : should rather return null-solution, as throwing an error should not be stochastic */
+    mowri << "n trials looking for a viable starting node in the graph : " << deriveable_search_iteration << Endl;  
+    
+    /* force the graph starting parameters */
     if (found_a_deriveable_hp == false){
       std::stringstream base_ss;
-      base_ss << "\n\nStruggling to find a deriveable set of hyper parameters which satisfy the geometry and constraints. The number of attempts made is " << n_trials << "\n throwing an error. To view the full output of the hyper parameters tried and their reasons for not being derivable, modify the code here (add deriveablesearch_ss.str()). \n";
-      throw  tinygemm_error(base_ss.str());
+      base_ss << "\n\nStruggling to find a deriveable set of hyper parameters which satisfy the geometry and constraints. ";
+      base_ss << "The number of attempts made is " << n_trials << ".  To view the full output of the hyper parameters tried and their reasons for not being derivable, modify the code here (add deriveablesearch_ss.str()). Attempting to obtain hyper parameters using get_generic_solution. \n";
+      mowri << base_ss.str() << "\n\n";
+      
+      
+      auto cached_soln = get_generic_cached_solution(graph.constraints_string_in, gg);
+      graph.force_start_node(cached_soln.hyperstring);
+      hyper_param_start = hyperparams::HyperParams(graph);
+      hyper_param_start.checks();
+      auto deriveability = derivedparams::get_deriveability(hyper_param_start, gg);
+      if (std::get<0>(deriveability) == false){
+        mowri << "NOW, THE FALLBACK SOLUTION IS NOT EVEN DERIVEABLE: " << hyper_param_start.get_string() << " is not deriveable, because : " << std::get<1>(deriveability) << "\n\n";
+        throw tinygemm::tinygemm_error("\nfallback solution failed deriveability test in get_hyper_param_start/\n");
+      }
     }
+    
     return hyper_param_start;
   }
 
@@ -922,14 +935,13 @@ std::string k_comment){
 tinygemm::TinyGemmSolution
 get_default(const tinygemm::TinyGemmGeometry & gg){
   std::string constraints_string = "";
-  auto cached_soln = get_generic_cached_solution(constraints_string, gg);
-
-  openclutil::OpenCLDeviceInfo devinfo;
-
-  outputwriting::OutputWriter mowri(false, false, "");
   
+  auto cached_soln = get_generic_cached_solution(constraints_string, gg);
+  openclutil::OpenCLDeviceInfo devinfo;
+  outputwriting::OutputWriter mowri(false, false, "");
   hyperparams::Graph graph(gg, devinfo, cached_soln.hyperstring, false);
   hyperparams::HyperParams hp(graph);
+  
   bool bundle_verbose_get_default = true;
   auto bundle = tinygemm::kerngen::get_bundle(hp,gg, mowri, bundle_verbose_get_default);
  
