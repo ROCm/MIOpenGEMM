@@ -78,7 +78,6 @@ std::tuple<bool, std::string, std::array<unsigned, 2>> get_mac_grid(unsigned mac
   
 }
 
-
 }
 
 namespace hyperparams{
@@ -111,7 +110,6 @@ const std::vector<char> graphchar = get_graphchar();
 const std::map <char, unsigned> graphind = get_vals(nsHP::nMats, graphchar, "getting graphind"); 
 
 
-
 KeysVals get_chiral_kv(){
   KeysVals ckv;
   ckv.keys.resize(nsHP::nChiralHPs);
@@ -127,7 +125,6 @@ KeysVals get_chiral_kv(){
 }
 
 const KeysVals chiral_kv = get_chiral_kv();
-
 
 KeysVals get_non_chiral_kv(){
   KeysVals ckv;
@@ -170,8 +167,8 @@ std::vector<std::string> get_sub_constraints(std::string constraints_string) {
 
 
 Graph::Graph(const tinygemm::TinyGemmGeometry & gg, const openclutil::OpenCLDeviceInfo & devinfo, std::string constraints_string, bool full_cs): ptr_gg(&gg) {
-
   
+  constraints_string_in = constraints_string;
   std::vector<std::string> sub_constraints = get_sub_constraints(constraints_string);
   
   asubg = ASubG(gg, sub_constraints[nsHP::matA], full_cs, &devinfo);
@@ -194,6 +191,22 @@ Graph::Graph(const tinygemm::TinyGemmGeometry & gg, const openclutil::OpenCLDevi
 
 }
 
+void Graph::force_start_node(std::string constraints_string){
+  std::vector<std::string> sub_constraints = get_sub_constraints(constraints_string);
+
+
+  auto a_vals = get_constraints(sub_constraints[nsHP::matA], true, asubg.ptr_keys_vals, asubg.get_char());
+  auto b_vals = get_constraints(sub_constraints[nsHP::matB], true, bsubg.ptr_keys_vals, bsubg.get_char());
+  auto c_vals = get_constraints(sub_constraints[nsHP::matC], true, csubg.ptr_keys_vals, csubg.get_char());
+
+  asubg.force_start_node(a_vals);
+  bsubg.force_start_node(b_vals);  
+  csubg.force_start_node(c_vals);    
+
+}
+
+
+
 std::vector< std::vector<unsigned> > get_all_constraints(std::string constraints_string){
   
   std::vector<std::string> sub_constraints = get_sub_constraints(constraints_string);
@@ -204,7 +217,6 @@ std::vector< std::vector<unsigned> > get_all_constraints(std::string constraints
   all_constraints[nsHP::matC] = get_constraints(sub_constraints[nsHP::matC], false, &non_chiral_kv, 'C');
 
   return all_constraints;  
-   
 }
 
 std::vector<unsigned> get_constraints(std::string subg_cs, bool subg_csfull, const KeysVals * p_kv, char subg_hash){
@@ -263,10 +275,6 @@ void SubG::set_constraints(){
 }
 
 
-
-
-
-
 const std::map<unsigned, std::vector<unsigned> > graph_binary = 
 {   {0, {1}},
     {1, {0}}    };
@@ -290,6 +298,21 @@ void SubG::initialise_start_range_from_range(){
   }
 }
 
+void SubG::force_start_node(std::vector<unsigned> start_node){
+  
+  if (start_node.size() != range.size()){
+    std::stringstream ss;
+    
+    ss << "in force_start_node, and start_node.size() (=" << start_node.size() << ") differs from range.size() << (" << range.size() << ")";
+    throw tinygemm::tinygemm_error(ss.str());
+  }
+  
+  for (unsigned hpi = 0; hpi < range.size(); ++hpi){
+    //for (auto & x : range[hpi]){
+    start_range[hpi] = {start_node.at(hpi)};
+    //}
+  }  
+}
 
 
 SubG::SubG(unsigned nHPs_, const tinygemm::TinyGemmGeometry & gg, std::string cs, bool csfull, const openclutil::OpenCLDeviceInfo * ptr_devinfo_): nHPs(nHPs_), ptr_gg(&gg), edges (nHPs_), start_range (nHPs_), subg_cs(cs), subg_csfull(csfull), ptr_devinfo(ptr_devinfo_) {
@@ -389,24 +412,29 @@ void SubG::confirm_start_is_subset(){
 CSubG::CSubG(const tinygemm::TinyGemmGeometry & gg, std::string cs, bool csfull, const openclutil::OpenCLDeviceInfo * ptr_devinfo_) : SubG(nsHP::nNonChiralHPs, gg, cs, csfull, ptr_devinfo_){}
 
 
-
 ChiralSubG::ChiralSubG(const tinygemm::TinyGemmGeometry & gg, std::string cs, bool csfull, const openclutil::OpenCLDeviceInfo * ptr_devinfo_) : SubG(nsHP::nChiralHPs, gg, cs, csfull, ptr_devinfo_){}
 
-
 void ChiralSubG::set_chirality_specific_start_range_base(unsigned non_unroll_dimension){
-  start_range[nsHP::MIC] = {8,6};
+  std::vector<unsigned> basemic = {8,6};
   if (non_unroll_dimension  < 256){
-    start_range[nsHP::MIC].push_back(5);
-    start_range[nsHP::MIC].push_back(4);
+    basemic.push_back(5);
+    basemic.push_back(4);
   }
   
   if (non_unroll_dimension < 128){
-    start_range[nsHP::MIC].push_back(3);
-    start_range[nsHP::MIC].push_back(2);
+    basemic.push_back(3);
+    basemic.push_back(2);
   }
   
   if (non_unroll_dimension < 64){
-    start_range[nsHP::MIC].push_back(1);
+    basemic.push_back(1);
+  }
+  
+  start_range[nsHP::MIC] = {};
+  for (auto & x : basemic){
+    if (x <= non_unroll_dimension){
+      start_range[nsHP::MIC].push_back(x);
+    }
   }
     
 }
@@ -455,7 +483,7 @@ void SubG::apply_constraints(){
 
 void ChiralSubG::set_preconstraint_edges(){
   
-  edges[nsHP::MIC] =
+  edges[nsHP::MIC] =  
   { {1, {2,3} },
     {2, {1,3,4} },
     {3, {1,2,4} },
@@ -463,6 +491,7 @@ void ChiralSubG::set_preconstraint_edges(){
     {5, {2,4,6} },
     {6, {4,5,8} },
     {8, {4,6} }    };
+    
     
   edges[nsHP::PAD] = 
   { {0, {1}   },
@@ -498,6 +527,7 @@ void CSubG::manual_override_start_range(){
   start_range[nsHP::ICE] = {1};
   start_range[nsHP::UFO] = {nsHP::no};
 
+
   if ((ptr_gg->m) > 200 && (ptr_gg->n) > 200){
     
     if (ptr_devinfo->wg_atom_size == 32){
@@ -508,7 +538,7 @@ void CSubG::manual_override_start_range(){
       start_range[nsHP::SKW] = {skew0};
     }
   }
-
+  
 }
 
 void CSubG::set_preconstraint_edges(){

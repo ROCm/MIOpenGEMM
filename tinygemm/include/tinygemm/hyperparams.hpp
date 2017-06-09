@@ -117,6 +117,8 @@ public:
   std::string get_range_string(unsigned hpi);
   std::string get_start_range_string(unsigned hpi);
 
+  
+  void force_start_node(std::vector<unsigned>);
 };
 
 
@@ -178,6 +180,9 @@ class Graph{
 
     std::vector<SubG * > p_subgs;
     
+    std::string constraints_string_in;
+    
+    void force_start_node(std::string);
     
     std::vector<std::pair< std::pair<unsigned, unsigned>, std::pair<unsigned, unsigned> > > coupled_parameters;
 
