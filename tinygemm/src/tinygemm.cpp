@@ -1051,23 +1051,23 @@ find(float allotted_time, cl_command_queue command_queue, cl_mem a, cl_mem b, cl
   if (allotted_time < min_time_without_cache){
     mowri << "allotted_time < min_time_without_cache, will not search\n";
   
-    if (is_custom_cache_entry){
+    if (is_custom_cache_entry == false){
       
       std::stringstream ss;
       ss << "\n\n";
-      ss << "in tinygemm find (version without workspace), and ";
-      ss << "\n\n(1) allotted_time (" << allotted_time << ") is less than min_time_without_cache (" << min_time_without_cache << ")  ";
+      ss << "In tinygemm find (version without workspace), and ";
+      ss << "\n(1) allotted_time (" << allotted_time << ") is less than min_time_without_cache (" << min_time_without_cache << ")  ";
       ss << "\n(2) there is no custom cache entry. The message returned when attempting to obtain a custom cache entry was,";
       ss << "\n";
       ss <<  std::get<1>(pair);
-      ss << "\n\n";
+      ss << "\n";
       ss << "Either ";
-      ss << "\n\n(1) set allotted_time to be greater than min_time_without_cache, or ";
+      ss << "\n(1) set allotted_time to be greater than min_time_without_cache, or ";
       ss << "\n(2) generate a custom cache entry (see tests/gencache.cpp for an example).";
       ss << "\n\nReturing a generic cache entry\n\n";
 
       mowri << ss.str();
-      tinygemm_warning("very limited search, with no custom cache");
+      tinygemm_warning("\nvery limited search, with no custom cache\n");
       solution = get_default(tgg);
     }
     
