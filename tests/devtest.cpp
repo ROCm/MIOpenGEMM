@@ -19,9 +19,7 @@
 
 std::string get_hyperstring(std::string hyperstring = ""){
   if (hyperstring.compare("") == 0){
-    //hyperstring = "A_MIC1_PAD0_PLU1_LIW0_MIW1_WOS0__B_MIC2_PAD1_PLU1_LIW0_MIW0_WOS0__C_UNR16_GAL3_PUN1_ICE1_NAW64_UFO1_MAC16_SKW10";
-    //hyperstring = "A_MIC1_PAD2_PLU0_LIW1_MIW1_WOS0__B_MIC1_PAD1_PLU0_LIW0_MIW1_WOS0__C_UNR16_GAL2_PUN0_ICE1_NAW64_UFO0_MAC16_SKW10";
-    hyperstring = "A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC8_PAD1_PLU1_LIW0_MIW1_WOS0__C_UNR8_GAL1_PUN0_ICE1_NAW16_UFO0_MAC256_SKW10";
+    hyperstring = "A_MIC1_PAD0_PLU0_LIW0_MIW0_WOS0__B_MIC1_PAD2_PLU1_LIW1_MIW1_WOS0__C_UNR16_GAL2_PUN0_ICE1_NAW16_UFO0_MAC1_SKW10";
   }
   return hyperstring;
 }
@@ -30,32 +28,29 @@ template <typename TFloat>
 tinygemm::TinyGemmGeometry get_geometry(){
 
 
-  //m1760n64k1760tA1tB0
-
-  bool isColMajor = true;
-  bool tA = false;
-  bool tB = false;
-  bool tC = false;
-  unsigned m = 512; 
-  unsigned n = 512; 
-  unsigned k = 512;           
-
-  
-  unsigned lda = ( tA == isColMajor ? k : m ) + 0;
-  unsigned ldb = ( tB == isColMajor ? n : k ) + 0;
-  unsigned ldc = ( tC == isColMajor ? n : m ) + 0;
-  unsigned workspace_size =  0;
-  char floattype = sizeof(TFloat) == sizeof(double) ? 'd' : 'f';
-  return { isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype };
+  //bool isColMajor = true;
+  //bool tA = false;
+  //bool tB = false;
+  //bool tC = false;
+  //unsigned m = 512; 
+  //unsigned n = 512; 
+  //unsigned k = 512;             
+  //unsigned lda = ( tA == isColMajor ? k : m ) + 0;
+  //unsigned ldb = ( tB == isColMajor ? n : k ) + 0;
+  //unsigned ldc = ( tC == isColMajor ? n : m ) + 0;
+  //unsigned workspace_size =  0;
+  //char floattype = sizeof(TFloat) == sizeof(double) ? 'd' : 'f';
+  //return { isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype };
     
+  return {"tC0_tA0_tB0_colMaj1_m900_n1_k147_lda900_ldb147_ldc900_ws0_f32"};
 }
 
 tinygemm::TinyGemmOffsets get_offsets(){
 
-  unsigned a_offset = 33;//3e6;//5;
-  unsigned b_offset = 55;//2e6;//7;
-  unsigned c_offset = 77;//1e6;//11;
-  unsigned workspace_offset = 0;//99;//1e6;//17;
+  unsigned a_offset = 330;
+  unsigned b_offset = 550;
+  unsigned c_offset = 770;
+  unsigned workspace_offset = 0;
   unsigned tail_off_a = 1e6 + 123;
   unsigned tail_off_b = 1e6 + 97;
   unsigned tail_off_c = 1e6 + 67;
@@ -102,16 +97,16 @@ int main(){
   tinygemm::outputwriting::OutputWriter mowri(true, fout != "" , fout);
 
 
-  bool test_print = true;
+  bool test_print = false;
   bool test_benchgemm = false;  
-  bool test_find = false;
+  bool test_find = true;
   bool test_accuracy = false;
   bool test_default = false;
 
-  std::string constraints_string("A_MIC8_PAD0_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD2_PLU1_LIW1_MIW1_WOS0__C_UNR8_GAL2_PUN0_ICE1_NAW64_UFO0_MAC256_SKW10");
+  std::string constraints_string("A_WOS0__B_WOS0");
   
-  float allotted_find_time = 200.00;
-  unsigned allotted_find_descents = 1;
+  float allotted_find_time = 1.00;
+  unsigned allotted_find_descents = 100;
   unsigned n_runs_per_kernel = 5;
   tinygemm::SummaryStat sumstat(tinygemm::Max);
   
@@ -135,10 +130,8 @@ int main(){
   
   if (test_accuracy || test_benchgemm){
     std::string hyperstring = get_hyperstring();
-    //for (unsigned i = 0; i < 100; ++i){
       if (test_accuracy){
         tinygemm::dev::accuracy_test(hyperstring, gg, toff, v_a.data(), v_b.data(), v_c.data(), c_true_bla, mowri);
-      //}
     }
 
     if (test_benchgemm){
@@ -161,8 +154,6 @@ int main(){
     std::cout << soln.hyper_param_string << std::endl;
     tinygemm::dev::accuracy_test(soln.hyper_param_string, gg, toff, v_a.data(), v_b.data(), v_c.data(), c_true_bla, mowri);
     std::cout << soln.hyper_param_string << std::endl;
-        
-    //throw tinygemm::tinygemm_error("cannot test default currently, bla");
   }
   
   return 0;

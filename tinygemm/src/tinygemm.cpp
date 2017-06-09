@@ -88,7 +88,7 @@ public:
   TinyGemmGPUMems gpum;
   const openclutil::OpenCLDeviceInfo devinfo;
   std::string constraints_string;
-  const hyperparams::Graph graph;
+  hyperparams::Graph graph;
 
 
 private:
@@ -351,24 +351,28 @@ private:
   
   void core_gemm_loop(size_t n_runs, bool print_asap){
     
-
     ++total_kernels_tested;
     update_total_elapsed_seconds();
     
-  
-  //if (mowri.to_terminal == false){
-
-    std::stringstream comment_string_ss;
-    comment_string_ss << "[ TOTAL TIME:" << stringutil::get_padded(static_cast<int>(total_elapsed_seconds), 7);
-    comment_string_ss << "  #RESTARTS:" << stringutil::get_padded(total_elapsed_descents, 7);
-    comment_string_ss << "  #GEMMS CONSIDERED:" << stringutil::get_padded(total_kernels_tested, 7) << "]       ";
-    old_comment_string = new_comment_string;
-    new_comment_string = comment_string_ss.str();
-    std::string backspaces = std::string(old_comment_string.size(), '\b');
-    
-    /* TODO : determine where to use mowri_tracker, and enable to path to here */
-    mowri_tracker << backspaces << new_comment_string << Flush;
+    if (mowri_tracker.to_terminal == true && mowri.to_terminal == true){
+      throw tinygemm::tinygemm_error("either one of mowri_tracker.to_terminal and mowri.to_terminal must be false");
       
+    }
+    
+  
+    if (mowri_tracker.to_terminal == true){
+  
+      std::stringstream comment_string_ss;
+      comment_string_ss << "[ TOTAL TIME:" << stringutil::get_padded(static_cast<int>(total_elapsed_seconds), 7);
+      comment_string_ss << "  #RESTARTS:" << stringutil::get_padded(total_elapsed_descents, 7);
+      comment_string_ss << "  #GEMMS CONSIDERED:" << stringutil::get_padded(total_kernels_tested, 7) << "]       ";
+      old_comment_string = new_comment_string;
+      new_comment_string = comment_string_ss.str();
+      std::string backspaces = std::string(old_comment_string.size(), '\b');
+      /* TODO : determine where to use mowri_tracker, and enable to path to here */
+      mowri_tracker << backspaces << new_comment_string << Flush;
+    }
+    
     reset_v_times();
     
     std::vector<std::string> indi_run_strings;
@@ -532,8 +536,8 @@ public:
   hyperparams::HyperParams get_hyper_param_start(){
 
   
-  hyperparams::HyperParams hyper_param_start(graph);
-  hyper_param_start.checks();  
+    hyperparams::HyperParams hyper_param_start(graph);
+    hyper_param_start.checks();  
   
 
     bool found_a_deriveable_hp = false;
@@ -542,16 +546,14 @@ public:
 
     
     /* the number of attempts at finding a deriveable HyperParams given the constraint string */
-    const unsigned n_trials = 10000;
+    const unsigned n_trials = 100000;
     
     while (found_a_deriveable_hp == false && deriveable_search_iteration < n_trials){
-      
       hyper_param_start = hyperparams::HyperParams(graph);
-      hyper_param_start.checks();  
-      
+      hyper_param_start.checks();        
       auto deriveability = derivedparams::get_deriveability(hyper_param_start, gg);
       if (std::get<0>(deriveability) == false){
-        deriveablesearch_ss << hyper_param_start.get_string() << " is not deriveable, because " << std::get<1>(deriveability) << "\n";            
+        deriveablesearch_ss << hyper_param_start.get_string() << " is not deriveable, because : " << std::get<1>(deriveability) << "\n\n";            
       }
       else{
         found_a_deriveable_hp = true;
@@ -559,12 +561,27 @@ public:
       ++deriveable_search_iteration;
     }
     
-    /* TODO : should rather return null-solution, as throwing an error should not be stochastic */
+    mowri << "n trials looking for a viable starting node in the graph : " << deriveable_search_iteration << Endl;  
+    
+    /* force the graph starting parameters */
     if (found_a_deriveable_hp == false){
       std::stringstream base_ss;
-      base_ss << "\n\nStruggling to find a deriveable set of hyper parameters which satisfy the geometry and constraints. The number of attempts made is " << n_trials << "\n throwing an error. To view the full output of the hyper parameters tried and their reasons for not being derivable, modify the code here (add deriveablesearch_ss.str()). \n";
-      throw  tinygemm_error(base_ss.str());
+      base_ss << "\n\nStruggling to find a deriveable set of hyper parameters which satisfy the geometry and constraints. ";
+      base_ss << "The number of attempts made is " << n_trials << ".  To view the full output of the hyper parameters tried and their reasons for not being derivable, modify the code here (add deriveablesearch_ss.str()). Attempting to obtain hyper parameters using get_generic_solution. \n";
+      mowri << base_ss.str() << "\n\n";
+      
+      
+      auto cached_soln = get_generic_cached_solution(graph.constraints_string_in, gg);
+      graph.force_start_node(cached_soln.hyperstring);
+      hyper_param_start = hyperparams::HyperParams(graph);
+      hyper_param_start.checks();
+      auto deriveability = derivedparams::get_deriveability(hyper_param_start, gg);
+      if (std::get<0>(deriveability) == false){
+        mowri << "NOW, THE FALLBACK SOLUTION IS NOT EVEN DERIVEABLE: " << hyper_param_start.get_string() << " is not deriveable, because : " << std::get<1>(deriveability) << "\n\n";
+        throw tinygemm::tinygemm_error("\nfallback solution failed deriveability test in get_hyper_param_start/\n");
+      }
     }
+    
     return hyper_param_start;
   }
 
@@ -918,14 +935,13 @@ std::string k_comment){
 tinygemm::TinyGemmSolution
 get_default(const tinygemm::TinyGemmGeometry & gg){
   std::string constraints_string = "";
-  auto cached_soln = get_generic_cached_solution(constraints_string, gg);
-
-  openclutil::OpenCLDeviceInfo devinfo;
-
-  outputwriting::OutputWriter mowri(false, false, "");
   
+  auto cached_soln = get_generic_cached_solution(constraints_string, gg);
+  openclutil::OpenCLDeviceInfo devinfo;
+  outputwriting::OutputWriter mowri(false, false, "");
   hyperparams::Graph graph(gg, devinfo, cached_soln.hyperstring, false);
   hyperparams::HyperParams hp(graph);
+  
   bool bundle_verbose_get_default = true;
   auto bundle = tinygemm::kerngen::get_bundle(hp,gg, mowri, bundle_verbose_get_default);
  
@@ -1011,6 +1027,9 @@ void benchgemm(
 tinygemm::TinyGemmSolution
 find(float allotted_time, cl_command_queue command_queue, cl_mem a, cl_mem b, cl_mem c, bool enforce_determinism, const tinygemm::TinyGemmGeometry & tgg){
 
+
+  tinygemm::TinyGemmSolution solution = get_default(tgg);
+
   /* TODO : where is a good place to set this ? */
   float min_time_without_cache = 100.00;
   
@@ -1028,8 +1047,8 @@ find(float allotted_time, cl_command_queue command_queue, cl_mem a, cl_mem b, cl
   
   tinygemm::TinyGemmOffsets toff(0,0,0,0,0,0,0);
   
-  /* complete silence (other thna warnings and errors) */
-  bool verbose = false;
+  /* complete silence (other than warnings and errors) */
+  bool verbose = true;
   bool use_mowri_tracker = false;  
   outputwriting::OutputWriter mowri(verbose, false, "");
 
@@ -1038,47 +1057,60 @@ find(float allotted_time, cl_command_queue command_queue, cl_mem a, cl_mem b, cl
   std::string k_comment = "";
   auto pair = check_for_default(command_queue, constraints_string, tgg, k_comment);
   
-  if (std::get<0>(pair) == false && allotted_time < min_time_without_cache){
+  bool is_custom_cache_entry = std::get<0>(pair);
+
+  mowri << "is_custom_cache_entry = " << is_custom_cache_entry << Endl;
+  if (allotted_time < min_time_without_cache){
+    mowri << "allotted_time < min_time_without_cache, will not search\n";
+  
+    if (is_custom_cache_entry == false){
+      
+      std::stringstream ss;
+      ss << "\n\n";
+      ss << "In tinygemm find (version without workspace), and ";
+      ss << "\n(1) allotted_time (" << allotted_time << ") is less than min_time_without_cache (" << min_time_without_cache << ")  ";
+      ss << "\n(2) there is no custom cache entry. The message returned when attempting to obtain a custom cache entry was,";
+      ss << "\n";
+      ss <<  std::get<1>(pair);
+      ss << "\n";
+      ss << "Either ";
+      ss << "\n(1) set allotted_time to be greater than min_time_without_cache, or ";
+      ss << "\n(2) generate a custom cache entry (see tests/gencache.cpp for an example).";
+      ss << "\n\nReturing a generic cache entry\n";
+
+      mowri << ss.str();
+      tinygemm_warning("\nvery limited search with no custom cache : expect a sub-optimal kernel(s) \n");
+      solution = get_default(tgg);
+    }
     
-    std::stringstream ss;
-    ss << "\n\n";
-    ss << "in tinygemm find (version without workspace), and ";
-    ss << "\n\n(1) allotted_time (" << allotted_time << ") is less than min_time_without_cache (" << min_time_without_cache << ")  ";
-    ss << "\n\n(2) there is no cache entry. The message returned when attempting to obtain a cache entry was,";
-    ss << "\n";
-    ss <<  std::get<1>(pair);
-    ss << "\n\n";
-    ss << "Either ";
-    ss << "\n\n(1) set allotted_time to be greater than min_time_without_cache, or ";
-    ss << "\n\n(2) generate a cache entry (see tests/gencache.cpp for an example).";
-    ss << "\n\n";
-    
-    tinygemm_warning(ss.str());
-    mowri << ss.str();
-
+    else{
+      solution = get_default(command_queue,constraints_string, tgg, k_comment, mowri);
+    }
   }
 
-  
-  
-  
-  if (std::get<0>(pair) == false){
-    return find(command_queue, find_params, a, b, c, workspace, constraints_string, tgg, toff, mowri, c_is_const, use_mowri_tracker);  
-  }
-  
-
-  auto found_soln = find(command_queue, find_params, a, b, c, workspace, constraints_string, tgg, toff, mowri, c_is_const, use_mowri_tracker);  
-  auto cached_soln = get_default(command_queue,constraints_string, tgg, k_comment, mowri);
-  
-  if (cached_soln.statistics.median_benchmark_gflops > found_soln.statistics.median_benchmark_gflops){
-    mowri << "cached solution has better glops: " << cached_soln.statistics.median_benchmark_gflops << ", returning cached soln" << Endl;
-    return cached_soln;
-  }
-  
+  /* we have time to search */  
   else{
-    mowri << "cached solution has worse glops: " << cached_soln.statistics.median_benchmark_gflops << ", the new soln will be returned" << Endl;
-    mowri << "consider adding this new solution to the cache, it's entry string is\n" << cached_soln.get_cache_entry_string() << Endl;
-    return found_soln;
-  }    
+    auto found_soln = find(command_queue, find_params, a, b, c, workspace, constraints_string, tgg, toff, mowri, c_is_const, use_mowri_tracker);  
+    
+    if (std::get<0>(pair) == false){
+      solution = found_soln;
+    }
+    
+    else{
+      auto cached_soln = get_default(command_queue,constraints_string, tgg, k_comment, mowri);
+      if (cached_soln.statistics.median_benchmark_gflops > found_soln.statistics.median_benchmark_gflops){
+        mowri << "cached solution has better glops: " << cached_soln.statistics.median_benchmark_gflops << ", returning cached soln" << Endl;
+        solution =  cached_soln;
+      }
+      else{
+        mowri << "cached solution has worse glops: " << cached_soln.statistics.median_benchmark_gflops << ", the new soln will be returned" << Endl;
+        mowri << "consider adding this new solution to the cache, it's entry string is\n" << cached_soln.get_cache_entry_string() << Endl;
+        solution = found_soln;
+      }
+    }
+  }
+  
+  return solution;
 
 }
 

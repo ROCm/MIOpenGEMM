@@ -131,12 +131,12 @@ DerivedParams::set_fragile(){
   for (auto emat_x : {nsHP::matA, nsHP::matB}){
     /* check - 3 : the macro tile is too tall */
     if (gg.m < at(nsHP::matA).macro_tile_length){
-      set_status_ss  << "m < aps.macro_tile_length, not considering this kernel\n";
+      set_status_ss  << "m < aps.macro_tile_length, not considering this kernel. ";
     }
     
     /* check - 4 : the macro tile is too wide */
     else if (gg.n < at(nsHP::matB).macro_tile_length){
-      set_status_ss << "m < bps.macro_tile_length, not considering this kernel\n";
+      set_status_ss << "m < bps.macro_tile_length, not considering this kernel. ";
     }
     
     at(emat_x).n_elements_in_unroll = at(emat_x).macro_tile_length * hp.at(nsHP::matC).vs[nsHP::UNR];
@@ -153,7 +153,7 @@ DerivedParams::set_fragile(){
   
     /* check 0 : macro tile not too large */  
     if (gg.get_non_k_dim(emat_x) < at(emat_x).macro_tile_length){
-      set_status_ss << "gg.get_non_k_dim(emat_x) < hp.at( emat_x ).macro_tile_length, this means the tile is too big to work with emat_x = (" << emat_x << ") . not considering this kernel\n";
+      set_status_ss << "gg.get_non_k_dim( " << matChars[emat_x] << " )  < at ( " << matChars[emat_x] << " ).macro_tile_length, this means the tile is too big to work with  " << matChars[emat_x] << " . not considering this kernel. ";
     }
 
   }
@@ -162,7 +162,7 @@ DerivedParams::set_fragile(){
  
   /* check -1 : enough workspace memory */
   if (gg.workspace_size < required_workspace){
-    set_status_ss << "gg.workspace_size ( " << gg.workspace_size << " ) is less then the required workspace ( " << required_workspace << " ) "; 
+    set_status_ss << "gg.workspace_size ( " << gg.workspace_size << " ) is less then the required workspace ( " << required_workspace << " ). "; 
   }
   
   if (set_status_ss.str() != ""){
@@ -174,7 +174,7 @@ DerivedParams::set_fragile(){
   auto is_div = [&set_status_ss, this](nsHP::eMat emat_x, std::string which, unsigned val){
 
     if (at(emat_x).n_elements_in_unroll % val != 0){
-      set_status_ss << "this is not supported:\n" << which << " (" << val << ") is not a factor of n_elements_in_(" <<  emat_x << ")_unroll (" << at(emat_x).n_elements_in_unroll << "). \n" << "Consider rounding unroll up. \n";
+      set_status_ss << "this is not supported: " << which << " (" << val << ") is not a factor of n_elements_in_(" <<  matChars[emat_x] << ")_unroll (" << at(emat_x).n_elements_in_unroll << "). \n" << "Consider rounding unroll up. ";
       return std::make_tuple<bool, std::string>(false, set_status_ss.str());
     }
     else{

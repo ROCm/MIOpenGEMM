@@ -108,7 +108,7 @@ public:
 
     if (bundle_verbose == true){
       mowri << "\n";
-      mowri << "network of of kernel dependencies: \n";
+      mowri << "network of kernel dependencies: \n";
       for (unsigned i = 0; i < v_tgks.size(); ++i){
         std::stringstream pre_waits_for_ss;
         pre_waits_for_ss << "kernel " << i << " ( " << types[i].full << " )";

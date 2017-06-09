@@ -11,6 +11,8 @@ namespace nsHP{
   enum eMat {matA, matB, matC, nMats};
 }
 
+/* maps eMats to characters */
+extern std::vector<char> matChars;
 
 
 class TinyGemmOffsets{
