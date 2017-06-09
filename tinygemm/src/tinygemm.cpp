@@ -1015,6 +1015,9 @@ void benchgemm(
 tinygemm::TinyGemmSolution
 find(float allotted_time, cl_command_queue command_queue, cl_mem a, cl_mem b, cl_mem c, bool enforce_determinism, const tinygemm::TinyGemmGeometry & tgg){
 
+
+  tinygemm::TinyGemmSolution solution = get_default(tgg);
+
   /* TODO : where is a good place to set this ? */
   float min_time_without_cache = 100.00;
   
@@ -1032,8 +1035,8 @@ find(float allotted_time, cl_command_queue command_queue, cl_mem a, cl_mem b, cl
   
   tinygemm::TinyGemmOffsets toff(0,0,0,0,0,0,0);
   
-  /* complete silence (other thna warnings and errors) */
-  bool verbose = false;
+  /* complete silence (other than warnings and errors) */
+  bool verbose = true;
   bool use_mowri_tracker = false;  
   outputwriting::OutputWriter mowri(verbose, false, "");
 
@@ -1042,47 +1045,60 @@ find(float allotted_time, cl_command_queue command_queue, cl_mem a, cl_mem b, cl
   std::string k_comment = "";
   auto pair = check_for_default(command_queue, constraints_string, tgg, k_comment);
   
-  if (std::get<0>(pair) == false && allotted_time < min_time_without_cache){
+  bool is_custom_cache_entry = std::get<0>(pair);
+
+  mowri << "is_custom_cache_entry = " << is_custom_cache_entry << Endl;
+  if (allotted_time < min_time_without_cache){
+    mowri << "allotted_time < min_time_without_cache, will not search\n";
+  
+    if (is_custom_cache_entry){
+      
+      std::stringstream ss;
+      ss << "\n\n";
+      ss << "in tinygemm find (version without workspace), and ";
+      ss << "\n\n(1) allotted_time (" << allotted_time << ") is less than min_time_without_cache (" << min_time_without_cache << ")  ";
+      ss << "\n(2) there is no custom cache entry. The message returned when attempting to obtain a custom cache entry was,";
+      ss << "\n";
+      ss <<  std::get<1>(pair);
+      ss << "\n\n";
+      ss << "Either ";
+      ss << "\n\n(1) set allotted_time to be greater than min_time_without_cache, or ";
+      ss << "\n(2) generate a custom cache entry (see tests/gencache.cpp for an example).";
+      ss << "\n\nReturing a generic cache entry\n\n";
+
+      mowri << ss.str();
+      tinygemm_warning("very limited search, with no custom cache");
+      solution = get_default(tgg);
+    }
     
-    std::stringstream ss;
-    ss << "\n\n";
-    ss << "in tinygemm find (version without workspace), and ";
-    ss << "\n\n(1) allotted_time (" << allotted_time << ") is less than min_time_without_cache (" << min_time_without_cache << ")  ";
-    ss << "\n\n(2) there is no cache entry. The message returned when attempting to obtain a cache entry was,";
-    ss << "\n";
-    ss <<  std::get<1>(pair);
-    ss << "\n\n";
-    ss << "Either ";
-    ss << "\n\n(1) set allotted_time to be greater than min_time_without_cache, or ";
-    ss << "\n\n(2) generate a cache entry (see tests/gencache.cpp for an example).";
-    ss << "\n\n";
-    
-    tinygemm_warning(ss.str());
-    mowri << ss.str();
-
+    else{
+      solution = get_default(command_queue,constraints_string, tgg, k_comment, mowri);
+    }
   }
 
-  
-  
-  
-  if (std::get<0>(pair) == false){
-    return find(command_queue, find_params, a, b, c, workspace, constraints_string, tgg, toff, mowri, c_is_const, use_mowri_tracker);  
-  }
-  
-
-  auto found_soln = find(command_queue, find_params, a, b, c, workspace, constraints_string, tgg, toff, mowri, c_is_const, use_mowri_tracker);  
-  auto cached_soln = get_default(command_queue,constraints_string, tgg, k_comment, mowri);
-  
-  if (cached_soln.statistics.median_benchmark_gflops > found_soln.statistics.median_benchmark_gflops){
-    mowri << "cached solution has better glops: " << cached_soln.statistics.median_benchmark_gflops << ", returning cached soln" << Endl;
-    return cached_soln;
-  }
-  
+  /* we have time to search */  
   else{
-    mowri << "cached solution has worse glops: " << cached_soln.statistics.median_benchmark_gflops << ", the new soln will be returned" << Endl;
-    mowri << "consider adding this new solution to the cache, it's entry string is\n" << cached_soln.get_cache_entry_string() << Endl;
-    return found_soln;
-  }    
+    auto found_soln = find(command_queue, find_params, a, b, c, workspace, constraints_string, tgg, toff, mowri, c_is_const, use_mowri_tracker);  
+    
+    if (std::get<0>(pair) == false){
+      solution = found_soln;
+    }
+    
+    else{
+      auto cached_soln = get_default(command_queue,constraints_string, tgg, k_comment, mowri);
+      if (cached_soln.statistics.median_benchmark_gflops > found_soln.statistics.median_benchmark_gflops){
+        mowri << "cached solution has better glops: " << cached_soln.statistics.median_benchmark_gflops << ", returning cached soln" << Endl;
+        solution =  cached_soln;
+      }
+      else{
+        mowri << "cached solution has worse glops: " << cached_soln.statistics.median_benchmark_gflops << ", the new soln will be returned" << Endl;
+        mowri << "consider adding this new solution to the cache, it's entry string is\n" << cached_soln.get_cache_entry_string() << Endl;
+        solution = found_soln;
+      }
+    }
+  }
+  
+  return solution;
 
 }
 
