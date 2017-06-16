@@ -45,7 +45,7 @@ void set_usage(){
 
 
 public:
-  AlphaGenerator(const hyperparams::HyperParams & hp_, const TinyGemmGeometry & gg_, const derivedparams::DerivedParams & dp_, std::string & type_):
+  AlphaGenerator(const hyperparams::HyperParams & hp_, const Geometry & gg_, const derivedparams::DerivedParams & dp_, std::string & type_):
   basegen::BaseGenerator(hp_, gg_, dp_, type_)  
   {
   }
@@ -910,7 +910,7 @@ R"(
 };
 
 
-KernelString get_alpha_kernelstring(const hyperparams::HyperParams & hp, const TinyGemmGeometry & gg, const derivedparams::DerivedParams & dp){
+KernelString get_alpha_kernelstring(const hyperparams::HyperParams & hp, const Geometry & gg, const derivedparams::DerivedParams & dp){
 
 
   std::string type = dp.main_does_beta_c_inc ? "betac_alphaab" : "alphaab";

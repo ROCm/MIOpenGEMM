@@ -1,5 +1,5 @@
-#ifndef TINYGEMMSOLUTION_HPP
-#define TINYGEMMSOLUTION_HPP
+#ifndef SOLUTION_HPP
+#define SOLUTION_HPP
 
 
 #include <string> 
@@ -14,7 +14,7 @@
 
 namespace MIOpenGEMM{
 
-class TinyGemmSolutionStatistics{
+class SolutionStatistics{
   public:
     /* the median time and flop/s recorded with the(se) kernel(s) on the specified benchmarked problem */
     float median_benchmark_time;
@@ -28,10 +28,10 @@ class TinyGemmSolutionStatistics{
     
     FindParams find_params;
     
-    TinyGemmSolutionStatistics(float median_benchmark_time, float median_benchmark_gflops, float solution_discovery_time, std::string date, const FindParams & find_params);
-    TinyGemmSolutionStatistics(std::string cache_string);
+    SolutionStatistics(float median_benchmark_time, float median_benchmark_gflops, float solution_discovery_time, std::string date, const FindParams & find_params);
+    SolutionStatistics(std::string cache_string);
 
-    TinyGemmSolutionStatistics() = default;
+    SolutionStatistics() = default;
     
     std::string get_string() const;
     
@@ -40,15 +40,15 @@ class TinyGemmSolutionStatistics{
 
 };
 
-/* Note 01 feb 2017: A TinyGemmSolution is only valid for a fixed geometry */
-class TinyGemmSolution{
+/* Note 01 feb 2017: A Solution is only valid for a fixed geometry */
+class Solution{
 
 public:
 
   /* the geometry on which this solution was obtained */
-  TinyGemmGeometry geometry;
+  Geometry geometry;
 
-  TinyGemmSolutionStatistics statistics;
+  SolutionStatistics statistics;
   
   /* the kernels of which the solution is comprised */
   std::vector<KernelString> v_tgks;
@@ -59,9 +59,9 @@ public:
 
   std::string constraints_string;
   
-  TinyGemmSolution(const TinyGemmGeometry & geometry_, TinyGemmSolutionStatistics tgss_, const std::vector<KernelString> & v_tgks_, std::string hyper_param_string_, openclutil::OpenCLDeviceInfo devinfo_, std::string constraints_string_): geometry(geometry_), statistics(tgss_), v_tgks(v_tgks_), hyper_param_string(hyper_param_string_), devinfo(devinfo_), constraints_string(constraints_string_) {}
+  Solution(const Geometry & geometry_, SolutionStatistics tgss_, const std::vector<KernelString> & v_tgks_, std::string hyper_param_string_, openclutil::OpenCLDeviceInfo devinfo_, std::string constraints_string_): geometry(geometry_), statistics(tgss_), v_tgks(v_tgks_), hyper_param_string(hyper_param_string_), devinfo(devinfo_), constraints_string(constraints_string_) {}
 
-  /* return a string summarising the TinyGemmGeometry, less offsets (a request from MLOpen) */
+  /* return a string summarising the Geometry, less offsets (a request from MLOpen) */
   std::string get_networkconfig_string() const;
 
   /* return a string describing the hyper parameters */

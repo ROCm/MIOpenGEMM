@@ -12,7 +12,7 @@ class NormalFormGenerator : public prepgen::PrepGenerator{
 
 
 public:
-  NormalFormGenerator(const hyperparams::HyperParams & hp_,  const TinyGemmGeometry & gg_, const derivedparams::DerivedParams & dp_, std::string type_): prepgen::PrepGenerator(hp_, gg_, dp_, type_){}
+  NormalFormGenerator(const hyperparams::HyperParams & hp_,  const Geometry & gg_, const derivedparams::DerivedParams & dp_, std::string type_): prepgen::PrepGenerator(hp_, gg_, dp_, type_){}
 
   void setup() override final{
     
@@ -167,13 +167,13 @@ ss << R"(
 
 
 
-KernelString get_nforma_kernelstring(const hyperparams::HyperParams & hp, const TinyGemmGeometry & gg, const derivedparams::DerivedParams & dp){
+KernelString get_nforma_kernelstring(const hyperparams::HyperParams & hp, const Geometry & gg, const derivedparams::DerivedParams & dp){
  NormalFormGenerator nfg(hp, gg, dp, "nforma");
  nfg.setup();
  return nfg.get_kernelstring();
 }
 
-KernelString get_nformb_kernelstring(const hyperparams::HyperParams & hp, const TinyGemmGeometry & gg, const derivedparams::DerivedParams & dp){
+KernelString get_nformb_kernelstring(const hyperparams::HyperParams & hp, const Geometry & gg, const derivedparams::DerivedParams & dp){
  NormalFormGenerator nfg(hp, gg, dp, "nformb");
  nfg.setup();
  return nfg.get_kernelstring();

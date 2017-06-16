@@ -37,7 +37,7 @@ void fill_uni(std::vector<TFloat> & v, unsigned r_small, unsigned r_big){
 
 
 template <typename TFloat>
-void set_abc(std::vector<TFloat> & v_a, std::vector<TFloat> & v_b, std::vector<TFloat> & v_c, const TinyGemmGeometry & gg, const TinyGemmOffsets & toff){
+void set_abc(std::vector<TFloat> & v_a, std::vector<TFloat> & v_b, std::vector<TFloat> & v_c, const Geometry & gg, const Offsets & toff){
 
   size_t n_a = gg.ldX[nsHP::matA] * (gg.tX[nsHP::matA] == gg.isColMajor ? gg.m : gg.k) + toff.oa + toff.tail_off_a;
   size_t n_b = gg.ldX[nsHP::matB] * (gg.tX[nsHP::matB] == gg.isColMajor ? gg.k : gg.n) + toff.ob + toff.tail_off_b;
@@ -65,7 +65,7 @@ void set_abc(std::vector<TFloat> & v_a, std::vector<TFloat> & v_b, std::vector<T
 
 
 template <typename TFloat>     
-void set_abcw(std::vector<TFloat> & v_a, std::vector<TFloat> & v_b, std::vector<TFloat> & v_c, std::vector<TFloat> & v_workspace, const TinyGemmGeometry & gg, const TinyGemmOffsets & toff){
+void set_abcw(std::vector<TFloat> & v_a, std::vector<TFloat> & v_b, std::vector<TFloat> & v_c, std::vector<TFloat> & v_workspace, const Geometry & gg, const Offsets & toff){
     
   set_abc<TFloat>(v_a, v_b, v_c, gg, toff);
 
@@ -76,13 +76,13 @@ void set_abcw(std::vector<TFloat> & v_a, std::vector<TFloat> & v_b, std::vector<
 }
 
 
-template void set_abc(std::vector<double> & v_a, std::vector<double> & v_b, std::vector<double> & v_c, const TinyGemmGeometry & gg, const TinyGemmOffsets & toff);
+template void set_abc(std::vector<double> & v_a, std::vector<double> & v_b, std::vector<double> & v_c, const Geometry & gg, const Offsets & toff);
 
-template void set_abc(std::vector<float> & v_a, std::vector<float> & v_b, std::vector<float> & v_c, const TinyGemmGeometry & gg, const TinyGemmOffsets & toff);
+template void set_abc(std::vector<float> & v_a, std::vector<float> & v_b, std::vector<float> & v_c, const Geometry & gg, const Offsets & toff);
 
-template void set_abcw(std::vector<double> & v_a, std::vector<double> & v_b, std::vector<double> & v_c, std::vector<double> & v_workspace, const TinyGemmGeometry & gg, const TinyGemmOffsets & toff);
+template void set_abcw(std::vector<double> & v_a, std::vector<double> & v_b, std::vector<double> & v_c, std::vector<double> & v_workspace, const Geometry & gg, const Offsets & toff);
 
-template void set_abcw(std::vector<float> & v_a, std::vector<float> & v_b, std::vector<float> & v_c, std::vector<float> & v_workspace, const TinyGemmGeometry & gg, const TinyGemmOffsets & toff);
+template void set_abcw(std::vector<float> & v_a, std::vector<float> & v_b, std::vector<float> & v_c, std::vector<float> & v_workspace, const Geometry & gg, const Offsets & toff);
 
 }
 }

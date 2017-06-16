@@ -1,5 +1,5 @@
-#ifndef TINYGEMM_TINYGEMMKERNEL_HPP
-#define TINYGEMM_TINYGEMMKERNEL_HPP
+#ifndef _KERNEL_HPP
+#define _KERNEL_HPP
 
 #include <vector> 
 #include <algorithm>
@@ -11,7 +11,7 @@
 namespace MIOpenGEMM{
   
 
-class TinyGemmKernel{
+class Kernel{
   
   public:
     cl_command_queue command_queue;    
@@ -40,16 +40,16 @@ class TinyGemmKernel{
     void set_kernel_arg(cl_uint arg_index, size_t arg_size, const void *arg_value);
   
   public:  
-    TinyGemmKernel(cl_command_queue command_queue_, const std::string & hash_);
+    Kernel(cl_command_queue command_queue_, const std::string & hash_);
     
-    TinyGemmKernel():TinyGemmKernel(nullptr, "default constructed TinyGemmKernel"){}
+    Kernel():Kernel(nullptr, "default constructed Kernel"){}
     
     void update(const KernelString & ks, outputwriting::OutputWriter & mowri); 
 
   
-    ~TinyGemmKernel();
+    ~Kernel();
     
-    TinyGemmKernel & operator= (const TinyGemmKernel &) = default;
+    Kernel & operator= (const Kernel &) = default;
 
     bool is_set();
     void set_kernel_args(std::vector<std::pair<size_t, const void *> > arg_sizes_values);

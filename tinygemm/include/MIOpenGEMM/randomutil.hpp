@@ -1,5 +1,5 @@
-#ifndef TINYGEMM_RANDOMUTIL_HPP
-#define TINYGEMM_RANDOMUTIL_HPP
+#ifndef _RANDOMUTIL_HPP
+#define _RANDOMUTIL_HPP
 
 #include <random>
 #include <algorithm>

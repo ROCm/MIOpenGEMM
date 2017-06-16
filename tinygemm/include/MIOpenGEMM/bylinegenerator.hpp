@@ -28,7 +28,7 @@ protected:
   size_t get_n_work_groups() override final;
 
 public:
-  ByLineGenerator(const hyperparams::HyperParams & hp_,  const TinyGemmGeometry & gg_, const derivedparams::DerivedParams & dp_, std::string type_);
+  ByLineGenerator(const hyperparams::HyperParams & hp_,  const Geometry & gg_, const derivedparams::DerivedParams & dp_, std::string type_);
 
   KernelString get_kernelstring() final override;
   void setup() final override;

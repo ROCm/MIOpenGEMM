@@ -15,7 +15,7 @@ namespace nsHP{
 extern std::vector<char> matChars;
 
 
-class TinyGemmOffsets{
+class Offsets{
   public:
     unsigned oa;
     unsigned ob;
@@ -26,13 +26,13 @@ class TinyGemmOffsets{
     unsigned tail_off_c;
 
     
-    TinyGemmOffsets(unsigned oa, unsigned ob, unsigned oc, unsigned oworkspace, unsigned tail_off_a, unsigned tail_off_b, unsigned tail_off_c);
+    Offsets(unsigned oa, unsigned ob, unsigned oc, unsigned oworkspace, unsigned tail_off_a, unsigned tail_off_b, unsigned tail_off_c);
     
     const unsigned & operator[](char c) const; 
     
 };
 
-class TinyGemmGeometryDerived{
+class GeometryDerived{
 public:
   unsigned float_size_bits;
   unsigned float_size_bytes;
@@ -40,7 +40,7 @@ public:
   
 };
 
-class TinyGemmGeometry{
+class Geometry{
   
 private:
 
@@ -66,18 +66,18 @@ public:
   /* 'f' : 32-bit single precision or 'd' : 64-bit double precision */
   char floattype;
   /* */
-  TinyGemmGeometryDerived derived;
+  GeometryDerived derived;
   
 
-  TinyGemmGeometry(bool isColMajor, bool tA, bool tB, bool tC, unsigned lda, unsigned ldb, unsigned ldc, unsigned m, unsigned n, unsigned k, unsigned workspace_size, char floattype);
+  Geometry(bool isColMajor, bool tA, bool tB, bool tC, unsigned lda, unsigned ldb, unsigned ldc, unsigned m, unsigned n, unsigned k, unsigned workspace_size, char floattype);
   
-  TinyGemmGeometry() = default;
+  Geometry() = default;
   
-  TinyGemmGeometry (const TinyGemmGeometry & ) = default;
+  Geometry (const Geometry & ) = default;
   
-  TinyGemmGeometry(std::string geometry_string);
+  Geometry(std::string geometry_string);
   
-  TinyGemmGeometry & operator= (const TinyGemmGeometry & ) = default;
+  Geometry & operator= (const Geometry & ) = default;
   
   unsigned get_padless_dim(nsHP::eMat emat_x, bool isCoal) const;
     

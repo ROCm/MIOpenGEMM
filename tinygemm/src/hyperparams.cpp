@@ -165,7 +165,7 @@ std::vector<std::string> get_sub_constraints(std::string constraints_string) {
 }
 
 
-Graph::Graph(const TinyGemmGeometry & gg, const openclutil::OpenCLDeviceInfo & devinfo, std::string constraints_string, bool full_cs): ptr_gg(&gg) {
+Graph::Graph(const Geometry & gg, const openclutil::OpenCLDeviceInfo & devinfo, std::string constraints_string, bool full_cs): ptr_gg(&gg) {
   
   constraints_string_in = constraints_string;
   std::vector<std::string> sub_constraints = get_sub_constraints(constraints_string);
@@ -314,7 +314,7 @@ void SubG::force_start_node(std::vector<unsigned> start_node){
 }
 
 
-SubG::SubG(unsigned nHPs_, const TinyGemmGeometry & gg, std::string cs, bool csfull, const openclutil::OpenCLDeviceInfo * ptr_devinfo_): nHPs(nHPs_), ptr_gg(&gg), edges (nHPs_), start_range (nHPs_), subg_cs(cs), subg_csfull(csfull), ptr_devinfo(ptr_devinfo_) {
+SubG::SubG(unsigned nHPs_, const Geometry & gg, std::string cs, bool csfull, const openclutil::OpenCLDeviceInfo * ptr_devinfo_): nHPs(nHPs_), ptr_gg(&gg), edges (nHPs_), start_range (nHPs_), subg_cs(cs), subg_csfull(csfull), ptr_devinfo(ptr_devinfo_) {
   
   
 }
@@ -408,10 +408,10 @@ void SubG::confirm_start_is_subset(){
 }
 
 
-CSubG::CSubG(const TinyGemmGeometry & gg, std::string cs, bool csfull, const openclutil::OpenCLDeviceInfo * ptr_devinfo_) : SubG(nsHP::nNonChiralHPs, gg, cs, csfull, ptr_devinfo_){}
+CSubG::CSubG(const Geometry & gg, std::string cs, bool csfull, const openclutil::OpenCLDeviceInfo * ptr_devinfo_) : SubG(nsHP::nNonChiralHPs, gg, cs, csfull, ptr_devinfo_){}
 
 
-ChiralSubG::ChiralSubG(const TinyGemmGeometry & gg, std::string cs, bool csfull, const openclutil::OpenCLDeviceInfo * ptr_devinfo_) : SubG(nsHP::nChiralHPs, gg, cs, csfull, ptr_devinfo_){}
+ChiralSubG::ChiralSubG(const Geometry & gg, std::string cs, bool csfull, const openclutil::OpenCLDeviceInfo * ptr_devinfo_) : SubG(nsHP::nChiralHPs, gg, cs, csfull, ptr_devinfo_){}
 
 void ChiralSubG::set_chirality_specific_start_range_base(unsigned non_unroll_dimension){
   std::vector<unsigned> basemic = {8,6};

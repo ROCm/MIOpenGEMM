@@ -1,5 +1,5 @@
-#ifndef TINYGEMMERROR_HPP
-#define TINYGEMMERROR_HPP
+#ifndef ERROR_HPP
+#define ERROR_HPP
 
 #include <stdexcept>
 

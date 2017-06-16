@@ -1,5 +1,5 @@
-#ifndef TINYGEMMFINDPARAMS_HPP
-#define TINYGEMMFINDPARAMS_HPP
+#ifndef FINDPARAMS_HPP
+#define FINDPARAMS_HPP
 
 #include <vector>
 #include <string>

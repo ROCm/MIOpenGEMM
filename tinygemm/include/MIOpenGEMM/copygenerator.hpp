@@ -11,7 +11,7 @@ class CopyGenerator : public bylinegen::ByLineGenerator {
 
 public:
 
-  CopyGenerator(const hyperparams::HyperParams & hp_,  const TinyGemmGeometry & gg_, const derivedparams::DerivedParams & dp_, const std::string & type_);
+  CopyGenerator(const hyperparams::HyperParams & hp_,  const Geometry & gg_, const derivedparams::DerivedParams & dp_, const std::string & type_);
 
   virtual void setup_additional() override final;
 
@@ -24,9 +24,9 @@ public:
 };
 
 
-KernelString get_copya_kernelstring(const hyperparams::HyperParams & hp, const TinyGemmGeometry & gg, const derivedparams::DerivedParams & dp);
+KernelString get_copya_kernelstring(const hyperparams::HyperParams & hp, const Geometry & gg, const derivedparams::DerivedParams & dp);
 
-KernelString get_copyb_kernelstring(const hyperparams::HyperParams & hp, const TinyGemmGeometry & gg, const derivedparams::DerivedParams & dp);
+KernelString get_copyb_kernelstring(const hyperparams::HyperParams & hp, const Geometry & gg, const derivedparams::DerivedParams & dp);
 
   
 }

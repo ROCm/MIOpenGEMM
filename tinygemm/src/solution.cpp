@@ -11,7 +11,7 @@
 
 namespace MIOpenGEMM{
 
-std::string TinyGemmSolutionStatistics::get_string() const {
+std::string SolutionStatistics::get_string() const {
   std::stringstream ss;
   ss << "runtime:" << median_benchmark_time << "  gflops:" << median_benchmark_gflops << "  date:" << date;
   ss << "  (find_params) " << find_params.get_string();
@@ -26,7 +26,7 @@ std::string TinyGemmSolutionStatistics::get_string() const {
   return stroo;
 }
 
-TinyGemmSolutionStatistics::TinyGemmSolutionStatistics(float median_benchmark_time_, float median_benchmark_gflops_, float solution_discovery_time_, std::string date_, const FindParams & find_params_): 
+SolutionStatistics::SolutionStatistics(float median_benchmark_time_, float median_benchmark_gflops_, float solution_discovery_time_, std::string date_, const FindParams & find_params_): 
   median_benchmark_time(median_benchmark_time_), median_benchmark_gflops(median_benchmark_gflops_), solution_discovery_time(solution_discovery_time_),  find_params(find_params_) {
     date = date_;
     if (date.size() > 1){
@@ -36,7 +36,7 @@ TinyGemmSolutionStatistics::TinyGemmSolutionStatistics(float median_benchmark_ti
     }    
 }
 
-TinyGemmSolutionStatistics::TinyGemmSolutionStatistics(std::string cache_string){
+SolutionStatistics::SolutionStatistics(std::string cache_string){
   auto megafrags = stringutil::split(cache_string, "__");
 
   if (megafrags.size() < 3){
@@ -57,11 +57,11 @@ TinyGemmSolutionStatistics::TinyGemmSolutionStatistics(std::string cache_string)
   date = get_X(2);
 }
     
-std::string TinyGemmSolution::get_networkconfig_string() const{
+std::string Solution::get_networkconfig_string() const{
   return geometry.get_networkconfig_string();
 }
 
-std::string TinyGemmSolution::get_hyper_param_string() const{
+std::string Solution::get_hyper_param_string() const{
   return hyper_param_string;
 }
 
@@ -69,7 +69,7 @@ std::string TinyGemmSolution::get_hyper_param_string() const{
 
 
 
-std::string TinyGemmSolution::get_cache_entry_string(std::string k_comment) const{
+std::string Solution::get_cache_entry_string(std::string k_comment) const{
   std::stringstream cache_write_ss;
   cache_write_ss << "add_entry(kc, \"" << devinfo.identifier << "\", /* device key */\n";
   cache_write_ss << "\"" << constraints_string << "\", /* constraint key */\n";

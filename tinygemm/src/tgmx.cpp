@@ -44,7 +44,7 @@ public:
 static const MultiFloatType m_alpha(default_alpha);
 static const MultiFloatType m_beta(default_beta);
 
-class TinyGemmGPUMems{
+class GPUMems{
   private:
     cl_mem a_gpu;
     cl_mem b_gpu;
@@ -52,7 +52,7 @@ class TinyGemmGPUMems{
     cl_mem workspace_gpu;
   
   public:
-    TinyGemmGPUMems(cl_mem a_gpu_, cl_mem b_gpu_, cl_mem c_gpu_, cl_mem workspace_gpu_):a_gpu(a_gpu_), b_gpu(b_gpu_), c_gpu(c_gpu_), workspace_gpu(workspace_gpu_) {}
+    GPUMems(cl_mem a_gpu_, cl_mem b_gpu_, cl_mem c_gpu_, cl_mem workspace_gpu_):a_gpu(a_gpu_), b_gpu(b_gpu_), c_gpu(c_gpu_), workspace_gpu(workspace_gpu_) {}
 
     cl_mem & operator[](char x){
       if (x == 'a'){
@@ -70,7 +70,7 @@ class TinyGemmGPUMems{
       
       else{
         std::stringstream ss;
-        ss << "Unrecognised char passed to operator[] of TinyGemmGPUMems. Should be one of a,b,c,w, not ";
+        ss << "Unrecognised char passed to operator[] of GPUMems. Should be one of a,b,c,w, not ";
         ss << x;
         throw  miog_error(ss.str());
       }
@@ -86,9 +86,9 @@ public:
 
   cl_command_queue command_queue;
   std::string outputfilename;
-  const TinyGemmGeometry gg;
-  const TinyGemmOffsets toff;
-  TinyGemmGPUMems gpum;
+  const Geometry gg;
+  const Offsets toff;
+  GPUMems gpum;
   const openclutil::OpenCLDeviceInfo devinfo;
   std::string constraints_string;
   hyperparams::Graph graph;
@@ -105,9 +105,9 @@ private:
   float median_time;
   float median_gflops;
   /* (for find) while generating, compiling and benchmarking kernels, we will keep track of the fastest found thus far */
-  std::vector<TinyGemmSolution> best_solns_path;
-  std::vector<TinyGemmKernel> tk_kernels;  
-  std::vector<TinyGemmKernel *> tk_kernels_active;  
+  std::vector<Solution> best_solns_path;
+  std::vector<Kernel> tk_kernels;  
+  std::vector<Kernel *> tk_kernels_active;  
   std::vector<std::vector <unsigned > > v_wait_indices;
   bool bundle_verbose = false;
 
@@ -124,8 +124,8 @@ private:
 public:
   OpenCLGemmEncapsulator(
   cl_command_queue command_queue_, 
-  const TinyGemmGeometry gg_,
-  const TinyGemmOffsets toff_,
+  const Geometry gg_,
+  const Offsets toff_,
   cl_mem a_gpu_,
   cl_mem b_gpu_, 
   cl_mem c_gpu_,
@@ -150,7 +150,7 @@ public:
     
     tk_kernels.resize(nBasicKernelTypes);
     for (unsigned i = 0; i < nBasicKernelTypes; ++ i){
-      tk_kernels[i] = TinyGemmKernel(command_queue, basic_kernel_type_strings[i]);
+      tk_kernels[i] = Kernel(command_queue, basic_kernel_type_strings[i]);
     }
   
     run_checks();    
@@ -597,7 +597,7 @@ public:
   
 
   
-  TinyGemmSolution find(const FindParams & find_params){
+  Solution find(const FindParams & find_params){
   
     /* TODO : use sumstat */
     float allotted_time = find_params.allotted_time;
@@ -612,7 +612,7 @@ public:
     
     find_start = std::chrono::high_resolution_clock::now();
     
-    std::vector<TinyGemmSolution> v_tgsolns;
+    std::vector<Solution> v_tgsolns;
 
     std::string stars("");    
      
@@ -666,7 +666,7 @@ public:
 
   }
   
-  TinyGemmSolution single_descent_find(float allotted_time, const FindParams & find_params){ //, FindStartType fst
+  Solution single_descent_find(float allotted_time, const FindParams & find_params){ //, FindStartType fst
               
 
     mowri << "geometry : " << gg.get_string()  << Endl;
@@ -733,7 +733,7 @@ public:
           improvement_found_on_front = true;          
           
           std::time_t generation_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-          auto sstats = TinyGemmSolutionStatistics(median_time, median_gflops, elapsed_seconds, std::ctime(&generation_time), find_params);
+          auto sstats = SolutionStatistics(median_time, median_gflops, elapsed_seconds, std::ctime(&generation_time), find_params);
           best_solns_path.emplace_back (gg, sstats, bundle.v_tgks, hyper_param_current.get_string(), devinfo, constraints_string );
         }
         ++hfi;
@@ -828,8 +828,8 @@ public:
 cl_mem get_copy(
 cl_command_queue command_queue,
 cl_mem c,   
-const TinyGemmGeometry & gg,
-const TinyGemmOffsets & toff,
+const Geometry & gg,
+const Offsets & toff,
 const std::string & hash
 ){  
   cl_mem c_copied;
@@ -854,7 +854,7 @@ const std::string & hash
 }
 
 
-TinyGemmSolution
+Solution
 find(
 cl_command_queue command_queue,
 const FindParams & find_params,
@@ -863,8 +863,8 @@ cl_mem b,
 cl_mem c,
 cl_mem workspace,
 const std::string constraints_string,
-const TinyGemmGeometry & gg,
-const TinyGemmOffsets & toff,
+const Geometry & gg,
+const Offsets & toff,
 outputwriting::OutputWriter & mowri,
 bool c_is_const, 
 bool use_mowri_tracker){
@@ -895,7 +895,7 @@ bool use_mowri_tracker){
 std::tuple<bool, std::string> check_for_default(
 cl_command_queue command_queue,
 std::string constraints_string,
-const TinyGemmGeometry & gg, 
+const Geometry & gg, 
 std::string k_comment){
 
   openclutil::OpenCLDeviceInfo devinfo(command_queue);
@@ -935,8 +935,8 @@ std::string k_comment){
   
   
 /* fall back solution */
-TinyGemmSolution
-get_default(const TinyGemmGeometry & gg){
+Solution
+get_default(const Geometry & gg){
   std::string constraints_string = "";
   
   auto cached_soln = get_generic_cached_solution(constraints_string, gg);
@@ -953,11 +953,11 @@ get_default(const TinyGemmGeometry & gg){
 
 }
 
-TinyGemmSolution
+Solution
 get_default(
 cl_command_queue command_queue,
 std::string constraints_string,
-const TinyGemmGeometry & gg, 
+const Geometry & gg, 
 std::string k_comment,
 outputwriting::OutputWriter & mowri){
 
@@ -967,7 +967,7 @@ outputwriting::OutputWriter & mowri){
   std::string k_con = constraints_string;
   std::string k_geo = gg.get_string();
   
-  TinygemmCachedSolution cached_soln;
+  CachedSolution cached_soln;
   auto pair = check_for_default(command_queue, constraints_string, gg, k_comment);
   if (std::get<0>(pair) == false){
     miog_warning(std::get<1>(pair));
@@ -994,8 +994,8 @@ void benchgemm(
   cl_command_queue command_queue,
   const std::string & hyperstring,
   unsigned n_runs,
-  const TinyGemmGeometry & gg,
-  const TinyGemmOffsets & toff, 
+  const Geometry & gg,
+  const Offsets & toff, 
   cl_mem a_gpu,
   cl_mem b_gpu, 
   cl_mem c_gpu,
@@ -1027,11 +1027,11 @@ void benchgemm(
 }
 
 
-TinyGemmSolution
-find(float allotted_time, cl_command_queue command_queue, cl_mem a, cl_mem b, cl_mem c, bool enforce_determinism, const TinyGemmGeometry & tgg){
+Solution
+find(float allotted_time, cl_command_queue command_queue, cl_mem a, cl_mem b, cl_mem c, bool enforce_determinism, const Geometry & tgg){
 
 
-  TinyGemmSolution solution = get_default(tgg);
+  Solution solution = get_default(tgg);
 
   /* TODO : where is a good place to set this ? */
   float min_time_without_cache = 100.00;
@@ -1048,7 +1048,7 @@ find(float allotted_time, cl_command_queue command_queue, cl_mem a, cl_mem b, cl
     constraints_string += "__C_ICE1";
   }
   
-  TinyGemmOffsets toff(0,0,0,0,0,0,0);
+  Offsets toff(0,0,0,0,0,0,0);
   
   /* complete silence (other than warnings and errors) */
   bool verbose = true;

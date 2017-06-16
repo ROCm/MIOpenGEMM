@@ -67,14 +67,14 @@ extern const KeysVals non_chiral_kv;
 class SubG{
 
 public:
-  SubG(unsigned nHPs, const TinyGemmGeometry & gg, std::string cs, bool csfull, const openclutil::OpenCLDeviceInfo * ptr_devinfo);
+  SubG(unsigned nHPs, const Geometry & gg, std::string cs, bool csfull, const openclutil::OpenCLDeviceInfo * ptr_devinfo);
  
   SubG() = default;
 
   void apply_constraints();
 
   unsigned nHPs; 
-  const TinyGemmGeometry * ptr_gg;
+  const Geometry * ptr_gg;
   //const std::vector<std::string> * 
   
   const KeysVals * ptr_keys_vals;
@@ -125,7 +125,7 @@ public:
 class CSubG : public SubG{
   public:
     CSubG() = default;
-    CSubG(const TinyGemmGeometry & gg, std::string cs, bool csfull, const openclutil::OpenCLDeviceInfo * ptr_devinfo);
+    CSubG(const Geometry & gg, std::string cs, bool csfull, const openclutil::OpenCLDeviceInfo * ptr_devinfo);
     virtual void initialise_maps() override final;
     virtual void set_preconstraint_edges() override final;
     virtual void manual_override_start_range() override final;
@@ -137,7 +137,7 @@ class CSubG : public SubG{
 class ChiralSubG : public SubG{
   public: 
     ChiralSubG() = default;
-    ChiralSubG(const TinyGemmGeometry & gg, std::string cs, bool csfull, const openclutil::OpenCLDeviceInfo * ptr_devinfo);  
+    ChiralSubG(const Geometry & gg, std::string cs, bool csfull, const openclutil::OpenCLDeviceInfo * ptr_devinfo);  
     virtual void initialise_maps() override final;
     virtual void set_preconstraint_edges() override final;
     virtual void manual_override_start_range() override final;
@@ -150,7 +150,7 @@ class ChiralSubG : public SubG{
 class ASubG : public ChiralSubG{
   public:
     ASubG() = default;
-    ASubG(const TinyGemmGeometry & gg, std::string cs, bool csfull, const openclutil::OpenCLDeviceInfo * ptr_devinfo_):ChiralSubG(gg, cs, csfull, ptr_devinfo_){}
+    ASubG(const Geometry & gg, std::string cs, bool csfull, const openclutil::OpenCLDeviceInfo * ptr_devinfo_):ChiralSubG(gg, cs, csfull, ptr_devinfo_){}
     virtual void set_chirality_specific_start_range() override final;
     virtual char get_char() override final {return 'A';}
     
@@ -159,7 +159,7 @@ class ASubG : public ChiralSubG{
 class BSubG : public ChiralSubG{
   public:
     BSubG() = default;
-    BSubG(const TinyGemmGeometry & gg, std::string cs, bool csfull, const openclutil::OpenCLDeviceInfo * ptr_devinfo_):ChiralSubG(gg, cs, csfull, ptr_devinfo_){}
+    BSubG(const Geometry & gg, std::string cs, bool csfull, const openclutil::OpenCLDeviceInfo * ptr_devinfo_):ChiralSubG(gg, cs, csfull, ptr_devinfo_){}
     virtual void set_chirality_specific_start_range() override final;
     virtual char get_char() override final {return 'B';}
 
@@ -176,7 +176,7 @@ class Graph{
     CSubG csubg;
 
   public:
-    const TinyGemmGeometry * ptr_gg;
+    const Geometry * ptr_gg;
 
     std::vector<SubG * > p_subgs;
     
@@ -186,7 +186,7 @@ class Graph{
     
     std::vector<std::pair< std::pair<unsigned, unsigned>, std::pair<unsigned, unsigned> > > coupled_parameters;
 
-    Graph(const TinyGemmGeometry & gg, const openclutil::OpenCLDeviceInfo & devinfo, std::string constraint_string, bool full_constraints_expected);
+    Graph(const Geometry & gg, const openclutil::OpenCLDeviceInfo & devinfo, std::string constraint_string, bool full_constraints_expected);
 
 };
 

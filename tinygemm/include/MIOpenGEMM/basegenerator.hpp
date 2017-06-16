@@ -18,7 +18,7 @@ class BaseGenerator{
 protected:
 
   const hyperparams::HyperParams & hp;
-  const TinyGemmGeometry & gg;
+  const Geometry & gg;
   const derivedparams::DerivedParams & dp;
 
   std::string type;
@@ -48,7 +48,7 @@ public:
 
   virtual KernelString get_kernelstring() = 0;
       
-  BaseGenerator(const hyperparams::HyperParams & hp_, const TinyGemmGeometry & gg_, const derivedparams::DerivedParams & dp_, const std::string & type_);
+  BaseGenerator(const hyperparams::HyperParams & hp_, const Geometry & gg_, const derivedparams::DerivedParams & dp_, const std::string & type_);
 
   void append_parameter_list_from_usage(std::stringstream & ss);
 

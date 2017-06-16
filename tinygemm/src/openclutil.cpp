@@ -424,14 +424,14 @@ cl_command_queue auto_get_command_queue(outputwriting::OutputWriter & mowri, 	cl
   return clCreateCommandQueue(context, device_id_to_use, properties, &locret);
 }
 
-TinyGemmCommandQueueInContext::TinyGemmCommandQueueInContext(outputwriting::OutputWriter & mowri, const std::string & hash_):command_queue(auto_get_command_queue(mowri)), hash(hash_) {}
+CommandQueueInContext::CommandQueueInContext(outputwriting::OutputWriter & mowri, const std::string & hash_):command_queue(auto_get_command_queue(mowri)), hash(hash_) {}
 
-TinyGemmCommandQueueInContext::~TinyGemmCommandQueueInContext(){
+CommandQueueInContext::~CommandQueueInContext(){
   if (command_queue != nullptr){
     cl_context context;
-    cl_get_command_queue_info(command_queue, CL_QUEUE_CONTEXT, sizeof(cl_context), &context, nullptr, hash + " + (TinyGemmCommandQueueInContext destuctor)");
-    cl_release_context(context, "in destructor of TinyGemmCommandQueueInContext" );
-    cl_release_command_queue(command_queue, "in destructor of TinyGemmCommandQueueInContext");
+    cl_get_command_queue_info(command_queue, CL_QUEUE_CONTEXT, sizeof(cl_context), &context, nullptr, hash + " + (CommandQueueInContext destuctor)");
+    cl_release_context(context, "in destructor of CommandQueueInContext" );
+    cl_release_command_queue(command_queue, "in destructor of CommandQueueInContext");
   }
 }
 
@@ -518,7 +518,7 @@ OpenCLDeviceInfo::OpenCLDeviceInfo(const cl_command_queue & command_queue){
   
   else{
     wg_atom_size = 32;
-    throw miog_error("Tinygemm has not been tested on any platform from vendor " + platinfo.vendor + " yet. Are you sure you want to try this ? If so, remove error message hyiar"); 
+    throw miog_error(" has not been tested on any platform from vendor " + platinfo.vendor + " yet. Are you sure you want to try this ? If so, remove error message hyiar"); 
   }
   
   /* setting identifier */

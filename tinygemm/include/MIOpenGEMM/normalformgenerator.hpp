@@ -9,9 +9,9 @@
 namespace MIOpenGEMM{
 namespace nformgen{
 
-KernelString get_nforma_kernelstring(const hyperparams::HyperParams & hp,  const TinyGemmGeometry & gg, const derivedparams::DerivedParams & dp);
+KernelString get_nforma_kernelstring(const hyperparams::HyperParams & hp,  const Geometry & gg, const derivedparams::DerivedParams & dp);
 
-KernelString get_nformb_kernelstring(const hyperparams::HyperParams & hp, const TinyGemmGeometry & gg, const derivedparams::DerivedParams & dp);
+KernelString get_nformb_kernelstring(const hyperparams::HyperParams & hp, const Geometry & gg, const derivedparams::DerivedParams & dp);
 }
 }
 

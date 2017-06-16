@@ -87,12 +87,12 @@ class SafeClMem{
     ~SafeClMem();
 };
 
-class TinyGemmCommandQueueInContext{
+class CommandQueueInContext{
   public:
     cl_command_queue command_queue;
     std::string hash;  
-    TinyGemmCommandQueueInContext(outputwriting::OutputWriter & mowri, const std::string & hash);
-    ~TinyGemmCommandQueueInContext();
+    CommandQueueInContext(outputwriting::OutputWriter & mowri, const std::string & hash);
+    ~CommandQueueInContext();
     
 };
 

@@ -10,7 +10,7 @@
 namespace MIOpenGEMM{
 
 
-int run_find_experiments(const std::vector<TinyGemmGeometry> & geometries, std::vector<std::string> & v_constraints, const FindParams & find_params, bool verbose_inner, std::string basedir_inner, bool verbose_outer, std::string fn_outer){
+int run_find_experiments(const std::vector<Geometry> & geometries, std::vector<std::string> & v_constraints, const FindParams & find_params, bool verbose_inner, std::string basedir_inner, bool verbose_outer, std::string fn_outer){
   
   
   
@@ -18,7 +18,7 @@ int run_find_experiments(const std::vector<TinyGemmGeometry> & geometries, std::
   
   std::string cache_write_string("");
   
-  TinyGemmOffsets offsets (13,24,35,46,57,67,79);
+  Offsets offsets (13,24,35,46,57,67,79);
   unsigned n_postfind_runs = 0;
   bool do_cpu_test = false;
 
@@ -53,7 +53,7 @@ int run_find_experiments(const std::vector<TinyGemmGeometry> & geometries, std::
     mowri_outer << "\nEntering experiment with constraints_string = `" << constraints << "'" << Endl;    
 
     for (unsigned prob_i = 0; prob_i < geometries.size(); ++prob_i){
-      TinyGemmGeometry gg = geometries[prob_i];
+      Geometry gg = geometries[prob_i];
       std::stringstream ss_logfile;        
       if (basedir_inner != ""){
         ss_logfile << fulldir_inner << gg.get_string() << ".txt";
@@ -103,7 +103,7 @@ int run_find_experiments(const std::vector<TinyGemmGeometry> & geometries, std::
 
 
 
-std::vector<TinyGemmGeometry> get_deepbench_geometries(unsigned workspace_size){
+std::vector<Geometry> get_deepbench_geometries(unsigned workspace_size){
 
 
   
@@ -193,9 +193,9 @@ std::vector<TinyGemmGeometry> get_deepbench_geometries(unsigned workspace_size){
 }
 
 
-std::vector<TinyGemmGeometry> get_small_deepbench_geometries(unsigned small_threshold, unsigned workspace_size){
+std::vector<Geometry> get_small_deepbench_geometries(unsigned small_threshold, unsigned workspace_size){
   auto all_geoms = get_deepbench_geometries(workspace_size);
-  std::vector<TinyGemmGeometry> small_geoms;
+  std::vector<Geometry> small_geoms;
   unsigned count_small = 0;
   for (auto & gg : all_geoms){
     if (gg.m*gg.n*gg.k < small_threshold){
@@ -206,9 +206,9 @@ std::vector<TinyGemmGeometry> get_small_deepbench_geometries(unsigned small_thre
   return small_geoms;
 }
 
-std::vector<TinyGemmGeometry> get_large_deepbench_geometries(unsigned large_threshold, unsigned workspace_size){
+std::vector<Geometry> get_large_deepbench_geometries(unsigned large_threshold, unsigned workspace_size){
   auto all_geoms = get_deepbench_geometries(workspace_size);
-  std::vector<TinyGemmGeometry> large_geoms;
+  std::vector<Geometry> large_geoms;
   for (auto & gg : all_geoms){
     if (gg.m*gg.n*gg.k >= large_threshold){
       large_geoms.emplace_back(gg);
@@ -218,9 +218,9 @@ std::vector<TinyGemmGeometry> get_large_deepbench_geometries(unsigned large_thre
 }
 
 
-std::vector<TinyGemmGeometry> get_problem_geometries(){
+std::vector<Geometry> get_problem_geometries(){
   auto all_geoms = get_deepbench_geometries(1);
-  std::vector<TinyGemmGeometry> large_geoms;
+  std::vector<Geometry> large_geoms;
   for (auto & gg : all_geoms){
     if (gg.m == 4096 && gg.n == 7133 && gg.k == 4096){
       large_geoms.emplace_back(gg);
@@ -231,7 +231,7 @@ std::vector<TinyGemmGeometry> get_problem_geometries(){
 
 
 
-std::vector<TinyGemmGeometry> get_backconvwrw_geometries(unsigned workspace_size){
+std::vector<Geometry> get_backconvwrw_geometries(unsigned workspace_size){
   
   /*                      m ,  n ,  k , lda ,ldb ,ldc , tA , tB (from Mayank, 25/11/2016) */ 
   std::vector<std::tuple<unsigned, unsigned, unsigned, unsigned, unsigned, unsigned, bool, bool>> backcwrwr_problems = {
@@ -268,7 +268,7 @@ std::vector<TinyGemmGeometry> get_backconvwrw_geometries(unsigned workspace_size
 }
 
 
-std::vector<TinyGemmGeometry> get_small_growing_geometries(unsigned workspace_size){
+std::vector<Geometry> get_small_growing_geometries(unsigned workspace_size){
 
   std::vector<std::tuple<unsigned, unsigned, unsigned, bool, bool>> scalingproblems = {
     std::make_tuple(250, 250, 50, false, false),
@@ -290,7 +290,7 @@ std::vector<TinyGemmGeometry> get_small_growing_geometries(unsigned workspace_si
 }
   
 
-std::vector<TinyGemmGeometry> get_square_geometries(unsigned workspace_size){
+std::vector<Geometry> get_square_geometries(unsigned workspace_size){
 
   std::vector<std::tuple<unsigned, unsigned, unsigned, bool, bool>> squareproblems;
   

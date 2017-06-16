@@ -24,7 +24,7 @@
 namespace MIOpenGEMM{
   
 template <typename TFloat> 
-TinyGemmSolution base_basicfind(const TinyGemmGeometry & geometry, const TinyGemmOffsets & toff, const FindParams & find_params,
+Solution base_basicfind(const Geometry & geometry, const Offsets & toff, const FindParams & find_params,
 
 bool verbose, std::string logfile, std::string constraints_string, unsigned n_postfind_runs, bool do_cpu_test){ 
   
@@ -122,7 +122,7 @@ bool verbose, std::string logfile, std::string constraints_string, unsigned n_po
 
   bool use_mowri_tracker = true;
   bool c_is_const = true;
-  TinyGemmSolution soln = find(command_queue, find_params, a_gpu, b_gpu, c_gpu, workspace_gpu, constraints_string, geometry, toff, mowri, c_is_const, use_mowri_tracker); 
+  Solution soln = find(command_queue, find_params, a_gpu, b_gpu, c_gpu, workspace_gpu, constraints_string, geometry, toff, mowri, c_is_const, use_mowri_tracker); 
    
     
   if (do_cpu_test == true && n_postfind_runs < 1){
@@ -301,7 +301,7 @@ bool verbose, std::string logfile, std::string constraints_string, unsigned n_po
 }
 
 
-TinyGemmSolution basicfind(const TinyGemmGeometry & geometry, const TinyGemmOffsets & toff, 
+Solution basicfind(const Geometry & geometry, const Offsets & toff, 
 
 const FindParams & find_params,
 

@@ -22,9 +22,9 @@ std::vector<char> get_matChars(){
 
 std::vector<char> matChars = get_matChars();
 
-TinyGemmOffsets::TinyGemmOffsets(unsigned oa_, unsigned ob_, unsigned oc_, unsigned oworkspace_, unsigned tail_off_a_, unsigned tail_off_b_, unsigned tail_off_c_):oa(oa_), ob(ob_), oc(oc_), oworkspace(oworkspace_), tail_off_a(tail_off_a_), tail_off_b(tail_off_b_), tail_off_c(tail_off_c_) {}
+Offsets::Offsets(unsigned oa_, unsigned ob_, unsigned oc_, unsigned oworkspace_, unsigned tail_off_a_, unsigned tail_off_b_, unsigned tail_off_c_):oa(oa_), ob(ob_), oc(oc_), oworkspace(oworkspace_), tail_off_a(tail_off_a_), tail_off_b(tail_off_b_), tail_off_c(tail_off_c_) {}
 
-const unsigned & TinyGemmOffsets::operator[](char x) const{
+const unsigned & Offsets::operator[](char x) const{
   if (x == 'a'){
     return oa;
   }
@@ -39,7 +39,7 @@ const unsigned & TinyGemmOffsets::operator[](char x) const{
   }
 
   else{
-    throw  miog_error(std::string("unrecognised char passed to operator[](char x) of TinyGemmOffsets. Should be one of a,b,c,w, not ") + x);
+    throw  miog_error(std::string("unrecognised char passed to operator[](char x) of Offsets. Should be one of a,b,c,w, not ") + x);
   }
 }
 
@@ -60,7 +60,7 @@ char get_floattype(unsigned nbits){
   return ft;
 }
 
-void TinyGemmGeometryDerived::reset(char floattype){
+void GeometryDerived::reset(char floattype){
   if (floattype == 'f'){
     float_size_bytes = sizeof(float);
   }
@@ -78,7 +78,7 @@ void TinyGemmGeometryDerived::reset(char floattype){
  * isCoal : the coalesced dimesion? For example, for 'a' which is m x k, 
  * if tA = false, isColMajor = false, isCoal = true, then k is returned as k is the coalesced dim. 
  * (false == false) == true  evaluates to true, so gate is true, so m is returned */
-unsigned TinyGemmGeometry::get_padless_dim(nsHP::eMat emat_x, bool isCoal) const{
+unsigned Geometry::get_padless_dim(nsHP::eMat emat_x, bool isCoal) const{
 
 
   bool gate = (tX.at(emat_x) == isColMajor) == isCoal;
@@ -100,7 +100,7 @@ unsigned TinyGemmGeometry::get_padless_dim(nsHP::eMat emat_x, bool isCoal) const
   }
 }
 
-unsigned TinyGemmGeometry::get_non_k_dim(nsHP::eMat emat_x) const{
+unsigned Geometry::get_non_k_dim(nsHP::eMat emat_x) const{
   
   if (emat_x == nsHP::matA){
     return m;
@@ -115,7 +115,7 @@ unsigned TinyGemmGeometry::get_non_k_dim(nsHP::eMat emat_x) const{
   }  
 }
 
-void TinyGemmGeometry::check_ldx_consistent() const{
+void Geometry::check_ldx_consistent() const{
 
   bool error = false;
   for (auto x : {nsHP::matA, nsHP::matB, nsHP::matC}){
@@ -168,22 +168,22 @@ void TinyGemmGeometry::check_ldx_consistent() const{
 }
 
   
-unsigned TinyGemmGeometry::get_uncoal(nsHP::eMat emat_x) const{
+unsigned Geometry::get_uncoal(nsHP::eMat emat_x) const{
   return get_padless_dim(emat_x, false);
 }
  
-unsigned TinyGemmGeometry::get_coal(nsHP::eMat emat_x) const{
+unsigned Geometry::get_coal(nsHP::eMat emat_x) const{
   return get_padless_dim(emat_x, true);
 }
 
 
-bool TinyGemmGeometry::coal_is_pll_k(nsHP::eMat emat_x) const{
+bool Geometry::coal_is_pll_k(nsHP::eMat emat_x) const{
   /* proof : false, false, true should give 1 */
   return (static_cast<unsigned>(isColMajor) + static_cast<unsigned>(tX.at(emat_x)) + static_cast<unsigned>(emat_x == nsHP::matA)) % 2;
 }
 
 
-void TinyGemmGeometry::initialise(bool isColMajor_, bool tA_, bool tB_, bool tC_, unsigned lda_, unsigned ldb_, unsigned ldc_, unsigned m_, unsigned n_, unsigned k_, unsigned workspace_size_, char floattype_){
+void Geometry::initialise(bool isColMajor_, bool tA_, bool tB_, bool tC_, unsigned lda_, unsigned ldb_, unsigned ldc_, unsigned m_, unsigned n_, unsigned k_, unsigned workspace_size_, char floattype_){
   
   isColMajor = isColMajor_;
   m = m_;
@@ -204,7 +204,7 @@ void TinyGemmGeometry::initialise(bool isColMajor_, bool tA_, bool tB_, bool tC_
   
   
   if (floattype != 'd' and floattype != 'f'){
-    throw  miog_error("floattype should be one of 'f' and 'd' (in TinyGemmGeometry constructor)");
+    throw  miog_error("floattype should be one of 'f' and 'd' (in Geometry constructor)");
   }
     
   
@@ -215,7 +215,7 @@ void TinyGemmGeometry::initialise(bool isColMajor_, bool tA_, bool tB_, bool tC_
 }
   
 
-TinyGemmGeometry::TinyGemmGeometry(bool isColMajor_, bool tA_, bool tB_, bool tC_, unsigned lda_, unsigned ldb_, unsigned ldc_, unsigned m_, unsigned n_, unsigned k_, unsigned workspace_size_, char floattype_) {
+Geometry::Geometry(bool isColMajor_, bool tA_, bool tB_, bool tC_, unsigned lda_, unsigned ldb_, unsigned ldc_, unsigned m_, unsigned n_, unsigned k_, unsigned workspace_size_, char floattype_) {
 
   initialise(isColMajor_, tA_, tB_, tC_, lda_, ldb_, ldc_, m_, n_, k_, workspace_size_, floattype_);
 
@@ -247,11 +247,11 @@ unsigned safeat(std::map<std::string, unsigned> & map, std::string key){
   return map.at(key);
 }
 
-TinyGemmGeometry::TinyGemmGeometry(std::string geometry_string){
+Geometry::Geometry(std::string geometry_string){
   
   auto key_val_map = get_key_val_map(geometry_string);
   
-  TinyGemmGeometry goldstandard_geometry (false, false, false, false, 100,100,100,100,100,100,100,'f'); 
+  Geometry goldstandard_geometry (false, false, false, false, 100,100,100,100,100,100,100,'f'); 
   std::string goldstandard_geometry_string = goldstandard_geometry.get_string();
   auto goldstandard_map = get_key_val_map(goldstandard_geometry_string);
 
@@ -282,13 +282,13 @@ TinyGemmGeometry::TinyGemmGeometry(std::string geometry_string){
 
   
 
-std::string TinyGemmGeometry::get_string() const{
+std::string Geometry::get_string() const{
   
   return get_networkconfig_string();
 
 }
 
-std::string TinyGemmGeometry::get_networkconfig_string() const{
+std::string Geometry::get_networkconfig_string() const{
   std::stringstream geometry_stringstream;
   geometry_stringstream << "tC" << tX[nsHP::matC]  << "_tA" << tX[nsHP::matA] << "_tB" << tX[nsHP::matB] << "_colMaj" << isColMajor << "_m" << m << "_n" << n << "_k" << k << "_lda" << ldX[nsHP::matA] << "_ldb" << ldX[nsHP::matB] << "_ldc" << ldX[nsHP::matC] << "_ws" << workspace_size << "_f" << derived.float_size_bits;
   return geometry_stringstream.str();

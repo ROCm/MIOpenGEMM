@@ -31,7 +31,7 @@ return kc;
 
 
 
-void add_entry(KernelCache & kc, const std::string & k_dev, const std::string & k_con,  const std::string k_geo, const std::string k_comment, TinygemmCachedSolution tgcs){
+void add_entry(KernelCache & kc, const std::string & k_dev, const std::string & k_con,  const std::string k_geo, const std::string k_comment, CachedSolution tgcs){
 
   
   if (kc.count(k_dev) == 0){
@@ -72,7 +72,7 @@ void add_entry(KernelCache & kc, const std::string & k_dev, const std::string & 
 
 
 
-void enforce_constraints(std::string & hps_to_update, const std::string & constraints_string, const TinyGemmGeometry & gg){
+void enforce_constraints(std::string & hps_to_update, const std::string & constraints_string, const Geometry & gg){
   
   openclutil::OpenCLDeviceInfo devinfo;
   hyperparams::Graph graph(gg, devinfo, hps_to_update, true);
@@ -84,11 +84,11 @@ void enforce_constraints(std::string & hps_to_update, const std::string & constr
 }
 
 
-TinygemmCachedSolution get_generic_cached_solution(const std::string & constraints_string, const TinyGemmGeometry & gg){
+CachedSolution get_generic_cached_solution(const std::string & constraints_string, const Geometry & gg){
 
 
   /* the case where there is no cached solution */
-  TinygemmCachedSolution cached_soln;
+  CachedSolution cached_soln;
   
   if (gg.m*gg.n > 2000*2000 && gg.m >= 256 && gg.n >= 256){ /* was 5719.51 gflops on Fiji at Tue May 16 08:38:59 2017 */ 
     cached_soln = {"A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD2_PLU1_LIW1_MIW0_WOS0__C_UNR8_GAL2_PUN0_ICE1_NAW16_UFO0_MAC256_SKW10", {0,0,0, "None", {200, 10, 3, Max}}};
@@ -130,7 +130,7 @@ TinygemmCachedSolution get_generic_cached_solution(const std::string & constrain
 } 
 
 
-std::string TinygemmCachedSolution::get_string(){
+std::string CachedSolution::get_string(){
   std::stringstream ss;
   ss << "(hyperstring) " << hyperstring << "\n";
   ss << "(stats) " << stats.get_string();
