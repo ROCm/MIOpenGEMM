@@ -14,7 +14,7 @@
 #include <array>
 
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 
 enum class FindStartType {Default, Random};
 

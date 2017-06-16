@@ -4,7 +4,7 @@
 #include <chrono>
 #include <sstream>
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 namespace basegen{
 
       

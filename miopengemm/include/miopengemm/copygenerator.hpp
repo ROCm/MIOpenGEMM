@@ -3,7 +3,7 @@
 
 #include <miopengemm/bylinegenerator.hpp>
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 namespace copygen{
 
 

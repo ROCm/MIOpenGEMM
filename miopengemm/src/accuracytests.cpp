@@ -2,7 +2,7 @@
 #include <miopengemm/outputwriter.hpp>
 #include <algorithm>
 
-namespace MOOMOOMOOGEMM {
+namespace MIOpenGEMM {
 
 namespace accuracytests {
 

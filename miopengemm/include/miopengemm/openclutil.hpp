@@ -6,7 +6,7 @@
 #include <CL/cl.h>
 
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 namespace openclutil{
 
 

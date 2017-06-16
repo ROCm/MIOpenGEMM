@@ -2,7 +2,7 @@
 #define SIZING_UP
 
 #include <miopengemm/geometry.hpp>
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 namespace sizingup{
 
 /* how many elements in the matrix? Includes padding (when ldx > min possible ldx) 

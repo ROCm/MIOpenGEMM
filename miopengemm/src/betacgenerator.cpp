@@ -2,7 +2,7 @@
 
 #include <sstream>
 #include <iostream>
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 namespace betacgen{
 
 

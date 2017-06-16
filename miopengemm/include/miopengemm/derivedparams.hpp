@@ -10,7 +10,7 @@
 #include <miopengemm/hyperparams.hpp>
 #include <miopengemm/geometry.hpp>
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 namespace derivedparams{
 
 const unsigned uninitialised_unsigned = std::numeric_limits<unsigned>::max();

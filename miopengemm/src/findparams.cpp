@@ -2,7 +2,7 @@
 #include <miopengemm/error.hpp>
 
 #include <sstream>
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 
 
 std::vector<std::string> get_sumstatkey(){

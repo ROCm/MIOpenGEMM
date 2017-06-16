@@ -4,7 +4,7 @@
 
 #include <miopengemm/outputwriter.hpp>
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 namespace outputwriting{
 
 OutputWriter::OutputWriter(bool to_terminal_, bool to_file_, std::string filename_):to_terminal(to_terminal_), to_file(to_file_), filename(filename_){

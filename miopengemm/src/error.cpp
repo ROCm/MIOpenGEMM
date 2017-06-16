@@ -4,7 +4,7 @@
 #include <iostream>
 #include <sstream>
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
   
   std::string tgformat(const std::string& what_arg, std::string prefix, std::string suffix){
     std::stringstream fms;

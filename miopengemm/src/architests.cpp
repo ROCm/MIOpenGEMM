@@ -3,7 +3,7 @@
 #include <miopengemm/architests.hpp>
 #include <miopengemm/openclutil.hpp>
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 namespace architests{
 
 std::tuple<bool, std::string> architecture_specific_tests(cl_command_queue command_queue, const hyperparams::HyperParams & hp, const derivedparams::DerivedParams & dp){

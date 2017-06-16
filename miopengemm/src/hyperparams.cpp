@@ -13,7 +13,7 @@
 #include <miopengemm/stringutilbase.hpp>
 #include <miopengemm/randomutil.hpp>
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 
 /* macro tile shape */
 /* at skew = skew0, MAC in (64, 256, ...) have a:b = 1:1 and MAC in (32, 128, ...) have a:b = 2:1 */

@@ -9,7 +9,7 @@
 #include <miopengemm/error.hpp>
 #include <miopengemm/stringutilbase.hpp>
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 
 std::string SolutionStatistics::get_string() const {
   std::stringstream ss;

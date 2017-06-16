@@ -12,7 +12,7 @@
 #include <miopengemm/kernelstring.hpp>
 #include <miopengemm/findparams.hpp>
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 
 class SolutionStatistics{
   public:

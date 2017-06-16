@@ -5,7 +5,7 @@
 #include <miopengemm/redirection.hpp>
 
 #include <iostream>
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 namespace redirection{
   
 template <typename T>

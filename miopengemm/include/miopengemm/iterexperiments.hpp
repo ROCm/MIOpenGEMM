@@ -3,7 +3,7 @@
 
 #include <miopengemm/miogemm.hpp>
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
   
 int run_find_experiments(const std::vector<Geometry> & geometries, std::vector<std::string> & v_constraints, const FindParams & find_params, bool verbose_inner, std::string basedir_inner, bool verbose_outer, std::string fn_outer);
 

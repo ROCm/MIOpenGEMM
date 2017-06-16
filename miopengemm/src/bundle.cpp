@@ -19,7 +19,7 @@
 #include <ctime>
 #include <algorithm>
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 namespace kerngen{
 
 

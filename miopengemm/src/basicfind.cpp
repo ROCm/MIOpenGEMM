@@ -21,7 +21,7 @@
 /* used to populate data with random values */
 #include <miopengemm/setabcw.hpp>
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
   
 template <typename TFloat> 
 Solution base_basicfind(const Geometry & geometry, const Offsets & toff, const FindParams & find_params,

@@ -4,7 +4,7 @@
 #include <miopengemm/geometry.hpp>
 
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 namespace setabcw{
 
 

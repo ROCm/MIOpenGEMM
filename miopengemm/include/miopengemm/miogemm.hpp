@@ -12,7 +12,7 @@
 #include <miopengemm/outputwriter.hpp>
 #include <miopengemm/findparams.hpp>
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 
 
 static const double default_alpha = 0.415693029182345929;

@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <string>
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 
 
 enum SummaryStat {Mean=0, Median, Max, nSumStatKeys};

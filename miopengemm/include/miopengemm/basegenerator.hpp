@@ -7,7 +7,7 @@
 #include <miopengemm/derivedparams.hpp>
 #include <miopengemm/kernelstring.hpp>
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 namespace basegen{
 
 

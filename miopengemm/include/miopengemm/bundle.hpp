@@ -8,7 +8,7 @@
 #include <miopengemm/geometry.hpp>
 #include <miopengemm/kernelstring.hpp>
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 
   
   

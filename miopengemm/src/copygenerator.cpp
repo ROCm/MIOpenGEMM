@@ -4,7 +4,7 @@
 #include <sstream>
 
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 namespace copygen{
 
 

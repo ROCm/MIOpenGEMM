@@ -8,7 +8,7 @@
 #include <miopengemm/error.hpp>
 #include <miopengemm/stringutilbase.hpp>
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 
 
 std::vector<char> get_matChars(){

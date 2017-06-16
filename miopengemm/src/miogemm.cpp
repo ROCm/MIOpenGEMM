@@ -25,7 +25,7 @@
 #include <miopengemm/findparams.hpp>
 #include <miopengemm/stringutilbase.hpp>
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 
 class MultiFloatType{
 

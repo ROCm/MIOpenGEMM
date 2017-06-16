@@ -3,7 +3,7 @@
 
 #include <miopengemm/basegenerator.hpp>
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 namespace prepgen{
 
 class PrepGenerator : public basegen::BaseGenerator{

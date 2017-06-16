@@ -1,7 +1,7 @@
 #include <miopengemm/floattostring.hpp>
 #include <string>
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 namespace floattostring{
 
 std::string float_string_type(double x){

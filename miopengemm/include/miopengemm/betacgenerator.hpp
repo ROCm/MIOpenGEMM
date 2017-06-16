@@ -4,7 +4,7 @@
 #include <miopengemm/bylinegenerator.hpp>
 #include <sstream>
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 namespace betacgen{
 
 

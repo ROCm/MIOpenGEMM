@@ -8,7 +8,7 @@
 #include <miopengemm/error.hpp>
 #include <miopengemm/outputwriter.hpp>
 
-namespace MOOMOOMOOGEMM {
+namespace MIOpenGEMM {
 namespace accuracytests {
 
 template <typename TFloat>

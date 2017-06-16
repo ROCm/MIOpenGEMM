@@ -4,7 +4,7 @@
 #include <iostream>
 #include <limits>
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
   
   
 std::vector<std::string> get_basic_kernel_type_strings(){

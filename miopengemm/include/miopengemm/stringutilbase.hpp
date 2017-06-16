@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 namespace stringutil{
 
 void indentify(std::string & source);

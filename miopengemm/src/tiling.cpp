@@ -5,7 +5,7 @@
 
 
 #include <iostream>
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 namespace tiling{
 
 std::vector<unsigned> get_multiples(unsigned N){

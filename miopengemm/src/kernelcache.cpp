@@ -5,7 +5,7 @@
 #include <miopengemm/kernelcache.hpp>
 
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 
 const KernelCache kernel_cache = get_kernel_cache();
 

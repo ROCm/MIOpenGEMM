@@ -5,7 +5,7 @@
 #include <vector>
 #include <string>
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 namespace dev{
 
 template <typename TFloat>

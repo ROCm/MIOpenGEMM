@@ -8,7 +8,7 @@
 #include <miopengemm/kernelstring.hpp>
 #include <miopengemm/outputwriter.hpp>
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
   
 
 class Kernel{

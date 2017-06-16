@@ -4,7 +4,7 @@
 #include <miopengemm/normalformgenerator.hpp>
 #include <miopengemm/error.hpp>
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 namespace nformgen{
 
 

@@ -5,7 +5,7 @@
 #include <fstream>
 #include <iostream>
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 namespace outputwriting{
   
 class Flusher{

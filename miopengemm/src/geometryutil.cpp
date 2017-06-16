@@ -1,7 +1,7 @@
 #include <miopengemm/geometryutil.hpp>
 #include <tuple>
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
   
 std::vector<Geometry> get_from_m_n_k_tA_tB(const std::vector<std::tuple<unsigned, unsigned, unsigned, bool, bool>> &  basicgeos, unsigned workspace_size ){
   

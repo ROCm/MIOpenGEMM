@@ -4,7 +4,7 @@
 
 #include <miopengemm/prepgenerator.hpp>
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 namespace bylinegen{
 
 

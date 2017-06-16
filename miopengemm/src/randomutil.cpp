@@ -1,7 +1,7 @@
 #include <miopengemm/randomutil.hpp>
 
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 
 RandomUtil::RandomUtil():rd(), gen(rd()) {} 
 

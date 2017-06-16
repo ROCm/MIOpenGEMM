@@ -3,7 +3,7 @@
 
 #include <stdexcept>
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 
 class miog_error : public std::runtime_error{
   public:

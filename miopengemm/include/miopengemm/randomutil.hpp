@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <miopengemm/error.hpp>
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 
 class RandomUtil {
 

@@ -24,7 +24,7 @@
 
 
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 namespace alphagen{
 
 

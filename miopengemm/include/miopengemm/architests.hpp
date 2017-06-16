@@ -6,7 +6,7 @@
 #include <miopengemm/derivedparams.hpp>
 #include <CL/cl.h>
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 namespace architests{
   
   std::tuple<bool, std::string> architecture_specific_tests(cl_command_queue, const hyperparams::HyperParams &, const derivedparams::DerivedParams &);

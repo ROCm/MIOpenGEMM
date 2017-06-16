@@ -31,9 +31,9 @@ void basicexample(){
   float allotted_time = 1.01;
   unsigned allotted_descents = 1;
   unsigned n_runs_per_kernel = 3;
-  MOOMOOMOOGEMM::SummaryStat sumstat = MOOMOOMOOGEMM::Max;
+  MIOpenGEMM::SummaryStat sumstat = MIOpenGEMM::Max;
   
-  MOOMOOMOOGEMM::FindParams find_params(allotted_time, allotted_descents, n_runs_per_kernel, sumstat);
+  MIOpenGEMM::FindParams find_params(allotted_time, allotted_descents, n_runs_per_kernel, sumstat);
   
   /* print output to terminal (true) or complete silence to terminal (false) */
   bool verbose = true;
@@ -50,9 +50,9 @@ void basicexample(){
   unsigned workspace_offset = 4;      
   char floattype = 'f';
   
-  MOOMOOMOOGEMM::Geometry gg (isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype);
-  MOOMOOMOOGEMM::Offsets offsets (a_offset, b_offset, c_offset, workspace_offset, tail_off_a, tail_off_b, tail_off_c);    
-  MOOMOOMOOGEMM::basicfind(gg, offsets, find_params, verbose, logfile, constraints_string, n_postfind_runs, do_cpu_test);    
+  MIOpenGEMM::Geometry gg (isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype);
+  MIOpenGEMM::Offsets offsets (a_offset, b_offset, c_offset, workspace_offset, tail_off_a, tail_off_b, tail_off_c);    
+  MIOpenGEMM::basicfind(gg, offsets, find_params, verbose, logfile, constraints_string, n_postfind_runs, do_cpu_test);    
 }
 
 

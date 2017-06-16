@@ -8,7 +8,7 @@
 
 
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 namespace openclutil{
 
 cl_command_queue cl_create_command_queue(cl_context context, cl_device_id device, cl_command_queue_properties properties, const std::string & hash){

@@ -6,7 +6,7 @@
 #include <miopengemm/derivedparams.hpp>
 #include <miopengemm/prepgenerator.hpp>
 
-namespace MOOMOOMOOGEMM{
+namespace MIOpenGEMM{
 namespace nformgen{
 
 KernelString get_nforma_kernelstring(const hyperparams::HyperParams & hp,  const Geometry & gg, const derivedparams::DerivedParams & dp);
