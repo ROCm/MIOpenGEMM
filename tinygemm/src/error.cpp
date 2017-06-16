@@ -41,10 +41,10 @@ namespace MIOpenGEMM{
     return fms.str();
   }
   
-  miog_error::miog_error(const std::string& what_arg):std::runtime_error(tgformat(what_arg, "tinygemm",  "ERROR")){}
+  miog_error::miog_error(const std::string& what_arg):std::runtime_error(tgformat(what_arg, "MIOpenGEMM",  "ERROR")){}
 
-  void tinygemm_warning(const std::string & warning){
-    std::cerr << tgformat(warning, "tinygemm",  "WARNING") << std::flush;
+  void miog_warning(const std::string & warning){
+    std::cerr << tgformat(warning, "MIOpenGEMM",  "WARNING") << std::flush;
   }
 
 }

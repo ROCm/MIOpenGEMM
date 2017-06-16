@@ -72,13 +72,13 @@ private:
 public:
   
   Gemini(TinyGemmGeometry gg_, TinyGemmOffsets toff_, const TFloat * a_, const TFloat * b_, const TFloat * c_, outputwriting::OutputWriter & mowri_):
-  gg(gg_), toff(toff_), a(a_), b(b_), c(c_), mowri(mowri_), tgcq(mowri, "tiny gemm command queue in devtinygemm"),  a_gpu_safemem("a_gpu_safemem, of Gemini"), b_gpu_safemem("b_gpu_safemem, of Gemini"), c_gpu_safemem("c_gpu_safemem, of Gemini"), workspace_safemem("workspace_safemem, of Gemini")
+  gg(gg_), toff(toff_), a(a_), b(b_), c(c_), mowri(mowri_), tgcq(mowri, "command queue of Gemini"),  a_gpu_safemem("a_gpu_safemem, of Gemini"), b_gpu_safemem("b_gpu_safemem, of Gemini"), c_gpu_safemem("c_gpu_safemem, of Gemini"), workspace_safemem("workspace_safemem, of Gemini")
   
   {
     //consistencychecks::check_ldx_mnk_consistent(gg);
     gg.check_ldx_consistent();
     if (gg.derived.float_size_bytes != sizeof(TFloat)){
-      throw miog_error("float sizes don't agree in devtinygemm.cpp");
+      throw miog_error("float sizes don't agree in Gemini");
     }
     sizingup::check_sizes_ok_for_unsigned(gg, toff); 
     c_copy.resize(get_c_memsize()/sizeof(TFloat));
@@ -112,13 +112,13 @@ public:
     
 
     /* allocate memory for a,b,c on device, send it over */
-    a_gpu_safemem.clmem = openclutil::cl_create_buffer_from_command_queue(tgcq.command_queue, CL_MEM_READ_ONLY, get_a_memsize(), NULL, "a_gpu in devtinygemm");
-    b_gpu_safemem.clmem = openclutil::cl_create_buffer_from_command_queue(tgcq.command_queue, CL_MEM_READ_ONLY, get_b_memsize(), NULL, "b_gpu in devtinygemm");
-    c_gpu_safemem.clmem = openclutil::cl_create_buffer_from_command_queue(tgcq.command_queue, CL_MEM_READ_WRITE, get_c_memsize(), NULL, "c_gpu in devtinygemm");  
+    a_gpu_safemem.clmem = openclutil::cl_create_buffer_from_command_queue(tgcq.command_queue, CL_MEM_READ_ONLY, get_a_memsize(), NULL, "a_gpu in Gemini");
+    b_gpu_safemem.clmem = openclutil::cl_create_buffer_from_command_queue(tgcq.command_queue, CL_MEM_READ_ONLY, get_b_memsize(), NULL, "b_gpu in Gemini");
+    c_gpu_safemem.clmem = openclutil::cl_create_buffer_from_command_queue(tgcq.command_queue, CL_MEM_READ_WRITE, get_c_memsize(), NULL, "c_gpu in Gemini");  
     
     std::stringstream ss_hash;
     if (get_workspace_memsize() > 0){
-      ss_hash << "workspace_gpu in devtinygemm, with workspace_memsize : (" << get_workspace_memsize() << "(bytes) )";
+      ss_hash << "workspace_gpu in Gemini, with workspace_memsize : (" << get_workspace_memsize() << "(bytes) )";
       workspace_safemem.clmem = openclutil::cl_create_buffer_from_command_queue(tgcq.command_queue, CL_MEM_READ_WRITE, get_workspace_memsize(), NULL, ss_hash.str());     
     }
 
@@ -133,7 +133,7 @@ public:
 
   void benchgemm(const std::vector<std::string> & hyperstrings, size_t number_of_runs){
     
-    /* dev code's connection to tinygemm */
+    /* dev code's connection to the outside */
     std::vector<hyperparams::HyperParams> hps;
     for (auto & hyperstring : hyperstrings){
       MIOpenGEMM::benchgemm(tgcq.command_queue, hyperstring, number_of_runs, gg, toff, a_gpu_safemem.clmem, b_gpu_safemem.clmem, c_gpu_safemem.clmem, workspace_safemem.clmem, mowri);
@@ -142,7 +142,7 @@ public:
   
 
   TinyGemmSolution find(const FindParams & find_params, std::string constraints_string){
-    /* dev code's connection to tinygemm */
+    /* dev code's connection to the outside */
     
     bool c_is_const = false;
     bool use_mowri_tracker = false;

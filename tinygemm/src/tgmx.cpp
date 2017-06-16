@@ -837,10 +837,10 @@ const std::string & hash
 
   size_t n_c = gg.ldX[nsHP::matC] * (gg.tX[nsHP::matC] == gg.isColMajor ? gg.m : gg.n) + toff.oc;
   size_t c_memsize = gg.derived.float_size_bytes*n_c;
-  c_copied = openclutil::cl_create_buffer_from_command_queue(command_queue, CL_MEM_READ_WRITE, c_memsize, NULL, hash + ", in function get_copy of tinygemm");
-  openclutil::cl_enqueue_copy_buffer(command_queue, c, c_copied, 0, 0, c_memsize, 0, NULL, &c_copy_event, hash + ", in function get_copy of tinygemm");
+  c_copied = openclutil::cl_create_buffer_from_command_queue(command_queue, CL_MEM_READ_WRITE, c_memsize, NULL, hash + ", in function get_copy which returns a cl_mem");
+  openclutil::cl_enqueue_copy_buffer(command_queue, c, c_copied, 0, 0, c_memsize, 0, NULL, &c_copy_event, hash + ", in function get_copy which returns a cl_mem");
 
-  openclutil::cl_wait_for_events(1, &c_copy_event, "in function find of tinygemm");
+  openclutil::cl_wait_for_events(1, &c_copy_event, "in function find");
   return c_copied;
 }
 
@@ -849,7 +849,7 @@ cl_command_queue command_queue,
 const std::string & hash
 ){
   size_t c_memsize = 1;
-  cl_mem single = openclutil::cl_create_buffer_from_command_queue(command_queue, CL_MEM_READ_WRITE, c_memsize, NULL, hash + ", in function cl_mem get_single of tinygemm");
+  cl_mem single = openclutil::cl_create_buffer_from_command_queue(command_queue, CL_MEM_READ_WRITE, c_memsize, NULL, hash + ", in function cl_mem get_single which returns a cl_mem");
   return single;
 }
 
@@ -970,7 +970,7 @@ outputwriting::OutputWriter & mowri){
   TinygemmCachedSolution cached_soln;
   auto pair = check_for_default(command_queue, constraints_string, gg, k_comment);
   if (std::get<0>(pair) == false){
-    tinygemm_warning(std::get<1>(pair));
+    miog_warning(std::get<1>(pair));
     mowri << std::get<1>(pair);
     cached_soln = get_generic_cached_solution(constraints_string, gg); 
   }
@@ -1070,7 +1070,7 @@ find(float allotted_time, cl_command_queue command_queue, cl_mem a, cl_mem b, cl
       
       std::stringstream ss;
       ss << "\n\n";
-      ss << "In tinygemm find (version without workspace), and ";
+      ss << "In find (version without workspace), and ";
       ss << "\n(1) allotted_time (" << allotted_time << ") is less than min_time_without_cache (" << min_time_without_cache << ")  ";
       ss << "\n(2) there is no custom cache entry. The message returned when attempting to obtain a custom cache entry was,";
       ss << "\n";
@@ -1082,7 +1082,7 @@ find(float allotted_time, cl_command_queue command_queue, cl_mem a, cl_mem b, cl
       ss << "\n\nReturing a generic cache entry\n";
 
       mowri << ss.str();
-      tinygemm_warning("\nvery limited search with no custom cache : expect a sub-optimal kernel(s) \n");
+      miog_warning("\nvery limited search with no custom cache : expect a sub-optimal kernel(s) \n");
       solution = get_default(tgg);
     }
     

@@ -2,7 +2,7 @@
 #define OPENCLUTIL_H
 
 
-#include "outputwriter.hpp"
+#include <MIOpenGEMM/outputwriter.hpp>
 #include <CL/cl.h>
 
 

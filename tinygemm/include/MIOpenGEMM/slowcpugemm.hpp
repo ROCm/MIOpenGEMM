@@ -4,8 +4,8 @@
 #include <vector>
 #include <string>
 
-#include "outputwriter.hpp"
-#include "geometry.hpp"
+#include <MIOpenGEMM/outputwriter.hpp>
+#include <MIOpenGEMM/geometry.hpp>
 
 namespace MIOpenGEMM{
 namespace slowcpugemm{

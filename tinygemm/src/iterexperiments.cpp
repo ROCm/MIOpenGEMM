@@ -93,7 +93,7 @@ int run_find_experiments(const std::vector<TinyGemmGeometry> & geometries, std::
     }
   }
 
-  mowri_outer << "\nAll experiments have completed. To cache the best kernels found, copy the following string (between the `snips') into tinygemmkernelcache.cpp" << Endl;
+  mowri_outer << "\nAll experiments have completed. To cache the best kernels found, copy the following string (between the `snips') into kernelcache.cpp" << Endl;
   mowri_outer << "\n\n-- snip -- snip -- snip -- \n\n\n"; 
   mowri_outer << cache_write_string << Flush;
   mowri_outer << "\n-- snip -- snip -- snip -- \n " << Endl; 

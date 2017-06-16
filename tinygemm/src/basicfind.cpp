@@ -6,7 +6,7 @@
 #include <chrono>
 #include <sstream>
 
-/* Required header for using tinygemm */
+/* Required header for using MIOpenGEMM */
 #include <MIOpenGEMM/tgmx.hpp>
 #include <MIOpenGEMM/findparams.hpp>
 
@@ -60,7 +60,7 @@ bool verbose, std::string logfile, std::string constraints_string, unsigned n_po
   
   /* On OpenCL boilerplate. 
    * This might be different depending on your system. 
-   * tinygemm does not help in setting up OpenCL boilerplate, 
+   * This project does not help in setting up OpenCL boilerplate, 
    * and assumes you can allocate memory buffers, find devices etc. 
    * Here we use our own boilerplate setup functions, which might not 
    * work on your system, but you can give it a try and see. Otherwise, 
@@ -136,7 +136,7 @@ bool verbose, std::string logfile, std::string constraints_string, unsigned n_po
 
     /* We now show how to use the kernel(s) in soln.
      * We use the kernel on the same problem as benchmarked. 
-     * We expect this to be the standard workflow with tinygemm.  */
+     * We expect this to be the standard workflow with this project.  */
         
     /* Note that the alpha and beta used in the `find' step are always double, even if the data type is float.  
      * This above design choice was made to reduce the amount of object code. 

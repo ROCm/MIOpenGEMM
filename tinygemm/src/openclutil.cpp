@@ -213,7 +213,7 @@ void cl_build_program(cl_program program,cl_uint num_devices,const cl_device_id 
 
     if (iswhitespace == false){//(buffer[0] != '\0'){
       std::stringstream ss_comp_warning;
-      ss_comp_warning << "\n                  warning during compilation of tinygemm kernel:\n ";
+      ss_comp_warning << "\n                  warning during compilation of kernel, in cl_build_program:\n ";
       ss_comp_warning << ">>" << buffer << "<<";
       mowri << ss_comp_warning.str();
     }
@@ -292,7 +292,7 @@ void set_platform_etc(cl_platform_id & platform, cl_uint & num_platforms, cl_con
   cl_get_context_info(context, CL_CONTEXT_NUM_DEVICES, sizeof(int), &deviceListSize, nullptr, "getting deviceListSize");
   
   if (deviceListSize == 0){
-    throw miog_error("There are no devices detected. \nSpecifically, using clGetContextInfo with CL_CONTEX_NUM_DEVICES as the flag returns 0. \nThis error is being thrown from set_platform_etc in openclutil.cpp. Please have a look, it seems tinygemm can't figure out your setup.");
+    throw miog_error("There are no devices detected. \nSpecifically, using clGetContextInfo with CL_CONTEX_NUM_DEVICES as the flag returns 0. \nThis error is being thrown from set_platform_etc in openclutil.cpp. Please have a look, it seems like the current boilerplate can't figure out your setup.");
   }
 
   
@@ -540,7 +540,7 @@ OpenCLDeviceInfo::OpenCLDeviceInfo(const cl_command_queue & command_queue){
 }
 
 OpenCLDeviceInfo::OpenCLDeviceInfo(){
-  device_name = "unknown_tinygemm_default_constructed";
+  device_name = "unknown_default_constructed";
 }
 
 std::string OpenCLPlatformInfo::get_string() const {

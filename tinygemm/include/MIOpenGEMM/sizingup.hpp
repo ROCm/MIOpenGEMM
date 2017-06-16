@@ -1,7 +1,7 @@
 #ifndef SIZING_UP
 #define SIZING_UP
 
-#include "geometry.hpp"
+#include <MIOpenGEMM/geometry.hpp>
 namespace MIOpenGEMM{
 namespace sizingup{
 

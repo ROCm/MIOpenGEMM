@@ -55,7 +55,7 @@ char get_floattype(unsigned nbits){
     ft = 'd';
   }
   else{
-    throw  miog_error("what is the floattype with this many bits : " + std::to_string(nbits) + std::string(" ?? in tinygemmgeometry"));
+    throw  miog_error("what is the floattype with number of bints : " + std::to_string(nbits) + std::string(" ?? in get_floattype of geometry"));
   }
   return ft;
 }
@@ -68,7 +68,7 @@ void TinyGemmGeometryDerived::reset(char floattype){
     float_size_bytes = sizeof(double);
   }
   else{
-    throw  miog_error("what is this floattype : " + floattype + std::string(" ?? in tinygemmgeometry"));
+    throw  miog_error("what is this floattype : " + floattype + std::string(" ?? in reset of geometry"));
   }
   float_size_bits = 8*float_size_bytes;
 }
@@ -96,7 +96,7 @@ unsigned TinyGemmGeometry::get_padless_dim(nsHP::eMat emat_x, bool isCoal) const
   }
   
   else{
-    throw  miog_error("unrecognised emat_x passed to get_coal in tinygemm geometry");
+    throw  miog_error("unrecognised emat_x passed to get_coal in get_padless_dim of geometry");
   }
 }
 
@@ -111,7 +111,7 @@ unsigned TinyGemmGeometry::get_non_k_dim(nsHP::eMat emat_x) const{
   }
 
   else{
-    throw  miog_error("invalid char passed to get_non_k_dim in tinygemm geometry, it should be either a or b");
+    throw  miog_error("invalid char passed to get_non_k_dim in get_non_k_dim of geometry, it should be either a or b");
   }  
 }
 
@@ -142,7 +142,7 @@ void TinyGemmGeometry::check_ldx_consistent() const{
     errm_ss << "A full table of the lower bounds of ldx for x in {a,b,c} can be found at, https://software.intel.com/en-us/mkl-developer-reference-c-cblas-gemm.  ";
     errm_ss << "\n\n";
     
-    errm_ss << "The particular geometry received by tinygemm is  ";
+    errm_ss << "The particular geometry received by in geometry check_ldx_consistent is  ";
     errm_ss << get_string();
     errm_ss << ", and the problems detected are:  ";
     
@@ -241,7 +241,7 @@ unsigned safeat(std::map<std::string, unsigned> & map, std::string key){
   if (map.count(key) == 0){
     std::stringstream errm;
     errm << "Unrecognised key `";
-    errm << key << "' in safeat in tinygemmgeometry";
+    errm << key << "' in safeat of geometry";
     throw miog_error(errm.str());
   }
   return map.at(key);

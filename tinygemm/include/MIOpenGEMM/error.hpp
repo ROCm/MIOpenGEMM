@@ -10,7 +10,7 @@ class miog_error : public std::runtime_error{
     miog_error(const std::string& what_arg);
 };
 
-void tinygemm_warning(const std::string & warning);
+void miog_warning(const std::string & warning);
 
 }
 

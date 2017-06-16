@@ -40,13 +40,13 @@ TinyGemmSolutionStatistics::TinyGemmSolutionStatistics(std::string cache_string)
   auto megafrags = stringutil::split(cache_string, "__");
 
   if (megafrags.size() < 3){
-    throw  miog_error("problem constructing tinygemm solution stats from string");
+    throw  miog_error("problem constructing solution stats from string, in constructor");
   }
   
   auto get_X = [&megafrags](unsigned i){
     auto X = stringutil::split(megafrags[i]);
     if (X.size() != 2)  {
-      throw  miog_error("split not into 2, problem in generating tinygemm solution from string");
+      throw  miog_error("split not into 2, problem in generating solution from string, on constructor");
     }
     return X[1];
   };

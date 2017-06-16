@@ -464,7 +464,7 @@ void SubG::apply_constraints(){
   for (unsigned hpi = 0; hpi < nHPs; ++hpi){
     if (constraints.at(hpi) != nsHP::undefined){
       
-      if (ptr_devinfo->device_name != "unknown_tinygemm_default_constructed"){
+      if (ptr_devinfo->device_name != "unknown_default_constructed"){
         if (std::find(range[hpi].begin(), range[hpi].end(), constraints.at(hpi)) == range[hpi].end()){
           std::stringstream errm;
           errm << "the constraint on " << ptr_keys_vals->keys[hpi] << " of " << constraints.at(hpi) << " is not in the pre-constraint range:  \n" << get_range_string(hpi);
@@ -561,7 +561,7 @@ void CSubG::set_preconstraint_edges(){
 
   /* MAC and SKW */
   
-  if (ptr_devinfo->device_name == "unknown_tinygemm_default_constructed"){
+  if (ptr_devinfo->device_name == "unknown_default_constructed"){
     //
   }
 

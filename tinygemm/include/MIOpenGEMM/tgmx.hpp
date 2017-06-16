@@ -7,9 +7,9 @@
 #include  <CL/cl.h> 
 
 #include <MIOpenGEMM/geometry.hpp>
-#include "solution.hpp"
-#include "error.hpp"
-#include "outputwriter.hpp"
+#include <MIOpenGEMM/solution.hpp>
+#include <MIOpenGEMM/error.hpp>
+#include <MIOpenGEMM/outputwriter.hpp>
 #include <MIOpenGEMM/findparams.hpp>
 
 namespace MIOpenGEMM{
@@ -30,7 +30,7 @@ cl_mem c,
 cl_mem workspace,
 /* a substring of a hyperstring, defines hyper-parameters with fixed values */
 const std::string constraints_string,
-/* see tinygemm/include/geometry.hpp for TinyGemmGeometry parameters */
+/* see MIOpenGEMM/include/geometry.hpp for TinyGemmGeometry parameters */
 const TinyGemmGeometry & gg,
 /* this is nec so that we know where in a,b,c and workspace to start */
 const TinyGemmOffsets & toff,
