@@ -1,4 +1,4 @@
-#include <tinygemm/tggeometryutil.hpp>
+#include <tinygemm/geometryutil.hpp>
 #include <tuple>
 
 namespace tinygemm{

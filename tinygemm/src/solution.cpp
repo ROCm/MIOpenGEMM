@@ -4,9 +4,9 @@
 #include <iostream>
 #include <string>
 
-#include <tinygemm/tinygemmsolution.hpp>
+#include <tinygemm/solution.hpp>
 #include <tinygemm/sizingup.hpp>
-#include <tinygemm/tinygemmerror.hpp>
+#include <tinygemm/error.hpp>
 #include <tinygemm/stringutilbase.hpp>
 
 namespace tinygemm{

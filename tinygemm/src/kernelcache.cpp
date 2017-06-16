@@ -2,7 +2,7 @@
 #include <map>
 #include <sstream>
 
-#include <tinygemm/tinygemmkernelcache.hpp>
+#include <tinygemm/kernelcache.hpp>
 
 
 namespace tinygemm{

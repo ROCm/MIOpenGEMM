@@ -6,11 +6,11 @@
 #include <map>
 #include <chrono>
 
-#include <tinygemm/tinygemmgeometry.hpp>
+#include <tinygemm/geometry.hpp>
 #include <tinygemm/hyperparams.hpp>
 #include <tinygemm/derivedparams.hpp>
 #include <tinygemm/kernelstring.hpp>
-#include <tinygemm/tinygemmfindparams.hpp>
+#include <tinygemm/findparams.hpp>
 
 namespace tinygemm{
 

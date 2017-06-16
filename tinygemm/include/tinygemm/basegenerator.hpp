@@ -3,7 +3,7 @@
 
 
 #include <tinygemm/hyperparams.hpp>
-#include <tinygemm/tinygemmgeometry.hpp>
+#include <tinygemm/geometry.hpp>
 #include <tinygemm/derivedparams.hpp>
 #include <tinygemm/kernelstring.hpp>
 

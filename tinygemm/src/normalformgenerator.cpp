@@ -2,7 +2,7 @@
 #include <sstream>
 
 #include <tinygemm/normalformgenerator.hpp>
-#include <tinygemm/tinygemmerror.hpp>
+#include <tinygemm/error.hpp>
 
 namespace tinygemm{
 namespace nformgen{

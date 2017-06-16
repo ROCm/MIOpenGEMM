@@ -1,5 +1,5 @@
-#include <tinygemm/tinygemmfindparams.hpp>
-#include <tinygemm/tinygemmerror.hpp>
+#include <tinygemm/findparams.hpp>
+#include <tinygemm/error.hpp>
 
 #include <sstream>
 namespace tinygemm{

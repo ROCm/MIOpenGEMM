@@ -3,7 +3,7 @@
 
 #include <random>
 #include <algorithm>
-#include <tinygemm/tinygemmerror.hpp>
+#include <tinygemm/error.hpp>
 
 namespace tinygemm{
 

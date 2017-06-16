@@ -3,7 +3,7 @@
 #include <iostream>
 
 #include <tinygemm/bylinegenerator.hpp>
-#include <tinygemm/tinygemmerror.hpp>
+#include <tinygemm/error.hpp>
 
 #include <tinygemm/prepgenerator.hpp>
 

@@ -8,7 +8,7 @@
 #include <tuple>
 
 #include <tinygemm/hyperparams.hpp>
-#include <tinygemm/tinygemmgeometry.hpp>
+#include <tinygemm/geometry.hpp>
 
 namespace tinygemm{
 namespace derivedparams{

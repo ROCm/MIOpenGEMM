@@ -1,6 +1,5 @@
 #include <vector>
 #include <iostream>
-#include <tinygemm/tinygemmerror.hpp>
 #include <vector>
 #include <sstream>
 #include <fstream>
@@ -27,15 +26,15 @@
 #include <tinygemm/redirection.hpp>
 #include <tinygemm/outputwriter.hpp>
 #include <tinygemm/floattostring.hpp>
-#include <tinygemm/consistencychecks.hpp>
 #include <tinygemm/slowcpugemm.hpp>
 #include <tinygemm/sizingup.hpp>
 #include <tinygemm/openclutil.hpp>
-#include <tinygemm/tinygemm.hpp>
+#include <tinygemm/tgmx.hpp>
 #include <tinygemm/accuracytests.hpp>
-#include <tinygemm/devtinygemm.hpp>
-#include <tinygemm/tinygemmgeometry.hpp>
+#include <tinygemm/devtgmx.hpp>
+#include <tinygemm/geometry.hpp>
 #include <tinygemm/hyperparams.hpp>
+#include <tinygemm/error.hpp>
 
 
 

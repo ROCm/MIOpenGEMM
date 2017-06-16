@@ -1,6 +1,6 @@
 #include <chrono>
-#include <tinygemm/tinygemmerror.hpp>
-#include <tinygemm/tinygemmgeometry.hpp>
+#include <tinygemm/error.hpp>
+#include <tinygemm/geometry.hpp>
 
 #include <tinygemm/slowcpugemm.hpp>
 #include <tinygemm/outputwriter.hpp>

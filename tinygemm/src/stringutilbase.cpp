@@ -1,5 +1,5 @@
 #include <tinygemm/stringutilbase.hpp>
-#include <tinygemm/tinygemmerror.hpp>
+#include <tinygemm/error.hpp>
 #include <iostream>
 #include <tuple>
 #include <cmath>

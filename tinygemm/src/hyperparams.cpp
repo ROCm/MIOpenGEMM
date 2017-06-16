@@ -9,7 +9,7 @@
 
 #include <tinygemm/stringutilbase.hpp>
 #include <tinygemm/hyperparams.hpp>
-#include <tinygemm/tinygemmerror.hpp>
+#include <tinygemm/error.hpp>
 #include <tinygemm/stringutilbase.hpp>
 #include <tinygemm/mapkeycheck.hpp>
 #include <tinygemm/randomutil.hpp>

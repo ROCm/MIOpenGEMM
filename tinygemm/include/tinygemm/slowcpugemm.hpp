@@ -5,7 +5,7 @@
 #include <string>
 
 #include "outputwriter.hpp"
-#include "tinygemmgeometry.hpp"
+#include "geometry.hpp"
 
 namespace tinygemm{
 namespace slowcpugemm{

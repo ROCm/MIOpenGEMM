@@ -4,9 +4,8 @@
 #include <string>
 #include <sstream>
 #include <map>
-#include <tinygemm/tinygemmgeometry.hpp>
-#include <tinygemm/consistencychecks.hpp>
-#include <tinygemm/tinygemmerror.hpp>
+#include <tinygemm/geometry.hpp>
+#include <tinygemm/error.hpp>
 #include <tinygemm/stringutilbase.hpp>
 
 namespace tinygemm{

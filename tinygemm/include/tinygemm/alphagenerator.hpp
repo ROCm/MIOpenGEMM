@@ -1,6 +1,6 @@
 #include <tinygemm/kernelstring.hpp>
-#include <tinygemm/tinygemmgeometry.hpp>
-#include <tinygemm/tinygemmerror.hpp>
+#include <tinygemm/geometry.hpp>
+#include <tinygemm/error.hpp>
 #include <tinygemm/derivedparams.hpp>
 
 namespace tinygemm{

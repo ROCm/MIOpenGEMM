@@ -1,5 +1,5 @@
 #include <algorithm>
-#include <tinygemm/tinygemmerror.hpp>
+#include <tinygemm/error.hpp>
 #include  <CL/cl.h> 
 
 #include <tinygemm/redirection.hpp>

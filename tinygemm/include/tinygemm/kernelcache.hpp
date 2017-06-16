@@ -2,7 +2,7 @@
 #define TINYGEMM_TINYGEMMKERNELCACHE_HPP
 
 
-#include <tinygemm/tinygemmsolution.hpp>
+#include <tinygemm/solution.hpp>
 namespace tinygemm{
  
 std::string get_cache_keys_string(std::string k_dev, std::string k_con, std::string k_geo, std::string k_comment);

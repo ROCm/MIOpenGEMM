@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <sstream>
 
-#include <tinygemm/tinygemmerror.hpp>
+#include <tinygemm/error.hpp>
 #include <tinygemm/outputwriter.hpp>
 
 namespace tinygemm {

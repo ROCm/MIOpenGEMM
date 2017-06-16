@@ -6,11 +6,11 @@
 
 #include  <CL/cl.h> 
 
-#include <tinygemm/tinygemmgeometry.hpp>
-#include "tinygemmsolution.hpp"
-#include "tinygemmerror.hpp"
+#include <tinygemm/geometry.hpp>
+#include "solution.hpp"
+#include "error.hpp"
 #include "outputwriter.hpp"
-#include <tinygemm/tinygemmfindparams.hpp>
+#include <tinygemm/findparams.hpp>
 
 namespace tinygemm{
 
@@ -30,7 +30,7 @@ cl_mem c,
 cl_mem workspace,
 /* a substring of a hyperstring, defines hyper-parameters with fixed values */
 const std::string constraints_string,
-/* see tinygemm/include/tinygemmgeometry.hpp for TinyGemmGeometry parameters */
+/* see tinygemm/include/geometry.hpp for TinyGemmGeometry parameters */
 const tinygemm::TinyGemmGeometry & gg,
 /* this is nec so that we know where in a,b,c and workspace to start */
 const tinygemm::TinyGemmOffsets & toff,

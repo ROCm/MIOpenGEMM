@@ -1,4 +1,4 @@
-#include <tinygemm/tinygemmerror.hpp>
+#include <tinygemm/error.hpp>
 #include <tinygemm/stringutilbase.hpp>
 
 #include <iostream>

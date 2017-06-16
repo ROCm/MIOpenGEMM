@@ -2,7 +2,7 @@
 #define TINYGEMM_MAPKEYCHECK_HPP
 
 
-#include <tinygemm/tinygemmerror.hpp>
+#include <tinygemm/error.hpp>
 #include <sstream>
 #include <algorithm>
 

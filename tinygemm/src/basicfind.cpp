@@ -7,8 +7,8 @@
 #include <sstream>
 
 /* Required header for using tinygemm */
-#include <tinygemm/tinygemm.hpp>
-#include <tinygemm/tinygemmfindparams.hpp>
+#include <tinygemm/tgmx.hpp>
+#include <tinygemm/findparams.hpp>
 
 /* The following two header files define functions which help with opencl boilerplating on my systems, they are not necessary */
 #include <tinygemm/outputwriter.hpp>

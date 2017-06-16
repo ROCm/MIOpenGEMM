@@ -1,7 +1,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
-#include <tinygemm/tinygemmerror.hpp>
+#include <tinygemm/error.hpp>
 #include <tinygemm/outputwriter.hpp>
 #include <tinygemm/openclutil.hpp>
 #include  <CL/cl.h>

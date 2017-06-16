@@ -1,7 +1,7 @@
 #ifndef TG_ITEREXPERIMENS_HPP
 #define TG_ITEREXPERIMENS_HPP
 
-#include <tinygemm/tinygemm.hpp>
+#include <tinygemm/tgmx.hpp>
 
 namespace tinygemm{
   

@@ -1,7 +1,7 @@
 #ifndef SETABCW_HPP
 #define SETABCW_HPP
 
-#include <tinygemm/tinygemmgeometry.hpp>
+#include <tinygemm/geometry.hpp>
 
 
 namespace setabcw{

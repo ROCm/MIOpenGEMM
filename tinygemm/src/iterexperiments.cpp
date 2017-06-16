@@ -1,10 +1,10 @@
 
 #include <sstream>
 #include <vector>
-#include <tinygemm/tinygemm.hpp>
+#include <tinygemm/tgmx.hpp>
 #include <tinygemm/basicfind.hpp>
 #include <tinygemm/stringutilbase.hpp>
-#include <tinygemm/tggeometryutil.hpp>
+#include <tinygemm/geometryutil.hpp>
   
 
 namespace tinygemm{

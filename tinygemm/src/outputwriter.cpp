@@ -1,6 +1,6 @@
 #include <iostream>
 #include <string>
-#include <tinygemm/tinygemmerror.hpp>
+#include <tinygemm/error.hpp>
 
 #include <tinygemm/outputwriter.hpp>
 

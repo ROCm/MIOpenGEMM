@@ -1,5 +1,5 @@
 #include <tinygemm/bundle.hpp>
-#include <tinygemm/tinygemmerror.hpp>
+#include <tinygemm/error.hpp>
 #include <tinygemm/derivedparams.hpp>
 #include <tinygemm/alphagenerator.hpp>
 #include <tinygemm/copygenerator.hpp>

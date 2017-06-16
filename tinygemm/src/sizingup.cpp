@@ -1,10 +1,10 @@
 #include <stdlib.h>
 #include <cmath>
 #include <string>
-#include <tinygemm/tinygemmerror.hpp>
+#include <tinygemm/error.hpp>
 
 #include <tinygemm/sizingup.hpp>
-#include <tinygemm/tinygemmgeometry.hpp>
+#include <tinygemm/geometry.hpp>
 
 namespace tinygemm{
 namespace sizingup{

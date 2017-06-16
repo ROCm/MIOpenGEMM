@@ -1,5 +1,5 @@
 #include <tinygemm/kernelstring.hpp>
-#include <tinygemm/tinygemmerror.hpp>
+#include <tinygemm/error.hpp>
 
 #include <iostream>
 #include <limits>

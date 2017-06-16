@@ -8,21 +8,21 @@
 #include <map>
 #include <iomanip>
 
-#include <tinygemm/tinygemmerror.hpp>
-#include <tinygemm/tinygemm.hpp>
-#include <tinygemm/consistencychecks.hpp>
+#include <tinygemm/error.hpp>
+#include <tinygemm/tgmx.hpp>
+
 #include <tinygemm/outputwriter.hpp>
 #include <tinygemm/sizingup.hpp>
 #include <tinygemm/openclutil.hpp>
-#include <tinygemm/tinygemmsolution.hpp>
+#include <tinygemm/solution.hpp>
 #include <tinygemm/hyperparams.hpp>
 #include <tinygemm/bundle.hpp>
-#include <tinygemm/tinygemmkernel.hpp>
+#include <tinygemm/kernel.hpp>
 #include <tinygemm/derivedparams.hpp>
 #include <tinygemm/architests.hpp>
 #include <tinygemm/kernelstring.hpp>
-#include <tinygemm/tinygemmkernelcache.hpp>
-#include <tinygemm/tinygemmfindparams.hpp>
+#include <tinygemm/kernelcache.hpp>
+#include <tinygemm/findparams.hpp>
 #include <tinygemm/stringutilbase.hpp>
 
 namespace tinygemm{

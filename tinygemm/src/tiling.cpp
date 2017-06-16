@@ -1,7 +1,7 @@
 #include <vector>
 #include <sstream>
 #include <tinygemm/tiling.hpp>
-#include <tinygemm/tinygemmerror.hpp>
+#include <tinygemm/error.hpp>
 
 
 #include <iostream>

@@ -1,7 +1,7 @@
 #ifndef SIZING_UP
 #define SIZING_UP
 
-#include "tinygemmgeometry.hpp"
+#include "geometry.hpp"
 namespace tinygemm{
 namespace sizingup{
 
