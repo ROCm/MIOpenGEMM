@@ -1,6 +1,5 @@
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -pedantic" )
 
-# include_directories("../tinygemm/include" ${OpenCL_INCLUDE_DIR})
 
 include(CTest)
 
@@ -11,7 +10,7 @@ add_dependencies(check tests)
 
 function(add_test_executable TEST_NAME)
     add_executable (${TEST_NAME} EXCLUDE_FROM_ALL ${ARGN})
-    target_link_libraries(${TEST_NAME} tinygemm)
+    target_link_libraries(${TEST_NAME} MIOpenGEMM)
     if(WIN32)
         add_test(NAME ${TEST_NAME} WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH} COMMAND $<TARGET_FILE:${TEST_NAME}>)
     else()
@@ -25,7 +24,7 @@ endfunction(add_test_executable)
 
 function(add_example_executable EX_NAME)
     add_executable (${EX_NAME} EXCLUDE_FROM_ALL ${ARGN})
-    target_link_libraries(${EX_NAME} tinygemm)
+    target_link_libraries(${EX_NAME} MIOpenGEMM)
     add_dependencies(examples ${EX_NAME})
 endfunction(add_example_executable)
 

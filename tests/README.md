@@ -6,7 +6,7 @@ Runs the full find-then-run pipeline for all 32 possible (a,b,c transposes, colu
     
 #basicexample.cpp
 
-The starting point of a minimal example running the full find-then-run pipeline. The best place start to understand how to use tinygemm. 
+The starting point of a minimal example running the full find-then-run pipeline. The best place start to understand how to use MIOpenGEMM. 
 
 #basicfind.hpp
 

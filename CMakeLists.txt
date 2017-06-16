@@ -7,7 +7,7 @@ else()
     set(CMAKE_INSTALL_PREFIX "/opt/rocm" CACHE PATH "Installation path")
 endif()
 
-project(tinygemm)
+project(MIOpenGEMM)
 
 set(${PROJECT_NAME}_VERSION 0.1)
 set(${PROJECT_NAME}_VERSION_MAJOR 0)
@@ -24,13 +24,13 @@ find_package(PythonInterp REQUIRED)
 
 # What I would like here : user sets the above directory, and at configuration time the file system is generated.
 # Currently, I assume that the tree structure of the writing dir is already setup. 
-# add_definitions(-DDIR_FOR_WRITING="/home/james/tinygemmout")
+# add_definitions(-DDIR_FOR_WRITING="/home/james/MIOpenGEMMout")
 
 option(BUILD_SHARED_LIBS "Build shared library" ON)
 
 include(EnableCompilerWarnings)
 
-add_subdirectory(tinygemm)
+add_subdirectory(MIOpenGEMM)
 add_subdirectory(tests)
 
 # development code. It requires cython (and only builds with certain versions. You probably want to comment this out.

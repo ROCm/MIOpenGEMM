@@ -2,16 +2,16 @@ SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -pedantic " )
 
 include(InstallSymlinks)
 include(GNUInstallDirs)
-set( TINYGEMM_INSTALL_DIR tinygemm)
-set( BIN_INSTALL_DIR ${TINYGEMM_INSTALL_DIR}/${CMAKE_INSTALL_BINDIR} )
-set( LIB_INSTALL_DIR ${TINYGEMM_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR} )
-set( INCLUDE_INSTALL_DIR ${TINYGEMM_INSTALL_DIR}/${CMAKE_INSTALL_INCLUDEDIR} )
-set( DATA_INSTALL_DIR ${TINYGEMM_INSTALL_DIR}/${CMAKE_INSTALL_DATAROOTDIR}/tinygemm )
-set( CONFIG_PACKAGE_INSTALL_DIR ${LIB_INSTALL_DIR}/cmake/tinygemm )
+set( MIOpenGEMM_INSTALL_DIR MIOpenGEMM)
+set( BIN_INSTALL_DIR ${MIOpenGEMM_INSTALL_DIR}/${CMAKE_INSTALL_BINDIR} )
+set( LIB_INSTALL_DIR ${MIOpenGEMM_INSTALL_DIR}/${CMAKE_INSTALL_LIBDIR} )
+set( INCLUDE_INSTALL_DIR ${MIOpenGEMM_INSTALL_DIR}/${CMAKE_INSTALL_INCLUDEDIR} )
+set( DATA_INSTALL_DIR ${MIOpenGEMM_INSTALL_DIR}/${CMAKE_INSTALL_DATAROOTDIR}/MIOpenGEMM )
+set( CONFIG_PACKAGE_INSTALL_DIR ${LIB_INSTALL_DIR}/cmake/MIOpenGEMM )
 
 include(CreatePackage)
 create_package(
-    NAME tinygemm
+    NAME MIOpenGEMM
     DESCRIPTION "A tool for generating OpenCL matrix multiplication (GEMM) kernels"
     MAINTAINER "Paul Fultz II <paul.fultz@amd.com>"
     LDCONFIG ${LIB_INSTALL_DIR}
@@ -20,23 +20,23 @@ create_package(
 option(BUILD_DEV OFF)
 
 if(BUILD_DEV)
-configure_file(config.hpp.dev dev_include/tinygemm/config.hpp)
+configure_file(config.hpp.dev dev_include/MIOpenGEMM/config.hpp)
 else()
-configure_file(config.hpp.install dev_include/tinygemm/config.hpp)
+configure_file(config.hpp.install dev_include/MIOpenGEMM/config.hpp)
 endif()
 
 file(GLOB_RECURSE source_files src/*.cpp)
 
-add_library(tinygemm ${source_files})
+add_library(MIOpenGEMM ${source_files})
 
-target_link_libraries(tinygemm ${OPENCL_LIBRARIES})
+target_link_libraries(MIOpenGEMM ${OPENCL_LIBRARIES})
 
-target_include_directories (tinygemm PUBLIC 
+target_include_directories (MIOpenGEMM PUBLIC 
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/dev_include>
     ${OPENCL_INCLUDE_DIRS})
 
-target_include_directories (tinygemm SYSTEM INTERFACE $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>)
+target_include_directories (MIOpenGEMM SYSTEM INTERFACE $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/include>)
 
 ############################################################
 # The following is cmake code to generate a config file package for Tensile
@@ -47,37 +47,37 @@ include( PackageConfigHelpers )
 
 
 configure_package_config_file(
-  tinygemm-config.cmake.in
-  ${CMAKE_CURRENT_BINARY_DIR}/tinygemm-config.cmake
+  MIOpenGEMM-config.cmake.in
+  ${CMAKE_CURRENT_BINARY_DIR}/MIOpenGEMM-config.cmake
   INSTALL_DESTINATION ${CONFIG_PACKAGE_INSTALL_DIR}
   PATH_VARS LIB_INSTALL_DIR INCLUDE_INSTALL_DIR CONFIG_PACKAGE_INSTALL_DIR
 )
 
 write_basic_package_version_file(
-  ${CMAKE_CURRENT_BINARY_DIR}/tinygemm-config-version.cmake
-  VERSION ${tinygemm_VERSION}
+  ${CMAKE_CURRENT_BINARY_DIR}/MIOpenGEMM-config-version.cmake
+  VERSION ${MIOpenGEMM_VERSION}
   COMPATIBILITY SameMajorVersion
 )
 
 ############################################################
 # Library install logic
 
-install(TARGETS tinygemm 
-    EXPORT tinygemm-targets
+install(TARGETS MIOpenGEMM 
+    EXPORT MIOpenGEMM-targets
     RUNTIME DESTINATION ${BIN_INSTALL_DIR}
     LIBRARY DESTINATION ${LIB_INSTALL_DIR}
     ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
 
-install(DIRECTORY include/tinygemm DESTINATION ${INCLUDE_INSTALL_DIR})
+install(DIRECTORY include/MIOpenGEMM DESTINATION ${INCLUDE_INSTALL_DIR})
 
-install( EXPORT tinygemm-targets
+install( EXPORT MIOpenGEMM-targets
   DESTINATION
     ${CONFIG_PACKAGE_INSTALL_DIR}
 )
 
 install( FILES
-  ${CMAKE_CURRENT_BINARY_DIR}/tinygemm-config.cmake
-  ${CMAKE_CURRENT_BINARY_DIR}/tinygemm-config-version.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/MIOpenGEMM-config.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/MIOpenGEMM-config-version.cmake
   DESTINATION
     ${CONFIG_PACKAGE_INSTALL_DIR} )
 
@@ -90,5 +90,5 @@ install(DIRECTORY
   PATTERN "*.cl"
 )
 
-install_symlink_subdir(${TINYGEMM_INSTALL_DIR})
+install_symlink_subdir(${MIOpenGEMM_INSTALL_DIR})
 

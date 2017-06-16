@@ -3,16 +3,16 @@
 #include <sstream>
 #include <fstream>
 
-#include <tinygemm/tinygemmerror.hpp>
-#include <tinygemm/tinygemm.hpp>
-#include <tinygemm/devtinygemm.hpp>
-#include <tinygemm/bundle.hpp>
-#include <tinygemm/stringutilbase.hpp>
-#include <tinygemm/hyperparams.hpp>
-#include <tinygemm/tinygemmgeometry.hpp>
-#include <tinygemm/outputwriter.hpp>
+#include <MIOpenGEMM/error.hpp>
+#include <MIOpenGEMM/tgmx.hpp>
+#include <MIOpenGEMM/devtgmx.hpp>
+#include <MIOpenGEMM/bundle.hpp>
+#include <MIOpenGEMM/stringutilbase.hpp>
+#include <MIOpenGEMM/hyperparams.hpp>
+#include <MIOpenGEMM/geometry.hpp>
+#include <MIOpenGEMM/outputwriter.hpp>
 
-#include <tinygemm/setabcw.hpp>
+#include <MIOpenGEMM/setabcw.hpp>
 /* Note that currently (13/11/2016) most testing is done through dev/python scripts */
 /* Update (30/01/2017) this is the preferred place for doing testing */
 
@@ -25,7 +25,7 @@ std::string get_hyperstring(std::string hyperstring = ""){
 }
 
 template <typename TFloat>
-tinygemm::TinyGemmGeometry get_geometry(){
+MIOpenGEMM::Geometry get_geometry(){
 
 
   //bool isColMajor = true;
@@ -45,7 +45,7 @@ tinygemm::TinyGemmGeometry get_geometry(){
   return {"tC0_tA0_tB0_colMaj1_m900_n1_k147_lda900_ldb147_ldc900_ws0_f32"};
 }
 
-tinygemm::TinyGemmOffsets get_offsets(){
+MIOpenGEMM::Offsets get_offsets(){
 
   unsigned a_offset = 330;
   unsigned b_offset = 550;
@@ -65,15 +65,15 @@ void print_kernel(){
   std::string hyperstring = get_hyperstring();
   auto gg = get_geometry<TFloat>();
 
-  tinygemm::openclutil::OpenCLDeviceInfo devinfo;
+  MIOpenGEMM::openclutil::OpenCLDeviceInfo devinfo;
   devinfo.wg_atom_size = 32;
-  tinygemm::hyperparams::Graph graph(gg, devinfo, hyperstring, true); 
-  tinygemm::hyperparams::HyperParams hp(graph);
+  MIOpenGEMM::hyperparams::Graph graph(gg, devinfo, hyperstring, true); 
+  MIOpenGEMM::hyperparams::HyperParams hp(graph);
   bool mowri_verbose = true;
   bool verbose_get_bundle = true;
   std::string mowri_out("");
-  tinygemm::outputwriting::OutputWriter mowri(mowri_verbose, mowri_out != "" , mowri_out);
-  auto bundle = tinygemm::kerngen::get_bundle(hp, gg, mowri, verbose_get_bundle);
+  MIOpenGEMM::outputwriting::OutputWriter mowri(mowri_verbose, mowri_out != "" , mowri_out);
+  auto bundle = MIOpenGEMM::kerngen::get_bundle(hp, gg, mowri, verbose_get_bundle);
   
   
   for (auto & x :  bundle.v_tgks){
@@ -94,7 +94,7 @@ void print_kernel(){
 int main(){
 
   std::string fout("");
-  tinygemm::outputwriting::OutputWriter mowri(true, fout != "" , fout);
+  MIOpenGEMM::outputwriting::OutputWriter mowri(true, fout != "" , fout);
 
 
   bool test_print = false;
@@ -108,21 +108,21 @@ int main(){
   float allotted_find_time = 1.00;
   unsigned allotted_find_descents = 100;
   unsigned n_runs_per_kernel = 5;
-  tinygemm::SummaryStat sumstat(tinygemm::Max);
+  MIOpenGEMM::SummaryStat sumstat(MIOpenGEMM::Max);
   
   unsigned n_runs_benchgemm = 5;
   
   typedef float tfloat;
   
   
-  tinygemm::TinyGemmGeometry gg = get_geometry<tfloat>();
-  tinygemm::TinyGemmOffsets toff = get_offsets();
-  mowri << "generating cpu data ... " << tinygemm::Flush;
+  MIOpenGEMM::Geometry gg = get_geometry<tfloat>();
+  MIOpenGEMM::Offsets toff = get_offsets();
+  mowri << "generating cpu data ... " << MIOpenGEMM::Flush;
   std::vector<tfloat> v_a;
   std::vector<tfloat> v_b;
   std::vector<tfloat> v_c;
-  setabcw::set_abc<tfloat>(v_a, v_b, v_c, gg, toff);
-  mowri << "done." << tinygemm::Endl;
+  MIOpenGEMM::setabcw::set_abc<tfloat>(v_a, v_b, v_c, gg, toff);
+  mowri << "done." << MIOpenGEMM::Endl;
   const tfloat * c_true_bla = nullptr; 
   if (test_print){
     print_kernel<tfloat>();
@@ -131,28 +131,28 @@ int main(){
   if (test_accuracy || test_benchgemm){
     std::string hyperstring = get_hyperstring();
       if (test_accuracy){
-        tinygemm::dev::accuracy_test(hyperstring, gg, toff, v_a.data(), v_b.data(), v_c.data(), c_true_bla, mowri);
+        MIOpenGEMM::dev::accuracy_test(hyperstring, gg, toff, v_a.data(), v_b.data(), v_c.data(), c_true_bla, mowri);
     }
 
     if (test_benchgemm){
-      tinygemm::dev::benchgemm({hyperstring}, n_runs_benchgemm, gg, toff, v_a.data(), v_b.data(), v_c.data(), mowri);
+      MIOpenGEMM::dev::benchgemm({hyperstring}, n_runs_benchgemm, gg, toff, v_a.data(), v_b.data(), v_c.data(), mowri);
     }
   }
   
   
-  tinygemm::FindParams find_params(allotted_find_time, allotted_find_descents, n_runs_per_kernel, sumstat);
+  MIOpenGEMM::FindParams find_params(allotted_find_time, allotted_find_descents, n_runs_per_kernel, sumstat);
   
   if (test_find){
-    auto soln = tinygemm::dev::find(find_params, v_a.data(), v_b.data(), v_c.data(), constraints_string, gg, toff, mowri);
+    auto soln = MIOpenGEMM::dev::find(find_params, v_a.data(), v_b.data(), v_c.data(), constraints_string, gg, toff, mowri);
     std::cout << "\n\n " << soln.get_cache_entry_string() << "\n\n";
   }
   
   if (test_default){
     std::string k_comment("");  
-    tinygemm::openclutil::TinyGemmCommandQueueInContext tgcq(mowri, "TinyGemmCommandQueueInContext in get_default in devtingemm.cpp");
-    auto soln = tinygemm::get_default(tgcq.command_queue, constraints_string, gg, k_comment, mowri);
+    MIOpenGEMM::openclutil::CommandQueueInContext tgcq(mowri, "in get_default in devtest.cpp");
+    auto soln = MIOpenGEMM::get_default(tgcq.command_queue, constraints_string, gg, k_comment, mowri);
     std::cout << soln.hyper_param_string << std::endl;
-    tinygemm::dev::accuracy_test(soln.hyper_param_string, gg, toff, v_a.data(), v_b.data(), v_c.data(), c_true_bla, mowri);
+    MIOpenGEMM::dev::accuracy_test(soln.hyper_param_string, gg, toff, v_a.data(), v_b.data(), v_c.data(), c_true_bla, mowri);
     std::cout << soln.hyper_param_string << std::endl;
   }
   
