@@ -7,7 +7,7 @@
 #include <sstream>
 
 /* Required header for using MIOpenGEMM */
-#include <MIOpenGEMM/tgmx.hpp>
+#include <MIOpenGEMM/miogemm.hpp>
 #include <MIOpenGEMM/findparams.hpp>
 
 /* The following two header files define functions which help with opencl boilerplating on my systems, they are not necessary */

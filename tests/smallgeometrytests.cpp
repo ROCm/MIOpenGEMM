@@ -1,4 +1,4 @@
-#include <MIOpenGEMM/tgmx.hpp>
+#include <MIOpenGEMM/miogemm.hpp>
 #include <MIOpenGEMM/basicfind.hpp>
 #include <string>
 

@@ -1,7 +1,7 @@
 
 #include <sstream>
 #include <vector>
-#include <MIOpenGEMM/tgmx.hpp>
+#include <MIOpenGEMM/miogemm.hpp>
 #include <MIOpenGEMM/basicfind.hpp>
 #include <MIOpenGEMM/stringutilbase.hpp>
 #include <MIOpenGEMM/geometryutil.hpp>

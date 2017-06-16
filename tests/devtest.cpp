@@ -4,8 +4,8 @@
 #include <fstream>
 
 #include <MIOpenGEMM/error.hpp>
-#include <MIOpenGEMM/tgmx.hpp>
-#include <MIOpenGEMM/devtgmx.hpp>
+#include <MIOpenGEMM/miogemm.hpp>
+#include <MIOpenGEMM/devmiogemm.hpp>
 #include <MIOpenGEMM/bundle.hpp>
 #include <MIOpenGEMM/stringutilbase.hpp>
 #include <MIOpenGEMM/hyperparams.hpp>

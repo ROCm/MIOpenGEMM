@@ -29,9 +29,9 @@
 #include <MIOpenGEMM/slowcpugemm.hpp>
 #include <MIOpenGEMM/sizingup.hpp>
 #include <MIOpenGEMM/openclutil.hpp>
-#include <MIOpenGEMM/tgmx.hpp>
+#include <MIOpenGEMM/miogemm.hpp>
 #include <MIOpenGEMM/accuracytests.hpp>
-#include <MIOpenGEMM/devtgmx.hpp>
+#include <MIOpenGEMM/devmiogemm.hpp>
 #include <MIOpenGEMM/geometry.hpp>
 #include <MIOpenGEMM/hyperparams.hpp>
 #include <MIOpenGEMM/error.hpp>

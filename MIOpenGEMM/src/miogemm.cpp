@@ -9,7 +9,7 @@
 #include <iomanip>
 
 #include <MIOpenGEMM/error.hpp>
-#include <MIOpenGEMM/tgmx.hpp>
+#include <MIOpenGEMM/miogemm.hpp>
 
 #include <MIOpenGEMM/outputwriter.hpp>
 #include <MIOpenGEMM/sizingup.hpp>
