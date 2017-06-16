@@ -1,8 +1,8 @@
 #include <string>
 #include <sstream>
 
-#include <tinygemm/normalformgenerator.hpp>
-#include <tinygemm/error.hpp>
+#include <MIOpenGEMM/normalformgenerator.hpp>
+#include <MIOpenGEMM/error.hpp>
 
 namespace MIOpenGEMM{
 namespace nformgen{

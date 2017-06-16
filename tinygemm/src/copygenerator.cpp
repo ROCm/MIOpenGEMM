@@ -1,5 +1,5 @@
-#include <tinygemm/copygenerator.hpp>
-#include <tinygemm/error.hpp>
+#include <MIOpenGEMM/copygenerator.hpp>
+#include <MIOpenGEMM/error.hpp>
 
 #include <sstream>
 

@@ -1,9 +1,9 @@
 #include <string>
 #include <sstream>
 #include <vector>
-#include <tinygemm/error.hpp>
-#include <tinygemm/outputwriter.hpp>
-#include <tinygemm/openclutil.hpp>
+#include <MIOpenGEMM/error.hpp>
+#include <MIOpenGEMM/outputwriter.hpp>
+#include <MIOpenGEMM/openclutil.hpp>
 #include  <CL/cl.h>
 
 

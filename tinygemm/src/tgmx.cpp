@@ -8,22 +8,22 @@
 #include <map>
 #include <iomanip>
 
-#include <tinygemm/error.hpp>
-#include <tinygemm/tgmx.hpp>
+#include <MIOpenGEMM/error.hpp>
+#include <MIOpenGEMM/tgmx.hpp>
 
-#include <tinygemm/outputwriter.hpp>
-#include <tinygemm/sizingup.hpp>
-#include <tinygemm/openclutil.hpp>
-#include <tinygemm/solution.hpp>
-#include <tinygemm/hyperparams.hpp>
-#include <tinygemm/bundle.hpp>
-#include <tinygemm/kernel.hpp>
-#include <tinygemm/derivedparams.hpp>
-#include <tinygemm/architests.hpp>
-#include <tinygemm/kernelstring.hpp>
-#include <tinygemm/kernelcache.hpp>
-#include <tinygemm/findparams.hpp>
-#include <tinygemm/stringutilbase.hpp>
+#include <MIOpenGEMM/outputwriter.hpp>
+#include <MIOpenGEMM/sizingup.hpp>
+#include <MIOpenGEMM/openclutil.hpp>
+#include <MIOpenGEMM/solution.hpp>
+#include <MIOpenGEMM/hyperparams.hpp>
+#include <MIOpenGEMM/bundle.hpp>
+#include <MIOpenGEMM/kernel.hpp>
+#include <MIOpenGEMM/derivedparams.hpp>
+#include <MIOpenGEMM/architests.hpp>
+#include <MIOpenGEMM/kernelstring.hpp>
+#include <MIOpenGEMM/kernelcache.hpp>
+#include <MIOpenGEMM/findparams.hpp>
+#include <MIOpenGEMM/stringutilbase.hpp>
 
 namespace MIOpenGEMM{
 

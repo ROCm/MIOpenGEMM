@@ -1,5 +1,5 @@
-#include <tinygemm/findparams.hpp>
-#include <tinygemm/error.hpp>
+#include <MIOpenGEMM/findparams.hpp>
+#include <MIOpenGEMM/error.hpp>
 
 #include <sstream>
 namespace MIOpenGEMM{

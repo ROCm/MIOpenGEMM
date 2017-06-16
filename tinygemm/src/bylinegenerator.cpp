@@ -2,10 +2,10 @@
 #include <sstream>
 #include <iostream>
 
-#include <tinygemm/bylinegenerator.hpp>
-#include <tinygemm/error.hpp>
+#include <MIOpenGEMM/bylinegenerator.hpp>
+#include <MIOpenGEMM/error.hpp>
 
-#include <tinygemm/prepgenerator.hpp>
+#include <MIOpenGEMM/prepgenerator.hpp>
 
 /* TODO : interwoven hyper-parameter */
 /* TODO : work-group size hyper-parameter (32 for vega) */

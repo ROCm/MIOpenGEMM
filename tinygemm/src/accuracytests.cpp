@@ -1,5 +1,5 @@
-#include <tinygemm/accuracytests.hpp>
-#include <tinygemm/outputwriter.hpp>
+#include <MIOpenGEMM/accuracytests.hpp>
+#include <MIOpenGEMM/outputwriter.hpp>
 #include <algorithm>
 
 namespace MIOpenGEMM {

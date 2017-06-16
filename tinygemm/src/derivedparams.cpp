@@ -1,9 +1,9 @@
-#include <tinygemm/derivedparams.hpp>
-#include <tinygemm/error.hpp>
+#include <MIOpenGEMM/derivedparams.hpp>
+#include <MIOpenGEMM/error.hpp>
 #include <sstream>
 #include <algorithm>
 #include <iostream>
-#include <tinygemm/tiling.hpp>
+#include <MIOpenGEMM/tiling.hpp>
 
 
 #include <iostream>

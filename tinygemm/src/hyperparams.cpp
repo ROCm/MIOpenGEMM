@@ -7,11 +7,11 @@
 #include <algorithm>
 #include <limits>
 
-#include <tinygemm/stringutilbase.hpp>
-#include <tinygemm/hyperparams.hpp>
-#include <tinygemm/error.hpp>
-#include <tinygemm/stringutilbase.hpp>
-#include <tinygemm/randomutil.hpp>
+#include <MIOpenGEMM/stringutilbase.hpp>
+#include <MIOpenGEMM/hyperparams.hpp>
+#include <MIOpenGEMM/error.hpp>
+#include <MIOpenGEMM/stringutilbase.hpp>
+#include <MIOpenGEMM/randomutil.hpp>
 
 namespace MIOpenGEMM{
 

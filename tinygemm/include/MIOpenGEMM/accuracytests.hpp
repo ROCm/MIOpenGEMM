@@ -5,8 +5,8 @@
 #include <algorithm>
 #include <sstream>
 
-#include <tinygemm/error.hpp>
-#include <tinygemm/outputwriter.hpp>
+#include <MIOpenGEMM/error.hpp>
+#include <MIOpenGEMM/outputwriter.hpp>
 
 namespace MIOpenGEMM {
 namespace accuracytests {

@@ -4,9 +4,9 @@
 #include <string>
 #include <sstream>
 #include <map>
-#include <tinygemm/geometry.hpp>
-#include <tinygemm/error.hpp>
-#include <tinygemm/stringutilbase.hpp>
+#include <MIOpenGEMM/geometry.hpp>
+#include <MIOpenGEMM/error.hpp>
+#include <MIOpenGEMM/stringutilbase.hpp>
 
 namespace MIOpenGEMM{
 

@@ -1,4 +1,4 @@
-#include <tinygemm/betacgenerator.hpp>
+#include <MIOpenGEMM/betacgenerator.hpp>
 
 #include <sstream>
 #include <iostream>

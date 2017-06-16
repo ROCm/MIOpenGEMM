@@ -1,5 +1,5 @@
-#include <tinygemm/stringutilbase.hpp>
-#include <tinygemm/error.hpp>
+#include <MIOpenGEMM/stringutilbase.hpp>
+#include <MIOpenGEMM/error.hpp>
 #include <iostream>
 #include <tuple>
 #include <cmath>

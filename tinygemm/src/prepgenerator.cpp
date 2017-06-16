@@ -1,5 +1,5 @@
-#include <tinygemm/prepgenerator.hpp>
-#include <tinygemm/error.hpp>
+#include <MIOpenGEMM/prepgenerator.hpp>
+#include <MIOpenGEMM/error.hpp>
 
 #include <sstream>
 

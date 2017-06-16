@@ -1,5 +1,5 @@
-#include <tinygemm/alphagenerator.hpp>
-#include <tinygemm/basegenerator.hpp>
+#include <MIOpenGEMM/alphagenerator.hpp>
+#include <MIOpenGEMM/basegenerator.hpp>
 
 #include <string>
 #include <iostream>

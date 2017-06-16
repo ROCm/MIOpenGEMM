@@ -6,11 +6,11 @@
 
 #include  <CL/cl.h> 
 
-#include <tinygemm/geometry.hpp>
+#include <MIOpenGEMM/geometry.hpp>
 #include "solution.hpp"
 #include "error.hpp"
 #include "outputwriter.hpp"
-#include <tinygemm/findparams.hpp>
+#include <MIOpenGEMM/findparams.hpp>
 
 namespace MIOpenGEMM{
 

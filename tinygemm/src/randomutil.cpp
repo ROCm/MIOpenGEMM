@@ -1,4 +1,4 @@
-#include <tinygemm/randomutil.hpp>
+#include <MIOpenGEMM/randomutil.hpp>
 
 
 namespace MIOpenGEMM{

@@ -22,19 +22,19 @@
 #include <cstring>
 #include  <CL/cl.h> 
 
-#include <tinygemm/stringutilbase.hpp>
-#include <tinygemm/redirection.hpp>
-#include <tinygemm/outputwriter.hpp>
-#include <tinygemm/floattostring.hpp>
-#include <tinygemm/slowcpugemm.hpp>
-#include <tinygemm/sizingup.hpp>
-#include <tinygemm/openclutil.hpp>
-#include <tinygemm/tgmx.hpp>
-#include <tinygemm/accuracytests.hpp>
-#include <tinygemm/devtgmx.hpp>
-#include <tinygemm/geometry.hpp>
-#include <tinygemm/hyperparams.hpp>
-#include <tinygemm/error.hpp>
+#include <MIOpenGEMM/stringutilbase.hpp>
+#include <MIOpenGEMM/redirection.hpp>
+#include <MIOpenGEMM/outputwriter.hpp>
+#include <MIOpenGEMM/floattostring.hpp>
+#include <MIOpenGEMM/slowcpugemm.hpp>
+#include <MIOpenGEMM/sizingup.hpp>
+#include <MIOpenGEMM/openclutil.hpp>
+#include <MIOpenGEMM/tgmx.hpp>
+#include <MIOpenGEMM/accuracytests.hpp>
+#include <MIOpenGEMM/devtgmx.hpp>
+#include <MIOpenGEMM/geometry.hpp>
+#include <MIOpenGEMM/hyperparams.hpp>
+#include <MIOpenGEMM/error.hpp>
 
 
 

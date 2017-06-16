@@ -1,8 +1,8 @@
 #include <iostream>
 #include <string>
-#include <tinygemm/error.hpp>
+#include <MIOpenGEMM/error.hpp>
 
-#include <tinygemm/outputwriter.hpp>
+#include <MIOpenGEMM/outputwriter.hpp>
 
 namespace MIOpenGEMM{
 namespace outputwriting{

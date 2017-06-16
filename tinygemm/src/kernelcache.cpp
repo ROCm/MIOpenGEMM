@@ -2,7 +2,7 @@
 #include <map>
 #include <sstream>
 
-#include <tinygemm/kernelcache.hpp>
+#include <MIOpenGEMM/kernelcache.hpp>
 
 
 namespace MIOpenGEMM{

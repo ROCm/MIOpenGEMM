@@ -4,10 +4,10 @@
 #include <iostream>
 #include <string>
 
-#include <tinygemm/solution.hpp>
-#include <tinygemm/sizingup.hpp>
-#include <tinygemm/error.hpp>
-#include <tinygemm/stringutilbase.hpp>
+#include <MIOpenGEMM/solution.hpp>
+#include <MIOpenGEMM/sizingup.hpp>
+#include <MIOpenGEMM/error.hpp>
+#include <MIOpenGEMM/stringutilbase.hpp>
 
 namespace MIOpenGEMM{
 

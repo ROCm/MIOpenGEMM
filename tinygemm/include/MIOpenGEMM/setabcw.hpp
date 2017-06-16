@@ -1,7 +1,7 @@
 #ifndef SETABCW_HPP
 #define SETABCW_HPP
 
-#include <tinygemm/geometry.hpp>
+#include <MIOpenGEMM/geometry.hpp>
 
 
 namespace MIOpenGEMM{

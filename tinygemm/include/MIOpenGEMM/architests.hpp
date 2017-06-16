@@ -2,8 +2,8 @@
 #define ARCHITESTS_HPP
 
 
-#include <tinygemm/hyperparams.hpp>
-#include <tinygemm/derivedparams.hpp>
+#include <MIOpenGEMM/hyperparams.hpp>
+#include <MIOpenGEMM/derivedparams.hpp>
 #include <CL/cl.h>
 
 namespace MIOpenGEMM{

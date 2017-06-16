@@ -1,11 +1,11 @@
-#include <tinygemm/bundle.hpp>
-#include <tinygemm/error.hpp>
-#include <tinygemm/derivedparams.hpp>
-#include <tinygemm/alphagenerator.hpp>
-#include <tinygemm/copygenerator.hpp>
-#include <tinygemm/normalformgenerator.hpp>
-#include <tinygemm/betacgenerator.hpp>
-#include <tinygemm/stringutilbase.hpp>
+#include <MIOpenGEMM/bundle.hpp>
+#include <MIOpenGEMM/error.hpp>
+#include <MIOpenGEMM/derivedparams.hpp>
+#include <MIOpenGEMM/alphagenerator.hpp>
+#include <MIOpenGEMM/copygenerator.hpp>
+#include <MIOpenGEMM/normalformgenerator.hpp>
+#include <MIOpenGEMM/betacgenerator.hpp>
+#include <MIOpenGEMM/stringutilbase.hpp>
 
 #include <string>
 #include <iostream>

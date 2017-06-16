@@ -1,11 +1,11 @@
 #include <chrono>
-#include <tinygemm/error.hpp>
-#include <tinygemm/geometry.hpp>
+#include <MIOpenGEMM/error.hpp>
+#include <MIOpenGEMM/geometry.hpp>
 
-#include <tinygemm/slowcpugemm.hpp>
-#include <tinygemm/outputwriter.hpp>
-#include <tinygemm/redirection.hpp>
-//#include <tinygemm/consistencychecks.hpp>
+#include <MIOpenGEMM/slowcpugemm.hpp>
+#include <MIOpenGEMM/outputwriter.hpp>
+#include <MIOpenGEMM/redirection.hpp>
+//#include <MIOpenGEMM/consistencychecks.hpp>
 
 /* TODO : add option to use OpenBLAS instead of this slow gemm code */
 

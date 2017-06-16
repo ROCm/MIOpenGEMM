@@ -1,7 +1,7 @@
 #include <sstream>
 
-#include <tinygemm/architests.hpp>
-#include <tinygemm/openclutil.hpp>
+#include <MIOpenGEMM/architests.hpp>
+#include <MIOpenGEMM/openclutil.hpp>
 
 namespace MIOpenGEMM{
 namespace architests{

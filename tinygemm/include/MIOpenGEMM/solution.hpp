@@ -6,11 +6,11 @@
 #include <map>
 #include <chrono>
 
-#include <tinygemm/geometry.hpp>
-#include <tinygemm/hyperparams.hpp>
-#include <tinygemm/derivedparams.hpp>
-#include <tinygemm/kernelstring.hpp>
-#include <tinygemm/findparams.hpp>
+#include <MIOpenGEMM/geometry.hpp>
+#include <MIOpenGEMM/hyperparams.hpp>
+#include <MIOpenGEMM/derivedparams.hpp>
+#include <MIOpenGEMM/kernelstring.hpp>
+#include <MIOpenGEMM/findparams.hpp>
 
 namespace MIOpenGEMM{
 

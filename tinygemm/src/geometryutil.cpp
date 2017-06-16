@@ -1,4 +1,4 @@
-#include <tinygemm/geometryutil.hpp>
+#include <MIOpenGEMM/geometryutil.hpp>
 #include <tuple>
 
 namespace MIOpenGEMM{

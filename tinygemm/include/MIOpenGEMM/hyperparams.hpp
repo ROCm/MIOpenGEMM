@@ -7,9 +7,9 @@
 
 #include <functional>
 
-#include <tinygemm/geometry.hpp>
-#include <tinygemm/error.hpp>
-#include <tinygemm/openclutil.hpp>
+#include <MIOpenGEMM/geometry.hpp>
+#include <MIOpenGEMM/error.hpp>
+#include <MIOpenGEMM/openclutil.hpp>
 
 #include <array>
 

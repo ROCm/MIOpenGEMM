@@ -1,7 +1,7 @@
 #ifndef PREPGENERATOR_HPP
 #define PREPGENERATOR_HPP
 
-#include <tinygemm/basegenerator.hpp>
+#include <MIOpenGEMM/basegenerator.hpp>
 
 namespace MIOpenGEMM{
 namespace prepgen{

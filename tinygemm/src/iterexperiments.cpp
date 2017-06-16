@@ -1,10 +1,10 @@
 
 #include <sstream>
 #include <vector>
-#include <tinygemm/tgmx.hpp>
-#include <tinygemm/basicfind.hpp>
-#include <tinygemm/stringutilbase.hpp>
-#include <tinygemm/geometryutil.hpp>
+#include <MIOpenGEMM/tgmx.hpp>
+#include <MIOpenGEMM/basicfind.hpp>
+#include <MIOpenGEMM/stringutilbase.hpp>
+#include <MIOpenGEMM/geometryutil.hpp>
   
 
 namespace MIOpenGEMM{

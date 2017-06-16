@@ -1,7 +1,7 @@
-#include <tinygemm/kernel.hpp>
+#include <MIOpenGEMM/kernel.hpp>
 
-#include <tinygemm/openclutil.hpp>
-#include <tinygemm/error.hpp>
+#include <MIOpenGEMM/openclutil.hpp>
+#include <MIOpenGEMM/error.hpp>
 
 #include <chrono>
 #include <iomanip>

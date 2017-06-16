@@ -2,7 +2,7 @@
 #define FORALLGENERATOR_HPP
 
 
-#include <tinygemm/prepgenerator.hpp>
+#include <MIOpenGEMM/prepgenerator.hpp>
 
 namespace MIOpenGEMM{
 namespace bylinegen{

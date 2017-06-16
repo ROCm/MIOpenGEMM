@@ -7,19 +7,19 @@
 #include <sstream>
 
 /* Required header for using tinygemm */
-#include <tinygemm/tgmx.hpp>
-#include <tinygemm/findparams.hpp>
+#include <MIOpenGEMM/tgmx.hpp>
+#include <MIOpenGEMM/findparams.hpp>
 
 /* The following two header files define functions which help with opencl boilerplating on my systems, they are not necessary */
-#include <tinygemm/outputwriter.hpp>
-#include <tinygemm/openclutil.hpp>
-#include <tinygemm/accuracytests.hpp>
+#include <MIOpenGEMM/outputwriter.hpp>
+#include <MIOpenGEMM/openclutil.hpp>
+#include <MIOpenGEMM/accuracytests.hpp>
 
 /* This is needed for accuracy testing */
-#include <tinygemm/slowcpugemm.hpp>
+#include <MIOpenGEMM/slowcpugemm.hpp>
 
 /* used to populate data with random values */
-#include <tinygemm/setabcw.hpp>
+#include <MIOpenGEMM/setabcw.hpp>
 
 namespace MIOpenGEMM{
   

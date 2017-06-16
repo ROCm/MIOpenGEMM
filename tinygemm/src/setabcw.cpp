@@ -1,5 +1,5 @@
-#include <tinygemm/setabcw.hpp>
-#include <tinygemm/error.hpp>
+#include <MIOpenGEMM/setabcw.hpp>
+#include <MIOpenGEMM/error.hpp>
 
 #include <sstream>
 

@@ -1,5 +1,5 @@
-#include <tinygemm/error.hpp>
-#include <tinygemm/stringutilbase.hpp>
+#include <MIOpenGEMM/error.hpp>
+#include <MIOpenGEMM/stringutilbase.hpp>
 
 #include <iostream>
 #include <sstream>

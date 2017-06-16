@@ -1,7 +1,7 @@
 #ifndef COPYGENERATOR_HPP
 #define COPYGENERATOR_HPP
 
-#include <tinygemm/bylinegenerator.hpp>
+#include <MIOpenGEMM/bylinegenerator.hpp>
 
 namespace MIOpenGEMM{
 namespace copygen{

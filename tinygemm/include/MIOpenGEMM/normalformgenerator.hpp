@@ -1,10 +1,10 @@
 #ifndef NORMALFORMGENERATOR_HPP
 #define NORMALFORMGENERATOR_HPP
 
-#include <tinygemm/kernelstring.hpp>
-#include <tinygemm/geometry.hpp>
-#include <tinygemm/derivedparams.hpp>
-#include <tinygemm/prepgenerator.hpp>
+#include <MIOpenGEMM/kernelstring.hpp>
+#include <MIOpenGEMM/geometry.hpp>
+#include <MIOpenGEMM/derivedparams.hpp>
+#include <MIOpenGEMM/prepgenerator.hpp>
 
 namespace MIOpenGEMM{
 namespace nformgen{

@@ -1,4 +1,4 @@
-#include <tinygemm/floattostring.hpp>
+#include <MIOpenGEMM/floattostring.hpp>
 #include <string>
 
 namespace MIOpenGEMM{

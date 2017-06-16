@@ -2,10 +2,10 @@
 #define BASEGENERATOR_HPP
 
 
-#include <tinygemm/hyperparams.hpp>
-#include <tinygemm/geometry.hpp>
-#include <tinygemm/derivedparams.hpp>
-#include <tinygemm/kernelstring.hpp>
+#include <MIOpenGEMM/hyperparams.hpp>
+#include <MIOpenGEMM/geometry.hpp>
+#include <MIOpenGEMM/derivedparams.hpp>
+#include <MIOpenGEMM/kernelstring.hpp>
 
 namespace MIOpenGEMM{
 namespace basegen{

@@ -1,7 +1,7 @@
 #ifndef TG_PROBLEMGEOMETRY_UTIL_HPP
 #define TG_PROBLEMGEOMETRY_UTIL_HPP
 
-#include <tinygemm/geometry.hpp>
+#include <MIOpenGEMM/geometry.hpp>
 
 #include <string>
 #include <vector>

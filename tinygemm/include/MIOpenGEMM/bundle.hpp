@@ -3,10 +3,10 @@
 
 #include <string>
 
-#include <tinygemm/hyperparams.hpp>
-#include <tinygemm/derivedparams.hpp>
-#include <tinygemm/geometry.hpp>
-#include <tinygemm/kernelstring.hpp>
+#include <MIOpenGEMM/hyperparams.hpp>
+#include <MIOpenGEMM/derivedparams.hpp>
+#include <MIOpenGEMM/geometry.hpp>
+#include <MIOpenGEMM/kernelstring.hpp>
 
 namespace MIOpenGEMM{
 

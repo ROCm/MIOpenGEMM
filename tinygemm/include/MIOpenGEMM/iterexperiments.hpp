@@ -1,7 +1,7 @@
 #ifndef TG_ITEREXPERIMENS_HPP
 #define TG_ITEREXPERIMENS_HPP
 
-#include <tinygemm/tgmx.hpp>
+#include <MIOpenGEMM/tgmx.hpp>
 
 namespace MIOpenGEMM{
   

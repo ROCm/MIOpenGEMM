@@ -5,8 +5,8 @@
 #include <algorithm>
 
 #include <CL/cl.h>
-#include <tinygemm/kernelstring.hpp>
-#include <tinygemm/outputwriter.hpp>
+#include <MIOpenGEMM/kernelstring.hpp>
+#include <MIOpenGEMM/outputwriter.hpp>
 
 namespace MIOpenGEMM{
   

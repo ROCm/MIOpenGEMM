@@ -1,8 +1,8 @@
 #include <algorithm>
-#include <tinygemm/error.hpp>
+#include <MIOpenGEMM/error.hpp>
 #include  <CL/cl.h> 
 
-#include <tinygemm/redirection.hpp>
+#include <MIOpenGEMM/redirection.hpp>
 
 #include <iostream>
 namespace MIOpenGEMM{

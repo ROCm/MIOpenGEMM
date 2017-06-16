@@ -1,7 +1,7 @@
 #ifndef BETACGENERATOR_HPP
 #define BETACGENERATOR_HPP
 
-#include <tinygemm/bylinegenerator.hpp>
+#include <MIOpenGEMM/bylinegenerator.hpp>
 #include <sstream>
 
 namespace MIOpenGEMM{

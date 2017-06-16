@@ -7,8 +7,8 @@
 #include <limits>
 #include <tuple>
 
-#include <tinygemm/hyperparams.hpp>
-#include <tinygemm/geometry.hpp>
+#include <MIOpenGEMM/hyperparams.hpp>
+#include <MIOpenGEMM/geometry.hpp>
 
 namespace MIOpenGEMM{
 namespace derivedparams{

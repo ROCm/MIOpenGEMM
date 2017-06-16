@@ -3,7 +3,7 @@
 
 #include <random>
 #include <algorithm>
-#include <tinygemm/error.hpp>
+#include <MIOpenGEMM/error.hpp>
 
 namespace MIOpenGEMM{
 
