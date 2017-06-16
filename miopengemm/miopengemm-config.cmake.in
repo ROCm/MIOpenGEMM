@@ -1,0 +1,36 @@
+# Configure the miopengemm package to be used in another cmake project.
+#
+# Defines the following variables:
+#
+#  miopengemm_INCLUDE_DIRS - include directories for miopengemm
+#
+# Also defines the library variables below as normal
+# variables.  These contain debug/optimized keywords when
+# a debugging library is found.
+#
+# Accepts the following variables as input:
+#
+#-----------------------
+# Example Usage:
+#
+# find_package( miopengemm REQUIRED CONFIG )
+#
+#    add_executable( foo foo.cc )
+#    
+#    # uses imported targets from package, including setting header paths
+#    target_link_libraries( foo miopengemm )
+#
+#-----------------------
+
+@PACKAGE_INIT@
+
+find_dependency(OpenCL)
+
+set_and_check( miopengemm_INCLUDE_DIR "@PACKAGE_INCLUDE_INSTALL_DIR@" )
+set_and_check( miopengemm_INCLUDE_DIRS "${miopengemm_INCLUDE_DIR}" )
+set_and_check( miopengemm_LIB_INSTALL_DIR "@PACKAGE_LIB_INSTALL_DIR@" )
+
+include( "@PACKAGE_CONFIG_PACKAGE_INSTALL_DIR@/miopengemm-targets.cmake" )
+
+set( miopengemm_LIBRARY miopengemm)
+set( miopengemm_LIBRARIES miopengemm)

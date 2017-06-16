@@ -3,16 +3,16 @@
 #include <sstream>
 #include <fstream>
 
-#include <MIOpenGEMM/error.hpp>
-#include <MIOpenGEMM/miogemm.hpp>
-#include <MIOpenGEMM/devmiogemm.hpp>
-#include <MIOpenGEMM/bundle.hpp>
-#include <MIOpenGEMM/stringutilbase.hpp>
-#include <MIOpenGEMM/hyperparams.hpp>
-#include <MIOpenGEMM/geometry.hpp>
-#include <MIOpenGEMM/outputwriter.hpp>
+#include <miopengemm/error.hpp>
+#include <miopengemm/miogemm.hpp>
+#include <miopengemm/devmiogemm.hpp>
+#include <miopengemm/bundle.hpp>
+#include <miopengemm/stringutilbase.hpp>
+#include <miopengemm/hyperparams.hpp>
+#include <miopengemm/geometry.hpp>
+#include <miopengemm/outputwriter.hpp>
 
-#include <MIOpenGEMM/setabcw.hpp>
+#include <miopengemm/setabcw.hpp>
 /* Note that currently (13/11/2016) most testing is done through dev/python scripts */
 /* Update (30/01/2017) this is the preferred place for doing testing */
 
@@ -25,7 +25,7 @@ std::string get_hyperstring(std::string hyperstring = ""){
 }
 
 template <typename TFloat>
-MIOpenGEMM::Geometry get_geometry(){
+MOOMOOMOOGEMM::Geometry get_geometry(){
 
 
   //bool isColMajor = true;
@@ -45,7 +45,7 @@ MIOpenGEMM::Geometry get_geometry(){
   return {"tC0_tA0_tB0_colMaj1_m900_n1_k147_lda900_ldb147_ldc900_ws0_f32"};
 }
 
-MIOpenGEMM::Offsets get_offsets(){
+MOOMOOMOOGEMM::Offsets get_offsets(){
 
   unsigned a_offset = 330;
   unsigned b_offset = 550;
@@ -65,15 +65,15 @@ void print_kernel(){
   std::string hyperstring = get_hyperstring();
   auto gg = get_geometry<TFloat>();
 
-  MIOpenGEMM::openclutil::OpenCLDeviceInfo devinfo;
+  MOOMOOMOOGEMM::openclutil::OpenCLDeviceInfo devinfo;
   devinfo.wg_atom_size = 32;
-  MIOpenGEMM::hyperparams::Graph graph(gg, devinfo, hyperstring, true); 
-  MIOpenGEMM::hyperparams::HyperParams hp(graph);
+  MOOMOOMOOGEMM::hyperparams::Graph graph(gg, devinfo, hyperstring, true); 
+  MOOMOOMOOGEMM::hyperparams::HyperParams hp(graph);
   bool mowri_verbose = true;
   bool verbose_get_bundle = true;
   std::string mowri_out("");
-  MIOpenGEMM::outputwriting::OutputWriter mowri(mowri_verbose, mowri_out != "" , mowri_out);
-  auto bundle = MIOpenGEMM::kerngen::get_bundle(hp, gg, mowri, verbose_get_bundle);
+  MOOMOOMOOGEMM::outputwriting::OutputWriter mowri(mowri_verbose, mowri_out != "" , mowri_out);
+  auto bundle = MOOMOOMOOGEMM::kerngen::get_bundle(hp, gg, mowri, verbose_get_bundle);
   
   
   for (auto & x :  bundle.v_tgks){
@@ -94,7 +94,7 @@ void print_kernel(){
 int main(){
 
   std::string fout("");
-  MIOpenGEMM::outputwriting::OutputWriter mowri(true, fout != "" , fout);
+  MOOMOOMOOGEMM::outputwriting::OutputWriter mowri(true, fout != "" , fout);
 
 
   bool test_print = false;
@@ -108,21 +108,21 @@ int main(){
   float allotted_find_time = 1.00;
   unsigned allotted_find_descents = 100;
   unsigned n_runs_per_kernel = 5;
-  MIOpenGEMM::SummaryStat sumstat(MIOpenGEMM::Max);
+  MOOMOOMOOGEMM::SummaryStat sumstat(MOOMOOMOOGEMM::Max);
   
   unsigned n_runs_benchgemm = 5;
   
   typedef float tfloat;
   
   
-  MIOpenGEMM::Geometry gg = get_geometry<tfloat>();
-  MIOpenGEMM::Offsets toff = get_offsets();
-  mowri << "generating cpu data ... " << MIOpenGEMM::Flush;
+  MOOMOOMOOGEMM::Geometry gg = get_geometry<tfloat>();
+  MOOMOOMOOGEMM::Offsets toff = get_offsets();
+  mowri << "generating cpu data ... " << MOOMOOMOOGEMM::Flush;
   std::vector<tfloat> v_a;
   std::vector<tfloat> v_b;
   std::vector<tfloat> v_c;
-  MIOpenGEMM::setabcw::set_abc<tfloat>(v_a, v_b, v_c, gg, toff);
-  mowri << "done." << MIOpenGEMM::Endl;
+  MOOMOOMOOGEMM::setabcw::set_abc<tfloat>(v_a, v_b, v_c, gg, toff);
+  mowri << "done." << MOOMOOMOOGEMM::Endl;
   const tfloat * c_true_bla = nullptr; 
   if (test_print){
     print_kernel<tfloat>();
@@ -131,28 +131,28 @@ int main(){
   if (test_accuracy || test_benchgemm){
     std::string hyperstring = get_hyperstring();
       if (test_accuracy){
-        MIOpenGEMM::dev::accuracy_test(hyperstring, gg, toff, v_a.data(), v_b.data(), v_c.data(), c_true_bla, mowri);
+        MOOMOOMOOGEMM::dev::accuracy_test(hyperstring, gg, toff, v_a.data(), v_b.data(), v_c.data(), c_true_bla, mowri);
     }
 
     if (test_benchgemm){
-      MIOpenGEMM::dev::benchgemm({hyperstring}, n_runs_benchgemm, gg, toff, v_a.data(), v_b.data(), v_c.data(), mowri);
+      MOOMOOMOOGEMM::dev::benchgemm({hyperstring}, n_runs_benchgemm, gg, toff, v_a.data(), v_b.data(), v_c.data(), mowri);
     }
   }
   
   
-  MIOpenGEMM::FindParams find_params(allotted_find_time, allotted_find_descents, n_runs_per_kernel, sumstat);
+  MOOMOOMOOGEMM::FindParams find_params(allotted_find_time, allotted_find_descents, n_runs_per_kernel, sumstat);
   
   if (test_find){
-    auto soln = MIOpenGEMM::dev::find(find_params, v_a.data(), v_b.data(), v_c.data(), constraints_string, gg, toff, mowri);
+    auto soln = MOOMOOMOOGEMM::dev::find(find_params, v_a.data(), v_b.data(), v_c.data(), constraints_string, gg, toff, mowri);
     std::cout << "\n\n " << soln.get_cache_entry_string() << "\n\n";
   }
   
   if (test_default){
     std::string k_comment("");  
-    MIOpenGEMM::openclutil::CommandQueueInContext tgcq(mowri, "in get_default in devtest.cpp");
-    auto soln = MIOpenGEMM::get_default(tgcq.command_queue, constraints_string, gg, k_comment, mowri);
+    MOOMOOMOOGEMM::openclutil::CommandQueueInContext tgcq(mowri, "in get_default in devtest.cpp");
+    auto soln = MOOMOOMOOGEMM::get_default(tgcq.command_queue, constraints_string, gg, k_comment, mowri);
     std::cout << soln.hyper_param_string << std::endl;
-    MIOpenGEMM::dev::accuracy_test(soln.hyper_param_string, gg, toff, v_a.data(), v_b.data(), v_c.data(), c_true_bla, mowri);
+    MOOMOOMOOGEMM::dev::accuracy_test(soln.hyper_param_string, gg, toff, v_a.data(), v_b.data(), v_c.data(), c_true_bla, mowri);
     std::cout << soln.hyper_param_string << std::endl;
   }
   

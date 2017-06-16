@@ -1,5 +1,5 @@
-#include <MIOpenGEMM/miogemm.hpp>
-#include <MIOpenGEMM/basicfind.hpp>
+#include <miopengemm/miogemm.hpp>
+#include <miopengemm/basicfind.hpp>
 #include <string>
 
 template <typename TFloat>
@@ -20,7 +20,7 @@ void geometrytest(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsign
   float allotted_time = 0.001;
   unsigned allotted_iterations = 1;
   unsigned n_runs_per_kernel = 1;
-  MIOpenGEMM::SummaryStat sumstat = MIOpenGEMM::Median;
+  MOOMOOMOOGEMM::SummaryStat sumstat = MOOMOOMOOGEMM::Median;
   
 
   /* set verbose to true if you want output to terminal */
@@ -37,12 +37,12 @@ void geometrytest(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsign
   unsigned workspace_size = 3;
   unsigned workspace_offset = 4;      
   char floattype = sizeof(TFloat) == 4 ? 'f' : 'd';
-  MIOpenGEMM::Geometry gg (isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype);
-  MIOpenGEMM::Offsets offsets (a_offset, b_offset, c_offset, workspace_offset, tail_off_a, tail_off_b, tail_off_c);    
+  MOOMOOMOOGEMM::Geometry gg (isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype);
+  MOOMOOMOOGEMM::Offsets offsets (a_offset, b_offset, c_offset, workspace_offset, tail_off_a, tail_off_b, tail_off_c);    
 
-  MIOpenGEMM::FindParams find_params(allotted_time, allotted_iterations, n_runs_per_kernel, sumstat);
+  MOOMOOMOOGEMM::FindParams find_params(allotted_time, allotted_iterations, n_runs_per_kernel, sumstat);
 
-  MIOpenGEMM::basicfind(gg, offsets, find_params, verbose, logfile, constraints_string,  n_postfind_runs, do_cpu_test);
+  MOOMOOMOOGEMM::basicfind(gg, offsets, find_params, verbose, logfile, constraints_string,  n_postfind_runs, do_cpu_test);
 }
 
 int main(){

@@ -1,7 +1,7 @@
 #include <string>
 #include <iostream>
 
-#include <MIOpenGEMM/redirection.hpp>
+#include <miopengemm/redirection.hpp>
 
 
 struct ExampleGeometry{
@@ -17,7 +17,7 @@ int main(){
   
   ExampleGeometry g_in(true, true, true, false, 10, 50, "a", "b");
   ExampleGeometry g_out(g_in);
-  MIOpenGEMM::redirection::redirect(g_out.isColMajor, g_out.tA, g_out.tB, g_out.tC, g_out.m, g_out.n, g_out.a, g_out.b);
+  MOOMOOMOOGEMM::redirection::redirect(g_out.isColMajor, g_out.tA, g_out.tB, g_out.tC, g_out.m, g_out.n, g_out.a, g_out.b);
   
   std::cout << "\n" << 
   "colMaj : " << g_in.isColMajor << " --> " << g_out.isColMajor << "\n" << 

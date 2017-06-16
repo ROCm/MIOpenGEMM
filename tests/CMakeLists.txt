@@ -10,7 +10,7 @@ add_dependencies(check tests)
 
 function(add_test_executable TEST_NAME)
     add_executable (${TEST_NAME} EXCLUDE_FROM_ALL ${ARGN})
-    target_link_libraries(${TEST_NAME} MIOpenGEMM)
+    target_link_libraries(${TEST_NAME} miopengemm)
     if(WIN32)
         add_test(NAME ${TEST_NAME} WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH} COMMAND $<TARGET_FILE:${TEST_NAME}>)
     else()
@@ -24,7 +24,7 @@ endfunction(add_test_executable)
 
 function(add_example_executable EX_NAME)
     add_executable (${EX_NAME} EXCLUDE_FROM_ALL ${ARGN})
-    target_link_libraries(${EX_NAME} MIOpenGEMM)
+    target_link_libraries(${EX_NAME} miopengemm)
     add_dependencies(examples ${EX_NAME})
 endfunction(add_example_executable)
 
