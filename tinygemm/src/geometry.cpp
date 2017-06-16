@@ -8,7 +8,7 @@
 #include <tinygemm/error.hpp>
 #include <tinygemm/stringutilbase.hpp>
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 
 
 std::vector<char> get_matChars(){

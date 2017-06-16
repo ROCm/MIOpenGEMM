@@ -7,7 +7,7 @@
 #include <tinygemm/derivedparams.hpp>
 #include <tinygemm/kernelstring.hpp>
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 namespace basegen{
 
 

@@ -12,7 +12,7 @@
 #include "outputwriter.hpp"
 #include <tinygemm/findparams.hpp>
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 
 
 static const double default_alpha = 0.415693029182345929;

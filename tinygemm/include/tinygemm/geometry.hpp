@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 
 
 namespace nsHP{

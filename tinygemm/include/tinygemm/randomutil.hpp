@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <tinygemm/error.hpp>
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 
 class RandomUtil {
 

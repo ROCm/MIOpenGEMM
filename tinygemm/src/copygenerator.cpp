@@ -4,7 +4,7 @@
 #include <sstream>
 
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 namespace copygen{
 
 

@@ -1,7 +1,7 @@
 #include <tinygemm/randomutil.hpp>
 
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 
 RandomUtil::RandomUtil():rd(), gen(rd()) {} 
 

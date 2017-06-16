@@ -4,7 +4,7 @@
 #include <tinygemm/bylinegenerator.hpp>
 #include <sstream>
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 namespace betacgen{
 
 

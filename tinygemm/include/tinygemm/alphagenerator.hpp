@@ -3,7 +3,7 @@
 #include <tinygemm/error.hpp>
 #include <tinygemm/derivedparams.hpp>
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 namespace alphagen{
   
 KernelString get_alpha_kernelstring(const hyperparams::HyperParams & hp, const TinyGemmGeometry & gg, const derivedparams::DerivedParams & dp);

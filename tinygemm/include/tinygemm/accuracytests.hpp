@@ -8,7 +8,7 @@
 #include <tinygemm/error.hpp>
 #include <tinygemm/outputwriter.hpp>
 
-namespace tinygemm {
+namespace MIOpenGEMM {
 namespace accuracytests {
 
 template <typename TFloat>

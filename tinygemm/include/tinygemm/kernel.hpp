@@ -8,7 +8,7 @@
 #include <tinygemm/kernelstring.hpp>
 #include <tinygemm/outputwriter.hpp>
 
-namespace tinygemm{
+namespace MIOpenGEMM{
   
 
 class TinyGemmKernel{

@@ -13,7 +13,7 @@
 #include <tinygemm/stringutilbase.hpp>
 #include <tinygemm/randomutil.hpp>
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 
 /* macro tile shape */
 /* at skew = skew0, MAC in (64, 256, ...) have a:b = 1:1 and MAC in (32, 128, ...) have a:b = 2:1 */

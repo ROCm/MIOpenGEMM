@@ -4,7 +4,7 @@
 #include <chrono>
 #include <sstream>
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 namespace basegen{
 
       

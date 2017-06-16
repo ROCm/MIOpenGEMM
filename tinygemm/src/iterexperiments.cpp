@@ -7,7 +7,7 @@
 #include <tinygemm/geometryutil.hpp>
   
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 
 
 int run_find_experiments(const std::vector<TinyGemmGeometry> & geometries, std::vector<std::string> & v_constraints, const FindParams & find_params, bool verbose_inner, std::string basedir_inner, bool verbose_outer, std::string fn_outer){

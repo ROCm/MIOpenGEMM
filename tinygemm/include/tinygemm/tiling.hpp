@@ -4,7 +4,7 @@
 #include <string>
 #include <tuple>
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 namespace tiling{
 
 

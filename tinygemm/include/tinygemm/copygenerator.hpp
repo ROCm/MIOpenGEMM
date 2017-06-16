@@ -3,7 +3,7 @@
 
 #include <tinygemm/bylinegenerator.hpp>
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 namespace copygen{
 
 

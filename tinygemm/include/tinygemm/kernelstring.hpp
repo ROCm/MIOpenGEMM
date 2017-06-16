@@ -16,7 +16,7 @@
 
 
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 
 enum bkt {wsa = 0, wsb, betac, main, nBasicKernelTypes };
 /* maps bkt to a string */

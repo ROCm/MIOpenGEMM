@@ -4,7 +4,7 @@
 #include <tuple>
 #include <cmath>
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 namespace stringutil{
 
 void indentify(std::string & source){

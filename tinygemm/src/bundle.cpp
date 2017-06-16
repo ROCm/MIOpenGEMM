@@ -19,7 +19,7 @@
 #include <ctime>
 #include <algorithm>
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 namespace kerngen{
 
 

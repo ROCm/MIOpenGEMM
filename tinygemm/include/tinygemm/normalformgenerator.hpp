@@ -6,7 +6,7 @@
 #include <tinygemm/derivedparams.hpp>
 #include <tinygemm/prepgenerator.hpp>
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 namespace nformgen{
 
 KernelString get_nforma_kernelstring(const hyperparams::HyperParams & hp,  const TinyGemmGeometry & gg, const derivedparams::DerivedParams & dp);

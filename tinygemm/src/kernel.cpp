@@ -6,7 +6,7 @@
 #include <chrono>
 #include <iomanip>
 
-namespace tinygemm{
+namespace MIOpenGEMM{
   
 
 TinyGemmKernel::TinyGemmKernel(cl_command_queue command_queue_, const std::string & hash_): command_queue(command_queue_), clprog(nullptr), clkern(nullptr), hash(hash_) {}

@@ -6,7 +6,7 @@
 #include <tinygemm/sizingup.hpp>
 #include <tinygemm/geometry.hpp>
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 namespace sizingup{
 
 

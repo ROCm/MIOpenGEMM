@@ -39,7 +39,7 @@
 
 
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 namespace dev{
 
 
@@ -136,7 +136,7 @@ public:
     /* dev code's connection to tinygemm */
     std::vector<hyperparams::HyperParams> hps;
     for (auto & hyperstring : hyperstrings){
-      tinygemm::benchgemm(tgcq.command_queue, hyperstring, number_of_runs, gg, toff, a_gpu_safemem.clmem, b_gpu_safemem.clmem, c_gpu_safemem.clmem, workspace_safemem.clmem, mowri);
+      MIOpenGEMM::benchgemm(tgcq.command_queue, hyperstring, number_of_runs, gg, toff, a_gpu_safemem.clmem, b_gpu_safemem.clmem, c_gpu_safemem.clmem, workspace_safemem.clmem, mowri);
     }
   }
   
@@ -146,7 +146,7 @@ public:
     
     bool c_is_const = false;
     bool use_mowri_tracker = false;
-    TinyGemmSolution tgs = tinygemm::find(
+    TinyGemmSolution tgs = MIOpenGEMM::find(
       tgcq.command_queue, 
       find_params,
       a_gpu_safemem.clmem, b_gpu_safemem.clmem, c_gpu_safemem.clmem, workspace_safemem.clmem, constraints_string, gg, toff, 

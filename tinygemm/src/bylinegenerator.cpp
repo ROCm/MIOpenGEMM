@@ -10,7 +10,7 @@
 /* TODO : interwoven hyper-parameter */
 /* TODO : work-group size hyper-parameter (32 for vega) */
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 namespace bylinegen{
 
 void ByLineGenerator::setup(){

@@ -5,7 +5,7 @@
 #include <tinygemm/kernelcache.hpp>
 
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 
 const KernelCache kernel_cache = get_kernel_cache();
 

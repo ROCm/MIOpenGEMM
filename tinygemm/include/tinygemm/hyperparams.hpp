@@ -14,7 +14,7 @@
 #include <array>
 
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 
 enum class FindStartType {Default, Random};
 

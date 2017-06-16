@@ -3,7 +3,7 @@
 
 #include <sstream>
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 namespace setabcw{
 
 

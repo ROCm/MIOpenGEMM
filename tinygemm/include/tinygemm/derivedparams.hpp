@@ -10,7 +10,7 @@
 #include <tinygemm/hyperparams.hpp>
 #include <tinygemm/geometry.hpp>
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 namespace derivedparams{
 
 const unsigned uninitialised_unsigned = std::numeric_limits<unsigned>::max();

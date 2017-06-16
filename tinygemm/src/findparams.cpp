@@ -2,7 +2,7 @@
 #include <tinygemm/error.hpp>
 
 #include <sstream>
-namespace tinygemm{
+namespace MIOpenGEMM{
 
 
 std::vector<std::string> get_sumstatkey(){

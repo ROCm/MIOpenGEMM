@@ -4,7 +4,7 @@
 
 #include <tinygemm/prepgenerator.hpp>
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 namespace bylinegen{
 
 

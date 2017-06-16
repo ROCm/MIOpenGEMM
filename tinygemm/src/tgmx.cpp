@@ -25,7 +25,7 @@
 #include <tinygemm/findparams.hpp>
 #include <tinygemm/stringutilbase.hpp>
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 
 class MultiFloatType{
 

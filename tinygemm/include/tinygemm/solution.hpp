@@ -12,7 +12,7 @@
 #include <tinygemm/kernelstring.hpp>
 #include <tinygemm/findparams.hpp>
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 
 class TinyGemmSolutionStatistics{
   public:

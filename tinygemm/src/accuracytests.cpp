@@ -2,7 +2,7 @@
 #include <tinygemm/outputwriter.hpp>
 #include <algorithm>
 
-namespace tinygemm {
+namespace MIOpenGEMM {
 
 namespace accuracytests {
 

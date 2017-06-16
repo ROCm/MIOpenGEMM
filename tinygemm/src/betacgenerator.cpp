@@ -2,7 +2,7 @@
 
 #include <sstream>
 #include <iostream>
-namespace tinygemm{
+namespace MIOpenGEMM{
 namespace betacgen{
 
 

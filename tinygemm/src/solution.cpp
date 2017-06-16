@@ -9,7 +9,7 @@
 #include <tinygemm/error.hpp>
 #include <tinygemm/stringutilbase.hpp>
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 
 std::string TinyGemmSolutionStatistics::get_string() const {
   std::stringstream ss;

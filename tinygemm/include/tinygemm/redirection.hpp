@@ -1,7 +1,7 @@
 #ifndef REDIRECTION_HPP
 #define REDIRECTION_HPP
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 namespace redirection{
 
 template <typename TFloat>

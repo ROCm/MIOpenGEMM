@@ -21,7 +21,7 @@
 /* used to populate data with random values */
 #include <tinygemm/setabcw.hpp>
 
-namespace tinygemm{
+namespace MIOpenGEMM{
   
 template <typename TFloat> 
 TinyGemmSolution base_basicfind(const TinyGemmGeometry & geometry, const TinyGemmOffsets & toff, const FindParams & find_params,

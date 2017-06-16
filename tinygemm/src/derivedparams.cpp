@@ -8,7 +8,7 @@
 
 #include <iostream>
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 namespace derivedparams{
 
 unsigned DerivedParams::get_target_ld(nsHP::eMat emat_x) const{

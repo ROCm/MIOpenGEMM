@@ -6,7 +6,7 @@
 #include <CL/cl.h>
 
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 namespace openclutil{
 
 

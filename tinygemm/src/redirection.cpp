@@ -5,7 +5,7 @@
 #include <tinygemm/redirection.hpp>
 
 #include <iostream>
-namespace tinygemm{
+namespace MIOpenGEMM{
 namespace redirection{
   
 template <typename T>

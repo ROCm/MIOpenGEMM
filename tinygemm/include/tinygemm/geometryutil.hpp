@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 
 
 std::vector<TinyGemmGeometry> get_from_m_n_k_ldaABC_tA_tB(const std::vector<std::tuple<unsigned, unsigned, unsigned, unsigned, unsigned, unsigned, bool, bool>> &  basicgeos, unsigned workspace_size);

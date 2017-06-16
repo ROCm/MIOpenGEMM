@@ -24,7 +24,7 @@
 
 
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 namespace alphagen{
 
 

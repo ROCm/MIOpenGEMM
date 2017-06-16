@@ -9,7 +9,7 @@
 
 /* TODO : add option to use OpenBLAS instead of this slow gemm code */
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 namespace slowcpugemm{
 
 template<typename TFloat>

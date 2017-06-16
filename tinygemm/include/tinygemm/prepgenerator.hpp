@@ -3,7 +3,7 @@
 
 #include <tinygemm/basegenerator.hpp>
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 namespace prepgen{
 
 class PrepGenerator : public basegen::BaseGenerator{

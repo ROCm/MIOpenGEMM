@@ -5,7 +5,7 @@
 #include <fstream>
 #include <iostream>
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 namespace outputwriting{
   
 class Flusher{

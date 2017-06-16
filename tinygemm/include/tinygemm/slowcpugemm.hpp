@@ -7,7 +7,7 @@
 #include "outputwriter.hpp"
 #include "geometry.hpp"
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 namespace slowcpugemm{
 
 

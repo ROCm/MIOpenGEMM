@@ -3,7 +3,7 @@
 
 #include <string>
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 namespace floattostring{
   
 std::string float_string_type(double x);

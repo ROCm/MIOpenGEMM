@@ -2,7 +2,7 @@
 #define SIZING_UP
 
 #include "geometry.hpp"
-namespace tinygemm{
+namespace MIOpenGEMM{
 namespace sizingup{
 
 /* how many elements in the matrix? Includes padding (when ldx > min possible ldx) 

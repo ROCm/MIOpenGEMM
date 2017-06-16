@@ -8,7 +8,7 @@
 #include <tinygemm/geometry.hpp>
 #include <tinygemm/kernelstring.hpp>
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 
   
   

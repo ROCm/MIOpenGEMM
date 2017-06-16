@@ -4,7 +4,7 @@
 #include <tinygemm/normalformgenerator.hpp>
 #include <tinygemm/error.hpp>
 
-namespace tinygemm{
+namespace MIOpenGEMM{
 namespace nformgen{
 
 
