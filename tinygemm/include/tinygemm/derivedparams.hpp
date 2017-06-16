@@ -16,7 +16,7 @@ namespace derivedparams{
 const unsigned uninitialised_unsigned = std::numeric_limits<unsigned>::max();
 
 std::tuple<bool, std::string>
-get_deriveability(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg);
+get_deriveability(const hyperparams::HyperParams & hp, const TinyGemmGeometry & gg);
 
 class ChiralDerivedParams{
 public:
@@ -67,7 +67,7 @@ class DerivedParams{
 
 private:
   const hyperparams::HyperParams & hp;
-  const tinygemm::TinyGemmGeometry & gg;
+  const TinyGemmGeometry & gg;
 
   ChiralDerivedParams adps;
   ChiralDerivedParams bdps;
@@ -81,9 +81,9 @@ public:
   
   
   /* initiate all parameters, throwing an error if there is an incompatibility */
-  DerivedParams(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg);
+  DerivedParams(const hyperparams::HyperParams & hp, const TinyGemmGeometry & gg);
   
-  DerivedParams(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg, std::string s);
+  DerivedParams(const hyperparams::HyperParams & hp, const TinyGemmGeometry & gg, std::string s);
   
 
   std::vector<ChiralDerivedParams * > chis;

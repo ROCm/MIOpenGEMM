@@ -12,7 +12,7 @@ class BetacGenerator : public bylinegen::ByLineGenerator {
 
 public:
 
-BetacGenerator(const tinygemm::hyperparams::HyperParams & hp_,  const tinygemm::TinyGemmGeometry & gg_, const tinygemm::derivedparams::DerivedParams & dp_);
+BetacGenerator(const hyperparams::HyperParams & hp_,  const TinyGemmGeometry & gg_, const derivedparams::DerivedParams & dp_);
 
 
   virtual void setup_additional() override final ;
@@ -28,7 +28,7 @@ BetacGenerator(const tinygemm::hyperparams::HyperParams & hp_,  const tinygemm::
 
 
 
-KernelString get_betac_kernelstring(const tinygemm::hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg, const tinygemm::derivedparams::DerivedParams & dp);
+KernelString get_betac_kernelstring(const hyperparams::HyperParams & hp, const TinyGemmGeometry & gg, const derivedparams::DerivedParams & dp);
 
 
   

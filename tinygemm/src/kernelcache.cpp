@@ -31,7 +31,7 @@ return kc;
 
 
 
-void add_entry(KernelCache & kc, const std::string & k_dev, const std::string & k_con,  const std::string k_geo, const std::string k_comment, tinygemm::TinygemmCachedSolution tgcs){
+void add_entry(KernelCache & kc, const std::string & k_dev, const std::string & k_con,  const std::string k_geo, const std::string k_comment, TinygemmCachedSolution tgcs){
 
   
   if (kc.count(k_dev) == 0){
@@ -65,16 +65,16 @@ void add_entry(KernelCache & kc, const std::string & k_dev, const std::string & 
     ss << "\n\n";    
     ss << "Please choose between these, and remove one.";
     
-    throw  tinygemm::tinygemm_error(ss.str());
+    throw  tinygemm_error(ss.str());
   }
 }
 
 
 
 
-void enforce_constraints(std::string & hps_to_update, const std::string & constraints_string, const tinygemm::TinyGemmGeometry & gg){
+void enforce_constraints(std::string & hps_to_update, const std::string & constraints_string, const TinyGemmGeometry & gg){
   
-  tinygemm::openclutil::OpenCLDeviceInfo devinfo;
+  openclutil::OpenCLDeviceInfo devinfo;
   hyperparams::Graph graph(gg, devinfo, hps_to_update, true);
   hyperparams::HyperParams hp(graph);
   
@@ -84,7 +84,7 @@ void enforce_constraints(std::string & hps_to_update, const std::string & constr
 }
 
 
-TinygemmCachedSolution get_generic_cached_solution(const std::string & constraints_string, const tinygemm::TinyGemmGeometry & gg){
+TinygemmCachedSolution get_generic_cached_solution(const std::string & constraints_string, const TinyGemmGeometry & gg){
 
 
   /* the case where there is no cached solution */

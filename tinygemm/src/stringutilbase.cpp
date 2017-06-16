@@ -85,7 +85,7 @@ std::tuple<std::string, unsigned> splitnumeric(std::string alphanum){
   size_t split_point = alphanum.find_first_of("0123456789");
   
   if (split_point == std::string::npos){
-    throw tinygemm::tinygemm_error("This error is being thrown from stringutilbase.cpp, function splitnumeric. It seems like the input string `" + alphanum + "' has no digits in it.");
+    throw tinygemm_error("This error is being thrown from stringutilbase.cpp, function splitnumeric. It seems like the input string `" + alphanum + "' has no digits in it.");
   }
   return  std::make_tuple<std::string, unsigned>(alphanum.substr(0, split_point), std::stoi(alphanum.substr(split_point, alphanum.size() )));
 }

@@ -9,7 +9,7 @@
 namespace tinygemm{
 namespace architests{
   
-  std::tuple<bool, std::string> architecture_specific_tests(cl_command_queue, const tinygemm::hyperparams::HyperParams &, const tinygemm::derivedparams::DerivedParams &);
+  std::tuple<bool, std::string> architecture_specific_tests(cl_command_queue, const hyperparams::HyperParams &, const derivedparams::DerivedParams &);
 
 }
 }

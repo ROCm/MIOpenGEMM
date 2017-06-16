@@ -24,22 +24,22 @@
 namespace tinygemm{
   
 template <typename TFloat> 
-tinygemm::TinyGemmSolution base_basicfind(const tinygemm::TinyGemmGeometry & geometry, const tinygemm::TinyGemmOffsets & toff, const tinygemm::FindParams & find_params,
+TinyGemmSolution base_basicfind(const TinyGemmGeometry & geometry, const TinyGemmOffsets & toff, const FindParams & find_params,
 
 bool verbose, std::string logfile, std::string constraints_string, unsigned n_postfind_runs, bool do_cpu_test){ 
   
   /* just checking that geometry floattype is correct */
   if (!((geometry.floattype == 'f' && sizeof(TFloat) == 4) || (geometry.floattype == 'd' && sizeof(TFloat) == 8))) {
-    throw tinygemm::tinygemm_error("disagreement between geometry.floattype and sizeof(TFloat) in basicfind.hpp");
+    throw tinygemm_error("disagreement between geometry.floattype and sizeof(TFloat) in basicfind.hpp");
   }
 
-  double alpha = tinygemm::default_alpha;
-  double beta = tinygemm::default_beta;
+  double alpha = default_alpha;
+  double beta = default_beta;
 
-  tinygemm::outputwriting::OutputWriter mowri(verbose, logfile.compare("") != 0, logfile);
+  outputwriting::OutputWriter mowri(verbose, logfile.compare("") != 0, logfile);
   
   /* generating cpu copies of data */
-  mowri << "generating cpu data ... " << tinygemm::Flush;
+  mowri << "generating cpu data ... " << Flush;
  
   std::vector<TFloat> v_a;
   std::vector<TFloat> v_b;
@@ -53,7 +53,7 @@ bool verbose, std::string logfile, std::string constraints_string, unsigned n_po
   size_t n_w = v_workspace.size();  
  
 
-  mowri << "done." << tinygemm::Endl;
+  mowri << "done." << Endl;
 
 
 
@@ -75,25 +75,25 @@ bool verbose, std::string logfile, std::string constraints_string, unsigned n_po
 
   cl_platform_id platform = nullptr;
   cl_uint num_platforms;
-  tinygemm::openclutil::set_platform_etc(platform, num_platforms, context, device_id_to_use, mowri);
+  openclutil::set_platform_etc(platform, num_platforms, context, device_id_to_use, mowri);
   
   /* we use are own version of clCreateCommandQueue (and other opencl functions), which has an added layer of error detection */
-  command_queue = tinygemm::openclutil::cl_create_command_queue(context, device_id_to_use, CL_QUEUE_PROFILING_ENABLE, "in basicfind.hpp");  
+  command_queue = openclutil::cl_create_command_queue(context, device_id_to_use, CL_QUEUE_PROFILING_ENABLE, "in basicfind.hpp");  
   
   /* writing cpu arrays to gpu */
-  cl_mem a_gpu = tinygemm::openclutil::cl_create_buffer(context, CL_MEM_READ_ONLY,  sizeof(TFloat)*n_a, NULL, "a_gpu in basicfind.hpp");
-  cl_mem b_gpu = tinygemm::openclutil::cl_create_buffer(context, CL_MEM_READ_ONLY,  sizeof(TFloat)*n_b, NULL, "b_gpu in basicfind.hpp");
-  cl_mem c_gpu = tinygemm::openclutil::cl_create_buffer(context, CL_MEM_READ_WRITE, sizeof(TFloat)*n_c, NULL, "c_gpu in basicfind.hpp");      
+  cl_mem a_gpu = openclutil::cl_create_buffer(context, CL_MEM_READ_ONLY,  sizeof(TFloat)*n_a, NULL, "a_gpu in basicfind.hpp");
+  cl_mem b_gpu = openclutil::cl_create_buffer(context, CL_MEM_READ_ONLY,  sizeof(TFloat)*n_b, NULL, "b_gpu in basicfind.hpp");
+  cl_mem c_gpu = openclutil::cl_create_buffer(context, CL_MEM_READ_WRITE, sizeof(TFloat)*n_c, NULL, "c_gpu in basicfind.hpp");      
   cl_mem workspace_gpu = nullptr;
   if (geometry.workspace_size > 0){
-    workspace_gpu = tinygemm::openclutil::cl_create_buffer(context, CL_MEM_READ_WRITE, sizeof(TFloat)*n_w, NULL, "workspace_gpu in basicfind.hpp");
+    workspace_gpu = openclutil::cl_create_buffer(context, CL_MEM_READ_WRITE, sizeof(TFloat)*n_w, NULL, "workspace_gpu in basicfind.hpp");
   }
   
-  tinygemm::openclutil::cl_enqueue_write_buffer(command_queue, a_gpu, CL_TRUE, 0, sizeof(TFloat)*n_a, v_a.data(), 0, NULL, NULL, "a_gpu in basicfind.hpp");
-  tinygemm::openclutil::cl_enqueue_write_buffer(command_queue, b_gpu, CL_TRUE, 0, sizeof(TFloat)*n_b, v_b.data(), 0, NULL, NULL, "b_gpu in basicfind.hpp");
-  tinygemm::openclutil::cl_enqueue_write_buffer(command_queue, c_gpu, CL_TRUE, 0, sizeof(TFloat)*n_c, v_c.data(), 0, NULL, NULL, "c_gpu in basicfind.hpp");
+  openclutil::cl_enqueue_write_buffer(command_queue, a_gpu, CL_TRUE, 0, sizeof(TFloat)*n_a, v_a.data(), 0, NULL, NULL, "a_gpu in basicfind.hpp");
+  openclutil::cl_enqueue_write_buffer(command_queue, b_gpu, CL_TRUE, 0, sizeof(TFloat)*n_b, v_b.data(), 0, NULL, NULL, "b_gpu in basicfind.hpp");
+  openclutil::cl_enqueue_write_buffer(command_queue, c_gpu, CL_TRUE, 0, sizeof(TFloat)*n_c, v_c.data(), 0, NULL, NULL, "c_gpu in basicfind.hpp");
   if (geometry.workspace_size > 0){
-    tinygemm::openclutil::cl_enqueue_write_buffer(command_queue, workspace_gpu, CL_TRUE, 0, sizeof(TFloat)*n_w, v_workspace.data(), 0, NULL, NULL, "workspace_gpu in basicfind.hpp");
+    openclutil::cl_enqueue_write_buffer(command_queue, workspace_gpu, CL_TRUE, 0, sizeof(TFloat)*n_w, v_workspace.data(), 0, NULL, NULL, "workspace_gpu in basicfind.hpp");
   }
   
   std::map<char, void *> gpum;
@@ -122,11 +122,11 @@ bool verbose, std::string logfile, std::string constraints_string, unsigned n_po
 
   bool use_mowri_tracker = true;
   bool c_is_const = true;
-  tinygemm::TinyGemmSolution soln = tinygemm::find(command_queue, find_params, a_gpu, b_gpu, c_gpu, workspace_gpu, constraints_string, geometry, toff, mowri, c_is_const, use_mowri_tracker); 
+  TinyGemmSolution soln = find(command_queue, find_params, a_gpu, b_gpu, c_gpu, workspace_gpu, constraints_string, geometry, toff, mowri, c_is_const, use_mowri_tracker); 
    
     
   if (do_cpu_test == true && n_postfind_runs < 1){
-    throw tinygemm::tinygemm_error("(in basicfind.hpp, part of example/test suite) do_cpu_test is true, and n_postfind_runs < 1. If you wish to run the cpu test, n_postfind_runs should take a positive integral value");
+    throw tinygemm_error("(in basicfind.hpp, part of example/test suite) do_cpu_test is true, and n_postfind_runs < 1. If you wish to run the cpu test, n_postfind_runs should take a positive integral value");
   }
   
   /* ****************************************************
@@ -165,27 +165,27 @@ bool verbose, std::string logfile, std::string constraints_string, unsigned n_po
       size_t source_size = ks.kernstr.size();
 
       clprograms.emplace_back (
-        tinygemm::openclutil::cl_create_program_with_source(context, 1, &kernel_cstr, &source_size, ks.type.bkt_string + " ( " + ks.type.full + " ) " + ": creating program (in basicfind.hpp)")
+        openclutil::cl_create_program_with_source(context, 1, &kernel_cstr, &source_size, ks.type.bkt_string + " ( " + ks.type.full + " ) " + ": creating program (in basicfind.hpp)")
       );
       
-      tinygemm::openclutil::cl_build_program(clprograms.back(), 1, &device_id_to_use, buildOptions, NULL, NULL, mowri, ks.type.bkt_string + " ( " + ks.type.full + " ) " + ": building program (in basicfind.hpp)");     
+      openclutil::cl_build_program(clprograms.back(), 1, &device_id_to_use, buildOptions, NULL, NULL, mowri, ks.type.bkt_string + " ( " + ks.type.full + " ) " + ": building program (in basicfind.hpp)");     
       
       clkernels.emplace_back (
-        tinygemm::openclutil::cl_create_kernel(clprograms.back(), fname_cstr, ks.type.bkt_string + " ( " + ks.type.full + " ) " + "creating kernel (in basicfind.hpp)")
+        openclutil::cl_create_kernel(clprograms.back(), fname_cstr, ks.type.bkt_string + " ( " + ks.type.full + " ) " + "creating kernel (in basicfind.hpp)")
       );
       
       clevents.emplace_back ();
 
 
       /* set parameters. easy, as parameters to kernels have a strict ordering */
-      std::string enqhash = std::string("basicfind.hpp") + tinygemm::basic_kernel_type_strings[ks.type.basic_kernel_type];
+      std::string enqhash = std::string("basicfind.hpp") + basic_kernel_type_strings[ks.type.basic_kernel_type];
       unsigned parameter_index = 0;      
 
       for (auto & x : {'a', 'b', 'c', 'w'}){
         if (ks.type.uses(x) == true){
-          tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), parameter_index, sizeof(cl_mem), gpum[x], enqhash + "gpumem " + x);
+          openclutil::cl_set_kernel_arg(clkernels.back(), parameter_index, sizeof(cl_mem), gpum[x], enqhash + "gpumem " + x);
           ++parameter_index;
-          tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), parameter_index, sizeof(unsigned),  &(toff[x]), enqhash + "offset " + x);
+          openclutil::cl_set_kernel_arg(clkernels.back(), parameter_index, sizeof(unsigned),  &(toff[x]), enqhash + "offset " + x);
           ++parameter_index;
         }
       }
@@ -193,12 +193,12 @@ bool verbose, std::string logfile, std::string constraints_string, unsigned n_po
       if (ks.type.uses_alpha){
         
 
-        tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), parameter_index, sizeof(TFloat), &alpha_true_type, enqhash + " alpha");
+        openclutil::cl_set_kernel_arg(clkernels.back(), parameter_index, sizeof(TFloat), &alpha_true_type, enqhash + " alpha");
         ++parameter_index;
       }
       
        if (ks.type.uses_beta){
-        tinygemm::openclutil::cl_set_kernel_arg(clkernels.back(), parameter_index, sizeof(TFloat), &beta_true_type, enqhash + " beta");
+        openclutil::cl_set_kernel_arg(clkernels.back(), parameter_index, sizeof(TFloat), &beta_true_type, enqhash + " beta");
         ++parameter_index;
       }
     }
@@ -211,14 +211,14 @@ bool verbose, std::string logfile, std::string constraints_string, unsigned n_po
       for (unsigned ki = 0; ki < soln.v_tgks.size(); ++ki){
         size_t n_events_to_wait_on = ki == 0 ? 0 : 1;
         cl_event * events_to_wait_on = ki == 0 ? nullptr : &clevents[ki - 1];
-        tinygemm::openclutil::cl_enqueue_ndrange_kernel(
+        openclutil::cl_enqueue_ndrange_kernel(
         command_queue, clkernels[ki], 1, NULL, &soln.v_tgks[ki].global_work_size, &soln.v_tgks[ki].local_work_size, n_events_to_wait_on, events_to_wait_on, &clevents[ki], "Error in basicfind.hpp, enqueueing " + soln.v_tgks[ki].type.bkt_string + " in call to enqueue_kernels with hash : " + hash);
       }
     };
     
     enqueue_kernels_serial("first enqueue");
     
-    tinygemm::openclutil::cl_wait_for_events(1, &clevents.back(), "basicfind.hpp, waiting for " + soln.v_tgks.back().type.bkt_string + " in call to enqueue_kernels after postfind first enq.");
+    openclutil::cl_wait_for_events(1, &clevents.back(), "basicfind.hpp, waiting for " + soln.v_tgks.back().type.bkt_string + " in call to enqueue_kernels after postfind first enq.");
     
     if (do_cpu_test == true){
       
@@ -231,7 +231,7 @@ bool verbose, std::string logfile, std::string constraints_string, unsigned n_po
       }
       
       
-      tinygemm::slowcpugemm::gemms_cpu<TFloat>(geometry, toff, v_a.data(), v_b.data(), c_cpu_final.data(), alpha, beta, algs, mowri);
+      slowcpugemm::gemms_cpu<TFloat>(geometry, toff, v_a.data(), v_b.data(), c_cpu_final.data(), alpha, beta, algs, mowri);
 
 
       auto c_copied_from_gpu = std::vector<TFloat>(v_c.size(), 0);
@@ -240,7 +240,7 @@ bool verbose, std::string logfile, std::string constraints_string, unsigned n_po
 
 
 
-      tinygemm::openclutil::cl_enqueue_read_buffer(command_queue, c_gpu, CL_TRUE, 0, sizeof(TFloat)*c_copied_from_gpu.size(), c_copied_from_gpu.data(), 0, NULL, &event_read_c_back, "read in basicfind.hpp s.");  
+      openclutil::cl_enqueue_read_buffer(command_queue, c_gpu, CL_TRUE, 0, sizeof(TFloat)*c_copied_from_gpu.size(), c_copied_from_gpu.data(), 0, NULL, &event_read_c_back, "read in basicfind.hpp s.");  
       
             
       clWaitForEvents(1, &event_read_c_back);
@@ -250,7 +250,7 @@ bool verbose, std::string logfile, std::string constraints_string, unsigned n_po
 
 
 
-      tinygemm::accuracytests::elementwise_compare<TFloat>(v_c.data(), beta, c_cpu_final.data(), c_copied_from_gpu.data(), v_c.size(), mowri);
+      accuracytests::elementwise_compare<TFloat>(v_c.data(), beta, c_cpu_final.data(), c_copied_from_gpu.data(), v_c.size(), mowri);
       mowri.to_terminal = old_to_terminal;      
     }
 
@@ -268,7 +268,7 @@ bool verbose, std::string logfile, std::string constraints_string, unsigned n_po
         }
 
         /* Wait for the final kernel to complete, then record the elapsed time */
-        tinygemm::openclutil::cl_wait_for_events(1, &clevents.back(), "basicfind.hpp, waiting for " + soln.v_tgks.back().type.bkt_string + " in call to enqueue_kernels after postfind runs");
+        openclutil::cl_wait_for_events(1, &clevents.back(), "basicfind.hpp, waiting for " + soln.v_tgks.back().type.bkt_string + " in call to enqueue_kernels after postfind runs");
         
         auto end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<float> fp_ms = end - start;
@@ -285,14 +285,14 @@ bool verbose, std::string logfile, std::string constraints_string, unsigned n_po
   
   
   /* Cleaning up, closing shop. */
-  tinygemm::openclutil::cl_release_mem_object(c_gpu, "c_gpu in basicfind.hpp");
-  tinygemm::openclutil::cl_release_mem_object(a_gpu, "a_gpu in basicfind.hpp");
-  tinygemm::openclutil::cl_release_mem_object(b_gpu, "b_gpu  in basicfind.hpp");
+  openclutil::cl_release_mem_object(c_gpu, "c_gpu in basicfind.hpp");
+  openclutil::cl_release_mem_object(a_gpu, "a_gpu in basicfind.hpp");
+  openclutil::cl_release_mem_object(b_gpu, "b_gpu  in basicfind.hpp");
   if (geometry.workspace_size > 0){
-    tinygemm::openclutil::cl_release_mem_object(workspace_gpu, "workspace_gpu  in basicfind.hpp");
+    openclutil::cl_release_mem_object(workspace_gpu, "workspace_gpu  in basicfind.hpp");
   }
-  tinygemm::openclutil::cl_release_command_queue(command_queue, "command queue in basicfind.hpp");
-  tinygemm::openclutil::cl_release_context(context, "context in basicfind.hpp");
+  openclutil::cl_release_command_queue(command_queue, "command queue in basicfind.hpp");
+  openclutil::cl_release_context(context, "context in basicfind.hpp");
 
 
   return soln;
@@ -301,9 +301,9 @@ bool verbose, std::string logfile, std::string constraints_string, unsigned n_po
 }
 
 
-tinygemm::TinyGemmSolution basicfind(const tinygemm::TinyGemmGeometry & geometry, const tinygemm::TinyGemmOffsets & toff, 
+TinyGemmSolution basicfind(const TinyGemmGeometry & geometry, const TinyGemmOffsets & toff, 
 
-const tinygemm::FindParams & find_params,
+const FindParams & find_params,
 
 bool verbose, std::string logfile, std::string constraints_string, unsigned n_postfind_runs, bool do_cpu_test){
   if (geometry.floattype == 'f'){
@@ -313,7 +313,7 @@ bool verbose, std::string logfile, std::string constraints_string, unsigned n_po
     return base_basicfind<double>(geometry, toff, find_params, verbose, logfile, constraints_string, n_postfind_runs, do_cpu_test);    
   }
   else{
-    throw tinygemm::tinygemm_error("unrecognised geometry floattype");
+    throw tinygemm_error("unrecognised geometry floattype");
   } 
 }
 

@@ -28,13 +28,13 @@ class BundleGenerator{
 
 private:
   const hyperparams::HyperParams & hp;
-  const tinygemm::TinyGemmGeometry & gg;
+  const TinyGemmGeometry & gg;
   const derivedparams::DerivedParams dp;
   outputwriting::OutputWriter & mowri;
   bool bundle_verbose;
 
 public: 
-  BundleGenerator(const hyperparams::HyperParams & hp_, const tinygemm::TinyGemmGeometry & gg_, outputwriting::OutputWriter & mowri_, bool bundle_verbose_): hp(hp_), gg(gg_), dp(hp, gg), mowri(mowri_), bundle_verbose(bundle_verbose_) {
+  BundleGenerator(const hyperparams::HyperParams & hp_, const TinyGemmGeometry & gg_, outputwriting::OutputWriter & mowri_, bool bundle_verbose_): hp(hp_), gg(gg_), dp(hp, gg), mowri(mowri_), bundle_verbose(bundle_verbose_) {
     
   }
 
@@ -138,7 +138,7 @@ public:
 
 
 
-Bundle get_bundle(const hyperparams::HyperParams & hp,  const tinygemm::TinyGemmGeometry & gg, outputwriting::OutputWriter & mowri, bool bundle_verbose){
+Bundle get_bundle(const hyperparams::HyperParams & hp,  const TinyGemmGeometry & gg, outputwriting::OutputWriter & mowri, bool bundle_verbose){
   
   BundleGenerator ksbg(hp, gg, mowri, bundle_verbose);
   return ksbg.generate();

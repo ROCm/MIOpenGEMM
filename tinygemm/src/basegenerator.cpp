@@ -8,7 +8,7 @@ namespace tinygemm{
 namespace basegen{
 
       
-BaseGenerator::BaseGenerator(const tinygemm::hyperparams::HyperParams & hp_, const tinygemm::TinyGemmGeometry & gg_, const tinygemm::derivedparams::DerivedParams & dp_, const std::string & type_): hp(hp_), gg(gg_), dp(dp_), type(type_), kernelname("tg_" + type_) {
+BaseGenerator::BaseGenerator(const hyperparams::HyperParams & hp_, const TinyGemmGeometry & gg_, const derivedparams::DerivedParams & dp_, const std::string & type_): hp(hp_), gg(gg_), dp(dp_), type(type_), kernelname("tg_" + type_) {
 
 }
   

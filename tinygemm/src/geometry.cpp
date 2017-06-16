@@ -204,7 +204,7 @@ void TinyGemmGeometry::initialise(bool isColMajor_, bool tA_, bool tB_, bool tC_
   
   
   if (floattype != 'd' and floattype != 'f'){
-    throw  tinygemm::tinygemm_error("floattype should be one of 'f' and 'd' (in TinyGemmGeometry constructor)");
+    throw  tinygemm_error("floattype should be one of 'f' and 'd' (in TinyGemmGeometry constructor)");
   }
     
   
@@ -224,7 +224,7 @@ TinyGemmGeometry::TinyGemmGeometry(bool isColMajor_, bool tA_, bool tB_, bool tC
 
 
 std::map<std::string, unsigned> get_key_val_map(std::string geometry_string){
-  auto frags = tinygemm::stringutil::split(geometry_string, "_");
+  auto frags = stringutil::split(geometry_string, "_");
   std::map<std::string, unsigned> key_val_map;
   for  (auto & frag : frags){
     auto key_val = stringutil::splitnumeric(frag);
@@ -242,7 +242,7 @@ unsigned safeat(std::map<std::string, unsigned> & map, std::string key){
     std::stringstream errm;
     errm << "Unrecognised key `";
     errm << key << "' in safeat in tinygemmgeometry";
-    throw tinygemm::tinygemm_error(errm.str());
+    throw tinygemm_error(errm.str());
   }
   return map.at(key);
 }
@@ -273,7 +273,7 @@ TinyGemmGeometry::TinyGemmGeometry(std::string geometry_string){
   }
 
   if (good_string == false){
-    throw tinygemm::tinygemm_error(errm_ss.str());
+    throw tinygemm_error(errm_ss.str());
   }
    
 

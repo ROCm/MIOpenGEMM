@@ -7,7 +7,7 @@ namespace betacgen{
 
 
 
-BetacGenerator::BetacGenerator(const tinygemm::hyperparams::HyperParams & hp_,  const tinygemm::TinyGemmGeometry & gg_, const tinygemm::derivedparams::DerivedParams & dp_): bylinegen::ByLineGenerator(hp_, gg_, dp_, "betac"){
+BetacGenerator::BetacGenerator(const hyperparams::HyperParams & hp_,  const TinyGemmGeometry & gg_, const derivedparams::DerivedParams & dp_): bylinegen::ByLineGenerator(hp_, gg_, dp_, "betac"){
 }
 
 size_t BetacGenerator::get_local_work_size(){
@@ -41,7 +41,7 @@ void BetacGenerator::append_derived_definitions_additional(std::stringstream & s
 
 
 
-KernelString get_betac_kernelstring(const tinygemm::hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg, const tinygemm::derivedparams::DerivedParams & dp){
+KernelString get_betac_kernelstring(const hyperparams::HyperParams & hp, const TinyGemmGeometry & gg, const derivedparams::DerivedParams & dp){
  BetacGenerator bcg(hp, gg, dp);
  bcg.setup();
  return bcg.get_kernelstring();

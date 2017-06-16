@@ -51,7 +51,7 @@ class TNInner{
 
 
 template <typename TFloat, class FInner>
-void gemm_3fors_generic_cpu(const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, const TFloat * a, const TFloat * b, TFloat * c, TFloat alpha, TFloat beta){
+void gemm_3fors_generic_cpu(const TinyGemmGeometry & gg, const TinyGemmOffsets & toff, const TFloat * a, const TFloat * b, TFloat * c, TFloat alpha, TFloat beta){
   /* at this point, must be column contiguous (ala fortran)
  * this is a generic slow matrix multiplier for NN, TN, NT. 
  * NN, TN, NT will have different FInner template parameters
@@ -84,7 +84,7 @@ void gemm_3fors_generic_cpu(const tinygemm::TinyGemmGeometry & gg, const tinygem
 
 
 template <typename TFloat>
-void gemm_3fors_cpu(const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff, const TFloat * a, const TFloat * b, TFloat * c, TFloat alpha, TFloat beta){
+void gemm_3fors_cpu(const TinyGemmGeometry & gg, const TinyGemmOffsets & toff, const TFloat * a, const TFloat * b, TFloat * c, TFloat alpha, TFloat beta){
   
     
   if (gg.tX[nsHP::matA] == true && gg.tX[nsHP::matB] == true){
@@ -143,7 +143,7 @@ void check_cpu_algs(std::vector<std::string> cpu_algs){
 }
   
   template <typename TFloat>
-  void gemms_cpu(tinygemm::TinyGemmGeometry gg, tinygemm::TinyGemmOffsets toff, const TFloat * a, const TFloat * b, TFloat * c, TFloat alpha, TFloat beta, std::vector<std::string> algs, outputwriting::OutputWriter & mowri){
+  void gemms_cpu(TinyGemmGeometry gg, TinyGemmOffsets toff, const TFloat * a, const TFloat * b, TFloat * c, TFloat alpha, TFloat beta, std::vector<std::string> algs, outputwriting::OutputWriter & mowri){
     check_cpu_algs(algs);        
     bool tA = gg.tX[nsHP::matA];
     bool tB = gg.tX[nsHP::matB];
@@ -154,7 +154,7 @@ void check_cpu_algs(std::vector<std::string> cpu_algs){
     gg.tX[nsHP::matC] = tC;
     
     redirection::confirm_redirection(gg.isColMajor, gg.tX[nsHP::matA], gg.tX[nsHP::matB], gg.m, gg.n);
-    //tinygemm::consistencychecks::check_ldx_mnk_consistent(gg);
+    //consistencychecks::check_ldx_mnk_consistent(gg);
     gg.check_ldx_consistent();
     
     for (auto & alg : algs){
@@ -171,9 +171,9 @@ void check_cpu_algs(std::vector<std::string> cpu_algs){
     }
   }
   
-  template void gemms_cpu(tinygemm::TinyGemmGeometry gg, tinygemm::TinyGemmOffsets toff,  const float * a, const float * b, float * c, float alpha, float beta, std::vector<std::string> algs, outputwriting::OutputWriter & mowri);
+  template void gemms_cpu(TinyGemmGeometry gg, TinyGemmOffsets toff,  const float * a, const float * b, float * c, float alpha, float beta, std::vector<std::string> algs, outputwriting::OutputWriter & mowri);
 
-  template void gemms_cpu(tinygemm::TinyGemmGeometry gg, tinygemm::TinyGemmOffsets toff,  const double * a, const double * b, double * c, double alpha, double beta, std::vector<std::string> algs, outputwriting::OutputWriter & mowri);  
+  template void gemms_cpu(TinyGemmGeometry gg, TinyGemmOffsets toff,  const double * a, const double * b, double * c, double alpha, double beta, std::vector<std::string> algs, outputwriting::OutputWriter & mowri);  
   
 }
 } //namespace

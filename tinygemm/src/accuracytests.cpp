@@ -8,7 +8,7 @@ namespace accuracytests {
 
 
 template <typename TFloat>
-void elementwise_compare(const TFloat * c_before, double beta, const TFloat * c_cpu, const TFloat * c_gpu, unsigned nels, tinygemm::outputwriting::OutputWriter & mowri){
+void elementwise_compare(const TFloat * c_before, double beta, const TFloat * c_cpu, const TFloat * c_gpu, unsigned nels, outputwriting::OutputWriter & mowri){
   
   
   // 1 in 100.
@@ -54,15 +54,15 @@ void elementwise_compare(const TFloat * c_before, double beta, const TFloat * c_
         ss << "{" << c_before[i] << "}  (" <<  c_cpu[i]  << ")  ["  << c_gpu[i] << "]" << "\n"; 
        } 
       
-      throw tinygemm::tinygemm_error(ss.str());
+      throw tinygemm_error(ss.str());
     }
   
   mowri << "max_relerr=" << max_relerr << Endl;
 }
 
-template void elementwise_compare(const float * c_before, double beta, const float * c_cpu, const float * c_gpu, unsigned nels, tinygemm::outputwriting::OutputWriter & mowri);
+template void elementwise_compare(const float * c_before, double beta, const float * c_cpu, const float * c_gpu, unsigned nels, outputwriting::OutputWriter & mowri);
 
-template void elementwise_compare(const double * c_before, double beta, const double * c_cpu, const double * c_gpu, unsigned nels, tinygemm::outputwriting::OutputWriter & mowri);
+template void elementwise_compare(const double * c_before, double beta, const double * c_cpu, const double * c_gpu, unsigned nels, outputwriting::OutputWriter & mowri);
 
 
 }

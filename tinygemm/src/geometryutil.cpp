@@ -3,9 +3,9 @@
 
 namespace tinygemm{
   
-std::vector<tinygemm::TinyGemmGeometry> get_from_m_n_k_tA_tB(const std::vector<std::tuple<unsigned, unsigned, unsigned, bool, bool>> &  basicgeos, unsigned workspace_size ){
+std::vector<TinyGemmGeometry> get_from_m_n_k_tA_tB(const std::vector<std::tuple<unsigned, unsigned, unsigned, bool, bool>> &  basicgeos, unsigned workspace_size ){
   
-  std::vector<tinygemm::TinyGemmGeometry> geometries;
+  std::vector<TinyGemmGeometry> geometries;
   bool isColMajor = true;
   bool tA;
   bool tB;
@@ -29,9 +29,9 @@ std::vector<tinygemm::TinyGemmGeometry> get_from_m_n_k_tA_tB(const std::vector<s
   return geometries;
 }
 
-std::vector<tinygemm::TinyGemmGeometry> get_from_m_n_k_ldaABC_tA_tB(const std::vector<std::tuple<unsigned, unsigned, unsigned, unsigned, unsigned, unsigned, bool, bool>> &  basicgeos, unsigned workspace_size){
+std::vector<TinyGemmGeometry> get_from_m_n_k_ldaABC_tA_tB(const std::vector<std::tuple<unsigned, unsigned, unsigned, unsigned, unsigned, unsigned, bool, bool>> &  basicgeos, unsigned workspace_size){
   
-  std::vector<tinygemm::TinyGemmGeometry> geometries;
+  std::vector<TinyGemmGeometry> geometries;
   bool isColMajor = true;
   bool tA;
   bool tB;

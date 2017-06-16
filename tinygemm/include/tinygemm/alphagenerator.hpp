@@ -6,7 +6,7 @@
 namespace tinygemm{
 namespace alphagen{
   
-KernelString get_alpha_kernelstring(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg, const derivedparams::DerivedParams & dp);
+KernelString get_alpha_kernelstring(const hyperparams::HyperParams & hp, const TinyGemmGeometry & gg, const derivedparams::DerivedParams & dp);
  
 }
 }

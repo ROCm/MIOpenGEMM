@@ -77,13 +77,13 @@ void DerivedParams::reset_ga3_params(){
 
 
 std::tuple<bool, std::string>
-get_deriveability(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg){
+get_deriveability(const hyperparams::HyperParams & hp, const TinyGemmGeometry & gg){
   DerivedParams dp(hp, gg, "uninitialised");
   return dp.set_fragile();
 }
 
 
-DerivedParams::DerivedParams(const hyperparams::HyperParams & hp_, const tinygemm::TinyGemmGeometry & gg_, std::string s):hp(hp_), gg(gg_){
+DerivedParams::DerivedParams(const hyperparams::HyperParams & hp_, const TinyGemmGeometry & gg_, std::string s):hp(hp_), gg(gg_){
   
   initialise_chis();
   
@@ -238,7 +238,7 @@ void DerivedParams::initialise_chis(){
 }
  
  
-DerivedParams::DerivedParams(const hyperparams::HyperParams & hp_, const tinygemm::TinyGemmGeometry & gg_): hp(hp_), gg(gg_) {
+DerivedParams::DerivedParams(const hyperparams::HyperParams & hp_, const TinyGemmGeometry & gg_): hp(hp_), gg(gg_) {
 
   initialise_chis();
   

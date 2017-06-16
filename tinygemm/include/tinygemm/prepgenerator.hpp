@@ -53,7 +53,7 @@ protected:
 
 
 public:
-  PrepGenerator(const tinygemm::hyperparams::HyperParams & hp_,  const tinygemm::TinyGemmGeometry & gg_, const tinygemm::derivedparams::DerivedParams & dp_, std::string type_);
+  PrepGenerator(const hyperparams::HyperParams & hp_,  const TinyGemmGeometry & gg_, const derivedparams::DerivedParams & dp_, std::string type_);
 
 };
 

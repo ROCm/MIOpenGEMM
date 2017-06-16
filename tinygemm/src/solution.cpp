@@ -26,7 +26,7 @@ std::string TinyGemmSolutionStatistics::get_string() const {
   return stroo;
 }
 
-TinyGemmSolutionStatistics::TinyGemmSolutionStatistics(float median_benchmark_time_, float median_benchmark_gflops_, float solution_discovery_time_, std::string date_, const tinygemm::FindParams & find_params_): 
+TinyGemmSolutionStatistics::TinyGemmSolutionStatistics(float median_benchmark_time_, float median_benchmark_gflops_, float solution_discovery_time_, std::string date_, const FindParams & find_params_): 
   median_benchmark_time(median_benchmark_time_), median_benchmark_gflops(median_benchmark_gflops_), solution_discovery_time(solution_discovery_time_),  find_params(find_params_) {
     date = date_;
     if (date.size() > 1){
@@ -78,7 +78,7 @@ std::string TinyGemmSolution::get_cache_entry_string(std::string k_comment) cons
   cache_write_ss << "{\"" << hyper_param_string << "\", /* solution hyper string */\n";
   cache_write_ss << "{" << statistics.median_benchmark_time << ", " << statistics.median_benchmark_gflops << ", " << statistics.solution_discovery_time;
   cache_write_ss << ", \"" << statistics.date << "\"" << ", /* solution stats (time [ms], gflops, time found (within descent), date found */\n";
-  cache_write_ss << "{" << statistics.find_params.allotted_time <<", " << statistics.find_params.allotted_descents << ", " << statistics.find_params.n_runs_per_kernel << ", " << tinygemm::get_sumstatkey(statistics.find_params.sumstat) << "}}}); /* find param: allotted time, allotted descents, n runs per kernel, summmary over runs */\n\n";  
+  cache_write_ss << "{" << statistics.find_params.allotted_time <<", " << statistics.find_params.allotted_descents << ", " << statistics.find_params.n_runs_per_kernel << ", " << get_sumstatkey(statistics.find_params.sumstat) << "}}}); /* find param: allotted time, allotted descents, n runs per kernel, summmary over runs */\n\n";  
   return cache_write_ss.str();
 
 }

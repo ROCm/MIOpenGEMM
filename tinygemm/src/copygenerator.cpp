@@ -9,7 +9,7 @@ namespace copygen{
 
 
 
-CopyGenerator::CopyGenerator(const tinygemm::hyperparams::HyperParams & hp_,  const tinygemm::TinyGemmGeometry & gg_, const tinygemm::derivedparams::DerivedParams & dp_, const std::string & type_): bylinegen::ByLineGenerator(hp_, gg_, dp_, type_){}
+CopyGenerator::CopyGenerator(const hyperparams::HyperParams & hp_,  const TinyGemmGeometry & gg_, const derivedparams::DerivedParams & dp_, const std::string & type_): bylinegen::ByLineGenerator(hp_, gg_, dp_, type_){}
 
 
 size_t CopyGenerator::get_local_work_size(){
@@ -53,13 +53,13 @@ void CopyGenerator::append_derived_definitions_additional(std::stringstream & ss
 
 
 
-KernelString get_copya_kernelstring(const tinygemm::hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg, const tinygemm::derivedparams::DerivedParams & dp){
+KernelString get_copya_kernelstring(const hyperparams::HyperParams & hp, const TinyGemmGeometry & gg, const derivedparams::DerivedParams & dp){
  CopyGenerator cg(hp, gg, dp, "copya");
  cg.setup();
  return cg.get_kernelstring();
 }
 
-KernelString get_copyb_kernelstring(const tinygemm::hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg, const tinygemm::derivedparams::DerivedParams & dp){
+KernelString get_copyb_kernelstring(const hyperparams::HyperParams & hp, const TinyGemmGeometry & gg, const derivedparams::DerivedParams & dp){
  CopyGenerator cg(hp, gg, dp, "copyb");
  cg.setup();
  return cg.get_kernelstring();

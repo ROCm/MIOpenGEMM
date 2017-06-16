@@ -38,7 +38,7 @@ void ByLineGenerator::setup(){
 }
 
 
-ByLineGenerator::ByLineGenerator(const tinygemm::hyperparams::HyperParams & hp_,  const tinygemm::TinyGemmGeometry & gg_, const tinygemm::derivedparams::DerivedParams & dp_, std::string type_): prepgen::PrepGenerator(hp_, gg_, dp_, type_){}
+ByLineGenerator::ByLineGenerator(const hyperparams::HyperParams & hp_,  const TinyGemmGeometry & gg_, const derivedparams::DerivedParams & dp_, std::string type_): prepgen::PrepGenerator(hp_, gg_, dp_, type_){}
 
 
 void ByLineGenerator::append_description_string(std::stringstream & ss){

@@ -27,7 +27,7 @@ class Bundle{
     Bundle(std::vector<KernelString> && v_tgks_, std::vector<std::vector<unsigned> > && v_wait_indices_, const derivedparams::DerivedParams & dp_): v_tgks(v_tgks_), v_wait_indices(v_wait_indices_), dp(dp_) {}
 };
 
-Bundle get_bundle(const hyperparams::HyperParams & hp, const tinygemm::TinyGemmGeometry & gg, outputwriting::OutputWriter & mowri, bool bundle_verbose);
+Bundle get_bundle(const hyperparams::HyperParams & hp, const TinyGemmGeometry & gg, outputwriting::OutputWriter & mowri, bool bundle_verbose);
   
 
 }

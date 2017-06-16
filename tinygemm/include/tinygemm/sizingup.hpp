@@ -13,7 +13,7 @@ size_t get_n_elements_padded(unsigned h, unsigned w, unsigned ldx, bool isColMaj
  * This is temporary, eventually the code accomodate sufficiently large matrices by casting to size_t  or uint64 when nec.*/
 void check_sizes_ok_for_unsigned(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned n, unsigned k, unsigned lda, unsigned ldb, unsigned ldc, unsigned workspace_size, unsigned a_offset, unsigned b_offset, unsigned c_offset, unsigned workspace_offset, unsigned tail_off_a, unsigned tail_off_b, unsigned tail_off_c);
 
-void check_sizes_ok_for_unsigned(const tinygemm::TinyGemmGeometry & gg, const tinygemm::TinyGemmOffsets & toff);
+void check_sizes_ok_for_unsigned(const TinyGemmGeometry & gg, const TinyGemmOffsets & toff);
   
 } //  namespace
 }
