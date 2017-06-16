@@ -5,9 +5,9 @@
 
 namespace tinygemm{
 
-class tinygemm_error : public std::runtime_error{
+class miog_error : public std::runtime_error{
   public:
-    tinygemm_error(const std::string& what_arg);
+    miog_error(const std::string& what_arg);
 };
 
 void tinygemm_warning(const std::string & warning);

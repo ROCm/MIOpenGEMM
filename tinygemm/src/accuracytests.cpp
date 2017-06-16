@@ -54,7 +54,7 @@ void elementwise_compare(const TFloat * c_before, double beta, const TFloat * c_
         ss << "{" << c_before[i] << "}  (" <<  c_cpu[i]  << ")  ["  << c_gpu[i] << "]" << "\n"; 
        } 
       
-      throw tinygemm_error(ss.str());
+      throw miog_error(ss.str());
     }
   
   mowri << "max_relerr=" << max_relerr << Endl;

@@ -30,7 +30,7 @@ bool verbose, std::string logfile, std::string constraints_string, unsigned n_po
   
   /* just checking that geometry floattype is correct */
   if (!((geometry.floattype == 'f' && sizeof(TFloat) == 4) || (geometry.floattype == 'd' && sizeof(TFloat) == 8))) {
-    throw tinygemm_error("disagreement between geometry.floattype and sizeof(TFloat) in basicfind.hpp");
+    throw miog_error("disagreement between geometry.floattype and sizeof(TFloat) in basicfind.hpp");
   }
 
   double alpha = default_alpha;
@@ -126,7 +126,7 @@ bool verbose, std::string logfile, std::string constraints_string, unsigned n_po
    
     
   if (do_cpu_test == true && n_postfind_runs < 1){
-    throw tinygemm_error("(in basicfind.hpp, part of example/test suite) do_cpu_test is true, and n_postfind_runs < 1. If you wish to run the cpu test, n_postfind_runs should take a positive integral value");
+    throw miog_error("(in basicfind.hpp, part of example/test suite) do_cpu_test is true, and n_postfind_runs < 1. If you wish to run the cpu test, n_postfind_runs should take a positive integral value");
   }
   
   /* ****************************************************
@@ -313,7 +313,7 @@ bool verbose, std::string logfile, std::string constraints_string, unsigned n_po
     return base_basicfind<double>(geometry, toff, find_params, verbose, logfile, constraints_string, n_postfind_runs, do_cpu_test);    
   }
   else{
-    throw tinygemm_error("unrecognised geometry floattype");
+    throw miog_error("unrecognised geometry floattype");
   } 
 }
 

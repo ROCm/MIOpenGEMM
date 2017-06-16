@@ -11,7 +11,6 @@
 #include <tinygemm/hyperparams.hpp>
 #include <tinygemm/error.hpp>
 #include <tinygemm/stringutilbase.hpp>
-#include <tinygemm/mapkeycheck.hpp>
 #include <tinygemm/randomutil.hpp>
 
 namespace tinygemm{
@@ -68,7 +67,7 @@ std::tuple<bool, std::string, std::array<unsigned, 2>> get_mac_grid(unsigned mac
   
   if (nsHP::matA >= 2 || nsHP::matB >= 2){
     errm_ss << "the std::array returned in get_mac_grid is too small";
-    throw tinygemm_error(errm_ss.str());
+    throw miog_error(errm_ss.str());
   }
   
   mac_grid[nsHP::matA] = u_na;
@@ -89,7 +88,7 @@ std::map<T, unsigned> get_vals(unsigned nVals, const std::vector<T> & keys, cons
   std::map<T, unsigned> vals;    
   for (unsigned val = 0; val < nVals; ++val){
     if (keys[val] == T()){
-      throw tinygemm_error("It appears as though one of the elements of " + hash +  " has not been added to keys, unitialisation error");
+      throw miog_error("It appears as though one of the elements of " + hash +  " has not been added to keys, unitialisation error");
     }
     vals[keys[val]] = val;
     
@@ -153,12 +152,12 @@ std::vector<std::string> get_sub_constraints(std::string constraints_string) {
       std::stringstream ss;
       ss << "\nWhile reading hyperstring in get-params-from-string,\n";
       ss << "the leading char should be A,B or C, not `" << megafrag[0] << "'.\n";
-      throw tinygemm_error(ss.str());
+      throw miog_error(ss.str());
     }
     if (megafrag.size() < 3){
       std::stringstream ss;
       ss << "sub constraint " << megafrag << " is too short, something is wrong. \n";
-      throw tinygemm_error(ss.str());
+      throw miog_error(ss.str());
     }
     sub_constraints[graphind.at(megafrag[0])] = megafrag.substr(2);
   }
@@ -240,7 +239,7 @@ std::vector<unsigned> get_constraints(std::string subg_cs, bool subg_csfull, con
       std::stringstream ss;
       ss << "While processing the constraint string for SubG `" << subg_hash << "', ";
       ss << "the key `" + key << "' was not recognised. In set_constraints(). \n";
-      throw tinygemm_error(ss.str());
+      throw miog_error(ss.str());
     }
 
     unsigned keyindex = p_kv->vals.at(key);
@@ -249,7 +248,7 @@ std::vector<unsigned> get_constraints(std::string subg_cs, bool subg_csfull, con
     }
 
     else{
-      throw tinygemm_error("in get constrains, strange out of bounds error, come and investigate");
+      throw miog_error("in get constrains, strange out of bounds error, come and investigate");
     }
   }
   
@@ -261,7 +260,7 @@ std::vector<unsigned> get_constraints(std::string subg_cs, bool subg_csfull, con
         std::stringstream ss;
         ss << "While processing the constraints string of SubG `" << subg_hash << "', ";
         ss << "the parameter `" << p_kv->keys[hpi] << "' appeared to be unset. The constraints must all be set (subg_csfull is true) \n";
-        throw tinygemm_error(ss.str()); 
+        throw miog_error(ss.str()); 
       }
     }
   }
@@ -304,7 +303,7 @@ void SubG::force_start_node(std::vector<unsigned> start_node){
     std::stringstream ss;
     
     ss << "in force_start_node, and start_node.size() (=" << start_node.size() << ") differs from range.size() << (" << range.size() << ")";
-    throw tinygemm_error(ss.str());
+    throw miog_error(ss.str());
   }
   
   for (unsigned hpi = 0; hpi < range.size(); ++hpi){
@@ -393,7 +392,7 @@ void SubG::confirm_start_is_subset(){
     if (start_range[hpi].size() == 0){
       std::stringstream ss;
       ss << "no valid value to start from in " << ptr_keys_vals->keys[hpi];
-      throw tinygemm_error(ss.str());
+      throw miog_error(ss.str());
     }
     
     for (auto & x : start_range[hpi]){
@@ -402,7 +401,7 @@ void SubG::confirm_start_is_subset(){
         ss << "It seems like the start_range element `" << x << "' is not in the range of " << ptr_keys_vals->keys[hpi] << ".";
         ss << "The full setup of " << ptr_keys_vals->keys[hpi] << " is\n ";
         ss << get_string(hpi);
-        throw tinygemm_error(ss.str());
+        throw miog_error(ss.str());
       }
     }
   }
@@ -470,7 +469,7 @@ void SubG::apply_constraints(){
           std::stringstream errm;
           errm << "the constraint on " << ptr_keys_vals->keys[hpi] << " of " << constraints.at(hpi) << " is not in the pre-constraint range:  \n" << get_range_string(hpi);
           errm << "this is not currently allowed";
-          throw tinygemm_error(errm.str());
+          throw miog_error(errm.str());
         }
       }
       
@@ -569,7 +568,7 @@ void CSubG::set_preconstraint_edges(){
   else if (ptr_devinfo->wg_atom_size != 64 && ptr_devinfo->wg_atom_size != 32){  
     std::stringstream ss;
     ss << "(device_name : " << ptr_devinfo->device_name << ")  " <<  "Setting up the edge search graph in set_preconstraint_edges, and it seems like the atomic wg size is neither 32 or 64. Is this correct ?? If so, consider changing here or raise an issue";
-    throw tinygemm_error(ss.str());
+    throw miog_error(ss.str());
   }
       
   /* very small / thin matrices */
@@ -632,7 +631,7 @@ void CSubG::set_preconstraint_edges(){
   }
   
   else {
-    throw tinygemm_error("wg_atom_size is neither 32 or 64, how can this be? I thought we'd already checked this. (Logic error)");
+    throw miog_error("wg_atom_size is neither 32 or 64, how can this be? I thought we'd already checked this. (Logic error)");
   }
 
   
@@ -668,7 +667,7 @@ void CSubG::set_preconstraint_edges(){
 void HyperParams::checks() const{
   for (unsigned gi = 0; gi < nsHP::nMats; ++gi){
     if (gi > v_xhps.size()){
-      throw tinygemm_error("strange error : gi > v_xhps.size()");
+      throw miog_error("strange error : gi > v_xhps.size()");
     }
     
     const XHPs & x = v_xhps[gi];
@@ -678,7 +677,7 @@ void HyperParams::checks() const{
         std::stringstream errm;
         errm << "strange error : hpi >= graph.range.size()\n";
         errm << "specifically, " << hpi << " >= " << sub_g.range.size();
-        throw tinygemm_error(errm.str());
+        throw miog_error(errm.str());
       }
 
       auto start = sub_g.range[hpi].begin();
@@ -689,7 +688,7 @@ void HyperParams::checks() const{
         std::stringstream errm;
         errm << "\nIn HyperParams::checks(). It appears as though `" << x.vs[hpi] << "' is not a valid value for " << sub_g.ptr_keys_vals->keys[hpi] << ".\n"; 
         errm << "the relevant graph looks like this: \n" << sub_g.get_string(hpi);
-        throw tinygemm_error(errm.str());
+        throw miog_error(errm.str());
       }
     }
   }
@@ -917,7 +916,7 @@ nsHP::eMat HyperParams::get_eMat_from_char(char X) const{
   X = (X == 'c' ? 'C' : X);
   
   if (X != 'A' && X != 'B' && X != 'C'){
-    throw tinygemm_error("Problem converting X (char) to nsHP::eMat enumerated type in get_eMat_from_char : " + std::to_string(X) );
+    throw miog_error("Problem converting X (char) to nsHP::eMat enumerated type in get_eMat_from_char : " + std::to_string(X) );
   }
   return static_cast<nsHP::eMat> (graphind.at(X));
 } 

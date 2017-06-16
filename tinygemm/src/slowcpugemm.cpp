@@ -88,11 +88,11 @@ void gemm_3fors_cpu(const TinyGemmGeometry & gg, const TinyGemmOffsets & toff, c
   
     
   if (gg.tX[nsHP::matA] == true && gg.tX[nsHP::matB] == true){
-    throw tinygemm_error("tA and tB should have been redirected before calling gemm_3fors_cpu");
+    throw miog_error("tA and tB should have been redirected before calling gemm_3fors_cpu");
   }
   
   else if (gg.isColMajor == false){
-    throw tinygemm_error("isColMajor should be true before calling gemm_3fors_cpu");
+    throw miog_error("isColMajor should be true before calling gemm_3fors_cpu");
   }
     
 
@@ -115,7 +115,7 @@ void gemm_3fors_cpu(const TinyGemmGeometry & gg, const TinyGemmOffsets & toff, c
     }
     
     else{
-      throw tinygemm_error("this will never happen");
+      throw miog_error("this will never happen");
     }
   }
 }
@@ -137,7 +137,7 @@ void check_cpu_algs(std::vector<std::string> cpu_algs){
       std::string errm = "unrecognised cpu algorithm, ";
       errm += alg;
       errm += "\n";
-      throw tinygemm_error(errm);
+      throw miog_error(errm);
     }
   }
 }

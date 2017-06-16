@@ -71,17 +71,17 @@ void redirect(bool & isColMajor, bool & tA, bool & tB, bool & tC, unsigned & m, 
 
 void confirm_redirection(bool isColMajor, bool tA, bool tB, unsigned m, unsigned n){
   if (isColMajor == false) {
-    throw tinygemm_error("isColMajor == false : see symmetry_red document for redirection and implement");
+    throw miog_error("isColMajor == false : see symmetry_red document for redirection and implement");
   }
   
   else{
     if (tA == true && tB == true){
-      throw tinygemm_error("both matrices transposed : see symmetry_red document for redirection and implement");
+      throw miog_error("both matrices transposed : see symmetry_red document for redirection and implement");
     }
    
     else if ((tA == true && tB == false) || (tA == false && tB == true)){
       if (m > n){
-        throw tinygemm_error("tA + tB = 1 with m > n : see symmetry_red document for redirection to m <= n");
+        throw miog_error("tA + tB = 1 with m > n : see symmetry_red document for redirection to m <= n");
       }
     }
   }

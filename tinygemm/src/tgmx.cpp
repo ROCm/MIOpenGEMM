@@ -69,7 +69,10 @@ class TinyGemmGPUMems{
       }
       
       else{
-        throw  tinygemm_error(std::string("unrecognised char passed to operator[] of TinyGemmGPUMems. Should be one of a,b,c,w, not ") + x);
+        std::stringstream ss;
+        ss << "Unrecognised char passed to operator[] of TinyGemmGPUMems. Should be one of a,b,c,w, not ";
+        ss << x;
+        throw  miog_error(ss.str());
       }
     }
 };
@@ -172,30 +175,30 @@ private:
 
   void address_check_valid(){
     if (gpum['c'] == gpum['a'] || gpum['c'] == gpum['b']){
-      throw  tinygemm_error("c should be distinct from a and b for gemm, otherwise race condition arises (one thread writes its result to c before another one has finished reading from c)");
+      throw  miog_error("in address_check_valid, c should be distinct from a and b for gemm, otherwise race condition arises (one thread writes its result to c before another one has finished reading from c)");
     }
     
     if (gpum['c'] == nullptr){
-      throw  tinygemm_error("c should not be nullptr");
+      throw  miog_error("in address_check_valid, c should not be nullptr");
     }
     
     if (gpum['w'] == nullptr && gg.workspace_size != 0){
-      throw  tinygemm_error("pointer to workspace memory is the nullptr, but workspace_size is not zero");
+      throw  miog_error("in address_check_valid, pointer to workspace memory is the nullptr, but workspace_size is not zero");
     }
     
     if (gpum['w'] != nullptr && gg.workspace_size == 0){
-      throw  tinygemm_error("pointer to workspace memory is not the nullptr, but workspace_size is zero. if workspace_size is zero please set workspace_gpu to the nullptr to make super clear that there will be no workspace used ");      
+      throw  miog_error("in address_check_valid, pointer to workspace memory is not the nullptr, but workspace_size is zero. if workspace_size is zero please set workspace_gpu to the nullptr to make super clear that there will be no workspace used ");      
     }
     
     if (gpum['w'] != nullptr && (gpum['w'] == gpum['a'] || gpum['w'] == gpum['b'] || gpum['w'] == gpum['c'] ) ){
-      throw  tinygemm_error("pointer to workspace memory is not the nullptr, and it is the same as one of the a,b,c pointers ");
+      throw  miog_error("in address_check_valid, pointer to workspace memory is not the nullptr, and it is the same as one of the a,b,c pointers ");
     }
   }
   
   void address_check_valid_and_reliable(){
     address_check_valid();
     if (gpum['a'] == gpum['b']){
-      throw  tinygemm_error( "a and b are the same. this will effect kernel run time, not sure if this should be allowed so throwing"); 
+      throw  miog_error( "in address_check_valid_and_reliable, a and b are the same. this will effect kernel run time, not sure if this should be allowed, so throwing"); 
     }
   }
 
@@ -268,7 +271,7 @@ private:
     }
 
     else{
-      throw  tinygemm_error("what is the type of this kernel? Don't recognise it : " + type);
+      throw  miog_error("what is the type of this kernel? Don't recognise it : " + type);
     }
   }
 
@@ -355,7 +358,7 @@ private:
     update_total_elapsed_seconds();
     
     if (mowri_tracker.to_terminal == true && mowri.to_terminal == true){
-      throw tinygemm_error("either one of mowri_tracker.to_terminal and mowri.to_terminal must be false");
+      throw miog_error("either one of mowri_tracker.to_terminal and mowri.to_terminal must be false");
       
     }
     
@@ -496,7 +499,7 @@ private:
   void deriveability_test(const hyperparams::HyperParams & hp, const std::string & hash){
     auto deriveability = derivedparams::get_deriveability(hp, gg);      
     if (std::get<0>(deriveability) == false){
-      throw  tinygemm_error(hash + ": the hyper parameters in benchgemm are not consistent, specifically, from get_deriveability \n" + std::get<1>(deriveability));
+      throw  miog_error(hash + ": the hyper parameters in benchgemm are not consistent, specifically, from get_deriveability \n" + std::get<1>(deriveability));
     }
   }
 
@@ -506,7 +509,7 @@ public:
     address_check_valid();
     
     if (n_runs == 0){
-      throw  tinygemm_error("n_runs to benchgemm should be a positive integer");
+      throw  miog_error("n_runs to benchgemm should be a positive integer");
     }
    
     hyperparams::HyperParams hp(graph);
@@ -517,7 +520,7 @@ public:
     auto atr = architests::architecture_specific_tests(command_queue, hp, bundle.dp);
     
     if (std::get<0>(atr) == false){
-      throw  tinygemm_error(std::get<1>(atr));
+      throw  miog_error(std::get<1>(atr));
     }
 
     setup_tinykernels(hp, bundle); 
@@ -578,7 +581,7 @@ public:
       auto deriveability = derivedparams::get_deriveability(hyper_param_start, gg);
       if (std::get<0>(deriveability) == false){
         mowri << "NOW, THE FALLBACK SOLUTION IS NOT EVEN DERIVEABLE: " << hyper_param_start.get_string() << " is not deriveable, because : " << std::get<1>(deriveability) << "\n\n";
-        throw tinygemm_error("\nfallback solution failed deriveability test in get_hyper_param_start/\n");
+        throw miog_error("\nfallback solution failed deriveability test in get_hyper_param_start/\n");
       }
     }
     
@@ -677,7 +680,7 @@ public:
 
 
     if (allotted_time <= 0){
-      throw  tinygemm_error("in single_descent_find with allotted_time <= 0, this should never happen (logic error)");
+      throw  miog_error("in single_descent_find with allotted_time <= 0, this should never happen (logic error)");
     }
 
     /* In here, we will store all previously considered HyperParams strings, used to check and ensure that we do not consider a HyperParam more than once */
@@ -752,7 +755,7 @@ public:
 
           auto in_graph_tuple = hp.in_graph();
           if (std::count(one_aways.begin(), one_aways.end(), hp) > 1){
-            throw tinygemm_error("duplicates in one_aways not allowed, should have already been filtered. Could filter out here, but less efficient ");
+            throw miog_error("duplicates in one_aways not allowed, should have already been filtered. Could filter out here, but less efficient ");
           }        
 
           else if (std::get<0>(in_graph_tuple) == false){
@@ -760,7 +763,7 @@ public:
             errmss << "constraint violators not allowed, should have already been filtered. Could filter out here, but less efficient. \nThe hyperstring is\n" << hp.get_string();
             errmss << "\nrecall the geometry is\n" << gg.get_string();
             errmss << "\nthe constraint violations string is:\n" << std::get<1>(in_graph_tuple);
-            throw tinygemm_error(errmss.str());
+            throw miog_error(errmss.str());
           }
           
           /* filtering out if it has already been considered */
@@ -799,11 +802,11 @@ public:
     }
     
     else{
-      throw tinygemm_error("why did the algorithm stop ? ");
+      throw miog_error("why did the algorithm stop ? ");
     }
     
     if (best_solns_path.size() == std::numeric_limits<float>::max()){
-      throw tinygemm_error("\nThere were no solutions found. This suggests that the initial kernel did not work (could not derive hyper parameters, required too much memory, or did not compile. Maybe there is some preceding warning printed which sheds light on this? Probably with a modification to the FindStartType or the constraints_string, this should be resolved. For example, the unroll UNR can be reduced if the problem is memory. jn should catch certain problems in architests ");
+      throw miog_error("\nThere were no solutions found. This suggests that the initial kernel did not work (could not derive hyper parameters, required too much memory, or did not compile. Maybe there is some preceding warning printed which sheds light on this? Probably with a modification to the FindStartType or the constraints_string, this should be resolved. For example, the unroll UNR can be reduced if the problem is memory. jn should catch certain problems in architests ");
     }
   
     auto leading_size = best_solns_path.back().hyper_param_string.size() + 2;

@@ -14,16 +14,16 @@ void fill_uni(std::vector<TFloat> & v, unsigned r_small, unsigned r_big){
   if (r_small > r_big){
     std::stringstream ss;
     ss << "in fill_uni, with r_small > r_big. this seems like a strange (incorrect) request ";
-    throw tinygemm_error(ss.str());    
+    throw miog_error(ss.str());    
   }
   
   
   if (r_small > v.size()){
-    throw tinygemm_error("in fill_uni, r_small > v.size()");
+    throw miog_error("in fill_uni, r_small > v.size()");
   }
 
   if (r_big > v.size()){
-    throw tinygemm_error("in fill_uni, r_big > v.size()");
+    throw miog_error("in fill_uni, r_big > v.size()");
   }
     
   for (size_t i = 0; i < r_small; ++i){
@@ -49,7 +49,7 @@ void set_abc(std::vector<TFloat> & v_a, std::vector<TFloat> & v_b, std::vector<T
     ss << "currently, this code only generates random matrices of size less than 20000*10000. ";
     ss << "the request with geometry " << gg.get_string() << " is therefore rejected.";
     ss << " (n_a = " << n_a << " n_b = " << n_b << " n_c = " << n_c << ")";
-    throw tinygemm_error(ss.str());
+    throw miog_error(ss.str());
   } 
   /* fill matrices with random floats. It is important to fill them with random floats, 
    * as if they're integers, the kernel can, and does, cheat! (runs faster) */

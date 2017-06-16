@@ -47,7 +47,7 @@ protected:
     }
     
     else{
-      throw tinygemm_error("in PrepGenerator : unrecognised matrixtype " + std::to_string(matrixchar_in));
+      throw miog_error("in PrepGenerator : unrecognised matrixtype " + std::to_string(matrixchar_in));
     }
   }
 

@@ -1,5 +1,8 @@
 #include <tinygemm/derivedparams.hpp>
-#include <tinygemm/mapkeycheck.hpp>
+#include <tinygemm/error.hpp>
+#include <sstream>
+#include <algorithm>
+#include <iostream>
 #include <tinygemm/tiling.hpp>
 
 
@@ -32,7 +35,7 @@ unsigned get_copy_pad(nsHP::eMat emat_x){
 
 void DerivedParams::reset_cw_params(nsHP::eMat emat_x){
   if (emat_x == nsHP::matB && hp.at(nsHP::matA).vs[nsHP::WOS] != 0 && adps.cw_n_elements == uninitialised_unsigned){
-    throw tinygemm_error(std::string("make sure reset acw1 params is called before reset_bcw1_params, we need that adps.cw1_target_ldx be set here in derivedparams reset of bcw1"));
+    throw miog_error(std::string("make sure reset acw1 params is called before reset_bcw1_params, we need that adps.cw1_target_ldx be set here in derivedparams reset of bcw1"));
   }
   
   /* simple copy with padding */
@@ -52,7 +55,7 @@ void DerivedParams::reset_cw_params(nsHP::eMat emat_x){
   }
 
   else{
-    throw tinygemm_error("copy type is neither 1 nor 2, so can't be correct that there's a call to reset_cw_params");
+    throw miog_error("copy type is neither 1 nor 2, so can't be correct that there's a call to reset_cw_params");
   }
   
   at(emat_x).cw_global_offset = (emat_x == nsHP::matB && hp.at(nsHP::matA).vs[nsHP::WOS] != 0) ? at(nsHP::matA).cw_n_elements : 0;
@@ -70,7 +73,7 @@ void DerivedParams::reset_ga3_params(){
     static_cast<unsigned>(std::floor(std::sqrt(static_cast<double>(hp.at(nsHP::matC).vs[nsHP::NAW]))));
   }
   else{
-    throw tinygemm_error("main_split_on_k is neither 0 nor 1, how can this be? Logic error in reset_ga3_params");
+    throw miog_error("main_split_on_k is neither 0 nor 1, how can this be? Logic error in reset_ga3_params");
   }  
   ga3_last_super_column_width = bdps.n_groups % ga3_super_column_width;
 }
@@ -88,7 +91,7 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams & hp_, const TinyGem
   initialise_chis();
   
   if (s.compare("uninitialised") != 0){
-    throw tinygemm_error("the only string with which a DerivedParams object can be initialised is `uninitialised'");
+    throw miog_error("the only string with which a DerivedParams object can be initialised is `uninitialised'");
   }
 }
 
@@ -230,7 +233,7 @@ DerivedParams::set_fragile(){
 void DerivedParams::initialise_chis(){
   chis.resize(2);
   if (nsHP::matA > 2 || nsHP::matB > 2){
-    throw tinygemm_error("In DeriverParams constructor, enums too large (strange)");
+    throw miog_error("In DeriverParams constructor, enums too large (strange)");
   }
   
   chis[nsHP::matA] = &adps;
@@ -245,7 +248,7 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams & hp_, const TinyGem
   auto tup = set_fragile();
 
   if (std::get<0>(tup) == false){
-    throw tinygemm_error("Failure to construct DerivedParams. Problem caught in set_fragile. It is recommended to run function ` derivable ' to check that a valid DerivedParams can be constructed. The message returned in set_fragile is :  " + std::get<1>(tup));
+    throw miog_error("Failure to construct DerivedParams. Problem caught in set_fragile. It is recommended to run function ` derivable ' to check that a valid DerivedParams can be constructed. The message returned in set_fragile is :  " + std::get<1>(tup));
   }
   
   /* do the tiling */  
@@ -330,7 +333,7 @@ unsigned DerivedParams::get_n_elements_in_x_unroll(char x){
     return bdps.n_elements_in_unroll;
   }
   else{
-    throw tinygemm_error("unrecognised x in get_n_elements_in_x_unroll");
+    throw miog_error("unrecognised x in get_n_elements_in_x_unroll");
   }
 }
 
@@ -348,7 +351,7 @@ unsigned DerivedParams::get_stride(nsHP::eMat emat_x, bool pll_k, bool is_macro,
   else if (workspace_type_ == 2){
     return get_stride_cw2(emat_x, pll_k, is_macro);
   }
-  else throw tinygemm_error("unrecognised workspace_type in get_strinde in derivedparams");
+  else throw miog_error("unrecognised workspace_type in get_strinde in derivedparams");
 }
 
 unsigned DerivedParams::get_stride_cw0(nsHP::eMat emat_x, bool pll_k) const{

@@ -17,7 +17,7 @@ std::vector<std::string> get_basic_kernel_type_strings(){
 
   for (unsigned i = 0; i < bkt::nBasicKernelTypes; ++i){
     if (pbt[i] == ""){
-      throw tinygemm_error("One of the strings of the basic kernel types vector has not been set");
+      throw miog_error("One of the strings of the basic kernel types vector has not been set");
     }
   }
 
@@ -39,7 +39,7 @@ std::vector<std::vector<unsigned>> get_kernel_dependencies(){
 
   for (unsigned i = 0; i < bkt::nBasicKernelTypes; ++i){
     if  (kdps[i].size() == 1 && kdps[i][0] == uninitialised_value ){
-      throw tinygemm_error("kernel_dependencies does not appear to be initialised entirely");
+      throw miog_error("kernel_dependencies does not appear to be initialised entirely");
     } 
   }
   
@@ -67,7 +67,7 @@ bool KernelType::uses(char c) const{
     return uses_workspace;
   }
   else{
-    throw tinygemm_error(std::string("unrecognised char in uses in KernelType, ") + c);
+    throw miog_error(std::string("unrecognised char in uses in KernelType, ") + c);
   }
 }
 
@@ -110,7 +110,7 @@ uses_a(uses_a_), uses_b(uses_b_), uses_c(uses_c_), uses_workspace(uses_workspace
   }
   
   else{
-    throw tinygemm_error("determining `basic' string of KernelType, not sure what this kernel does. Its full string is " + full);
+    throw miog_error("determining `basic' string of KernelType, not sure what this kernel does. Its full string is " + full);
   }
     
 }

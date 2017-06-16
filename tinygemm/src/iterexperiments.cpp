@@ -46,7 +46,7 @@ int run_find_experiments(const std::vector<TinyGemmGeometry> & geometries, std::
       if (v_sys != 0){
         std::stringstream ss;
         ss << "The following call to std::system failed:\n" << syscall << "\nIs the operating system posix? If not, the call to std::system should be different.\nPlease raise an issue if you see this, and ideally propose a fix";
-        throw tinygemm_error(ss.str());
+        throw miog_error(ss.str());
       }
     }
     

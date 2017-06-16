@@ -13,7 +13,7 @@ void indentify(std::string & source){
   std::string::size_type last_lend = source.find("\n", 0);  
   
   if (std::string::npos == last_lend){
-    throw tinygemm_error("the kernel up for indentification seems suspicious, it seems like it has no new lines in it :\n"  + source);  
+    throw miog_error("the kernel up for indentification seems suspicious, it seems like it has no new lines in it :\n"  + source);  
   }
   
   std::string::size_type next_lend = source.find("\n", last_lend + 1);
@@ -85,7 +85,7 @@ std::tuple<std::string, unsigned> splitnumeric(std::string alphanum){
   size_t split_point = alphanum.find_first_of("0123456789");
   
   if (split_point == std::string::npos){
-    throw tinygemm_error("This error is being thrown from stringutilbase.cpp, function splitnumeric. It seems like the input string `" + alphanum + "' has no digits in it.");
+    throw miog_error("This error is being thrown from stringutilbase.cpp, function splitnumeric. It seems like the input string `" + alphanum + "' has no digits in it.");
   }
   return  std::make_tuple<std::string, unsigned>(alphanum.substr(0, split_point), std::stoi(alphanum.substr(split_point, alphanum.size() )));
 }
@@ -124,7 +124,7 @@ std::string getdirfromfn(const std::string & fn){
   auto morcels = split(fn, "/");
   
   if (morcels[0].compare("") != 0){
-    throw tinygemm_error("The string passed to getdirfromfn is not a valid path as there is no leading / .");
+    throw miog_error("The string passed to getdirfromfn is not a valid path as there is no leading / .");
   }
   
   std::string dir = "/";

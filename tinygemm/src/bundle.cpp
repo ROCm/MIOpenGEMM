@@ -57,7 +57,7 @@ public:
     }
     
     else{
-      throw tinygemm_error("hp.at(nsHP::matA).vs[nsHP::WOS] should be 0, 1 or 2");
+      throw miog_error("hp.at(nsHP::matA).vs[nsHP::WOS] should be 0, 1 or 2");
     }
     
 
@@ -75,7 +75,7 @@ public:
     }
 
     else {
-      throw tinygemm_error("hp.at(nsHP::matB).vs[nsHP::WOS] should be 0, 1 or 2");
+      throw miog_error("hp.at(nsHP::matB).vs[nsHP::WOS] should be 0, 1 or 2");
     }
 
     

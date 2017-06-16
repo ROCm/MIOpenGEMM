@@ -137,7 +137,7 @@ group_id_a = (group_id_xy  - (N_GROUPS_B - LAST_SUPER_COLUMN_WIDTH)*N_GROUPS_A) 
   else{
     std::stringstream err_ss;
     err_ss << "Invalid group_allocation parameter : " << hp.at(nsHP::matC).vs[nsHP::GAL] << ". It should be one of 1/2/3.";
-    throw tinygemm_error(err_ss.str());
+    throw miog_error(err_ss.str());
   }
 }
 
@@ -326,7 +326,7 @@ void append_load_into_LDS_string(char x, std::stringstream & ss, unsigned final_
   
   
   if (final_unroll != 0 && special_first_unroll != 0){
-    throw tinygemm_error("From get_load_ab_into_LDS_string > It is not possible for this to be both a `special_first_unroll' and a `final_unroll'. This is a logic error, broken alg, come and sort it out");
+    throw miog_error("From get_load_ab_into_LDS_string > It is not possible for this to be both a `special_first_unroll' and a `final_unroll'. This is a logic error, broken alg, come and sort it out");
   }
   
   std::stringstream ss_value_to_get;
@@ -394,7 +394,7 @@ void append_math_section(std::stringstream & ss, unsigned use_k_remaining){
 
 void append_relocate_load_math_string(std::stringstream & ss, unsigned final_unroll, unsigned special_first_unroll){
   if (final_unroll != 0 && special_first_unroll != 0){
-    throw tinygemm_error("From get_relocate_load_math_string : It is not possible for this to be both a `special_first_unroll' and a `final_unroll'. This is a logic error, broken alg, come and sort it out");
+    throw miog_error("From get_relocate_load_math_string : It is not possible for this to be both a `special_first_unroll' and a `final_unroll'. This is a logic error, broken alg, come and sort it out");
   }
 
   append_load_ab_into_LDS_string(ss, final_unroll, special_first_unroll);
@@ -510,7 +510,7 @@ void append_final_write_all(std::stringstream & ss){
     else{
       
       if (dp.main_use_edge_trick == 0){
-        throw tinygemm_error("in alphagenerator, dp.main_use_edge_trick == 0. however, non-perfectly tilable");
+        throw miog_error("in alphagenerator, dp.main_use_edge_trick == 0. however, non-perfectly tilable");
       }
       
       ss << "\n/* the case where this is not an edge tile : will write to all cells */ \n";

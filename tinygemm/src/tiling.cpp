@@ -33,7 +33,7 @@ std::tuple<bool, std::string> get_tileability(unsigned TH, unsigned TW, unsigned
   std::stringstream ss_tileable_status;
   
   if (tS == 0){
-    throw tinygemm_error("This is worse than non-tileable, there is a bad input parameter: tS in zero (tiling::get_tileable_status)");
+    throw miog_error("In get_tileability, and tS is zero. This is worse than non-tileable, there is probably a bad input parameter.");
   }
 
   std::string set_ds("");  
@@ -63,9 +63,9 @@ std::tuple<bool, std::string> get_tileability(unsigned TH, unsigned TW, unsigned
   if (TW % tW != 0 || TH % TH != 0 || tW*tH != tS){
     std::stringstream err_ss;
     err_ss 
-    << "This is worse than non-tileable, this is a logic error. the found micro tile size is not consistent with the macro tile : "
+    << "Problem in get_tileability. This isn't even non-tileable, this is a logic error. The found micro tile size is not consistent with the macro tile : "
     << input_string << "   tH : " << tH << " tW  " << tW;
-    throw tinygemm_error(err_ss.str()); 
+    throw miog_error(err_ss.str()); 
   }
   
   /* ran the gauntlet successfully */
@@ -80,7 +80,7 @@ void set_tile_dimensions(unsigned & tH, unsigned & tW, unsigned TH, unsigned TW,
   
   std::tie(is_tileable, tileable_status) = get_tileability(TH, TW, tS);
   if (is_tileable == false){
-    throw tinygemm_error("The problem is not tileable (in set_tile_dimensions). Call get_tileability before set_tile_dimensions to catch this case without throwing an error. The string returned from set_tile_dimensions was : " + tileable_status);
+    throw miog_error("In set_tile_dimensions, and the problem is not tileable. Call get_tileability as a check before set_tile_dimensions to catch this case without throwing an error. The string returned from set_tile_dimensions was : " + tileable_status);
   }
   
   /* switch (tW <-> tH) and (TW <-> TH) */

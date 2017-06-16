@@ -12,7 +12,7 @@ OutputWriter::OutputWriter(bool to_terminal_, bool to_file_, std::string filenam
 
   if (to_file == true){
     if (filename.compare("") == 0){
-      throw tinygemm_error("empty filename passed to OutputWrite, with to_file flag true. This is not possible.");
+      throw miog_error("empty filename passed to OutputWrite, with to_file flag true. This is not possible.");
     }
     
     file.open(filename, std::ios::out);
@@ -21,7 +21,7 @@ OutputWriter::OutputWriter(bool to_terminal_, bool to_file_, std::string filenam
       std::string errm = "bad filename in constructor of OutputWriter object. The filename provided is `";
       errm += filename;
       errm += "'. The directory of the file must exist, OutputWriters do not create directories. Either create all directories in the path, or change the provided path.  ";
-      throw tinygemm_error(errm);
+      throw miog_error(errm);
     }
   }
   

@@ -41,7 +41,7 @@ namespace tinygemm{
     return fms.str();
   }
   
-  tinygemm_error::tinygemm_error(const std::string& what_arg):std::runtime_error(tgformat(what_arg, "tinygemm",  "ERROR")){}
+  miog_error::miog_error(const std::string& what_arg):std::runtime_error(tgformat(what_arg, "tinygemm",  "ERROR")){}
 
   void tinygemm_warning(const std::string & warning){
     std::cerr << tgformat(warning, "tinygemm",  "WARNING") << std::flush;

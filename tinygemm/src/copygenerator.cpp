@@ -33,7 +33,7 @@ void CopyGenerator::setup_additional() {
   }
 
   else{
-    throw tinygemm_error("Unrecognised type in ByLineGenerator.cpp : " + type + ". should be either copya or copyb \n");
+    throw miog_error("Unrecognised type in ByLineGenerator.cpp : " + type + ". should be either copya or copyb \n");
   }
 
   description_string = R"()";
@@ -44,7 +44,7 @@ void CopyGenerator::setup_additional() {
 
 void CopyGenerator::append_derived_definitions_additional(std::stringstream & ss){
   if (matrixchar != 'a' && matrixchar != 'b'){
-    throw tinygemm_error(std::string("this is unexpected, call to append_derived_definitions_additional but matrixchar is neither a not b, but rather  ") + matrixchar);
+    throw miog_error(std::string("this is unexpected, call to append_derived_definitions_additional but matrixchar is neither a not b, but rather  ") + matrixchar);
   }
  
   ss << "#define LDW " << dp.get_target_ld(emat_x) << "\n";

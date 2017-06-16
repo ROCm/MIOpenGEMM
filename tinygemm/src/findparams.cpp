@@ -12,7 +12,7 @@ std::vector<std::string> get_sumstatkey(){
   ssv[Max] = "Max";
   for (unsigned i = 0; i < nSumStatKeys; ++i){
     if (ssv[i] == "unset"){
-      throw  tinygemm_error("one of the keys has not been set for sumstatkey");
+      throw  miog_error("one of the keys has not been set for sumstatkey");
     }
   }
   
@@ -24,7 +24,7 @@ const std::vector<std::string> sumstatkey = get_sumstatkey();
 std::string get_sumstatkey(SummaryStat sumstat){
   
   if (sumstat >= nSumStatKeys){
-    throw  tinygemm_error("unrecognised sumstat key in get_sumstatkey");
+    throw  miog_error("unrecognised sumstat key in get_sumstatkey");
   }
   return sumstatkey[sumstat];
   
@@ -33,11 +33,11 @@ std::string get_sumstatkey(SummaryStat sumstat){
 FindParams::FindParams(float allotted_time_, unsigned allotted_descents_, unsigned n_runs_per_kernel_, SummaryStat sumstat_):allotted_time(allotted_time_), allotted_descents(allotted_descents_), n_runs_per_kernel(n_runs_per_kernel_), sumstat(sumstat_) {
 
   if (allotted_time <= 0){
-    throw  tinygemm_error("allotted_time should be strictly positive, in FindParams constructor");
+    throw  miog_error("allotted_time should be strictly positive, in FindParams constructor");
   }
   
   if (allotted_descents == 0){
-    throw  tinygemm_error("allotted_descents should be strictly positive, in FindParams constructor");
+    throw  miog_error("allotted_descents should be strictly positive, in FindParams constructor");
   }
 }
 

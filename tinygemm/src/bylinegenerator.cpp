@@ -23,7 +23,7 @@ void ByLineGenerator::setup(){
     ss  << "in ByLineGenerator::setup, invalid emat_x : " << emat_x;
     ss << "\nMATRIXCHAR is " << MATRIXCHAR;
     ss << "\nmatrixchar is " << matrixchar;
-    throw tinygemm_error(ss.str());
+    throw miog_error(ss.str());
   } 
 
   

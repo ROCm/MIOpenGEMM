@@ -32,7 +32,7 @@ void PrepGenerator::set_usage_from_matrixchar(){
       uses_b = true;    
     }
     else{
-      throw tinygemm_error("Unrecognised matrixchar in forallgenerator.cpp : " + std::string(1,matrixchar) + std::string(".\n"));
+      throw miog_error("Unrecognised matrixchar in forallgenerator.cpp : " + std::string(1,matrixchar) + std::string(".\n"));
     }
   }
 }

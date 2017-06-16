@@ -65,7 +65,7 @@ void add_entry(KernelCache & kc, const std::string & k_dev, const std::string & 
     ss << "\n\n";    
     ss << "Please choose between these, and remove one.";
     
-    throw  tinygemm_error(ss.str());
+    throw  miog_error(ss.str());
   }
 }
 

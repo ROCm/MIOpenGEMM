@@ -22,7 +22,7 @@ void confirm_cl_status(cl_int ret, const std::string & hash, const std::string &
   if (ret != CL_SUCCESS){
     std::stringstream errms;
     errms << "Reporting an opencl error (grep this code: `" << hash << "') which returned with cl_int " << ret << " from function " << function << "." << std::endl;
-    throw tinygemm_error(errms.str());
+    throw miog_error(errms.str());
   }
 }
 
@@ -292,7 +292,7 @@ void set_platform_etc(cl_platform_id & platform, cl_uint & num_platforms, cl_con
   cl_get_context_info(context, CL_CONTEXT_NUM_DEVICES, sizeof(int), &deviceListSize, nullptr, "getting deviceListSize");
   
   if (deviceListSize == 0){
-    throw tinygemm_error("There are no devices detected. \nSpecifically, using clGetContextInfo with CL_CONTEX_NUM_DEVICES as the flag returns 0. \nThis error is being thrown from set_platform_etc in openclutil.cpp. Please have a look, it seems tinygemm can't figure out your setup.");
+    throw miog_error("There are no devices detected. \nSpecifically, using clGetContextInfo with CL_CONTEX_NUM_DEVICES as the flag returns 0. \nThis error is being thrown from set_platform_etc in openclutil.cpp. Please have a look, it seems tinygemm can't figure out your setup.");
   }
 
   
@@ -351,7 +351,7 @@ void set_platform_etc(cl_platform_id & platform, cl_uint & num_platforms, cl_con
     else if (max_max_compute_units < 40){
       std::string errm = device_compute_unit_count_string;
       errm += "As this is less than 40, an error is being thrown. \nIf you wish to use a device with fewer than 40 CUs, please make changes here (in openclutil.cpp)";
-      throw tinygemm_error(errm);
+      throw miog_error(errm);
     }
   }
   
@@ -518,7 +518,7 @@ OpenCLDeviceInfo::OpenCLDeviceInfo(const cl_command_queue & command_queue){
   
   else{
     wg_atom_size = 32;
-    throw tinygemm_error("Tinygemm has not been tested on any platform from vendor " + platinfo.vendor + " yet. Are you sure you want to try this ? If so, remove error message hyiar"); 
+    throw miog_error("Tinygemm has not been tested on any platform from vendor " + platinfo.vendor + " yet. Are you sure you want to try this ? If so, remove error message hyiar"); 
   }
   
   /* setting identifier */

@@ -57,7 +57,7 @@ void check_sizes_ok_for_unsigned(bool isColMajor, bool tA, bool tB, bool tC, uns
   
   if (errm.compare("") != 0){
     errm += "\nthis error is can be fixed, just need to change some unsigneds to size_ts. please report this bug"; 
-    throw tinygemm_error(errm);
+    throw miog_error(errm);
   }
 }
   

@@ -39,7 +39,7 @@ const unsigned & TinyGemmOffsets::operator[](char x) const{
   }
 
   else{
-    throw  tinygemm_error(std::string("unrecognised char passed to operator[](char x) of TinyGemmOffsets. Should be one of a,b,c,w, not ") + x);
+    throw  miog_error(std::string("unrecognised char passed to operator[](char x) of TinyGemmOffsets. Should be one of a,b,c,w, not ") + x);
   }
 }
 
@@ -55,7 +55,7 @@ char get_floattype(unsigned nbits){
     ft = 'd';
   }
   else{
-    throw  tinygemm_error("what is the floattype with this many bits : " + std::to_string(nbits) + std::string(" ?? in tinygemmgeometry"));
+    throw  miog_error("what is the floattype with this many bits : " + std::to_string(nbits) + std::string(" ?? in tinygemmgeometry"));
   }
   return ft;
 }
@@ -68,7 +68,7 @@ void TinyGemmGeometryDerived::reset(char floattype){
     float_size_bytes = sizeof(double);
   }
   else{
-    throw  tinygemm_error("what is this floattype : " + floattype + std::string(" ?? in tinygemmgeometry"));
+    throw  miog_error("what is this floattype : " + floattype + std::string(" ?? in tinygemmgeometry"));
   }
   float_size_bits = 8*float_size_bytes;
 }
@@ -96,7 +96,7 @@ unsigned TinyGemmGeometry::get_padless_dim(nsHP::eMat emat_x, bool isCoal) const
   }
   
   else{
-    throw  tinygemm_error("unrecognised emat_x passed to get_coal in tinygemm geometry");
+    throw  miog_error("unrecognised emat_x passed to get_coal in tinygemm geometry");
   }
 }
 
@@ -111,7 +111,7 @@ unsigned TinyGemmGeometry::get_non_k_dim(nsHP::eMat emat_x) const{
   }
 
   else{
-    throw  tinygemm_error("invalid char passed to get_non_k_dim in tinygemm geometry, it should be either a or b");
+    throw  miog_error("invalid char passed to get_non_k_dim in tinygemm geometry, it should be either a or b");
   }  
 }
 
@@ -160,7 +160,7 @@ void TinyGemmGeometry::check_ldx_consistent() const{
       }
     }
         
-    throw  tinygemm_error(errm_ss.str());
+    throw  miog_error(errm_ss.str());
   }
   
   
@@ -204,7 +204,7 @@ void TinyGemmGeometry::initialise(bool isColMajor_, bool tA_, bool tB_, bool tC_
   
   
   if (floattype != 'd' and floattype != 'f'){
-    throw  tinygemm_error("floattype should be one of 'f' and 'd' (in TinyGemmGeometry constructor)");
+    throw  miog_error("floattype should be one of 'f' and 'd' (in TinyGemmGeometry constructor)");
   }
     
   
@@ -242,7 +242,7 @@ unsigned safeat(std::map<std::string, unsigned> & map, std::string key){
     std::stringstream errm;
     errm << "Unrecognised key `";
     errm << key << "' in safeat in tinygemmgeometry";
-    throw tinygemm_error(errm.str());
+    throw miog_error(errm.str());
   }
   return map.at(key);
 }
@@ -273,7 +273,7 @@ TinyGemmGeometry::TinyGemmGeometry(std::string geometry_string){
   }
 
   if (good_string == false){
-    throw tinygemm_error(errm_ss.str());
+    throw miog_error(errm_ss.str());
   }
    
 

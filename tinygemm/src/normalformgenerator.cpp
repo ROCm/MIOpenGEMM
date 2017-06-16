@@ -26,7 +26,7 @@ public:
     }
   
     else{
-      throw tinygemm_error("Unrecognised type in normalformgenerator.cpp : " + type + ". should be either nforma or nformb \n");
+      throw miog_error("Unrecognised type in normalformgenerator.cpp : " + type + ". should be either nforma or nformb \n");
     }
     
     set_usage_from_matrixchar();
