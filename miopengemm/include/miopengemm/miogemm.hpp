@@ -76,7 +76,7 @@ bool c_is_const = false);
 
 /* reduced form, patch for miopen */
 Solution
-find(float allotted_time, cl_command_queue command_queue, cl_mem a, cl_mem b, cl_mem c, bool enforce_determinism, const Geometry & tgg);
+find(float allotted_time, cl_command_queue command_queue, cl_mem a, cl_mem b, cl_mem c, bool enforce_determinism, const Geometry & tgg, bool verbose, bool with_warnings);
 
 Solution
 get_default(const Geometry & gg);
