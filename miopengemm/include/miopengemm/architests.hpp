@@ -9,7 +9,7 @@
 namespace MIOpenGEMM{
 namespace architests{
   
-  std::tuple<bool, std::string> architecture_specific_tests(cl_command_queue, const hyperparams::HyperParams &, const derivedparams::DerivedParams &);
+  std::tuple<bool, std::string> architecture_specific_tests(cl_command_queue, const derivedparams::DerivedParams &, const Geometry & gg, const hyperparams::HyperParams &);
 
 }
 }
