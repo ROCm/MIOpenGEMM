@@ -41,6 +41,38 @@ public:
   
 };
 
+
+/* cl_events comment.
+ * copying cl_events is dangerous. 
+ * I have seen that copying them before passed to enqueue 
+ * (last parameter) causes problems,
+ * this is my idea of what is going on, to confirm: 
+ * from cl.h, we see that
+ * typedef struct _cl_event *          cl_event,
+ * that is cl_event is a pointer to a _cl_event. 
+ * when a cl_event address is passed to enqueue,
+ * the value of it changes. that is it points to a different _cl_event.
+ * thus ev_a = ev_b, enqueue(..., ev_b) 
+ * leaves ev_a pointing to the wrong (old) place 
+ * checking the event is safe:
+ * clGetEventInfo takes cl_events by value. 
+ * So the moral of the story is : 
+ * don't copy cl_events before passing their address  
+ * as non-const pointers somewhere!
+ * paruse cl.h, sometimes *cl_event is passed as const, sometimes not
+ *  */
+
+
+/* the in series comment solution
+ if (k_ind == 0){ 
+  status = tk_kernels_active[k_ind]->enqueue();
+}
+
+else{
+  status = tk_kernels_active[k_ind]->enqueue(1, &(tk_kernels_active[k_ind - 1]->clevent));
+} */
+
+
 static const MultiFloatType m_alpha(default_alpha);
 static const MultiFloatType m_beta(default_beta);
 
@@ -277,27 +309,48 @@ private:
 
 
   
-  void refresh_kernel(const KernelString & ks, const hyperparams::HyperParams & hp, const derivedparams::DerivedParams & dp){
+  openclutil::OpenCLResult refresh_kernel(const KernelString & ks, const hyperparams::HyperParams & hp, const derivedparams::DerivedParams & dp){
 
+    openclutil::OpenCLResult oclr;
     auto type = ks.type;
     if (refresh_needed(type.basic_kernel_type, hp, dp) == true){
-      tk_kernels.at(type.basic_kernel_type).update(ks, mowri);
-      set_kern_args(type);
+      
+      oclr = tk_kernels.at(type.basic_kernel_type).update(ks, mowri);
+      if (oclr.fail() == false){
+        set_kern_args(type);
+      }
+      
+      else {
+        oclr.message += " (failed from refresh_kernel) ";
+      }
+      
     }
+    return oclr;
   }
 
 
-  void setup_tinykernels(const hyperparams::HyperParams & hp, const kerngen::Bundle & bundle ){
+  openclutil::OpenCLResult setup_tinykernels(const hyperparams::HyperParams & hp, const kerngen::Bundle & bundle ){
+    
+    
+    openclutil::OpenCLResult oclr;
     
     v_wait_indices = bundle.v_wait_indices;
     tk_kernels_active.resize(0);
     
     for (unsigned ksi = 0; ksi < bundle.v_tgks.size(); ++ksi){
-
+      
       bkt basic = bundle.v_tgks[ksi].type.basic_kernel_type;
-      refresh_kernel(bundle.v_tgks[ksi], hp, bundle.dp);
-      tk_kernels_active.push_back(&tk_kernels[basic]);
+      oclr = refresh_kernel(bundle.v_tgks[ksi], hp, bundle.dp);
+      if (oclr.fail() == false){
+        tk_kernels_active.push_back(&tk_kernels[basic]);
+      }
+      else{
+        oclr.message += " (failed in setup_tinykernels) ";
+        return oclr;
+      }
     }
+        
+    return oclr;
   }
   
 
@@ -313,7 +366,8 @@ private:
     }
     
     else{
-      v_t_total.push_back(std::numeric_limits<float>::max());
+      throw miog_error("in update_run_times, status is not CL_SUCCESS. The logic has changed, this logic branch should be impossible"); 
+      //v_t_total.push_back(std::numeric_limits<float>::max());
     }
   }
 
@@ -351,20 +405,8 @@ private:
     }
   }
   
-  
-  void core_gemm_loop(size_t n_runs, bool print_asap){
-    
-    ++total_kernels_tested;
-    update_total_elapsed_seconds();
-    
-    if (mowri_tracker.to_terminal == true && mowri.to_terminal == true){
-      throw miog_error("either one of mowri_tracker.to_terminal and mowri.to_terminal must be false");
-      
-    }
-    
-  
-    if (mowri_tracker.to_terminal == true){
-  
+
+    void mowri_tracker_print(){
       std::stringstream comment_string_ss;
       comment_string_ss << "[ TOTAL TIME:" << stringutil::get_padded(static_cast<int>(total_elapsed_seconds), 7);
       comment_string_ss << "  #RESTARTS:" << stringutil::get_padded(total_elapsed_descents, 7);
@@ -375,11 +417,21 @@ private:
       /* TODO : determine where to use mowri_tracker, and enable to path to here */
       mowri_tracker << backspaces << new_comment_string << Flush;
     }
+  
     
+  openclutil::OpenCLResult core_gemm_loop(size_t n_runs, bool print_asap){
+    
+    update_total_elapsed_seconds();    
+    if (mowri_tracker.to_terminal == true && mowri.to_terminal == true){
+      throw miog_error("either one of mowri_tracker.to_terminal and mowri.to_terminal must be false");      
+    }
+
     reset_v_times();
+    if (mowri_tracker.to_terminal == true){
+      mowri_tracker_print();
+    }
     
     std::vector<std::string> indi_run_strings;
-
     if (print_asap == true){
       mowri << get_run_times_heading();
     }
@@ -387,7 +439,7 @@ private:
 
 
     for (size_t kqq = 0; kqq < n_runs; ++kqq){
-
+      
       /* This pause should have zero effect but
        * mysteriously it smooths out the run times 
        * between runs when working with certain 
@@ -400,8 +452,8 @@ private:
        *  Note on timing : the same results have been obtained whth timespec and std::chrono   *
        *  **************************************************************************************/
       
-      int status = 10111; 
-
+      openclutil::OpenCLResult oclr;
+      
       for (unsigned k_ind = 0; k_ind < tk_kernels_active.size(); ++k_ind){
       /* At this point, the kernel has been succesfully compiled, 
        * but it is still possible that the resources necessary (LDS etc) are
@@ -412,70 +464,47 @@ private:
         std::vector<cl_event> clevent_waits;
 
         for (auto & evi : v_wait_indices[k_ind]){
-          /* copying cl_events is dangerous. 
-           * I have seen that copying them before passed to enqueue 
-           * (last parameter) causes problems,
-           * this is my idea of what is going on, to confirm: 
-           * from cl.h, we see that
-           * typedef struct _cl_event *          cl_event,
-           * that is cl_event is a pointer to a _cl_event. 
-           * when a cl_event address is passed to enqueue,
-           * the value of it changes. that is it points to a different _cl_event.
-           * thus ev_a = ev_b, enqueue(..., ev_b) 
-           * leaves ev_a pointing to the wrong (old) place 
-           * checking the event is safe:
-           * clGetEventInfo takes cl_events by value. 
-           * So the moral of the story is : 
-           * don't copy cl_events before passing their address  
-           * as non-const pointers somewhere!
-           * paruse cl.h, sometimes *cl_event is passed as const, sometimes not
-           *  */
+          //see cl_events comment at top          
           clevent_waits.emplace_back(tk_kernels_active[evi]->clevent);
         }
         
         size_t num_events_int_wait_list = clevent_waits.size();
         const cl_event * event_wait_list = num_events_int_wait_list == 0 ? nullptr : clevent_waits.data();
-        status = tk_kernels_active[k_ind]->enqueue(num_events_int_wait_list, event_wait_list);
+        oclr = tk_kernels_active[k_ind]->enqueue(num_events_int_wait_list, event_wait_list);
+        //see in series comment at top
 
-        ////* the in series solution */  
-        //if (k_ind == 0){ 
-          //status = tk_kernels_active[k_ind]->enqueue();
-        //}
+
+        /* Set the run time(s) and append to vectors */          
+        if (oclr.success == CL_OUT_OF_RESOURCES){
+          openclutil::cl_flush(command_queue, "cl flushing in core gemm loop", true);
+          oclr.message += " (CL_OUT_OF_RESOURCES in core_gemm_loop) ";
+          return oclr;
+        }
         
-        //else{
-          //status = tk_kernels_active[k_ind]->enqueue(1, &(tk_kernels_active[k_ind - 1]->clevent));
-        //}
-
-
-        if (status == CL_OUT_OF_RESOURCES){
-          /* Set the run time(s) and append to vectors */
-          mowri << "kernel could not be enqueued, status returned from clEnqueueNDRangeKernel was CL_OUT_OF_RESOURCES (" <<tk_kernels_active[k_ind]->hash << ")" << Endl;
-          break;
+        else if (oclr.success != CL_SUCCESS){          
+          std::stringstream ss;
+          ss << "OpenCL error status : " << oclr.success << ". ";
+          ss << "This seems like a logic error. How can this not be CL_SUCCESS or CL_OUT_OF_RESOURCES? Maybe an algo prob, come fix. Is status 10111? Maybe there are no kernels? Maybe there's a runtime/compiler issue? One option is to lump this error with CL_OUT_OF_RESOURCES (ie throw oclr) ";
+          ss << "The error from opencl was " << oclr.message;
+          throw miog_error(ss.str());          
+        }
+        
+        else{
+          //CL_SUCCESS
         }
       }
       
-      openclutil::cl_flush(command_queue, "cl flushing in core gemm loop");      
+      openclutil::cl_flush(command_queue, "cl flushing in core gemm loop", true);      
       
       
-      if (status == CL_SUCCESS){
-        /* Wait for kernels to complete */
-        openclutil::cl_wait_for_events(1, &(tk_kernels_active.back()->clevent), "with status == CL_SUCCESS in core gemm loops");
-      }
-
-      else if (status == CL_OUT_OF_RESOURCES){
-        //
-      }
+      /* Wait for kernels to complete */
+      openclutil::cl_wait_for_events(1, &(tk_kernels_active.back()->clevent), "with status == CL_SUCCESS in core gemm loops", true);
       
-      else{
-        throw std::logic_error("How can this not be CL_SUCCESS or CL_OUT_OF_RESOURCES? Algo prob, come fix. Is status 10111? Maybe there are no kernels?");
-      }
-      
-      update_run_times(status);
-      indi_run_strings.push_back(get_run_time_string(status));
+      update_run_times(oclr.success);
+      indi_run_strings.push_back(get_run_time_string(oclr.success));
       if (print_asap == true){
         mowri << indi_run_strings[kqq] << "\n";
       }
-
     }
     
     set_medians();
@@ -494,6 +523,10 @@ private:
         mowri << "\n";
       }
     }
+    
+    ++total_kernels_tested;
+    return {};
+    
   }
 
   void deriveability_test(const hyperparams::HyperParams & hp, const std::string & hash){
@@ -515,23 +548,30 @@ public:
     hyperparams::HyperParams hp(graph);
     
     deriveability_test(hp, "in benchgemm");
-    
-    auto bundle = kerngen::get_bundle(hp,gg, mowri, bundle_verbose); 
-    auto atr = architests::architecture_specific_tests(command_queue, hp, bundle.dp);
-    
+
+
+     
+      
+    auto bundle = kerngen::get_bundle(hp,gg, mowri, bundle_verbose);         
+    auto atr = architests::architecture_specific_tests(command_queue, bundle.dp, gg, hp);
     if (std::get<0>(atr) == false){
       throw  miog_error(std::get<1>(atr));
     }
 
-    setup_tinykernels(hp, bundle); 
-    
+
+    auto oclr = setup_tinykernels(hp, bundle); 
+    if (oclr.fail()){
+      throw miog_error(oclr.message);
+    }
+
+
+    mowri << "(benchgemm) hp   :" << hp.get_string() << Endl;
     mowri << "(benchgemm) geometry  \t:" << gg.get_string()  << "\nEntering the core gemm loops" << Endl;
-    core_gemm_loop(n_runs, true);
+    oclr = core_gemm_loop(n_runs, true);
 
-    
-
-    
-
+    if (oclr.fail()){
+      throw miog_error(oclr.message);
+    }
   }
   
 
@@ -543,34 +583,42 @@ public:
     hyper_param_start.checks();  
   
 
-    bool found_a_deriveable_hp = false;
-    unsigned deriveable_search_iteration = 0;
-    std::stringstream deriveablesearch_ss;
+    bool found_a_deriveable_goodarchi_hp = false;
+    unsigned d_and_g_search_iteration = 0;
+    std::stringstream d_and_g_ss;
 
     
     /* the number of attempts at finding a deriveable HyperParams given the constraint string */
     const unsigned n_trials = 100000;
     
-    while (found_a_deriveable_hp == false && deriveable_search_iteration < n_trials){
+    while (found_a_deriveable_goodarchi_hp == false && d_and_g_search_iteration < n_trials){
       hyper_param_start = hyperparams::HyperParams(graph);
       hyper_param_start.checks();        
       auto deriveability = derivedparams::get_deriveability(hyper_param_start, gg);
       if (std::get<0>(deriveability) == false){
-        deriveablesearch_ss << hyper_param_start.get_string() << " is not deriveable, because : " << std::get<1>(deriveability) << "\n\n";            
+        d_and_g_ss << hyper_param_start.get_string() << " is not deriveable, because : " << std::get<1>(deriveability) << "\n\n";            
       }
+      
       else{
-        found_a_deriveable_hp = true;
+        auto dp = derivedparams::DerivedParams(hyper_param_start, gg);
+        auto atr = architests::architecture_specific_tests(command_queue, dp, gg, hyper_param_start);
+        if (std::get<0>(atr) == false){
+          d_and_g_ss << hyper_param_start.get_string() << "failed archotests because : " << std::get<1>(atr);
+        }
+        else{
+          found_a_deriveable_goodarchi_hp = true;
+        }
       }
-      ++deriveable_search_iteration;
+      ++d_and_g_search_iteration;
     }
     
-    mowri << "n trials looking for a viable starting node in the graph : " << deriveable_search_iteration << Endl;  
+    mowri << "n trials looking for a viable starting node in the graph : " << d_and_g_search_iteration << Endl;  
     
     /* force the graph starting parameters */
-    if (found_a_deriveable_hp == false){
+    if (found_a_deriveable_goodarchi_hp == false){
       std::stringstream base_ss;
       base_ss << "\n\nStruggling to find a deriveable set of hyper parameters which satisfy the geometry and constraints. ";
-      base_ss << "The number of attempts made is " << n_trials << ".  To view the full output of the hyper parameters tried and their reasons for not being derivable, modify the code here (add deriveablesearch_ss.str()). Attempting to obtain hyper parameters using get_generic_solution. \n";
+      base_ss << "The number of attempts made is " << n_trials << ".  To view the full output of the hyper parameters tried and their reasons for not being derivable, modify the code here (add d_and_g_ss.str()). Attempting to obtain hyper parameters using get_generic_solution. \n";
       mowri << base_ss.str() << "\n\n";
       
       
@@ -712,6 +760,7 @@ public:
         std::string hp_string = hyper_param_current.get_string();        
         hyper_front_history.push_back(hp_string);
 
+
         /* extra precaution, should be able to remove this */
         deriveability_test(hyper_param_current, "in find loop");     
         
@@ -720,27 +769,59 @@ public:
         /* the OpenCL string was succesfully generated, we can now attempt to compile and benchmark it */
         ++global_counter;
 
+
+
         mowri << "\n[" << global_counter  <<  ", " << std::fixed << std::setprecision(2) << elapsed_seconds;
         mowri << std::setprecision(6) << "s]\t" << hyper_param_current.get_string() << Endl;
-        
-        setup_tinykernels(hyper_param_current, bundle);  
 
-        core_gemm_loop(find_params.n_runs_per_kernel, false);
 
-        /* A new best kernel found */
-        if (best_solns_path.size() == 0 || median_time < 1.000*best_solns_path.back().statistics.median_benchmark_time){
-          update_elapsed_seconds();
-          improvement_found_on_front = true;          
-          
-          std::time_t generation_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-          auto sstats = SolutionStatistics(median_time, median_gflops, elapsed_seconds, std::ctime(&generation_time), find_params);
-          best_solns_path.emplace_back (gg, sstats, bundle.v_tgks, hyper_param_current.get_string(), devinfo, constraints_string );
+        auto atr = architests::architecture_specific_tests(command_queue, bundle.dp, gg, hyper_param_current);
+        if (std::get<0>(atr) == false){
+          mowri << "Archtests failed : " << std::get<1>(atr) << Endl;
         }
+        
+        else{
+          /* kernel compilation */
+          auto oclr = setup_tinykernels(hyper_param_current, bundle);  
+   
+          if (oclr.fail()){
+            
+            std::stringstream ss;
+            ss << "** failed in setup : " << hyper_param_current.get_string() << " message : " << oclr.message;
+            ss << "error status : " << oclr.success;
+            ss << "Is this error related to this thread : https://github.com/BVLC/caffe/issues/5610  ? ";
+            ss << "  did you see errors about local memory exceeded? That is coming from runtime, bailing";
+            throw miog_error(ss.str());
+          }
+          
+          else{
+            /* run kernels */
+            oclr = core_gemm_loop(find_params.n_runs_per_kernel, false);
+  
+            if (oclr.fail()){
+                mowri << "** failed in core_gemm_loop : " << hyper_param_current.get_string() << Endl;
+            }
+            
+            else{
+              
+              /* A new best kernel found */
+              if (best_solns_path.size() == 0 || median_time < 1.000*best_solns_path.back().statistics.median_benchmark_time){
+                update_elapsed_seconds();
+                improvement_found_on_front = true;          
+                
+                std::time_t generation_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+                auto sstats = SolutionStatistics(median_time, median_gflops, elapsed_seconds, std::ctime(&generation_time), find_params);
+                best_solns_path.emplace_back (gg, sstats, bundle.v_tgks, hyper_param_current.get_string(), devinfo, constraints_string );
+              }
+            }
+          }
+        }
+        
+        
         ++hfi;
         update_elapsed_seconds();
       }
-      
-  
+        
       if (improvement_found_on_front == true && allotted_time > elapsed_seconds){
         
         /* getting all `one-away's */        
@@ -787,10 +868,17 @@ public:
           }
           //mowri << front_insertion_type;
 
+
+
         }
         //mowri << ")  [+" << hyper_front.size() << "]" << Endl;
 
+
+
       }
+      
+      
+
     }
     
     if (allotted_time <= elapsed_seconds){
@@ -805,7 +893,7 @@ public:
       throw miog_error("why did the algorithm stop ? ");
     }
     
-    if (best_solns_path.size() == std::numeric_limits<float>::max()){
+    if (best_solns_path.size() == 0){
       throw miog_error("\nThere were no solutions found. This suggests that the initial kernel did not work (could not derive hyper parameters, required too much memory, or did not compile. Maybe there is some preceding warning printed which sheds light on this? Probably with a modification to the FindStartType or the constraints_string, this should be resolved. For example, the unroll UNR can be reduced if the problem is memory. jn should catch certain problems in architests ");
     }
   
@@ -837,10 +925,10 @@ const std::string & hash
 
   size_t n_c = gg.ldX[nsHP::matC] * (gg.tX[nsHP::matC] == gg.isColMajor ? gg.m : gg.n) + toff.oc;
   size_t c_memsize = gg.derived.float_size_bytes*n_c;
-  c_copied = openclutil::cl_create_buffer_from_command_queue(command_queue, CL_MEM_READ_WRITE, c_memsize, NULL, hash + ", in function get_copy which returns a cl_mem");
-  openclutil::cl_enqueue_copy_buffer(command_queue, c, c_copied, 0, 0, c_memsize, 0, NULL, &c_copy_event, hash + ", in function get_copy which returns a cl_mem");
+  openclutil::cl_set_buffer_from_command_queue(c_copied, command_queue, CL_MEM_READ_WRITE, c_memsize, NULL, hash + ", in function get_copy which returns a cl_mem", true);
+  openclutil::cl_enqueue_copy_buffer(command_queue, c, c_copied, 0, 0, c_memsize, 0, NULL, &c_copy_event, hash + ", in function get_copy which returns a cl_mem", true);
 
-  openclutil::cl_wait_for_events(1, &c_copy_event, "in function find");
+  openclutil::cl_wait_for_events(1, &c_copy_event, "in function find", true);
   return c_copied;
 }
 
@@ -849,7 +937,8 @@ cl_command_queue command_queue,
 const std::string & hash
 ){
   size_t c_memsize = 1;
-  cl_mem single = openclutil::cl_create_buffer_from_command_queue(command_queue, CL_MEM_READ_WRITE, c_memsize, NULL, hash + ", in function cl_mem get_single which returns a cl_mem");
+  cl_mem single;
+  openclutil::cl_set_buffer_from_command_queue(single, command_queue, CL_MEM_READ_WRITE, c_memsize, NULL, hash + ", in function cl_mem get_single which returns a cl_mem", true);
   return single;
 }
 
@@ -1004,6 +1093,7 @@ void benchgemm(
   bool c_is_const){
   
   
+  
   bool full_constraints_expected = true;
   
   //consistencychecks::check_ldx_mnk_consistent(gg);
@@ -1028,7 +1118,9 @@ void benchgemm(
 
 
 Solution
-find(float allotted_time, cl_command_queue command_queue, cl_mem a, cl_mem b, cl_mem c, bool enforce_determinism, const Geometry & tgg){
+find(float allotted_time, cl_command_queue command_queue, cl_mem a, cl_mem b, cl_mem c, bool enforce_determinism, const Geometry & tgg, bool verbose, bool with_warnings){
+
+  //throw miog_error("Not NOW");
 
 
   Solution solution = get_default(tgg);
@@ -1051,7 +1143,7 @@ find(float allotted_time, cl_command_queue command_queue, cl_mem a, cl_mem b, cl
   Offsets toff(0,0,0,0,0,0,0);
   
   /* complete silence (other than warnings and errors) */
-  bool verbose = true;
+//  bool verbose = false;
   bool use_mowri_tracker = false;  
   outputwriting::OutputWriter mowri(verbose, false, "");
 
@@ -1082,7 +1174,9 @@ find(float allotted_time, cl_command_queue command_queue, cl_mem a, cl_mem b, cl
       ss << "\n\nReturing a generic cache entry\n";
 
       mowri << ss.str();
-      miog_warning("\nvery limited search with no custom cache : expect a sub-optimal kernel(s) \n");
+      
+      if (with_warnings) miog_warning("\nvery limited search with no custom cache : expect a sub-optimal kernel(s) \n");
+      
       solution = get_default(tgg);
     }
     
@@ -1113,6 +1207,8 @@ find(float allotted_time, cl_command_queue command_queue, cl_mem a, cl_mem b, cl
     }
   }
   
+  std::cout << tgg.get_string() << std::endl;
+  std::cout << solution.hyper_param_string << std::endl;
   return solution;
 
 }
