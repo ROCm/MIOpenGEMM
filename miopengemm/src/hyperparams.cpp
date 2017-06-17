@@ -72,7 +72,7 @@ std::tuple<bool, std::string, std::array<unsigned, 2>> get_mac_grid(unsigned mac
   
   mac_grid[nsHP::matA] = u_na;
   mac_grid[nsHP::matB] = u_nb;
-    
+  
   return std::make_tuple(true, "no error", mac_grid);
   
 }
@@ -870,12 +870,11 @@ std::vector<HyperParams> HyperParams::get_one_aways(){
 
   /* shuffle the true one aways */
   radu.shuffle(0, n_uncoupled, one_aways);
-  
-  
+    
   /* shuffle the two aways (coupled) */
   radu.shuffle(n_uncoupled, n_total, one_aways);
   
-  /* shuffle the custom kernels. What? Custom kernels? */
+  /* shuffle the custom kernels if there are any */
   
 
   return one_aways;

@@ -112,21 +112,21 @@ public:
     
 
     /* allocate memory for a,b,c on device, send it over */
-    a_gpu_safemem.clmem = openclutil::cl_create_buffer_from_command_queue(tgcq.command_queue, CL_MEM_READ_ONLY, get_a_memsize(), NULL, "a_gpu in Gemini");
-    b_gpu_safemem.clmem = openclutil::cl_create_buffer_from_command_queue(tgcq.command_queue, CL_MEM_READ_ONLY, get_b_memsize(), NULL, "b_gpu in Gemini");
-    c_gpu_safemem.clmem = openclutil::cl_create_buffer_from_command_queue(tgcq.command_queue, CL_MEM_READ_WRITE, get_c_memsize(), NULL, "c_gpu in Gemini");  
+    openclutil::cl_set_buffer_from_command_queue(a_gpu_safemem.clmem, tgcq.command_queue, CL_MEM_READ_ONLY, get_a_memsize(), NULL, "a_gpu in Gemini", true);
+    openclutil::cl_set_buffer_from_command_queue(b_gpu_safemem.clmem, tgcq.command_queue, CL_MEM_READ_ONLY, get_b_memsize(), NULL, "b_gpu in Gemini", true);
+    openclutil::cl_set_buffer_from_command_queue(c_gpu_safemem.clmem, tgcq.command_queue, CL_MEM_READ_WRITE, get_c_memsize(), NULL, "c_gpu in Gemini", true);  
     
     std::stringstream ss_hash;
     if (get_workspace_memsize() > 0){
       ss_hash << "workspace_gpu in Gemini, with workspace_memsize : (" << get_workspace_memsize() << "(bytes) )";
-      workspace_safemem.clmem = openclutil::cl_create_buffer_from_command_queue(tgcq.command_queue, CL_MEM_READ_WRITE, get_workspace_memsize(), NULL, ss_hash.str());     
+      openclutil::cl_set_buffer_from_command_queue(workspace_safemem.clmem, tgcq.command_queue, CL_MEM_READ_WRITE, get_workspace_memsize(), NULL, ss_hash.str(), true);     
     }
 
 
           
-    openclutil::cl_enqueue_write_buffer(tgcq.command_queue, a_gpu_safemem.clmem, CL_TRUE, 0, get_a_memsize(), a, 0, NULL, NULL, "enqueueing a on opencl_memory_initialise");
-    openclutil::cl_enqueue_write_buffer(tgcq.command_queue, b_gpu_safemem.clmem, CL_TRUE, 0, get_b_memsize(), b, 0, NULL, NULL, "enqueueing b on opencl_memory_initialise");
-    openclutil::cl_enqueue_write_buffer(tgcq.command_queue, c_gpu_safemem.clmem, CL_TRUE, 0, get_c_memsize(), c, 0, NULL, NULL, "enqueueing c on opencl_memory_initialise");
+    openclutil::cl_enqueue_write_buffer(tgcq.command_queue, a_gpu_safemem.clmem, CL_TRUE, 0, get_a_memsize(), a, 0, NULL, NULL, "enqueueing a on opencl_memory_initialise", true);
+    openclutil::cl_enqueue_write_buffer(tgcq.command_queue, b_gpu_safemem.clmem, CL_TRUE, 0, get_b_memsize(), b, 0, NULL, NULL, "enqueueing b on opencl_memory_initialise", true);
+    openclutil::cl_enqueue_write_buffer(tgcq.command_queue, c_gpu_safemem.clmem, CL_TRUE, 0, get_c_memsize(), c, 0, NULL, NULL, "enqueueing c on opencl_memory_initialise", true);
 
   }
 
@@ -161,7 +161,7 @@ public:
 
     
     cl_event event_read_c_back;
-    openclutil::cl_enqueue_read_buffer(tgcq.command_queue, c_gpu_safemem.clmem, CL_TRUE, 0, get_c_memsize(), c_copy.data(), 0, NULL, &event_read_c_back, "enqueue read to c, in base_basegemm_with_accuracy_test");
+    openclutil::cl_enqueue_read_buffer(tgcq.command_queue, c_gpu_safemem.clmem, CL_TRUE, 0, get_c_memsize(), c_copy.data(), 0, NULL, &event_read_c_back, "enqueue read to c, in base_basegemm_with_accuracy_test", true);
     
     if (c_true_for_test == nullptr){
       c_for_cpu_compute.resize(get_c_memsize()/sizeof(TFloat));
@@ -172,7 +172,7 @@ public:
       c_true_for_test = c_for_cpu_compute.data();
     }
     
-    openclutil::cl_wait_for_events(1, &event_read_c_back, "waiting in accuracy test, dev tiny gemm");
+    openclutil::cl_wait_for_events(1, &event_read_c_back, "waiting in accuracy test, dev tiny gemm", true);
     accuracytests::elementwise_compare(c, default_beta, c_true_for_test, c_copy.data(), c_copy.size(), mowri);
   }
 };

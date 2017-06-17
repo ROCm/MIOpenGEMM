@@ -143,7 +143,7 @@ class ChiralSubG : public SubG{
     virtual void manual_override_start_range() override final;
     void set_chirality_specific_start_range_base(unsigned non_unroll_dimension);
     virtual void set_chirality_specific_start_range() = 0;
-    virtual char get_char() = 0;
+//    virtual char get_char() = 0;
 
 };
 
@@ -178,6 +178,7 @@ class Graph{
   public:
     const Geometry * ptr_gg;
 
+    /* TODO if a Graph is copied this causes undefined behaviour. can Graphs be copied? Make design clearer */
     std::vector<SubG * > p_subgs;
     
     std::string constraints_string_in;

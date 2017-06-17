@@ -20,6 +20,7 @@ class CachedSolution {
 };
 
 
+/* TODO : unordered maps are faster */
 using KernelCache = std::map< std::string, std::map< std::string, std::map<std::string, std::map<std::string, CachedSolution> > > >;
 
 KernelCache get_kernel_cache();
@@ -28,7 +29,7 @@ KernelCache get_kernel_cache();
 CachedSolution get_generic_cached_solution(const std::string & constraints_string, const Geometry & gg);
 
 
-/* [device][constraint][further_comment][geometry] -> cached solution */
+/* [device][constraint][geometry][further_comment] -> cached solution */
 extern const KernelCache kernel_cache;
 
 void add_entry(KernelCache & kc, const std::string & k_dev, const std::string & k_con,  const std::string k_geo, const std::string k_comment, CachedSolution tgcs);

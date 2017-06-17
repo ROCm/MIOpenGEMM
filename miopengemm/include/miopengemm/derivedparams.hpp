@@ -21,6 +21,9 @@ get_deriveability(const hyperparams::HyperParams & hp, const Geometry & gg);
 class ChiralDerivedParams{
 public:
 
+
+  //ChiralDerivedParams() = default;
+
   unsigned macro_tile_length = uninitialised_unsigned;
   unsigned n_elements_in_unroll = uninitialised_unsigned; 
   unsigned main_n_elements_to_load_per_workitem = uninitialised_unsigned;
@@ -66,8 +69,8 @@ public:
 class DerivedParams{
 
 private:
-  const hyperparams::HyperParams & hp;
-  const Geometry & gg;
+  const hyperparams::HyperParams * ptr_hp;
+  const Geometry * ptr_gg;
 
   ChiralDerivedParams adps;
   ChiralDerivedParams bdps;
@@ -85,14 +88,20 @@ public:
   
   DerivedParams(const hyperparams::HyperParams & hp, const Geometry & gg, std::string s);
   
+  DerivedParams() = delete;
+  DerivedParams(const DerivedParams&) = delete;
+  DerivedParams(DerivedParams&&) = default;
 
+
+  /* TODO if copied, this causes undefined behaviour. Currently not used
+   * Before doing this, make sure what's up with construction options.  */
   std::vector<ChiralDerivedParams * > chis;
   
   ChiralDerivedParams & at(nsHP::eMat emat_x){
-    return *chis[emat_x];
+    return emat_x == nsHP::matA ? adps : bdps; //*chis[emat_x];
   }
   const ChiralDerivedParams & at(nsHP::eMat emat_x) const{
-    return *chis[emat_x];
+    return emat_x == nsHP::matA ? adps : bdps; //*chis[emat_x];
   }
     
   /* does the minimum setting to confirm compatibitily. called by get_deriveability */

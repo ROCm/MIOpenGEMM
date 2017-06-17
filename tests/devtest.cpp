@@ -19,41 +19,31 @@
 
 std::string get_hyperstring(std::string hyperstring = ""){
   if (hyperstring.compare("") == 0){
-    hyperstring = "A_MIC1_PAD0_PLU0_LIW0_MIW0_WOS0__B_MIC1_PAD2_PLU1_LIW1_MIW1_WOS0__C_UNR16_GAL2_PUN0_ICE1_NAW16_UFO0_MAC1_SKW10";
+    hyperstring = "A_MIC1_PAD0_PLU0_LIW0_MIW0_WOS0__B_MIC1_PAD0_PLU0_LIW0_MIW0_WOS0__C_UNR16_GAL1_PUN0_ICE1_NAW16_UFO0_MAC1_SKW10"; 
   }
   return hyperstring;
 }
 
+
+
+
+
+
 template <typename TFloat>
 MIOpenGEMM::Geometry get_geometry(){
-
-
-  //bool isColMajor = true;
-  //bool tA = false;
-  //bool tB = false;
-  //bool tC = false;
-  //unsigned m = 512; 
-  //unsigned n = 512; 
-  //unsigned k = 512;             
-  //unsigned lda = ( tA == isColMajor ? k : m ) + 0;
-  //unsigned ldb = ( tB == isColMajor ? n : k ) + 0;
-  //unsigned ldc = ( tC == isColMajor ? n : m ) + 0;
-  //unsigned workspace_size =  0;
-  //char floattype = sizeof(TFloat) == sizeof(double) ? 'd' : 'f';
-  //return { isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype };
-    
-  return {"tC0_tA0_tB0_colMaj1_m900_n1_k147_lda900_ldb147_ldc900_ws0_f32"};
+                 
+  return {"tC0_tA1_tB0_colMaj1_m64_n1_k524288_lda524288_ldb524288_ldc64_ws0_f32"};
 }
 
 MIOpenGEMM::Offsets get_offsets(){
 
-  unsigned a_offset = 330;
-  unsigned b_offset = 550;
-  unsigned c_offset = 770;
+  unsigned a_offset = 0;
+  unsigned b_offset = 0;
+  unsigned c_offset = 0;
   unsigned workspace_offset = 0;
-  unsigned tail_off_a = 1e6 + 123;
-  unsigned tail_off_b = 1e6 + 97;
-  unsigned tail_off_c = 1e6 + 67;
+  unsigned tail_off_a = 0;
+  unsigned tail_off_b = 0;
+  unsigned tail_off_c = 0;
   return {a_offset, b_offset, c_offset, workspace_offset, tail_off_a, tail_off_b, tail_off_c};
 
 }
@@ -96,18 +86,17 @@ int main(){
   std::string fout("");
   MIOpenGEMM::outputwriting::OutputWriter mowri(true, fout != "" , fout);
 
-
   bool test_print = false;
   bool test_benchgemm = false;  
-  bool test_find = true;
-  bool test_accuracy = false;
+  bool test_find = false;
+  bool test_accuracy = true;
   bool test_default = false;
 
-  std::string constraints_string("A_WOS0__B_WOS0");
-  
-  float allotted_find_time = 1.00;
-  unsigned allotted_find_descents = 100;
-  unsigned n_runs_per_kernel = 5;
+  std::string constraints_string("A_MIC8_PAD1_PLU0_LIW0_MIW0_WOS0__B_MIC8_PAD1_PLU0_LIW0_MIW0_WOS0__C_UNR64");
+    
+  float allotted_find_time = 100.00;
+  unsigned allotted_find_descents = 1000;
+  unsigned n_runs_per_kernel = 2;
   MIOpenGEMM::SummaryStat sumstat(MIOpenGEMM::Max);
   
   unsigned n_runs_benchgemm = 5;

@@ -6,7 +6,7 @@ namespace MIOpenGEMM {
 
 namespace accuracytests {
 
-
+/* TODO : document logic. are matrices positive or zero centeted? Provide better diagnostics when not correct. Output full matrices to files for visualisation. etc etc etc. */
 template <typename TFloat>
 void elementwise_compare(const TFloat * c_before, double beta, const TFloat * c_cpu, const TFloat * c_gpu, unsigned nels, outputwriting::OutputWriter & mowri){
   

@@ -756,6 +756,10 @@ void add_predefine_chiral(char x, std::stringstream & ss){
 
   defcom("MACRO_TILE_LENGTH_A_AND_PAD * UNROLL");
   ss << "#define N_ELEMENTS_IN_PADDED_" << x << "_UNROLL "<< dp.at(emat_x).main_n_elements_in_padded_unroll <<"\n";
+
+
+
+
   defcom("N_ELEMENTS_IN_A_UNROLL / N_WORK_ITEMS_PER_WORKGROUP");
   ss << "#define N_ELEMENTS_OF_" << x << "_TO_LOAD_PER_WORKITEM "<< dp.at(emat_x).main_n_elements_to_load_per_workitem <<"\n";
   defcom("MACRO_TILE_LENGTH_A / MICRO_TILE_LENGTH_A");

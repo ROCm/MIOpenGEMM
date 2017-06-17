@@ -1,5 +1,5 @@
 #include <miopengemm/iterexperiments.hpp>
-#include <miopengemm/tggeometryutil.hpp>
+#include <miopengemm/geometryutil.hpp>
 
 /* example of how to generate cache entries */
 int main(){
@@ -31,7 +31,7 @@ int main(){
     
   /* (2)   define the search settings (upper bounds for each of the geometries) */
   /* the maximum time to search, per geometry */
-  float allotted_time = 120.00; 
+  float allotted_time = 2.00; 
   /* the maximum number of restarts during the search, per geometry */
   unsigned allotted_iterations = 30;
   /* the number of times each kernel should be run during the search. (tradeoff : many runs means less exploration with more accurate perf estimates) */

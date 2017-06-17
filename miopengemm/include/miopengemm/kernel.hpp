@@ -8,6 +8,8 @@
 #include <miopengemm/kernelstring.hpp>
 #include <miopengemm/outputwriter.hpp>
 
+#include <miopengemm/openclutil.hpp>
+
 namespace MIOpenGEMM{
   
 
@@ -44,7 +46,7 @@ class Kernel{
     
     Kernel():Kernel(nullptr, "default constructed Kernel"){}
     
-    void update(const KernelString & ks, outputwriting::OutputWriter & mowri); 
+    openclutil::OpenCLResult update(const KernelString & ks, outputwriting::OutputWriter & mowri); 
 
   
     ~Kernel();
@@ -54,8 +56,8 @@ class Kernel{
     bool is_set();
     void set_kernel_args(std::vector<std::pair<size_t, const void *> > arg_sizes_values);
     
-    int enqueue(cl_uint num_events_in_wait_list, const cl_event *event_wait_list);
-    int enqueue();
+    openclutil::OpenCLResult enqueue(cl_uint num_events_in_wait_list, const cl_event *event_wait_list);
+    openclutil::OpenCLResult enqueue();
     
     void update_times();
     
