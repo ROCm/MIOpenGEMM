@@ -122,7 +122,7 @@ bool verbose, std::string logfile, std::string constraints_string, unsigned n_po
 //, allotted_time, allotted_descents, n_runs_per_kernel sumstat,
 
 
-  bool use_mowri_tracker = true;
+  bool use_mowri_tracker = (verbose == false) ? true : false;
   bool c_is_const = true;
   Solution soln = find(command_queue, find_params, a_gpu, b_gpu, c_gpu, workspace_gpu, constraints_string, geometry, toff, mowri, c_is_const, use_mowri_tracker); 
    
