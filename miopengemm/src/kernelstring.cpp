@@ -51,8 +51,6 @@ const std::vector<std::string> basic_kernel_type_strings = get_basic_kernel_type
 const std::vector<std::vector<unsigned>> kernel_dependencies = get_kernel_dependencies();
 
 
-
-
 bool KernelType::uses(char c) const{
   if (c == 'a'){
     return uses_a;

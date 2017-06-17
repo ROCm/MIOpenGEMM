@@ -58,12 +58,8 @@ int run_find_experiments(const std::vector<Geometry> & geometries, std::vector<s
       if (basedir_inner != ""){
         ss_logfile << fulldir_inner << gg.get_string() << ".txt";
       }
-
-
       mowri_outer << (prob_i + 1) <<  "/" <<  geometries.size() << "       " << gg.get_string() << Endl;
       
-      //"    m:" << stringutil::get_padded(gg.m) << "  n:" << stringutil::get_padded(gg.n) << "  k:" << stringutil::get_padded(gg.k) << "  tA:" << gg.tX[nsHP::matA] << "  tB:" << gg.tX[nsHP::matB] << "  tC:" << gg.tX[nsHP::matB] << "  tC:" << gg.tX[nsHP::matB] << Endl;
-
       std::string logfile = ss_logfile.str();
   
       if (basedir_inner != ""){
@@ -73,8 +69,6 @@ int run_find_experiments(const std::vector<Geometry> & geometries, std::vector<s
       auto soln = basicfind(gg, offsets, find_params, verbose_inner, logfile, constraints,  n_postfind_runs, do_cpu_test);  
       end = std::chrono::high_resolution_clock::now();
       
-      
-
       cache_write_string += soln.get_cache_entry_string(); 
       
       fp_ms = end - start;

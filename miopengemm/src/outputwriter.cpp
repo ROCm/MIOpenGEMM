@@ -34,10 +34,6 @@ OutputWriter::~OutputWriter(){
   file.close();
 }
 
-
-
-
-
 template <>
 OutputWriter & OutputWriter::operator << (Flusher f){
   f.increment();

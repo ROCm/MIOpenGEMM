@@ -9,6 +9,4 @@ unsigned RandomUtil::get_from_range(unsigned upper){
   return unidis(gen) % upper;
 }
   
-
-
 }

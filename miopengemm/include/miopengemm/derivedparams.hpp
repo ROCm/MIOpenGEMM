@@ -22,8 +22,6 @@ class ChiralDerivedParams{
 public:
 
 
-  //ChiralDerivedParams() = default;
-
   unsigned macro_tile_length = uninitialised_unsigned;
   unsigned n_elements_in_unroll = uninitialised_unsigned; 
   unsigned main_n_elements_to_load_per_workitem = uninitialised_unsigned;

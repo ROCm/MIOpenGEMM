@@ -164,7 +164,6 @@ void check_cpu_algs(std::vector<std::string> cpu_algs){
         gemm_3fors_cpu(gg, toff, a, b, c, alpha, beta);
       }
       
-      
       auto t1 = std::chrono::high_resolution_clock::now();
       auto elapsed_time = std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count();
       mowri << "elapsed time : " << elapsed_time * 1e-6 << " [s] " << Endl;

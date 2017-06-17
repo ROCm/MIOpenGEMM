@@ -307,9 +307,7 @@ void SubG::force_start_node(std::vector<unsigned> start_node){
   }
   
   for (unsigned hpi = 0; hpi < range.size(); ++hpi){
-    //for (auto & x : range[hpi]){
     start_range[hpi] = {start_node.at(hpi)};
-    //}
   }  
 }
 

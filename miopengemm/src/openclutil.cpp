@@ -33,96 +33,88 @@ OpenCLResult confirm_cl_status(cl_int ret, const std::string & hash, const std::
   }
 }
 
-//
+
 OpenCLResult cl_set_command_queue(cl_command_queue & a_cl_command_queue, cl_context context, cl_device_id device, cl_command_queue_properties properties, const std::string & hash, bool strict){
  	cl_int errcode_ret;
   a_cl_command_queue = clCreateCommandQueue(context, device, properties, &errcode_ret);
   return confirm_cl_status(errcode_ret, hash, "cl_create_command_queue", strict);
 }
 
-//
+
 OpenCLResult cl_release_kernel(cl_kernel kernel, const std::string & hash, bool strict){
   cl_int ret = clReleaseKernel(kernel);
   return confirm_cl_status(ret, hash, "cl_release_kernel", strict);
 }
 
 
-//
+
 OpenCLResult cl_release_context(cl_context context, const std::string & hash, bool strict){
   cl_int ret = clReleaseContext(context);
   return confirm_cl_status(ret, hash, "cl_release_context", strict);
 }  
 
-//
+
 OpenCLResult cl_release_command_queue(cl_command_queue command_queue, const std::string & hash, bool strict){
   cl_int ret = clReleaseCommandQueue(command_queue);
   return confirm_cl_status(ret, hash, "cl_release_command_queue", strict);
 }
     
-//
+
 OpenCLResult cl_release_program(cl_program program, const std::string & hash, bool strict){
   cl_int ret = clReleaseProgram(program);
   return confirm_cl_status(ret, hash, "cl_release_program", strict);
 }
 
-//
+
 OpenCLResult cl_set_kernel_arg(cl_kernel & kernel, cl_uint arg_index, size_t arg_size, const void * arg_value, const std::string & hash, bool strict){
   cl_int ret = clSetKernelArg(kernel, arg_index, arg_size, arg_value);
   return confirm_cl_status(ret, hash, "cl_set_kernel_arg", strict);
 }
 
-//
+
 OpenCLResult cl_flush(cl_command_queue command_queue, const std::string & hash, bool strict){
   cl_int ret = clFlush(command_queue);
   return confirm_cl_status(ret, hash, "cl_flush", strict); 
 }
 
-//
+
 OpenCLResult cl_wait_for_events(cl_uint num_events, const cl_event * event_list, const std::string & hash, bool strict){
   cl_int ret = clWaitForEvents(num_events, event_list);
   return confirm_cl_status(ret, hash, "cl_wait_for_events", strict);
 }
 
-//
+
 OpenCLResult cl_set_command_queue_info(cl_command_queue command_queue, cl_command_queue_info param_name, size_t param_value_size, void * param_value, size_t * param_value_size_ret, const std::string & hash, bool strict){
   cl_int ret = clGetCommandQueueInfo(command_queue, param_name, param_value_size, param_value, param_value_size_ret);
   return confirm_cl_status(ret, hash, "cl_set_command_queue_info", strict);
 }
 
-//
+
 OpenCLResult cl_set_buffer(cl_mem & a_cl_mem, cl_context context, cl_mem_flags flags, size_t size, void * host_ptr, const std::string & hash, bool strict){
   cl_int errcode_ret;
   a_cl_mem = clCreateBuffer(context, flags, size, host_ptr, &errcode_ret);
   return confirm_cl_status(errcode_ret, hash, "cl_set_buffer", strict);
 }
  
-//
+
 OpenCLResult cl_enqueue_copy_buffer(cl_command_queue command_queue, cl_mem src_buffer, cl_mem dst_buffer, size_t src_offset, size_t dst_offset, size_t cb, cl_uint num_events_in_wait_list, const cl_event *event_wait_list, cl_event *event, const std::string & hash, bool strict){
   cl_int ret = clEnqueueCopyBuffer(command_queue, src_buffer, dst_buffer, src_offset, dst_offset, cb, num_events_in_wait_list, event_wait_list, event); 
   return confirm_cl_status(ret, hash, "cl_enqueue_copy_buffer", strict);
 }
 
-//
 OpenCLResult cl_release_mem_object(cl_mem memobj, const std::string & hash, bool strict){
   cl_int ret = clReleaseMemObject(memobj);
   return confirm_cl_status(ret, hash, "cl_release_mem_object", strict);
 }   
 
-//
 OpenCLResult cl_enqueue_ndrange_kernel(cl_command_queue command_queue, cl_kernel kernel, cl_uint work_dim, const size_t * global_work_offset, const size_t * global_work_size, const size_t * local_work_size,cl_uint num_events_in_wait_list, const cl_event *event_wait_list,cl_event * event, const std::string & hash, bool strict){
   cl_int ret = clEnqueueNDRangeKernel(command_queue, kernel, work_dim, global_work_offset, global_work_size, local_work_size, num_events_in_wait_list, event_wait_list, event);
   return confirm_cl_status(ret, hash, "cl_enqueue_ndrange_kernel", strict);
 }
 
-//
 OpenCLResult cl_set_buffer_from_command_queue(cl_mem & a_cl_mem, cl_command_queue command_queue, cl_mem_flags flags, size_t size, void * host_ptr, const std::string & hash, bool strict){
   
-
   cl_context context;
-  //cl_get_command_queue_info(command_queue, CL_QUEUE_CONTEXT, sizeof(cl_context), &context, nullptr, hash + " + (cl_set_buffer_from_command_queue)");
-  //return 
-  
-  
   auto oclr = cl_set_command_queue_info(command_queue, CL_QUEUE_CONTEXT, sizeof(cl_context), &context, nullptr, hash + " + (cl_set_buffer_from_command_queue)", strict);
   if (oclr.fail()) return oclr;
   
@@ -133,33 +125,32 @@ OpenCLResult cl_set_buffer_from_command_queue(cl_mem & a_cl_mem, cl_command_queu
 
 
 
-//
 OpenCLResult cl_set_platform_ids(cl_uint num_entries, cl_platform_id * platforms, cl_uint * num_platforms, const std::string & hash, bool strict){
   cl_int ret = clGetPlatformIDs(num_entries, platforms, num_platforms);
   return confirm_cl_status(ret, hash, "cl_set_platform_ids", strict);
 }
 
 
-//
+
 OpenCLResult cl_set_context_from_type(cl_context & a_cl_context, cl_context_properties * properties, cl_device_type  device_type, void  (*pfn_notify) (const char *errinfo, const void  *private_info, size_t  cb, void  *user_data), void  *user_data, const std::string & hash, bool strict){
   cl_int errcode;
   a_cl_context = clCreateContextFromType(properties, device_type, pfn_notify, user_data, & errcode);
   return confirm_cl_status(errcode, hash, "cl_set_context_from_type", strict);
 }
 
-//
+
 OpenCLResult cl_set_context_info(cl_context context, cl_context_info param_name, size_t param_value_size, void * param_value, size_t * param_value_size_ret, const std::string & hash, bool strict){
   cl_int ret = clGetContextInfo(context, param_name, param_value_size, param_value, param_value_size_ret);
   return confirm_cl_status(ret, hash, "cl_set_context_info", strict);
 }
 
-//
+
 OpenCLResult cl_set_device_info(cl_device_id device, cl_device_info param_name, size_t param_value_size, void *param_value, size_t *param_value_size_ret, const std::string & hash, bool strict){
   cl_int ret = clGetDeviceInfo(device, param_name, param_value_size, param_value, param_value_size_ret);
   return confirm_cl_status(ret, hash, "cl_set_device_info", strict);
 }
 
-//
+
 OpenCLResult cl_set_platform_info(cl_platform_id platform, cl_platform_info param_name, size_t param_value_size, void *param_value, size_t *param_value_size_ret, const std::string & hash, bool strict){
   cl_int ret = clGetPlatformInfo(platform, param_name, param_value_size, param_value, param_value_size_ret);
   return confirm_cl_status(ret, hash, "cl_set_platform_info", strict);
@@ -171,7 +162,7 @@ OpenCLResult cl_set_event_profiling_info(cl_event event, cl_profiling_info param
   return confirm_cl_status(ret, hash, "cl_set_event_profiling_info", strict);  
 }
 
-//
+
 OpenCLResult set_device_info_from_command_queue(cl_command_queue command_queue, cl_device_info param_name, size_t param_value_size, void *param_value, size_t *param_value_size_ret, const std::string & hash, bool strict){
   
   cl_device_id device;
@@ -182,7 +173,7 @@ OpenCLResult set_device_info_from_command_queue(cl_command_queue command_queue, 
 }
 
 
-//
+
 OpenCLResult cl_set_platform_info_from_command_queue(cl_command_queue command_queue, cl_platform_info param_name, size_t param_value_size, void *param_value, size_t *param_value_size_ret, const std::string & hash, bool strict){
   cl_platform_id platform;
   
@@ -193,7 +184,7 @@ OpenCLResult cl_set_platform_info_from_command_queue(cl_command_queue command_qu
 
 }
 
-//
+
 OpenCLResult cl_create_kernel(cl_kernel & a_kernel, cl_program program, const char *kernel_name, const std::string & hash, bool strict){
   cl_int errcode_ret;
   a_kernel = clCreateKernel(program, kernel_name, & errcode_ret);
@@ -230,7 +221,7 @@ OpenCLResult cl_build_program(cl_program program,cl_uint num_devices,const cl_de
       }
     }
 
-    if (iswhitespace == false){//(buffer[0] != '\0'){
+    if (iswhitespace == false){
       std::stringstream ss_comp_warning;
       ss_comp_warning << "\n                  warning during compilation of kernel, in cl_build_program:\n ";
       ss_comp_warning << ">>" << buffer << "<<";
@@ -368,7 +359,6 @@ OpenCLResult cl_set_platform_etc(cl_platform_id & platform, cl_uint & num_platfo
     oclr = cl_set_platform_info(platform, CL_PLATFORM_VENDOR, info_st.size(), &info_st[0], &info_size, hash + " obtaining CL_PLATFORM_VENDOR", strict);
     if (oclr.fail()) return oclr;
     
-    //openclutil::get_platform_info(command_queue, CL_PLATFORM_VENDOR, info_st.size(), &info_st[0], &info_size, "obtaining CL_PLATFORM_VENDOR");
     std::string platform_vendor = info_st.substr(0, info_size);
     /* assuming that if it's nv-id-ia, it's correct */
     if (platform_vendor.find("vidia") != std::string::npos ||  platform_vendor.find("NVIDIA") != std::string::npos){
@@ -495,7 +485,6 @@ OpenCLPlatformInfo::OpenCLPlatformInfo(cl_platform_id platform_id){
 
 /* taken from MIOpen */
 
-
 std::string GetDeviceNameFromMap(const std::string &name){
 
     static std::map<std::string, std::string> device_name_map = {
@@ -543,7 +532,6 @@ OpenCLDeviceInfo::OpenCLDeviceInfo(const cl_command_queue & command_queue){
     
   openclutil::set_device_info_from_command_queue(command_queue, CL_DEVICE_NAME, info_st.size(), &info_st[0], &info_size, "obtaining CL_DEVICE_NAME", strict);
   device_name = info_st.substr(0, info_size - 1);  
-  //we map the device name here. 
   device_name = GetDeviceNameFromMap(device_name);
 
   openclutil::set_device_info_from_command_queue(command_queue, CL_DEVICE_AVAILABLE, sizeof(cl_bool), &a_bool, NULL, "obtaining CL_DEVICE_AVAILABLE", strict);
@@ -651,5 +639,5 @@ std::string OpenCLDeviceInfo::get_string() const {
 
     
 }
-} // end namespace
+} 
 

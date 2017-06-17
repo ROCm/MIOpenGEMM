@@ -15,10 +15,4 @@ KernelString get_nformb_kernelstring(const hyperparams::HyperParams & hp, const 
 }
 }
 
-
-
-
-
-
-
 #endif

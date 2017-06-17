@@ -47,10 +47,7 @@ void PrepGenerator::append_basic_what_definitions(std::stringstream & ss){
 }
 
 
-
-
 PrepGenerator::PrepGenerator(const hyperparams::HyperParams & hp_,  const Geometry & gg_, const derivedparams::DerivedParams & dp_, std::string type_): basegen::BaseGenerator(hp_, gg_, dp_, type_){}
-
 
 }
 }

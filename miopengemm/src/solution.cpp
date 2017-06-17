@@ -66,9 +66,6 @@ std::string Solution::get_hyper_param_string() const{
 }
 
 
-
-
-
 std::string Solution::get_cache_entry_string(std::string k_comment) const{
   std::stringstream cache_write_ss;
   cache_write_ss << "add_entry(kc, \"" << devinfo.identifier << "\", /* device key */\n";
@@ -82,6 +79,5 @@ std::string Solution::get_cache_entry_string(std::string k_comment) const{
   return cache_write_ss.str();
 
 }
-
 
 } //namespace

@@ -7,9 +7,7 @@
 namespace MIOpenGEMM{
 namespace nformgen{
 
-
 class NormalFormGenerator : public prepgen::PrepGenerator{
-
 
 public:
   NormalFormGenerator(const hyperparams::HyperParams & hp_,  const Geometry & gg_, const derivedparams::DerivedParams & dp_, std::string type_): prepgen::PrepGenerator(hp_, gg_, dp_, type_){}
@@ -45,7 +43,6 @@ public:
  void append_copy_string(std::stringstream & ss){
    ss << "w[mu_pll_i*WRITE_STRIDE_PLL_K + mu_perp_i*WRITE_STRIDE_PERP_K] = " << matrixchar << "[mu_pll_i*READ_STRIDE_PLL_K + mu_perp_i*READ_STRIDE_PERP_K];";
  }
-
 
 
 KernelString get_kernelstring(){
@@ -163,8 +160,6 @@ ss << R"(
 
 
 };
-
-
 
 
 KernelString get_nforma_kernelstring(const hyperparams::HyperParams & hp, const Geometry & gg, const derivedparams::DerivedParams & dp){

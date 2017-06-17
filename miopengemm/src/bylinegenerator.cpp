@@ -170,9 +170,6 @@ w += start_coal;
 
 KernelString ByLineGenerator::get_kernelstring(){
 
-
-
-
   std::stringstream ss;
 
   ss << get_time_string();
@@ -209,8 +206,6 @@ KernelString ByLineGenerator::get_kernelstring(){
   return {{uses_a, uses_b, uses_c, uses_workspace, uses_alpha, uses_beta}, ss.str(), kernelname, get_global_work_size(), get_local_work_size()};
 
 }
-
-
 
 
 }

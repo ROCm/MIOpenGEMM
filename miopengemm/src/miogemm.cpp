@@ -111,7 +111,6 @@ class GPUMems{
 
 
 
-
 class OpenCLGemmEncapsulator{
 
 public:   
@@ -129,7 +128,7 @@ public:
 private:
   outputwriting::OutputWriter & mowri;
   
-  //special purpose output.
+  /* special purpose output */
   outputwriting::OutputWriter mowri_tracker;
   
   /* vector of times over a set of runs on core loop */
@@ -234,7 +233,6 @@ private:
     }
   }
 
-
   void run_checks(){
     sizingup::check_sizes_ok_for_unsigned(gg, toff);
   }  
@@ -308,7 +306,6 @@ private:
   }
 
 
-  
   openclutil::OpenCLResult refresh_kernel(const KernelString & ks, const hyperparams::HyperParams & hp, const derivedparams::DerivedParams & dp){
 
     openclutil::OpenCLResult oclr;
@@ -328,9 +325,7 @@ private:
     return oclr;
   }
 
-
   openclutil::OpenCLResult setup_tinykernels(const hyperparams::HyperParams & hp, const kerngen::Bundle & bundle ){
-    
     
     openclutil::OpenCLResult oclr;
     
@@ -354,7 +349,6 @@ private:
   }
   
 
-
   void update_run_times(cl_int status){
     
     if (status == CL_SUCCESS){
@@ -367,7 +361,6 @@ private:
     
     else{
       throw miog_error("in update_run_times, status is not CL_SUCCESS. The logic has changed, this logic branch should be impossible"); 
-      //v_t_total.push_back(std::numeric_limits<float>::max());
     }
   }
 
@@ -406,17 +399,17 @@ private:
   }
   
 
-    void mowri_tracker_print(){
-      std::stringstream comment_string_ss;
-      comment_string_ss << "[ TOTAL TIME:" << stringutil::get_padded(static_cast<int>(total_elapsed_seconds), 7);
-      comment_string_ss << "  #RESTARTS:" << stringutil::get_padded(total_elapsed_descents, 7);
-      comment_string_ss << "  #GEMMS CONSIDERED:" << stringutil::get_padded(total_kernels_tested, 7) << "]       ";
-      old_comment_string = new_comment_string;
-      new_comment_string = comment_string_ss.str();
-      std::string backspaces = std::string(old_comment_string.size(), '\b');
-      /* TODO : determine where to use mowri_tracker, and enable to path to here */
-      mowri_tracker << backspaces << new_comment_string << Flush;
-    }
+  void mowri_tracker_print(){
+    std::stringstream comment_string_ss;
+    comment_string_ss << "[ TOTAL TIME:" << stringutil::get_padded(static_cast<int>(total_elapsed_seconds), 7);
+    comment_string_ss << "  #RESTARTS:" << stringutil::get_padded(total_elapsed_descents, 7);
+    comment_string_ss << "  #GEMMS CONSIDERED:" << stringutil::get_padded(total_kernels_tested, 7) << "]       ";
+    old_comment_string = new_comment_string;
+    new_comment_string = comment_string_ss.str();
+    std::string backspaces = std::string(old_comment_string.size(), '\b');
+    /* TODO : determine where to use mowri_tracker, and enable to path to here */
+    mowri_tracker << backspaces << new_comment_string << Flush;
+  }
   
     
   openclutil::OpenCLResult core_gemm_loop(size_t n_runs, bool print_asap){
@@ -435,8 +428,6 @@ private:
     if (print_asap == true){
       mowri << get_run_times_heading();
     }
-      
-
 
     for (size_t kqq = 0; kqq < n_runs; ++kqq){
       
@@ -459,19 +450,17 @@ private:
        * but it is still possible that the resources necessary (LDS etc) are
        * not sufficient on this machine. We catch this case here. 
        * TODO : architests can go some way to catching these before compilation */        
-        
 
         std::vector<cl_event> clevent_waits;
-
         for (auto & evi : v_wait_indices[k_ind]){
-          //see cl_events comment at top          
+          /* see cl_events comment at top */
           clevent_waits.emplace_back(tk_kernels_active[evi]->clevent);
         }
         
         size_t num_events_int_wait_list = clevent_waits.size();
         const cl_event * event_wait_list = num_events_int_wait_list == 0 ? nullptr : clevent_waits.data();
         oclr = tk_kernels_active[k_ind]->enqueue(num_events_int_wait_list, event_wait_list);
-        //see in series comment at top
+        /* see in series comment at top */
 
 
         /* Set the run time(s) and append to vectors */          
@@ -509,7 +498,6 @@ private:
     
     set_medians();
     
-    
     if (print_asap == false){
       mowri << get_run_times_heading();
       for (size_t kqq = 0; kqq < n_runs; ++kqq){
@@ -545,12 +533,8 @@ public:
       throw  miog_error("n_runs to benchgemm should be a positive integer");
     }
    
-    hyperparams::HyperParams hp(graph);
-    
+    hyperparams::HyperParams hp(graph);    
     deriveability_test(hp, "in benchgemm");
-
-
-     
       
     auto bundle = kerngen::get_bundle(hp,gg, mowri, bundle_verbose);         
     auto atr = architests::architecture_specific_tests(command_queue, bundle.dp, gg, hp);
@@ -563,7 +547,6 @@ public:
     if (oclr.fail()){
       throw miog_error(oclr.message);
     }
-
 
     mowri << "(benchgemm) hp   :" << hp.get_string() << Endl;
     mowri << "(benchgemm) geometry  \t:" << gg.get_string()  << "\nEntering the core gemm loops" << Endl;
@@ -578,7 +561,6 @@ public:
 
   hyperparams::HyperParams get_hyper_param_start(){
 
-  
     hyperparams::HyperParams hyper_param_start(graph);
     hyper_param_start.checks();  
   
@@ -586,7 +568,6 @@ public:
     bool found_a_deriveable_goodarchi_hp = false;
     unsigned d_and_g_search_iteration = 0;
     std::stringstream d_and_g_ss;
-
     
     /* the number of attempts at finding a deriveable HyperParams given the constraint string */
     const unsigned n_trials = 100000;
@@ -635,7 +616,6 @@ public:
     
     return hyper_param_start;
   }
-
   
   void update_total_elapsed_seconds(){
     auto end = std::chrono::high_resolution_clock::now();
@@ -643,7 +623,6 @@ public:
     total_elapsed_seconds = fp_ms.count();          
   }
   
-
   
   Solution find(const FindParams & find_params){
   
@@ -705,12 +684,7 @@ public:
     }
     mowri << "\n\n";
 
-    
-            
     return v_tgsolns[best_soln_index];
-
-
-    
 
   }
   
@@ -868,17 +842,10 @@ public:
           }
           //mowri << front_insertion_type;
 
-
-
         }
         //mowri << ")  [+" << hyper_front.size() << "]" << Endl;
 
-
-
       }
-      
-      
-
     }
     
     if (allotted_time <= elapsed_seconds){
@@ -958,8 +925,6 @@ outputwriting::OutputWriter & mowri,
 bool c_is_const, 
 bool use_mowri_tracker){
 
-  //consistencychecks::check_ldx_mnk_consistent(gg);  
-
   gg.check_ldx_consistent();
   bool full_constraints_expected = false;
 
@@ -973,8 +938,6 @@ bool use_mowri_tracker){
   else{
     c_to_use = c;
   }
-  
-  //bool use_mowri_tracker = false;
 
   OpenCLGemmEncapsulator oger(command_queue, gg, toff, a, b, c_to_use, workspace, constraints_string, full_constraints_expected, mowri, use_mowri_tracker); 
   return oger.find(find_params);
@@ -1038,8 +1001,6 @@ get_default(const Geometry & gg){
   auto bundle = kerngen::get_bundle(hp,gg, mowri, bundle_verbose_get_default);
  
   return { gg, cached_soln.stats, bundle.v_tgks, hp.get_string(), devinfo, constraints_string};
-
-
 }
 
 Solution
@@ -1078,7 +1039,6 @@ outputwriting::OutputWriter & mowri){
 
 }
   
-  
 void benchgemm(
   cl_command_queue command_queue,
   const std::string & hyperstring,
@@ -1091,8 +1051,6 @@ void benchgemm(
   cl_mem workspace_gpu,  
   outputwriting::OutputWriter & mowri,
   bool c_is_const){
-  
-  
   
   bool full_constraints_expected = true;
   
@@ -1120,9 +1078,6 @@ void benchgemm(
 Solution
 find(float allotted_time, cl_command_queue command_queue, cl_mem a, cl_mem b, cl_mem c, bool enforce_determinism, const Geometry & tgg, bool verbose, bool with_warnings){
 
-  //throw miog_error("Not NOW");
-
-
   Solution solution = get_default(tgg);
 
   /* TODO : where is a good place to set this ? */
@@ -1142,8 +1097,6 @@ find(float allotted_time, cl_command_queue command_queue, cl_mem a, cl_mem b, cl
   
   Offsets toff(0,0,0,0,0,0,0);
   
-  /* complete silence (other than warnings and errors) */
-//  bool verbose = false;
   bool use_mowri_tracker = false;  
   outputwriting::OutputWriter mowri(verbose, false, "");
 

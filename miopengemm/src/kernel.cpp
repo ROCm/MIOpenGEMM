@@ -74,18 +74,9 @@ void Kernel::set_kernel_args(std::vector<std::pair<size_t, const void *> > arg_s
 
 
 openclutil::OpenCLResult Kernel::enqueue(cl_uint num_events_in_wait_list, const cl_event *event_wait_list){
-
- // cl_int ret;  
   
   return openclutil::cl_enqueue_ndrange_kernel(command_queue, clkern, 1, NULL, &tgk_strings.global_work_size, &tgk_strings.local_work_size, num_events_in_wait_list, event_wait_list, &clevent, "Kernel::enqueue", false);
-  
-//  ret = clEnqueueNDRangeKernel();
-    
-  //if (oclr.success != CL_OUT_OF_RESOURCES){
-    //openclutil::confirm_cl_status(ret, "in enqueue of Kernel " + hash, true);
-  //}
-  /* Either returning CL_SUCCESS or CL_OUT_OF_RESOURCES, any other bad result results in a thrown */
-  //return ret;
+
 }
 
 openclutil::OpenCLResult Kernel::enqueue(){

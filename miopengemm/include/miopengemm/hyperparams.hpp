@@ -75,12 +75,9 @@ public:
 
   unsigned nHPs; 
   const Geometry * ptr_gg;
-  //const std::vector<std::string> * 
   
   const KeysVals * ptr_keys_vals;
-  //const std::map<std::string, unsigned> * ptr_vals;
   
-
   /* all the possible edges from all the possible hyper parameter */
   /* example : edges[nsHP::MIC] is a map; edges[nsHP::MIC][1] --> {2,3,4} */
   std::vector<std::map<unsigned, std::vector<unsigned> > > edges;
