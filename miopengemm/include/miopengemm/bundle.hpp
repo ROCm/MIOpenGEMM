@@ -22,9 +22,13 @@ class Bundle{
 
     const std::vector<KernelString> v_tgks;
     const std::vector<std::vector<unsigned> > v_wait_indices;
+    
     derivedparams::DerivedParams dp;
 
-    Bundle(std::vector<KernelString> && v_tgks_, std::vector<std::vector<unsigned> > && v_wait_indices_, const derivedparams::DerivedParams & dp_): v_tgks(v_tgks_), v_wait_indices(v_wait_indices_), dp(dp_) {}
+    //TODO : when is std::move needed. I know, I really should know...
+    Bundle(std::vector<KernelString> && v_tgks_, std::vector<std::vector<unsigned> > && v_wait_indices_, derivedparams::DerivedParams && dp_): v_tgks(std::move(v_tgks_)), v_wait_indices(std::move(v_wait_indices_)), dp(std::move(dp_))  {
+      
+    }
 };
 
 Bundle get_bundle(const hyperparams::HyperParams & hp, const Geometry & gg, outputwriting::OutputWriter & mowri, bool bundle_verbose);
