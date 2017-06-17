@@ -1160,8 +1160,6 @@ find(float allotted_time, cl_command_queue command_queue, cl_mem a, cl_mem b, cl
     }
   }
   
-  std::cout << tgg.get_string() << std::endl;
-  std::cout << solution.hyper_param_string << std::endl;
   return solution;
 
 }
