@@ -3,22 +3,20 @@
 
 /* example of how to generate cache entries */
 int main(){
-    
-  
 
 
   /* (1)   define a vector of geometries which you wish to generate cache entries for. */
-  /* (1.1) This can be done with strings  */
+  /* (1.1) This can be done from strings,  */
   std::vector<MIOpenGEMM::Geometry> geometries = {{"tC0_tA1_tB0_colMaj1_m1200_n1_k1_lda1_ldb1_ldc1200_ws0_f32", }};
   
   
   if (false){
-    /* (1.2) Or it can be done `directly' */
+    /* (1.2) or it can be done `directly' */
     geometries.emplace_back(
     /*isColMajor tA tB tC lda ldb ldc m n k workspace_size floattype */
         true, false, false, false, 10, 10, 10, 10, 10, 10, 0,'f');
    
-    /* (1.3) or using a function which assumes tC is false and isColMajor is true  (m, n, k, lda, ldb, ldc, tA, tB), workspace_size */ 
+    /* (1.3) or by using a function which assumes tC is false and isColMajor is true  (m, n, k, lda, ldb, ldc, tA, tB), workspace_size */ 
     auto more_geometries = MIOpenGEMM::get_from_m_n_k_ldaABC_tA_tB({std::make_tuple(800, 64, 16, 16, 16, 800, true, false)}, 0);
     geometries.insert(geometries.end(), more_geometries.begin(), more_geometries.end());
     

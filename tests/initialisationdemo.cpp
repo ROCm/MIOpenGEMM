@@ -1,5 +1,4 @@
 #include <CL/cl.h>	
-
 #include <vector>
 #include <iostream>
 #include <chrono>
@@ -11,6 +10,7 @@ void checkstatus(cl_int x, std::string where){
   }
 }
 
+/* Is initialisation with ints or floats different ? */
 int main(int argc,char *argv[])	
 {	
   

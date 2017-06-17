@@ -1,5 +1,6 @@
 #include <miopengemm/iterexperiments.hpp>
 
+/* A set of experiments used while writing a report/paper */
 int main(){
 
   bool write_to_dir = false;
@@ -7,7 +8,7 @@ int main(){
   
   if (write_to_dir == true){
     
-    /* Mayank : change this to some directory on your system where the results can be written */ 
+    /* change this to some directory on your system where the results can be written */ 
     basedir = "/home/james/gemmpaper/data/apiless5/";
   
     if (basedir.back() != '/'){
@@ -25,10 +26,10 @@ int main(){
   
   
  
-  unsigned n_iterations_smallgrowing = 0;      // at 25 seconds each
-  unsigned n_iterations_square = 1;            // at 6000 seconds each
-  unsigned n_iterations_smalldeep = 0;         // at 250 seconds each
-  unsigned n_iterations_largedeep = 10;          // at 1100 seconds each
+  unsigned n_iterations_smallgrowing = 0;      // at ~25 seconds each
+  unsigned n_iterations_square = 1;            // at ~6000 seconds each
+  unsigned n_iterations_smalldeep = 0;         // at ~250 seconds each
+  unsigned n_iterations_largedeep = 10;          // at ~1100 seconds each
   unsigned n_iterations_problem_geometries = 0;  // 1000;
 
   
@@ -46,12 +47,8 @@ int main(){
     MIOpenGEMM::FindParams find_params(allotted_time, n_iterations_smallgrowing, n_runs_per_kernel, sumstat);
     MIOpenGEMM::run_find_experiments(geometries, v_constraints, find_params, verbose, basedir, verbose_outer, fn_outer);
   }
-
-
-
   
   unsigned small_threshold = 1000*1000*200;
-  
   std::cout << "\nSMALLDEEP EXPERIMENTS : HOW DO WE DO ON THE SMALL DEEPBENCH PROBLEMS (WITH AND WITHOUT ICE ALLOWED) ? " << std::endl;
   geometries = MIOpenGEMM::get_small_deepbench_geometries(small_threshold);
   v_constraints = {"", "C_ICE1"};
@@ -75,10 +72,6 @@ int main(){
     MIOpenGEMM::run_find_experiments(geometries, v_constraints, find_params, verbose, basedir, verbose_outer, fn_outer);
   }
 
-  
-
-
-
   std::cout << "\nSQUARE EXPERIMENTS : HOW DO WE DO ON THE STANDARD SQUARE PROBLEMS ? (~600s per iteration) " << std::endl;
   geometries = MIOpenGEMM::get_square_geometries();
   v_constraints = {""};
@@ -98,7 +91,6 @@ int main(){
   if (n_iterations_problem_geometries > 0){
     MIOpenGEMM::FindParams find_params(allotted_time, n_iterations_problem_geometries, n_runs_per_kernel, sumstat);
     MIOpenGEMM::run_find_experiments(geometries, v_constraints, find_params, verbose, basedir, verbose_outer, fn_outer);
-  }
-  
+  }  
 }
  

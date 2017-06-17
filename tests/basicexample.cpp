@@ -1,7 +1,6 @@
 #include <miopengemm/miogemm.hpp>
 #include <miopengemm/basicfind.hpp>
 
-
 template <typename TFloat>
 void basicexample(){
   /* define the GEMM problem */
@@ -23,9 +22,9 @@ void basicexample(){
   unsigned c_offset = 3;
   
   /* not nec, but helps is debugging */
-  unsigned tail_off_a = 1000;
-  unsigned tail_off_b = 1000;
-  unsigned tail_off_c = 1000;
+  unsigned tail_off_a = 13;
+  unsigned tail_off_b = 19;
+  unsigned tail_off_c = 33;
    
   /* define how long to search for, in seconds. No kernels will be compiled after this allotted time. */
   float allotted_time = 1.01;

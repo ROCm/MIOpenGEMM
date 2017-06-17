@@ -32,7 +32,6 @@ endfunction(add_example_executable)
 add_test_executable(smallgeometrytests smallgeometrytests.cpp)
 
 
-add_example_executable(verifycache verifycache.cpp)
 add_example_executable(basicexample basicexample.cpp)
 add_example_executable(deepbench deepbench.cpp)
 add_example_executable(redirectionexample redirectionexample.cpp)
