@@ -1,3 +1,7 @@
+
+################################################################################
+# Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
+################################################################################
 cmake_minimum_required(VERSION 3.0)
 
 # Default installation path

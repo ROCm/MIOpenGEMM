@@ -1,3 +1,7 @@
+
+/*******************************************************************************
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ *******************************************************************************/
 #ifndef NORMALFORMGENERATOR_HPP
 #define NORMALFORMGENERATOR_HPP
 
