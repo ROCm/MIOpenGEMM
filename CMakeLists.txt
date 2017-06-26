@@ -9,9 +9,15 @@ endif()
 
 project(miopengemm)
 
-set(${PROJECT_NAME}_VERSION 0.1)
-set(${PROJECT_NAME}_VERSION_MAJOR 0)
-set(${PROJECT_NAME}_VERSION_MINOR 1)
+find_package(ROCM REQUIRED PATHS /opt/rocm)
+
+include(ROCMInstallTargets)
+include(ROCMPackageConfigHelpers)
+include(ROCMSetupVersion)
+include(ROCMInstallSymlinks)
+include(ROCMCreatePackage)
+
+rocm_setup_version(VERSION 0.1)
 
 #Where to find FindOpenCL.cmake (etc)
 list( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
