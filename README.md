@@ -4,6 +4,7 @@ A tool for generating OpenCL matrix multiplication (GEMM) kernels. More informat
 
 ## Prerequisites
 * OpenCL - OpenCL libraries and header files
+* [Rocm cmake modules](https://github.com/RadeonOpenCompute/rocm-cmake) 
 
 
 ## Configure with cmake
