@@ -1,50 +1,98 @@
-# tinygemm
+# MIOpenGEMM
 
-tinygemm is a tool for generating OpenCL matrix multiplication (GEMM) kernels. The project is inspired by, and very similar to, [Tensile](https://github.com/RadeonOpenCompute/Tensile), a general purpose tool for tensor problems.
+A tool for generating OpenCL matrix multiplication (GEMM) kernels. More information is available at (working document link). 
 
-## Background
-
-A GEMM problem,  `c.tC = alpha * a.tA * b.tB + beta * c.tC`, is defined by the dimensions and memory layout of matrices a,b and c. These 10 *geometry* parameters are isColMaj, tA, tB, tC, m, n, k, lda, ldb, and ldc, to be described later.
-
-The standard matrix multiplication algorithm requires `2mnk` floating point operations to solve a GEMM problem is. A device with `t` threads of clock-speed `f` *should* solve a GEMM problem in time `2mnk/(ft)`.  On an ideal device where all data is accessible in a single cycle, obtaining this lower bound would be trivial, but in practice moving data to a register, where it is ready for computing, takes *thousands* of cycles. A good GEMM kernel is one which hides such *latency*.
-
-There are three levels of accessible GPU memory, referred to with OpenCL lingo as global, local, and private. Transferring data between these layers can be done in several different ways. We refer to the parameters controlling how and where threads read and write at each of the three layers as *hyper-parameters*. How well latency is hidden depends on these parameters.  
-
-tinygemm currently defines 15 *hyper-parameters*, with most combinations defining a valid kernel. Thus there are an exponentially large number of GEMM kernels to consider. Moreover, the best hyper-parameters (the best kernel) depends on the geometry parameters, and so it is not a question of finding a \`best' kernel. 
-
-For a given GEMM problem, tinygemm performs a non-exhaustive search through the hyper-parameters (kernels), and returns the best that it finds in an allotted user-defined time. The goal of tinygemm is to rapidly find a reasonable kernel, and then if given enough time, to find an exceptional kernel.
+## Prerequisites
+* OpenCL - OpenCL libraries and header files
 
 
-## Configuring
+## Configure with cmake
 
-`mkdir build`
+First create a build directory:
+```
+mkdir build; cd build;
+```
 
-`cd build`
-
-`cmake ..`
-
-(if this fails, you may to need to set OpenCL_INCLUDE_DIR and OpenCL_LIBRARIES in CMakeCache.txt and cmake again)
-
-
-## Building
-`make`
-
-## Installing
-`make install`
+Next configure cmake:
+```
+cmake ..
+```
 
 
-## Usage
-make tests examples
-Example use is presented in basicexample.cpp and devtest.cpp
+The above assumes that OpenCL is installed in one of the standard locations. If not, then manually set these two cmake variables, either in ` CMakeCache.txt ` or
 
-## GEMM problem parameters
-`isColMaj, tA, tB, tC, m, n, k, lda, ldb` and `ldc`
+```
+cmake -DOPENCL_LIBRARIES=<opencl-library-path> -DOPENCL_INCLUDE_DIRS<opencl-headers-path> ..
+```
 
-## Hyperparameters 
-To view what kernel described by 15 hyper-parameters looks, a string such as `Y128_X96_y8_x6_U8_P1_GA3_APLU0_BPLU1_PU1_LIW1_MIW1_ICE2_NAW64_UFO1` can be passed to a kernel string constructor (see for example devtest.cpp). The 15 parameters are (very briefly)
-`Y` : macro-tile height
-`X` : macro-tile width
-...
 
-## Heuristic graph search
-TODO
+By default the install location is set to '/opt/rocm', this can be set by using `CMAKE_INSTALL_PREFIX`:
+
+```
+cmake -DCMAKE_INSTALL_PREFIX=<miopen-installed-path> ..
+```
+
+
+## Build the library
+
+The library can be built, from the `build` directory 
+
+```
+make miopengemm
+```
+
+And can be installed by using the 'install' target
+```
+make install
+```
+
+## Build the examples
+
+All examples can be built with
+```
+make examples
+```
+
+Or individually for examples ` basicexample ` , ` deepbench ` , ` devtest ` , ` experiment1 ` , ` gencache ` , ` initialisationdemo ` , ` redirectionexample ` and ` smallgeometry ` with make "examplename"
+
+## Usage 
+
+To use MIOpenGEMM, the ` miopengemm.hpp ` header file should be included in your C++ source file 
+
+```c++
+#include <miopengemm/miopengemm.hpp>
+```
+
+The key function is
+```c++
+Solution find(float allotted_time,              // Amount of time [s] allotted to search for a solution
+              cl_command_queue command_queue,   // OpenCL command queue
+              cl_mem a, cl_mem b, cl_mem c,     // Read-only OpenCL memory buffers
+              bool enforce_determinism,         // Guarantee bit-wise fidelity with for-for-for GEMM.
+              const Geometry & tgg,             // Matrix geometry, see below
+              bool verbose,                     // Print summary information to terminal while searching. 
+              bool with_warnings);              // Print performance warnings.
+```
+
+One of the parameters of ` find ` is a ` Geometry ` object, which describes the GEMM problem.  The ` Geometry ` class has a constructor with one std::string as argument, for example
+
+```c++
+Geometry tgg("tC0_tA0_tB1_colMaj0_m55_n65_k122_lda123_ldb124_ldc69_ws0_f32");
+```
+
+creates a Geometry for the Row-Major SGEMM problem ` C = alpha A B.T + beta C ` where A is 55 x 122, B.T is 122 x 65, and C is 55 x 65. lda, ldb, and ldc are the standard matrix paddings. ` tC ` allows for C to be transposed, which is not in the standard GEMM API. ` ws ` is currently an experimental work-space parameter, and should be left as zero. MIOpenGEMM currently supports SGEMM (f32) and DGEMM (f64).
+
+
+` find ` returns a ` Solution ` object. A ` Solution ` object has member ` std::vector<KernelString> v_tgks ` where each KernelString in the vector has members
+
+```c++
+  std::string kernstr;      // OpenCL source
+  std::string fname;        // The name of the kernel function in kernstr
+  size_t global_work_size;  // The global work size to be passed to clEnqueueNDRangeKernel 
+  size_t local_work_size;   // The local work size to be passed to clEnqueueNDRangeKernel
+```
+
+Note that the ` Solution ` object returned by ` find ` is only valid for the ` Geometry ` passed as to ` find ` . Currently, there are either 1 or 2 `KernelString`s in ` v_tgks ` , to be executed serially. 
+
+
+If a ` Geometry ` is used frequently, it is possible to cache the ` Solution `  for future use, so that ` find ` does not need to be re-run. See the example ` gencache ` to see how this is done. Cached Solutions can be retrieved with the function ` get_default ` .  
