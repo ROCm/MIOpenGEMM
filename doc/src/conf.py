@@ -173,7 +173,4 @@ texinfo_documents = [
 ]
 
 primary_domain = 'cpp'
-cpp_id_attributes = ['miopengemm_EXPORT']
-
-
 
