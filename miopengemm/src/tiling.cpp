@@ -1,3 +1,7 @@
+
+/*******************************************************************************
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ *******************************************************************************/
 #include <vector>
 #include <sstream>
 #include <miopengemm/tiling.hpp>

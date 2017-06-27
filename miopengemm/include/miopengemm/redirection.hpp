@@ -1,3 +1,7 @@
+
+/*******************************************************************************
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ *******************************************************************************/
 #ifndef REDIRECTION_HPP
 #define REDIRECTION_HPP
 

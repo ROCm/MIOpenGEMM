@@ -1,3 +1,7 @@
+
+/*******************************************************************************
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ *******************************************************************************/
 #ifndef TG_PROBLEMGEOMETRY_UTIL_HPP
 #define TG_PROBLEMGEOMETRY_UTIL_HPP
 

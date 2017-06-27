@@ -1,3 +1,7 @@
+
+/*******************************************************************************
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ *******************************************************************************/
 #include <chrono>
 #include <miopengemm/error.hpp>
 #include <miopengemm/geometry.hpp>
