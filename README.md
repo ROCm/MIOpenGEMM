@@ -1,6 +1,6 @@
 # MIOpenGEMM
 
-A tool for generating OpenCL matrix multiplication (GEMM) kernels. More information is available at (working document link). 
+A tool for generating OpenCL matrix multiplication (GEMM) kernels. More information is available at (document link, coming soon). 
 
 ## Prerequisites
 * OpenCL - OpenCL libraries and header files
@@ -65,13 +65,14 @@ To use MIOpenGEMM, the ` miopengemm.hpp ` header file should be included in your
 
 The key function is
 ```c++
-Solution find(float allotted_time,              // Amount of time [s] allotted to search for a solution
-              cl_command_queue command_queue,   // OpenCL command queue
-              cl_mem a, cl_mem b, cl_mem c,     // Read-only OpenCL memory buffers
-              bool enforce_determinism,         // Guarantee bit-wise fidelity with for-for-for GEMM.
-              const Geometry & tgg,             // Matrix geometry, see below
-              bool verbose,                     // Print summary information to terminal while searching. 
-              bool with_warnings);              // Print performance warnings.
+Solution find(
+  float allotted_time,             // Amount of time [s] allotted to search for a solution
+  cl_command_queue command_queue,  // OpenCL command queue
+  cl_mem a, cl_mem b, cl_mem c,    // Read-only OpenCL memory buffers
+  bool enforce_determinism,        // Guarantee bit-wise fidelity with for-for-for GEMM.
+  const Geometry & tgg,            // Matrix geometry, see below
+  bool verbose,                    // Print summary information to terminal while searching. 
+  bool with_warnings);             // Print performance warnings.
 ```
 
 One of the parameters of ` find ` is a ` Geometry ` object, which describes the GEMM problem.  The ` Geometry ` class has a constructor with one std::string as argument, for example
@@ -96,3 +97,10 @@ Note that the ` Solution ` object returned by ` find ` is only valid for the ` G
 
 
 If a ` Geometry ` is used frequently, it is possible to cache the ` Solution `  for future use, so that ` find ` does not need to be re-run. See the example ` gencache ` to see how this is done. Cached Solutions can be retrieved with the function ` get_default ` .  
+
+
+## Building the documentation
+
+Instructions for building the documentations are identical to those for [MIOpen](https://github.com/AMDComputeLibraries/MLOpen#building-the-documentation) 
+
+
