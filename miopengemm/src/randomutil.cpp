@@ -1,12 +1,9 @@
 #include <miopengemm/randomutil.hpp>
 
+namespace MIOpenGEMM
+{
 
-namespace MIOpenGEMM{
+RandomUtil::RandomUtil() : rd(), gen(rd()) {}
 
-RandomUtil::RandomUtil():rd(), gen(rd()) {} 
-
-unsigned RandomUtil::get_from_range(unsigned upper){
-  return unidis(gen) % upper;
-}
-  
+unsigned RandomUtil::get_from_range(unsigned upper) { return unidis(gen) % upper; }
 }

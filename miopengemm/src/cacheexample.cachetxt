@@ -1,8 +1,9 @@
-add_entry(kc, "same_or_other_device_key",
-"same_or_other_constraint_key",
-"tC0_tA0_tB0_colMaj1_m5000_n5000_k5000_lda5000_ldb5000_ldc5000_ws1_f32",
-"",
-{"A_MIC8_PAD2_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW1_MIW0_WOS0__C_UNR8_GAL2_PUN0_ICE1_NAW64_UFO0_MAC256_SKW10",
-{59.2006, 4222.93, 3.32959, "Sun May 14 12:29:44 2017",
-{3, 2, 1, Max}}});
-
+add_entry(kc,
+          "same_or_other_device_key",
+          "same_or_other_constraint_key",
+          "tC0_tA0_tB0_colMaj1_m5000_n5000_k5000_lda5000_ldb5000_ldc5000_ws1_f32",
+          "",
+          {"A_MIC8_PAD2_PLU0_LIW0_MIW1_WOS0__B_MIC6_PAD1_PLU0_LIW1_MIW0_WOS0__C_UNR8_"
+           "GAL2_PUN0_"
+           "ICE1_NAW64_UFO0_MAC256_SKW10",
+           {59.2006, 4222.93, 3.32959, "Sun May 14 12:29:44 2017", {3, 2, 1, Max}}});

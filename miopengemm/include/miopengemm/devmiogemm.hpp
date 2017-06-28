@@ -5,6 +5,9 @@
 #include <vector>
 #include <string>
 
+#include <miopengemm/geometry.hpp>
+#include <miopengemm/solution.hpp>
+
 namespace MIOpenGEMM{
 namespace dev{
 
