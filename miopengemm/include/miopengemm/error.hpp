@@ -1,18 +1,18 @@
-#ifndef ERROR_HPP
-#define ERROR_HPP
+#ifndef GUARD_MIOPENGEMM_ERROR_HPP
+#define GUARD_MIOPENGEMM_ERROR_HPP
 
 #include <stdexcept>
 
-namespace MIOpenGEMM{
+namespace MIOpenGEMM
+{
 
-class miog_error : public std::runtime_error{
+class miog_error : public std::runtime_error
+{
   public:
-    miog_error(const std::string& what_arg);
+  miog_error(const std::string& what_arg);
 };
 
-void miog_warning(const std::string & warning);
-
+void miog_warning(const std::string& warning);
 }
-
 
 #endif
