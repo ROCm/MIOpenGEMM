@@ -1,10 +1,10 @@
 # MIOpenGEMM
 
-A tool for generating OpenCL matrix multiplication (GEMM) kernels. More information is available at (document link, coming soon). 
+A tool for generating OpenCL matrix multiplication (GEMM) kernels. More information is available at (link coming soon). 
 
 ## Prerequisites
 * OpenCL - OpenCL libraries and header files
-* [Rocm cmake modules](https://github.com/RadeonOpenCompute/rocm-cmake) 
+* [ROCm cmake modules](https://github.com/RadeonOpenCompute/rocm-cmake) 
 
 ## Configure with cmake
 
@@ -53,7 +53,7 @@ All examples can be built with
 make examples
 ```
 
-Or individually for examples ` basicexample ` , ` deepbench ` , ` devtest ` , ` experiment1 ` , ` gencache ` , ` initialisationdemo ` , ` redirectionexample ` and ` smallgeometry ` with make "examplename"
+Or individually for examples ` basicexample ` , ` deepbench ` , ` devtest ` , ` experiment1 ` , ` gencache ` , ` initialisationdemo ` , ` redirectionexample ` and ` smallgeometry ` with make "example-name"
 
 ## Usage 
 
@@ -97,3 +97,10 @@ Note that the ` Solution ` object returned by ` find ` is only valid for the ` G
 
 
 If a ` Geometry ` is used frequently, it is possible to cache the ` Solution `  for future use, so that ` find ` does not need to be re-run. See the example ` gencache ` to see how this is done. Cached Solutions can be retrieved with the function ` get_default ` .  
+
+
+## Building the documentation
+
+Instructions for building the documentation are identical to those for [MIOpen](https://github.com/AMDComputeLibraries/MLOpen#building-the-documentation) 
+
+
