@@ -104,4 +104,4 @@ std::string Solution::get_cache_entry_string(std::string k_comment) const
   return cache_write_ss.str();
 }
 
-} // namespace
+}

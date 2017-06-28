@@ -1397,7 +1397,7 @@ Solution find(float            allotted_time,
   return solution;
 }
 
-} // namespace
+}
 
 // comment `overheat'
 // This pause should have zero effect but

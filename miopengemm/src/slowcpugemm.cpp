@@ -263,4 +263,4 @@ template void gemms_cpu(Geometry                     gg,
                         std::vector<std::string>     algs,
                         outputwriting::OutputWriter& mowri);
 }
-} // namespace
+}
