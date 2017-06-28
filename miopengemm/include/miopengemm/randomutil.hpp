@@ -1,36 +1,37 @@
-
 /*******************************************************************************
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
  *******************************************************************************/
-#ifndef _RANDOMUTIL_HPP
-#define _RANDOMUTIL_HPP
+#ifndef GUARD_MIOPENGEMM_RANDOMUTIL_HPP
+#define GUARD_MIOPENGEMM_RANDOMUTIL_HPP
 
-#include <random>
 #include <algorithm>
+#include <random>
 #include <miopengemm/error.hpp>
 
-namespace MIOpenGEMM{
+namespace MIOpenGEMM
+{
 
-class RandomUtil {
+class RandomUtil
+{
 
-private:
-  std::random_device rd;
-  std::default_random_engine gen;
+  private:
+  std::random_device                      rd;
+  std::default_random_engine              gen;
   std::uniform_int_distribution<unsigned> unidis;
 
-public:
+  public:
   RandomUtil();
-  unsigned get_from_range(unsigned upper);  
+  unsigned get_from_range(unsigned upper);
   template <typename T>
-  void shuffle(unsigned start_index, unsigned end_index, T & t){
-    if (end_index > t.size() || start_index > end_index){
+  void shuffle(unsigned start_index, unsigned end_index, T& t)
+  {
+    if (end_index > t.size() || start_index > end_index)
+    {
       throw miog_error("problem in template function RandomUtil::shuffle");
     }
     std::shuffle(t.begin() + start_index, t.begin() + end_index, gen);
   }
 };
-  
 }
-
 
 #endif

@@ -1,8 +1,6 @@
-
 ################################################################################
 # Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
 ################################################################################
-# - Enable warning all for gcc/clang or use /W4 for visual studio
 
 ## Strict warning level
 if (MSVC)
