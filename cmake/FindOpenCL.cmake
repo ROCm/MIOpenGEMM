@@ -1,3 +1,7 @@
+################################################################################
+# Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
+################################################################################
+
 find_path(OPENCL_INCLUDE_DIRS
 	NAMES OpenCL/cl.h CL/cl.h
 	HINTS

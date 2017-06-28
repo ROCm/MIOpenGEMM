@@ -1,29 +1,42 @@
-#OUT OF DATE !
+#Description of MIOpenGEMM programs
 
-# smallgeometrytests.cpp
 
-Runs the full find-then-run pipeline for all 32 possible (a,b,c transposes, column major, m > n)  cases, but only for small matrices. 
-    
 #basicexample.cpp
 
 The starting point of a minimal example running the full find-then-run pipeline. The best place start to understand how to use MIOpenGEMM. 
 
-#basicfind.hpp
-
-The basic code of all examples, in a header file as it templated over float type. It contains all the OpenCL boiler-plate, cpu and gpu matrix allocations, accuracy testing, etc used in all examples and tests. 
 
 #deepbench.cpp
 
 Benchmarking of DeepBench GEMM problems.
 
-#backconvwrw.cpp
 
-Benchmarking of DeepBench back convolution with respect to weights.
+#devtest.cpp
+
+Experimental tests, and easy way to printing kernels to file without any benchmarking
+
+
+#devtest.cpp
+
+A set of benchmark experiments
+
+
+#gencache.cpp  
+
+Illustrating how to generate Solutions and cache them for later use
+
+
+#initialisationdemo.cpp  
+
+Not really part of MIOPenGEMM, a simple experiment to see if initialising matrices with ints or floats makes a difference
+
 
 #redirectionexample.cpp
 
 Illustrating how problems are redirected to a problem  with is column major, and NN or NT (m < n) or TN (m < n). currently (1/12/2016) it is used only for cpu kernels.
 
-#devtest.cpp
 
-Experimental tests, currently (1/12/2016) not for end-user use.
+# smallgeometrytests.cpp
+
+Runs the full find-then-run pipeline for all 32 possible (a,b,c transposes, column major, m > n)  cases, only for small matrices. Verifies correctness
+    
