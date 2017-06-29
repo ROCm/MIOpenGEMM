@@ -7,12 +7,14 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <algorithm>
 #include <miopengemm/basicfind.hpp>
 #include <miopengemm/devmiogemm.hpp>
 #include <miopengemm/kernelcache.hpp>
 #include <miopengemm/miogemm.hpp>
 #include <miopengemm/openclutil.hpp>
 #include <miopengemm/setabcw.hpp>
+#include <miopengemm/iterexperiments.hpp>
 
 MIOpenGEMM::Offsets get_offsets()
 {
@@ -27,7 +29,7 @@ MIOpenGEMM::Offsets get_offsets()
 }
 
 template <typename TFloat>
-int go()
+int go(bool only_deepbench)
 {
 
   std::string                                   fout("");
@@ -62,6 +64,13 @@ int go()
   MIOpenGEMM::setabcw::set_multigeom_abc<TFloat>(v_a, v_b, v_c, all_geometries, toff);
   std::vector<TFloat> v_c_final_true(v_c);
 
+
+  auto db_geoms = MIOpenGEMM::get_deepbench_geometries(1);
+  std::vector<std::string> db_geom_strings;
+  for (auto & x : db_geoms){
+    db_geom_strings.push_back(x.get_string());
+  }
+
   for (auto& x : MIOpenGEMM::kernel_cache)
   {
     auto identifier = x.first;
@@ -76,11 +85,16 @@ int go()
         {
           auto geometry_string = z.first;
           MIOpenGEMM::Geometry gg(geometry_string);
-  
+          
+          
+          if (only_deepbench && std::find(db_geom_strings.begin(), db_geom_strings.end(), gg.get_string()) == db_geom_strings.end()){
+            continue;
+          }
+          
     
           for (auto& a : z.second)
           {
-            auto                 comment_string = a.first;
+            auto comment_string = a.first;
             
 
 
@@ -126,4 +140,7 @@ int go()
   return 0;
 }
 
-int main() { go<float>(); }
+int main() {
+  bool only_deepbench = true;
+  go<float>(only_deepbench); 
+}

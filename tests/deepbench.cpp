@@ -3,7 +3,7 @@
  *******************************************************************************/
 #include <miopengemm/iterexperiments.hpp>
 
-/* Run the 77 DeepBench problems */
+/* Find solutions to the 77 DeepBench problems */
 int main()
 {
 
