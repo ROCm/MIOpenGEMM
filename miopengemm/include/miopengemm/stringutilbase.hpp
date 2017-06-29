@@ -29,6 +29,16 @@ std::string getdirfromfn(const std::string& fn);
 std::tuple<std::string, unsigned> splitnumeric(std::string alphanum);
 
 std::string get_padded(unsigned x, unsigned length = 4);
+
+template <typename T>
+std::string get_char_padded(const T& t, unsigned length){
+  auto t_s = std::to_string(t);
+  if (t_s.size() < length)
+  t_s.resize(length, ' ');
+  return t_s;
+}
+
+
 }
 }
 
