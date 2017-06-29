@@ -6,9 +6,15 @@
 The starting point of a minimal example running the full find-then-run pipeline. The best place start to understand how to use MIOpenGEMM. 
 
 
+#benchthecache.cpp
+
+Benchmark all cached Solutions (currently only for cached DeepBench geometries)   
+
+
+
 #deepbench.cpp
 
-Benchmarking of DeepBench GEMM problems.
+Find Solutions for DeepBench GEMM problems.
 
 
 #devtest.cpp
