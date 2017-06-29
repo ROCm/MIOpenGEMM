@@ -19,6 +19,13 @@ void set_abc(std::vector<TFloat>& v_a,
              const Offsets&       toff);
 
 template <typename TFloat>
+void set_multigeom_abc(std::vector<TFloat>& v_a,
+             std::vector<TFloat>& v_b,
+             std::vector<TFloat>& v_c,
+             const std::vector<Geometry> &,
+             const Offsets&       toff);
+             
+template <typename TFloat>
 void set_abcw(std::vector<TFloat>& v_a,
               std::vector<TFloat>& v_b,
               std::vector<TFloat>& v_c,
