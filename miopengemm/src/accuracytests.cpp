@@ -1,8 +1,10 @@
 /*******************************************************************************
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
  *******************************************************************************/
+#include <cmath>
 #include <miopengemm/accuracytests.hpp>
 #include <miopengemm/outputwriter.hpp>
+#include <vector>
 
 namespace MIOpenGEMM
 {

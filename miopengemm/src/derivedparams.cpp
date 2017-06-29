@@ -2,6 +2,7 @@
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
  *******************************************************************************/
 #include <algorithm>
+#include <cmath>
 #include <iostream>
 #include <sstream>
 #include <miopengemm/derivedparams.hpp>
