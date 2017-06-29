@@ -12,9 +12,6 @@
 *.amd
 *temp_directory*
 *junk*
-*.eps
-*.pdf
-*.png
 *a.out
 *.exe
 *.dylib
