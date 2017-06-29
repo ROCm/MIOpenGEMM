@@ -381,4 +381,26 @@ std::string Geometry::get_networkconfig_string() const
                         << derived.float_size_bits;
   return geometry_stringstream.str();
 }
+
+std::string Geometry::get_tabbed_string() const
+{
+  
+  std::stringstream geometry_stringstream;
+  geometry_stringstream << "tC=" << tX[nsHP::matC] 
+                        << " tA=" << tX[nsHP::matA] 
+                        << " tB=" << tX[nsHP::matB] 
+                        << " colMaj=" << isColMajor
+                        << " m=" << stringutil::get_char_padded(m, 5)
+                        << " n=" << stringutil::get_char_padded(n, 5)
+                        << " k=" << stringutil::get_char_padded(k, 5) 
+                        << " lda=" << stringutil::get_char_padded(ldX[nsHP::matA], 5) 
+                        << " ldb=" << stringutil::get_char_padded(ldX[nsHP::matB], 5)
+                        << " ldc=" << stringutil::get_char_padded(ldX[nsHP::matC], 5)
+                        << " ws=" << workspace_size
+                        << " f=" << derived.float_size_bits;
+
+    return geometry_stringstream.str();
+
+}
+  
 }

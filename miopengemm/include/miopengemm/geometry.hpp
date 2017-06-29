@@ -130,6 +130,8 @@ class Geometry
   std::string get_string() const;
 
   std::string get_networkconfig_string() const;
+  
+  std::string get_tabbed_string() const;
 
   void check_ldx_consistent() const;
 };
