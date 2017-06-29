@@ -85,6 +85,7 @@ int run_find_experiments(const std::vector<Geometry>& geometries,
         mowri_outer << logfile << Endl;
       }
 
+      bool use_mowri_tracker = true;
       auto soln = basicfind(gg,
                             offsets,
                             find_params,
@@ -92,7 +93,8 @@ int run_find_experiments(const std::vector<Geometry>& geometries,
                             logfile,
                             constraints,
                             n_postfind_runs,
-                            do_cpu_test);
+                            do_cpu_test,
+                            use_mowri_tracker);
       end = std::chrono::high_resolution_clock::now();
 
       cache_write_string += soln.get_cache_entry_string();

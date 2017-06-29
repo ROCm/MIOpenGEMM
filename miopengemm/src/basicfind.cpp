@@ -22,12 +22,12 @@ template <typename TFloat>
 Solution base_basicfind(const Geometry&   geometry,
                         const Offsets&    toff,
                         const FindParams& find_params,
-
                         bool        verbose,
                         std::string logfile,
                         std::string constraints_string,
                         unsigned    n_postfind_runs,
-                        bool        do_cpu_test)
+                        bool        do_cpu_test,
+                        bool        use_mowri_tracker)
 {
 
   // checking that geometry floattype is correct
@@ -169,7 +169,10 @@ Solution base_basicfind(const Geometry&   geometry,
 
   // Find a solution
 
-  bool     use_mowri_tracker = (verbose == false) ? true : false;
+  if (use_mowri_tracker == true && verbose == true){
+    use_mowri_tracker = false;
+  }
+  
   bool     c_is_const        = true;
   Solution soln              = find(command_queue,
                        find_params,
@@ -439,14 +442,13 @@ Solution base_basicfind(const Geometry&   geometry,
 
 Solution basicfind(const Geometry& geometry,
                    const Offsets&  toff,
-
                    const FindParams& find_params,
-
                    bool        verbose,
                    std::string logfile,
                    std::string constraints_string,
                    unsigned    n_postfind_runs,
-                   bool        do_cpu_test)
+                   bool        do_cpu_test, 
+                   bool        use_mowri_tracker)
 {
   if (geometry.floattype == 'f')
   {
@@ -457,7 +459,8 @@ Solution basicfind(const Geometry& geometry,
                                  logfile,
                                  constraints_string,
                                  n_postfind_runs,
-                                 do_cpu_test);
+                                 do_cpu_test, 
+                                 use_mowri_tracker);
   }
   else if (geometry.floattype == 'd')
   {
@@ -468,7 +471,8 @@ Solution basicfind(const Geometry& geometry,
                                   logfile,
                                   constraints_string,
                                   n_postfind_runs,
-                                  do_cpu_test);
+                                  do_cpu_test,
+                                  use_mowri_tracker);
   }
   else
   {

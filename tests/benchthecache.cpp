@@ -49,11 +49,31 @@ int go()
         for (auto& z : y.second)
         {
           auto geometry_string = z.first;
-          std::cout << "\nGEOMETRY STRING: " << geometry_string << std::endl;
+          MIOpenGEMM::Geometry gg(geometry_string);
+        }
+      }
+    }
+  }
+  
+    for (auto& x : MIOpenGEMM::kernel_cache)
+  {
+    auto identifier = x.first;
+    if (identifier == devinfo.identifier)
+    {
+      std::cout << "\nCACHE DEIVCE ID: " << identifier << std::endl;
+      for (auto& y : x.second)
+      {
+        auto constraints_string = y.first;
+        std::cout << "\nCONSTRAINTS STRING: " << constraints_string << std::endl;
+        for (auto& z : y.second)
+        {
+          auto geometry_string = z.first;
+          MIOpenGEMM::Geometry gg(geometry_string);
+  
           for (auto& a : z.second)
           {
             auto                 comment_string = a.first;
-            MIOpenGEMM::Geometry gg(geometry_string);
+            
             MIOpenGEMM::Offsets  toff = get_offsets();
 
             if (gg.derived.float_size_bytes == sizeof(TFloat))
@@ -87,12 +107,15 @@ int go()
 
               MIOpenGEMM::FindParams find_params(0.01, 1, 4, MIOpenGEMM::Max);
 
-              auto soln = MIOpenGEMM::basicfind(
-                gg, toff, find_params, false, "", soln1.hyper_param_string, 0, false);
+              bool use_mowri_tracker = false;
 
-              std::cout << "soln median gflops :  " << soln.statistics.median_benchmark_gflops
+              auto soln = MIOpenGEMM::basicfind(
+                gg, toff, find_params, false, "", soln1.hyper_param_string, 0, false, use_mowri_tracker);
+
+              std::cout << "(" << counter << ")" << " m:" << gg.m << "\t n:" << gg.n << "\t k:" << gg.k <<  "\t tA:" << gg.tX[MIOpenGEMM::nsHP::matA] <<  "\t tB:" << gg.tX[MIOpenGEMM::nsHP::matA] << std::flush ;
+              std::cout << " soln median gflops :  " << soln.statistics.median_benchmark_gflops
                         << "  \t soln median time : " << soln.statistics.median_benchmark_time
-                        << std::endl;
+                        << "[ms]" << std::endl;
             }
           }
         }

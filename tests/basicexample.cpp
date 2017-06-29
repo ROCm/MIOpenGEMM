@@ -41,6 +41,7 @@ void basicexample()
 
   // print output to terminal (true) or complete silence to terminal (false)
   bool verbose = true;
+  bool use_mowri_tracker = false;
   // print output to logfile (non-empty string) or not (empty string)
   // MUST BE SET BY USER
   std::string logfile("basicexample-findlog.txt");
@@ -58,8 +59,10 @@ void basicexample()
     isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype);
   MIOpenGEMM::Offsets offsets(
     a_offset, b_offset, c_offset, workspace_offset, tail_off_a, tail_off_b, tail_off_c);
+  
+  
   MIOpenGEMM::basicfind(
-    gg, offsets, find_params, verbose, logfile, constraints_string, n_postfind_runs, do_cpu_test);
+    gg, offsets, find_params, verbose, logfile, constraints_string, n_postfind_runs, do_cpu_test, use_mowri_tracker);
 }
 
 int main()
