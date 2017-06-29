@@ -112,10 +112,10 @@ int go()
               auto soln = MIOpenGEMM::basicfind(
                 gg, toff, find_params, false, "", soln1.hyper_param_string, 0, false, use_mowri_tracker);
 
-              std::cout << "(" << counter << ")" << " m:" << gg.m << "\t n:" << gg.n << "\t k:" << gg.k <<  "\t tA:" << gg.tX[MIOpenGEMM::nsHP::matA] <<  "\t tB:" << gg.tX[MIOpenGEMM::nsHP::matA] << std::flush ;
-              std::cout << " soln median gflops :  " << soln.statistics.median_benchmark_gflops
-                        << "  \t soln median time : " << soln.statistics.median_benchmark_time
-                        << "[ms]" << std::endl;
+              std::cout << "(" << counter << ")" << " \t  m:" << gg.m << "\t  n:" << gg.n << "\t  k:" << gg.k <<  "\t  tA:" << gg.tX[MIOpenGEMM::nsHP::matA] <<  "\t  tB:" << gg.tX[MIOpenGEMM::nsHP::matA] << std::flush ;
+              std::cout << " soln gflops:  " << soln.statistics.median_benchmark_gflops
+                        << "  \tsoln time: " << soln.statistics.median_benchmark_time
+                        << " [ms]" << std::endl;
             }
           }
         }
