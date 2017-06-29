@@ -28,6 +28,7 @@ void geometrytest(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsign
 
   // set verbose to true if you want output to terminal
   bool verbose = false;
+  bool use_mowri_tracker = false;
   // set logfile if you want output forked to file
   std::string logfile("");
 
@@ -46,7 +47,7 @@ void geometrytest(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsign
   MIOpenGEMM::FindParams find_params(
     allotted_time, allotted_iterations, n_runs_per_kernel, sumstat);
   MIOpenGEMM::basicfind(
-    gg, offsets, find_params, verbose, logfile, constraints_string, n_postfind_runs, do_cpu_test);
+    gg, offsets, find_params, verbose, logfile, constraints_string, n_postfind_runs, do_cpu_test, use_mowri_tracker);
 }
 
 int main()
