@@ -15,6 +15,7 @@
 #include <miopengemm/openclutil.hpp>
 #include <miopengemm/setabcw.hpp>
 #include <miopengemm/iterexperiments.hpp>
+#include <miopengemm/stringutilbase.hpp>
 
 MIOpenGEMM::Offsets get_offsets()
 {
@@ -38,7 +39,16 @@ int go(bool only_deepbench)
   MIOpenGEMM::openclutil::OpenCLDeviceInfo      devinfo(tgcq.command_queue);
   unsigned                                      counter = 0;
 
+
+  auto db_geoms = MIOpenGEMM::get_deepbench_geometries(1);
+  std::vector<std::string> db_geom_strings;
+  for (auto & x : db_geoms){
+    db_geom_strings.push_back(x.get_string());
+  }
+
   
+  
+  unsigned n_to_bench = 0;
   MIOpenGEMM::Offsets  toff = get_offsets();
   std::vector<MIOpenGEMM::Geometry> all_geometries;
   for (auto& x : MIOpenGEMM::kernel_cache)
@@ -52,7 +62,14 @@ int go(bool only_deepbench)
         for (auto& z : y.second)
         {
           auto geometry_string = z.first;
-          all_geometries.emplace_back(geometry_string);
+          
+          if (only_deepbench && std::find(db_geom_strings.begin(), db_geom_strings.end(), geometry_string) == db_geom_strings.end()){
+            //do nothing
+          }
+          else{
+            all_geometries.emplace_back(geometry_string);
+            ++n_to_bench;
+          }
         }
       }
     }
@@ -65,11 +82,6 @@ int go(bool only_deepbench)
   std::vector<TFloat> v_c_final_true(v_c);
 
 
-  auto db_geoms = MIOpenGEMM::get_deepbench_geometries(1);
-  std::vector<std::string> db_geom_strings;
-  for (auto & x : db_geoms){
-    db_geom_strings.push_back(x.get_string());
-  }
 
   for (auto& x : MIOpenGEMM::kernel_cache)
   {
@@ -128,7 +140,7 @@ int go(bool only_deepbench)
                 gg, toff, find_params, false, "", soln1.hyper_param_string, 0, false, use_mowri_tracker);
 
 
-              std::cout << gg.get_tabbed_string()
+              std::cout << MIOpenGEMM::stringutil::get_char_padded(counter, 2) << "/" << n_to_bench << "  " << gg.get_tabbed_string()
                         << "\t  gflops: " << soln.statistics.median_benchmark_gflops
                         << "    time[ms]: " << soln.statistics.median_benchmark_time << std::endl;
             }
