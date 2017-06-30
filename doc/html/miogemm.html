@@ -1,0 +1,383 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>find &mdash; MIOpenGEMM Documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="MIOpenGEMM Documentation" href="index.html"/>
+        <link rel="up" title="API Reference" href="apireference.html"/>
+        <link rel="prev" title="API Reference" href="apireference.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> miopengemm
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="install.html">MIOpenGEMM</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="install.html#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#configure-with-cmake">Configure with cmake</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#build-the-library">Build the library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#build-the-examples">Build the examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#building-the-documentation">Building the documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="apireference.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">find</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#get-default">get_default</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#check-for-default">check_for_default</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#benchgemm">benchgemm</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">miopengemm</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="apireference.html">API Reference</a> &raquo;</li>
+        
+      <li>find</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/miogemm.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="find">
+<h1>find<a class="headerlink" href="#find" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="_CPPv2N10MIOpenGEMM4findEf16cl_command_queue6cl_mem6cl_mem6cl_membRK8Geometrybb">
+<span id="MIOpenGEMM::find__float.cl_command_queue.cl_mem.cl_mem.cl_mem.b.GeometryCR.b.b"></span><span class="target" id="miogemm_8hpp_1ab9f72a1f4f1a41bc8c45461bd27f5399"></span>Solution <code class="descclassname">MIOpenGEMM::</code><code class="descname">find</code><span class="sig-paren">(</span>float <em>allotted_time</em>, cl_command_queue <em>command_queue</em>, cl_mem <em>a</em>, cl_mem <em>b</em>, cl_mem <em>c</em>, bool <em>enforce_determinism</em>, <em class="property">const</em> Geometry &amp;<em>tgg</em>, bool <em>verbose</em>, bool <em>with_warnings</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N10MIOpenGEMM4findEf16cl_command_queue6cl_mem6cl_mem6cl_membRK8Geometrybb" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Find a Solution, considering only kernels without workspace requirements. </p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>The best Solution found during search </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">allotted_time</span></code>: An upper bound in seconds on the time spent searching. When this time </li>
+<li><code class="docutils literal"><span class="pre">command_queue</span></code>: An OpenCL command queue has expired, the best Solution found thus far is returned. </li>
+<li><code class="docutils literal"><span class="pre">a</span></code>: Matrix A, memory will be unchanged </li>
+<li><code class="docutils literal"><span class="pre">b</span></code>: Matrix B, memory will be unchanged </li>
+<li><code class="docutils literal"><span class="pre">c</span></code>: Matric C, memory will be unchanged </li>
+<li><code class="docutils literal"><span class="pre">enforce_determinism</span></code>: If true, only kernels which are bitwise consistent are considered. For small GEMM problems enforce_determinism = False finds faster Solutions. </li>
+<li><code class="docutils literal"><span class="pre">tgg</span></code>: GEMM problem Geometry as in geometry.hpp </li>
+<li><code class="docutils literal"><span class="pre">verbose</span></code>: Print the search summary to std::cout </li>
+<li><code class="docutils literal"><span class="pre">with_warnings</span></code>: Print warnings to std::cerr. Warnings are provided when the allotted_time is insufficient to find good Solutions. </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N10MIOpenGEMM4findE16cl_command_queueRK10FindParams6cl_mem6cl_mem6cl_mem6cl_memKNSt6stringERK8GeometryRK7OffsetsRN13outputwriting12OutputWriterEbb">
+<span id="MIOpenGEMM::find__cl_command_queue.FindParamsCR.cl_mem.cl_mem.cl_mem.cl_mem.ssC.GeometryCR.OffsetsCR.outputwriting::OutputWriterR.b.b"></span><span class="target" id="miogemm_8hpp_1a67bb22849dc85f0b83f7958f615e028e"></span>Solution <code class="descclassname">MIOpenGEMM::</code><code class="descname">find</code><span class="sig-paren">(</span>cl_command_queue <em>command_queue</em>, <em class="property">const</em> FindParams &amp;<em>find_params</em>, cl_mem <em>a</em>, cl_mem <em>b</em>, cl_mem <em>c</em>, cl_mem <em>workspace</em>, <em class="property">const</em> std::string <em>constraints_string</em>, <em class="property">const</em> Geometry &amp;<em>gg</em>, <em class="property">const</em> Offsets &amp;<em>toff</em>, outputwriting::OutputWriter &amp;<em>mowri</em>, bool <em>c_is_const</em>, bool <em>use_mowri_tracker</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N10MIOpenGEMM4findE16cl_command_queueRK10FindParams6cl_mem6cl_mem6cl_mem6cl_memKNSt6stringERK8GeometryRK7OffsetsRN13outputwriting12OutputWriterEbb" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Find a Solution, considering kernels with and without workspace requirements. This function is experimental. </p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>best Solution found during search </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">command_queue</span></code>: OpenCL command queue </li>
+<li><code class="docutils literal"><span class="pre">find_params</span></code>: Parameters define duration and structure of search </li>
+<li><code class="docutils literal"><span class="pre">a</span></code>: Matrix A </li>
+<li><code class="docutils literal"><span class="pre">b</span></code>: Matrix B </li>
+<li><code class="docutils literal"><span class="pre">c</span></code>: Matric C </li>
+<li><code class="docutils literal"><span class="pre">workspace</span></code>: Workspace memory </li>
+<li><code class="docutils literal"><span class="pre">constraints_string</span></code>: String describing the constraints on the kernels considered. It is a substring of a hyperstring, defining with hyper-parameters have fixed values </li>
+<li><code class="docutils literal"><span class="pre">gg</span></code>: GEMM problem Geometry as in geometry.hpp </li>
+<li><code class="docutils literal"><span class="pre">toff</span></code>: The offsets of a,b,c and workspace </li>
+<li><code class="docutils literal"><span class="pre">mowri</span></code>: Controls writing to terminal and file </li>
+<li><code class="docutils literal"><span class="pre">c_is_const</span></code>: Whether matrix C may be modified </li>
+<li><code class="docutils literal"><span class="pre">use_mowri_tracker</span></code>: Controls writing to terminal of search summary </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+</div>
+<div class="section" id="get-default">
+<h1>get_default<a class="headerlink" href="#get-default" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="_CPPv2N10MIOpenGEMM11get_defaultE16cl_command_queueNSt6stringERK8GeometryNSt6stringERN13outputwriting12OutputWriterE">
+<span id="MIOpenGEMM::get_default__cl_command_queue.ss.GeometryCR.ss.outputwriting::OutputWriterR"></span><span class="target" id="miogemm_8hpp_1ae8d2060d44542678840b93c139e8f5a5"></span>Solution <code class="descclassname">MIOpenGEMM::</code><code class="descname">get_default</code><span class="sig-paren">(</span>cl_command_queue <em>command_queue</em>, std::string <em>constraints_string</em>, <em class="property">const</em> Geometry &amp;<em>gg</em>, std::string <em>k_comment</em>, outputwriting::OutputWriter &amp;<em>mowri</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N10MIOpenGEMM11get_defaultE16cl_command_queueNSt6stringERK8GeometryNSt6stringERN13outputwriting12OutputWriterE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Return a default Solution from cache, without exploring. If no Solution exists, an error will be thrown. </p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>best Solution found during search </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">command_queue</span></code>: OpenCL command queue, used to extract device name </li>
+<li><code class="docutils literal"><span class="pre">constraints_string</span></code>: String describing the constraints on the kernels considered. It is a substring of a hyperstring, defining with hyper-parameters have fixed values </li>
+<li><code class="docutils literal"><span class="pre">gg</span></code>: GEMM problem Geometry </li>
+<li><code class="docutils literal"><span class="pre">k_comment</span></code>: If a Solution from a custom cache is to be returned, this can be a non-empty string </li>
+<li><code class="docutils literal"><span class="pre">mowri</span></code>: Controls writing to terminal and file </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv2N10MIOpenGEMM11get_defaultERK8Geometry">
+<span id="MIOpenGEMM::get_default__GeometryCR"></span><span class="target" id="miogemm_8hpp_1a65078c72330995fd2a94790963061474"></span>Solution <code class="descclassname">MIOpenGEMM::</code><code class="descname">get_default</code><span class="sig-paren">(</span><em class="property">const</em> Geometry &amp;<em>gg</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N10MIOpenGEMM11get_defaultERK8Geometry" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Return a default Solution, independent of device. This version of get_default does not require a Solution to exist in cache. </p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>generic Solution </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">gg</span></code>: GEMM problem Geometry </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+</div>
+<div class="section" id="check-for-default">
+<h1>check_for_default<a class="headerlink" href="#check-for-default" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="_CPPv2N10MIOpenGEMM17check_for_defaultE16cl_command_queueNSt6stringERK8GeometryNSt6stringE">
+<span id="MIOpenGEMM::check_for_default__cl_command_queue.ss.GeometryCR.ss"></span><span class="target" id="miogemm_8hpp_1ae76191ad3b540279fa5c044b02dff951"></span>std::tuple&lt;bool, std::string&gt; <code class="descclassname">MIOpenGEMM::</code><code class="descname">check_for_default</code><span class="sig-paren">(</span>cl_command_queue <em>command_queue</em>, std::string <em>constraints_string</em>, <em class="property">const</em> Geometry &amp;<em>gg</em>, std::string <em>k_comment</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N10MIOpenGEMM17check_for_defaultE16cl_command_queueNSt6stringERK8GeometryNSt6stringE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>check if a Solution exists in cache. </p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>A tuple, first argument is true if a Solution exists is cache. The second argument is a string describing, if a Solution does not exist, possible reasons. </dd>
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">command_queue</span></code>: OpenCL command queue, used to extract device name </li>
+<li><code class="docutils literal"><span class="pre">constraints_string</span></code>: String describing the constraints on the kernels considered. It is a substring of a hyperstring, defining with hyper-parameters have fixed values </li>
+<li><code class="docutils literal"><span class="pre">gg</span></code>: GEMM problem Geometry </li>
+<li><code class="docutils literal"><span class="pre">k_comment</span></code>: If a a custom cache is to be checked, this can be a non-empty string </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+</div>
+<div class="section" id="benchgemm">
+<h1>benchgemm<a class="headerlink" href="#benchgemm" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="_CPPv2N10MIOpenGEMM9benchgemmE16cl_command_queueRKNSt6stringEjRK8GeometryRK7Offsets6cl_mem6cl_mem6cl_mem6cl_memRN13outputwriting12OutputWriterEb">
+<span id="MIOpenGEMM::benchgemm__cl_command_queue.ssCR.unsigned.GeometryCR.OffsetsCR.cl_mem.cl_mem.cl_mem.cl_mem.outputwriting::OutputWriterR.b"></span><span class="target" id="miogemm_8hpp_1aa286cf2c6eb69844a83785a9d858cbcf"></span>void <code class="descclassname">MIOpenGEMM::</code><code class="descname">benchgemm</code><span class="sig-paren">(</span>cl_command_queue <em>command_queue</em>, <em class="property">const</em> std::string &amp;<em>hyperstring</em>, unsigned <em>n_runs</em>, <em class="property">const</em> Geometry &amp;<em>gg</em>, <em class="property">const</em> Offsets &amp;<em>toff</em>, cl_mem <em>a</em>, cl_mem <em>b</em>, cl_mem <em>c</em>, cl_mem <em>workspace</em>, outputwriting::OutputWriter &amp;<em>mowri</em>, bool <em>c_is_const</em> = false<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv2N10MIOpenGEMM9benchgemmE16cl_command_queueRKNSt6stringEjRK8GeometryRK7Offsets6cl_mem6cl_mem6cl_mem6cl_memRN13outputwriting12OutputWriterEb" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Benchmark the performance of MIOpenGEMM kernel(s). </p>
+<p><dl class="docutils">
+<dt><strong>Parameters</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal"><span class="pre">command_queue</span></code>: OpenCL command queue </li>
+<li><code class="docutils literal"><span class="pre">hyperstring</span></code>: String describing the GEMM kernel(s) to be benchmarked </li>
+<li><code class="docutils literal"><span class="pre">gg</span></code>: The Geometry of the GEMM problem </li>
+<li><code class="docutils literal"><span class="pre">toff</span></code>: Offsets of a, b, c, workspace </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="apireference.html" class="btn btn-neutral" title="API Reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Advanced Micro Devices, Inc.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

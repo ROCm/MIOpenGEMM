@@ -1,0 +1,333 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>MIOpenGEMM &mdash; MIOpenGEMM Documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="MIOpenGEMM Documentation" href="index.html"/>
+        <link rel="next" title="API Reference" href="apireference.html"/>
+        <link rel="prev" title="Welcome to MIOpenGEMM" href="index.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> miopengemm
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">MIOpenGEMM</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#configure-with-cmake">Configure with cmake</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#build-the-library">Build the library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#build-the-examples">Build the examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#building-the-documentation">Building the documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="apireference.html">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="miogemm.html">find</a></li>
+<li class="toctree-l2"><a class="reference internal" href="miogemm.html#get-default">get_default</a></li>
+<li class="toctree-l2"><a class="reference internal" href="miogemm.html#check-for-default">check_for_default</a></li>
+<li class="toctree-l2"><a class="reference internal" href="miogemm.html#benchgemm">benchgemm</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">miopengemm</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>MIOpenGEMM</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/install.md.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="miopengemm">
+<span id="miopengemm"></span><h1>MIOpenGEMM<a class="headerlink" href="#miopengemm" title="Permalink to this headline">¶</a></h1>
+<p>A tool for generating OpenCL matrix multiplication (GEMM) kernels. More information is available at (link coming soon).</p>
+<div class="section" id="prerequisites">
+<span id="prerequisites"></span><h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>OpenCL - OpenCL libraries and header files</li>
+<li><a class="reference external" href="https://github.com/RadeonOpenCompute/rocm-cmake">ROCm cmake modules</a></li>
+</ul>
+</div>
+<div class="section" id="configure-with-cmake">
+<span id="configure-with-cmake"></span><h2>Configure with cmake<a class="headerlink" href="#configure-with-cmake" title="Permalink to this headline">¶</a></h2>
+<p>First create a build directory:</p>
+<div class="highlight-default"><div class="highlight"><pre><span class="n">mkdir</span> <span class="n">build</span><span class="p">;</span> <span class="n">cd</span> <span class="n">build</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>Next configure cmake:</p>
+<div class="highlight-default"><div class="highlight"><pre><span class="n">cmake</span> <span class="o">..</span>
+</pre></div>
+</div>
+<p>The above assumes that OpenCL is installed in one of the standard locations. If not, then manually set these two cmake variables, either in <code class="docutils literal"><span class="pre">CMakeCache.txt</span></code> or</p>
+<div class="highlight-default"><div class="highlight"><pre><span class="n">cmake</span> <span class="o">-</span><span class="n">DOPENCL_LIBRARIES</span><span class="o">=&lt;</span><span class="n">opencl</span><span class="o">-</span><span class="n">library</span><span class="o">-</span><span class="n">path</span><span class="o">&gt;</span> <span class="o">-</span><span class="n">DOPENCL_INCLUDE_DIRS</span><span class="o">&lt;</span><span class="n">opencl</span><span class="o">-</span><span class="n">headers</span><span class="o">-</span><span class="n">path</span><span class="o">&gt;</span> <span class="o">..</span>
+</pre></div>
+</div>
+<p>By default the install location is set to '/opt/rocm', this can be set by using <code class="docutils literal"><span class="pre">CMAKE_INSTALL_PREFIX</span></code>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span class="n">cmake</span> <span class="o">-</span><span class="n">DCMAKE_INSTALL_PREFIX</span><span class="o">=&lt;</span><span class="n">miopen</span><span class="o">-</span><span class="n">installed</span><span class="o">-</span><span class="n">path</span><span class="o">&gt;</span> <span class="o">..</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="build-the-library">
+<span id="build-the-library"></span><h2>Build the library<a class="headerlink" href="#build-the-library" title="Permalink to this headline">¶</a></h2>
+<p>The library can be built, from the <code class="docutils literal"><span class="pre">build</span></code> directory</p>
+<div class="highlight-default"><div class="highlight"><pre><span class="n">make</span> <span class="n">miopengemm</span>
+</pre></div>
+</div>
+<p>And can be installed by using the 'install' target</p>
+<div class="highlight-default"><div class="highlight"><pre><span class="n">make</span> <span class="n">install</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="build-the-examples">
+<span id="build-the-examples"></span><h2>Build the examples<a class="headerlink" href="#build-the-examples" title="Permalink to this headline">¶</a></h2>
+<p>All examples can be built with</p>
+<div class="highlight-default"><div class="highlight"><pre><span class="n">make</span> <span class="n">examples</span>
+</pre></div>
+</div>
+<p>Or individually for examples <code class="docutils literal"><span class="pre">basicexample</span></code> , <code class="docutils literal"><span class="pre">deepbench</span></code> , <code class="docutils literal"><span class="pre">devtest</span></code> , <code class="docutils literal"><span class="pre">experiment1</span></code> , <code class="docutils literal"><span class="pre">gencache</span></code> , <code class="docutils literal"><span class="pre">initialisationdemo</span></code> , <code class="docutils literal"><span class="pre">redirectionexample</span></code> and <code class="docutils literal"><span class="pre">smallgeometry</span></code> with make &quot;example-name&quot;</p>
+</div>
+<div class="section" id="usage">
+<span id="usage"></span><h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
+<p>To use MIOpenGEMM, the <code class="docutils literal"><span class="pre">miopengemm.hpp</span></code> header file should be included in your C++ source file</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="cp">#include</span> <span class="cpf">&lt;miopengemm/miopengemm.hpp&gt;</span><span class="cp"></span>
+</pre></div>
+</div>
+<p>The key function is</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="n">Solution</span> <span class="nf">find</span><span class="p">(</span>
+  <span class="kt">float</span> <span class="n">allotted_time</span><span class="p">,</span>             <span class="c1">// Amount of time [s] allotted to search for a solution</span>
+  <span class="n">cl_command_queue</span> <span class="n">command_queue</span><span class="p">,</span>  <span class="c1">// OpenCL command queue</span>
+  <span class="n">cl_mem</span> <span class="n">a</span><span class="p">,</span> <span class="n">cl_mem</span> <span class="n">b</span><span class="p">,</span> <span class="n">cl_mem</span> <span class="n">c</span><span class="p">,</span>    <span class="c1">// Read-only OpenCL memory buffers</span>
+  <span class="kt">bool</span> <span class="n">enforce_determinism</span><span class="p">,</span>        <span class="c1">// Guarantee bit-wise fidelity with for-for-for GEMM.</span>
+  <span class="k">const</span> <span class="n">Geometry</span> <span class="o">&amp;</span> <span class="n">tgg</span><span class="p">,</span>            <span class="c1">// Matrix geometry, see below</span>
+  <span class="kt">bool</span> <span class="n">verbose</span><span class="p">,</span>                    <span class="c1">// Print summary information to terminal while searching. </span>
+  <span class="kt">bool</span> <span class="n">with_warnings</span><span class="p">);</span>             <span class="c1">// Print performance warnings.</span>
+</pre></div>
+</div>
+<p>One of the parameters of <code class="docutils literal"><span class="pre">find</span></code> is a <code class="docutils literal"><span class="pre">Geometry</span></code> object, which describes the GEMM problem.  The <code class="docutils literal"><span class="pre">Geometry</span></code> class has a constructor with one std::string as argument, for example</p>
+<div class="highlight-c++"><div class="highlight"><pre><span class="n">Geometry</span> <span class="nf">tgg</span><span class="p">(</span><span class="s">&quot;tC0_tA0_tB1_colMaj0_m55_n65_k122_lda123_ldb124_ldc69_ws0_f32&quot;</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>creates a Geometry for the Row-Major SGEMM problem <code class="docutils literal"><span class="pre">C</span> <span class="pre">=</span> <span class="pre">alpha</span> <span class="pre">A</span> <span class="pre">B.T</span> <span class="pre">+</span> <span class="pre">beta</span> <span class="pre">C</span></code> where A is 55 x 122, B.T is 122 x 65, and C is 55 x 65. lda, ldb, and ldc are the standard matrix paddings. <code class="docutils literal"><span class="pre">tC</span></code> allows for C to be transposed, which is not in the standard GEMM API. <code class="docutils literal"><span class="pre">ws</span></code> is currently an experimental work-space parameter, and should be left as zero. MIOpenGEMM currently supports SGEMM (f32) and DGEMM (f64).</p>
+<p><code class="docutils literal"><span class="pre">find</span></code> returns a <code class="docutils literal"><span class="pre">Solution</span></code> object. A <code class="docutils literal"><span class="pre">Solution</span></code> object has member <code class="docutils literal"><span class="pre">std::vector&lt;KernelString&gt;</span> <span class="pre">v_tgks</span></code> where each KernelString in the vector has members</p>
+<div class="highlight-c++"><div class="highlight"><pre>  <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">kernstr</span><span class="p">;</span>      <span class="c1">// OpenCL source</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">fname</span><span class="p">;</span>        <span class="c1">// The name of the kernel function in kernstr</span>
+  <span class="kt">size_t</span> <span class="n">global_work_size</span><span class="p">;</span>  <span class="c1">// The global work size to be passed to clEnqueueNDRangeKernel </span>
+  <span class="kt">size_t</span> <span class="n">local_work_size</span><span class="p">;</span>   <span class="c1">// The local work size to be passed to clEnqueueNDRangeKernel</span>
+</pre></div>
+</div>
+<p>Note that the <code class="docutils literal"><span class="pre">Solution</span></code> object returned by <code class="docutils literal"><span class="pre">find</span></code> is only valid for the <code class="docutils literal"><span class="pre">Geometry</span></code> passed as to <code class="docutils literal"><span class="pre">find</span></code> . Currently, there are either 1 or 2 <code class="docutils literal"><span class="pre">KernelString</span></code>s in <code class="docutils literal"><span class="pre">v_tgks</span></code> , to be executed serially.</p>
+<p>If a <code class="docutils literal"><span class="pre">Geometry</span></code> is used frequently, it is possible to cache the <code class="docutils literal"><span class="pre">Solution</span></code>  for future use, so that <code class="docutils literal"><span class="pre">find</span></code> does not need to be re-run. See the example <code class="docutils literal"><span class="pre">gencache</span></code> to see how this is done. Cached Solutions can be retrieved with the function <code class="docutils literal"><span class="pre">get_default</span></code> .</p>
+</div>
+<div class="section" id="building-the-documentation">
+<span id="building-the-documentation"></span><h2>Building the documentation<a class="headerlink" href="#building-the-documentation" title="Permalink to this headline">¶</a></h2>
+<p>Instructions for building the documentation are identical to those for <a class="reference external" href="https://github.com/AMDComputeLibraries/MLOpen#building-the-documentation">MIOpen</a></p>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="apireference.html" class="btn btn-neutral float-right" title="API Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral" title="Welcome to MIOpenGEMM" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Advanced Micro Devices, Inc.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
