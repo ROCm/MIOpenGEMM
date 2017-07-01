@@ -100,7 +100,20 @@ If a ` Geometry ` is used frequently, it is possible to cache the ` Solution `  
 
 
 ## Building the documentation
+HTML and PDF documentation can be built using:
 
-Instructions for building the documentation are identical to those for [MIOpen](https://github.com/AMDComputeLibraries/MLOpen#building-the-documentation) 
+`make doc`
+
+This will build a local searchable web site inside the ./MIOpenGEMM/doc/html folder and a PDF document inside the ./MIOpenGEMM/doc/pdf folder.
+
+Documentation is generated using [Doxygen](http://www.stack.nl/~dimitri/doxygen/download.html) and should be installed separately.
+
+HTML and PDFs are generated using [Sphinx](http://www.sphinx-doc.org/en/stable/index.html) and [Breathe](https://breathe.readthedocs.io/en/latest/), with the [ReadTheDocs theme](https://github.com/rtfd/sphinx_rtd_theme).
+
+Requirements for both Sphinx, Breathe, and the ReadTheDocs theme can be filled for these in the MIOpenGEMM/doc folder:
+
+`pip install -r ./requirements.txt`
+
+Depending on your setup `sudo` may be required for the pip install.
 
 
