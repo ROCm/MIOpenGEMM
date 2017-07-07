@@ -8,7 +8,7 @@
 #include <miopengemm/geometry.hpp>
 #include <miopengemm/hyperparams.hpp>
 #include <miopengemm/kernelstring.hpp>
-
+#include <miopengemm/stringutilbase.hpp>
 namespace MIOpenGEMM
 {
 namespace basegen
@@ -22,6 +22,8 @@ class BaseGenerator
   const Geometry&                     gg;
   const derivedparams::DerivedParams& dp;
 
+  unsigned n_args_added;
+
   std::string type;
   std::string kernelname;
 
@@ -33,12 +35,11 @@ class BaseGenerator
   bool uses_beta;
 
   std::string get_time_string();
-
   std::string get_what_string();
-
   std::string get_how_string();
-
   std::string get_derived_string();
+
+  void append_farg(bool, std::stringstream &, const std::string &);
 
   public:
   /* Does entire setup */
@@ -51,7 +52,7 @@ class BaseGenerator
                 const derivedparams::DerivedParams& dp_,
                 const std::string&                  type_);
 
-  void append_parameter_list_from_usage(std::stringstream& ss);
+  void append_fargs(std::stringstream& ss);
 
   void append_unroll_block_geometry(char               x,
                                     std::stringstream& ss,

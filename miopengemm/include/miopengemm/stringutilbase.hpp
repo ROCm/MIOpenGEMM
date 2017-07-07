@@ -38,6 +38,8 @@ std::string get_char_padded(const T& t, unsigned length){
   return t_s;
 }
 
+std::string get_stars(unsigned n_stars);
+std::string get_star_wrapped(const std::string & s);
 
 }
 }

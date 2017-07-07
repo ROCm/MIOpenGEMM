@@ -206,7 +206,7 @@ KernelString ByLineGenerator::get_kernelstring()
   ss << "__kernel void ";
 
   ss << kernelname;
-  append_parameter_list_from_usage(ss);
+  append_fargs(ss);
 
   ss << "{";
 

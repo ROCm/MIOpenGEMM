@@ -22,7 +22,7 @@ std::string get_hyperstring(std::string hyperstring = "")
 {
   if (hyperstring.compare("") == 0)
   {
-    hyperstring = "A_MIC1_PAD0_PLU0_LIW0_MIW0_WOS0__B_MIC1_PAD0_PLU0_LIW0_MIW0_WOS0__C_UNR16_GAL1_"
+    hyperstring = "A_MIC1_PAD0_PLU0_LIW0_MIW0_WOS0__B_MIC1_PAD0_PLU0_LIW0_MIW0_WOS1__C_UNR16_GAL1_"
                   "PUN0_ICE1_NAW16_UFO0_MAC1_SKW10";
   }
   return hyperstring;
@@ -31,7 +31,7 @@ std::string get_hyperstring(std::string hyperstring = "")
 template <typename TFloat>
 MIOpenGEMM::Geometry get_geometry()
 {
-  return {"tC0_tA1_tB0_colMaj1_m64_n1_k524288_lda524288_ldb524288_ldc64_ws0_f32"};
+  return {"tC0_tA1_tB0_colMaj1_m64_n1_k524288_lda524288_ldb524288_ldc64_ws8000000_f32"};
 }
 
 MIOpenGEMM::Offsets get_offsets()
@@ -39,7 +39,7 @@ MIOpenGEMM::Offsets get_offsets()
   unsigned a_offset         = 0;
   unsigned b_offset         = 0;
   unsigned c_offset         = 0;
-  unsigned workspace_offset = 0;
+  unsigned workspace_offset = 4;
   unsigned tail_off_a       = 0;
   unsigned tail_off_b       = 0;
   unsigned tail_off_c       = 0;
@@ -66,7 +66,7 @@ void print_kernel()
   for (auto& x : bundle.v_tgks)
   {
     // set this to the directory to write kernels to
-    auto dirname = "/home/james/" + gg.get_string() + "/" + get_hyperstring() + "/";
+    auto dirname = "/home/james/test/" + gg.get_string() + "/" + get_hyperstring() + "/";
     // WARNING : mkdir only works on linux/mac
     std::string syscall = "mkdir -p " + dirname;
     std::system(syscall.c_str());
@@ -86,7 +86,7 @@ int main()
   MIOpenGEMM::outputwriting::OutputWriter mowri(true, fout != "", fout);
 
   // what test(s) are you running ?
-  bool test_print     = false;
+  bool test_print     = true;
   bool test_benchgemm = false;
   bool test_find      = false;
   bool test_accuracy  = true;

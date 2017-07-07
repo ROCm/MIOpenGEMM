@@ -206,7 +206,7 @@ class OpenCLGemmEncapsulator
                        "but workspace_size is zero. if workspace_size is zero please set "
                        "workspace_gpu to the nullptr to make super clear that there will be "
                        "no "
-                       "workspace used ");
+                       "workspace used. The workspace offset should be zero too in this case ");
     }
 
     if (gpum['w'] != nullptr &&

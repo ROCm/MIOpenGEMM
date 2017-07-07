@@ -4,6 +4,7 @@
 #include <cmath>
 #include <iostream>
 #include <tuple>
+#include <sstream>
 #include <miopengemm/error.hpp>
 #include <miopengemm/stringutilbase.hpp>
 
@@ -201,6 +202,16 @@ std::string get_padded(unsigned x, unsigned length)
 }
 
 
+std::string get_stars(unsigned n_stars){
+  return std::string(n_stars, '*');
+}
+
+std::string get_star_wrapped(const std::string & s){
+  auto n_stars = s.size() + 1;
+  std::stringstream ss;
+  ss  << "/* " << get_stars(n_stars) << "\n* " << s << " *\n" << get_stars(n_stars) << "  */";
+  return ss.str();
+}
 
 }
 }

@@ -1052,7 +1052,7 @@ unsigned k_plus_offset = __K__ + unroll_offset;
        << ",1, 1)))\n";
     ss << "__kernel void ";
     ss << kernelname;
-    append_parameter_list_from_usage(ss);
+    append_fargs(ss);
 
     ss << "\n{\n\n";
 

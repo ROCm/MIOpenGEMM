@@ -99,7 +99,7 @@ class NormalFormGenerator : public prepgen::PrepGenerator
        << "__attribute__((reqd_work_group_size(N_WORK_ITEMS_PER_GROUP,1,1)))" << '\n'
        << "__kernel void " << kernelname;
 
-    append_parameter_list_from_usage(ss);
+    append_fargs(ss);
 
     ss << "{"
        << "\n/* setting up where this thread works */\n"

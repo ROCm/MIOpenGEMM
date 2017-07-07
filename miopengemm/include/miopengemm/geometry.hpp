@@ -7,10 +7,14 @@
 #include <string>
 #include <vector>
 
+/* TODO : namespace should be lower-case. */
 namespace MIOpenGEMM
 {
 
 namespace nsHP
+
+
+/* TODO : ONLY use enum class (see C++11 Meyers) */
 {
 enum eMat
 {
@@ -96,6 +100,7 @@ class Geometry
 
   GeometryDerived derived;
 
+  /* TODO : decide on style :  workspace_size vs workspaceSize. */
   Geometry(bool     isColMajor,
            bool     tA,
            bool     tB,
