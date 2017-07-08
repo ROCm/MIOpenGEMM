@@ -17,8 +17,6 @@ namespace MIOpenGEMM
 {
 
 
-// design note: a safer choice than namespacing enums is to use enum class.
-// but this would involve static casting from the enumerated type to unsigned all the time
 
 namespace nsMAC
 {
@@ -31,22 +29,9 @@ std::tuple<bool, std::string, std::array<unsigned, 2>> get_mac_grid(unsigned mac
 namespace hyperparams
 {
 
-//class KeysVals
-//{
-  //public:
-  //std::vector<std::string> keys;
-  //std::map<std::string, unsigned> vals;
-  //unsigned nHPs;
-//};
-
 std::vector<unsigned>
 get_constraints(std::string subg_cs, bool subg_csfull, const EnumMapper<std::string> * p_kv, char subg_hash);
 
-//extern const std::map<char, unsigned> graphind;
-//extern const std::vector<char> graphchar;
-
-//extern const KeysVals chiral_kv;
-//extern const KeysVals non_chiral_kv;
 
 class SubG
 {

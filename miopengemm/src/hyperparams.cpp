@@ -113,53 +113,6 @@ std::map<T, unsigned> get_vals(unsigned nVals, const std::vector<T>& keys, const
   return vals;
 }
 
-//std::vector<char> get_graphchar()
-//{
-  //std::vector<char> gchar;
-  //gchar.resize(Mat::E::N);
-  //gchar[Mat::E::A] = 'A';
-  //gchar[Mat::E::B] = 'B';
-  //gchar[Mat::E::C] = 'C';
-  //return gchar;
-//}
-//const std::vector<char> graphchar = get_graphchar();
-//const std::map<char, unsigned> Mat::M.val = get_vals(Mat::E::N, graphchar, "getting Mat::M.val");
-
-//KeysVals get_chiral_kv()
-//{
-  //KeysVals ckv;
-  //ckv.keys.resize(Chi::E::N);
-  //ckv.keys[Chi::E::MIC] = "MIC";
-  //ckv.keys[Chi::E::PAD] = "PAD";
-  //ckv.keys[Chi::E::PLU] = "PLU";
-  //ckv.keys[Chi::E::LIW] = "LIW";
-  //ckv.keys[Chi::E::MIW] = "MIW";
-  //ckv.keys[Chi::E::WOS] = "WOS";
-  //ckv.vals            = get_vals(Chi::E::N, ckv.keys, "getting chiral vals");
-  //ckv.nHPs            = Chi::E::N;
-  //return ckv;
-//}
-
-//const KeysVals chiral_kv = get_chiral_kv();
-
-//KeysVals get_non_chiral_kv()
-//{
-  //KeysVals ckv;
-  //ckv.keys.resize(NonChi::E::N);
-  //ckv.keys[NonChi::E::UNR] = "UNR";
-  //ckv.keys[NonChi::E::GAL] = "GAL";
-  //ckv.keys[NonChi::E::PUN] = "PUN";
-  //ckv.keys[NonChi::E::ICE] = "ICE";
-  //ckv.keys[NonChi::E::NAW] = "NAW";
-  //ckv.keys[NonChi::E::UFO] = "UFO";
-  //ckv.keys[NonChi::E::MAC] = "MAC";
-  //ckv.keys[NonChi::E::SKW] = "SKW";
-  //ckv.vals            = get_vals(NonChi::E::N, ckv.keys, "getting non_chiral_keys");
-  //ckv.nHPs            = NonChi::E::N;
-  //return ckv;
-//}
-
-//const KeysVals non_chiral_kv = get_non_chiral_kv();
 
 std::vector<std::string> get_sub_constraints(std::string constraints_string)
 {
