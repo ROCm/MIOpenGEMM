@@ -12,9 +12,6 @@ namespace MIOpenGEMM
 {
 
 
-// maps bkt to a string
-extern const std::vector<std::string> basic_kernel_type_strings;
-
 // maps dependencies of execution order of kernels
 extern const std::vector<std::vector<unsigned>> kernel_dependencies;
 

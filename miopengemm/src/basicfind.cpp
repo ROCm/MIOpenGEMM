@@ -264,7 +264,7 @@ Solution base_basicfind(const Geometry&   geometry,
       // set parameters. easy, as parameters to kernels have a strict ordering
 
       std::string enqhash =
-        std::string("basicfind.hpp") + basic_kernel_type_strings[ks.type.basic_kernel_type];
+        std::string("basicfind.hpp") + BasicKernelType::M.name[ks.type.basic_kernel_type];
       unsigned parameter_index = 0;
 
       for (auto& x : {'a', 'b', 'c', 'w'})

@@ -113,53 +113,53 @@ std::map<T, unsigned> get_vals(unsigned nVals, const std::vector<T>& keys, const
   return vals;
 }
 
-std::vector<char> get_graphchar()
-{
-  std::vector<char> gchar;
-  gchar.resize(Mat::E::N);
-  gchar[Mat::E::A] = 'A';
-  gchar[Mat::E::B] = 'B';
-  gchar[Mat::E::C] = 'C';
-  return gchar;
-}
-const std::vector<char> graphchar = get_graphchar();
-const std::map<char, unsigned> graphind = get_vals(Mat::E::N, graphchar, "getting graphind");
+//std::vector<char> get_graphchar()
+//{
+  //std::vector<char> gchar;
+  //gchar.resize(Mat::E::N);
+  //gchar[Mat::E::A] = 'A';
+  //gchar[Mat::E::B] = 'B';
+  //gchar[Mat::E::C] = 'C';
+  //return gchar;
+//}
+//const std::vector<char> graphchar = get_graphchar();
+//const std::map<char, unsigned> Mat::M.val = get_vals(Mat::E::N, graphchar, "getting Mat::M.val");
 
-KeysVals get_chiral_kv()
-{
-  KeysVals ckv;
-  ckv.keys.resize(Chi::E::N);
-  ckv.keys[Chi::E::MIC] = "MIC";
-  ckv.keys[Chi::E::PAD] = "PAD";
-  ckv.keys[Chi::E::PLU] = "PLU";
-  ckv.keys[Chi::E::LIW] = "LIW";
-  ckv.keys[Chi::E::MIW] = "MIW";
-  ckv.keys[Chi::E::WOS] = "WOS";
-  ckv.vals            = get_vals(Chi::E::N, ckv.keys, "getting chiral vals");
-  ckv.nHPs            = Chi::E::N;
-  return ckv;
-}
+//KeysVals get_chiral_kv()
+//{
+  //KeysVals ckv;
+  //ckv.keys.resize(Chi::E::N);
+  //ckv.keys[Chi::E::MIC] = "MIC";
+  //ckv.keys[Chi::E::PAD] = "PAD";
+  //ckv.keys[Chi::E::PLU] = "PLU";
+  //ckv.keys[Chi::E::LIW] = "LIW";
+  //ckv.keys[Chi::E::MIW] = "MIW";
+  //ckv.keys[Chi::E::WOS] = "WOS";
+  //ckv.vals            = get_vals(Chi::E::N, ckv.keys, "getting chiral vals");
+  //ckv.nHPs            = Chi::E::N;
+  //return ckv;
+//}
 
-const KeysVals chiral_kv = get_chiral_kv();
+//const KeysVals chiral_kv = get_chiral_kv();
 
-KeysVals get_non_chiral_kv()
-{
-  KeysVals ckv;
-  ckv.keys.resize(NonChi::E::N);
-  ckv.keys[NonChi::E::UNR] = "UNR";
-  ckv.keys[NonChi::E::GAL] = "GAL";
-  ckv.keys[NonChi::E::PUN] = "PUN";
-  ckv.keys[NonChi::E::ICE] = "ICE";
-  ckv.keys[NonChi::E::NAW] = "NAW";
-  ckv.keys[NonChi::E::UFO] = "UFO";
-  ckv.keys[NonChi::E::MAC] = "MAC";
-  ckv.keys[NonChi::E::SKW] = "SKW";
-  ckv.vals            = get_vals(NonChi::E::N, ckv.keys, "getting non_chiral_keys");
-  ckv.nHPs            = NonChi::E::N;
-  return ckv;
-}
+//KeysVals get_non_chiral_kv()
+//{
+  //KeysVals ckv;
+  //ckv.keys.resize(NonChi::E::N);
+  //ckv.keys[NonChi::E::UNR] = "UNR";
+  //ckv.keys[NonChi::E::GAL] = "GAL";
+  //ckv.keys[NonChi::E::PUN] = "PUN";
+  //ckv.keys[NonChi::E::ICE] = "ICE";
+  //ckv.keys[NonChi::E::NAW] = "NAW";
+  //ckv.keys[NonChi::E::UFO] = "UFO";
+  //ckv.keys[NonChi::E::MAC] = "MAC";
+  //ckv.keys[NonChi::E::SKW] = "SKW";
+  //ckv.vals            = get_vals(NonChi::E::N, ckv.keys, "getting non_chiral_keys");
+  //ckv.nHPs            = NonChi::E::N;
+  //return ckv;
+//}
 
-const KeysVals non_chiral_kv = get_non_chiral_kv();
+//const KeysVals non_chiral_kv = get_non_chiral_kv();
 
 std::vector<std::string> get_sub_constraints(std::string constraints_string)
 {
@@ -167,7 +167,7 @@ std::vector<std::string> get_sub_constraints(std::string constraints_string)
   auto                     megafrags = stringutil::split(constraints_string, "__");
   for (auto& megafrag : megafrags)
   {
-    if (graphind.count(megafrag[0]) == 0)
+    if (Mat::M.val.count(megafrag[0]) == 0)
     {
       std::stringstream ss;
       ss << "\nWhile reading hyperstring in get-params-from-string,\n";
@@ -180,7 +180,7 @@ std::vector<std::string> get_sub_constraints(std::string constraints_string)
       ss << "sub constraint " << megafrag << " is too short, something is wrong. \n";
       throw miog_error(ss.str());
     }
-    sub_constraints[graphind.at(megafrag[0])] = megafrag.substr(2);
+    sub_constraints[Mat::M.val.at(megafrag[0])] = megafrag.substr(2);
   }
   return sub_constraints;
 }
@@ -237,20 +237,20 @@ std::vector<std::vector<unsigned>> get_all_constraints(std::string constraints_s
   std::vector<std::vector<unsigned>> all_constraints(Mat::E::N);
 
   all_constraints[Mat::E::A] =
-    get_constraints(sub_constraints[Mat::E::A], false, &chiral_kv, 'A');
+    get_constraints(sub_constraints[Mat::E::A], false, &Chi::M, 'A');
   all_constraints[Mat::E::B] =
-    get_constraints(sub_constraints[Mat::E::B], false, &chiral_kv, 'B');
+    get_constraints(sub_constraints[Mat::E::B], false, &Chi::M, 'B');
   all_constraints[Mat::E::C] =
-    get_constraints(sub_constraints[Mat::E::C], false, &non_chiral_kv, 'C');
+    get_constraints(sub_constraints[Mat::E::C], false, &NonChi::M, 'C');
 
   return all_constraints;
 }
 
 std::vector<unsigned>
-get_constraints(std::string subg_cs, bool subg_csfull, const KeysVals* p_kv, char subg_hash)
+get_constraints(std::string subg_cs, bool subg_csfull, const EnumMapper<std::string> * p_kv, char subg_hash)
 {
 
-  std::vector<unsigned> constraints(p_kv->nHPs, Status::E::UNDEFINED);
+  std::vector<unsigned> constraints(p_kv->n, Status::E::UNDEFINED);
 
   std::vector<std::string> keyvalfrags;
   if (subg_cs.compare(""))
@@ -265,8 +265,8 @@ get_constraints(std::string subg_cs, bool subg_csfull, const KeysVals* p_kv, cha
   for (auto& x : keyvalfrags)
   {
     std::tie(key, val) = stringutil::splitnumeric(x);
-    auto start = p_kv->keys.begin();
-    auto end   = p_kv->keys.end();
+    auto start = p_kv->name.begin();
+    auto end   = p_kv->name.end();
     if (std::find(start, end, key) == end)
     {
       std::stringstream ss;
@@ -275,7 +275,7 @@ get_constraints(std::string subg_cs, bool subg_csfull, const KeysVals* p_kv, cha
       throw miog_error(ss.str());
     }
 
-    unsigned keyindex = p_kv->vals.at(key);
+    unsigned keyindex = p_kv->val.at(key);
     if (keyindex < constraints.size())
     {
       constraints[keyindex] = val;
@@ -292,13 +292,13 @@ get_constraints(std::string subg_cs, bool subg_csfull, const KeysVals* p_kv, cha
   // are supposed to be comprehensive
   if (subg_csfull == true)
   {
-    for (unsigned hpi = 0; hpi < p_kv->nHPs; ++hpi)
+    for (unsigned hpi = 0; hpi < p_kv->n; ++hpi)
     {
       if (constraints[hpi] == Status::E::UNDEFINED)
       {
         std::stringstream ss;
         ss << "While processing the constraints string of SubG `" << subg_hash << "', ";
-        ss << "the parameter `" << p_kv->keys[hpi]
+        ss << "the parameter `" << p_kv->name[hpi]
            << "' appeared to be unset. The constraints must all be set "
               "(subg_csfull is true) \n";
         throw miog_error(ss.str());
@@ -373,9 +373,9 @@ SubG::SubG(unsigned                            nHPs_,
 {
 }
 
-void ChiralSubG::initialise_maps() { ptr_keys_vals = &chiral_kv; }
+void ChiralSubG::initialise_maps() { ptr_keys_vals = &Chi::M; }
 
-void CSubG::initialise_maps() { ptr_keys_vals = &non_chiral_kv; }
+void CSubG::initialise_maps() { ptr_keys_vals = &NonChi::M; }
 
 void SubG::initialise()
 {
@@ -452,7 +452,7 @@ void SubG::confirm_start_is_subset()
     if (start_range[hpi].size() == 0)
     {
       std::stringstream ss;
-      ss << "no valid value to start from in " << ptr_keys_vals->keys[hpi];
+      ss << "no valid value to start from in " << ptr_keys_vals->name[hpi];
       throw miog_error(ss.str());
     }
 
@@ -462,8 +462,8 @@ void SubG::confirm_start_is_subset()
       {
         std::stringstream ss;
         ss << "It seems like the start_range element `" << x << "' is not in the range of "
-           << ptr_keys_vals->keys[hpi] << ".";
-        ss << "The full setup of " << ptr_keys_vals->keys[hpi] << " is\n ";
+           << ptr_keys_vals->name[hpi] << ".";
+        ss << "The full setup of " << ptr_keys_vals->name[hpi] << " is\n ";
         ss << get_string(hpi);
         throw miog_error(ss.str());
       }
@@ -551,7 +551,7 @@ void SubG::apply_constraints()
             range[hpi].end())
         {
           std::stringstream errm;
-          errm << "the constraint on " << ptr_keys_vals->keys[hpi] << " of " << constraints.at(hpi)
+          errm << "the constraint on " << ptr_keys_vals->name[hpi] << " of " << constraints.at(hpi)
                << " is not in the pre-constraint range:  \n"
                << get_range_string(hpi);
           errm << "this is not currently allowed";
@@ -727,7 +727,7 @@ void HyperParams::checks() const
 
         std::stringstream errm;
         errm << "\nIn HyperParams::checks(). It appears as though `" << x.vs[hpi]
-             << "' is not a valid value for " << sub_g.ptr_keys_vals->keys[hpi] << ".\n";
+             << "' is not a valid value for " << sub_g.ptr_keys_vals->name[hpi] << ".\n";
         errm << "the relevant graph looks like this: \n" << sub_g.get_string(hpi);
         throw miog_error(errm.str());
       }
@@ -797,12 +797,12 @@ bool HyperParams::operator==(const HyperParams& hpr) { return get_string() == hp
 
 std::string HyperParams::get_part_string(char X) const
 {
-  unsigned          mi = graphind.at(X);
+  unsigned          mi = Mat::M.val.at(X);
   std::stringstream ss;
   ss << X;
   for (unsigned hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi)
   {
-    ss << "_" << p_graph->p_subgs[mi]->ptr_keys_vals->keys[hpi] << v_xhps[mi].vs[hpi];
+    ss << "_" << p_graph->p_subgs[mi]->ptr_keys_vals->name[hpi] << v_xhps[mi].vs[hpi];
   }
   return ss.str();
 }
@@ -958,7 +958,7 @@ std::tuple<bool, std::string> HyperParams::in_graph()
       {
 
         std::stringstream sstr;
-        sstr << "hyper param : " << p_graph->p_subgs[mi]->ptr_keys_vals->keys[hpi] << ", and value "
+        sstr << "hyper param : " << p_graph->p_subgs[mi]->ptr_keys_vals->name[hpi] << ", and value "
              << v_xhps[mi].vs[hpi] << ".";
         in_graph_string       = sstr.str();
         constraints_satisfied = false;
@@ -982,7 +982,7 @@ Mat::E HyperParams::get_eMat_from_char(char X) const
                      "type in get_eMat_from_char : " +
                      std::to_string(X));
   }
-  return static_cast<Mat::E>(graphind.at(X));
+  return static_cast<Mat::E>(Mat::M.val.at(X));
 }
 }
 }

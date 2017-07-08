@@ -31,22 +31,22 @@ std::tuple<bool, std::string, std::array<unsigned, 2>> get_mac_grid(unsigned mac
 namespace hyperparams
 {
 
-class KeysVals
-{
-  public:
-  std::vector<std::string> keys;
-  std::map<std::string, unsigned> vals;
-  unsigned nHPs;
-};
+//class KeysVals
+//{
+  //public:
+  //std::vector<std::string> keys;
+  //std::map<std::string, unsigned> vals;
+  //unsigned nHPs;
+//};
 
 std::vector<unsigned>
-get_constraints(std::string subg_cs, bool subg_csfull, const KeysVals* p_kv, char subg_hash);
+get_constraints(std::string subg_cs, bool subg_csfull, const EnumMapper<std::string> * p_kv, char subg_hash);
 
-extern const std::map<char, unsigned> graphind;
-extern const std::vector<char> graphchar;
+//extern const std::map<char, unsigned> graphind;
+//extern const std::vector<char> graphchar;
 
-extern const KeysVals chiral_kv;
-extern const KeysVals non_chiral_kv;
+//extern const KeysVals chiral_kv;
+//extern const KeysVals non_chiral_kv;
 
 class SubG
 {
@@ -65,7 +65,7 @@ class SubG
   unsigned        nHPs;
   const Geometry* ptr_gg;
 
-  const KeysVals* ptr_keys_vals;
+  const EnumMapper<std::string>* ptr_keys_vals;
 
   // all the possible edges from all the possible hyper parameter
   // example : edges[Chi::E::MIC] is a map; edges[Chi::E::MIC][1] --> {2,3,4}

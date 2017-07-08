@@ -14,17 +14,6 @@
 namespace MIOpenGEMM
 {
 
-std::vector<char> get_matChars()
-{
-  std::vector<char> v1;
-  v1.resize(Mat::E::N);
-  v1[Mat::E::A] = 'a';
-  v1[Mat::E::B] = 'b';
-  v1[Mat::E::C] = 'c';
-  return v1;
-}
-
-std::vector<char> matChars = get_matChars();
 
 Offsets::Offsets(unsigned oa_,
                  unsigned ob_,
@@ -117,42 +106,42 @@ void GeometryDerived::reset(char floattype)
 // the coalesced dim.
 // (false == false) == true  evaluates to true,
 // so gate is true, so m is returned
-unsigned Geometry::get_padless_dim(Mat::E emat_x, bool isCoal) const
+unsigned Geometry::get_padless_dim(Mat::E M, bool isCoal) const
 {
 
-  bool gate = (tX.at(emat_x) == isColMajor) == isCoal;
+  bool gate = (tX.at(M) == isColMajor) == isCoal;
 
-  if (emat_x == Mat::E::A)
+  if (M == Mat::E::A)
   {
     return gate ? k : m;
   }
 
-  else if (emat_x == Mat::E::B)
+  else if (M == Mat::E::B)
   {
     return gate ? n : k;
   }
 
-  else if (emat_x == Mat::E::C)
+  else if (M == Mat::E::C)
   {
     return gate ? n : m;
   }
 
   else
   {
-    throw miog_error("unrecognised emat_x passed to get_coal in "
+    throw miog_error("unrecognised M passed to get_coal in "
                      "get_padless_dim of geometry");
   }
 }
 
-unsigned Geometry::get_non_k_dim(Mat::E emat_x) const
+unsigned Geometry::get_non_k_dim(Mat::E M) const
 {
 
-  if (emat_x == Mat::E::A)
+  if (M == Mat::E::A)
   {
     return m;
   }
 
-  else if (emat_x == Mat::E::B)
+  else if (M == Mat::E::B)
   {
     return n;
   }
@@ -225,15 +214,15 @@ void Geometry::check_ldx_consistent() const
   }
 }
 
-unsigned Geometry::get_uncoal(Mat::E emat_x) const { return get_padless_dim(emat_x, false); }
+unsigned Geometry::get_uncoal(Mat::E M) const { return get_padless_dim(M, false); }
 
-unsigned Geometry::get_coal(Mat::E emat_x) const { return get_padless_dim(emat_x, true); }
+unsigned Geometry::get_coal(Mat::E M) const { return get_padless_dim(M, true); }
 
-bool Geometry::coal_is_pll_k(Mat::E emat_x) const
+bool Geometry::coal_is_pll_k(Mat::E M) const
 {
   // proof : false, false, true should give 1
-  return (static_cast<unsigned>(isColMajor) + static_cast<unsigned>(tX.at(emat_x)) +
-          static_cast<unsigned>(emat_x == Mat::E::A)) %
+  return (static_cast<unsigned>(isColMajor) + static_cast<unsigned>(tX.at(M)) +
+          static_cast<unsigned>(M == Mat::E::A)) %
          2;
 }
 

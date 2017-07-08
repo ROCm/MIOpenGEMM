@@ -156,7 +156,7 @@ class OpenCLGemmEncapsulator
     tk_kernels.resize(BasicKernelType::E::N);
     for (unsigned i = 0; i < BasicKernelType::E::N; ++i)
     {
-      tk_kernels[i] = Kernel(command_queue, basic_kernel_type_strings[i]);
+      tk_kernels[i] = Kernel(command_queue, BasicKernelType::M.name[i]);
     }
 
     run_checks();

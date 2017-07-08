@@ -4,8 +4,22 @@
 #ifndef GUARD_MIOPENGEMM_ALLENUMS_HPP
 #define GUARD_MIOPENGEMM_ALLENUMS_HPP
 
+#include <vector>
+#include <unordered_map>
+#include <miopengemm/error.hpp>
+
 
 namespace MIOpenGEMM {
+
+
+template <typename T>
+class EnumMapper{
+  public:
+    unsigned n;
+    std::vector<T> name;
+    std::unordered_map<T, unsigned> val;
+    EnumMapper(const std::vector<T> & name_); 
+};
 
 // if you add a parameter to enum, make sure to add it before the final count N
 
@@ -17,8 +31,9 @@ enum E{
   BETAC,
   MAIN,
   N  // how many BasicKernelTypes
- 
 };
+extern const EnumMapper<std::string> M;
+
 }
 
 
@@ -30,22 +45,12 @@ enum E{
   MAX,
   N
 };
+extern const EnumMapper<std::string> M;
+
 }
-
-
-namespace GroupAllocation
-{
-enum E{
-  BYROW = 1,
-  BYCOL = 2,
-  SUCOL = 3
-};
-}
-
 
 namespace Chi
 {
-
 enum E{
   MIC = 0,
   PAD,
@@ -55,6 +60,7 @@ enum E{
   WOS,
   N
 };
+extern const EnumMapper<std::string> M;
 }
 
 
@@ -71,7 +77,22 @@ enum E{
   SKW,
   N
 };
+extern const EnumMapper<std::string> M;
 }
+
+
+
+namespace Mat
+{
+enum E{
+  A,
+  B,
+  C,
+  N
+};
+extern const EnumMapper<char> M;
+}
+
 
 namespace Status
 {
@@ -88,16 +109,17 @@ enum E{
 };
 }
 
-
-namespace Mat
+namespace GroupAllocation
 {
 enum E{
-  A,
-  B,
-  C,
-  N
+  BYROW = 1,
+  BYCOL = 2,
+  SUCOL = 3
 };
 }
+
+
+
 }
 
 #endif

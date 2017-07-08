@@ -10,26 +10,6 @@
 namespace MIOpenGEMM
 {
 
-std::vector<std::string> get_basic_kernel_type_strings()
-{
-
-  std::vector<std::string> pbt(BasicKernelType::N);
-  pbt[BasicKernelType::WSA]   = "wsa";
-  pbt[BasicKernelType::WSB]   = "wsb";
-  pbt[BasicKernelType::BETAC] = "betac";
-  pbt[BasicKernelType::MAIN]  = "main";
-
-  for (unsigned i = 0; i < BasicKernelType::N; ++i)
-  {
-    if (pbt[i] == "")
-    {
-      throw miog_error("One of the strings of the basic kernel types vector "
-                       "has not been set");
-    }
-  }
-
-  return pbt;
-}
 
 std::vector<std::vector<unsigned>> get_kernel_dependencies()
 {
@@ -55,7 +35,7 @@ std::vector<std::vector<unsigned>> get_kernel_dependencies()
   return kdps;
 }
 
-const std::vector<std::string> basic_kernel_type_strings     = get_basic_kernel_type_strings();
+//const std::vector<std::string> basic_kernel_type_strings     = get_basic_kernel_type_strings();
 const std::vector<std::vector<unsigned>> kernel_dependencies = get_kernel_dependencies();
 
 bool KernelType::uses(char c) const
@@ -113,25 +93,25 @@ KernelType::KernelType(
   if (uses_alpha)
   {
     basic_kernel_type = BasicKernelType::MAIN;
-    bkt_string        = basic_kernel_type_strings[BasicKernelType::MAIN];
+    bkt_string        = BasicKernelType::M.name[BasicKernelType::MAIN];
   }
 
   else if (uses_beta && uses('c'))
   {
     basic_kernel_type = BasicKernelType::BETAC;
-    bkt_string        = basic_kernel_type_strings[BasicKernelType::BETAC];
+    bkt_string        = BasicKernelType::M.name[BasicKernelType::BETAC];
   }
 
   else if (uses('a') && uses('w'))
   {
     basic_kernel_type = BasicKernelType::WSA;
-    bkt_string        = basic_kernel_type_strings[BasicKernelType::WSA];
+    bkt_string        = BasicKernelType::M.name[BasicKernelType::WSA];
   }
 
   else if (uses('b') && uses('w'))
   {
     basic_kernel_type = BasicKernelType::WSB;
-    bkt_string        = basic_kernel_type_strings[BasicKernelType::WSB];
+    bkt_string        = BasicKernelType::M.name[BasicKernelType::WSB];
   }
 
   else

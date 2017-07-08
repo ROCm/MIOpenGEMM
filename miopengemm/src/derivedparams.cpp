@@ -193,10 +193,10 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
     // check 0 : macro tile not too large
     if (ptr_gg->get_non_k_dim(emat_x) < at(emat_x).macro_tile_length)
     {
-      set_status_ss << "ptr_gg->get_non_k_dim( " << matChars[emat_x] << " )  < at ( "
-                    << matChars[emat_x] << " ).macro_tile_length, this means the tile is too big "
+      set_status_ss << "ptr_gg->get_non_k_dim( " << Mat::M.name[emat_x] << " )  < at ( "
+                    << Mat::M.name[emat_x] << " ).macro_tile_length, this means the tile is too big "
                                            "to work with  "
-                    << matChars[emat_x] << " . not considering this kernel. ";
+                    << Mat::M.name[emat_x] << " . not considering this kernel. ";
     }
   }
 
@@ -219,7 +219,7 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
     if (at(emat_x).n_elements_in_unroll % val != 0)
     {
       set_status_ss << "this is not supported: " << which << " (" << val
-                    << ") is not a factor of n_elements_in_(" << matChars[emat_x] << ")_unroll ("
+                    << ") is not a factor of n_elements_in_(" << Mat::M.name[emat_x] << ")_unroll ("
                     << at(emat_x).n_elements_in_unroll << "). \n"
                     << "Consider rounding unroll up. ";
       return std::make_tuple<bool, std::string>(false, set_status_ss.str());

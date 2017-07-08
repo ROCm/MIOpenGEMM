@@ -12,10 +12,6 @@
 namespace MIOpenGEMM
 {
 
-
-// maps eMats to characters
-extern std::vector<char> matChars;
-
 // offsets and tails
 class Offsets
 {
@@ -110,15 +106,15 @@ class Geometry
 
   Geometry& operator=(const Geometry&) = default;
 
-  unsigned get_padless_dim(Mat::E emat_x, bool isCoal) const;
+  unsigned get_padless_dim(Mat::E M, bool isCoal) const;
 
-  unsigned get_coal(Mat::E emat_x) const;
+  unsigned get_coal(Mat::E M) const;
 
-  unsigned get_uncoal(Mat::E emat_x) const;
+  unsigned get_uncoal(Mat::E M) const;
 
-  unsigned get_non_k_dim(Mat::E emat_x) const;
+  unsigned get_non_k_dim(Mat::E M) const;
 
-  bool coal_is_pll_k(Mat::E emat_x) const;
+  bool coal_is_pll_k(Mat::E M) const;
 
   std::string get_string() const;
 
