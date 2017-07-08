@@ -113,7 +113,7 @@ int run_find_experiments(const std::vector<Geometry>& geometries,
 
       if (basedir_inner != "")
       {
-        mowri_outer << "\n";
+        mowri_outer << '\n';
       }
     }
   }

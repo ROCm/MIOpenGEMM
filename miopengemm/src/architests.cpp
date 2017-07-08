@@ -49,8 +49,8 @@ std::tuple<bool, std::string> architecture_specific_tests(cl_command_queue comma
     true);
 
   unsigned LDS_required =
-    gg.derived.float_size_bytes * ((dp.at(nsHP::matA).main_n_elements_in_padded_unroll +
-                                    dp.at(nsHP::matB).main_n_elements_in_padded_unroll));
+    gg.derived.float_size_bytes * ((dp.at(Mat::E::A).main_n_elements_in_padded_unroll +
+                                    dp.at(Mat::E::B).main_n_elements_in_padded_unroll));
 
   if (LDS_required >= max_LDS_bytes)
   {

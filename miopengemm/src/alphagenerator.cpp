@@ -36,11 +36,11 @@ class AlphaGenerator : basegen::BaseGenerator
   void set_usage()
   {
 
-    uses_a = (hp.at(nsHP::matA).vs[nsHP::WOS] == 0) ? true : false; // this worked. propogate.
-    uses_b = (hp.at(nsHP::matB).vs[nsHP::WOS] == 0) ? true : false;
+    uses_a = (hp.at(Mat::E::A).vs[Chi::E::WOS] == 0) ? true : false; // this worked. propogate.
+    uses_b = (hp.at(Mat::E::B).vs[Chi::E::WOS] == 0) ? true : false;
     uses_c = true;
     uses_workspace =
-      (hp.at(nsHP::matA).vs[nsHP::WOS] + hp.at(nsHP::matB).vs[nsHP::WOS]) == 0 ? false : true;
+      (hp.at(Mat::E::A).vs[Chi::E::WOS] + hp.at(Mat::E::B).vs[Chi::E::WOS]) == 0 ? false : true;
     uses_alpha = true;
     uses_beta  = dp.main_does_beta_c_inc;
   }
@@ -59,7 +59,7 @@ class AlphaGenerator : basegen::BaseGenerator
   private:
   void append_group_allocation_string(std::stringstream& ss)
   {
-    if (hp.at(nsHP::matC).vs[nsHP::GAL] == nsGAL::bycol)
+    if (hp.at(Mat::E::C).vs[NonChi::E::GAL] == GroupAllocation::E::BYCOL)
     {
       ss <<
         R"(
@@ -69,7 +69,7 @@ const unsigned group_id_b = group_id_xy / N_GROUPS_A;
 )";
     }
 
-    else if (hp.at(nsHP::matC).vs[nsHP::GAL] == nsGAL::byrow)
+    else if (hp.at(Mat::E::C).vs[NonChi::E::GAL] == GroupAllocation::E::BYROW)
     {
       ss <<
         R"(
@@ -79,7 +79,7 @@ unsigned group_id_a = group_id_xy / N_GROUPS_B;
 )";
     }
 
-    else if (hp.at(nsHP::matC).vs[nsHP::GAL] == nsGAL::sucol)
+    else if (hp.at(Mat::E::C).vs[NonChi::E::GAL] == GroupAllocation::E::SUCOL)
     {
       ss <<
         R"(
@@ -102,12 +102,12 @@ unsigned group_id_a;
 unsigned wg_super_column = group_id_xy / (SUPER_COLUMN_WIDTH*N_GROUPS_A);
 )";
 
-      std::string full_sucol_string = R"(
+      std::string full_SUCOL_string = R"(
 group_id_b = wg_super_column * SUPER_COLUMN_WIDTH + group_id_xy % SUPER_COLUMN_WIDTH;
 group_id_a = (group_id_xy / SUPER_COLUMN_WIDTH) % N_GROUPS_A;
 )";
 
-      std::string partial_sucol_string = R"(
+      std::string partial_SUCOL_string = R"(
 group_id_b = wg_super_column * SUPER_COLUMN_WIDTH + group_id_xy % LAST_SUPER_COLUMN_WIDTH;
 group_id_a = (group_id_xy  - (N_GROUPS_B - LAST_SUPER_COLUMN_WIDTH)*N_GROUPS_A) / LAST_SUPER_COLUMN_WIDTH;
 )";
@@ -115,27 +115,27 @@ group_id_a = (group_id_xy  - (N_GROUPS_B - LAST_SUPER_COLUMN_WIDTH)*N_GROUPS_A) 
       // super column width perfectly fits across B
       if (dp.ga3_last_super_column_width == 0)
       {
-        ss << full_sucol_string;
+        ss << full_SUCOL_string;
       }
 
       else
       {
 
         // there is just one column
-        if (dp.ga3_last_super_column_width == dp.at(nsHP::matB).n_groups)
+        if (dp.ga3_last_super_column_width == dp.at(Mat::E::B).n_groups)
         {
-          ss << partial_sucol_string;
+          ss << partial_SUCOL_string;
         }
 
         else
         {
-          ss << "\n"
+          ss << '\n'
              << "if (group_id_xy < (N_GROUPS_B - "
                 "LAST_SUPER_COLUMN_WIDTH)*N_GROUPS_A){";
-          ss << full_sucol_string << "}\n";
+          ss << full_SUCOL_string << "}\n";
 
           ss << "else{";
-          ss << partial_sucol_string << "}\n";
+          ss << partial_SUCOL_string << "}\n";
         }
       }
     }
@@ -143,7 +143,7 @@ group_id_a = (group_id_xy  - (N_GROUPS_B - LAST_SUPER_COLUMN_WIDTH)*N_GROUPS_A) 
     else
     {
       std::stringstream err_ss;
-      err_ss << "Invalid group_allocation parameter : " << hp.at(nsHP::matC).vs[nsHP::GAL]
+      err_ss << "Invalid group_allocation parameter : " << hp.at(Mat::E::C).vs[NonChi::E::GAL]
              << ". It should be one of 1/2/3.";
       throw miog_error(err_ss.str());
     }
@@ -152,7 +152,7 @@ group_id_a = (group_id_xy  - (N_GROUPS_B - LAST_SUPER_COLUMN_WIDTH)*N_GROUPS_A) 
   void append_super_column_width_defn(std::stringstream& ss)
   {
 
-    if (hp.at(nsHP::matC).vs[nsHP::GAL] == 3)
+    if (hp.at(Mat::E::C).vs[NonChi::E::GAL] == 3)
     {
 
       ss << "\n\n"
@@ -176,7 +176,7 @@ group_id_a = (group_id_xy  - (N_GROUPS_B - LAST_SUPER_COLUMN_WIDTH)*N_GROUPS_A) 
 /* the following variables are used in implementing a basic atomic increment */
 global TFLOAT * ptr_to_c_elm;  // with `restrict' is no faster
 TFLOAT previous_value; )"
-         << "\n"
+         << '\n'
          << dp.infa << " newVal;\n"
          << dp.infa << " prevVal;"
          << "\n\n";
@@ -195,13 +195,13 @@ TFLOAT previous_value; )"
   void append_load_for_perp(char X, std::stringstream& ss)
   {
 
-    nsHP::eMat emat_x = hp.get_eMat_from_char(X);
+    Mat::E emat_x = hp.get_eMat_from_char(X);
 
-    std::string bound_string = hp.at(emat_x).vs[nsHP::LIW] == 0
+    std::string bound_string = hp.at(emat_x).vs[Chi::E::LIW] == 0
                                  ? std::string("MICRO_") + X + "_TILE_PERP_UNROLL"
                                  : std::string("MACRO_TILE_LENGTH_") + X;
     std::string increment_string =
-      hp.at(emat_x).vs[nsHP::LIW] == 0
+      hp.at(emat_x).vs[Chi::E::LIW] == 0
         ? "++mu_perp_i"
         : std::string("mu_perp_i += MACRO_TILE_LENGTH_") + X + "/MICRO_" + X + "_TILE_PERP_UNROLL";
     append_loop_var_bound_incr(ss, "mu_perp_i", bound_string, increment_string);
@@ -210,12 +210,12 @@ TFLOAT previous_value; )"
   void append_load_for_pll(char X, std::stringstream& ss)
   {
 
-    nsHP::eMat emat_x = hp.get_eMat_from_char(X);
+    Mat::E emat_x = hp.get_eMat_from_char(X);
 
     std::string bound_string =
-      hp.at(emat_x).vs[nsHP::LIW] == 0 ? std::string("MICRO_") + X + "_TILE_PLL_UNROLL" : "UNROLL";
+      hp.at(emat_x).vs[Chi::E::LIW] == 0 ? std::string("MICRO_") + X + "_TILE_PLL_UNROLL" : "UNROLL";
     std::string increment_string =
-      hp.at(emat_x).vs[nsHP::LIW] == 0 ? "++mu_pll_i" : std::string("mu_pll_i += UNROLL/MICRO_") +
+      hp.at(emat_x).vs[Chi::E::LIW] == 0 ? "++mu_pll_i" : std::string("mu_pll_i += UNROLL/MICRO_") +
                                                           X + "_TILE_PLL_UNROLL";
     append_loop_var_bound_incr(ss, "mu_pll_i", bound_string, increment_string);
   }
@@ -236,7 +236,7 @@ TFLOAT previous_value; )"
     ss << (with_beta_scaling == 0 ? "" : "c[index] *= beta;\n");
     if (with_alpha_increment != 0)
     {
-      ss << "\n";
+      ss << '\n';
       if (atomic_increment == 0)
       {
         ss << "c[index] += " << alpha_scaled << +";\n";
@@ -264,16 +264,16 @@ TFLOAT previous_value; )"
     append_loop_var_bound_incr(
       ss,
       "row",
-      hp.at(nsHP::matA).vs[nsHP::MIW] == 0 ? "MICRO_TILE_LENGTH_A" : "MACRO_TILE_LENGTH_A",
-      hp.at(nsHP::matA).vs[nsHP::MIW] == 0 ? "++row" : "row += N_MICRO_IN_MACRO_A");
+      hp.at(Mat::E::A).vs[Chi::E::MIW] == 0 ? "MICRO_TILE_LENGTH_A" : "MACRO_TILE_LENGTH_A",
+      hp.at(Mat::E::A).vs[Chi::E::MIW] == 0 ? "++row" : "row += N_MICRO_IN_MACRO_A");
     ss << " {\n";
 
     ss << dp.pragma_unroll_string;
     append_loop_var_bound_incr(
       ss,
       "col",
-      hp.at(nsHP::matB).vs[nsHP::MIW] == 0 ? "MICRO_TILE_LENGTH_B" : "MACRO_TILE_LENGTH_B",
-      hp.at(nsHP::matB).vs[nsHP::MIW] == 0 ? "++col" : "col += N_MICRO_IN_MACRO_B");
+      hp.at(Mat::E::B).vs[Chi::E::MIW] == 0 ? "MICRO_TILE_LENGTH_B" : "MACRO_TILE_LENGTH_B",
+      hp.at(Mat::E::B).vs[Chi::E::MIW] == 0 ? "++col" : "col += N_MICRO_IN_MACRO_B");
     ss << " {\n";
   }
 
@@ -407,14 +407,14 @@ barrier(CLK_LOCAL_MEM_FENCE); )";
       ss_comment << "/* load data from " << x << " into LDS */";
     }
 
-    ss << "\n" << ss_comment.str() << "\n" << dp.pragma_unroll_string;
+    ss << '\n' << ss_comment.str() << '\n' << dp.pragma_unroll_string;
     append_load_for_perp(X, ss);
     ss << " {\n" << dp.pragma_unroll_string;
     append_load_for_pll(X, ss);
     ss << " {\n"
        << "local" << X << "[MACRO_TILE_LENGTH_" << X << "_AND_PAD*(" << x
        << "_offset_pll_unroll + mu_pll_i) + (" << x << "_offset_perp_unroll + mu_perp_i)] = \n"
-       << ss_value_to_get.str() << "\n"
+       << ss_value_to_get.str() << '\n'
        << "}\n"
        << "}\n";
 
@@ -422,15 +422,15 @@ barrier(CLK_LOCAL_MEM_FENCE); )";
       ss << x << " += "
          << "STRIDE_PLL_K_" << X << "*" << n_jumps_string << ";\n";
 
-    ss << "\n";
+    ss << '\n';
   }
 
   std::string get_c_work_item_next(char X)
   {
 
-    nsHP::eMat emat_x = hp.get_eMat_from_char(X);
+    Mat::E emat_x = hp.get_eMat_from_char(X);
 
-    return (hp.at(emat_x).vs[nsHP::MIW] != 0) ? "1" : (std::string("MICRO_TILE_LENGTH_") + X);
+    return (hp.at(emat_x).vs[Chi::E::MIW] != 0) ? "1" : (std::string("MICRO_TILE_LENGTH_") + X);
   }
 
   // We previously had a variable unroll_the_math_section = False.
@@ -442,7 +442,7 @@ barrier(CLK_LOCAL_MEM_FENCE); )";
     ss << "\nfor (unsigned u = 0; u < " << number_of_unrolls << "; ++u){\n";
     append_load_to_register_string('a', ss);
     append_load_to_register_string('b', ss);
-    ss << "\n";
+    ss << '\n';
     append_compute_string(ss);
 
     ss << "}\n";
@@ -463,16 +463,16 @@ barrier(CLK_LOCAL_MEM_FENCE); )";
 
     append_load_ab_into_LDS_string(ss, final_unroll, special_first_unroll);
 
-    ss << "\n";
+    ss << '\n';
     for (char X : {'A', 'B'})
     {
       char x = (X == 'A') ? 'a' : 'b';
-      ss << "\n"
+      ss << '\n'
          << "l" << X << " = local" << X << " + micro_id_" << x << "*" << get_c_work_item_next(X)
          << ";";
     }
 
-    ss << "\n";
+    ss << '\n';
 
     append_math_section(ss, final_unroll);
     ss <<
@@ -486,9 +486,9 @@ barrier(CLK_LOCAL_MEM_FENCE); )";
 
     if (dp.main_split_on_k == 0)
     {
-      ss << "\n";
+      ss << '\n';
       append_relocate_load_math_string(ss, 1, 0);
-      ss << "\n";
+      ss << '\n';
     }
     else
     {
@@ -505,14 +505,14 @@ if (group_id_z == n_work_groups_with_1_more && k_remaining > 0){
 
   void append_first_unroll_block(std::stringstream& ss)
   {
-    if (hp.at(nsHP::matC).vs[nsHP::UFO] != 0)
+    if (hp.at(Mat::E::C).vs[NonChi::E::UFO] != 0)
     {
       ss << "\n\n/* This is where the first unroll will be performed. "
             "Identical to what is in the "
             "main while, but with zero buffering.  */";
       if (dp.main_split_on_k == 0)
       {
-        ss << "\n";
+        ss << '\n';
         append_relocate_load_math_string(ss, 0, 1);
         ss << "\n--n_unrolls_remaining;\n";
       }
@@ -535,7 +535,7 @@ if (group_id_z == n_work_groups_with_1_more && k_remaining > 0){
   void append_load_to_register_string(char x, std::stringstream& ss)
   {
     char X = (x == 'a') ? 'A' : 'B';
-    ss << "\n" << dp.pragma_unroll_string;
+    ss << '\n' << dp.pragma_unroll_string;
     ss << "for (unsigned i = 0; i < MICRO_TILE_LENGTH_" << X << "; ++i){\n";
     ss << "r" << X << "[i] = l" << X << "["
        << "i*"
@@ -545,15 +545,15 @@ if (group_id_z == n_work_groups_with_1_more && k_remaining > 0){
 
   void append_group_allocation_defn_string(std::stringstream& ss)
   {
-    ss << "#define GROUP_ALLOCATION " << hp.at(nsHP::matC).vs[nsHP::GAL] << "\n";
-    if (hp.at(nsHP::matC).vs[nsHP::GAL] == 3)
+    ss << "#define GROUP_ALLOCATION " << hp.at(Mat::E::C).vs[NonChi::E::GAL] << '\n';
+    if (hp.at(Mat::E::C).vs[NonChi::E::GAL] == 3)
     {
       ss << "/* this variable is declared because we have GROUP_ALLOCATION "
             "type 3. */\n";
       ss << "/* It should define how many workgroups we expect to have active "
             "simulantaneuosly. "
             "*/\n";
-      ss << "#define N_TARGET_ACTIVE_WORKGROUPS " << hp.at(nsHP::matC).vs[nsHP::NAW] << "\n";
+      ss << "#define N_TARGET_ACTIVE_WORKGROUPS " << hp.at(Mat::E::C).vs[NonChi::E::NAW] << '\n';
     }
   }
 
@@ -562,7 +562,7 @@ if (group_id_z == n_work_groups_with_1_more && k_remaining > 0){
 
     if (dp.main_use_edge_trick == 0)
     {
-      ss << "\n";
+      ss << '\n';
       append_final_write_loops_no_check(ss);
     }
 
@@ -570,13 +570,13 @@ if (group_id_z == n_work_groups_with_1_more && k_remaining > 0){
     {
 
       std::string cond_a("");
-      if (dp.at(nsHP::matA).preshift_final_tile != dp.at(nsHP::matA).macro_tile_length)
+      if (dp.at(Mat::E::A).preshift_final_tile != dp.at(Mat::E::A).macro_tile_length)
       {
         cond_a = "(group_id_a != N_GROUPS_A - 1)";
       }
 
       std::string cond_b("");
-      if (dp.at(nsHP::matB).preshift_final_tile != dp.at(nsHP::matB).macro_tile_length)
+      if (dp.at(Mat::E::B).preshift_final_tile != dp.at(Mat::E::B).macro_tile_length)
       {
         cond_b = "(group_id_b != N_GROUPS_B - 1)";
       }
@@ -626,7 +626,7 @@ if (group_id_z == n_work_groups_with_1_more && k_remaining > 0){
         R"(/* the cumulative unroll. */
 /* For the (standard) case of N_WORK_ITEMS_PER_C_ELM = 1, G_UNROLL would just be UNROLL*/
 #define G_UNROLL )"
-         << hp.at(nsHP::matC).vs[nsHP::ICE] * hp.at(nsHP::matC).vs[nsHP::UNR]
+         << hp.at(Mat::E::C).vs[NonChi::E::ICE] * hp.at(Mat::E::C).vs[NonChi::E::UNR]
          << " // N_WORK_ITEMS_PER_C_ELM*UNROLL";
     }
   }
@@ -651,11 +651,11 @@ const unsigned group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
   void append_stride_c_defn(std::stringstream& ss)
   {
 
-    unsigned transposed_xor_is_col_major = (gg.tX[nsHP::matC] + gg.isColMajor) % 2;
-    ss << "#define STRIDE_PLL_M_C " << (transposed_xor_is_col_major == 1 ? 1 : gg.ldX[nsHP::matC])
-       << "\n";
-    ss << "#define STRIDE_PLL_N_C " << (transposed_xor_is_col_major == 0 ? 1 : gg.ldX[nsHP::matC])
-       << "\n";
+    unsigned transposed_xor_is_col_major = (gg.tX[Mat::E::C] + gg.isColMajor) % 2;
+    ss << "#define STRIDE_PLL_M_C " << (transposed_xor_is_col_major == 1 ? 1 : gg.ldX[Mat::E::C])
+       << '\n';
+    ss << "#define STRIDE_PLL_N_C " << (transposed_xor_is_col_major == 0 ? 1 : gg.ldX[Mat::E::C])
+       << '\n';
   }
 
   void append_n_unrolls_remaining_string(std::stringstream& ss)
@@ -710,7 +710,7 @@ const unsigned micro_id_b = local_id / N_MICRO_IN_MACRO_A;
 
     append_group_allocation_string(ss);
 
-    if (hp.at(nsHP::matC).vs[nsHP::UFO] != 0)
+    if (hp.at(Mat::E::C).vs[NonChi::E::UFO] != 0)
     {
       ss <<
         R"(
@@ -729,9 +729,9 @@ unsigned k_plus_offset = __K__ + unroll_offset;
     X      = (x == 'a') ? 'A' : ((x == 'b') ? 'B' : x);
     x      = (x == 'B') ? 'b' : ((x == 'A') ? 'a' : x);
 
-    nsHP::eMat emat_x = hp.get_eMat_from_char(x);
+    Mat::E emat_x = hp.get_eMat_from_char(x);
 
-    ss << "\n";
+    ss << '\n';
 
     if (X == 'A')
       ss << "/* LDS memory */\n";
@@ -763,7 +763,7 @@ unsigned k_plus_offset = __K__ + unroll_offset;
 
     ss << "\n\n\n";
 
-    if (hp.at(emat_x).vs[nsHP::WOS] == 1 || hp.at(emat_x).vs[nsHP::WOS] == 2)
+    if (hp.at(emat_x).vs[Chi::E::WOS] == 1 || hp.at(emat_x).vs[Chi::E::WOS] == 2)
     {
       if (X == 'A')
         ss << "/* from workspace */\n";
@@ -790,7 +790,7 @@ unsigned k_plus_offset = __K__ + unroll_offset;
             "seem to make much difference) */\n";
     ss << "unsigned read_macro_tile_start_" << x << " = group_id_" << x << "*MACRO_TILE_LENGTH_"
        << X << "; \n";
-    if (dp.main_use_edge_trick != 0 && hp.at(emat_x).vs[nsHP::WOS] != 2)
+    if (dp.main_use_edge_trick != 0 && hp.at(emat_x).vs[Chi::E::WOS] != 2)
     {
       if (X == 'A')
         ss << "/* tile on edge and A is not normal form: pulling in read zone "
@@ -814,7 +814,7 @@ unsigned k_plus_offset = __K__ + unroll_offset;
       ss << x << " += UNROLL*group_id_z*STRIDE_PLL_K_" << X << ";\n";
     }
 
-    if (hp.at(nsHP::matC).vs[nsHP::UFO] != 0)
+    if (hp.at(Mat::E::C).vs[NonChi::E::UFO] != 0)
     {
       if (X == 'A')
         ss << "/* UFO != 0, so offsetting the unroll */\n";
@@ -823,7 +823,7 @@ unsigned k_plus_offset = __K__ + unroll_offset;
 
     std::string str_n_pll("");
     std::string str_n_perp("");
-    if (hp.at(emat_x).vs[nsHP::LIW] == 0)
+    if (hp.at(emat_x).vs[Chi::E::LIW] == 0)
     {
       str_n_pll  = std::string("MICRO_") + X + "_TILE_PLL_UNROLL *";
       str_n_perp = std::string("MICRO_") + X + "_TILE_PERP_UNROLL *";
@@ -840,7 +840,7 @@ unsigned k_plus_offset = __K__ + unroll_offset;
     ss << x << " += "
        << "STRIDE_PERP_K_" << X << " * " << x << "_offset_perp_unroll;\n";
 
-    ss << "\n";
+    ss << '\n';
   }
 
   void append_transpose_note(std::stringstream& ss)
@@ -854,7 +854,7 @@ unsigned k_plus_offset = __K__ + unroll_offset;
   void add_predefine_chiral(char x, std::stringstream& ss)
   {
 
-    nsHP::eMat emat_x = hp.get_eMat_from_char(x);
+    Mat::E emat_x = hp.get_eMat_from_char(x);
 
     auto defcom = [x, &ss](std::string&& comment) {
       if (x == 'A')
@@ -866,41 +866,41 @@ unsigned k_plus_offset = __K__ + unroll_offset;
     bool with_x_in_name = true;
     append_unroll_block_geometry(x, ss, withcomments, with_x_in_name);
 
-    append_stride_definitions(x, ss, hp.at(emat_x).vs[nsHP::WOS], withcomments, "", with_x_in_name);
+    append_stride_definitions(x, ss, hp.at(emat_x).vs[Chi::E::WOS], withcomments, "", with_x_in_name);
 
     if (x == 'A')
       ss << "/* micro tiles define the pattern of C that individual threads "
             "process */\n";
-    ss << "#define MICRO_TILE_LENGTH_" << x << " " << hp.at(emat_x).vs[nsHP::MIC] << "\n";
+    ss << "#define MICRO_TILE_LENGTH_" << x << " " << hp.at(emat_x).vs[Chi::E::MIC] << '\n';
 
     if (x == 'A')
       ss << "/* the amount of padding of " << x
          << " in LDS (local) memory, to avoid bank comflicts */\n";
-    ss << "#define PAD_LDS_" << x << "  " << hp.at(emat_x).vs[nsHP::PAD] << "\n";
+    ss << "#define PAD_LDS_" << x << "  " << hp.at(emat_x).vs[Chi::E::PAD] << '\n';
     if (x == 'A')
       ss << "/* whether loading of " << x << " from global should try to be long in direction of "
                                              "unroll (1) or perpendicular to it (0) */\n";
-    ss << "#define WORK_ITEM_LOAD_" << x << "_PLL_TO_UNROLL " << hp.at(emat_x).vs[nsHP::PLU]
-       << "\n";
+    ss << "#define WORK_ITEM_LOAD_" << x << "_PLL_TO_UNROLL " << hp.at(emat_x).vs[Chi::E::PLU]
+       << '\n';
     defcom("MACRO_TILE_LENGTH_A + PAD_LDS_A");
     ss << "#define MACRO_TILE_LENGTH_" << x << "_AND_PAD "
-       << dp.at(emat_x).main_macro_tile_length_and_pad << "\n";
+       << dp.at(emat_x).main_macro_tile_length_and_pad << '\n';
 
     defcom("MACRO_TILE_LENGTH_A_AND_PAD * UNROLL");
     ss << "#define N_ELEMENTS_IN_PADDED_" << x << "_UNROLL "
-       << dp.at(emat_x).main_n_elements_in_padded_unroll << "\n";
+       << dp.at(emat_x).main_n_elements_in_padded_unroll << '\n';
 
     defcom("N_ELEMENTS_IN_A_UNROLL / N_WORK_ITEMS_PER_WORKGROUP");
     ss << "#define N_ELEMENTS_OF_" << x << "_TO_LOAD_PER_WORKITEM "
-       << dp.at(emat_x).main_n_elements_to_load_per_workitem << "\n";
+       << dp.at(emat_x).main_n_elements_to_load_per_workitem << '\n';
     defcom("MACRO_TILE_LENGTH_A / MICRO_TILE_LENGTH_A");
-    ss << "#define N_MICRO_IN_MACRO_" << x << "  " << dp.at(emat_x).main_n_micro_in_macro << "\n";
+    ss << "#define N_MICRO_IN_MACRO_" << x << "  " << dp.at(emat_x).main_n_micro_in_macro << '\n';
     defcom("MICRO_A_TILE_PLL_UNROLL * MICRO_A_TILE_PERP_UNROLL = "
            "N_ELEMENTS_OF_A_TO_LOAD_PER_WORKITEM");
     ss << "#define MICRO_" << x << "_TILE_PLL_UNROLL " << dp.at(emat_x).main_micro_tile_pll_unroll
        << " \n";
     ss << "#define MICRO_" << x << "_TILE_PERP_UNROLL " << dp.at(emat_x).main_micro_tile_perp_unroll
-       << "\n";
+       << '\n';
 
     defcom("MACRO_TILE_LENGTH_A / MICRO_A_TILE_PLL_UNROLL");
     ss << "#define N_MICRO_" << x << "_TILES_PLL_UNROLL "
@@ -909,22 +909,22 @@ unsigned k_plus_offset = __K__ + unroll_offset;
       ss << "/* Whether the load tiles are interwoven (ala Cobalt, (1)) or if "
             "the load tiles are "
             "truly contiguous tiles (0) */\n";
-    ss << "#define LOAD_TO_LDS_INTERWOVEN_" << x << " " << hp.at(emat_x).vs[nsHP::LIW] << "\n";
+    ss << "#define LOAD_TO_LDS_INTERWOVEN_" << x << " " << hp.at(emat_x).vs[Chi::E::LIW] << '\n';
     if (x == 'A')
       ss << "/* Whether micro tile being processed by a compute item is "
             "interwoven with other "
             "micro tiles (ala Cobalt, (1)) or if the micro tiles are "
             "contiguous in C */\n";
-    ss << "#define C_MICRO_TILES_INTERWOVEN_" << x << " " << hp.at(emat_x).vs[nsHP::MIW] << "\n";
+    ss << "#define C_MICRO_TILES_INTERWOVEN_" << x << " " << hp.at(emat_x).vs[Chi::E::MIW] << '\n';
 
     if (x == 'A')
       ss << "/* depending on whether loads to c are interwoven, set as MIW == "
             "0 ? 1 : "
             "N_MICRO_IN_MACRO_A */\n";
     ss << "#define C_INTERWEAVE_STRIDE_" << x << " " << dp.at(emat_x).main_c_interweave_stride
-       << "\n";
+       << '\n';
 
-    if (hp.at(emat_x).vs[nsHP::WOS] != 0)
+    if (hp.at(emat_x).vs[Chi::E::WOS] != 0)
     {
       if (x == 'A')
         ss << "/* global memory offset, depends on type of copy of both a,b "
@@ -932,7 +932,7 @@ unsigned k_plus_offset = __K__ + unroll_offset;
       ss << "#define GLOBAL_OFFSET_" << x << " " << dp.at(emat_x).cw_global_offset;
     }
 
-    ss << "\n";
+    ss << '\n';
   }
 
   public:
@@ -945,11 +945,11 @@ unsigned k_plus_offset = __K__ + unroll_offset;
     ss << "\n\n";
     ss << "/* this kernel was generated for starting geometry : */\n";
     ss << "/* " << gg.get_string() << "*/\n";
-    ss << "#define __K__ " << gg.k << "\n";
-    ss << "#define TFLOAT  " << dp.t_float << "\n";
-    ss << "#define DOES_BETA_C_INC " << dp.main_does_beta_c_inc << "\n";
+    ss << "#define __K__ " << gg.k << '\n';
+    ss << "#define TFLOAT  " << dp.t_float << '\n';
+    ss << "#define DOES_BETA_C_INC " << dp.main_does_beta_c_inc << '\n';
     ss << "#define DOES_ALPHA_A_B_INC 1"
-       << "\n";
+       << '\n';
 
     append_transpose_note(ss);
 
@@ -976,18 +976,18 @@ unsigned k_plus_offset = __K__ + unroll_offset;
     ss << "/* in the same way as the final unroll populates LDS with zeros in "
           "k mod UNROLL != 0, "
           "the initial negative indices here populate with 0 */\n";
-    ss << "#define UNROLL_FOR_OFFSET " << hp.at(nsHP::matC).vs[nsHP::UFO] << "\n";
+    ss << "#define UNROLL_FOR_OFFSET " << hp.at(Mat::E::C).vs[NonChi::E::UFO] << '\n';
 
     ss << "/* How much a workgroup loads (global -> LDS) in the k-direction at "
           "each iteration of "
           "the outer-most loop */\n";
-    ss << "#define UNROLL " << hp.at(nsHP::matC).vs[nsHP::UNR] << "\n";
+    ss << "#define UNROLL " << hp.at(Mat::E::C).vs[NonChi::E::UNR] << '\n';
     ss << "/* whether or not this kernel uses the edge trick (SC17 submission) "
           "*/\n";
     ss << "/* this precompiler defn has no direct influence on the running the "
           "kernel, "
           "implementation already done in make_kernel.py */\n";
-    ss << "#define EDGETRICK " << dp.main_use_edge_trick << "\n";
+    ss << "#define EDGETRICK " << dp.main_use_edge_trick << '\n';
     ss << "/* the number of work items working on the same c element. if this "
           "is 1, there will be "
           "just one thread doing all k multiply-adds, */\n";
@@ -995,7 +995,7 @@ unsigned k_plus_offset = __K__ + unroll_offset;
           "~ k / "
           "N_WORK_ITEMS_PER_C_ELM of the multiply adds, to be atomically added "
           "at the end */ \n";
-    ss << "#define N_WORK_ITEMS_PER_C_ELM " << hp.at(nsHP::matC).vs[nsHP::ICE] << "\n";
+    ss << "#define N_WORK_ITEMS_PER_C_ELM " << hp.at(Mat::E::C).vs[NonChi::E::ICE] << '\n';
 
     ss << R"(/* define the way in which work groups are assigned to tiles */
 /* 1 : column-by-column
@@ -1011,24 +1011,24 @@ unsigned k_plus_offset = __K__ + unroll_offset;
     ss << "/* Included here for user, in practice it has no direct effect on "
           "this kernel, as the "
           "relevent implementation has been done in make_kernel.py */\n";
-    ss << "#define PRAGMA_UNROLL_FORLOOPS " << hp.at(nsHP::matC).vs[nsHP::PUN] << "\n";
+    ss << "#define PRAGMA_UNROLL_FORLOOPS " << hp.at(Mat::E::C).vs[NonChi::E::PUN] << '\n';
     ss << "/* (deprecated parameter, as of 17 Nov 2016, see git log) How many "
           "steps ahead are we "
           "reading into registers, as compared to doing the math. */\n";
     ss << "/* This should be the domain of the compiler, and currently "
           "(26/08/2016, Catalyst) it "
           "seems that leaving this as 0 is best.  */\n";
-    ss << "#define N_PREFETCH_FOR_REGISTER_LOAD " << 0 << "\n";
+    ss << "#define N_PREFETCH_FOR_REGISTER_LOAD " << 0 << '\n';
     ss << "/* (deprecated parameter, as of 17 Nov 2016, see git log) How many "
           "steps ahead are we "
           "reading into LDS, as compared to the unroll loop */\n";
     ss << "/* This should be the domain of the compiler, and currently "
           "(26/08/2016, Catalyst) it "
           "seems that leaving this as 0 is best.  */\n";
-    ss << "#define N_PREFETCH_FOR_LDS_LOAD " << 0 << "\n";
-    ss << "#define MACRO_TILE_AREA " << dp.main_macro_tile_area << "\n";
-    ss << "#define MICRO_TILE_AREA " << dp.main_micro_tile_area << "\n";
-    ss << "#define N_WORK_ITEMS_PER_WORKGROUP  " << dp.main_n_work_items_per_workgroup << "\n";
+    ss << "#define N_PREFETCH_FOR_LDS_LOAD " << 0 << '\n';
+    ss << "#define MACRO_TILE_AREA " << dp.main_macro_tile_area << '\n';
+    ss << "#define MICRO_TILE_AREA " << dp.main_micro_tile_area << '\n';
+    ss << "#define N_WORK_ITEMS_PER_WORKGROUP  " << dp.main_n_work_items_per_workgroup << '\n';
     ss << "/* two more parameters, which do dot have an effect the running of "
           "this kernel (used in "
           "enqueuing) */\n";
@@ -1037,12 +1037,11 @@ unsigned k_plus_offset = __K__ + unroll_offset;
     ss << "/* N_WORK_ITEMS_PER_C_ELM * ((M/MACRO_TILE_LENGTH_A) + "
           "(M%MACRO_TILE_LENGTH_A != 0)) * "
           "((N/MACRO_TILE_LENGTH_B) + (N%MACRO_TILE_LENGTH_B != 0)) */ \n";
-    ss << "#define N_WORK_GROUPS " << dp.main_n_work_groups << "\n";
+    ss << "#define N_WORK_GROUPS " << dp.main_n_work_groups << '\n';
     ss << "/* the global work size, ie the total mumber of work items "
-          "(threads) which will run */ "
-          "\n";
+          "(threads) which will run */\n ";
     ss << "/* N_WORK_GROUPS * N_WORK_ITEMS_PER_WORKGROUP */ \n";
-    ss << "#define GLOBAL_WORK_SIZE " << dp.main_global_work_size << "\n";
+    ss << "#define GLOBAL_WORK_SIZE " << dp.main_global_work_size << '\n';
 
     append_stride_c_defn(ss);
     append_split_on_k_defns_string(ss);

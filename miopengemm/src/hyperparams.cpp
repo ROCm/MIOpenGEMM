@@ -79,14 +79,14 @@ std::tuple<bool, std::string, std::array<unsigned, 2>> get_mac_grid(unsigned mac
 
   std::array<unsigned, 2> mac_grid;
 
-  if (nsHP::matA >= 2 || nsHP::matB >= 2)
+  if (Mat::E::A >= 2 || Mat::E::B >= 2)
   {
     errm_ss << "the std::array returned in get_mac_grid is too small";
     throw miog_error(errm_ss.str());
   }
 
-  mac_grid[nsHP::matA] = u_na;
-  mac_grid[nsHP::matB] = u_nb;
+  mac_grid[Mat::E::A] = u_na;
+  mac_grid[Mat::E::B] = u_nb;
 
   return std::make_tuple(true, "no error", mac_grid);
 }
@@ -116,27 +116,27 @@ std::map<T, unsigned> get_vals(unsigned nVals, const std::vector<T>& keys, const
 std::vector<char> get_graphchar()
 {
   std::vector<char> gchar;
-  gchar.resize(nsHP::nMats);
-  gchar[nsHP::matA] = 'A';
-  gchar[nsHP::matB] = 'B';
-  gchar[nsHP::matC] = 'C';
+  gchar.resize(Mat::E::N);
+  gchar[Mat::E::A] = 'A';
+  gchar[Mat::E::B] = 'B';
+  gchar[Mat::E::C] = 'C';
   return gchar;
 }
 const std::vector<char> graphchar = get_graphchar();
-const std::map<char, unsigned> graphind = get_vals(nsHP::nMats, graphchar, "getting graphind");
+const std::map<char, unsigned> graphind = get_vals(Mat::E::N, graphchar, "getting graphind");
 
 KeysVals get_chiral_kv()
 {
   KeysVals ckv;
-  ckv.keys.resize(nsHP::nChiralHPs);
-  ckv.keys[nsHP::MIC] = "MIC";
-  ckv.keys[nsHP::PAD] = "PAD";
-  ckv.keys[nsHP::PLU] = "PLU";
-  ckv.keys[nsHP::LIW] = "LIW";
-  ckv.keys[nsHP::MIW] = "MIW";
-  ckv.keys[nsHP::WOS] = "WOS";
-  ckv.vals            = get_vals(nsHP::nChiralHPs, ckv.keys, "getting chiral vals");
-  ckv.nHPs            = nsHP::nChiralHPs;
+  ckv.keys.resize(Chi::E::N);
+  ckv.keys[Chi::E::MIC] = "MIC";
+  ckv.keys[Chi::E::PAD] = "PAD";
+  ckv.keys[Chi::E::PLU] = "PLU";
+  ckv.keys[Chi::E::LIW] = "LIW";
+  ckv.keys[Chi::E::MIW] = "MIW";
+  ckv.keys[Chi::E::WOS] = "WOS";
+  ckv.vals            = get_vals(Chi::E::N, ckv.keys, "getting chiral vals");
+  ckv.nHPs            = Chi::E::N;
   return ckv;
 }
 
@@ -145,17 +145,17 @@ const KeysVals chiral_kv = get_chiral_kv();
 KeysVals get_non_chiral_kv()
 {
   KeysVals ckv;
-  ckv.keys.resize(nsHP::nNonChiralHPs);
-  ckv.keys[nsHP::UNR] = "UNR";
-  ckv.keys[nsHP::GAL] = "GAL";
-  ckv.keys[nsHP::PUN] = "PUN";
-  ckv.keys[nsHP::ICE] = "ICE";
-  ckv.keys[nsHP::NAW] = "NAW";
-  ckv.keys[nsHP::UFO] = "UFO";
-  ckv.keys[nsHP::MAC] = "MAC";
-  ckv.keys[nsHP::SKW] = "SKW";
-  ckv.vals            = get_vals(nsHP::nNonChiralHPs, ckv.keys, "getting non_chiral_keys");
-  ckv.nHPs            = nsHP::nNonChiralHPs;
+  ckv.keys.resize(NonChi::E::N);
+  ckv.keys[NonChi::E::UNR] = "UNR";
+  ckv.keys[NonChi::E::GAL] = "GAL";
+  ckv.keys[NonChi::E::PUN] = "PUN";
+  ckv.keys[NonChi::E::ICE] = "ICE";
+  ckv.keys[NonChi::E::NAW] = "NAW";
+  ckv.keys[NonChi::E::UFO] = "UFO";
+  ckv.keys[NonChi::E::MAC] = "MAC";
+  ckv.keys[NonChi::E::SKW] = "SKW";
+  ckv.vals            = get_vals(NonChi::E::N, ckv.keys, "getting non_chiral_keys");
+  ckv.nHPs            = NonChi::E::N;
   return ckv;
 }
 
@@ -163,7 +163,7 @@ const KeysVals non_chiral_kv = get_non_chiral_kv();
 
 std::vector<std::string> get_sub_constraints(std::string constraints_string)
 {
-  std::vector<std::string> sub_constraints(nsHP::nMats, "");
+  std::vector<std::string> sub_constraints(Mat::E::N, "");
   auto                     megafrags = stringutil::split(constraints_string, "__");
   for (auto& megafrag : megafrags)
   {
@@ -195,23 +195,23 @@ Graph::Graph(const Geometry&                     gg,
   constraints_string_in                    = constraints_string;
   std::vector<std::string> sub_constraints = get_sub_constraints(constraints_string);
 
-  asubg = ASubG(gg, sub_constraints[nsHP::matA], full_cs, &devinfo);
+  asubg = ASubG(gg, sub_constraints[Mat::E::A], full_cs, &devinfo);
   asubg.initialise();
 
-  bsubg = BSubG(gg, sub_constraints[nsHP::matB], full_cs, &devinfo);
+  bsubg = BSubG(gg, sub_constraints[Mat::E::B], full_cs, &devinfo);
   bsubg.initialise();
 
-  csubg = CSubG(gg, sub_constraints[nsHP::matC], full_cs, &devinfo);
+  csubg = CSubG(gg, sub_constraints[Mat::E::C], full_cs, &devinfo);
   csubg.initialise();
 
-  p_subgs.resize(nsHP::nMats);
-  p_subgs[nsHP::matA] = &asubg;
-  p_subgs[nsHP::matB] = &bsubg;
-  p_subgs[nsHP::matC] = &csubg;
+  p_subgs.resize(Mat::E::N);
+  p_subgs[Mat::E::A] = &asubg;
+  p_subgs[Mat::E::B] = &bsubg;
+  p_subgs[Mat::E::C] = &csubg;
 
-  coupled_parameters.push_back({{nsHP::matA, nsHP::MIC}, {nsHP::matB, nsHP::MIC}});
-  coupled_parameters.push_back({{nsHP::matC, nsHP::UFO}, {nsHP::matC, nsHP::PUN}});
-  coupled_parameters.push_back({{nsHP::matC, nsHP::UNR}, {nsHP::matC, nsHP::ICE}});
+  coupled_parameters.push_back({{Mat::E::A, Chi::E::MIC}, {Mat::E::B, Chi::E::MIC}});
+  coupled_parameters.push_back({{Mat::E::C, NonChi::E::UFO}, {Mat::E::C, NonChi::E::PUN}});
+  coupled_parameters.push_back({{Mat::E::C, NonChi::E::UNR}, {Mat::E::C, NonChi::E::ICE}});
 }
 
 void Graph::force_start_node(std::string constraints_string)
@@ -219,11 +219,11 @@ void Graph::force_start_node(std::string constraints_string)
   std::vector<std::string> sub_constraints = get_sub_constraints(constraints_string);
 
   auto a_vals =
-    get_constraints(sub_constraints[nsHP::matA], true, asubg.ptr_keys_vals, asubg.get_char());
+    get_constraints(sub_constraints[Mat::E::A], true, asubg.ptr_keys_vals, asubg.get_char());
   auto b_vals =
-    get_constraints(sub_constraints[nsHP::matB], true, bsubg.ptr_keys_vals, bsubg.get_char());
+    get_constraints(sub_constraints[Mat::E::B], true, bsubg.ptr_keys_vals, bsubg.get_char());
   auto c_vals =
-    get_constraints(sub_constraints[nsHP::matC], true, csubg.ptr_keys_vals, csubg.get_char());
+    get_constraints(sub_constraints[Mat::E::C], true, csubg.ptr_keys_vals, csubg.get_char());
 
   asubg.force_start_node(a_vals);
   bsubg.force_start_node(b_vals);
@@ -234,14 +234,14 @@ std::vector<std::vector<unsigned>> get_all_constraints(std::string constraints_s
 {
 
   std::vector<std::string>           sub_constraints = get_sub_constraints(constraints_string);
-  std::vector<std::vector<unsigned>> all_constraints(nsHP::nMats);
+  std::vector<std::vector<unsigned>> all_constraints(Mat::E::N);
 
-  all_constraints[nsHP::matA] =
-    get_constraints(sub_constraints[nsHP::matA], false, &chiral_kv, 'A');
-  all_constraints[nsHP::matB] =
-    get_constraints(sub_constraints[nsHP::matB], false, &chiral_kv, 'B');
-  all_constraints[nsHP::matC] =
-    get_constraints(sub_constraints[nsHP::matC], false, &non_chiral_kv, 'C');
+  all_constraints[Mat::E::A] =
+    get_constraints(sub_constraints[Mat::E::A], false, &chiral_kv, 'A');
+  all_constraints[Mat::E::B] =
+    get_constraints(sub_constraints[Mat::E::B], false, &chiral_kv, 'B');
+  all_constraints[Mat::E::C] =
+    get_constraints(sub_constraints[Mat::E::C], false, &non_chiral_kv, 'C');
 
   return all_constraints;
 }
@@ -250,7 +250,7 @@ std::vector<unsigned>
 get_constraints(std::string subg_cs, bool subg_csfull, const KeysVals* p_kv, char subg_hash)
 {
 
-  std::vector<unsigned> constraints(p_kv->nHPs, nsHP::undefined);
+  std::vector<unsigned> constraints(p_kv->nHPs, Status::E::UNDEFINED);
 
   std::vector<std::string> keyvalfrags;
   if (subg_cs.compare(""))
@@ -294,7 +294,7 @@ get_constraints(std::string subg_cs, bool subg_csfull, const KeysVals* p_kv, cha
   {
     for (unsigned hpi = 0; hpi < p_kv->nHPs; ++hpi)
     {
-      if (constraints[hpi] == nsHP::undefined)
+      if (constraints[hpi] == Status::E::UNDEFINED)
       {
         std::stringstream ss;
         ss << "While processing the constraints string of SubG `" << subg_hash << "', ";
@@ -475,7 +475,7 @@ CSubG::CSubG(const Geometry&                     gg,
              std::string                         cs,
              bool                                csfull,
              const openclutil::OpenCLDeviceInfo* ptr_devinfo_)
-  : SubG(nsHP::nNonChiralHPs, gg, cs, csfull, ptr_devinfo_)
+  : SubG(NonChi::E::N, gg, cs, csfull, ptr_devinfo_)
 {
 }
 
@@ -483,7 +483,7 @@ ChiralSubG::ChiralSubG(const Geometry&                     gg,
                        std::string                         cs,
                        bool                                csfull,
                        const openclutil::OpenCLDeviceInfo* ptr_devinfo_)
-  : SubG(nsHP::nChiralHPs, gg, cs, csfull, ptr_devinfo_)
+  : SubG(Chi::E::N, gg, cs, csfull, ptr_devinfo_)
 {
 }
 
@@ -507,12 +507,12 @@ void ChiralSubG::set_chirality_specific_start_range_base(unsigned non_unroll_dim
     basemic.push_back(1);
   }
 
-  start_range[nsHP::MIC] = {};
+  start_range[Chi::E::MIC] = {};
   for (auto& x : basemic)
   {
     if (x <= non_unroll_dimension)
     {
-      start_range[nsHP::MIC].push_back(x);
+      start_range[Chi::E::MIC].push_back(x);
     }
   }
 }
@@ -530,10 +530,10 @@ void BSubG::set_chirality_specific_start_range()
 void ChiralSubG::manual_override_start_range()
 {
 
-  start_range[nsHP::PAD] = {1, 2};
-  start_range[nsHP::LIW] = {nsHP::no};
-  start_range[nsHP::MIW] = {nsHP::yes};
-  start_range[nsHP::WOS] = {0, 1, 2};
+  start_range[Chi::E::PAD] = {1, 2};
+  start_range[Chi::E::LIW] = {Binary::E::NO};
+  start_range[Chi::E::MIW] = {Binary::E::YES};
+  start_range[Chi::E::WOS] = {0, 1, 2};
 
   set_chirality_specific_start_range();
 }
@@ -542,7 +542,7 @@ void SubG::apply_constraints()
 {
   for (unsigned hpi = 0; hpi < nHPs; ++hpi)
   {
-    if (constraints.at(hpi) != nsHP::undefined)
+    if (constraints.at(hpi) != Status::E::UNDEFINED)
     {
 
       if (ptr_devinfo->device_name != "unknown_default_constructed")
@@ -569,7 +569,7 @@ void SubG::apply_constraints()
 void ChiralSubG::set_preconstraint_edges()
 {
 
-  edges[nsHP::MIC] = {{1, {2, 3}},
+  edges[Chi::E::MIC] = {{1, {2, 3}},
                       {2, {1, 3, 4}},
                       {3, {1, 2, 4}},
                       {4, {2, 3, 5, 6}},
@@ -577,38 +577,38 @@ void ChiralSubG::set_preconstraint_edges()
                       {6, {4, 5, 8}},
                       {8, {4, 6}}};
 
-  edges[nsHP::PAD] = {{0, {1}},
+  edges[Chi::E::PAD] = {{0, {1}},
                       {1, {0, 2}},
                       {
                         2, {1},
                       }};
 
-  edges[nsHP::PLU] = {graph_binary};
-  edges[nsHP::LIW] = {graph_binary};
-  edges[nsHP::MIW] = {graph_binary};
+  edges[Chi::E::PLU] = {graph_binary};
+  edges[Chi::E::LIW] = {graph_binary};
+  edges[Chi::E::MIW] = {graph_binary};
 
   /* TODO : namespace the copy types */
-  edges[nsHP::WOS] = {{0, {1, 2}}, {1, {0, 2}}, {2, {0, 1}}};
+  edges[Chi::E::WOS] = {{0, {1, 2}}, {1, {0, 2}}, {2, {0, 1}}};
 }
 
 void CSubG::manual_override_start_range()
 {
 
-  start_range[nsHP::UNR] = {8, 16};
-  start_range[nsHP::ICE] = {1};
-  start_range[nsHP::UFO] = {nsHP::no};
+  start_range[NonChi::E::UNR] = {8, 16};
+  start_range[NonChi::E::ICE] = {1};
+  start_range[NonChi::E::UFO] = {Binary::E::NO};
 
   if ((ptr_gg->m) > 200 && (ptr_gg->n) > 200)
   {
 
     if (ptr_devinfo->wg_atom_size == 32)
     {
-      start_range[nsHP::SKW] = {skew0, skew0 + 1};
+      start_range[NonChi::E::SKW] = {skew0, skew0 + 1};
     }
 
     else
     {
-      start_range[nsHP::SKW] = {skew0};
+      start_range[NonChi::E::SKW] = {skew0};
     }
   }
 }
@@ -616,11 +616,11 @@ void CSubG::manual_override_start_range()
 void CSubG::set_preconstraint_edges()
 {
 
-  edges[nsHP::UNR] = {{8, {16}}, {16, {8, 32}}, {32, {16, 64}}, {64, {16, 32}}};
-  edges[nsHP::NAW] = {{64, {16}}, {16, {64}}};
-  edges[nsHP::GAL] = {{nsGAL::byrow, {nsGAL::bycol, nsGAL::sucol}},
-                      {nsGAL::bycol, {nsGAL::byrow, nsGAL::sucol}},
-                      {nsGAL::sucol, {nsGAL::byrow, nsGAL::bycol}}};
+  edges[NonChi::E::UNR] = {{8, {16}}, {16, {8, 32}}, {32, {16, 64}}, {64, {16, 32}}};
+  edges[NonChi::E::NAW] = {{64, {16}}, {16, {64}}};
+  edges[NonChi::E::GAL] = {{GroupAllocation::E::BYROW, {GroupAllocation::E::BYCOL, GroupAllocation::E::SUCOL}},
+                      {GroupAllocation::E::BYCOL, {GroupAllocation::E::BYROW, GroupAllocation::E::SUCOL}},
+                      {GroupAllocation::E::SUCOL, {GroupAllocation::E::BYROW, GroupAllocation::E::BYCOL}}};
 
   // MAC and SKW
 
@@ -643,11 +643,11 @@ void CSubG::set_preconstraint_edges()
   // very small / thin matrices
   else if (ptr_gg->m * ptr_gg->n < 32 * 32 || ptr_gg->m < 16 || ptr_gg->n < 16)
   {
-    edges[nsHP::MAC] = {
+    edges[NonChi::E::MAC] = {
       {1, {4, 16}}, {4, {1, 16, 64}}, {16, {4, 64}}, {64, {16, 256}}, {256, {64}},
     };
 
-    edges[nsHP::SKW] = {
+    edges[NonChi::E::SKW] = {
 
       {7, {8}},
       {8, {7, 9}},
@@ -662,14 +662,14 @@ void CSubG::set_preconstraint_edges()
 
   else if (ptr_devinfo->wg_atom_size == 64)
   {
-    edges[nsHP::MAC] = {{64, {256}}, {256, {64}}};
-    edges[nsHP::SKW] = {{9, {10}}, {10, {9, 11}}, {11, {10}}};
+    edges[NonChi::E::MAC] = {{64, {256}}, {256, {64}}};
+    edges[NonChi::E::SKW] = {{9, {10}}, {10, {9, 11}}, {11, {10}}};
   }
 
   else if (ptr_devinfo->wg_atom_size == 32)
   {
-    edges[nsHP::MAC] = {{32, {64, 256}}, {64, {32, 128, 256}}, {128, {64, 256}}, {256, {64}}};
-    edges[nsHP::SKW] = {{9, {10}}, {10, {9, 11}}, {11, {10, 12}}, {12, {10, 11}}};
+    edges[NonChi::E::MAC] = {{32, {64, 256}}, {64, {32, 128, 256}}, {128, {64, 256}}, {256, {64}}};
+    edges[NonChi::E::SKW] = {{9, {10}}, {10, {9, 11}}, {11, {10, 12}}, {12, {10, 11}}};
   }
 
   else
@@ -679,7 +679,7 @@ void CSubG::set_preconstraint_edges()
                      "checked this. (Logic error)");
   }
 
-  edges[nsHP::ICE] = {{1, {2}},
+  edges[NonChi::E::ICE] = {{1, {2}},
                       {2, {1, 3, 4}},
                       {3, {1, 2, 4, 6}},
                       {4, {1, 3, 5, 7}},
@@ -694,13 +694,13 @@ void CSubG::set_preconstraint_edges()
                       {13, {10, 12, 14}},
                       {14, {1, 11, 13}}};
 
-  edges[nsHP::PUN] = {graph_binary};
-  edges[nsHP::UFO] = {graph_binary};
+  edges[NonChi::E::PUN] = {graph_binary};
+  edges[NonChi::E::UFO] = {graph_binary};
 }
 
 void HyperParams::checks() const
 {
-  for (unsigned gi = 0; gi < nsHP::nMats; ++gi)
+  for (unsigned gi = 0; gi < Mat::E::N; ++gi)
   {
     if (gi > v_xhps.size())
     {
@@ -722,7 +722,7 @@ void HyperParams::checks() const
       auto start = sub_g.range[hpi].begin();
       auto end   = sub_g.range[hpi].end();
 
-      if (x.vs[hpi] == nsHP::undefined || (std::find(start, end, x.vs[hpi]) == end))
+      if (x.vs[hpi] == Status::E::UNDEFINED || (std::find(start, end, x.vs[hpi]) == end))
       {
 
         std::stringstream errm;
@@ -737,7 +737,7 @@ void HyperParams::checks() const
 
 void HyperParams::replace(const std::vector<std::vector<unsigned>>& params)
 {
-  for (unsigned mi = 0; mi < nsHP::nMats; ++mi)
+  for (unsigned mi = 0; mi < Mat::E::N; ++mi)
   {
     for (unsigned hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi)
     {
@@ -746,15 +746,15 @@ void HyperParams::replace(const std::vector<std::vector<unsigned>>& params)
   }
 }
 
-// go through the params, and where it is not nHP::undefined,
+// go through the params, and where it is not nHP::UNDEFINED,
 // use its value to replace this
 void HyperParams::replace_where_source_defined(const std::vector<std::vector<unsigned>>& params)
 {
-  for (unsigned mi = 0; mi < nsHP::nMats; ++mi)
+  for (unsigned mi = 0; mi < Mat::E::N; ++mi)
   {
     for (unsigned hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi)
     {
-      if (params[mi][hpi] != nsHP::undefined)
+      if (params[mi][hpi] != Status::E::UNDEFINED)
       {
         v_xhps[mi].vs[hpi] = params[mi][hpi];
       }
@@ -764,11 +764,11 @@ void HyperParams::replace_where_source_defined(const std::vector<std::vector<uns
 
 void HyperParams::replace_undefined_randomly()
 {
-  for (unsigned mi = 0; mi < nsHP::nMats; ++mi)
+  for (unsigned mi = 0; mi < Mat::E::N; ++mi)
   {
     for (unsigned hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi)
     {
-      if (v_xhps[mi].vs[hpi] == nsHP::undefined)
+      if (v_xhps[mi].vs[hpi] == Status::E::UNDEFINED)
       {
         auto&    a_range   = p_graph->p_subgs[mi]->start_range[hpi];
         unsigned index     = radu.get_from_range(a_range.size());
@@ -780,7 +780,7 @@ void HyperParams::replace_undefined_randomly()
 
 HyperParams::HyperParams(const Graph& graph) : p_graph(&graph)
 {
-  for (unsigned mi = 0; mi < nsHP::nMats; ++mi)
+  for (unsigned mi = 0; mi < Mat::E::N; ++mi)
   {
     v_xhps.emplace_back(XHPs(p_graph->p_subgs[mi]->nHPs));
     for (unsigned hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi)
@@ -820,7 +820,7 @@ std::vector<HyperParams> HyperParams::get_one_aways()
   std::vector<HyperParams> one_aways;
 
   // by changing just one hyper-parameter
-  for (unsigned mi = 0; mi < nsHP::nMats; ++mi)
+  for (unsigned mi = 0; mi < Mat::E::N; ++mi)
   {
     for (unsigned hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi)
     {
@@ -837,56 +837,56 @@ std::vector<HyperParams> HyperParams::get_one_aways()
   // by changing MAC and one or both MICs,
   // so as to semi-preserve the overall
   // shape of the macro tile
-  unsigned curr_mac = v_xhps[nsHP::matC].vs[nsHP::MAC];
-  for (auto& newmac : p_graph->p_subgs[nsHP::matC]->edges[nsHP::MAC].at(curr_mac))
+  unsigned curr_mac = v_xhps[Mat::E::C].vs[NonChi::E::MAC];
+  for (auto& newmac : p_graph->p_subgs[Mat::E::C]->edges[NonChi::E::MAC].at(curr_mac))
   {
 
     // ratios of new to current tile grid sizes
-    auto curr_grid_size_tuple = nsMAC::get_mac_grid(curr_mac, v_xhps[nsHP::matC].vs[nsHP::SKW]);
+    auto curr_grid_size_tuple = nsMAC::get_mac_grid(curr_mac, v_xhps[Mat::E::C].vs[NonChi::E::SKW]);
     auto curr_grid_size       = std::get<2>(curr_grid_size_tuple);
 
-    auto new_grid_size_tuple = nsMAC::get_mac_grid(newmac, v_xhps[nsHP::matC].vs[nsHP::SKW]);
+    auto new_grid_size_tuple = nsMAC::get_mac_grid(newmac, v_xhps[Mat::E::C].vs[NonChi::E::SKW]);
     if (std::get<0>(new_grid_size_tuple) == false)
     {
       continue;
     }
     auto new_grid_size = std::get<2>(new_grid_size_tuple);
 
-    double delta_na = static_cast<double>(new_grid_size[nsHP::matA]) /
-                      static_cast<double>(curr_grid_size[nsHP::matA]);
-    double delta_nb = static_cast<double>(new_grid_size[nsHP::matB]) /
-                      static_cast<double>(curr_grid_size[nsHP::matB]);
+    double delta_na = static_cast<double>(new_grid_size[Mat::E::A]) /
+                      static_cast<double>(curr_grid_size[Mat::E::A]);
+    double delta_nb = static_cast<double>(new_grid_size[Mat::E::B]) /
+                      static_cast<double>(curr_grid_size[Mat::E::B]);
 
     // mica scaled so that the macro tile
     // remains ~ the same in the a dimension
 
-    unsigned curr_mica = v_xhps[nsHP::matA].vs[nsHP::MIC];
+    unsigned curr_mica = v_xhps[Mat::E::A].vs[Chi::E::MIC];
     unsigned new_mica  = static_cast<unsigned>(static_cast<double>(curr_mica) / delta_na);
 
     // micb scaled so that the macro tile remains the same in the b dimension
-    unsigned curr_micb = v_xhps[nsHP::matB].vs[nsHP::MIC];
+    unsigned curr_micb = v_xhps[Mat::E::B].vs[Chi::E::MIC];
     unsigned new_micb  = static_cast<unsigned>(static_cast<double>(curr_micb) / delta_nb);
 
     // if the new micro tile (a) is different and valid, add it
-    if (new_mica != curr_mica && in_graph(nsHP::matA, nsHP::MIC, new_mica))
+    if (new_mica != curr_mica && in_graph(Mat::E::A, Chi::E::MIC, new_mica))
     {
       HyperParams hp(*this);
-      hp.v_xhps[nsHP::matC].vs[nsHP::MAC] = newmac;
-      hp.v_xhps[nsHP::matA].vs[nsHP::MIC] = new_mica;
+      hp.v_xhps[Mat::E::C].vs[NonChi::E::MAC] = newmac;
+      hp.v_xhps[Mat::E::A].vs[Chi::E::MIC] = new_mica;
       one_aways.push_back(hp);
     }
 
-    if (new_micb != curr_micb && in_graph(nsHP::matB, nsHP::MIC, new_micb))
+    if (new_micb != curr_micb && in_graph(Mat::E::B, Chi::E::MIC, new_micb))
     {
       HyperParams hp(*this);
-      hp.v_xhps[nsHP::matC].vs[nsHP::MAC] = newmac;
-      hp.v_xhps[nsHP::matB].vs[nsHP::MIC] = new_micb;
+      hp.v_xhps[Mat::E::C].vs[NonChi::E::MAC] = newmac;
+      hp.v_xhps[Mat::E::B].vs[Chi::E::MIC] = new_micb;
       one_aways.push_back(hp);
 
-      if (new_mica != curr_mica && in_graph(nsHP::matA, nsHP::MIC, new_mica))
+      if (new_mica != curr_mica && in_graph(Mat::E::A, Chi::E::MIC, new_mica))
       {
         HyperParams hp2(hp);
-        hp2.v_xhps[nsHP::matA].vs[nsHP::MIC] = new_mica;
+        hp2.v_xhps[Mat::E::A].vs[Chi::E::MIC] = new_mica;
         one_aways.push_back(hp2);
       }
     }
@@ -950,7 +950,7 @@ std::tuple<bool, std::string> HyperParams::in_graph()
   std::string in_graph_string("in graph");
   // filtering out if violates the constraint string
   bool constraints_satisfied = true;
-  for (unsigned mi = 0; mi < nsHP::nMats; ++mi)
+  for (unsigned mi = 0; mi < Mat::E::N; ++mi)
   {
     for (unsigned hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi)
     {
@@ -970,7 +970,7 @@ std::tuple<bool, std::string> HyperParams::in_graph()
   return std::make_tuple(constraints_satisfied, in_graph_string);
 }
 
-nsHP::eMat HyperParams::get_eMat_from_char(char X) const
+Mat::E HyperParams::get_eMat_from_char(char X) const
 {
   X = (X == 'a' ? 'A' : X);
   X = (X == 'b' ? 'B' : X);
@@ -978,11 +978,11 @@ nsHP::eMat HyperParams::get_eMat_from_char(char X) const
 
   if (X != 'A' && X != 'B' && X != 'C')
   {
-    throw miog_error("Problem converting X (char) to nsHP::eMat enumerated "
+    throw miog_error("Problem converting X (char) to Mat::E enumerated "
                      "type in get_eMat_from_char : " +
                      std::to_string(X));
   }
-  return static_cast<nsHP::eMat>(graphind.at(X));
+  return static_cast<Mat::E>(graphind.at(X));
 }
 }
 }

@@ -65,7 +65,7 @@ class NormalFormGenerator : public prepgen::PrepGenerator
     ss << "#define TFLOAT " << dp.t_float << '\n'
        << "#define "
        << "N_WORK_ITEMS_PER_GROUP " << dp.at(emat_x).cw2_local_work_size << '\n'
-       << "#define UNROLL " << hp.at(nsHP::matC).vs[nsHP::UNR] << '\n'
+       << "#define UNROLL " << hp.at(Mat::E::C).vs[NonChi::E::UNR] << '\n'
        << "#define __K__ " << gg.k << '\n';
 
     append_unroll_block_geometry(matrixchar, ss, false, false);
@@ -91,9 +91,9 @@ class NormalFormGenerator : public prepgen::PrepGenerator
        << "\n#define GLOBAL_WORKSPACE_OFFSET " << dp.at(emat_x).cw_global_offset << '\n'
        << "\n#define PRESHIFT_FINAL_TILE " << dp.at(emat_x).preshift_final_tile << '\n';
 
-    unsigned final_unroll_depth = gg.k % hp.at(nsHP::matC).vs[nsHP::UNR];
+    unsigned final_unroll_depth = gg.k % hp.at(Mat::E::C).vs[NonChi::E::UNR];
     final_unroll_depth =
-      (final_unroll_depth == 0 ? hp.at(nsHP::matC).vs[nsHP::UNR] : final_unroll_depth);
+      (final_unroll_depth == 0 ? hp.at(Mat::E::C).vs[NonChi::E::UNR] : final_unroll_depth);
 
     ss << "\n#define FINAL_UNROLL_DEPTH " << final_unroll_depth << "\n\n\n"
        << "__attribute__((reqd_work_group_size(N_WORK_ITEMS_PER_GROUP,1,1)))" << '\n'

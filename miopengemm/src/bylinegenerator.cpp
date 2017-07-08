@@ -21,7 +21,7 @@ void ByLineGenerator::setup()
 
   setup_additional();
 
-  if (static_cast<unsigned>(emat_x) >= static_cast<unsigned>(nsHP::nMats))
+  if (static_cast<unsigned>(emat_x) >= static_cast<unsigned>(Mat::E::N))
   {
     std::stringstream ss;
     ss << "in ByLineGenerator::setup, invalid emat_x : " << emat_x;

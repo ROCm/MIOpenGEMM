@@ -6,24 +6,12 @@
 
 #include <string>
 #include <vector>
+#include <miopengemm/enums.hpp>
 
 /* TODO : namespace should be lower-case. */
 namespace MIOpenGEMM
 {
 
-namespace nsHP
-
-
-/* TODO : ONLY use enum class (see C++11 Meyers) */
-{
-enum eMat
-{
-  matA,
-  matB,
-  matC,
-  nMats
-};
-}
 
 // maps eMats to characters
 extern std::vector<char> matChars;
@@ -122,15 +110,15 @@ class Geometry
 
   Geometry& operator=(const Geometry&) = default;
 
-  unsigned get_padless_dim(nsHP::eMat emat_x, bool isCoal) const;
+  unsigned get_padless_dim(Mat::E emat_x, bool isCoal) const;
 
-  unsigned get_coal(nsHP::eMat emat_x) const;
+  unsigned get_coal(Mat::E emat_x) const;
 
-  unsigned get_uncoal(nsHP::eMat emat_x) const;
+  unsigned get_uncoal(Mat::E emat_x) const;
 
-  unsigned get_non_k_dim(nsHP::eMat emat_x) const;
+  unsigned get_non_k_dim(Mat::E emat_x) const;
 
-  bool coal_is_pll_k(nsHP::eMat emat_x) const;
+  bool coal_is_pll_k(Mat::E emat_x) const;
 
   std::string get_string() const;
 

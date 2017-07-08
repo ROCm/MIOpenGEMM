@@ -24,7 +24,7 @@ void geometrytest(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsign
   float                   allotted_time       = 0.001;
   unsigned                allotted_iterations = 1;
   unsigned                n_runs_per_kernel   = 1;
-  MIOpenGEMM::SummaryStat sumstat             = MIOpenGEMM::Median;
+  MIOpenGEMM::SummStat::E sumstat             = MIOpenGEMM::SummStat::E::MEDIAN;
 
   // set verbose to true if you want output to terminal
   bool verbose = false;

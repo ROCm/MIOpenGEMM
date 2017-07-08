@@ -54,7 +54,7 @@ void BaseGenerator::append_stride_definitions(char               x,
                                               bool               with_x_in_name)
 {
 
-  nsHP::eMat emat_x = hp.get_eMat_from_char(x);
+  Mat::E emat_x = hp.get_eMat_from_char(x);
 
   if (withcomments == true)
     ss << "/* strides parallel to k (unroll) in " << x << ". MACRO_STRIDE_" << x
@@ -77,7 +77,7 @@ void BaseGenerator::append_unroll_block_geometry(char               x,
                                                  bool               with_x_string)
 {
 
-  nsHP::eMat emat_x = hp.get_eMat_from_char(x);
+  Mat::E emat_x = hp.get_eMat_from_char(x);
 
   std::string x_string = with_x_string ? "_" + std::string(1, x) : "";
   x                    = (x == 'a' ? 'A' : (x == 'b' ? 'B' : x));

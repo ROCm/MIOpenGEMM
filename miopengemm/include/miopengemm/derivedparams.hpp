@@ -78,7 +78,7 @@ class DerivedParams
 
   void reset_ga3_params();
 
-  void reset_cw_params(nsHP::eMat emat_x);
+  void reset_cw_params(Mat::E emat_x);
 
   public:
   // initiate all parameters, throwing an error if there is an incompatibility
@@ -94,10 +94,10 @@ class DerivedParams
    * Before doing this, make sure what's up with construction options.  */
   std::vector<ChiralDerivedParams*> chis;
 
-  ChiralDerivedParams& at(nsHP::eMat emat_x) { return emat_x == nsHP::matA ? adps : bdps; }
-  const ChiralDerivedParams& at(nsHP::eMat emat_x) const
+  ChiralDerivedParams& at(Mat::E emat_x) { return emat_x == Mat::E::A ? adps : bdps; }
+  const ChiralDerivedParams& at(Mat::E emat_x) const
   {
-    return emat_x == nsHP::matA ? adps : bdps;
+    return emat_x == Mat::E::A ? adps : bdps;
   }
 
   // does the minimum setting to confirm compatibitily. called by get_deriveability
@@ -136,17 +136,17 @@ class DerivedParams
   unsigned ga3_super_column_width      = uninitialised_unsigned;
   unsigned ga3_last_super_column_width = uninitialised_unsigned;
 
-  unsigned get_target_ld(nsHP::eMat emat_x) const;
+  unsigned get_target_ld(Mat::E emat_x) const;
 
   unsigned get_n_elements_in_x_unroll(char x);
 
-  unsigned get_stride(nsHP::eMat emat_x, bool pll_k, bool is_macro, unsigned workspace_type) const;
+  unsigned get_stride(Mat::E emat_x, bool pll_k, bool is_macro, unsigned workspace_type) const;
 
-  unsigned get_stride_cw0(nsHP::eMat emat_x, bool pll_k) const;
+  unsigned get_stride_cw0(Mat::E emat_x, bool pll_k) const;
 
-  unsigned get_stride_cw1(nsHP::eMat emat_x, bool pll_k) const;
+  unsigned get_stride_cw1(Mat::E emat_x, bool pll_k) const;
 
-  unsigned get_stride_cw2(nsHP::eMat emat_x, bool pll_k, bool is_macro) const;
+  unsigned get_stride_cw2(Mat::E emat_x, bool pll_k, bool is_macro) const;
 
   void set_should_be_hyperparams();
 };

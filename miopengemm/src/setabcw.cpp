@@ -43,9 +43,9 @@ void fill_uni(std::vector<TFloat>& v, unsigned r_small, unsigned r_big)
 }
 
 void set_nelmts_abc(const Geometry& gg, const Offsets& toff, size_t & n_a, size_t & n_b, size_t & n_c){
-  n_a = gg.ldX[nsHP::matA] * (gg.tX[nsHP::matA] == gg.isColMajor ? gg.m : gg.k) + toff.oa + toff.tail_off_a;
-  n_b = gg.ldX[nsHP::matB] * (gg.tX[nsHP::matB] == gg.isColMajor ? gg.k : gg.n) + toff.ob + toff.tail_off_b;
-  n_c = gg.ldX[nsHP::matC] * (gg.tX[nsHP::matC] == gg.isColMajor ? gg.m : gg.n) + toff.oc + toff.tail_off_c;
+  n_a = gg.ldX[Mat::E::A] * (gg.tX[Mat::E::A] == gg.isColMajor ? gg.m : gg.k) + toff.oa + toff.tail_off_a;
+  n_b = gg.ldX[Mat::E::B] * (gg.tX[Mat::E::B] == gg.isColMajor ? gg.k : gg.n) + toff.ob + toff.tail_off_b;
+  n_c = gg.ldX[Mat::E::C] * (gg.tX[Mat::E::C] == gg.isColMajor ? gg.m : gg.n) + toff.oc + toff.tail_off_c;
 }
 
 

@@ -16,11 +16,6 @@
 namespace MIOpenGEMM
 {
 
-enum class FindStartType
-{
-  Default,
-  Random
-};
 
 // design note: a safer choice than namespacing enums is to use enum class.
 // but this would involve static casting from the enumerated type to unsigned all the time
@@ -31,51 +26,7 @@ namespace nsMAC
 std::tuple<bool, std::string, std::array<unsigned, 2>> get_mac_grid(unsigned mac, unsigned skew);
 }
 
-namespace nsGAL
-{
-enum eGAL
-{
-  byrow = 1,
-  bycol = 2,
-  sucol = 3
-};
-}
 
-namespace nsHP
-{
-// if you're going to add a parameter here, make sure to add it BEFORE the final count
-enum eChiral
-{
-  MIC = 0,
-  PAD,
-  PLU,
-  LIW,
-  MIW,
-  WOS,
-  nChiralHPs
-};
-enum eNonChiral
-{
-  UNR = 0,
-  GAL,
-  PUN,
-  ICE,
-  NAW,
-  UFO,
-  MAC,
-  SKW,
-  nNonChiralHPs
-};
-enum eSpecial
-{
-  undefined = -1
-};
-enum eBinary
-{
-  no  = 0,
-  yes = 1
-};
-}
 
 namespace hyperparams
 {
@@ -117,15 +68,15 @@ class SubG
   const KeysVals* ptr_keys_vals;
 
   // all the possible edges from all the possible hyper parameter
-  // example : edges[nsHP::MIC] is a map; edges[nsHP::MIC][1] --> {2,3,4}
+  // example : edges[Chi::E::MIC] is a map; edges[Chi::E::MIC][1] --> {2,3,4}
   std::vector<std::map<unsigned, std::vector<unsigned>>> edges;
 
   // all the possible values of a hyper parameter
-  // example : range[nsHP::MIC] --> {1,2,3,4,5,6,7,8}
+  // example : range[Chi::E::MIC] --> {1,2,3,4,5,6,7,8}
   std::vector<std::vector<unsigned>> range;
 
   // a subset of range, the possible values returned on a request for a random value
-  // example : start_range[nsHP::MIC] --> {2,8}. It can depend on geometry (from initialisation)
+  // example : start_range[Chi::E::MIC] --> {2,8}. It can depend on geometry (from initialisation)
   std::vector<std::vector<unsigned>> start_range;
 
   std::string subg_cs;
@@ -246,7 +197,7 @@ class XHPs
 
   public:
   std::vector<unsigned> vs;
-  XHPs(unsigned nHPs) { vs = std::vector<unsigned>(nHPs, nsHP::undefined); }
+  XHPs(unsigned nHPs) { vs = std::vector<unsigned>(nHPs, Status::E::UNDEFINED); }
 };
 
 class HyperParams
@@ -263,10 +214,10 @@ class HyperParams
   bool in_graph(unsigned mi, unsigned hpi, unsigned value);
   std::tuple<bool, std::string> in_graph();
 
-  const XHPs& at(nsHP::eMat subgtype) const { return v_xhps[subgtype]; }
-  XHPs& at(nsHP::eMat subgtype) { return v_xhps[subgtype]; }
+  const XHPs& at(Mat::E subgtype) const { return v_xhps[subgtype]; }
+  XHPs& at(Mat::E subgtype) { return v_xhps[subgtype]; }
 
-  nsHP::eMat get_eMat_from_char(char X) const;
+  Mat::E get_eMat_from_char(char X) const;
 
   HyperParams(const Graph& graph);
 

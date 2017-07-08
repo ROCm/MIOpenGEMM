@@ -17,10 +17,10 @@ namespace MIOpenGEMM
 std::vector<char> get_matChars()
 {
   std::vector<char> v1;
-  v1.resize(nsHP::nMats);
-  v1[nsHP::matA] = 'a';
-  v1[nsHP::matB] = 'b';
-  v1[nsHP::matC] = 'c';
+  v1.resize(Mat::E::N);
+  v1[Mat::E::A] = 'a';
+  v1[Mat::E::B] = 'b';
+  v1[Mat::E::C] = 'c';
   return v1;
 }
 
@@ -117,22 +117,22 @@ void GeometryDerived::reset(char floattype)
 // the coalesced dim.
 // (false == false) == true  evaluates to true,
 // so gate is true, so m is returned
-unsigned Geometry::get_padless_dim(nsHP::eMat emat_x, bool isCoal) const
+unsigned Geometry::get_padless_dim(Mat::E emat_x, bool isCoal) const
 {
 
   bool gate = (tX.at(emat_x) == isColMajor) == isCoal;
 
-  if (emat_x == nsHP::matA)
+  if (emat_x == Mat::E::A)
   {
     return gate ? k : m;
   }
 
-  else if (emat_x == nsHP::matB)
+  else if (emat_x == Mat::E::B)
   {
     return gate ? n : k;
   }
 
-  else if (emat_x == nsHP::matC)
+  else if (emat_x == Mat::E::C)
   {
     return gate ? n : m;
   }
@@ -144,15 +144,15 @@ unsigned Geometry::get_padless_dim(nsHP::eMat emat_x, bool isCoal) const
   }
 }
 
-unsigned Geometry::get_non_k_dim(nsHP::eMat emat_x) const
+unsigned Geometry::get_non_k_dim(Mat::E emat_x) const
 {
 
-  if (emat_x == nsHP::matA)
+  if (emat_x == Mat::E::A)
   {
     return m;
   }
 
-  else if (emat_x == nsHP::matB)
+  else if (emat_x == Mat::E::B)
   {
     return n;
   }
@@ -169,7 +169,7 @@ void Geometry::check_ldx_consistent() const
 {
 
   bool error = false;
-  for (auto x : {nsHP::matA, nsHP::matB, nsHP::matC})
+  for (auto x : {Mat::E::A, Mat::E::B, Mat::E::C})
   {
     if (ldX[x] < get_coal(x))
     {
@@ -207,12 +207,12 @@ void Geometry::check_ldx_consistent() const
     errm_ss << get_string();
     errm_ss << ", and the problems detected are:  ";
 
-    std::vector<char> m_chars(nsHP::nMats);
-    m_chars[nsHP::matA] = 'a';
-    m_chars[nsHP::matB] = 'b';
-    m_chars[nsHP::matC] = 'c';
+    std::vector<char> m_chars(Mat::E::N);
+    m_chars[Mat::E::A] = 'a';
+    m_chars[Mat::E::B] = 'b';
+    m_chars[Mat::E::C] = 'c';
 
-    for (auto x : {nsHP::matA, nsHP::matB, nsHP::matC})
+    for (auto x : {Mat::E::A, Mat::E::B, Mat::E::C})
     {
       if (ldX[x] < get_coal(x))
       {
@@ -225,15 +225,15 @@ void Geometry::check_ldx_consistent() const
   }
 }
 
-unsigned Geometry::get_uncoal(nsHP::eMat emat_x) const { return get_padless_dim(emat_x, false); }
+unsigned Geometry::get_uncoal(Mat::E emat_x) const { return get_padless_dim(emat_x, false); }
 
-unsigned Geometry::get_coal(nsHP::eMat emat_x) const { return get_padless_dim(emat_x, true); }
+unsigned Geometry::get_coal(Mat::E emat_x) const { return get_padless_dim(emat_x, true); }
 
-bool Geometry::coal_is_pll_k(nsHP::eMat emat_x) const
+bool Geometry::coal_is_pll_k(Mat::E emat_x) const
 {
   // proof : false, false, true should give 1
   return (static_cast<unsigned>(isColMajor) + static_cast<unsigned>(tX.at(emat_x)) +
-          static_cast<unsigned>(emat_x == nsHP::matA)) %
+          static_cast<unsigned>(emat_x == Mat::E::A)) %
          2;
 }
 
@@ -258,15 +258,15 @@ void Geometry::initialise(bool     isColMajor_,
   workspace_size = workspace_size_;
   floattype      = floattype_;
 
-  tX.resize(nsHP::nMats);
-  tX[nsHP::matA] = tA_;
-  tX[nsHP::matB] = tB_;
-  tX[nsHP::matC] = tC_;
+  tX.resize(Mat::E::N);
+  tX[Mat::E::A] = tA_;
+  tX[Mat::E::B] = tB_;
+  tX[Mat::E::C] = tC_;
 
-  ldX.resize(nsHP::nMats);
-  ldX[nsHP::matA] = lda_;
-  ldX[nsHP::matB] = ldb_;
-  ldX[nsHP::matC] = ldc_;
+  ldX.resize(Mat::E::N);
+  ldX[Mat::E::A] = lda_;
+  ldX[Mat::E::B] = ldb_;
+  ldX[Mat::E::C] = ldc_;
 
   if (floattype != 'd' and floattype != 'f')
   {
@@ -374,10 +374,10 @@ std::string Geometry::get_string() const { return get_networkconfig_string(); }
 std::string Geometry::get_networkconfig_string() const
 {
   std::stringstream geometry_stringstream;
-  geometry_stringstream << "tC" << tX[nsHP::matC] << "_tA" << tX[nsHP::matA] << "_tB"
-                        << tX[nsHP::matB] << "_colMaj" << isColMajor << "_m" << m << "_n" << n
-                        << "_k" << k << "_lda" << ldX[nsHP::matA] << "_ldb" << ldX[nsHP::matB]
-                        << "_ldc" << ldX[nsHP::matC] << "_ws" << workspace_size << "_f"
+  geometry_stringstream << "tC" << tX[Mat::E::C] << "_tA" << tX[Mat::E::A] << "_tB"
+                        << tX[Mat::E::B] << "_colMaj" << isColMajor << "_m" << m << "_n" << n
+                        << "_k" << k << "_lda" << ldX[Mat::E::A] << "_ldb" << ldX[Mat::E::B]
+                        << "_ldc" << ldX[Mat::E::C] << "_ws" << workspace_size << "_f"
                         << derived.float_size_bits;
   return geometry_stringstream.str();
 }
@@ -386,16 +386,16 @@ std::string Geometry::get_tabbed_string() const
 {
   
   std::stringstream geometry_stringstream;
-  geometry_stringstream << "tC=" << tX[nsHP::matC] 
-                        << " tA=" << tX[nsHP::matA] 
-                        << " tB=" << tX[nsHP::matB] 
+  geometry_stringstream << "tC=" << tX[Mat::E::C] 
+                        << " tA=" << tX[Mat::E::A] 
+                        << " tB=" << tX[Mat::E::B] 
                         << " colMaj=" << isColMajor
                         << " m=" << stringutil::get_char_padded(m, 5)
                         << " n=" << stringutil::get_char_padded(n, 5)
                         << " k=" << stringutil::get_char_padded(k, 5) 
-                        << " lda=" << stringutil::get_char_padded(ldX[nsHP::matA], 5) 
-                        << " ldb=" << stringutil::get_char_padded(ldX[nsHP::matB], 5)
-                        << " ldc=" << stringutil::get_char_padded(ldX[nsHP::matC], 5)
+                        << " lda=" << stringutil::get_char_padded(ldX[Mat::E::A], 5) 
+                        << " ldb=" << stringutil::get_char_padded(ldX[Mat::E::B], 5)
+                        << " ldc=" << stringutil::get_char_padded(ldX[Mat::E::C], 5)
                         << " ws=" << workspace_size
                         << " f=" << derived.float_size_bits;
 

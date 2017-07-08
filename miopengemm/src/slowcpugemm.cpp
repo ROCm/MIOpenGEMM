@@ -106,17 +106,17 @@ void gemm_3fors_generic_cpu(const Geometry& gg,
     {
       // Set the index of the element in C we're setting,
       unsigned target_index;
-      if (gg.tX[nsHP::matC] == false)
+      if (gg.tX[Mat::E::C] == false)
       {
-        target_index = x + y * gg.ldX[nsHP::matC];
+        target_index = x + y * gg.ldX[Mat::E::C];
       }
       else
       {
-        target_index = y + x * gg.ldX[nsHP::matC];
+        target_index = y + x * gg.ldX[Mat::E::C];
       }
       // and set it
       c[target_index] *= beta;
-      c[target_index] += alpha * finner(a, b, x, y, gg.ldX[nsHP::matA], gg.ldX[nsHP::matB], gg.k);
+      c[target_index] += alpha * finner(a, b, x, y, gg.ldX[Mat::E::A], gg.ldX[Mat::E::B], gg.k);
     }
   }
 }
@@ -131,7 +131,7 @@ void gemm_3fors_cpu(const Geometry& gg,
                     TFloat          beta)
 {
 
-  if (gg.tX[nsHP::matA] == true && gg.tX[nsHP::matB] == true)
+  if (gg.tX[Mat::E::A] == true && gg.tX[Mat::E::B] == true)
   {
     throw miog_error("tA and tB should have been redirected before calling gemm_3fors_cpu");
   }
@@ -141,7 +141,7 @@ void gemm_3fors_cpu(const Geometry& gg,
     throw miog_error("isColMajor should be true before calling gemm_3fors_cpu");
   }
 
-  else if (gg.tX[nsHP::matA] == false && gg.tX[nsHP::matB] == false)
+  else if (gg.tX[Mat::E::A] == false && gg.tX[Mat::E::B] == false)
   {
     gemm_3fors_generic_cpu<TFloat, NNInner<TFloat>>(gg, toff, a, b, c, alpha, beta);
   }
@@ -153,12 +153,12 @@ void gemm_3fors_cpu(const Geometry& gg,
       throw std::logic_error("m > n should have been redirected before calling gemm_3fors_cpu");
     }
 
-    if (gg.tX[nsHP::matA] == false && gg.tX[nsHP::matB] == true)
+    if (gg.tX[Mat::E::A] == false && gg.tX[Mat::E::B] == true)
     {
       gemm_3fors_generic_cpu<TFloat, NTInner<TFloat>>(gg, toff, a, b, c, alpha, beta);
     }
 
-    else if (gg.tX[nsHP::matA] == true && gg.tX[nsHP::matB] == false)
+    else if (gg.tX[Mat::E::A] == true && gg.tX[Mat::E::B] == false)
     {
       gemm_3fors_generic_cpu<TFloat, TNInner<TFloat>>(gg, toff, a, b, c, alpha, beta);
     }
@@ -191,7 +191,7 @@ void check_cpu_algs(std::vector<std::string> cpu_algs)
     {
       std::string errm = "unrecognised cpu algorithm, ";
       errm += alg;
-      errm += "\n";
+      errm += '\n';
       throw miog_error(errm);
     }
   }
@@ -209,26 +209,26 @@ void gemms_cpu(Geometry                     gg,
                outputwriting::OutputWriter& mowri)
 {
   check_cpu_algs(algs);
-  bool tA = gg.tX[nsHP::matA];
-  bool tB = gg.tX[nsHP::matB];
-  bool tC = gg.tX[nsHP::matC];
+  bool tA = gg.tX[Mat::E::A];
+  bool tB = gg.tX[Mat::E::B];
+  bool tC = gg.tX[Mat::E::C];
   redirection::redirect(gg.isColMajor,
                         tA,
                         tB,
                         tC,
                         gg.m,
                         gg.n,
-                        gg.ldX[nsHP::matA],
-                        gg.ldX[nsHP::matB],
+                        gg.ldX[Mat::E::A],
+                        gg.ldX[Mat::E::B],
                         toff.oa,
                         toff.ob,
                         a,
                         b);
-  gg.tX[nsHP::matA] = tA;
-  gg.tX[nsHP::matB] = tB;
-  gg.tX[nsHP::matC] = tC;
+  gg.tX[Mat::E::A] = tA;
+  gg.tX[Mat::E::B] = tB;
+  gg.tX[Mat::E::C] = tC;
 
-  redirection::confirm_redirection(gg.isColMajor, gg.tX[nsHP::matA], gg.tX[nsHP::matB], gg.m, gg.n);
+  redirection::confirm_redirection(gg.isColMajor, gg.tX[Mat::E::A], gg.tX[Mat::E::B], gg.m, gg.n);
   gg.check_ldx_consistent();
 
   for (auto& alg : algs)

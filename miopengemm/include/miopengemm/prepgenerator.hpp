@@ -20,7 +20,7 @@ class PrepGenerator : public basegen::BaseGenerator
 
   char       matrixchar;
   char       MATRIXCHAR;
-  nsHP::eMat emat_x;
+  Mat::E emat_x;
 
   void set_usage_from_matrixchar();
   void append_basic_what_definitions(std::stringstream& ss);
@@ -40,21 +40,21 @@ class PrepGenerator : public basegen::BaseGenerator
     {
       matrixchar = 'a';
       MATRIXCHAR = 'A';
-      emat_x     = nsHP::matA;
+      emat_x     = Mat::E::A;
     }
 
     else if (matrixchar_in == 'b')
     {
       matrixchar = 'b';
       MATRIXCHAR = 'B';
-      emat_x     = nsHP::matB;
+      emat_x     = Mat::E::B;
     }
 
     else if (matrixchar_in == 'c')
     {
       matrixchar = 'c';
       MATRIXCHAR = 'C';
-      emat_x     = nsHP::matC;
+      emat_x     = Mat::E::C;
     }
 
     else

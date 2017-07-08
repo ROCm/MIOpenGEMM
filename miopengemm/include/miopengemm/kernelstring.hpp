@@ -6,18 +6,12 @@
 
 #include <string>
 #include <vector>
+#include <miopengemm/enums.hpp>
 
 namespace MIOpenGEMM
 {
 
-enum bkt
-{
-  wsa = 0,
-  wsb,
-  betac,
-  main,
-  nBasicKernelTypes
-};
+
 // maps bkt to a string
 extern const std::vector<std::string> basic_kernel_type_strings;
 
@@ -34,7 +28,7 @@ class KernelType
   // one of wsa, wsb, betac, main
   std::string bkt_string;
 
-  bkt basic_kernel_type;
+  BasicKernelType::E basic_kernel_type;
 
   bool uses_a;
   bool uses_b;
@@ -55,6 +49,7 @@ class KernelType
   KernelType() = default;
 };
 
+// TODO : this is a bad class name, as this is more than a *string*. change and propogate.
 class KernelString
 {
   public:

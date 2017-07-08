@@ -153,8 +153,8 @@ class OpenCLGemmEncapsulator
       mowri_tracker(use_mowri_tracker, false, "")
   {
 
-    tk_kernels.resize(nBasicKernelTypes);
-    for (unsigned i = 0; i < nBasicKernelTypes; ++i)
+    tk_kernels.resize(BasicKernelType::E::N);
+    for (unsigned i = 0; i < BasicKernelType::E::N; ++i)
     {
       tk_kernels[i] = Kernel(command_queue, basic_kernel_type_strings[i]);
     }
@@ -260,16 +260,16 @@ class OpenCLGemmEncapsulator
     tk_kernels.at(type.basic_kernel_type).set_kernel_args(arg_sizes_values);
   }
 
-  bool refresh_needed(bkt                                 type,
+  bool refresh_needed(BasicKernelType::E                                 type,
                       const hyperparams::HyperParams&     new_hp,
                       const derivedparams::DerivedParams& new_dp)
   {
 
     /* TODO : check (here) hyper parameters to see if needed anew */
 
-    if (type == bkt::betac)
+    if (type == BasicKernelType::E::BETAC)
     {
-      if (tk_kernels.at(bkt::betac).is_set() == false && new_dp.main_does_beta_c_inc == 0)
+      if (tk_kernels.at(BasicKernelType::E::BETAC).is_set() == false && new_dp.main_does_beta_c_inc == 0)
       {
         return true;
       }
@@ -279,14 +279,14 @@ class OpenCLGemmEncapsulator
       }
     }
 
-    else if (type == bkt::main)
+    else if (type == BasicKernelType::E::MAIN)
     {
       return true;
     }
 
-    else if (type == bkt::wsa)
+    else if (type == BasicKernelType::E::WSA)
     {
-      if (tk_kernels.at(bkt::wsa).is_set() == false && new_hp.at(nsHP::matA).vs[nsHP::WOS] != 0)
+      if (tk_kernels.at(BasicKernelType::E::WSA).is_set() == false && new_hp.at(Mat::E::A).vs[Chi::E::WOS] != 0)
       {
         return true;
       }
@@ -296,9 +296,9 @@ class OpenCLGemmEncapsulator
       }
     }
 
-    else if (type == bkt::wsb)
+    else if (type == BasicKernelType::E::WSB)
     {
-      if (tk_kernels.at(bkt::wsb).is_set() == false && new_hp.at(nsHP::matB).vs[nsHP::WOS] != 0)
+      if (tk_kernels.at(BasicKernelType::E::WSB).is_set() == false && new_hp.at(Mat::E::B).vs[Chi::E::WOS] != 0)
       {
         return true;
       }
@@ -350,7 +350,7 @@ class OpenCLGemmEncapsulator
     for (unsigned ksi = 0; ksi < bundle.v_tgks.size(); ++ksi)
     {
 
-      bkt basic = bundle.v_tgks[ksi].type.basic_kernel_type;
+      BasicKernelType::E basic = bundle.v_tgks[ksi].type.basic_kernel_type;
       oclr      = refresh_kernel(bundle.v_tgks[ksi], hp, bundle.dp);
       if (oclr.fail() == false)
       {
@@ -539,7 +539,7 @@ class OpenCLGemmEncapsulator
       indi_run_strings.push_back(get_run_time_string(oclr.success));
       if (print_asap == true)
       {
-        mowri << indi_run_strings[kqq] << "\n";
+        mowri << indi_run_strings[kqq] << '\n';
       }
     }
 
@@ -560,7 +560,7 @@ class OpenCLGemmEncapsulator
             mowri << " (NEW BEST) ";
           }
         }
-        mowri << "\n";
+        mowri << '\n';
       }
     }
 
@@ -735,7 +735,7 @@ class OpenCLGemmEncapsulator
       std::string titlestring = sss.str();
 
       stars.resize(titlestring.size(), '*');
-      mowri << "\n" << stars << "\n" << titlestring << "\n" << stars << Endl;
+      mowri << '\n' << stars << '\n' << titlestring << '\n' << stars << Endl;
 
       v_tgsolns.emplace_back(
         single_descent_find(allotted_time - total_elapsed_seconds, find_params)); // fst,
@@ -762,10 +762,10 @@ class OpenCLGemmEncapsulator
     std::string header("The gflops found by single descents:");
     stars.resize(header.size(), '*');
 
-    mowri << "\n"
+    mowri << '\n'
           << "(find finished) elapsed seconds: " << total_elapsed_seconds
           << "    elapsed descents: " << total_elapsed_descents << Endl;
-    mowri << header << "\n" << stars << "\n";
+    mowri << header << '\n' << stars << '\n';
     std::sort(soln_gflops.begin(), soln_gflops.end());
     for (auto& x : soln_gflops)
     {
@@ -1000,7 +1000,7 @@ class OpenCLGemmEncapsulator
 
     std::string startstring = "hyper parameter string:";
     startstring.resize(leading_size, ' ');
-    mowri << "\n" << startstring << "\t time when found:\t median Gflops/s:" << Endl;
+    mowri << '\n' << startstring << "\t time when found:\t median Gflops/s:" << Endl;
 
     for (auto& x : best_solns_path)
     {
@@ -1023,7 +1023,7 @@ cl_mem get_copy(cl_command_queue   command_queue,
   cl_mem   c_copied;
   cl_event c_copy_event;
 
-  size_t n_c = gg.ldX[nsHP::matC] * (gg.tX[nsHP::matC] == gg.isColMajor ? gg.m : gg.n) + toff.oc;
+  size_t n_c = gg.ldX[Mat::E::C] * (gg.tX[Mat::E::C] == gg.isColMajor ? gg.m : gg.n) + toff.oc;
   size_t c_memsize = gg.derived.float_size_bytes * n_c;
   openclutil::cl_set_buffer_from_command_queue(c_copied,
                                                command_queue,
@@ -1287,7 +1287,7 @@ Solution find(float            allotted_time,
   /* TODO : where is a good place to set this ? */
   float min_time_without_cache = 100.00;
 
-  SummaryStat sumstat(Median);
+  SummStat::E sumstat(SummStat::E::MEDIAN);
   unsigned    allotted_descents = 30;
   unsigned    n_runs_per_kernel = 3;
   FindParams  find_params(allotted_time, allotted_descents, n_runs_per_kernel, sumstat);
@@ -1328,8 +1328,8 @@ Solution find(float            allotted_time,
          << "\n(2) there is no custom cache entry. The message returned when "
          << "attempting to obtain "
          << "a custom cache entry was,"
-         << "\n"
-         << std::get<1>(pair) << "\n"
+         << '\n'
+         << std::get<1>(pair) << '\n'
          << "Either "
          << "\n(1) set allotted_time to be greater than "
          << "min_time_without_cache, or "

@@ -4,17 +4,17 @@
 #include <sstream>
 #include <miopengemm/error.hpp>
 #include <miopengemm/findparams.hpp>
-
+#include <miopengemm/enums.hpp>
 namespace MIOpenGEMM
 {
 
 std::vector<std::string> get_sumstatkey()
 {
-  std::vector<std::string> ssv(nSumStatKeys, "unset");
-  ssv[Mean]   = "Mean";
-  ssv[Median] = "Median";
-  ssv[Max]    = "Max";
-  for (unsigned i = 0; i < nSumStatKeys; ++i)
+  std::vector<std::string> ssv(SummStat::E::N, "unset");
+  ssv[SummStat::E::MEAN]   = "Mean";
+  ssv[SummStat::E::MEDIAN] = "Median";
+  ssv[SummStat::E::MAX]    = "Max";
+  for (unsigned i = 0; i < SummStat::E::N; ++i)
   {
     if (ssv[i] == "unset")
     {
@@ -27,10 +27,10 @@ std::vector<std::string> get_sumstatkey()
 
 const std::vector<std::string> sumstatkey = get_sumstatkey();
 
-std::string get_sumstatkey(SummaryStat sumstat)
+std::string get_sumstatkey(SummStat::E sumstat)
 {
 
-  if (sumstat >= nSumStatKeys)
+  if (sumstat >= SummStat::E::N)
   {
     throw miog_error("unrecognised sumstat key in get_sumstatkey");
   }
@@ -40,7 +40,7 @@ std::string get_sumstatkey(SummaryStat sumstat)
 FindParams::FindParams(float       allotted_time_,
                        unsigned    allotted_descents_,
                        unsigned    n_runs_per_kernel_,
-                       SummaryStat sumstat_)
+                       SummStat::E sumstat_)
   : allotted_time(allotted_time_),
     allotted_descents(allotted_descents_),
     n_runs_per_kernel(n_runs_per_kernel_),

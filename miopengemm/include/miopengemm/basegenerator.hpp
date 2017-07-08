@@ -7,13 +7,13 @@
 #include <miopengemm/derivedparams.hpp>
 #include <miopengemm/geometry.hpp>
 #include <miopengemm/hyperparams.hpp>
-#include <miopengemm/kernelstring.hpp>
 #include <miopengemm/stringutilbase.hpp>
+#include <miopengemm/kernelstring.hpp>
+
 namespace MIOpenGEMM
 {
 namespace basegen
 {
-
 class BaseGenerator
 {
 
@@ -39,9 +39,11 @@ class BaseGenerator
   std::string get_how_string();
   std::string get_derived_string();
 
+  // append argument(s) to the function definition
   void append_farg(bool, std::stringstream &, const std::string &);
 
   public:
+  
   /* Does entire setup */
   virtual void setup() = 0;
 

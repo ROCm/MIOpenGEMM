@@ -6,19 +6,13 @@
 
 #include <string>
 #include <vector>
+#include <miopengemm/kernelstring.hpp>
 
 namespace MIOpenGEMM
 {
 
-enum SummaryStat
-{
-  Mean = 0,
-  Median,
-  Max,
-  nSumStatKeys
-};
 
-std::string get_sumstatkey(SummaryStat sumstat);
+std::string get_sumstatkey(SummStat::E sumstat);
 
 class FindParams
 {
@@ -26,11 +20,11 @@ class FindParams
   float       allotted_time;
   unsigned    allotted_descents;
   unsigned    n_runs_per_kernel;
-  SummaryStat sumstat;
+  SummStat::E sumstat;
   FindParams(float       allotted_time,
              unsigned    allotted_descents,
              unsigned    n_runs_per_kernel,
-             SummaryStat sumstat);
+             SummStat::E sumstat);
   FindParams() = default;
   std::string get_string() const;
 };

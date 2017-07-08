@@ -90,9 +90,9 @@ class Gemini
   {
     auto c_memsize = sizingup::get_n_elements_padded(gg.m,
                                                      gg.n,
-                                                     gg.ldX[nsHP::matC],
+                                                     gg.ldX[Mat::E::C],
                                                      gg.isColMajor,
-                                                     gg.tX[nsHP::matC],
+                                                     gg.tX[Mat::E::C],
                                                      toff.oc,
                                                      toff.tail_off_c) *
                      sizeof(TFloat);
@@ -103,9 +103,9 @@ class Gemini
   {
     return sizingup::get_n_elements_padded(gg.m,
                                            gg.k,
-                                           gg.ldX[nsHP::matA],
+                                           gg.ldX[Mat::E::A],
                                            gg.isColMajor,
-                                           gg.tX[nsHP::matA],
+                                           gg.tX[Mat::E::A],
                                            toff.oa,
                                            toff.tail_off_a) *
            sizeof(TFloat);
@@ -115,9 +115,9 @@ class Gemini
   {
     return sizingup::get_n_elements_padded(gg.k,
                                            gg.n,
-                                           gg.ldX[nsHP::matB],
+                                           gg.ldX[Mat::E::B],
                                            gg.isColMajor,
-                                           gg.tX[nsHP::matB],
+                                           gg.tX[Mat::E::B],
                                            toff.ob,
                                            toff.tail_off_b) *
            sizeof(TFloat);

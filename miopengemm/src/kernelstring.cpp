@@ -5,6 +5,7 @@
 #include <limits>
 #include <miopengemm/error.hpp>
 #include <miopengemm/kernelstring.hpp>
+#include <miopengemm/enums.hpp>
 
 namespace MIOpenGEMM
 {
@@ -12,13 +13,13 @@ namespace MIOpenGEMM
 std::vector<std::string> get_basic_kernel_type_strings()
 {
 
-  std::vector<std::string> pbt(bkt::nBasicKernelTypes);
-  pbt[bkt::wsa]   = "wsa";
-  pbt[bkt::wsb]   = "wsb";
-  pbt[bkt::betac] = "betac";
-  pbt[bkt::main]  = "main";
+  std::vector<std::string> pbt(BasicKernelType::N);
+  pbt[BasicKernelType::WSA]   = "wsa";
+  pbt[BasicKernelType::WSB]   = "wsb";
+  pbt[BasicKernelType::BETAC] = "betac";
+  pbt[BasicKernelType::MAIN]  = "main";
 
-  for (unsigned i = 0; i < bkt::nBasicKernelTypes; ++i)
+  for (unsigned i = 0; i < BasicKernelType::N; ++i)
   {
     if (pbt[i] == "")
     {
@@ -36,14 +37,14 @@ std::vector<std::vector<unsigned>> get_kernel_dependencies()
   unsigned              uninitialised_value{std::numeric_limits<unsigned>::max()};
   std::vector<unsigned> uninitialised_vector{uninitialised_value};
 
-  std::vector<std::vector<unsigned>> kdps(bkt::nBasicKernelTypes, uninitialised_vector);
+  std::vector<std::vector<unsigned>> kdps(BasicKernelType::N, uninitialised_vector);
 
-  kdps[bkt::wsa]   = {};
-  kdps[bkt::wsb]   = {};
-  kdps[bkt::betac] = {};
-  kdps[bkt::main]  = {bkt::betac, bkt::wsa, bkt::wsb};
+  kdps[BasicKernelType::WSA]   = {};
+  kdps[BasicKernelType::WSB]   = {};
+  kdps[BasicKernelType::BETAC] = {};
+  kdps[BasicKernelType::MAIN]  = {BasicKernelType::BETAC, BasicKernelType::WSA, BasicKernelType::WSB};
 
-  for (unsigned i = 0; i < bkt::nBasicKernelTypes; ++i)
+  for (unsigned i = 0; i < BasicKernelType::N; ++i)
   {
     if (kdps[i].size() == 1 && kdps[i][0] == uninitialised_value)
     {
@@ -111,26 +112,26 @@ KernelType::KernelType(
   //  we assume here that the main kernel will always use alpha
   if (uses_alpha)
   {
-    basic_kernel_type = bkt::main;
-    bkt_string        = basic_kernel_type_strings[bkt::main];
+    basic_kernel_type = BasicKernelType::MAIN;
+    bkt_string        = basic_kernel_type_strings[BasicKernelType::MAIN];
   }
 
   else if (uses_beta && uses('c'))
   {
-    basic_kernel_type = bkt::betac;
-    bkt_string        = basic_kernel_type_strings[bkt::betac];
+    basic_kernel_type = BasicKernelType::BETAC;
+    bkt_string        = basic_kernel_type_strings[BasicKernelType::BETAC];
   }
 
   else if (uses('a') && uses('w'))
   {
-    basic_kernel_type = bkt::wsa;
-    bkt_string        = basic_kernel_type_strings[bkt::wsa];
+    basic_kernel_type = BasicKernelType::WSA;
+    bkt_string        = basic_kernel_type_strings[BasicKernelType::WSA];
   }
 
   else if (uses('b') && uses('w'))
   {
-    basic_kernel_type = bkt::wsb;
-    bkt_string        = basic_kernel_type_strings[bkt::wsb];
+    basic_kernel_type = BasicKernelType::WSB;
+    bkt_string        = basic_kernel_type_strings[BasicKernelType::WSB];
   }
 
   else
