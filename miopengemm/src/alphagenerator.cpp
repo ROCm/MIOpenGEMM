@@ -64,8 +64,8 @@ class AlphaGenerator : basegen::BaseGenerator
       ss <<
         R"(
 /* GROUP_ALLOCATION = 1 :  allocation is done column-by-column */
-const unsigned group_id_a = group_id_xy % N_GROUPS_A;
-const unsigned group_id_b = group_id_xy / N_GROUPS_A;
+const size_t group_id_a = group_id_xy % N_GROUPS_A;
+const size_t group_id_b = group_id_xy / N_GROUPS_A;
 )";
     }
 
@@ -74,8 +74,8 @@ const unsigned group_id_b = group_id_xy / N_GROUPS_A;
       ss <<
         R"(
 /* GROUP_ALLOCATION = 2 :  allocation is done row-by-row */
-unsigned group_id_b = group_id_xy % N_GROUPS_B;
-unsigned group_id_a = group_id_xy / N_GROUPS_B;
+size_t group_id_b = group_id_xy % N_GROUPS_B;
+size_t group_id_a = group_id_xy / N_GROUPS_B;
 )";
     }
 
@@ -97,9 +97,9 @@ unsigned group_id_a = group_id_xy / N_GROUPS_B;
 *                .
 * where the integers are work group numbers
 * */  
-unsigned group_id_b;
-unsigned group_id_a;
-unsigned wg_super_column = group_id_xy / (SUPER_COLUMN_WIDTH*N_GROUPS_A);
+size_t group_id_b;
+size_t group_id_a;
+size_t wg_super_column = group_id_xy / (SUPER_COLUMN_WIDTH*N_GROUPS_A);
 )";
 
       std::string full_SUCOL_string = R"(
@@ -188,7 +188,7 @@ TFLOAT previous_value; )"
                                   std::string        bound_string,
                                   std::string        increment_string)
   {
-    ss << "for (unsigned " << varname << " = 0; " << varname << " < " << bound_string << "; "
+    ss << "for (size_t " << varname << " = 0; " << varname << " < " << bound_string << "; "
        << increment_string << ")";
   }
 
@@ -221,9 +221,9 @@ TFLOAT previous_value; )"
   }
 
   void append_final_write_element(std::stringstream& ss,
-                                  unsigned           atomic_increment,
-                                  unsigned           with_beta_scaling,
-                                  unsigned           with_alpha_increment)
+                                  size_t           atomic_increment,
+                                  size_t           with_beta_scaling,
+                                  size_t           with_alpha_increment)
   {
 
     // a good place to break kernel to check error checking.
@@ -302,10 +302,10 @@ write_start_a + row >= MACRO_TILE_LENGTH_A*(N_GROUPS_A - 1)
   void append_check_wrapped_if_clause_close(std::stringstream& ss) { ss << "\n}"; }
 
   void append_checked_wrapped_loops_from_bools(std::stringstream& ss,
-                                               unsigned           with_check,
-                                               unsigned           atomic_increment,
-                                               unsigned           with_beta_scaling,
-                                               unsigned           with_alpha_increment)
+                                               size_t           with_check,
+                                               size_t           atomic_increment,
+                                               size_t           with_beta_scaling,
+                                               size_t           with_alpha_increment)
   {
 
     append_for_loops_for_c_write_open(ss);
@@ -323,7 +323,7 @@ write_start_a + row >= MACRO_TILE_LENGTH_A*(N_GROUPS_A - 1)
     append_for_loops_for_c_write_close(ss);
   }
 
-  void append_final_write_loops(std::stringstream& ss, unsigned with_check)
+  void append_final_write_loops(std::stringstream& ss, size_t with_check)
   {
     if (dp.main_split_on_k == 0)
     {
@@ -345,14 +345,14 @@ write_start_a + row >= MACRO_TILE_LENGTH_A*(N_GROUPS_A - 1)
 
   void append_k_remaining_string(std::stringstream& ss)
   {
-    ss << "\nunsigned k_remaining = " << dp.effective_k_varies_string << " % UNROLL;";
+    ss << "\nsize_t k_remaining = " << dp.effective_k_varies_string << " % UNROLL;";
   }
 
   // simple for loops. Could consider unrolling like Cobalt, but for the moment
   // I use the optional pragma unroll
   void append_load_ab_into_LDS_string(std::stringstream& ss,
-                                      unsigned           final_unroll,
-                                      unsigned           special_first_unroll)
+                                      size_t           final_unroll,
+                                      size_t           special_first_unroll)
   {
 
     append_load_into_LDS_string('a', ss, final_unroll, special_first_unroll);
@@ -368,8 +368,8 @@ barrier(CLK_LOCAL_MEM_FENCE); )";
   // but for the moment I use the optional pragma unroll
   void append_load_into_LDS_string(char               x,
                                    std::stringstream& ss,
-                                   unsigned           final_unroll,
-                                   unsigned           special_first_unroll)
+                                   size_t           final_unroll,
+                                   size_t           special_first_unroll)
   {
 
     char X = (x == 'a') ? 'A' : 'B';
@@ -435,11 +435,11 @@ barrier(CLK_LOCAL_MEM_FENCE); )";
 
   // We previously had a variable unroll_the_math_section = False.
   // Experiments with unroll_the_math_section suggest that it's a bad idea.
-  void append_math_section(std::stringstream& ss, unsigned use_k_remaining)
+  void append_math_section(std::stringstream& ss, size_t use_k_remaining)
   {
 
     std::string number_of_unrolls = use_k_remaining == 0 ? "UNROLL" : "k_remaining";
-    ss << "\nfor (unsigned u = 0; u < " << number_of_unrolls << "; ++u){\n";
+    ss << "\nfor (size_t u = 0; u < " << number_of_unrolls << "; ++u){\n";
     append_load_to_register_string('a', ss);
     append_load_to_register_string('b', ss);
     ss << '\n';
@@ -449,8 +449,8 @@ barrier(CLK_LOCAL_MEM_FENCE); )";
   }
 
   void append_relocate_load_math_string(std::stringstream& ss,
-                                        unsigned           final_unroll,
-                                        unsigned           special_first_unroll)
+                                        size_t           final_unroll,
+                                        size_t           special_first_unroll)
   {
     if (final_unroll != 0 && special_first_unroll != 0)
     {
@@ -527,8 +527,8 @@ if (group_id_z == n_work_groups_with_1_more && k_remaining > 0){
 
   void append_compute_string(std::stringstream& ss)
   {
-    ss << dp.pragma_unroll_string << "for (unsigned row = 0; row < MICRO_TILE_LENGTH_A; ++row){\n"
-       << dp.pragma_unroll_string << "for (unsigned col = 0; col < MICRO_TILE_LENGTH_B; ++col){\n"
+    ss << dp.pragma_unroll_string << "for (size_t row = 0; row < MICRO_TILE_LENGTH_A; ++row){\n"
+       << dp.pragma_unroll_string << "for (size_t col = 0; col < MICRO_TILE_LENGTH_B; ++col){\n"
        << "rC[row][col] += rA[row]*rB[col];   \n}\n}\n";
   }
 
@@ -536,7 +536,7 @@ if (group_id_z == n_work_groups_with_1_more && k_remaining > 0){
   {
     char X = (x == 'a') ? 'A' : 'B';
     ss << '\n' << dp.pragma_unroll_string;
-    ss << "for (unsigned i = 0; i < MICRO_TILE_LENGTH_" << X << "; ++i){\n";
+    ss << "for (size_t i = 0; i < MICRO_TILE_LENGTH_" << X << "; ++i){\n";
     ss << "r" << X << "[i] = l" << X << "["
        << "i*"
        << "C_INTERWEAVE_STRIDE_" << X << "];\n}\n";
@@ -635,15 +635,15 @@ if (group_id_z == n_work_groups_with_1_more && k_remaining > 0){
   {
     if (dp.main_split_on_k == 0)
     {
-      ss << "\nconst unsigned group_id_xy = get_group_id(0);\n";
+      ss << "\nconst size_t group_id_xy = get_group_id(0);\n";
     }
     else
     {
       ss <<
         R"(
-const unsigned group_id = get_group_id(0);
-const unsigned group_id_xy = group_id / N_WORK_ITEMS_PER_C_ELM;
-const unsigned group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
+const size_t group_id = get_group_id(0);
+const size_t group_id_xy = group_id / N_WORK_ITEMS_PER_C_ELM;
+const size_t group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
 )";
     }
   }
@@ -651,7 +651,7 @@ const unsigned group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
   void append_stride_c_defn(std::stringstream& ss)
   {
 
-    unsigned transposed_xor_is_col_major = (gg.tX[Mat::E::C] + gg.isColMajor) % 2;
+    size_t transposed_xor_is_col_major = (gg.tX[Mat::E::C] + gg.isColMajor) % 2;
     ss << "#define STRIDE_PLL_M_C " << (transposed_xor_is_col_major == 1 ? 1 : gg.ldX[Mat::E::C])
        << '\n';
     ss << "#define STRIDE_PLL_N_C " << (transposed_xor_is_col_major == 0 ? 1 : gg.ldX[Mat::E::C])
@@ -699,13 +699,13 @@ c += c_offset;
 
   void append_id_string_nonsym(std::stringstream& ss)
   {
-    ss << "const unsigned local_id = get_local_id(0);\n";
+    ss << "const size_t local_id = get_local_id(0);\n";
     append_group_id_defns(ss);
 
     ss << R"(
 /* Define which part of the C macro-tile this thread will process (% / or / % ? doesn't seem to make much difference) */
-const unsigned micro_id_a = local_id % N_MICRO_IN_MACRO_A;
-const unsigned micro_id_b = local_id / N_MICRO_IN_MACRO_A;
+const size_t micro_id_a = local_id % N_MICRO_IN_MACRO_A;
+const size_t micro_id_b = local_id / N_MICRO_IN_MACRO_A;
 )";
 
     append_group_allocation_string(ss);
@@ -715,8 +715,8 @@ const unsigned micro_id_b = local_id / N_MICRO_IN_MACRO_A;
       ss <<
         R"(
 /* this additional offset of a and b appears because UNROLL_FOR_OFFSET is 1 */
-unsigned unroll_offset = (13*group_id_a + 7*group_id_b)%UNROLL;
-unsigned k_plus_offset = __K__ + unroll_offset;
+size_t unroll_offset = (13*group_id_a + 7*group_id_b)%UNROLL;
+size_t k_plus_offset = __K__ + unroll_offset;
 )";
     }
   }
@@ -747,7 +747,7 @@ unsigned k_plus_offset = __K__ + unroll_offset;
       ss << "/* Define which part of the C macro-tile this thread will process "
             "(% / or / % ? "
             "doesn't seem to make much difference) */\n";
-    ss << "unsigned write_macro_tile_start_" << x << " = group_id_" << x << "*MACRO_TILE_LENGTH_"
+    ss << "size_t write_macro_tile_start_" << x << " = group_id_" << x << "*MACRO_TILE_LENGTH_"
        << X << "; \n";
     if (dp.main_use_edge_trick != 0)
     {
@@ -758,7 +758,7 @@ unsigned k_plus_offset = __K__ + unroll_offset;
          << " - PRESHIFT_FINAL_TILE_" << X << ");\n";
       ss << "}\n";
     }
-    ss << "const unsigned write_start_" << x << " = write_macro_tile_start_" << x << " + micro_id_"
+    ss << "const size_t write_start_" << x << " = write_macro_tile_start_" << x << " + micro_id_"
        << x << "*" << get_c_work_item_next(X) << ";\n";
 
     ss << "\n\n\n";
@@ -779,16 +779,16 @@ unsigned k_plus_offset = __K__ + unroll_offset;
       ss << "/* Define what of A this thread will load from unroll tile in "
             "global to LDS (% / or / "
             "% ? looks like no difference ) */\n";
-    ss << "const unsigned pll_unroll_" << x << "_load_id = local_id % N_MICRO_" << X
+    ss << "const size_t pll_unroll_" << x << "_load_id = local_id % N_MICRO_" << X
        << "_TILES_PLL_UNROLL;\n";
-    ss << "const unsigned perp_unroll_" << x << "_load_id = local_id / N_MICRO_" << X
+    ss << "const size_t perp_unroll_" << x << "_load_id = local_id / N_MICRO_" << X
        << "_TILES_PLL_UNROLL;\n";
 
     if (X == 'A')
       ss << "/* Define which part of A this thread will read from process (% / "
             "or / % ? doesn't "
             "seem to make much difference) */\n";
-    ss << "unsigned read_macro_tile_start_" << x << " = group_id_" << x << "*MACRO_TILE_LENGTH_"
+    ss << "size_t read_macro_tile_start_" << x << " = group_id_" << x << "*MACRO_TILE_LENGTH_"
        << X << "; \n";
     if (dp.main_use_edge_trick != 0 && hp.at(emat_x).vs[Chi::E::WOS] != 2)
     {
@@ -831,9 +831,9 @@ unsigned k_plus_offset = __K__ + unroll_offset;
     if (X == 'A')
       ss << "/* make the micro adjustments (A) for the thread, getting ready "
             "to load */\n";
-    ss << "const unsigned " << x << "_offset_pll_unroll = " << str_n_pll << " pll_unroll_" << x
+    ss << "const size_t " << x << "_offset_pll_unroll = " << str_n_pll << " pll_unroll_" << x
        << "_load_id;\n";
-    ss << "const unsigned " << x << "_offset_perp_unroll = " << str_n_perp << " perp_unroll_" << x
+    ss << "const size_t " << x << "_offset_perp_unroll = " << str_n_perp << " perp_unroll_" << x
        << "_load_id;\n";
     ss << x << " += "
        << "STRIDE_PLL_K_" << X << " * " << x << "_offset_pll_unroll;\n";
@@ -1086,7 +1086,7 @@ unsigned k_plus_offset = __K__ + unroll_offset;
     }
 
     ss << "\n\n";
-    ss << "unsigned index;\n";
+    ss << "size_t index;\n";
     append_split_on_k_vardecl_write_string(ss);
     append_final_write_all(ss);
     ss << "\n}\n";

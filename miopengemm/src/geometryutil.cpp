@@ -8,8 +8,8 @@ namespace MIOpenGEMM
 {
 
 std::vector<Geometry> get_from_m_n_k_tA_tB(
-  const std::vector<std::tuple<unsigned, unsigned, unsigned, bool, bool>>& basicgeos,
-  unsigned workspace_size)
+  const std::vector<std::tuple<size_t, size_t, size_t, bool, bool>>& basicgeos,
+  size_t workspace_size)
 {
 
   std::vector<Geometry> geometries;
@@ -17,12 +17,12 @@ std::vector<Geometry> get_from_m_n_k_tA_tB(
   bool                  tA;
   bool                  tB;
   bool                  tC = false;
-  unsigned              lda;
-  unsigned              ldb;
-  unsigned              ldc;
-  unsigned              m;
-  unsigned              n;
-  unsigned              k;
+  size_t              lda;
+  size_t              ldb;
+  size_t              ldc;
+  size_t              m;
+  size_t              n;
+  size_t              k;
 
   bool ldx_offset = false;
 
@@ -39,8 +39,8 @@ std::vector<Geometry> get_from_m_n_k_tA_tB(
 
 std::vector<Geometry> get_from_m_n_k_ldaABC_tA_tB(
   const std::vector<
-    std::tuple<unsigned, unsigned, unsigned, unsigned, unsigned, unsigned, bool, bool>>& basicgeos,
-  unsigned workspace_size)
+    std::tuple<size_t, size_t, size_t, size_t, size_t, size_t, bool, bool>>& basicgeos,
+  size_t workspace_size)
 {
 
   std::vector<Geometry> geometries;
@@ -48,12 +48,12 @@ std::vector<Geometry> get_from_m_n_k_ldaABC_tA_tB(
   bool                  tA;
   bool                  tB;
   bool                  tC = false;
-  unsigned              lda;
-  unsigned              ldb;
-  unsigned              ldc;
-  unsigned              m;
-  unsigned              n;
-  unsigned              k;
+  size_t              lda;
+  size_t              ldb;
+  size_t              ldc;
+  size_t              m;
+  size_t              n;
+  size_t              k;
 
   for (auto& problem : basicgeos)
   {

@@ -14,7 +14,7 @@ namespace redirection
 
 template <typename T>
 void redirect_base(
-  bool& isColMajor, bool& tA, bool& tB, bool& tC, unsigned& m, unsigned& n, T& a, T& b)
+  bool& isColMajor, bool& tA, bool& tB, bool& tC, size_t& m, size_t& n, T& a, T& b)
 {
   if (isColMajor == false)
   {
@@ -49,9 +49,9 @@ class MatrixBundle
 {
   public:
   const TFloat* x;
-  unsigned      ldx;
-  unsigned      x_offset;
-  MatrixBundle(const TFloat* x_, unsigned ldx_, unsigned x_offset_)
+  size_t      ldx;
+  size_t      x_offset;
+  MatrixBundle(const TFloat* x_, size_t ldx_, size_t x_offset_)
     : x(x_), ldx(ldx_), x_offset(x_offset_)
   {
   }
@@ -62,12 +62,12 @@ void redirect(bool&          isColMajor,
               bool&          tA,
               bool&          tB,
               bool&          tC,
-              unsigned&      m,
-              unsigned&      n,
-              unsigned&      lda,
-              unsigned&      ldb,
-              unsigned&      a_offset,
-              unsigned&      b_offset,
+              size_t&      m,
+              size_t&      n,
+              size_t&      lda,
+              size_t&      ldb,
+              size_t&      a_offset,
+              size_t&      b_offset,
               const TFloat*& a,
               const TFloat*& b)
 {
@@ -89,12 +89,12 @@ template void redirect(bool&          isColMajor,
                        bool&          tA,
                        bool&          tB,
                        bool&          tC,
-                       unsigned&      m,
-                       unsigned&      n,
-                       unsigned&      lda,
-                       unsigned&      ldb,
-                       unsigned&      a_offset,
-                       unsigned&      b_offset,
+                       size_t&      m,
+                       size_t&      n,
+                       size_t&      lda,
+                       size_t&      ldb,
+                       size_t&      a_offset,
+                       size_t&      b_offset,
                        const double*& a,
                        const double*& b);
 
@@ -102,12 +102,12 @@ template void redirect(bool&         isColMajor,
                        bool&         tA,
                        bool&         tB,
                        bool&         tC,
-                       unsigned&     m,
-                       unsigned&     n,
-                       unsigned&     lda,
-                       unsigned&     ldb,
-                       unsigned&     a_offset,
-                       unsigned&     b_offset,
+                       size_t&     m,
+                       size_t&     n,
+                       size_t&     lda,
+                       size_t&     ldb,
+                       size_t&     a_offset,
+                       size_t&     b_offset,
                        const float*& a,
                        const float*& b);
 
@@ -115,15 +115,15 @@ void redirect(bool&        isColMajor,
               bool&        tA,
               bool&        tB,
               bool&        tC,
-              unsigned&    m,
-              unsigned&    n,
+              size_t&    m,
+              size_t&    n,
               std::string& a,
               std::string& b)
 {
   redirect_base<std::string>(isColMajor, tA, tB, tC, m, n, a, b);
 }
 
-void confirm_redirection(bool isColMajor, bool tA, bool tB, unsigned m, unsigned n)
+void confirm_redirection(bool isColMajor, bool tA, bool tB, size_t m, size_t n)
 {
   if (isColMajor == false)
   {

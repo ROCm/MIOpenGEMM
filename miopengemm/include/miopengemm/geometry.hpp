@@ -17,32 +17,32 @@ class Offsets
 {
   public:
   // offsets of a,b,c and workspace
-  unsigned oa;
-  unsigned ob;
-  unsigned oc;
-  unsigned oworkspace;
+  size_t oa;
+  size_t ob;
+  size_t oc;
+  size_t oworkspace;
 
   // tails of a,b and c. why no workspace?
-  unsigned tail_off_a;
-  unsigned tail_off_b;
-  unsigned tail_off_c;
+  size_t tail_off_a;
+  size_t tail_off_b;
+  size_t tail_off_c;
 
-  Offsets(unsigned oa,
-          unsigned ob,
-          unsigned oc,
-          unsigned oworkspace,
-          unsigned tail_off_a,
-          unsigned tail_off_b,
-          unsigned tail_off_c);
+  Offsets(size_t oa,
+          size_t ob,
+          size_t oc,
+          size_t oworkspace,
+          size_t tail_off_a,
+          size_t tail_off_b,
+          size_t tail_off_c);
 
-  const unsigned& operator[](char c) const;
+  const size_t& operator[](char c) const;
 };
 
 class GeometryDerived
 {
   public:
-  unsigned float_size_bits;
-  unsigned float_size_bytes;
+  size_t float_size_bits;
+  size_t float_size_bytes;
   void reset(char floattype);
 };
 
@@ -54,13 +54,13 @@ class Geometry
                   bool     tA_,
                   bool     tB_,
                   bool     tC_,
-                  unsigned lda_,
-                  unsigned ldb_,
-                  unsigned ldc_,
-                  unsigned m_,
-                  unsigned n_,
-                  unsigned k_,
-                  unsigned workspace_size_,
+                  size_t lda_,
+                  size_t ldb_,
+                  size_t ldc_,
+                  size_t m_,
+                  size_t n_,
+                  size_t k_,
+                  size_t workspace_size_,
                   char     floattype_);
 
   public:
@@ -70,14 +70,14 @@ class Geometry
   std::vector<bool> tX;
 
   // indexed by eMat (for A, B and C)
-  std::vector<unsigned> ldX;
+  std::vector<size_t> ldX;
 
-  unsigned m;
-  unsigned n;
-  unsigned k;
+  size_t m;
+  size_t n;
+  size_t k;
 
   // the usable amount of workspace
-  unsigned workspace_size;
+  size_t workspace_size;
 
   // 'f' : 32-bit single precision or 'd' : 64-bit double precision
   char floattype;
@@ -89,13 +89,13 @@ class Geometry
            bool     tA,
            bool     tB,
            bool     tC,
-           unsigned lda,
-           unsigned ldb,
-           unsigned ldc,
-           unsigned m,
-           unsigned n,
-           unsigned k,
-           unsigned workspace_size,
+           size_t lda,
+           size_t ldb,
+           size_t ldc,
+           size_t m,
+           size_t n,
+           size_t k,
+           size_t workspace_size,
            char     floattype);
 
   Geometry() = default;
@@ -106,13 +106,13 @@ class Geometry
 
   Geometry& operator=(const Geometry&) = default;
 
-  unsigned get_padless_dim(Mat::E M, bool isCoal) const;
+  size_t get_padless_dim(Mat::E M, bool isCoal) const;
 
-  unsigned get_coal(Mat::E M) const;
+  size_t get_coal(Mat::E M) const;
 
-  unsigned get_uncoal(Mat::E M) const;
+  size_t get_uncoal(Mat::E M) const;
 
-  unsigned get_non_k_dim(Mat::E M) const;
+  size_t get_non_k_dim(Mat::E M) const;
 
   bool coal_is_pll_k(Mat::E M) const;
 

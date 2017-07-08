@@ -21,7 +21,7 @@ void ByLineGenerator::setup()
 
   setup_additional();
 
-  if (static_cast<unsigned>(emat_x) >= static_cast<unsigned>(Mat::E::N))
+  if (static_cast<size_t>(emat_x) >= static_cast<size_t>(Mat::E::N))
   {
     std::stringstream ss;
     ss << "in ByLineGenerator::setup, invalid emat_x : " << emat_x;
@@ -108,12 +108,12 @@ void ByLineGenerator::append_setup_coordinates(std::stringstream& ss)
     
     
 /* setting up where this thread works */
-unsigned group_id = get_group_id(0);
-unsigned local_id = get_local_id(0);
-unsigned global_id = group_id*N_WORK_ITEMS_PER_GROUP + local_id; 
+size_t group_id = get_group_id(0);
+size_t local_id = get_local_id(0);
+size_t global_id = group_id*N_WORK_ITEMS_PER_GROUP + local_id; 
 
-unsigned start_uncoal = 0;
-unsigned start_coal = 0;
+size_t start_uncoal = 0;
+size_t start_coal = 0;
 
 bool is_in_full_zone = (global_id < N_FULL_WORK_ITEMS);
 )";
@@ -159,13 +159,13 @@ void ByLineGenerator::append_work_string(std::stringstream& ss)
     R"(
 if (is_in_full_zone){
 #pragma unroll WORK_PER_THREAD
-for (unsigned i = 0; i < WORK_PER_THREAD; ++i){  )";
+for (size_t i = 0; i < WORK_PER_THREAD; ++i){  )";
   append_inner_work(ss);
   ss << "\n}\n}\n";
 
   ss << R"(
 else if (global_id < N_WORK_ITEMS){
-for (unsigned i = 0; i < WORK_FOR_LAST_ITEM_IN_COAL; ++i){  )";
+for (size_t i = 0; i < WORK_FOR_LAST_ITEM_IN_COAL; ++i){  )";
   append_inner_work(ss);
   ss << "\n}\n}\n";
 }

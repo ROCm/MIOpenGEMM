@@ -4,6 +4,7 @@
 #include <cmath>
 #include <stdlib.h>
 #include <string>
+#include <limits>
 #include <miopengemm/error.hpp>
 #include <miopengemm/geometry.hpp>
 #include <miopengemm/sizingup.hpp>
@@ -13,15 +14,15 @@ namespace MIOpenGEMM
 namespace sizingup
 {
 
-size_t get_n_elements_padded(unsigned h,
-                             unsigned w,
-                             unsigned ldx,
+size_t get_n_elements_padded(size_t h,
+                             size_t w,
+                             size_t ldx,
                              bool     isColMajor,
                              bool     tX,
-                             unsigned offset,
-                             unsigned tail_off)
+                             size_t offset,
+                             size_t tail_off)
 {
-  size_t nelements = ((unsigned(isColMajor) + unsigned(tX)) % 2 == 1)
+  size_t nelements = ((size_t(isColMajor) + size_t(tX)) % 2 == 1)
                        ? static_cast<size_t>(ldx) * static_cast<size_t>(w)
                        : static_cast<size_t>(ldx) * static_cast<size_t>(h);
   nelements += offset;
@@ -29,10 +30,10 @@ size_t get_n_elements_padded(unsigned h,
   return nelements;
 }
 
-void check_sizes_ok_for_unsigned(const Geometry& gg, const Offsets& toff)
+void check_sizes_ok_for_size_t(const Geometry& gg, const Offsets& toff)
 {
 
-  check_sizes_ok_for_unsigned(gg.isColMajor,
+  check_sizes_ok_for_size_t(gg.isColMajor,
                               gg.tX[Mat::E::A],
                               gg.tX[Mat::E::B],
                               gg.tX[Mat::E::C],
@@ -52,29 +53,29 @@ void check_sizes_ok_for_unsigned(const Geometry& gg, const Offsets& toff)
                               toff.tail_off_c);
 }
 
-void check_sizes_ok_for_unsigned(bool     isColMajor,
+void check_sizes_ok_for_size_t(bool     isColMajor,
                                  bool     tA,
                                  bool     tB,
                                  bool     tC,
-                                 unsigned m,
-                                 unsigned n,
-                                 unsigned k,
-                                 unsigned lda,
-                                 unsigned ldb,
-                                 unsigned ldc,
-                                 unsigned workspace_size,
-                                 unsigned a_offset,
-                                 unsigned b_offset,
-                                 unsigned c_offset,
-                                 unsigned workspace_offset,
-                                 unsigned tail_off_a,
-                                 unsigned tail_off_b,
-                                 unsigned tail_off_c)
+                                 size_t m,
+                                 size_t n,
+                                 size_t k,
+                                 size_t lda,
+                                 size_t ldb,
+                                 size_t ldc,
+                                 size_t workspace_size,
+                                 size_t a_offset,
+                                 size_t b_offset,
+                                 size_t c_offset,
+                                 size_t workspace_offset,
+                                 size_t tail_off_a,
+                                 size_t tail_off_b,
+                                 size_t tail_off_c)
 {
 
-  size_t max_size = std::pow(2, 8 * sizeof(unsigned)) - 1;
+  size_t max_size = std::numeric_limits<size_t>::max() / 10; 
 
-  std::string base_frag("is too large : unsigned will wrap in address space. "
+  std::string base_frag("is too large : `size_t' will wrap in address space (old warning from unsigned time "
                         "Code needs modification. \n");
   std::string errm = "";
 
@@ -105,7 +106,7 @@ void check_sizes_ok_for_unsigned(bool     isColMajor,
 
   if (errm.compare("") != 0)
   {
-    errm += "\nthis error is can be fixed, just need to change some unsigneds "
+    errm += "\nthis error is can be fixed, just need to change some size_ts "
             "to size_ts. please "
             "report this bug";
     throw miog_error(errm);

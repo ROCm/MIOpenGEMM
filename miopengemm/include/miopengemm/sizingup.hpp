@@ -15,37 +15,37 @@ namespace sizingup
 // Includes padding (when ldx > min possible ldx)
 // matrix is h x w
 
-size_t get_n_elements_padded(unsigned h,
-                             unsigned w,
-                             unsigned ldx,
+size_t get_n_elements_padded(size_t h,
+                             size_t w,
+                             size_t ldx,
                              bool     isColMajor,
                              bool     tX,
-                             unsigned offset,
-                             unsigned tail_off);
+                             size_t offset,
+                             size_t tail_off);
 
-// check that the strides from first to last addresses are within limits of unsigned.
+// check that the strides from first to last addresses are within limits of size_t.
 // This is temporary, eventually the code accomodate sufficiently large matrices by casting to
 // size_t  or uint64 when nec
-void check_sizes_ok_for_unsigned(bool     isColMajor,
+void check_sizes_ok_for_size_t(bool     isColMajor,
                                  bool     tA,
                                  bool     tB,
                                  bool     tC,
-                                 unsigned m,
-                                 unsigned n,
-                                 unsigned k,
-                                 unsigned lda,
-                                 unsigned ldb,
-                                 unsigned ldc,
-                                 unsigned workspace_size,
-                                 unsigned a_offset,
-                                 unsigned b_offset,
-                                 unsigned c_offset,
-                                 unsigned workspace_offset,
-                                 unsigned tail_off_a,
-                                 unsigned tail_off_b,
-                                 unsigned tail_off_c);
+                                 size_t m,
+                                 size_t n,
+                                 size_t k,
+                                 size_t lda,
+                                 size_t ldb,
+                                 size_t ldc,
+                                 size_t workspace_size,
+                                 size_t a_offset,
+                                 size_t b_offset,
+                                 size_t c_offset,
+                                 size_t workspace_offset,
+                                 size_t tail_off_a,
+                                 size_t tail_off_b,
+                                 size_t tail_off_c);
 
-void check_sizes_ok_for_unsigned(const Geometry& gg, const Offsets& toff);
+void check_sizes_ok_for_size_t(const Geometry& gg, const Offsets& toff);
 
 }
 }

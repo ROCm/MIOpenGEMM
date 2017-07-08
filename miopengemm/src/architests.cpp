@@ -48,7 +48,7 @@ std::tuple<bool, std::string> architecture_specific_tests(cl_command_queue comma
     "getting CL_DEVICE_LOCAL_MEM_SIZE in artcitecture specfic stests",
     true);
 
-  unsigned LDS_required =
+  size_t LDS_required =
     gg.derived.float_size_bytes * ((dp.at(Mat::E::A).main_n_elements_in_padded_unroll +
                                     dp.at(Mat::E::B).main_n_elements_in_padded_unroll));
 

@@ -25,7 +25,7 @@ int run_find_experiments(const std::vector<Geometry>& geometries,
   std::string cache_write_string("");
 
   Offsets  offsets(13, 24, 35, 46, 57, 67, 79);
-  unsigned n_postfind_runs = 0;
+  size_t n_postfind_runs = 0;
   bool     do_cpu_test     = false;
 
   // We're tracking the overall run time with these
@@ -67,7 +67,7 @@ int run_find_experiments(const std::vector<Geometry>& geometries,
     mowri_outer << "\nEntering experiment with constraints_string = `" << constraints << "'"
                 << Endl;
 
-    for (unsigned prob_i = 0; prob_i < geometries.size(); ++prob_i)
+    for (size_t prob_i = 0; prob_i < geometries.size(); ++prob_i)
     {
       Geometry          gg = geometries[prob_i];
       std::stringstream ss_logfile;
@@ -129,10 +129,10 @@ int run_find_experiments(const std::vector<Geometry>& geometries,
   return 0;
 }
 
-std::vector<Geometry> get_deepbench_geometries(unsigned workspace_size)
+std::vector<Geometry> get_deepbench_geometries(size_t workspace_size)
 {
 
-  std::vector<std::tuple<unsigned, unsigned, unsigned, bool, bool>> baiduproblems = {
+  std::vector<std::tuple<size_t, size_t, size_t, bool, bool>> baiduproblems = {
     std::make_tuple(5124, 9124, 1760, false, false),
     std::make_tuple(35, 8457, 1760, false, false),
     std::make_tuple(5124, 9124, 2048, false, false),
@@ -216,12 +216,12 @@ std::vector<Geometry> get_deepbench_geometries(unsigned workspace_size)
   return get_from_m_n_k_tA_tB(baiduproblems, workspace_size);
 }
 
-std::vector<Geometry> get_small_deepbench_geometries(unsigned small_threshold,
-                                                     unsigned workspace_size)
+std::vector<Geometry> get_small_deepbench_geometries(size_t small_threshold,
+                                                     size_t workspace_size)
 {
   auto                  all_geoms = get_deepbench_geometries(workspace_size);
   std::vector<Geometry> small_geoms;
-  unsigned              count_small = 0;
+  size_t              count_small = 0;
   for (auto& gg : all_geoms)
   {
     if (gg.m * gg.n * gg.k < small_threshold)
@@ -233,8 +233,8 @@ std::vector<Geometry> get_small_deepbench_geometries(unsigned small_threshold,
   return small_geoms;
 }
 
-std::vector<Geometry> get_large_deepbench_geometries(unsigned large_threshold,
-                                                     unsigned workspace_size)
+std::vector<Geometry> get_large_deepbench_geometries(size_t large_threshold,
+                                                     size_t workspace_size)
 {
   auto                  all_geoms = get_deepbench_geometries(workspace_size);
   std::vector<Geometry> large_geoms;
@@ -262,11 +262,11 @@ std::vector<Geometry> get_problem_geometries()
   return large_geoms;
 }
 
-std::vector<Geometry> get_backconvwrw_geometries(unsigned workspace_size)
+std::vector<Geometry> get_backconvwrw_geometries(size_t workspace_size)
 {
 
   // m ,  n ,  k , lda ,ldb ,ldc , tA , tB
-  std::vector<std::tuple<unsigned, unsigned, unsigned, unsigned, unsigned, unsigned, bool, bool>>
+  std::vector<std::tuple<size_t, size_t, size_t, size_t, size_t, size_t, bool, bool>>
     backcwrwr_problems = {
 
       //  m , n , k , lda , ldb , ldc , tA , tB
@@ -300,10 +300,10 @@ std::vector<Geometry> get_backconvwrw_geometries(unsigned workspace_size)
   return get_from_m_n_k_ldaABC_tA_tB(backcwrwr_problems, workspace_size);
 }
 
-std::vector<Geometry> get_small_growing_geometries(unsigned workspace_size)
+std::vector<Geometry> get_small_growing_geometries(size_t workspace_size)
 {
 
-  std::vector<std::tuple<unsigned, unsigned, unsigned, bool, bool>> scalingproblems = {
+  std::vector<std::tuple<size_t, size_t, size_t, bool, bool>> scalingproblems = {
     std::make_tuple(250, 250, 50, false, false),
     std::make_tuple(250, 250, 100, false, false),
     std::make_tuple(250, 250, 200, false, false),
@@ -321,12 +321,12 @@ std::vector<Geometry> get_small_growing_geometries(unsigned workspace_size)
   return get_from_m_n_k_tA_tB(scalingproblems, workspace_size);
 }
 
-std::vector<Geometry> get_square_geometries(unsigned workspace_size)
+std::vector<Geometry> get_square_geometries(size_t workspace_size)
 {
 
-  std::vector<std::tuple<unsigned, unsigned, unsigned, bool, bool>> squareproblems;
+  std::vector<std::tuple<size_t, size_t, size_t, bool, bool>> squareproblems;
 
-  for (unsigned dim = 100; dim < 6400; dim += 100)
+  for (size_t dim = 100; dim < 6400; dim += 100)
   {
     squareproblems.push_back(std::make_tuple(dim, dim, dim, false, false));
     squareproblems.push_back(std::make_tuple(dim, dim, dim, false, true));

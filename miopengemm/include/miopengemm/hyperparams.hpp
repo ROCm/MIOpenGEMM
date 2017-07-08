@@ -21,7 +21,7 @@ namespace MIOpenGEMM
 namespace nsMAC
 {
 
-std::tuple<bool, std::string, std::array<unsigned, 2>> get_mac_grid(unsigned mac, unsigned skew);
+std::tuple<bool, std::string, std::array<size_t, 2>> get_mac_grid(size_t mac, size_t skew);
 }
 
 
@@ -29,7 +29,7 @@ std::tuple<bool, std::string, std::array<unsigned, 2>> get_mac_grid(unsigned mac
 namespace hyperparams
 {
 
-std::vector<unsigned>
+std::vector<size_t>
 get_constraints(std::string subg_cs, bool subg_csfull, const EnumMapper<std::string> * p_kv, char subg_hash);
 
 
@@ -37,7 +37,7 @@ class SubG
 {
 
   public:
-  SubG(unsigned                            nHPs,
+  SubG(size_t                            nHPs,
        const Geometry&                     gg,
        std::string                         cs,
        bool                                csfull,
@@ -47,29 +47,29 @@ class SubG
 
   void apply_constraints();
 
-  unsigned        nHPs;
+  size_t        nHPs;
   const Geometry* ptr_gg;
 
   const EnumMapper<std::string>* ptr_keys_vals;
 
   // all the possible edges from all the possible hyper parameter
   // example : edges[Chi::E::MIC] is a map; edges[Chi::E::MIC][1] --> {2,3,4}
-  std::vector<std::map<unsigned, std::vector<unsigned>>> edges;
+  std::vector<std::map<size_t, std::vector<size_t>>> edges;
 
   // all the possible values of a hyper parameter
   // example : range[Chi::E::MIC] --> {1,2,3,4,5,6,7,8}
-  std::vector<std::vector<unsigned>> range;
+  std::vector<std::vector<size_t>> range;
 
   // a subset of range, the possible values returned on a request for a random value
   // example : start_range[Chi::E::MIC] --> {2,8}. It can depend on geometry (from initialisation)
-  std::vector<std::vector<unsigned>> start_range;
+  std::vector<std::vector<size_t>> start_range;
 
   std::string subg_cs;
   bool        subg_csfull;
 
   const openclutil::OpenCLDeviceInfo* ptr_devinfo;
 
-  std::vector<unsigned> constraints;
+  std::vector<size_t> constraints;
 
   void         initialise();
   void         set_constraints();
@@ -82,12 +82,12 @@ class SubG
   virtual void manual_override_start_range() = 0;
   virtual char get_char()                    = 0;
 
-  std::string get_string(unsigned hpi);
-  std::string get_edges_string(unsigned hpi);
-  std::string get_range_string(unsigned hpi);
-  std::string get_start_range_string(unsigned hpi);
+  std::string get_string(size_t hpi);
+  std::string get_edges_string(size_t hpi);
+  std::string get_range_string(size_t hpi);
+  std::string get_start_range_string(size_t hpi);
 
-  void force_start_node(std::vector<unsigned>);
+  void force_start_node(std::vector<size_t>);
 };
 
 class CSubG : public SubG
@@ -115,7 +115,7 @@ class ChiralSubG : public SubG
   virtual void initialise_maps() override final;
   virtual void set_preconstraint_edges() override final;
   virtual void manual_override_start_range() override final;
-  void set_chirality_specific_start_range_base(unsigned non_unroll_dimension);
+  void set_chirality_specific_start_range_base(size_t non_unroll_dimension);
   virtual void set_chirality_specific_start_range() = 0;
 };
 
@@ -168,7 +168,7 @@ class Graph
 
   void force_start_node(std::string);
 
-  std::vector<std::pair<std::pair<unsigned, unsigned>, std::pair<unsigned, unsigned>>>
+  std::vector<std::pair<std::pair<size_t, size_t>, std::pair<size_t, size_t>>>
     coupled_parameters;
 
   Graph(const Geometry&                     gg,
@@ -181,8 +181,8 @@ class XHPs
 {
 
   public:
-  std::vector<unsigned> vs;
-  XHPs(unsigned nHPs) { vs = std::vector<unsigned>(nHPs, Status::E::UNDEFINED); }
+  std::vector<size_t> vs;
+  XHPs(size_t nHPs) { vs = std::vector<size_t>(nHPs, Status::E::UNDEFINED); }
 };
 
 class HyperParams
@@ -194,9 +194,9 @@ class HyperParams
 
   public:
   void replace_undefined_randomly();
-  void replace(const std::vector<std::vector<unsigned>>& partial_params);
-  void replace_where_source_defined(const std::vector<std::vector<unsigned>>& params);
-  bool in_graph(unsigned mi, unsigned hpi, unsigned value);
+  void replace(const std::vector<std::vector<size_t>>& partial_params);
+  void replace_where_source_defined(const std::vector<std::vector<size_t>>& params);
+  bool in_graph(size_t mi, size_t hpi, size_t value);
   std::tuple<bool, std::string> in_graph();
 
   const XHPs& at(Mat::E subgtype) const { return v_xhps[subgtype]; }
@@ -213,7 +213,7 @@ class HyperParams
   void        checks() const;
 };
 
-std::vector<std::vector<unsigned>> get_all_constraints(std::string constraints_string);
+std::vector<std::vector<size_t>> get_all_constraints(std::string constraints_string);
 }
 }
 

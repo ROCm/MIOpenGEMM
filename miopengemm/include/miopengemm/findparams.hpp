@@ -18,12 +18,12 @@ class FindParams
 {
   public:
   float       allotted_time;
-  unsigned    allotted_descents;
-  unsigned    n_runs_per_kernel;
+  size_t    allotted_descents;
+  size_t    n_runs_per_kernel;
   SummStat::E sumstat;
   FindParams(float       allotted_time,
-             unsigned    allotted_descents,
-             unsigned    n_runs_per_kernel,
+             size_t    allotted_descents,
+             size_t    n_runs_per_kernel,
              SummStat::E sumstat);
   FindParams() = default;
   std::string get_string() const;

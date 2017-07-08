@@ -24,26 +24,26 @@ namespace MIOpenGEMM
 // at skew = skew0, (64, 256) are a:b = 1:1 and (32, 128) have a:b = 2:1
 // at skew = skew0 + 1, (64, 256) are a:b = 1:4 and (32, 128) have a:b = 1:2
 // at skew0 = skew + 1, (64, 256) are a:b = 4:1 and (32, 128) have a:b = 8:1
-const unsigned skew0 = 10;
+const size_t skew0 = 10;
 
 namespace nsMAC
 {
 
-std::tuple<bool, std::string, std::array<unsigned, 2>> get_mac_grid(unsigned mac, unsigned skew)
+std::tuple<bool, std::string, std::array<size_t, 2>> get_mac_grid(size_t mac, size_t skew)
 {
 
   double   dbl_lg2_mac = std::log2(static_cast<double>(mac));
-  unsigned lg2_mac     = static_cast<unsigned>(dbl_lg2_mac);
+  size_t lg2_mac     = static_cast<size_t>(dbl_lg2_mac);
 
   double na = std::exp2(lg2_mac / 2 + lg2_mac % 2);
   double nb = static_cast<double>(mac) / na;
-  for (unsigned i = skew0; i < skew; ++i)
+  for (size_t i = skew0; i < skew; ++i)
   {
     na /= 2.;
     nb *= 2.;
   }
 
-  for (unsigned i = skew; i < skew0; ++i)
+  for (size_t i = skew; i < skew0; ++i)
   {
     na *= 2.;
     nb /= 2.;
@@ -52,9 +52,9 @@ std::tuple<bool, std::string, std::array<unsigned, 2>> get_mac_grid(unsigned mac
   std::stringstream errm_ss;
 
   errm_ss << "problem getting mac sizes: ";
-  std::array<unsigned, 2> null_array = {0, 0};
-  unsigned u_na = static_cast<unsigned>(na);
-  unsigned u_nb = static_cast<unsigned>(nb);
+  std::array<size_t, 2> null_array = {0, 0};
+  size_t u_na = static_cast<size_t>(na);
+  size_t u_nb = static_cast<size_t>(nb);
   if (std::abs(na * nb - static_cast<double>(u_na * u_nb)) > 1e-7)
   {
     errm_ss << "  casting non-ints. ";
@@ -77,7 +77,7 @@ std::tuple<bool, std::string, std::array<unsigned, 2>> get_mac_grid(unsigned mac
     return std::make_tuple(false, errm_ss.str(), null_array);
   }
 
-  std::array<unsigned, 2> mac_grid;
+  std::array<size_t, 2> mac_grid;
 
   if (Mat::E::A >= 2 || Mat::E::B >= 2)
   {
@@ -98,10 +98,10 @@ namespace hyperparams
 RandomUtil radu;
 
 template <typename T>
-std::map<T, unsigned> get_vals(unsigned nVals, const std::vector<T>& keys, const std::string& hash)
+std::map<T, size_t> get_vals(size_t nVals, const std::vector<T>& keys, const std::string& hash)
 {
-  std::map<T, unsigned> vals;
-  for (unsigned val = 0; val < nVals; ++val)
+  std::map<T, size_t> vals;
+  for (size_t val = 0; val < nVals; ++val)
   {
     if (keys[val] == T())
     {
@@ -183,11 +183,11 @@ void Graph::force_start_node(std::string constraints_string)
   csubg.force_start_node(c_vals);
 }
 
-std::vector<std::vector<unsigned>> get_all_constraints(std::string constraints_string)
+std::vector<std::vector<size_t>> get_all_constraints(std::string constraints_string)
 {
 
   std::vector<std::string>           sub_constraints = get_sub_constraints(constraints_string);
-  std::vector<std::vector<unsigned>> all_constraints(Mat::E::N);
+  std::vector<std::vector<size_t>> all_constraints(Mat::E::N);
 
   all_constraints[Mat::E::A] =
     get_constraints(sub_constraints[Mat::E::A], false, &Chi::M, 'A');
@@ -199,11 +199,11 @@ std::vector<std::vector<unsigned>> get_all_constraints(std::string constraints_s
   return all_constraints;
 }
 
-std::vector<unsigned>
+std::vector<size_t>
 get_constraints(std::string subg_cs, bool subg_csfull, const EnumMapper<std::string> * p_kv, char subg_hash)
 {
 
-  std::vector<unsigned> constraints(p_kv->n, Status::E::UNDEFINED);
+  std::vector<size_t> constraints(p_kv->n, Status::E::UNDEFINED);
 
   std::vector<std::string> keyvalfrags;
   if (subg_cs.compare(""))
@@ -214,7 +214,7 @@ get_constraints(std::string subg_cs, bool subg_csfull, const EnumMapper<std::str
   // MIC, etc
   std::string key;
   // 6, etc
-  unsigned val;
+  size_t val;
   for (auto& x : keyvalfrags)
   {
     std::tie(key, val) = stringutil::splitnumeric(x);
@@ -228,7 +228,7 @@ get_constraints(std::string subg_cs, bool subg_csfull, const EnumMapper<std::str
       throw miog_error(ss.str());
     }
 
-    unsigned keyindex = p_kv->val.at(key);
+    size_t keyindex = p_kv->val.at(key);
     if (keyindex < constraints.size())
     {
       constraints[keyindex] = val;
@@ -245,7 +245,7 @@ get_constraints(std::string subg_cs, bool subg_csfull, const EnumMapper<std::str
   // are supposed to be comprehensive
   if (subg_csfull == true)
   {
-    for (unsigned hpi = 0; hpi < p_kv->n; ++hpi)
+    for (size_t hpi = 0; hpi < p_kv->n; ++hpi)
     {
       if (constraints[hpi] == Status::E::UNDEFINED)
       {
@@ -267,12 +267,12 @@ void SubG::set_constraints()
   constraints = get_constraints(subg_cs, subg_csfull, ptr_keys_vals, get_char());
 }
 
-const std::map<unsigned, std::vector<unsigned>> graph_binary = {{0, {1}}, {1, {0}}};
+const std::map<size_t, std::vector<size_t>> graph_binary = {{0, {1}}, {1, {0}}};
 
 void SubG::initialise_range_from_preconstraint_edges()
 {
   range.resize(edges.size());
-  for (unsigned hpi = 0; hpi < edges.size(); ++hpi)
+  for (size_t hpi = 0; hpi < edges.size(); ++hpi)
   {
     for (auto& x : edges[hpi])
     {
@@ -284,7 +284,7 @@ void SubG::initialise_range_from_preconstraint_edges()
 void SubG::initialise_start_range_from_range()
 {
   start_range.resize(range.size());
-  for (unsigned hpi = 0; hpi < range.size(); ++hpi)
+  for (size_t hpi = 0; hpi < range.size(); ++hpi)
   {
     for (auto& x : range[hpi])
     {
@@ -293,7 +293,7 @@ void SubG::initialise_start_range_from_range()
   }
 }
 
-void SubG::force_start_node(std::vector<unsigned> start_node)
+void SubG::force_start_node(std::vector<size_t> start_node)
 {
 
   if (start_node.size() != range.size())
@@ -305,13 +305,13 @@ void SubG::force_start_node(std::vector<unsigned> start_node)
     throw miog_error(ss.str());
   }
 
-  for (unsigned hpi = 0; hpi < range.size(); ++hpi)
+  for (size_t hpi = 0; hpi < range.size(); ++hpi)
   {
     start_range[hpi] = {start_node.at(hpi)};
   }
 }
 
-SubG::SubG(unsigned                            nHPs_,
+SubG::SubG(size_t                            nHPs_,
            const Geometry&                     gg,
            std::string                         cs,
            bool                                csfull,
@@ -342,7 +342,7 @@ void SubG::initialise()
   confirm_start_is_subset();
 }
 
-std::string SubG::get_edges_string(unsigned hpi)
+std::string SubG::get_edges_string(size_t hpi)
 {
   std::stringstream ss;
   ss << "Edges : \n";
@@ -359,7 +359,7 @@ std::string SubG::get_edges_string(unsigned hpi)
 }
 
 std::string get_generic_range_string(std::string                  opener,
-                                     const std::vector<unsigned>& generic_range_hpi)
+                                     const std::vector<size_t>& generic_range_hpi)
 {
   std::stringstream ss;
   ss << opener << " : \n";
@@ -371,17 +371,17 @@ std::string get_generic_range_string(std::string                  opener,
   return ss.str();
 }
 
-std::string SubG::get_range_string(unsigned hpi)
+std::string SubG::get_range_string(size_t hpi)
 {
   return get_generic_range_string("Range", range[hpi]);
 }
 
-std::string SubG::get_start_range_string(unsigned hpi)
+std::string SubG::get_start_range_string(size_t hpi)
 {
   return get_generic_range_string("Start Range", start_range[hpi]);
 }
 
-std::string SubG::get_string(unsigned hpi)
+std::string SubG::get_string(size_t hpi)
 {
   std::stringstream ss;
   ss << get_edges_string(hpi);
@@ -400,7 +400,7 @@ std::string SubG::get_string(unsigned hpi)
 void SubG::confirm_start_is_subset()
 {
 
-  for (unsigned hpi = 0; hpi < nHPs; ++hpi)
+  for (size_t hpi = 0; hpi < nHPs; ++hpi)
   {
     if (start_range[hpi].size() == 0)
     {
@@ -440,9 +440,9 @@ ChiralSubG::ChiralSubG(const Geometry&                     gg,
 {
 }
 
-void ChiralSubG::set_chirality_specific_start_range_base(unsigned non_unroll_dimension)
+void ChiralSubG::set_chirality_specific_start_range_base(size_t non_unroll_dimension)
 {
-  std::vector<unsigned> basemic = {8, 6};
+  std::vector<size_t> basemic = {8, 6};
   if (non_unroll_dimension < 256)
   {
     basemic.push_back(5);
@@ -493,7 +493,7 @@ void ChiralSubG::manual_override_start_range()
 
 void SubG::apply_constraints()
 {
-  for (unsigned hpi = 0; hpi < nHPs; ++hpi)
+  for (size_t hpi = 0; hpi < nHPs; ++hpi)
   {
     if (constraints.at(hpi) != Status::E::UNDEFINED)
     {
@@ -653,7 +653,7 @@ void CSubG::set_preconstraint_edges()
 
 void HyperParams::checks() const
 {
-  for (unsigned gi = 0; gi < Mat::E::N; ++gi)
+  for (size_t gi = 0; gi < Mat::E::N; ++gi)
   {
     if (gi > v_xhps.size())
     {
@@ -662,7 +662,7 @@ void HyperParams::checks() const
 
     const XHPs& x     = v_xhps[gi];
     SubG&       sub_g = *(p_graph->p_subgs[gi]);
-    for (unsigned hpi = 0; hpi < sub_g.nHPs; ++hpi)
+    for (size_t hpi = 0; hpi < sub_g.nHPs; ++hpi)
     {
       if (hpi >= sub_g.range.size())
       {
@@ -688,11 +688,11 @@ void HyperParams::checks() const
   }
 }
 
-void HyperParams::replace(const std::vector<std::vector<unsigned>>& params)
+void HyperParams::replace(const std::vector<std::vector<size_t>>& params)
 {
-  for (unsigned mi = 0; mi < Mat::E::N; ++mi)
+  for (size_t mi = 0; mi < Mat::E::N; ++mi)
   {
-    for (unsigned hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi)
+    for (size_t hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi)
     {
       v_xhps[mi].vs[hpi] = params.at(mi).at(hpi);
     }
@@ -701,11 +701,11 @@ void HyperParams::replace(const std::vector<std::vector<unsigned>>& params)
 
 // go through the params, and where it is not nHP::UNDEFINED,
 // use its value to replace this
-void HyperParams::replace_where_source_defined(const std::vector<std::vector<unsigned>>& params)
+void HyperParams::replace_where_source_defined(const std::vector<std::vector<size_t>>& params)
 {
-  for (unsigned mi = 0; mi < Mat::E::N; ++mi)
+  for (size_t mi = 0; mi < Mat::E::N; ++mi)
   {
-    for (unsigned hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi)
+    for (size_t hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi)
     {
       if (params[mi][hpi] != Status::E::UNDEFINED)
       {
@@ -717,14 +717,14 @@ void HyperParams::replace_where_source_defined(const std::vector<std::vector<uns
 
 void HyperParams::replace_undefined_randomly()
 {
-  for (unsigned mi = 0; mi < Mat::E::N; ++mi)
+  for (size_t mi = 0; mi < Mat::E::N; ++mi)
   {
-    for (unsigned hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi)
+    for (size_t hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi)
     {
       if (v_xhps[mi].vs[hpi] == Status::E::UNDEFINED)
       {
         auto&    a_range   = p_graph->p_subgs[mi]->start_range[hpi];
-        unsigned index     = radu.get_from_range(a_range.size());
+        size_t index     = radu.get_from_range(a_range.size());
         v_xhps[mi].vs[hpi] = a_range[index];
       }
     }
@@ -733,13 +733,13 @@ void HyperParams::replace_undefined_randomly()
 
 HyperParams::HyperParams(const Graph& graph) : p_graph(&graph)
 {
-  for (unsigned mi = 0; mi < Mat::E::N; ++mi)
+  for (size_t mi = 0; mi < Mat::E::N; ++mi)
   {
     v_xhps.emplace_back(XHPs(p_graph->p_subgs[mi]->nHPs));
-    for (unsigned hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi)
+    for (size_t hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi)
     {
       auto&    a_range   = p_graph->p_subgs[mi]->start_range[hpi];
-      unsigned index     = radu.get_from_range(a_range.size());
+      size_t index     = radu.get_from_range(a_range.size());
       v_xhps[mi].vs[hpi] = a_range[index];
     }
   }
@@ -750,10 +750,10 @@ bool HyperParams::operator==(const HyperParams& hpr) { return get_string() == hp
 
 std::string HyperParams::get_part_string(char X) const
 {
-  unsigned          mi = Mat::M.val.at(X);
+  size_t          mi = Mat::M.val.at(X);
   std::stringstream ss;
   ss << X;
-  for (unsigned hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi)
+  for (size_t hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi)
   {
     ss << "_" << p_graph->p_subgs[mi]->ptr_keys_vals->name[hpi] << v_xhps[mi].vs[hpi];
   }
@@ -773,11 +773,11 @@ std::vector<HyperParams> HyperParams::get_one_aways()
   std::vector<HyperParams> one_aways;
 
   // by changing just one hyper-parameter
-  for (unsigned mi = 0; mi < Mat::E::N; ++mi)
+  for (size_t mi = 0; mi < Mat::E::N; ++mi)
   {
-    for (unsigned hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi)
+    for (size_t hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi)
     {
-      unsigned value = v_xhps[mi].vs[hpi];
+      size_t value = v_xhps[mi].vs[hpi];
       for (auto& newval : p_graph->p_subgs[mi]->edges[hpi].at(value))
       {
         HyperParams hp(*this);
@@ -790,7 +790,7 @@ std::vector<HyperParams> HyperParams::get_one_aways()
   // by changing MAC and one or both MICs,
   // so as to semi-preserve the overall
   // shape of the macro tile
-  unsigned curr_mac = v_xhps[Mat::E::C].vs[NonChi::E::MAC];
+  size_t curr_mac = v_xhps[Mat::E::C].vs[NonChi::E::MAC];
   for (auto& newmac : p_graph->p_subgs[Mat::E::C]->edges[NonChi::E::MAC].at(curr_mac))
   {
 
@@ -813,12 +813,12 @@ std::vector<HyperParams> HyperParams::get_one_aways()
     // mica scaled so that the macro tile
     // remains ~ the same in the a dimension
 
-    unsigned curr_mica = v_xhps[Mat::E::A].vs[Chi::E::MIC];
-    unsigned new_mica  = static_cast<unsigned>(static_cast<double>(curr_mica) / delta_na);
+    size_t curr_mica = v_xhps[Mat::E::A].vs[Chi::E::MIC];
+    size_t new_mica  = static_cast<size_t>(static_cast<double>(curr_mica) / delta_na);
 
     // micb scaled so that the macro tile remains the same in the b dimension
-    unsigned curr_micb = v_xhps[Mat::E::B].vs[Chi::E::MIC];
-    unsigned new_micb  = static_cast<unsigned>(static_cast<double>(curr_micb) / delta_nb);
+    size_t curr_micb = v_xhps[Mat::E::B].vs[Chi::E::MIC];
+    size_t new_micb  = static_cast<size_t>(static_cast<double>(curr_micb) / delta_nb);
 
     // if the new micro tile (a) is different and valid, add it
     if (new_mica != curr_mica && in_graph(Mat::E::A, Chi::E::MIC, new_mica))
@@ -845,7 +845,7 @@ std::vector<HyperParams> HyperParams::get_one_aways()
     }
   }
 
-  unsigned n_uncoupled = one_aways.size();
+  size_t n_uncoupled = one_aways.size();
 
   // by changing two hyper-parameters
   for (auto& couple_p : p_graph->coupled_parameters)
@@ -878,7 +878,7 @@ std::vector<HyperParams> HyperParams::get_one_aways()
     }
   }
 
-  unsigned n_total = one_aways.size();
+  size_t n_total = one_aways.size();
 
   // shuffle the true one aways
   radu.shuffle(0, n_uncoupled, one_aways);
@@ -891,7 +891,7 @@ std::vector<HyperParams> HyperParams::get_one_aways()
   return one_aways;
 }
 
-bool HyperParams::in_graph(unsigned mi, unsigned hpi, unsigned value)
+bool HyperParams::in_graph(size_t mi, size_t hpi, size_t value)
 {
   return std::count(p_graph->p_subgs[mi]->range[hpi].begin(),
                     p_graph->p_subgs[mi]->range[hpi].end(),
@@ -903,9 +903,9 @@ std::tuple<bool, std::string> HyperParams::in_graph()
   std::string in_graph_string("in graph");
   // filtering out if violates the constraint string
   bool constraints_satisfied = true;
-  for (unsigned mi = 0; mi < Mat::E::N; ++mi)
+  for (size_t mi = 0; mi < Mat::E::N; ++mi)
   {
-    for (unsigned hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi)
+    for (size_t hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi)
     {
       if (in_graph(mi, hpi, v_xhps[mi].vs[hpi]) == false)
       {

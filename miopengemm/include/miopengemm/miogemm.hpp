@@ -132,7 +132,7 @@ std::tuple<bool, std::string> check_for_default(cl_command_queue command_queue,
  */
 void benchgemm(cl_command_queue             command_queue,
                const std::string&           hyperstring,
-               unsigned                     n_runs,
+               size_t                     n_runs,
                const Geometry&              gg,
                const Offsets&               toff,
                cl_mem                       a,

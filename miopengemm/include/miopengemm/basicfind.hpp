@@ -15,7 +15,7 @@ Solution basicfind(const Geometry&   geometry,
                    bool              verbose,
                    std::string       logfile,
                    std::string       constraints_string,
-                   unsigned          n_postfind_runs,
+                   size_t          n_postfind_runs,
                    bool              do_cpu_test,
                    bool              use_mowri_tracker);
 }

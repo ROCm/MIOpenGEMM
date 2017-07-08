@@ -14,7 +14,7 @@ std::vector<std::string> get_sumstatkey()
   ssv[SummStat::E::MEAN]   = "Mean";
   ssv[SummStat::E::MEDIAN] = "Median";
   ssv[SummStat::E::MAX]    = "Max";
-  for (unsigned i = 0; i < SummStat::E::N; ++i)
+  for (size_t i = 0; i < SummStat::E::N; ++i)
   {
     if (ssv[i] == "unset")
     {
@@ -38,8 +38,8 @@ std::string get_sumstatkey(SummStat::E sumstat)
 }
 
 FindParams::FindParams(float       allotted_time_,
-                       unsigned    allotted_descents_,
-                       unsigned    n_runs_per_kernel_,
+                       size_t    allotted_descents_,
+                       size_t    n_runs_per_kernel_,
                        SummStat::E sumstat_)
   : allotted_time(allotted_time_),
     allotted_descents(allotted_descents_),

@@ -11,20 +11,20 @@ namespace MIOpenGEMM
 {
 
 
-std::vector<std::vector<unsigned>> get_kernel_dependencies()
+std::vector<std::vector<size_t>> get_kernel_dependencies()
 {
 
-  unsigned              uninitialised_value{std::numeric_limits<unsigned>::max()};
-  std::vector<unsigned> uninitialised_vector{uninitialised_value};
+  size_t              uninitialised_value{std::numeric_limits<size_t>::max()};
+  std::vector<size_t> uninitialised_vector{uninitialised_value};
 
-  std::vector<std::vector<unsigned>> kdps(BasicKernelType::N, uninitialised_vector);
+  std::vector<std::vector<size_t>> kdps(BasicKernelType::N, uninitialised_vector);
 
   kdps[BasicKernelType::WSA]   = {};
   kdps[BasicKernelType::WSB]   = {};
   kdps[BasicKernelType::BETAC] = {};
   kdps[BasicKernelType::MAIN]  = {BasicKernelType::BETAC, BasicKernelType::WSA, BasicKernelType::WSB};
 
-  for (unsigned i = 0; i < BasicKernelType::N; ++i)
+  for (size_t i = 0; i < BasicKernelType::N; ++i)
   {
     if (kdps[i].size() == 1 && kdps[i][0] == uninitialised_value)
     {
@@ -36,7 +36,7 @@ std::vector<std::vector<unsigned>> get_kernel_dependencies()
 }
 
 //const std::vector<std::string> basic_kernel_type_strings     = get_basic_kernel_type_strings();
-const std::vector<std::vector<unsigned>> kernel_dependencies = get_kernel_dependencies();
+const std::vector<std::vector<size_t>> kernel_dependencies = get_kernel_dependencies();
 
 bool KernelType::uses(char c) const
 {

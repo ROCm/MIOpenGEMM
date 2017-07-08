@@ -14,17 +14,17 @@ namespace MIOpenGEMM
 namespace derivedparams
 {
 
-unsigned DerivedParams::get_target_ld(Mat::E emat_x) const { return at(emat_x).cw1_target_ldx; }
+size_t DerivedParams::get_target_ld(Mat::E emat_x) const { return at(emat_x).cw1_target_ldx; }
 
-unsigned get_target(unsigned grid_size, unsigned above_distance, unsigned x)
+size_t get_target(size_t grid_size, size_t above_distance, size_t x)
 {
-  unsigned to_grid_line =
+  size_t to_grid_line =
     (x - above_distance) / grid_size + ((x - above_distance) % grid_size != 0);
 
   return grid_size * to_grid_line + above_distance;
 }
 
-unsigned get_copy_pad(Mat::E emat_x)
+size_t get_copy_pad(Mat::E emat_x)
 {
   if (emat_x == Mat::E::A)
   {
@@ -39,7 +39,7 @@ unsigned get_copy_pad(Mat::E emat_x)
 void DerivedParams::reset_cw_params(Mat::E emat_x)
 {
   if (emat_x == Mat::E::B && ptr_hp->at(Mat::E::A).vs[Chi::E::WOS] != 0 &&
-      adps.cw_n_elements == uninitialised_unsigned)
+      adps.cw_n_elements == uninitialised_size_t)
   {
     throw miog_error("make sure reset acw1 params is called before reset_bcw1_params, we "
                      "need that "
@@ -81,13 +81,13 @@ void DerivedParams::reset_ga3_params()
 {
   if (main_split_on_k == 1)
   {
-    ga3_super_column_width = static_cast<unsigned>(
+    ga3_super_column_width = static_cast<size_t>(
       std::floor(std::sqrt(static_cast<double>(ptr_hp->at(Mat::E::C).vs[NonChi::E::NAW]) /
                            static_cast<double>(ptr_hp->at(Mat::E::C).vs[NonChi::E::ICE]))));
   }
   else if (main_split_on_k == 0)
   {
-    ga3_super_column_width = static_cast<unsigned>(
+    ga3_super_column_width = static_cast<size_t>(
       std::floor(std::sqrt(static_cast<double>(ptr_hp->at(Mat::E::C).vs[NonChi::E::NAW]))));
   }
   else
@@ -155,7 +155,7 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
     ptr_hp->at(Mat::E::B).vs[Chi::E::MIC] * ptr_hp->at(Mat::E::A).vs[Chi::E::MIC];
   main_n_work_items_per_workgroup = main_macro_tile_area / main_micro_tile_area;
 
-  unsigned required_workspace = 0;
+  size_t required_workspace = 0;
 
   std::stringstream set_status_ss;
 
@@ -214,7 +214,7 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
 
   // check 1 : n_work_items_per_workgroup divides n_elements_in_unroll for a and b  */
 
-  auto is_div = [&set_status_ss, this](Mat::E emat_x, std::string which, unsigned val) {
+  auto is_div = [&set_status_ss, this](Mat::E emat_x, std::string which, size_t val) {
 
     if (at(emat_x).n_elements_in_unroll % val != 0)
     {
@@ -400,6 +400,13 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams& hp_, const Geometry
                                   ptr_gg->k % ptr_hp->at(Mat::E::C).vs[NonChi::E::UNR] != 0)
                                    ? 1
                                    : 0;
+
+  // set tints. TODO here.
+  tints[Mem::E::A] = "unsigned";
+  tints[Mem::E::B] = "unsigned";
+  tints[Mem::E::C] = "unsigned";  
+  tints[Mem::E::W] = "unsigned";  
+
 }
 
 /* TODO : move to hyper params */
@@ -419,7 +426,7 @@ void DerivedParams::set_should_be_hyperparams()
   }
 }
 
-unsigned DerivedParams::get_n_elements_in_x_unroll(char x)
+size_t DerivedParams::get_n_elements_in_x_unroll(char x)
 {
   if (x == 'a')
   {
@@ -435,10 +442,10 @@ unsigned DerivedParams::get_n_elements_in_x_unroll(char x)
   }
 }
 
-unsigned DerivedParams::get_stride(Mat::E emat_x,
+size_t DerivedParams::get_stride(Mat::E emat_x,
                                    bool       pll_k,
                                    bool       is_macro,
-                                   unsigned   workspace_type_) const
+                                   size_t   workspace_type_) const
 {
 
   if (workspace_type_ == 0)
@@ -459,17 +466,17 @@ unsigned DerivedParams::get_stride(Mat::E emat_x,
     throw miog_error("unrecognised workspace_type in get_strinde in derivedparams");
 }
 
-unsigned DerivedParams::get_stride_cw0(Mat::E emat_x, bool pll_k) const
+size_t DerivedParams::get_stride_cw0(Mat::E emat_x, bool pll_k) const
 {
   return ptr_gg->coal_is_pll_k(emat_x) == pll_k ? 1 : ptr_gg->ldX.at(emat_x);
 }
 
-unsigned DerivedParams::get_stride_cw1(Mat::E emat_x, bool pll_k) const
+size_t DerivedParams::get_stride_cw1(Mat::E emat_x, bool pll_k) const
 {
   return ptr_gg->coal_is_pll_k(emat_x) == pll_k ? 1 : at(emat_x).cw1_target_ldx;
 }
 
-unsigned DerivedParams::get_stride_cw2(Mat::E emat_x, bool pll_k, bool is_macro) const
+size_t DerivedParams::get_stride_cw2(Mat::E emat_x, bool pll_k, bool is_macro) const
 {
   if (is_macro == false)
   {

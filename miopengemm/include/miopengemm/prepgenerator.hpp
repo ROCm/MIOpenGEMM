@@ -15,8 +15,8 @@ class PrepGenerator : public basegen::BaseGenerator
 {
 
   protected:
-  unsigned n_work_items;
-  unsigned n_work_groups;
+  size_t n_work_items;
+  size_t n_work_groups;
 
   char       matrixchar;
   char       MATRIXCHAR;

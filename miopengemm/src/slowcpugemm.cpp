@@ -21,14 +21,14 @@ class NNInner
   public:
   inline TFloat operator()(const TFloat* a,
                            const TFloat* b,
-                           unsigned      x,
-                           unsigned      y,
-                           unsigned      lda,
-                           unsigned      ldb,
-                           unsigned      k)
+                           size_t      x,
+                           size_t      y,
+                           size_t      lda,
+                           size_t      ldb,
+                           size_t      k)
   {
     TFloat inner = 0;
-    for (unsigned z = 0; z < k; ++z)
+    for (size_t z = 0; z < k; ++z)
     {
       inner += a[x + z * lda] * b[y * ldb + z];
     }
@@ -42,14 +42,14 @@ class NTInner
   public:
   inline TFloat operator()(const TFloat* a,
                            const TFloat* b,
-                           unsigned      x,
-                           unsigned      y,
-                           unsigned      lda,
-                           unsigned      ldb,
-                           unsigned      k)
+                           size_t      x,
+                           size_t      y,
+                           size_t      lda,
+                           size_t      ldb,
+                           size_t      k)
   {
     TFloat inner = 0;
-    for (unsigned z = 0; z < k; ++z)
+    for (size_t z = 0; z < k; ++z)
     {
       inner += a[x + z * lda] * b[y + z * ldb];
     }
@@ -63,14 +63,14 @@ class TNInner
   public:
   inline TFloat operator()(const TFloat* a,
                            const TFloat* b,
-                           unsigned      x,
-                           unsigned      y,
-                           unsigned      lda,
-                           unsigned      ldb,
-                           unsigned      k)
+                           size_t      x,
+                           size_t      y,
+                           size_t      lda,
+                           size_t      ldb,
+                           size_t      k)
   {
     TFloat inner = 0;
-    for (unsigned z = 0; z < k; ++z)
+    for (size_t z = 0; z < k; ++z)
     {
       inner += a[x * lda + z] * b[y * ldb + z];
     }
@@ -99,13 +99,13 @@ void gemm_3fors_generic_cpu(const Geometry& gg,
   FInner finner;
 
   // For rows of C
-  for (unsigned x = 0; x < gg.m; ++x)
+  for (size_t x = 0; x < gg.m; ++x)
   {
     // For columns of C
-    for (unsigned y = 0; y < gg.n; ++y)
+    for (size_t y = 0; y < gg.n; ++y)
     {
       // Set the index of the element in C we're setting,
-      unsigned target_index;
+      size_t target_index;
       if (gg.tX[Mat::E::C] == false)
       {
         target_index = x + y * gg.ldX[Mat::E::C];

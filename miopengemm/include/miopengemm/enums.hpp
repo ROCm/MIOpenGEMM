@@ -15,9 +15,9 @@ namespace MIOpenGEMM {
 template <typename T>
 class EnumMapper{
   public:
-    unsigned n;
+    size_t n;
     std::vector<T> name;
-    std::unordered_map<T, unsigned> val;
+    std::unordered_map<T, size_t> val;
     EnumMapper(const std::vector<T> & name_); 
 };
 
@@ -85,13 +85,28 @@ extern const EnumMapper<std::string> M;
 namespace Mat
 {
 enum E{
-  A,
+  A = 0,
   B,
   C,
   N
 };
 extern const EnumMapper<char> M;
 }
+
+
+namespace Mem
+{
+enum E{
+  A,
+  B,
+  C,
+  W,
+  N
+};
+extern const EnumMapper<char> M;
+}
+
+
 
 
 namespace Status

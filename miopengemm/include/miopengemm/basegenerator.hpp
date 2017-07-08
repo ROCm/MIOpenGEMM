@@ -22,7 +22,7 @@ class BaseGenerator
   const Geometry&                     gg;
   const derivedparams::DerivedParams& dp;
 
-  unsigned n_args_added;
+  size_t n_args_added;
 
   std::string type;
   std::string kernelname;
@@ -63,7 +63,7 @@ class BaseGenerator
 
   void append_stride_definitions(char               x,
                                  std::stringstream& ss,
-                                 unsigned           workspace_type,
+                                 size_t           workspace_type,
                                  bool               withcomments,
                                  std::string        macro_prefix,
                                  bool               append_stride_definitions);

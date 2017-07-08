@@ -35,7 +35,7 @@ Bundle get_bundle(const hyperparams::HyperParams& hp,
   derivedparams::DerivedParams dp(hp, gg);
 
   std::vector<KernelString>          v_tgks;
-  std::vector<std::vector<unsigned>> v_wait_indices;
+  std::vector<std::vector<size_t>> v_wait_indices;
 
   if (hp.at(Mat::E::A).vs[Chi::E::WOS] == 0)
   {
@@ -94,15 +94,15 @@ Bundle get_bundle(const hyperparams::HyperParams& hp,
   }
 
   std::vector<KernelType> types;
-  for (unsigned i = 0; i < v_tgks.size(); ++i)
+  for (size_t i = 0; i < v_tgks.size(); ++i)
   {
     types.push_back(v_tgks[i].type);
   }
 
-  for (unsigned i = 0; i < v_tgks.size(); ++i)
+  for (size_t i = 0; i < v_tgks.size(); ++i)
   {
     v_wait_indices.push_back({});
-    for (unsigned j = 0; j < v_tgks.size(); ++j)
+    for (size_t j = 0; j < v_tgks.size(); ++j)
     {
       if (std::find(kernel_dependencies.at(types[i].basic_kernel_type).begin(),
                     kernel_dependencies.at(types[i].basic_kernel_type).end(),
@@ -118,7 +118,7 @@ Bundle get_bundle(const hyperparams::HyperParams& hp,
   {
     mowri << "\n";
     mowri << "network of kernel dependencies: \n";
-    for (unsigned i = 0; i < v_tgks.size(); ++i)
+    for (size_t i = 0; i < v_tgks.size(); ++i)
     {
       std::stringstream pre_waits_for_ss;
       pre_waits_for_ss << "kernel " << i << " ( " << types[i].full << " )";
@@ -133,7 +133,7 @@ Bundle get_bundle(const hyperparams::HyperParams& hp,
         mowri << "(nothing)";
       }
 
-      for (unsigned j = 0; j < v_wait_indices[i].size(); ++j)
+      for (size_t j = 0; j < v_wait_indices[i].size(); ++j)
       {
         mowri << "(kernel " << v_wait_indices[i][j] << " ( " << types[v_wait_indices[i][j]].full
               << " ))   " << Flush;

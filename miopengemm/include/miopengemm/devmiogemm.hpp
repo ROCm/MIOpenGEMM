@@ -17,7 +17,7 @@ namespace dev
 
 template <typename TFloat>
 void benchgemm(const std::vector<std::string>& hyperstrings,
-               unsigned                        n_runs,
+               size_t                        n_runs,
                const Geometry&                 gg,
                const Offsets&                  toff,
                const TFloat*                   a,

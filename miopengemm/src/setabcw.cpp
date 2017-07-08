@@ -11,7 +11,7 @@ namespace setabcw
 {
 
 template <typename TFloat>
-void fill_uni(std::vector<TFloat>& v, unsigned r_small, unsigned r_big)
+void fill_uni(std::vector<TFloat>& v, size_t r_small, size_t r_big)
 {
 
   if (r_small > r_big)

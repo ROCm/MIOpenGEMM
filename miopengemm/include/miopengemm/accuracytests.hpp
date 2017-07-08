@@ -19,7 +19,7 @@ void elementwise_compare(const TFloat*                c_before,
                          double                       beta,
                          const TFloat*                c_cpu,
                          const TFloat*                c_gpu,
-                         unsigned                     nels,
+                         size_t                     nels,
                          outputwriting::OutputWriter& mowri);
 }
 }

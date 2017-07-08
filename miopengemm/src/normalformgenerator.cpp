@@ -91,7 +91,7 @@ class NormalFormGenerator : public prepgen::PrepGenerator
        << "\n#define GLOBAL_WORKSPACE_OFFSET " << dp.at(emat_x).cw_global_offset << '\n'
        << "\n#define PRESHIFT_FINAL_TILE " << dp.at(emat_x).preshift_final_tile << '\n';
 
-    unsigned final_unroll_depth = gg.k % hp.at(Mat::E::C).vs[NonChi::E::UNR];
+    size_t final_unroll_depth = gg.k % hp.at(Mat::E::C).vs[NonChi::E::UNR];
     final_unroll_depth =
       (final_unroll_depth == 0 ? hp.at(Mat::E::C).vs[NonChi::E::UNR] : final_unroll_depth);
 
@@ -103,16 +103,16 @@ class NormalFormGenerator : public prepgen::PrepGenerator
 
     ss << "{"
        << "\n/* setting up where this thread works */\n"
-       << "unsigned group_id = get_group_id(0);\n"
-       << "unsigned micro_id = get_local_id(0);\n";
+       << "size_t group_id = get_group_id(0);\n"
+       << "size_t micro_id = get_local_id(0);\n";
 
     ss << R"(
 
-unsigned macro_id_pll_unroll = group_id % N_MACRO_TILES_PLL_UNROLL;
-unsigned macro_id_perp_unroll = group_id / N_MACRO_TILES_PLL_UNROLL;
+size_t macro_id_pll_unroll = group_id % N_MACRO_TILES_PLL_UNROLL;
+size_t macro_id_perp_unroll = group_id / N_MACRO_TILES_PLL_UNROLL;
 
-unsigned micro_id_pll_unroll = micro_id / N_MICRO_TILES_PERP_UNROLL;
-unsigned micro_id_perp_unroll = micro_id % N_MICRO_TILES_PERP_UNROLL;
+size_t micro_id_pll_unroll = micro_id / N_MICRO_TILES_PERP_UNROLL;
+size_t micro_id_perp_unroll = micro_id % N_MICRO_TILES_PERP_UNROLL;
 
 )";
 
@@ -142,8 +142,8 @@ unsigned micro_id_perp_unroll = micro_id % N_MICRO_TILES_PERP_UNROLL;
     ss << R"(
 if (macro_id_pll_unroll == N_MACRO_TILES_PLL_UNROLL - 1){
 #pragma unroll
-for (unsigned mu_pll_i = 0; mu_pll_i < MICRO_TILE_PLL_UNROLL; ++mu_pll_i) {
-for (unsigned mu_perp_i = 0; mu_perp_i < MICRO_TILE_PERP_UNROLL; ++mu_perp_i) {
+for (size_t mu_pll_i = 0; mu_pll_i < MICRO_TILE_PLL_UNROLL; ++mu_pll_i) {
+for (size_t mu_perp_i = 0; mu_perp_i < MICRO_TILE_PERP_UNROLL; ++mu_perp_i) {
 if (micro_id_pll_unroll * MICRO_TILE_PLL_UNROLL + mu_pll_i < FINAL_UNROLL_DEPTH) { 
 )";
     append_copy_string(ss);
@@ -156,8 +156,8 @@ if (micro_id_pll_unroll * MICRO_TILE_PLL_UNROLL + mu_pll_i < FINAL_UNROLL_DEPTH)
 
 else{
 #pragma unroll
-for (unsigned mu_pll_i = 0; mu_pll_i < MICRO_TILE_PLL_UNROLL; ++mu_pll_i) {
-for (unsigned mu_perp_i = 0; mu_perp_i < MICRO_TILE_PERP_UNROLL; ++mu_perp_i) { 
+for (size_t mu_pll_i = 0; mu_pll_i < MICRO_TILE_PLL_UNROLL; ++mu_pll_i) {
+for (size_t mu_perp_i = 0; mu_perp_i < MICRO_TILE_PERP_UNROLL; ++mu_perp_i) { 
 )";
     append_copy_string(ss);
     ss << R"(

@@ -13,7 +13,7 @@ namespace MIOpenGEMM
 
 
 // maps dependencies of execution order of kernels
-extern const std::vector<std::vector<unsigned>> kernel_dependencies;
+extern const std::vector<std::vector<size_t>> kernel_dependencies;
 
 class KernelType
 {

@@ -39,11 +39,11 @@ namespace tiling
 // tS = 24 return [6, 4]
 
 void set_tile_dimensions(
-  unsigned& tH, unsigned& tW, unsigned TH, unsigned TW, unsigned tS, bool tall = true);
+  size_t& tH, size_t& tW, size_t TH, size_t TW, size_t tS, bool tall = true);
 
 // checks if it is tileable according to the above.
 // returns (true, "") if, otherwise (false,"reason")
-std::tuple<bool, std::string> get_tileability(unsigned TH, unsigned TW, unsigned tS);
+std::tuple<bool, std::string> get_tileability(size_t TH, size_t TW, size_t tS);
 }
 }
 

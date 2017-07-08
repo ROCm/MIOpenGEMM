@@ -13,12 +13,12 @@ namespace MIOpenGEMM
 
 std::vector<Geometry> get_from_m_n_k_ldaABC_tA_tB(
   const std::vector<
-    std::tuple<unsigned, unsigned, unsigned, unsigned, unsigned, unsigned, bool, bool>>& basicgeos,
-  unsigned workspace_size);
+    std::tuple<size_t, size_t, size_t, size_t, size_t, size_t, bool, bool>>& basicgeos,
+  size_t workspace_size);
 
 std::vector<Geometry> get_from_m_n_k_tA_tB(
-  const std::vector<std::tuple<unsigned, unsigned, unsigned, bool, bool>>& basicgeos,
-  unsigned workspace_size);
+  const std::vector<std::tuple<size_t, size_t, size_t, bool, bool>>& basicgeos,
+  size_t workspace_size);
 }
 
 #endif

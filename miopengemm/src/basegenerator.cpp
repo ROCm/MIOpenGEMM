@@ -32,15 +32,15 @@ void BaseGenerator::append_farg(bool uses_x, std::stringstream& ss, const std::s
 void BaseGenerator::append_fargs(std::stringstream& ss)
 {
   ss << "\n(";
-  append_farg(uses_a, ss, "\n__global const TFLOAT * restrict a, \nconst unsigned a_offset");
-  append_farg(uses_b, ss, "\n__global const TFLOAT * restrict b, \nconst unsigned b_offset");
-  append_farg(uses_c, ss, "\n__global TFLOAT       *          c, \nconst unsigned c_offset");
+  append_farg(uses_a, ss, "\n__global const TFLOAT * restrict a, \nconst size_t a_offset");
+  append_farg(uses_b, ss, "\n__global const TFLOAT * restrict b, \nconst size_t b_offset");
+  append_farg(uses_c, ss, "\n__global TFLOAT       *          c, \nconst size_t c_offset");
   // if using c, we assume workspace is const.
   // this is a hacky, as we might have a kernel
   // which uses c and modifies w as well.
   std::string cness = (uses_c == true) ? "const " : "";
   append_farg(
-    uses_workspace, ss, "\n__global " + cness + "TFLOAT * restrict w,\nconst unsigned w_offset");
+    uses_workspace, ss, "\n__global " + cness + "TFLOAT * restrict w,\nconst size_t w_offset");
   append_farg(uses_alpha, ss, "\nconst TFLOAT alpha");
   append_farg(uses_beta, ss, "\nconst TFLOAT beta");
   ss << ")\n";
@@ -48,7 +48,7 @@ void BaseGenerator::append_fargs(std::stringstream& ss)
 
 void BaseGenerator::append_stride_definitions(char               x,
                                               std::stringstream& ss,
-                                              unsigned           workspace_type,
+                                              size_t           workspace_type,
                                               bool               withcomments,
                                               std::string        macro_prefix,
                                               bool               with_x_in_name)

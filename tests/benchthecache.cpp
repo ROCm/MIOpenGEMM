@@ -120,7 +120,7 @@ int go(bool only_deepbench)
               auto soln1 = MIOpenGEMM::get_default(
                 tgcq.command_queue, constraints_string, gg, comment_string, mowri);
 
-              if (gg.tX[MIOpenGEMM::nsHP::matC])
+              if (gg.tX[MIOpenGEMM::Mat::E::C])
               {
                 throw MIOpenGEMM::miog_error("gg tC not supp");
               }
@@ -132,7 +132,7 @@ int go(bool only_deepbench)
 
               ++counter;
 
-              MIOpenGEMM::FindParams find_params(0.01, 1, 4, MIOpenGEMM::Max);
+              MIOpenGEMM::FindParams find_params(0.01, 1, 4, MIOpenGEMM::SummStat::E::MAX);
 
               bool use_mowri_tracker = false;
 

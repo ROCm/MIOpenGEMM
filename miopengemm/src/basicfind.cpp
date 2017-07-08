@@ -25,7 +25,7 @@ Solution base_basicfind(const Geometry&   geometry,
                         bool        verbose,
                         std::string logfile,
                         std::string constraints_string,
-                        unsigned    n_postfind_runs,
+                        size_t    n_postfind_runs,
                         bool        do_cpu_test,
                         bool        use_mowri_tracker)
 {
@@ -265,7 +265,7 @@ Solution base_basicfind(const Geometry&   geometry,
 
       std::string enqhash =
         std::string("basicfind.hpp") + BasicKernelType::M.name[ks.type.basic_kernel_type];
-      unsigned parameter_index = 0;
+      size_t parameter_index = 0;
 
       for (auto& x : {'a', 'b', 'c', 'w'})
       {
@@ -281,7 +281,7 @@ Solution base_basicfind(const Geometry&   geometry,
 
           openclutil::cl_set_kernel_arg(clkernels.back(),
                                         parameter_index,
-                                        sizeof(unsigned),
+                                        sizeof(size_t),
                                         &(toff[x]),
                                         enqhash + "offset " + x,
                                         true);
@@ -316,7 +316,7 @@ Solution base_basicfind(const Geometry&   geometry,
     // Enqueueing the kernel(s)
     auto enqueue_kernels_serial = [&soln, &clevents, &command_queue, &clkernels](std::string hash) {
 
-      for (unsigned ki = 0; ki < soln.v_tgks.size(); ++ki)
+      for (size_t ki = 0; ki < soln.v_tgks.size(); ++ki)
       {
         size_t    n_events_to_wait_on = ki == 0 ? 0 : 1;
         cl_event* events_to_wait_on   = ki == 0 ? nullptr : &clevents[ki - 1];
@@ -351,7 +351,7 @@ Solution base_basicfind(const Geometry&   geometry,
       // We do a check with cpu
       std::vector<std::string> algs{"3fors"};
       std::vector<TFloat>      c_cpu_final(v_c.size());
-      for (unsigned i = 0; i < v_c.size(); ++i)
+      for (size_t i = 0; i < v_c.size(); ++i)
       {
         c_cpu_final[i] = v_c[i];
       }
@@ -390,11 +390,11 @@ Solution base_basicfind(const Geometry&   geometry,
       // We now take a look at how the times reported in benchmarking,
       // which use cl_events to get accurate gpu times, compare to times
       // obtained here on the host side.
-      std::map<unsigned, float> host_times;
-      for (unsigned npr : std::vector<unsigned>{1, n_postfind_runs + 1})
+      std::map<size_t, float> host_times;
+      for (size_t npr : std::vector<size_t>{1, n_postfind_runs + 1})
       {
         auto start = std::chrono::high_resolution_clock::now();
-        for (unsigned pfr = 0; pfr < npr; ++pfr)
+        for (size_t pfr = 0; pfr < npr; ++pfr)
         {
           enqueue_kernels_serial("in postfind runs");
         }
@@ -446,7 +446,7 @@ Solution basicfind(const Geometry& geometry,
                    bool        verbose,
                    std::string logfile,
                    std::string constraints_string,
-                   unsigned    n_postfind_runs,
+                   size_t    n_postfind_runs,
                    bool        do_cpu_test, 
                    bool        use_mowri_tracker)
 {

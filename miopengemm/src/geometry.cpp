@@ -15,13 +15,13 @@ namespace MIOpenGEMM
 {
 
 
-Offsets::Offsets(unsigned oa_,
-                 unsigned ob_,
-                 unsigned oc_,
-                 unsigned oworkspace_,
-                 unsigned tail_off_a_,
-                 unsigned tail_off_b_,
-                 unsigned tail_off_c_)
+Offsets::Offsets(size_t oa_,
+                 size_t ob_,
+                 size_t oc_,
+                 size_t oworkspace_,
+                 size_t tail_off_a_,
+                 size_t tail_off_b_,
+                 size_t tail_off_c_)
   : oa(oa_),
     ob(ob_),
     oc(oc_),
@@ -32,7 +32,7 @@ Offsets::Offsets(unsigned oa_,
 {
 }
 
-const unsigned& Offsets::operator[](char x) const
+const size_t& Offsets::operator[](char x) const
 {
   if (x == 'a')
   {
@@ -59,7 +59,7 @@ const unsigned& Offsets::operator[](char x) const
   }
 }
 
-char get_floattype(unsigned nbits)
+char get_floattype(size_t nbits)
 {
 
   char ft = 'x';
@@ -106,7 +106,7 @@ void GeometryDerived::reset(char floattype)
 // the coalesced dim.
 // (false == false) == true  evaluates to true,
 // so gate is true, so m is returned
-unsigned Geometry::get_padless_dim(Mat::E M, bool isCoal) const
+size_t Geometry::get_padless_dim(Mat::E M, bool isCoal) const
 {
 
   bool gate = (tX.at(M) == isColMajor) == isCoal;
@@ -133,7 +133,7 @@ unsigned Geometry::get_padless_dim(Mat::E M, bool isCoal) const
   }
 }
 
-unsigned Geometry::get_non_k_dim(Mat::E M) const
+size_t Geometry::get_non_k_dim(Mat::E M) const
 {
 
   if (M == Mat::E::A)
@@ -214,15 +214,15 @@ void Geometry::check_ldx_consistent() const
   }
 }
 
-unsigned Geometry::get_uncoal(Mat::E M) const { return get_padless_dim(M, false); }
+size_t Geometry::get_uncoal(Mat::E M) const { return get_padless_dim(M, false); }
 
-unsigned Geometry::get_coal(Mat::E M) const { return get_padless_dim(M, true); }
+size_t Geometry::get_coal(Mat::E M) const { return get_padless_dim(M, true); }
 
 bool Geometry::coal_is_pll_k(Mat::E M) const
 {
   // proof : false, false, true should give 1
-  return (static_cast<unsigned>(isColMajor) + static_cast<unsigned>(tX.at(M)) +
-          static_cast<unsigned>(M == Mat::E::A)) %
+  return (static_cast<size_t>(isColMajor) + static_cast<size_t>(tX.at(M)) +
+          static_cast<size_t>(M == Mat::E::A)) %
          2;
 }
 
@@ -230,13 +230,13 @@ void Geometry::initialise(bool     isColMajor_,
                           bool     tA_,
                           bool     tB_,
                           bool     tC_,
-                          unsigned lda_,
-                          unsigned ldb_,
-                          unsigned ldc_,
-                          unsigned m_,
-                          unsigned n_,
-                          unsigned k_,
-                          unsigned workspace_size_,
+                          size_t lda_,
+                          size_t ldb_,
+                          size_t ldc_,
+                          size_t m_,
+                          size_t n_,
+                          size_t k_,
+                          size_t workspace_size_,
                           char     floattype_)
 {
 
@@ -271,22 +271,22 @@ Geometry::Geometry(bool     isColMajor_,
                    bool     tA_,
                    bool     tB_,
                    bool     tC_,
-                   unsigned lda_,
-                   unsigned ldb_,
-                   unsigned ldc_,
-                   unsigned m_,
-                   unsigned n_,
-                   unsigned k_,
-                   unsigned workspace_size_,
+                   size_t lda_,
+                   size_t ldb_,
+                   size_t ldc_,
+                   size_t m_,
+                   size_t n_,
+                   size_t k_,
+                   size_t workspace_size_,
                    char     floattype_)
 {
   initialise(isColMajor_, tA_, tB_, tC_, lda_, ldb_, ldc_, m_, n_, k_, workspace_size_, floattype_);
 }
 
-std::map<std::string, unsigned> get_key_val_map(std::string geometry_string)
+std::map<std::string, size_t> get_key_val_map(std::string geometry_string)
 {
   auto frags = stringutil::split(geometry_string, "_");
-  std::map<std::string, unsigned> key_val_map;
+  std::map<std::string, size_t> key_val_map;
   for (auto& frag : frags)
   {
     auto key_val     = stringutil::splitnumeric(frag);
@@ -297,7 +297,7 @@ std::map<std::string, unsigned> get_key_val_map(std::string geometry_string)
   return key_val_map;
 }
 
-unsigned safeat(std::map<std::string, unsigned>& map, std::string key)
+size_t safeat(std::map<std::string, size_t>& map, std::string key)
 {
   if (map.count(key) == 0)
   {

@@ -17,21 +17,21 @@ int run_find_experiments(const std::vector<Geometry>& geometries,
                          bool                         verbose_outer,
                          std::string                  fn_outer);
 
-std::vector<Geometry> get_deepbench_geometries(unsigned workspace_size = 1);
+std::vector<Geometry> get_deepbench_geometries(size_t workspace_size = 1);
 
-std::vector<Geometry> get_small_deepbench_geometries(unsigned small_threshold,
-                                                     unsigned workspace_size = 1);
+std::vector<Geometry> get_small_deepbench_geometries(size_t small_threshold,
+                                                     size_t workspace_size = 1);
 
-std::vector<Geometry> get_large_deepbench_geometries(unsigned large_threshold,
-                                                     unsigned workspace_size = 1);
+std::vector<Geometry> get_large_deepbench_geometries(size_t large_threshold,
+                                                     size_t workspace_size = 1);
 
 std::vector<Geometry> get_problem_geometries();
 
-std::vector<Geometry> get_backconvwrw_geometries(unsigned workspace_size = 1);
+std::vector<Geometry> get_backconvwrw_geometries(size_t workspace_size = 1);
 
-std::vector<Geometry> get_small_growing_geometries(unsigned workspace_size = 1);
+std::vector<Geometry> get_small_growing_geometries(size_t workspace_size = 1);
 
-std::vector<Geometry> get_square_geometries(unsigned workspace_size = 1);
+std::vector<Geometry> get_square_geometries(size_t workspace_size = 1);
 }
 
 #endif

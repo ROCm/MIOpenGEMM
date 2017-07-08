@@ -12,10 +12,10 @@ namespace MIOpenGEMM
 namespace tiling
 {
 
-std::vector<unsigned> get_multiples(unsigned N)
+std::vector<size_t> get_multiples(size_t N)
 {
-  std::vector<unsigned> multiples;
-  for (unsigned k = N; k > 0; --k)
+  std::vector<size_t> multiples;
+  for (size_t k = N; k > 0; --k)
   {
     if (N % k == 0)
     {
@@ -26,7 +26,7 @@ std::vector<unsigned> get_multiples(unsigned N)
 }
 
 void set_tile_dimensions_no_checks(
-  unsigned& tH, unsigned& tW, unsigned TH, unsigned TW, unsigned tS)
+  size_t& tH, size_t& tW, size_t TH, size_t TW, size_t tS)
 {
   for (auto& multiple_of_TH : get_multiples(TH))
   {
@@ -39,7 +39,7 @@ void set_tile_dimensions_no_checks(
   }
 }
 
-std::tuple<bool, std::string> get_tileability(unsigned TH, unsigned TW, unsigned tS)
+std::tuple<bool, std::string> get_tileability(size_t TH, size_t TW, size_t tS)
 {
   std::stringstream ss_tileable_status;
 
@@ -61,7 +61,7 @@ std::tuple<bool, std::string> get_tileability(unsigned TH, unsigned TW, unsigned
     std::make_tuple(false, ss_tileable_status.str());
   }
 
-  unsigned tH, tW;
+  size_t tH, tW;
   set_tile_dimensions_no_checks(tH, tW, TH, TW, tS);
 
   if (tH == 0)
@@ -90,7 +90,7 @@ std::tuple<bool, std::string> get_tileability(unsigned TH, unsigned TW, unsigned
 }
 
 void set_tile_dimensions(
-  unsigned& tH, unsigned& tW, unsigned TH, unsigned TW, unsigned tS, bool tall)
+  size_t& tH, size_t& tW, size_t TH, size_t TW, size_t tS, bool tall)
 {
 
   bool        is_tileable;

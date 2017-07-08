@@ -30,9 +30,9 @@ void confirm(const std::vector<T> & X, std::string enum_name){
 }
 
 template <typename T>
-std::unordered_map<T, unsigned> get_val(const std::vector<T> & a){
-  std::unordered_map<T, unsigned> X;
-  for (unsigned i = 0; i < a.size(); ++i){
+std::unordered_map<T, size_t> get_val(const std::vector<T> & a){
+  std::unordered_map<T, size_t> X;
+  for (size_t i = 0; i < a.size(); ++i){
     X[a[i]] = i;
   }
   return X;
@@ -102,7 +102,6 @@ namespace NonChi
     X[E::UFO] = "UFO";
     X[E::MAC] = "MAC";
     X[E::SKW] = "SKW";
-    confirm<std::string>(X, "NonChi");
     return X;
   }
   const EnumMapper<std::string> M = get_enum_mapper<std::string>(get_name(), "NonChi");
@@ -115,10 +114,24 @@ namespace Mat
     X[E::A] = 'A';
     X[E::B] = 'B';
     X[E::C] = 'C';
-    confirm<char>(X, "Mat");
     return X;
   }  
   const EnumMapper<char> M = get_enum_mapper<char>(get_name(), "Mat");
+}
+
+
+// TODO : make use of this new enum more widely. 
+namespace Mem
+{
+  std::vector<char> get_name() {
+    std::vector<char> X(E::N, unfilled<char>());
+    X[E::A] = 'A';
+    X[E::B] = 'B';
+    X[E::C] = 'C';
+    X[E::W] = 'W';
+    return X;
+  }  
+  const EnumMapper<char> M = get_enum_mapper<char>(get_name(), "Mem");
 }
 
 

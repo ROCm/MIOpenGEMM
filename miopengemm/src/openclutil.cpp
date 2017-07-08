@@ -405,7 +405,7 @@ OpenCLResult cl_build_program(cl_program          program,
   else
   {
     bool iswhitespace = true;
-    for (unsigned i = 0; i < buffer_size - 1; ++i)
+    for (size_t i = 0; i < buffer_size - 1; ++i)
     {
       if (std::isspace(buffer[i]) == false)
       {
@@ -510,7 +510,7 @@ OpenCLResult cl_set_platform_etc(cl_platform_id&              platform,
   {
     std::stringstream errm;
     errm << num_platforms << " platforms detected\n-----------------";
-    for (unsigned i = 0; i < num_platforms; ++i)
+    for (size_t i = 0; i < num_platforms; ++i)
     {
       OpenCLPlatformInfo platinfo(platforms[i]);
       if (platinfo.vendor.find("NVIDIA") != std::string::npos ||

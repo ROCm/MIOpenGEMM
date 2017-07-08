@@ -292,10 +292,10 @@ class OpenCLDeviceInfo
   std::string identifier;
   bool        device_available;
   size_t      device_global_mem_size;
-  unsigned    device_max_clock_frequency;
-  unsigned    device_max_compute_units;
-  unsigned    device_max_work_group_size;
-  unsigned    wg_atom_size;
+  size_t    device_max_clock_frequency;
+  size_t    device_max_compute_units;
+  size_t    device_max_work_group_size;
+  size_t    wg_atom_size;
 
   std::string get_string() const;
   OpenCLDeviceInfo(const cl_command_queue& command_queue);

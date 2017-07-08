@@ -80,7 +80,7 @@ class Gemini
     {
       throw miog_error("float sizes don't agree in Gemini");
     }
-    sizingup::check_sizes_ok_for_unsigned(gg, toff);
+    sizingup::check_sizes_ok_for_size_t(gg, toff);
     c_copy.resize(get_c_memsize() / sizeof(TFloat));
     std::memcpy(c_copy.data(), c, get_c_memsize());
     opencl_memory_initialise();
@@ -279,7 +279,7 @@ class Gemini
 
 template <typename TFloat>
 void benchgemm(const std::vector<std::string>& hyperstrings,
-               unsigned                        n_runs,
+               size_t                        n_runs,
                const Geometry&                 gg,
                const Offsets&                  toff,
                const TFloat*                   a,
@@ -292,7 +292,7 @@ void benchgemm(const std::vector<std::string>& hyperstrings,
 }
 
 template void benchgemm(const std::vector<std::string>& hyperstrings,
-                        unsigned                        n_runs,
+                        size_t                        n_runs,
                         const Geometry&                 gg,
                         const Offsets&                  toff,
                         const float*                    a,
@@ -301,7 +301,7 @@ template void benchgemm(const std::vector<std::string>& hyperstrings,
                         outputwriting::OutputWriter&    mowri);
 
 template void benchgemm(const std::vector<std::string>& hyperstrings,
-                        unsigned                        n_runs,
+                        size_t                        n_runs,
                         const Geometry&                 gg,
                         const Offsets&                  toff,
                         const double*                   a,

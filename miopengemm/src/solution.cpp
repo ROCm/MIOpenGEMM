@@ -61,7 +61,7 @@ SolutionStatistics::SolutionStatistics(std::string cache_string)
     throw miog_error("problem constructing solution stats from string, in constructor");
   }
 
-  auto get_X = [&megafrags](unsigned i) {
+  auto get_X = [&megafrags](size_t i) {
     auto X = stringutil::split(megafrags[i]);
     if (X.size() != 2)
     {

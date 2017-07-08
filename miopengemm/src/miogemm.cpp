@@ -117,11 +117,11 @@ class OpenCLGemmEncapsulator
   std::vector<Solution>                                       best_solns_path;
   std::vector<Kernel>                                         tk_kernels;
   std::vector<Kernel*>                                        tk_kernels_active;
-  std::vector<std::vector<unsigned>>                          v_wait_indices;
+  std::vector<std::vector<size_t>>                          v_wait_indices;
   bool                                                        bundle_verbose{false};
   float                                                       total_elapsed_seconds{0};
-  unsigned                                                    total_elapsed_descents{0};
-  unsigned                                                    total_kernels_tested{0};
+  size_t                                                    total_elapsed_descents{0};
+  size_t                                                    total_kernels_tested{0};
   std::chrono::time_point<std::chrono::high_resolution_clock> find_start;
   std::string                                                 old_comment_string;
   std::string                                                 new_comment_string;
@@ -154,7 +154,7 @@ class OpenCLGemmEncapsulator
   {
 
     tk_kernels.resize(BasicKernelType::E::N);
-    for (unsigned i = 0; i < BasicKernelType::E::N; ++i)
+    for (size_t i = 0; i < BasicKernelType::E::N; ++i)
     {
       tk_kernels[i] = Kernel(command_queue, BasicKernelType::M.name[i]);
     }
@@ -230,7 +230,7 @@ class OpenCLGemmEncapsulator
     }
   }
 
-  void run_checks() { sizingup::check_sizes_ok_for_unsigned(gg, toff); }
+  void run_checks() { sizingup::check_sizes_ok_for_size_t(gg, toff); }
 
   void set_kern_args(const KernelType& type)
   {
@@ -243,7 +243,7 @@ class OpenCLGemmEncapsulator
       if (type.uses(x) == true)
       {
         arg_sizes_values.emplace_back(sizeof(cl_mem), (void*)&(gpum[x]));
-        arg_sizes_values.emplace_back(sizeof(unsigned), &(toff[x]));
+        arg_sizes_values.emplace_back(sizeof(size_t), &(toff[x]));
       }
     }
 
@@ -347,7 +347,7 @@ class OpenCLGemmEncapsulator
     v_wait_indices = bundle.v_wait_indices;
     tk_kernels_active.resize(0);
 
-    for (unsigned ksi = 0; ksi < bundle.v_tgks.size(); ++ksi)
+    for (size_t ksi = 0; ksi < bundle.v_tgks.size(); ++ksi)
     {
 
       BasicKernelType::E basic = bundle.v_tgks[ksi].type.basic_kernel_type;
@@ -391,7 +391,7 @@ class OpenCLGemmEncapsulator
   {
     std::stringstream ss;
     ss << "tt: \t";
-    for (unsigned k_ind = 0; k_ind < tk_kernels_active.size(); ++k_ind)
+    for (size_t k_ind = 0; k_ind < tk_kernels_active.size(); ++k_ind)
     {
       ss << " k" << k_ind << ":\t";
     }
@@ -405,7 +405,7 @@ class OpenCLGemmEncapsulator
     if (status == CL_SUCCESS)
     {
       ss << std::fixed << std::setprecision(3) << v_t_total.back() << "\t";
-      for (unsigned k_ind = 0; k_ind < tk_kernels_active.size(); ++k_ind)
+      for (size_t k_ind = 0; k_ind < tk_kernels_active.size(); ++k_ind)
       {
         ss << " " << tk_kernels_active[k_ind]->v_times.back() << "\t";
       }
@@ -477,7 +477,7 @@ class OpenCLGemmEncapsulator
 
       openclutil::OpenCLResult oclr;
 
-      for (unsigned k_ind = 0; k_ind < tk_kernels_active.size(); ++k_ind)
+      for (size_t k_ind = 0; k_ind < tk_kernels_active.size(); ++k_ind)
       {
         // At this point, the kernel has been succesfully compiled,
         // but it is still possible that the resources necessary (LDS etc) are
@@ -580,7 +580,7 @@ class OpenCLGemmEncapsulator
   }
 
   public:
-  void benchgemm(unsigned n_runs)
+  void benchgemm(size_t n_runs)
   {
 
     address_check_valid();
@@ -624,13 +624,13 @@ class OpenCLGemmEncapsulator
     hyper_param_start.checks();
 
     bool              found_a_deriveable_goodarchi_hp = false;
-    unsigned          d_and_g_search_iteration        = 0;
+    size_t          d_and_g_search_iteration        = 0;
     std::stringstream d_and_g_ss;
 
     // the number of attempts at finding a
     // deriveable HyperParams given the
     // constraint string
-    const unsigned n_trials = 100000;
+    const size_t n_trials = 100000;
 
     while (found_a_deriveable_goodarchi_hp == false && d_and_g_search_iteration < n_trials)
     {
@@ -709,7 +709,7 @@ class OpenCLGemmEncapsulator
 
     /* TODO : use sumstat */
     float    allotted_time     = find_params.allotted_time;
-    unsigned allotted_descents = find_params.allotted_descents;
+    size_t allotted_descents = find_params.allotted_descents;
 
     if (allotted_time <= 0 || allotted_descents == 0)
     {
@@ -745,9 +745,9 @@ class OpenCLGemmEncapsulator
     }
 
     float              best_gflops     = 0;
-    unsigned           best_soln_index = 0;
+    size_t           best_soln_index = 0;
     std::vector<float> soln_gflops;
-    for (unsigned si = 0; si < v_tgsolns.size(); ++si)
+    for (size_t si = 0; si < v_tgsolns.size(); ++si)
     {
 
       float gflops = v_tgsolns[si].statistics.median_benchmark_gflops;
@@ -785,7 +785,7 @@ class OpenCLGemmEncapsulator
 
     // we will count how many kernels are successfully generated
     // AND compiled AND benchmarked
-    unsigned global_counter = 0;
+    size_t global_counter = 0;
 
     hyperparams::HyperParams hyper_param_current = get_hyper_param_start(); // fst);
 
@@ -820,7 +820,7 @@ class OpenCLGemmEncapsulator
     {
       update_elapsed_seconds();
       improvement_found_on_front = false;
-      unsigned hfi               = 0;
+      size_t hfi               = 0;
       while (hfi < hyper_front.size() && improvement_found_on_front == false &&
              elapsed_seconds < allotted_time)
       {
@@ -1217,7 +1217,7 @@ Solution get_default(cl_command_queue             command_queue,
 
 void benchgemm(cl_command_queue             command_queue,
                const std::string&           hyperstring,
-               unsigned                     n_runs,
+               size_t                     n_runs,
                const Geometry&              gg,
                const Offsets&               toff,
                cl_mem                       a_gpu,
@@ -1288,8 +1288,8 @@ Solution find(float            allotted_time,
   float min_time_without_cache = 100.00;
 
   SummStat::E sumstat(SummStat::E::MEDIAN);
-  unsigned    allotted_descents = 30;
-  unsigned    n_runs_per_kernel = 3;
+  size_t    allotted_descents = 30;
+  size_t    n_runs_per_kernel = 3;
   FindParams  find_params(allotted_time, allotted_descents, n_runs_per_kernel, sumstat);
 
   cl_mem workspace = nullptr;
