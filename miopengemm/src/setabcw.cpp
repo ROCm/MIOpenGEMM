@@ -2,6 +2,7 @@
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
  *******************************************************************************/
 #include <sstream>
+#include <limits>
 #include <miopengemm/error.hpp>
 #include <miopengemm/setabcw.hpp>
 
@@ -94,7 +95,7 @@ void set_multigeom_abc(std::vector<TFloat>& v_a,
     n_c = std::max(n_c, tn_c);       
   }
   
-  size_t n_elmnts_limit = 20000 * 10000;
+  size_t n_elmnts_limit = std::numeric_limits<size_t>::max() / 2;
   if (n_a > n_elmnts_limit || n_b > n_elmnts_limit || n_c > n_elmnts_limit)
   {
     std::stringstream ss;

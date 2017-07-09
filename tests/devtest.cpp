@@ -36,13 +36,13 @@ MIOpenGEMM::Geometry get_geometry()
 
 MIOpenGEMM::Offsets get_offsets()
 {
-  unsigned a_offset         = 0;
-  unsigned b_offset         = 0;
-  unsigned c_offset         = 0;
-  unsigned workspace_offset = 4;
-  unsigned tail_off_a       = 0;
-  unsigned tail_off_b       = 0;
-  unsigned tail_off_c       = 0;
+  size_t a_offset         = 0;
+  size_t b_offset         = 0;
+  size_t c_offset         = 0;
+  size_t workspace_offset = 4;
+  size_t tail_off_a       = 0;
+  size_t tail_off_b       = 0;
+  size_t tail_off_c       = 0;
   return {a_offset, b_offset, c_offset, workspace_offset, tail_off_a, tail_off_b, tail_off_c};
 }
 
@@ -119,7 +119,7 @@ int main()
 
     if (test_benchgemm)
     {
-      unsigned n_runs_benchgemm = 5;
+      size_t n_runs_benchgemm = 5;
       MIOpenGEMM::dev::benchgemm(
         {hyperstring}, n_runs_benchgemm, gg, toff, v_a.data(), v_b.data(), v_c.data(), mowri);
     }
@@ -133,9 +133,9 @@ int main()
     if (test_find)
     {
       float                   allotted_find_time     = 100.00;
-      unsigned                allotted_find_descents = 1000;
-      unsigned                n_runs_per_kernel      = 2;
-      MIOpenGEMM::SummaryStat sumstat(MIOpenGEMM::Max);
+      size_t                allotted_find_descents = 1000;
+      size_t                n_runs_per_kernel      = 2;
+      MIOpenGEMM::SummStat::E sumstat(MIOpenGEMM::SummStat::E::MAX);
       MIOpenGEMM::FindParams  find_params(
         allotted_find_time, allotted_find_descents, n_runs_per_kernel, sumstat);
       auto soln = MIOpenGEMM::dev::find(

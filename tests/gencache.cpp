@@ -47,13 +47,13 @@ int main()
   // the maximum time to search, per geometry
   float allotted_time = 2.00;
   // the maximum number of restarts during the search, per geometry
-  unsigned allotted_iterations = 30;
+  size_t allotted_iterations = 30;
   // the number of times each kernel should be run during the search.
   // (tradeoff : many runs means less exploration with more accurate perf estimates)
-  unsigned n_runs_per_kernel = 3;
+  size_t n_runs_per_kernel = 3;
   // the statistic for averaging over the n_runs_per_kernel runs. Max/Mean/Median
   // (TODO : currently only Max supported)
-  MIOpenGEMM::SummaryStat sumstat(MIOpenGEMM::Max);
+  MIOpenGEMM::SummStat::E sumstat(MIOpenGEMM::SummStat::E::MAX);
   MIOpenGEMM::FindParams  find_params(
     allotted_time, allotted_iterations, n_runs_per_kernel, sumstat);
 

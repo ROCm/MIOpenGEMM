@@ -6,24 +6,24 @@
 #include <miopengemm/miogemm.hpp>
 
 template <typename TFloat>
-void geometrytest(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned n, unsigned k)
+void geometrytest(bool isColMajor, bool tA, bool tB, bool tC, size_t m, size_t n, size_t k)
 {
 
-  unsigned lda = (tA == isColMajor ? k : m) + 1;
-  unsigned ldb = (tB == isColMajor ? n : k) + 2;
-  unsigned ldc = (tC == isColMajor ? n : m) + 4;
+  size_t lda = (tA == isColMajor ? k : m) + 1;
+  size_t ldb = (tB == isColMajor ? n : k) + 2;
+  size_t ldc = (tC == isColMajor ? n : m) + 4;
 
-  unsigned a_offset = 5;
-  unsigned b_offset = 7;
-  unsigned c_offset = 11;
+  size_t a_offset = 5;
+  size_t b_offset = 7;
+  size_t c_offset = 11;
 
-  unsigned tail_off_a = 13;
-  unsigned tail_off_b = 17;
-  unsigned tail_off_c = 19;
+  size_t tail_off_a = 13;
+  size_t tail_off_b = 17;
+  size_t tail_off_c = 19;
 
   float                   allotted_time       = 0.001;
-  unsigned                allotted_iterations = 1;
-  unsigned                n_runs_per_kernel   = 1;
+  size_t                allotted_iterations = 1;
+  size_t                n_runs_per_kernel   = 1;
   MIOpenGEMM::SummStat::E sumstat             = MIOpenGEMM::SummStat::E::MEDIAN;
 
   // set verbose to true if you want output to terminal
@@ -34,11 +34,11 @@ void geometrytest(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsign
 
   std::string constraints_string = "A_WOS0__B_WOS0__C_ICE3";
 
-  unsigned n_postfind_runs = 1;
+  size_t n_postfind_runs = 1;
   bool     do_cpu_test     = true;
 
-  unsigned             workspace_size   = 3;
-  unsigned             workspace_offset = 4;
+  size_t             workspace_size   = 3;
+  size_t             workspace_offset = 4;
   char                 floattype        = sizeof(TFloat) == 4 ? 'f' : 'd';
   MIOpenGEMM::Geometry gg(
     isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype);
@@ -52,9 +52,9 @@ void geometrytest(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsign
 
 int main()
 {
-  unsigned m     = 55;
-  unsigned k     = 118;
-  unsigned testi = 0;
+  size_t m     = 55;
+  size_t k     = 118;
+  size_t testi = 0;
   for (bool tC : {false, true})
   {
     for (bool isColMajor : {false, true})
@@ -63,7 +63,7 @@ int main()
       {
         for (bool tB : {false, true})
         {
-          for (unsigned n : {m - 10, m + 10})
+          for (size_t n : {m - 10, m + 10})
           {
             testi += 1;
             k += 1;

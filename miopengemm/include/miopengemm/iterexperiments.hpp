@@ -19,6 +19,10 @@ int run_find_experiments(const std::vector<Geometry>& geometries,
 
 std::vector<Geometry> get_deepbench_geometries(size_t workspace_size = 1);
 
+std::vector<Geometry> get_old_deepbench_geometries(size_t workspace_size = 1);
+
+std::vector<Geometry> get_new_deepbench_geometries(size_t workspace_size = 1);
+
 std::vector<Geometry> get_small_deepbench_geometries(size_t small_threshold,
                                                      size_t workspace_size = 1);
 

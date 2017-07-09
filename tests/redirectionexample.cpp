@@ -8,14 +8,14 @@
 struct ExampleGeometry
 {
   bool        isColMajor, tA, tB, tC;
-  unsigned    m, n;
+  size_t    m, n;
   std::string a, b;
   ExampleGeometry(bool        isColMajor_,
                   bool        tA_,
                   bool        tB_,
                   bool        tC_,
-                  unsigned    m_,
-                  unsigned    n_,
+                  size_t    m_,
+                  size_t    n_,
                   std::string a_,
                   std::string b_)
     : isColMajor(isColMajor_), tA(tA_), tB(tB_), tC(tC_), m(m_), n(n_), a(a_), b(b_)

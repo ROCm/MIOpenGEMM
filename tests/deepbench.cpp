@@ -9,9 +9,9 @@ int main()
 
   auto                    geometries          = MIOpenGEMM::get_deepbench_geometries();
   float                   allotted_time       = 360.00;
-  unsigned                allotted_iterations = 40;
-  unsigned                n_runs_per_kernel   = 3;
-  MIOpenGEMM::SummaryStat sumstat(MIOpenGEMM::Max);
+  size_t                allotted_iterations = 40;
+  size_t                n_runs_per_kernel   = 3;
+  MIOpenGEMM::SummStat::E sumstat(MIOpenGEMM::SummStat::E::MAX);
 
   bool                     verbose       = false;
   std::vector<std::string> v_constraints = {"A_WOS0__B_WOS0"};

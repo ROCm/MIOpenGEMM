@@ -19,13 +19,13 @@
 
 MIOpenGEMM::Offsets get_offsets()
 {
-  unsigned a_offset         = 0;
-  unsigned b_offset         = 0;
-  unsigned c_offset         = 0;
-  unsigned workspace_offset = 0;
-  unsigned tail_off_a       = 0;
-  unsigned tail_off_b       = 0;
-  unsigned tail_off_c       = 0;
+  size_t a_offset         = 0;
+  size_t b_offset         = 0;
+  size_t c_offset         = 0;
+  size_t workspace_offset = 0;
+  size_t tail_off_a       = 0;
+  size_t tail_off_b       = 0;
+  size_t tail_off_c       = 0;
   return {a_offset, b_offset, c_offset, workspace_offset, tail_off_a, tail_off_b, tail_off_c};
 }
 
@@ -37,7 +37,7 @@ int go(bool only_deepbench)
   MIOpenGEMM::outputwriting::OutputWriter       mowri(false, fout != "", fout);
   MIOpenGEMM::openclutil::CommandQueueInContext tgcq(mowri, "in benchthecache.cpp");
   MIOpenGEMM::openclutil::OpenCLDeviceInfo      devinfo(tgcq.command_queue);
-  unsigned                                      counter = 0;
+  size_t                                      counter = 0;
 
 
   auto db_geoms = MIOpenGEMM::get_deepbench_geometries(1);
@@ -48,7 +48,7 @@ int go(bool only_deepbench)
 
   
   
-  unsigned n_to_bench = 0;
+  size_t n_to_bench = 0;
   MIOpenGEMM::Offsets  toff = get_offsets();
   std::vector<MIOpenGEMM::Geometry> all_geometries;
   for (auto& x : MIOpenGEMM::kernel_cache)

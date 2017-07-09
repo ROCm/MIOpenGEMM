@@ -23,17 +23,17 @@ int main()
   }
 
   float                   allotted_time     = 2000.00;
-  unsigned                n_runs_per_kernel = 1;
-  MIOpenGEMM::SummaryStat sumstat(MIOpenGEMM::Max);
+  size_t                n_runs_per_kernel = 1;
+  MIOpenGEMM::SummStat::E sumstat(MIOpenGEMM::SummStat::E::MAX);
   bool                    verbose       = false;
   bool                    verbose_outer = true;
   std::string             fn_outer("");
 
-  unsigned n_iterations_smallgrowing       = 0;   // at ~25 seconds each
-  unsigned n_iterations_square             = 1;   // at ~6000 seconds each
-  unsigned n_iterations_smalldeep          = 0;   // at ~250 seconds each
-  unsigned n_iterations_largedeep          = 10;  // at ~1100 seconds each
-  unsigned n_iterations_problem_geometries = 0;   // 1000;
+  size_t n_iterations_smallgrowing       = 0;   // at ~25 seconds each
+  size_t n_iterations_square             = 1;   // at ~6000 seconds each
+  size_t n_iterations_smalldeep          = 0;   // at ~250 seconds each
+  size_t n_iterations_largedeep          = 10;  // at ~1100 seconds each
+  size_t n_iterations_problem_geometries = 0;   // 1000;
 
   std::cout << "\nSMALLGROWING EXPERIMENTS : HOW DOES PERFORMANCE SCALE AS K INCREASES  ?  "
             << std::endl;
@@ -58,7 +58,7 @@ int main()
       geometries, v_constraints, find_params, verbose, basedir, verbose_outer, fn_outer);
   }
 
-  unsigned small_threshold = 1000 * 1000 * 200;
+  size_t small_threshold = 1000 * 1000 * 200;
   std::cout << "\nSMALLDEEP EXPERIMENTS : HOW DO WE DO ON THE SMALL DEEPBENCH PROBLEMS (WITH AND "
                "WITHOUT ICE ALLOWED) ? "
             << std::endl;
