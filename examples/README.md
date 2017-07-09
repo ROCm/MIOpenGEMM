@@ -1,4 +1,4 @@
-#Description of MIOpenGEMM programs
+#Description of MIOpenGEMM examples
 
 
 #basicexample.cpp
@@ -42,7 +42,3 @@ Not really part of MIOPenGEMM, a simple experiment to see if initialising matric
 Illustrating how problems are redirected to a problem  with is column major, and NN or NT (m < n) or TN (m < n). currently (1/12/2016) it is used only for cpu kernels.
 
 
-# smallgeometrytests.cpp
-
-Runs the full find-then-run pipeline for all 32 possible (a,b,c transposes, column major, m > n)  cases, only for small matrices. Verifies correctness
-    
