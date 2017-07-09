@@ -99,7 +99,8 @@ std::string Solution::get_cache_entry_string(std::string k_comment) const
                  << "(within descent), date found */\n"
                  << "{" << statistics.find_params.allotted_time << ", "
                  << statistics.find_params.allotted_descents << ", "
-                 << statistics.find_params.n_runs_per_kernel << ", "
+                 << statistics.find_params.max_n_runs_per_kernel << ", "
+                 << statistics.find_params.max_time_per_kernel << ", "
                  << get_sumstatkey(statistics.find_params.sumstat)
                  << "}}}); /* find param: allotted time, allotted descents, n "
                  << "runs per kernel, "

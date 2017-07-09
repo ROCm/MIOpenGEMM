@@ -18,20 +18,22 @@
 /* (30/01/2017) this is the preferred place for doing testing */
 /* (17/06/2017) much testing is now done in an indepent project, using OpenBLAS */
 
+
+
 std::string get_hyperstring(std::string hyperstring = "")
 {
-  if (hyperstring.compare("") == 0)
-  {
-    hyperstring = "A_MIC1_PAD0_PLU0_LIW0_MIW0_WOS0__B_MIC1_PAD0_PLU0_LIW0_MIW0_WOS1__C_UNR16_GAL1_"
-                  "PUN0_ICE1_NAW16_UFO0_MAC1_SKW10";
-  }
+  //if (hyperstring.compare("") == 0)
+  //{
+    hyperstring = "A_MIC6_PAD1_PLU1_LIW0_MIW0_WOS0__B_MIC5_PAD1_PLU1_LIW0_MIW1_WOS0__C_UNR8_GAL3_PUN1_ICE1_NAW16_UFO0_MAC4_SKW9";
+    //hyperstring = "A_MIC2_PAD0_PLU0_LIW0_MIW0_WOS0__B_MIC4_PAD0_PLU1_LIW0_MIW0_WOS0__C_UNR16_GAL1_PUN0_ICE1_NAW64_UFO0_MAC256_SKW9";
+  //}
   return hyperstring;
 }
 
 template <typename TFloat>
 MIOpenGEMM::Geometry get_geometry()
 {
-  return {"tC0_tA1_tB0_colMaj1_m64_n1_k524288_lda524288_ldb524288_ldc64_ws8000000_f32"};
+  return {"tC0_tA0_tB0_colMaj1_m1024_n8_k10000_lda1024_ldb10000_ldc1024_ws1_f32"};
 }
 
 MIOpenGEMM::Offsets get_offsets()
@@ -87,7 +89,7 @@ int main()
 
   // what test(s) are you running ?
   bool test_print     = true;
-  bool test_benchgemm = false;
+  bool test_benchgemm = true;
   bool test_find      = false;
   bool test_accuracy  = true;
   bool test_default   = false;

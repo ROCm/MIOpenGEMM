@@ -444,7 +444,7 @@ class OpenCLGemmEncapsulator
     mowri_tracker << backspaces << new_comment_string << Flush;
   }
 
-  openclutil::OpenCLResult core_gemm_loop(size_t n_runs, bool print_asap)
+  openclutil::OpenCLResult core_gemm_loop(size_t max_n_runs, double max_time, bool print_asap)
   {
 
     update_total_elapsed_seconds();
@@ -466,11 +466,11 @@ class OpenCLGemmEncapsulator
       mowri << get_run_times_heading();
     }
 
-    for (size_t kqq = 0; kqq < n_runs; ++kqq)
+    for (size_t kqq = 0; kqq < max_n_runs; ++kqq)
     {
 
       // see `oeverheat' comment at bottome
-      if (n_runs > 1)
+      if (max_n_runs > 1)
       {
         std::this_thread::sleep_for(std::chrono::milliseconds(0));
       }
@@ -548,7 +548,7 @@ class OpenCLGemmEncapsulator
     if (print_asap == false)
     {
       mowri << get_run_times_heading();
-      for (size_t kqq = 0; kqq < n_runs; ++kqq)
+      for (size_t kqq = 0; kqq < max_n_runs; ++kqq)
       {
         mowri << indi_run_strings[kqq];
         if (median_time == v_t_total[kqq])
@@ -580,14 +580,14 @@ class OpenCLGemmEncapsulator
   }
 
   public:
-  void benchgemm(size_t n_runs)
+  void benchgemm(size_t max_n_runs, double max_time)
   {
 
     address_check_valid();
 
-    if (n_runs == 0)
+    if (max_n_runs == 0)
     {
-      throw miog_error("n_runs to benchgemm should be a positive integer");
+      throw miog_error("max_n_runs to benchgemm should be a positive integer");
     }
 
     hyperparams::HyperParams hp(graph);
@@ -609,7 +609,7 @@ class OpenCLGemmEncapsulator
     mowri << "(benchgemm) hp   :" << hp.get_string() << Endl;
     mowri << "(benchgemm) geometry  \t:" << gg.get_string() << "\nEntering the core gemm loops"
           << Endl;
-    oclr = core_gemm_loop(n_runs, true);
+    oclr = core_gemm_loop(max_n_runs, max_time, true);
 
     if (oclr.fail())
     {
@@ -870,7 +870,7 @@ class OpenCLGemmEncapsulator
           else
           {
             // run kernels
-            oclr = core_gemm_loop(find_params.n_runs_per_kernel, false);
+            oclr = core_gemm_loop(find_params.max_n_runs_per_kernel, find_params.max_time_per_kernel, false);
 
             if (oclr.fail())
             {
@@ -1217,7 +1217,8 @@ Solution get_default(cl_command_queue             command_queue,
 
 void benchgemm(cl_command_queue             command_queue,
                const std::string&           hyperstring,
-               size_t                     n_runs,
+               size_t                     max_n_runs,
+               double                     max_time,
                const Geometry&              gg,
                const Offsets&               toff,
                cl_mem                       a_gpu,
@@ -1250,7 +1251,7 @@ void benchgemm(cl_command_queue             command_queue,
                                 full_constraints_expected,
                                 mowri,
                                 use_mowri_tracker);
-    oger.benchgemm(n_runs);
+    oger.benchgemm(max_n_runs, max_time);
   }
 
   else
@@ -1267,7 +1268,7 @@ void benchgemm(cl_command_queue             command_queue,
                                 full_constraints_expected,
                                 mowri,
                                 use_mowri_tracker);
-    oger.benchgemm(n_runs);
+    oger.benchgemm(max_n_runs, max_time);
   }
 }
 
@@ -1289,8 +1290,10 @@ Solution find(float            allotted_time,
 
   SummStat::E sumstat(SummStat::E::MEDIAN);
   size_t    allotted_descents = 30;
-  size_t    n_runs_per_kernel = 3;
-  FindParams  find_params(allotted_time, allotted_descents, n_runs_per_kernel, sumstat);
+  size_t    max_n_runs_per_kernel = 3;
+  double    max_time_per_kernel = 1000.; // 1000 seconds. 
+  
+  FindParams  find_params(allotted_time, allotted_descents, max_n_runs_per_kernel, max_time_per_kernel, sumstat);
 
   cl_mem workspace = nullptr;
 

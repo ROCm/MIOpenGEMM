@@ -37,13 +37,16 @@ std::string get_sumstatkey(SummStat::E sumstat)
   return sumstatkey[sumstat];
 }
 
+/* TODO floats to doubles */
 FindParams::FindParams(float       allotted_time_,
                        size_t    allotted_descents_,
-                       size_t    n_runs_per_kernel_,
+                       size_t    max_n_runs_per_kernel_,
+                       double    max_time_per_kernel_
                        SummStat::E sumstat_)
   : allotted_time(allotted_time_),
     allotted_descents(allotted_descents_),
-    n_runs_per_kernel(n_runs_per_kernel_),
+    max_n_runs_per_kernel(max_n_runs_per_kernel_),
+    max_time_per_kernel(max_time_per_kernel_)
     sumstat(sumstat_)
 {
 
@@ -63,7 +66,7 @@ std::string FindParams::get_string() const
 {
   std::stringstream ss;
   ss << "allotted time: " << allotted_time << " allotted_descents: " << allotted_descents
-     << " n_runs_per_kernel: " << n_runs_per_kernel << " sumstat: " << get_sumstatkey(sumstat)
+     << " max_n_runs_per_kernel: " << max_n_runs_per_kernel << " max_time_per_kernel: " << max_time_per_kernel << "  sumstat: " << get_sumstatkey(sumstat)
      << std::endl;
   return ss.str();
 }

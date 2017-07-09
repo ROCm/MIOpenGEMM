@@ -279,7 +279,8 @@ class Gemini
 
 template <typename TFloat>
 void benchgemm(const std::vector<std::string>& hyperstrings,
-               size_t                        n_runs,
+               size_t                        max_n_runs,
+               double max_time,
                const Geometry&                 gg,
                const Offsets&                  toff,
                const TFloat*                   a,
@@ -288,11 +289,12 @@ void benchgemm(const std::vector<std::string>& hyperstrings,
                outputwriting::OutputWriter&    mowri)
 {
   Gemini<TFloat> gem(gg, toff, a, b, c, mowri);
-  gem.benchgemm(hyperstrings, n_runs);
+  gem.benchgemm(hyperstrings, max_n_runs, max_time);
 }
 
 template void benchgemm(const std::vector<std::string>& hyperstrings,
-                        size_t                        n_runs,
+                        size_t                        max_n_runs,
+                        double max_time,
                         const Geometry&                 gg,
                         const Offsets&                  toff,
                         const float*                    a,
@@ -301,7 +303,8 @@ template void benchgemm(const std::vector<std::string>& hyperstrings,
                         outputwriting::OutputWriter&    mowri);
 
 template void benchgemm(const std::vector<std::string>& hyperstrings,
-                        size_t                        n_runs,
+                        size_t                        max_n_runs,
+                        double                        max_time,
                         const Geometry&                 gg,
                         const Offsets&                  toff,
                         const double*                   a,

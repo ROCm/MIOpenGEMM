@@ -24,7 +24,7 @@ class Kernel
   // used for getting performance of kernel
   cl_event clevent;
 
-  // stores (the most recent of n_runs) execution time
+  // stores (the most recent of max_n_runs or fewer) execution time
   size_t             t_start;
   size_t             t_end;
   std::vector<float> v_times;
