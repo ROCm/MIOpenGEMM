@@ -53,7 +53,7 @@ class ChiralDerivedParams
   size_t cw1_work_per_thread       = uninitialised_size_t;
 
   // copy to workspace, type 2, specific parameters
-  size_t   cw2_local_work_size           = uninitialised_size_t;
+  size_t cw2_local_work_size           = uninitialised_size_t;
   size_t cw2_load_pll_to_unroll        = uninitialised_size_t;  // always perp
   size_t cw2_micro_tile_pll_unroll     = uninitialised_size_t;
   size_t cw2_micro_tile_perp_unroll    = uninitialised_size_t;
@@ -149,6 +149,7 @@ class DerivedParams
   size_t get_stride_cw2(Mat::E emat_x, bool pll_k, bool is_macro) const;
 
   std::array<std::string, Mem::E::N> tints;
+  std::string tintk;
   
   void set_should_be_hyperparams();
   

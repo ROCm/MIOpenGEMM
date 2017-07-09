@@ -64,8 +64,8 @@ class AlphaGenerator : basegen::BaseGenerator
       ss <<
         R"(
 /* GROUP_ALLOCATION = 1 :  allocation is done column-by-column */
-const size_t group_id_a = group_id_xy % N_GROUPS_A;
-const size_t group_id_b = group_id_xy / N_GROUPS_A;
+const TINTA group_id_a = group_id_xy % N_GROUPS_A;
+const TINTB group_id_b = group_id_xy / N_GROUPS_A;
 )";
     }
 
@@ -74,8 +74,8 @@ const size_t group_id_b = group_id_xy / N_GROUPS_A;
       ss <<
         R"(
 /* GROUP_ALLOCATION = 2 :  allocation is done row-by-row */
-size_t group_id_b = group_id_xy % N_GROUPS_B;
-size_t group_id_a = group_id_xy / N_GROUPS_B;
+TINTB group_id_b = group_id_xy % N_GROUPS_B;
+TINTA group_id_a = group_id_xy / N_GROUPS_B;
 )";
     }
 
@@ -97,9 +97,9 @@ size_t group_id_a = group_id_xy / N_GROUPS_B;
 *                .
 * where the integers are work group numbers
 * */  
-size_t group_id_b;
-size_t group_id_a;
-size_t wg_super_column = group_id_xy / (SUPER_COLUMN_WIDTH*N_GROUPS_A);
+TINTB group_id_b;
+TINTA group_id_a;
+TINTC wg_super_column = group_id_xy / (SUPER_COLUMN_WIDTH*N_GROUPS_A);
 )";
 
       std::string full_SUCOL_string = R"(
@@ -186,9 +186,10 @@ TFLOAT previous_value; )"
   void append_loop_var_bound_incr(std::stringstream& ss,
                                   std::string        varname,
                                   std::string        bound_string,
-                                  std::string        increment_string)
+                                  std::string        increment_string, 
+                                  char X)
   {
-    ss << "for (size_t " << varname << " = 0; " << varname << " < " << bound_string << "; "
+    ss << "for (TINT" << X << ' ' << varname << " = 0; " << varname << " < " << bound_string << "; "
        << increment_string << ")";
   }
 
@@ -204,7 +205,7 @@ TFLOAT previous_value; )"
       hp.at(emat_x).vs[Chi::E::LIW] == 0
         ? "++mu_perp_i"
         : std::string("mu_perp_i += MACRO_TILE_LENGTH_") + X + "/MICRO_" + X + "_TILE_PERP_UNROLL";
-    append_loop_var_bound_incr(ss, "mu_perp_i", bound_string, increment_string);
+    append_loop_var_bound_incr(ss, "mu_perp_i", bound_string, increment_string, X);
   }
 
   void append_load_for_pll(char X, std::stringstream& ss)
@@ -217,7 +218,7 @@ TFLOAT previous_value; )"
     std::string increment_string =
       hp.at(emat_x).vs[Chi::E::LIW] == 0 ? "++mu_pll_i" : std::string("mu_pll_i += UNROLL/MICRO_") +
                                                           X + "_TILE_PLL_UNROLL";
-    append_loop_var_bound_incr(ss, "mu_pll_i", bound_string, increment_string);
+    append_loop_var_bound_incr(ss, "mu_pll_i", bound_string, increment_string, X);
   }
 
   void append_final_write_element(std::stringstream& ss,
@@ -265,7 +266,7 @@ TFLOAT previous_value; )"
       ss,
       "row",
       hp.at(Mat::E::A).vs[Chi::E::MIW] == 0 ? "MICRO_TILE_LENGTH_A" : "MACRO_TILE_LENGTH_A",
-      hp.at(Mat::E::A).vs[Chi::E::MIW] == 0 ? "++row" : "row += N_MICRO_IN_MACRO_A");
+      hp.at(Mat::E::A).vs[Chi::E::MIW] == 0 ? "++row" : "row += N_MICRO_IN_MACRO_A", 'A');
     ss << " {\n";
 
     ss << dp.pragma_unroll_string;
@@ -273,7 +274,7 @@ TFLOAT previous_value; )"
       ss,
       "col",
       hp.at(Mat::E::B).vs[Chi::E::MIW] == 0 ? "MICRO_TILE_LENGTH_B" : "MACRO_TILE_LENGTH_B",
-      hp.at(Mat::E::B).vs[Chi::E::MIW] == 0 ? "++col" : "col += N_MICRO_IN_MACRO_B");
+      hp.at(Mat::E::B).vs[Chi::E::MIW] == 0 ? "++col" : "col += N_MICRO_IN_MACRO_B", 'B');
     ss << " {\n";
   }
 
@@ -345,7 +346,7 @@ write_start_a + row >= MACRO_TILE_LENGTH_A*(N_GROUPS_A - 1)
 
   void append_k_remaining_string(std::stringstream& ss)
   {
-    ss << "\nsize_t k_remaining = " << dp.effective_k_varies_string << " % UNROLL;";
+    ss << '\n' << "TSHORT k_remaining = " << dp.effective_k_varies_string << " % UNROLL;";
   }
 
   // simple for loops. Could consider unrolling like Cobalt, but for the moment
@@ -439,7 +440,7 @@ barrier(CLK_LOCAL_MEM_FENCE); )";
   {
 
     std::string number_of_unrolls = use_k_remaining == 0 ? "UNROLL" : "k_remaining";
-    ss << "\nfor (size_t u = 0; u < " << number_of_unrolls << "; ++u){\n";
+    ss << "\nfor (TSHORT u = 0; u < " << number_of_unrolls << "; ++u){\n";
     append_load_to_register_string('a', ss);
     append_load_to_register_string('b', ss);
     ss << '\n';
@@ -527,8 +528,8 @@ if (group_id_z == n_work_groups_with_1_more && k_remaining > 0){
 
   void append_compute_string(std::stringstream& ss)
   {
-    ss << dp.pragma_unroll_string << "for (size_t row = 0; row < MICRO_TILE_LENGTH_A; ++row){\n"
-       << dp.pragma_unroll_string << "for (size_t col = 0; col < MICRO_TILE_LENGTH_B; ++col){\n"
+    ss << dp.pragma_unroll_string << "for (TSHORT row = 0; row < MICRO_TILE_LENGTH_A; ++row){\n"
+       << dp.pragma_unroll_string << "for (TSHORT col = 0; col < MICRO_TILE_LENGTH_B; ++col){\n"
        << "rC[row][col] += rA[row]*rB[col];   \n}\n}\n";
   }
 
@@ -536,7 +537,7 @@ if (group_id_z == n_work_groups_with_1_more && k_remaining > 0){
   {
     char X = (x == 'a') ? 'A' : 'B';
     ss << '\n' << dp.pragma_unroll_string;
-    ss << "for (size_t i = 0; i < MICRO_TILE_LENGTH_" << X << "; ++i){\n";
+    ss << "for (TSHORT i = 0; i < MICRO_TILE_LENGTH_" << X << "; ++i){\n";
     ss << "r" << X << "[i] = l" << X << "["
        << "i*"
        << "C_INTERWEAVE_STRIDE_" << X << "];\n}\n";
@@ -635,15 +636,15 @@ if (group_id_z == n_work_groups_with_1_more && k_remaining > 0){
   {
     if (dp.main_split_on_k == 0)
     {
-      ss << "\nconst size_t group_id_xy = get_group_id(0);\n";
+      ss << "\nconst TINTC group_id_xy = get_group_id(0);\n";
     }
     else
     {
       ss <<
         R"(
-const size_t group_id = get_group_id(0);
-const size_t group_id_xy = group_id / N_WORK_ITEMS_PER_C_ELM;
-const size_t group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
+const TINTC group_id = get_group_id(0);
+const TINTC group_id_xy = group_id / N_WORK_ITEMS_PER_C_ELM;
+const TSHORT group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
 )";
     }
   }
@@ -699,13 +700,13 @@ c += c_offset;
 
   void append_id_string_nonsym(std::stringstream& ss)
   {
-    ss << "const size_t local_id = get_local_id(0);\n";
+    ss << "const TSHORT local_id = get_local_id(0);\n";
     append_group_id_defns(ss);
 
     ss << R"(
 /* Define which part of the C macro-tile this thread will process (% / or / % ? doesn't seem to make much difference) */
-const size_t micro_id_a = local_id % N_MICRO_IN_MACRO_A;
-const size_t micro_id_b = local_id / N_MICRO_IN_MACRO_A;
+const TSHORT micro_id_a = local_id % N_MICRO_IN_MACRO_A;
+const TSHORT micro_id_b = local_id / N_MICRO_IN_MACRO_A;
 )";
 
     append_group_allocation_string(ss);
@@ -715,8 +716,8 @@ const size_t micro_id_b = local_id / N_MICRO_IN_MACRO_A;
       ss <<
         R"(
 /* this additional offset of a and b appears because UNROLL_FOR_OFFSET is 1 */
-size_t unroll_offset = (13*group_id_a + 7*group_id_b)%UNROLL;
-size_t k_plus_offset = __K__ + unroll_offset;
+TSHORT unroll_offset = (13*group_id_a + 7*group_id_b)%UNROLL;
+TINTK k_plus_offset = __K__ + unroll_offset;
 )";
     }
   }
@@ -747,7 +748,7 @@ size_t k_plus_offset = __K__ + unroll_offset;
       ss << "/* Define which part of the C macro-tile this thread will process "
             "(% / or / % ? "
             "doesn't seem to make much difference) */\n";
-    ss << "size_t write_macro_tile_start_" << x << " = group_id_" << x << "*MACRO_TILE_LENGTH_"
+    ss << "TINT" << X << " write_macro_tile_start_" << x << " = group_id_" << x << "*MACRO_TILE_LENGTH_"
        << X << "; \n";
     if (dp.main_use_edge_trick != 0)
     {
@@ -758,7 +759,7 @@ size_t k_plus_offset = __K__ + unroll_offset;
          << " - PRESHIFT_FINAL_TILE_" << X << ");\n";
       ss << "}\n";
     }
-    ss << "const size_t write_start_" << x << " = write_macro_tile_start_" << x << " + micro_id_"
+    ss << "const TINT" << X << " write_start_" << x << " = write_macro_tile_start_" << x << " + micro_id_"
        << x << "*" << get_c_work_item_next(X) << ";\n";
 
     ss << "\n\n\n";
@@ -779,16 +780,16 @@ size_t k_plus_offset = __K__ + unroll_offset;
       ss << "/* Define what of A this thread will load from unroll tile in "
             "global to LDS (% / or / "
             "% ? looks like no difference ) */\n";
-    ss << "const size_t pll_unroll_" << x << "_load_id = local_id % N_MICRO_" << X
+    ss << "const TINT" << X << " pll_unroll_" << x << "_load_id = local_id % N_MICRO_" << X
        << "_TILES_PLL_UNROLL;\n";
-    ss << "const size_t perp_unroll_" << x << "_load_id = local_id / N_MICRO_" << X
+    ss << "const TINT" << X << " perp_unroll_" << x << "_load_id = local_id / N_MICRO_" << X
        << "_TILES_PLL_UNROLL;\n";
 
     if (X == 'A')
-      ss << "/* Define which part of A this thread will read from process (% / "
+      ss << "/* Define which part of A this thread will read from (% / "
             "or / % ? doesn't "
             "seem to make much difference) */\n";
-    ss << "size_t read_macro_tile_start_" << x << " = group_id_" << x << "*MACRO_TILE_LENGTH_"
+    ss << "TINT" << X << " read_macro_tile_start_" << x << " = group_id_" << x << "*MACRO_TILE_LENGTH_"
        << X << "; \n";
     if (dp.main_use_edge_trick != 0 && hp.at(emat_x).vs[Chi::E::WOS] != 2)
     {
@@ -831,9 +832,9 @@ size_t k_plus_offset = __K__ + unroll_offset;
     if (X == 'A')
       ss << "/* make the micro adjustments (A) for the thread, getting ready "
             "to load */\n";
-    ss << "const size_t " << x << "_offset_pll_unroll = " << str_n_pll << " pll_unroll_" << x
+    ss << "const TINT" << X << " " << x << "_offset_pll_unroll = " << str_n_pll << " pll_unroll_" << x
        << "_load_id;\n";
-    ss << "const size_t " << x << "_offset_perp_unroll = " << str_n_perp << " perp_unroll_" << x
+    ss << "const TINT" << X << " " << x << "_offset_perp_unroll = " << str_n_perp << " perp_unroll_" << x
        << "_load_id;\n";
     ss << x << " += "
        << "STRIDE_PLL_K_" << X << " * " << x << "_offset_pll_unroll;\n";
@@ -964,6 +965,15 @@ size_t k_plus_offset = __K__ + unroll_offset;
          << " *************************************** */";
       add_predefine_chiral(x, ss);
     }
+    
+    ss << "\n/* integer types for navigating each of the memory buffers */\n";
+    for (size_t i = 0; i < Mem::E::N; ++i){
+      ss << "#define TINT" << Mem::M.name[i] << " " << dp.tints[i] << '\n';
+    }
+    ss << "\n/* type for integer in inner most loops (probably inlined anyway)  */\n";
+    ss << "#define TSHORT " << "ushort" << '\n';
+    ss << "\n/* type for integers which never exceeds __K__ + UNROLL (for UFO case) */\n";
+    ss << "#define TINTK " << dp.tintk << '\n';
 
     ss << "\n/* ********************************** common to A and B "
           "*************************************** */";
@@ -1086,7 +1096,7 @@ size_t k_plus_offset = __K__ + unroll_offset;
     }
 
     ss << "\n\n";
-    ss << "size_t index;\n";
+    ss << "TINTC index;\n";
     append_split_on_k_vardecl_write_string(ss);
     append_final_write_all(ss);
     ss << "\n}\n";

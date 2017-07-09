@@ -298,6 +298,28 @@ void DerivedParams::initialise_chis()
   chis[Mat::E::B] = &bdps;
 }
 
+
+std::string get_tint(size_t memsize){
+  
+  std::string tint;
+  if (memsize < std::pow(2, 16)){ // 2 bytes = 16 bits. 
+    tint = "ushort";
+  }
+  
+  else if (memsize < std::pow(2, 32)){ // 4 bytes = 32 bits. 
+    tint = "unsigned";
+  }
+  
+  else{
+    tint = "size_t";
+  }
+  
+  return tint;
+  
+}
+
+
+
 DerivedParams::DerivedParams(const hyperparams::HyperParams& hp_, const Geometry& gg_)
   : ptr_hp(&hp_), ptr_gg(&gg_)
 {
@@ -402,12 +424,15 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams& hp_, const Geometry
                                    : 0;
 
   // set tints. TODO here.
-  tints[Mem::E::A] = "unsigned";
-  tints[Mem::E::B] = "unsigned";
-  tints[Mem::E::C] = "unsigned";  
-  tints[Mem::E::W] = "unsigned";  
-
+  tints[Mem::E::A] = get_tint(ptr_gg->get_uncoal(Mat::E::A)*(ptr_gg->ldX[Mat::E::A])); // TODO : does UFO need increase here
+  tints[Mem::E::B] = get_tint(ptr_gg->get_uncoal(Mat::E::B)*(ptr_gg->ldX[Mat::E::B]));
+  tints[Mem::E::C] = get_tint(ptr_gg->get_uncoal(Mat::E::C)*(ptr_gg->ldX[Mat::E::C])); 
+  tints[Mem::E::W] = get_tint(ptr_gg->workspace_size);
+  tintk = get_tint(ptr_gg->k + 2*ptr_hp->at(Mat::E::C).vs[NonChi::E::UNR]); // TODO : make this tight and prove correct. 
 }
+
+
+
 
 /* TODO : move to hyper params */
 void DerivedParams::set_should_be_hyperparams()
