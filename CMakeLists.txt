@@ -37,5 +37,6 @@ option(BUILD_SHARED_LIBS "Build shared library" ON)
 include(EnableCompilerWarnings)
 
 add_subdirectory(miopengemm)
+add_subdirectory(examples)
 add_subdirectory(tests)
 add_subdirectory(doc)
