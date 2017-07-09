@@ -24,4 +24,4 @@ endfunction(add_test_executable)
 
 
 add_test_executable(smallgeometrytests smallgeometrytests.cpp)
-
+add_test_executable(rocm1 rocm1.cpp)
