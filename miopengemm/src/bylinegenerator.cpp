@@ -92,6 +92,8 @@ void ByLineGenerator::append_derived_definitions(std::stringstream& ss)
         "DerivedParams) */\n";
 
   append_derived_definitions_additional(ss);
+  
+  
 }
 
 size_t ByLineGenerator::get_n_work_groups()
@@ -104,19 +106,13 @@ size_t ByLineGenerator::get_n_work_groups()
 void ByLineGenerator::append_setup_coordinates(std::stringstream& ss)
 {
 
-  ss << R"(
-    
-    
-/* setting up where this thread works */
-size_t group_id = get_group_id(0);
-size_t local_id = get_local_id(0);
-size_t global_id = group_id*N_WORK_ITEMS_PER_GROUP + local_id; 
-
-size_t start_uncoal = 0;
-size_t start_coal = 0;
-
-bool is_in_full_zone = (global_id < N_FULL_WORK_ITEMS);
-)";
+  ss << "\n\n\n/* setting up where this thread works */";
+  ss << "TINT" << MATRIXCHAR << " group_id = get_group_id(0);\n";
+  ss << "TSHORT local_id = get_local_id(0);\n";
+  ss << "TINT" << MATRIXCHAR << " global_id = group_id*N_WORK_ITEMS_PER_GROUP + local_id;\n";
+  ss << "TINT" << MATRIXCHAR << " start_uncoal = 0;\n";
+  ss << "TINT" << MATRIXCHAR << " start_coal = 0;\n";
+  ss << "bool is_in_full_zone = (global_id < N_FULL_WORK_ITEMS);\n";
 
   if (n_full_work_items != 0)
   {
@@ -159,13 +155,13 @@ void ByLineGenerator::append_work_string(std::stringstream& ss)
     R"(
 if (is_in_full_zone){
 #pragma unroll WORK_PER_THREAD
-for (size_t i = 0; i < WORK_PER_THREAD; ++i){  )";
+for (TSHORT i = 0; i < WORK_PER_THREAD; ++i){  )";
   append_inner_work(ss);
   ss << "\n}\n}\n";
 
   ss << R"(
 else if (global_id < N_WORK_ITEMS){
-for (size_t i = 0; i < WORK_FOR_LAST_ITEM_IN_COAL; ++i){  )";
+for (TSHORT i = 0; i < WORK_FOR_LAST_ITEM_IN_COAL; ++i){  )";
   append_inner_work(ss);
   ss << "\n}\n}\n";
 }
@@ -199,6 +195,11 @@ KernelString ByLineGenerator::get_kernelstring()
 
   ss << get_derived_string() << "\n";
   append_derived_definitions(ss);
+
+
+  ss << "#define TINT" << MATRIXCHAR << " " << dp.tints[emat_x] << "\n";
+  ss << "#define TSHORT" << " ushort\n";
+
 
   ss << "\n\n"
      << "__attribute__((reqd_work_group_size(N_WORK_ITEMS_PER_GROUP,1,1)))"
