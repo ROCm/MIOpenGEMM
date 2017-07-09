@@ -132,7 +132,7 @@ int go(bool only_deepbench)
 
               ++counter;
 
-              MIOpenGEMM::FindParams find_params(0.01, 1, 4, MIOpenGEMM::SummStat::E::MAX);
+              MIOpenGEMM::FindParams find_params(0.01, 1, 4, 1e12, MIOpenGEMM::SummStat::E::MAX);
 
               bool use_mowri_tracker = false;
 

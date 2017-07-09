@@ -200,7 +200,7 @@ class Gemini
                                         true);
   }
 
-  void benchgemm(const std::vector<std::string>& hyperstrings, size_t number_of_runs)
+  void benchgemm(const std::vector<std::string>& hyperstrings, size_t max_number_of_runs, double max_time_per_kernel)
   {
 
     // dev code's connection to the outside
@@ -209,7 +209,8 @@ class Gemini
     {
       MIOpenGEMM::benchgemm(tgcq.command_queue,
                             hyperstring,
-                            number_of_runs,
+                            max_number_of_runs,
+                            max_time_per_kernel,
                             gg,
                             toff,
                             a_gpu_safemem.clmem,
@@ -245,7 +246,7 @@ class Gemini
     clEnqueueWriteBuffer(
       tgcq.command_queue, c_gpu_safemem.clmem, CL_TRUE, 0, get_c_memsize(), c, 0, NULL, NULL);
 
-    benchgemm({hyperstring}, 1);
+    benchgemm({hyperstring}, 1, 1e12);
 
     cl_event event_read_c_back;
     openclutil::cl_enqueue_read_buffer(tgcq.command_queue,

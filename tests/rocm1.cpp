@@ -57,9 +57,10 @@ int main()
   mowri << "done." << MIOpenGEMM::Endl;
 
 
-  size_t n_runs_benchgemm = 5;
+  size_t max_max_n_runs_benchgemm = 5;
+  double max_time_per_kernel = 1e12;
   MIOpenGEMM::dev::benchgemm(
-    {hyperstring}, n_runs_benchgemm, gg, toff, v_a.data(), v_b.data(), v_c.data(), mowri);
+    {hyperstring}, max_max_n_runs_benchgemm, max_time_per_kernel, gg, toff, v_a.data(), v_b.data(), v_c.data(), mowri);
     
   return 0;
 }

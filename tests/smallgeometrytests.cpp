@@ -23,7 +23,8 @@ void geometrytest(bool isColMajor, bool tA, bool tB, bool tC, size_t m, size_t n
 
   float                   allotted_time       = 0.001;
   size_t                allotted_iterations = 1;
-  size_t                n_runs_per_kernel   = 1;
+  size_t                max_max_n_runs_per_kernel   = 1;
+  double max_time_per_kernel = 1e9;
   MIOpenGEMM::SummStat::E sumstat             = MIOpenGEMM::SummStat::E::MEDIAN;
 
   // set verbose to true if you want output to terminal
@@ -45,7 +46,7 @@ void geometrytest(bool isColMajor, bool tA, bool tB, bool tC, size_t m, size_t n
   MIOpenGEMM::Offsets offsets(
     a_offset, b_offset, c_offset, workspace_offset, tail_off_a, tail_off_b, tail_off_c);
   MIOpenGEMM::FindParams find_params(
-    allotted_time, allotted_iterations, n_runs_per_kernel, sumstat);
+    allotted_time, allotted_iterations, max_max_n_runs_per_kernel, max_time_per_kernel, sumstat);
   MIOpenGEMM::basicfind(
     gg, offsets, find_params, verbose, logfile, constraints_string, n_postfind_runs, do_cpu_test, use_mowri_tracker);
 }

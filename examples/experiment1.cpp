@@ -23,7 +23,8 @@ int main()
   }
 
   float                   allotted_time     = 2000.00;
-  size_t                n_runs_per_kernel = 1;
+  size_t                max_n_runs_per_kernel = 1;
+  double max_time_per_kernel = 1e12;
   MIOpenGEMM::SummStat::E sumstat(MIOpenGEMM::SummStat::E::MAX);
   bool                    verbose       = false;
   bool                    verbose_outer = true;
@@ -53,7 +54,7 @@ int main()
   if (n_iterations_smallgrowing > 0)
   {
     MIOpenGEMM::FindParams find_params(
-      allotted_time, n_iterations_smallgrowing, n_runs_per_kernel, sumstat);
+      allotted_time, n_iterations_smallgrowing, max_n_runs_per_kernel, max_time_per_kernel, sumstat);
     MIOpenGEMM::run_find_experiments(
       geometries, v_constraints, find_params, verbose, basedir, verbose_outer, fn_outer);
   }
@@ -70,7 +71,7 @@ int main()
   if (n_iterations_smalldeep > 0)
   {
     MIOpenGEMM::FindParams find_params(
-      allotted_time, n_iterations_smalldeep, n_runs_per_kernel, sumstat);
+      allotted_time, n_iterations_smalldeep, max_n_runs_per_kernel, max_time_per_kernel, sumstat);
     MIOpenGEMM::run_find_experiments(
       geometries, v_constraints, find_params, verbose, basedir, verbose_outer, fn_outer);
   }
@@ -86,7 +87,7 @@ int main()
   if (n_iterations_largedeep > 0)
   {
     MIOpenGEMM::FindParams find_params(
-      allotted_time, n_iterations_largedeep, n_runs_per_kernel, sumstat);
+      allotted_time, n_iterations_largedeep, max_n_runs_per_kernel, max_time_per_kernel, sumstat);
     MIOpenGEMM::run_find_experiments(
       geometries, v_constraints, find_params, verbose, basedir, verbose_outer, fn_outer);
   }
@@ -101,7 +102,7 @@ int main()
   if (n_iterations_square > 0)
   {
     MIOpenGEMM::FindParams find_params(
-      allotted_time, n_iterations_square, n_runs_per_kernel, sumstat);
+      allotted_time, n_iterations_square, max_n_runs_per_kernel, max_time_per_kernel, sumstat);
     MIOpenGEMM::run_find_experiments(
       geometries, v_constraints, find_params, verbose, basedir, verbose_outer, fn_outer);
   }
@@ -115,7 +116,7 @@ int main()
   if (n_iterations_problem_geometries > 0)
   {
     MIOpenGEMM::FindParams find_params(
-      allotted_time, n_iterations_problem_geometries, n_runs_per_kernel, sumstat);
+      allotted_time, n_iterations_problem_geometries, max_n_runs_per_kernel, max_time_per_kernel, sumstat);
     MIOpenGEMM::run_find_experiments(
       geometries, v_constraints, find_params, verbose, basedir, verbose_outer, fn_outer);
   }

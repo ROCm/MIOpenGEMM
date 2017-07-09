@@ -14,7 +14,9 @@ int main()
   
   float                   allotted_time       = 420.00;
   size_t                allotted_iterations = 40;
-  size_t                n_runs_per_kernel   = 3;
+  size_t                max_n_runs_per_kernel   = 3;  
+  double max_time_per_kernel = 0.1;  //seconds 
+  
   MIOpenGEMM::SummStat::E sumstat(MIOpenGEMM::SummStat::E::MAX);
 
   bool                     verbose       = false;
@@ -23,7 +25,7 @@ int main()
   std::string basedir("/home/james/miogout/overnight_9_july");
 
   MIOpenGEMM::FindParams find_params(
-    allotted_time, allotted_iterations, n_runs_per_kernel, sumstat);
+    allotted_time, allotted_iterations, max_n_runs_per_kernel, max_time_per_kernel, sumstat);
 
   bool        verbose_outer = true;
   std::string fn_outer("");

@@ -41,12 +41,12 @@ std::string get_sumstatkey(SummStat::E sumstat)
 FindParams::FindParams(float       allotted_time_,
                        size_t    allotted_descents_,
                        size_t    max_n_runs_per_kernel_,
-                       double    max_time_per_kernel_
+                       double    max_time_per_kernel_,
                        SummStat::E sumstat_)
   : allotted_time(allotted_time_),
     allotted_descents(allotted_descents_),
     max_n_runs_per_kernel(max_n_runs_per_kernel_),
-    max_time_per_kernel(max_time_per_kernel_)
+    max_time_per_kernel(max_time_per_kernel_),
     sumstat(sumstat_)
 {
 

@@ -25,7 +25,7 @@ KernelCache get_kernel_cache()
             "",
             {"A_MIC8_PAD2_PLU0_LIW0_MIW0_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW0_WOS0__"
              "C_UNR8_GAL2_PUN0_ICE1_NAW64_UFO0_MAC256_SKW10",
-             {59.2006, 4222.93, 3.32959, "Sun May 14 12:29:44 2017", {3, 2, 1, SummStat::MAX}}});
+             {59.2006, 4222.93, 3.32959, "Sun May 14 12:29:44 2017", {3, 2, 1,1e9,  SummStat::MAX}}});
 
 // and the second is to drop them into a txt file like like this
 #include "cacheexample.cachetxt"
@@ -106,7 +106,7 @@ CachedSolution get_generic_cached_solution(const std::string& constraints_string
     cached_soln = {"A_MIC8_PAD1_PLU0_LIW0_MIW0_WOS0__B_MIC6_PAD2_PLU0_LIW0_"
                    "MIW0_WOS0__C_UNR8_GAL2_"
                    "PUN0_ICE1_NAW16_UFO0_MAC256_SKW10",
-                   {0, 0, 0, "None", {200, 10, 3, SummStat::MAX}}};
+                   {0, 0, 0, "None", {200, 10, 3, 1e12, SummStat::MAX}}};
   }
 
   else if (gg.m * gg.n > 800 * 800 && gg.m >= 256. && gg.n >= 128)
@@ -114,7 +114,7 @@ CachedSolution get_generic_cached_solution(const std::string& constraints_string
     cached_soln = {"A_MIC8_PAD1_PLU0_LIW0_MIW0_WOS0__B_MIC4_PAD0_PLU0_LIW0_"
                    "MIW0_WOS0__C_UNR16_GAL1_"
                    "PUN1_ICE1_NAW64_UFO0_MAC256_SKW10",
-                   {0, 0, 0, "None", {200, 10, 3, SummStat::MAX}}};
+                   {0, 0, 0, "None", {200, 10, 3, 1e12, SummStat::MAX}}};
   }
 
   else if (gg.m * gg.n > 300 * 300 && gg.m >= 64 && gg.n >= 64)
@@ -122,7 +122,7 @@ CachedSolution get_generic_cached_solution(const std::string& constraints_string
     cached_soln = {"A_MIC2_PAD1_PLU0_LIW0_MIW0_WOS0__B_MIC2_PAD2_PLU0_LIW0_"
                    "MIW0_WOS0__C_UNR16_GAL3_"
                    "PUN0_ICE1_NAW64_UFO0_MAC256_SKW10",
-                   {0, 0, 0, "None", {200, 10, 3, SummStat::MAX}}};
+                   {0, 0, 0, "None", {200, 10, 3, 1e12, SummStat::MAX}}};
   }
 
   else if (gg.m * gg.n > 128 * 128 && gg.m >= 16 && gg.n >= 16)
@@ -130,7 +130,7 @@ CachedSolution get_generic_cached_solution(const std::string& constraints_string
     cached_soln = {"A_MIC1_PAD1_PLU0_LIW0_MIW0_WOS0__B_MIC2_PAD2_PLU0_LIW0_"
                    "MIW0_WOS0__C_UNR32_GAL2_"
                    "PUN1_ICE1_NAW64_UFO0_MAC64_SKW10",
-                   {0, 0, 0, "None", {200, 10, 3, SummStat::MAX}}};
+                   {0, 0, 0, "None", {200, 10, 3, 1e12, SummStat::MAX}}};
   }
 
   else if (gg.m >= 16 && gg.n >= 16)
@@ -138,7 +138,7 @@ CachedSolution get_generic_cached_solution(const std::string& constraints_string
     cached_soln = {"A_MIC1_PAD0_PLU0_LIW0_MIW0_WOS0__B_MIC1_PAD0_PLU0_LIW0_"
                    "MIW0_WOS0__C_UNR16_GAL2_"
                    "PUN1_ICE1_NAW64_UFO0_MAC256_SKW10",
-                   {0, 0, 0, "None", {200, 10, 3, SummStat::MAX}}};
+                   {0, 0, 0, "None", {200, 10, 3, 1e12, SummStat::MAX}}};
   }
 
   else if (gg.m >= 8 && gg.n >= 8)
@@ -146,7 +146,7 @@ CachedSolution get_generic_cached_solution(const std::string& constraints_string
     cached_soln = {"A_MIC1_PAD0_PLU0_LIW0_MIW0_WOS0__B_MIC2_PAD1_PLU0_LIW0_"
                    "MIW0_WOS0__C_UNR16_GAL3_"
                    "PUN1_ICE1_NAW64_UFO0_MAC16_SKW10",
-                   {0, 0, 0, "None", {200, 10, 3, SummStat::MAX}}};
+                   {0, 0, 0, "None", {200, 10, 3, 1e12, SummStat::MAX}}};
   }
 
   else if (gg.m >= 4 && gg.n >= 4)
@@ -154,7 +154,7 @@ CachedSolution get_generic_cached_solution(const std::string& constraints_string
     cached_soln = {"A_MIC1_PAD2_PLU0_LIW0_MIW0_WOS0__B_MIC1_PAD1_PLU0_LIW0_"
                    "MIW0_WOS0__C_UNR16_GAL2_"
                    "PUN0_ICE1_NAW64_UFO0_MAC16_SKW10",
-                   {0, 0, 0, "None", {200, 10, 3, SummStat::MAX}}};
+                   {0, 0, 0, "None", {200, 10, 3, 1e12, SummStat::MAX}}};
   }
 
   else
@@ -162,7 +162,7 @@ CachedSolution get_generic_cached_solution(const std::string& constraints_string
     cached_soln = {"A_MIC1_PAD0_PLU0_LIW0_MIW0_WOS0__B_MIC1_PAD0_PLU0_LIW0_"
                    "MIW0_WOS0__C_UNR8_GAL1_"
                    "PUN0_ICE1_NAW16_UFO0_MAC1_SKW10",
-                   {0, 0, 0, "None", {200, 10, 3, SummStat::MAX}}};
+                   {0, 0, 0, "None", {200, 10, 3, 1e12, SummStat::MAX}}};
   }
 
   enforce_constraints(cached_soln.hyperstring, constraints_string, gg);

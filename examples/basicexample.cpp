@@ -34,10 +34,11 @@ void basicexample()
   // No kernels will be compiled after this allotted time
   float                   allotted_time     = 1.01;
   size_t                allotted_descents = 1;
-  size_t                n_runs_per_kernel = 3;
+  size_t                max_n_runs_per_kernel = 3;
+  double max_time_per_kernel = 1e12; //seconds
   MIOpenGEMM::SummStat::E sumstat           = MIOpenGEMM::SummStat::E::MAX;
 
-  MIOpenGEMM::FindParams find_params(allotted_time, allotted_descents, n_runs_per_kernel, sumstat);
+  MIOpenGEMM::FindParams find_params(allotted_time, allotted_descents, max_n_runs_per_kernel, max_time_per_kernel, sumstat);
 
   // print output to terminal (true) or complete silence to terminal (false)
   bool verbose = true;

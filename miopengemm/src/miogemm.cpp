@@ -466,7 +466,13 @@ class OpenCLGemmEncapsulator
       mowri << get_run_times_heading();
     }
 
-    for (size_t kqq = 0; kqq < max_n_runs; ++kqq)
+    size_t runi = 0;
+    double local_elapsed_seconds = 0;
+    auto start_kernel_run0 = std::chrono::high_resolution_clock::now();
+    
+    
+
+    while (runi < max_n_runs && local_elapsed_seconds < max_time)
     {
 
       // see `oeverheat' comment at bottome
@@ -539,19 +545,29 @@ class OpenCLGemmEncapsulator
       indi_run_strings.push_back(get_run_time_string(oclr.success));
       if (print_asap == true)
       {
-        mowri << indi_run_strings[kqq] << '\n';
+        mowri << indi_run_strings[runi] << '\n';
       }
+      ++runi;
+      
+      
+      auto t_now = std::chrono::high_resolution_clock::now();
+      std::chrono::duration<double> fp_ms = t_now - start_kernel_run0;
+      local_elapsed_seconds = fp_ms.count();
+
+
     }
+    size_t runs_completed = runi;
 
     set_medians();
 
+  
     if (print_asap == false)
     {
       mowri << get_run_times_heading();
-      for (size_t kqq = 0; kqq < max_n_runs; ++kqq)
+      for (size_t ir = 0; ir < runs_completed; ++ir)
       {
-        mowri << indi_run_strings[kqq];
-        if (median_time == v_t_total[kqq])
+        mowri << indi_run_strings[ir];
+        if (median_time == v_t_total[ir])
         {
           mowri << " (median) ";
           if (best_solns_path.size() > 0 &&

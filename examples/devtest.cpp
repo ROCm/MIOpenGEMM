@@ -121,9 +121,10 @@ int main()
 
     if (test_benchgemm)
     {
-      size_t n_runs_benchgemm = 5;
+      size_t max_n_runs_benchgemm = 5;
+      double max_time_per_kernel = 1e12;
       MIOpenGEMM::dev::benchgemm(
-        {hyperstring}, n_runs_benchgemm, gg, toff, v_a.data(), v_b.data(), v_c.data(), mowri);
+        {hyperstring}, max_n_runs_benchgemm, max_time_per_kernel, gg, toff, v_a.data(), v_b.data(), v_c.data(), mowri);
     }
   }
 
@@ -136,10 +137,11 @@ int main()
     {
       float                   allotted_find_time     = 100.00;
       size_t                allotted_find_descents = 1000;
-      size_t                n_runs_per_kernel      = 2;
+      size_t                max_n_runs_per_kernel      = 2;
+      double max_time_per_kernel = 1e12;
       MIOpenGEMM::SummStat::E sumstat(MIOpenGEMM::SummStat::E::MAX);
       MIOpenGEMM::FindParams  find_params(
-        allotted_find_time, allotted_find_descents, n_runs_per_kernel, sumstat);
+        allotted_find_time, allotted_find_descents, max_n_runs_per_kernel, max_time_per_kernel, sumstat);
       auto soln = MIOpenGEMM::dev::find(
         find_params, v_a.data(), v_b.data(), v_c.data(), constraints_string, gg, toff, mowri);
       std::cout << "\n\n " << soln.get_cache_entry_string() << "\n\n";

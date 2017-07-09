@@ -14,7 +14,7 @@ add_entry(kc,
             "Fri Jun 16 23:27:35 2017", /* solution stats (time [ms], gflops,
                                            time found (within descent),
                                            date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted
                                            descents, n runs per kernel,
                                            summmary over runs */
 
@@ -33,7 +33,7 @@ add_entry(kc,
             "Fri Jun 16 23:36:18 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -51,7 +51,7 @@ add_entry(kc,
             "Fri Jun 16 23:41:57 2017", /* solution stats (time [ms], gflops,
                                            time found (within descent),
                                            date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted
                                            descents, n runs per kernel,
                                            summmary over runs */
 
@@ -70,7 +70,7 @@ add_entry(kc,
             "Fri Jun 16 23:47:22 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -88,7 +88,7 @@ add_entry(kc,
             "Fri Jun 16 23:54:01 2017", /* solution stats (time [ms], gflops,
                                            time found (within descent),
                                            date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted
                                            descents, n runs per kernel,
                                            summmary over runs */
 
@@ -107,7 +107,7 @@ add_entry(kc,
             "Sat Jun 17 00:00:08 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -125,7 +125,7 @@ add_entry(kc,
             "Sat Jun 17 00:03:52 2017", /* solution stats (time [ms], gflops,
                                            time found (within descent),
                                            date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted
                                            descents, n runs per kernel,
                                            summmary over runs */
 
@@ -144,7 +144,7 @@ add_entry(kc,
             "Sat Jun 17 00:08:27 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -162,7 +162,7 @@ add_entry(kc,
             "Sat Jun 17 00:15:34 2017", /* solution stats (time [ms], gflops,
                                            time found (within descent),
                                            date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted
                                            descents, n runs per kernel,
                                            summmary over runs */
 
@@ -182,7 +182,7 @@ add_entry(kc,
             "Sat Jun 17 00:20:16 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -200,7 +200,7 @@ add_entry(kc,
             "Sat Jun 17 00:27:08 2017", /* solution stats (time [ms], gflops,
                                            time found (within descent),
                                            date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted
                                            descents, n runs per kernel,
                                            summmary over runs */
 
@@ -220,7 +220,7 @@ add_entry(kc,
             "Sat Jun 17 00:32:52 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -238,7 +238,7 @@ add_entry(kc,
             "Sat Jun 17 00:38:28 2017", /* solution stats (time [ms], gflops,
                                            time found (within descent),
                                            date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted
                                            descents, n runs per kernel,
                                            summmary over runs */
 
@@ -258,7 +258,7 @@ add_entry(kc,
             "Sat Jun 17 00:47:06 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -276,7 +276,7 @@ add_entry(kc,
             "Sat Jun 17 00:54:23 2017", /* solution stats (time [ms], gflops,
                                            time found (within descent),
                                            date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted
                                            descents, n runs per kernel,
                                            summmary over runs */
 
@@ -296,7 +296,7 @@ add_entry(kc,
             "Sat Jun 17 01:00:07 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -315,7 +315,7 @@ add_entry(kc,
             "Sat Jun 17 01:01:44 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -334,7 +334,7 @@ add_entry(kc,
             "Sat Jun 17 01:08:38 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -353,7 +353,7 @@ add_entry(kc,
             "Sat Jun 17 01:16:53 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -371,7 +371,7 @@ add_entry(kc,
             "Sat Jun 17 01:20:09 2017", /* solution stats (time [ms], gflops,
                                            time found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted
                                            descents, n runs per
                                            kernel, summmary over runs */
 
@@ -391,7 +391,7 @@ add_entry(kc,
             "Sat Jun 17 01:26:03 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -410,7 +410,7 @@ add_entry(kc,
             "Sat Jun 17 01:34:37 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -429,7 +429,7 @@ add_entry(kc,
             "Sat Jun 17 01:40:26 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -447,7 +447,7 @@ add_entry(kc,
             "Sat Jun 17 01:46:35 2017", /* solution stats (time [ms], gflops,
                                            time found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted
                                            descents, n runs per
                                            kernel, summmary over runs */
 
@@ -467,7 +467,7 @@ add_entry(kc,
             "Sat Jun 17 01:51:51 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -486,7 +486,7 @@ add_entry(kc,
             "Sat Jun 17 01:57:13 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -505,7 +505,7 @@ add_entry(kc,
             "Sat Jun 17 02:04:58 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -523,7 +523,7 @@ add_entry(kc,
             "Sat Jun 17 02:12:02 2017", /* solution stats (time [ms], gflops,
                                            time found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted
                                            descents, n runs per
                                            kernel, summmary over runs */
 
@@ -543,7 +543,7 @@ add_entry(kc,
             "Sat Jun 17 02:18:48 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -562,7 +562,7 @@ add_entry(kc,
             "Sat Jun 17 02:23:30 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -581,7 +581,7 @@ add_entry(kc,
             "Sat Jun 17 02:30:27 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -599,7 +599,7 @@ add_entry(kc,
             "Sat Jun 17 02:31:24 2017", /* solution stats (time [ms], gflops,
                                            time found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted
                                            descents, n runs per
                                            kernel, summmary over runs */
 
@@ -618,7 +618,7 @@ add_entry(kc,
             "Sat Jun 17 02:37:06 2017", /* solution stats (time [ms], gflops,
                                            time found (within descent),
                                            date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted
                                            descents, n runs per kernel,
                                            summmary over runs */
 
@@ -637,7 +637,7 @@ add_entry(kc,
             "Sat Jun 17 02:48:11 2017", /* solution stats (time [ms], gflops,
                                            time found (within descent),
                                            date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted
                                            descents, n runs per kernel,
                                            summmary over runs */
 
@@ -657,7 +657,7 @@ add_entry(kc,
             "Sat Jun 17 02:49:22 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -676,7 +676,7 @@ add_entry(kc,
             "Sat Jun 17 02:55:46 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -695,7 +695,7 @@ add_entry(kc,
             "Sat Jun 17 03:02:17 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -713,7 +713,7 @@ add_entry(kc,
             "Sat Jun 17 03:09:30 2017", /* solution stats (time [ms], gflops,
                                            time found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted
                                            descents, n runs per
                                            kernel, summmary over runs */
 
@@ -732,7 +732,7 @@ add_entry(kc,
             "Sat Jun 17 03:13:46 2017", /* solution stats (time [ms], gflops,
                                            time found (within descent),
                                            date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted
                                            descents, n runs per kernel,
                                            summmary over runs */
 
@@ -752,7 +752,7 @@ add_entry(kc,
             "Sat Jun 17 03:25:00 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -771,7 +771,7 @@ add_entry(kc,
             "Sat Jun 17 03:28:42 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -790,7 +790,7 @@ add_entry(kc,
             "Sat Jun 17 03:32:05 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -808,7 +808,7 @@ add_entry(kc,
             "Sat Jun 17 03:41:26 2017", /* solution stats (time [ms], gflops,
                                            time found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted
                                            descents, n runs per
                                            kernel, summmary over runs */
 
@@ -827,7 +827,7 @@ add_entry(kc,
             "Sat Jun 17 03:48:51 2017", /* solution stats (time [ms], gflops,
                                            time found (within descent),
                                            date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted
                                            descents, n runs per kernel,
                                            summmary over runs */
 
@@ -847,7 +847,7 @@ add_entry(kc,
             "Sat Jun 17 03:53:01 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -866,7 +866,7 @@ add_entry(kc,
             "Sat Jun 17 03:55:34 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -885,7 +885,7 @@ add_entry(kc,
             "Sat Jun 17 04:02:36 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -903,7 +903,7 @@ add_entry(kc,
             "Sat Jun 17 04:12:48 2017", /* solution stats (time [ms], gflops,
                                            time found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted
                                            descents, n runs per
                                            kernel, summmary over runs */
 
@@ -922,7 +922,7 @@ add_entry(kc,
             "Sat Jun 17 04:14:00 2017", /* solution stats (time [ms], gflops,
                                            time found (within descent),
                                            date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted
                                            descents, n runs per kernel,
                                            summmary over runs */
 
@@ -942,7 +942,7 @@ add_entry(kc,
             "Sat Jun 17 04:22:45 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -961,7 +961,7 @@ add_entry(kc,
             "Sat Jun 17 04:25:56 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -980,7 +980,7 @@ add_entry(kc,
             "Sat Jun 17 04:32:28 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -998,7 +998,7 @@ add_entry(kc,
             "Sat Jun 17 04:39:29 2017", /* solution stats (time [ms], gflops,
                                            time found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted
                                            descents, n runs per
                                            kernel, summmary over runs */
 
@@ -1017,7 +1017,7 @@ add_entry(kc,
             "Sat Jun 17 04:47:22 2017", /* solution stats (time [ms], gflops,
                                            time found (within descent),
                                            date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted
                                            descents, n runs per kernel,
                                            summmary over runs */
 
@@ -1037,7 +1037,7 @@ add_entry(kc,
             "Sat Jun 17 04:53:22 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -1056,7 +1056,7 @@ add_entry(kc,
             "Sat Jun 17 05:00:03 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -1075,7 +1075,7 @@ add_entry(kc,
             "Sat Jun 17 05:03:11 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -1093,7 +1093,7 @@ add_entry(kc,
             "Sat Jun 17 05:11:08 2017", /* solution stats (time [ms], gflops,
                                            time found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted
                                            descents, n runs per
                                            kernel, summmary over runs */
 
@@ -1112,7 +1112,7 @@ add_entry(kc,
             "Sat Jun 17 05:17:04 2017", /* solution stats (time [ms], gflops,
                                            time found (within descent),
                                            date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted
                                            descents, n runs per kernel,
                                            summmary over runs */
 
@@ -1132,7 +1132,7 @@ add_entry(kc,
             "Sat Jun 17 05:22:17 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -1151,7 +1151,7 @@ add_entry(kc,
             "Sat Jun 17 05:30:35 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -1170,7 +1170,7 @@ add_entry(kc,
             "Sat Jun 17 05:32:28 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -1188,7 +1188,7 @@ add_entry(kc,
             "Sat Jun 17 05:41:24 2017", /* solution stats (time [ms], gflops,
                                            time found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted
                                            descents, n runs per
                                            kernel, summmary over runs */
 
@@ -1207,7 +1207,7 @@ add_entry(kc,
             "Sat Jun 17 05:48:34 2017", /* solution stats (time [ms], gflops,
                                            time found (within descent),
                                            date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted
                                            descents, n runs per kernel,
                                            summmary over runs */
 
@@ -1227,7 +1227,7 @@ add_entry(kc,
             "Sat Jun 17 05:49:35 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -1246,7 +1246,7 @@ add_entry(kc,
             "Sat Jun 17 05:59:04 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -1265,7 +1265,7 @@ add_entry(kc,
             "Sat Jun 17 06:05:00 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -1283,7 +1283,7 @@ add_entry(kc,
             "Sat Jun 17 06:11:16 2017", /* solution stats (time [ms], gflops,
                                            time found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted
                                            descents, n runs per
                                            kernel, summmary over runs */
 
@@ -1302,7 +1302,7 @@ add_entry(kc,
             "Sat Jun 17 06:15:19 2017", /* solution stats (time [ms], gflops,
                                            time found (within descent),
                                            date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted
                                            descents, n runs per kernel,
                                            summmary over runs */
 
@@ -1322,7 +1322,7 @@ add_entry(kc,
             "Sat Jun 17 06:22:05 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -1341,7 +1341,7 @@ add_entry(kc,
             "Sat Jun 17 06:28:13 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -1360,7 +1360,7 @@ add_entry(kc,
             "Sat Jun 17 06:36:07 2017", /* solution stats (time [ms], gflops, time
                                            found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted descents, n runs per
                                            kernel, summmary over runs */
 
 add_entry(kc,
@@ -1378,7 +1378,7 @@ add_entry(kc,
             "Sat Jun 17 06:43:14 2017", /* solution stats (time [ms], gflops,
                                            time found (within
                                            descent), date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted
                                            descents, n runs per
                                            kernel, summmary over runs */
 
@@ -1397,7 +1397,7 @@ add_entry(kc,
             "Sat Jun 17 06:49:18 2017", /* solution stats (time [ms], gflops,
                                            time found (within descent),
                                            date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted
                                            descents, n runs per kernel,
                                            summmary over runs */
 
@@ -1416,7 +1416,7 @@ add_entry(kc,
             "Sat Jun 17 06:53:39 2017", /* solution stats (time [ms], gflops,
                                            time found (within descent),
                                            date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted
                                            descents, n runs per kernel,
                                            summmary over runs */
 
@@ -1435,7 +1435,7 @@ add_entry(kc,
             "Sat Jun 17 07:00:13 2017", /* solution stats (time [ms], gflops,
                                            time found (within descent),
                                            date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted
                                            descents, n runs per kernel,
                                            summmary over runs */
 
@@ -1454,6 +1454,6 @@ add_entry(kc,
             "Sat Jun 17 07:03:01 2017", /* solution stats (time [ms], gflops,
                                            time found (within descent),
                                            date found */
-            {360, 40, 3, SummStat::E::MAX}}});       /* find param: allotted time, allotted
+            {360, 40, 3, 1e12, SummStat::E::MAX}}});       /* find param: allotted time, allotted
                                            descents, n runs per kernel,
                                            summmary over runs */

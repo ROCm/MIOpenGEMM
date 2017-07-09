@@ -50,12 +50,15 @@ int main()
   size_t allotted_iterations = 30;
   // the number of times each kernel should be run during the search.
   // (tradeoff : many runs means less exploration with more accurate perf estimates)
-  size_t n_runs_per_kernel = 3;
-  // the statistic for averaging over the n_runs_per_kernel runs. Max/Mean/Median
+  size_t max_n_runs_per_kernel = 3;
+  // the statistic for averaging over the max_n_runs_per_kernel runs. Max/Mean/Median
   // (TODO : currently only Max supported)
   MIOpenGEMM::SummStat::E sumstat(MIOpenGEMM::SummStat::E::MAX);
+
+  double max_time_per_kernel = 1e12;
+
   MIOpenGEMM::FindParams  find_params(
-    allotted_time, allotted_iterations, n_runs_per_kernel, sumstat);
+    allotted_time, allotted_iterations, max_n_runs_per_kernel, max_time_per_kernel, sumstat);
 
   bool verbose = false;
   // path to a directory if you want a log of each of the searches
