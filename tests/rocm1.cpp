@@ -41,6 +41,9 @@ int main()
   // gives incorrect results. Unresolved. 
   //hyperstring = "A_MIC2_PAD0_PLU0_LIW0_MIW0_WOS0__B_MIC4_PAD0_PLU1_LIW0_MIW0_WOS0__C_UNR16_GAL1_PUN0_ICE1_NAW64_UFO0_MAC256_SKW9";
   //"tC0_tA1_tB0_colMaj0_m1601_n64_k1_lda1601_ldb269_ldc269_ws1_f32"
+  
+  //hang before single descent rocm 1.6 night run
+  //tC0_tA1_tB0_colMaj1_m512_n48000_k2816_lda2816_ldb2816_ldc512_ws1_f32
 
   
   std::string                             fout("");

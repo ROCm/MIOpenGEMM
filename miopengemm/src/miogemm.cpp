@@ -788,6 +788,11 @@ class OpenCLGemmEncapsulator
       mowri << x << "  ";
     }
     mowri << "\n\n";
+    
+    mowri << " -- snip -- -- -- snip --\n" << Endl;
+    mowri << v_tgsolns[best_soln_index].get_cache_entry_string();
+    mowri << " -- snip -- -- -- snip --" << Endl;
+
 
     return v_tgsolns[best_soln_index];
   }

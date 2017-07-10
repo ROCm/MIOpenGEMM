@@ -33,7 +33,8 @@ std::string get_hyperstring(std::string hyperstring = "")
 template <typename TFloat>
 MIOpenGEMM::Geometry get_geometry()
 {
-  return {"tC0_tA0_tB0_colMaj1_m1024_n8_k10000_lda1024_ldb10000_ldc1024_ws1_f32"};
+  //return {"tC0_tA0_tB0_colMaj1_m1024_n8_k10000_lda1024_ldb10000_ldc1024_ws1_f32"};
+  return {"tC0_tA1_tB0_colMaj1_m512_n48000_k2816_lda2816_ldb2816_ldc512_ws1_f32"};
 }
 
 MIOpenGEMM::Offsets get_offsets()
@@ -88,10 +89,10 @@ int main()
   MIOpenGEMM::outputwriting::OutputWriter mowri(true, fout != "", fout);
 
   // what test(s) are you running ?
-  bool test_print     = true;
-  bool test_benchgemm = true;
-  bool test_find      = false;
-  bool test_accuracy  = true;
+  bool test_print     = false;
+  bool test_benchgemm = false;
+  bool test_find      = true;
+  bool test_accuracy  = false;
   bool test_default   = false;
 
   typedef float tfloat;
@@ -132,10 +133,10 @@ int main()
   {
     // constraint string
     std::string constraints_string(
-      "A_MIC8_PAD1_PLU0_LIW0_MIW0_WOS0__B_MIC8_PAD1_PLU0_LIW0_MIW0_WOS0__C_UNR64");
+      "");//A_MIC8_PAD1_PLU0_LIW0_MIW0_WOS0__B_MIC8_PAD1_PLU0_LIW0_MIW0_WOS0__C_UNR64");
     if (test_find)
     {
-      float                   allotted_find_time     = 100.00;
+      float                   allotted_find_time     = 20.00;
       size_t                allotted_find_descents = 1000;
       size_t                max_n_runs_per_kernel      = 2;
       double max_time_per_kernel = 1e12;
