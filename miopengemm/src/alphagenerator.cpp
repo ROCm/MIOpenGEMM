@@ -29,11 +29,11 @@ namespace MIOpenGEMM
 namespace alphagen
 {
 
-class AlphaGenerator : basegen::BaseGenerator
+class AlphaGenerator : public basegen::BaseGenerator
 {
 
   private:
-  void set_usage()
+  virtual void set_usage() override final
   {
 
     /* TODO enum the WOS */ 
@@ -48,13 +48,13 @@ class AlphaGenerator : basegen::BaseGenerator
   public:
   AlphaGenerator(const hyperparams::HyperParams&     hp_,
                  const Geometry&                     gg_,
-                 const derivedparams::DerivedParams& dp_,
-                 std::string&                        type_)
-    : basegen::BaseGenerator(hp_, gg_, dp_, type_)
+                 const derivedparams::DerivedParams& dp_)
+                 //std::string&                        type_)
+    : basegen::BaseGenerator(hp_, gg_, dp_)//, type_)
   {
   }
 
-  virtual void setup() final override { set_usage(); }
+  //virtual void setup() final override { set_usage(); }
 
   private:
   void append_group_allocation_string(std::stringstream& ss)
@@ -187,17 +187,18 @@ TFLOAT previous_value; )"
                                   std::string        varname,
                                   std::string        bound_string,
                                   std::string        increment_string, 
-                                  char X)
+                                  Mat::E emat_x)
   {
-    ss << "for (TINT" << X << ' ' << varname << " = 0; " << varname << " < " << bound_string << "; "
+    ss << "for (TINT" << Mat::M.name[emat_x] << ' ' << varname << " = 0; " << varname << " < " << bound_string << "; "
        << increment_string << ")";
   }
 
-  void append_load_for_perp(char X, std::stringstream& ss)
+  void append_load_for_perp(Mat::E emat_x, std::stringstream& ss)
   {
 
-    Mat::E emat_x = hp.get_eMat_from_char(X);
 
+    char X = Mat::M.name[emat_x];
+    
     std::string bound_string = hp.at(emat_x).vs[Chi::E::LIW] == 0
                                  ? std::string("MICRO_") + X + "_TILE_PERP_UNROLL"
                                  : std::string("MACRO_TILE_LENGTH_") + X;
@@ -205,20 +206,19 @@ TFLOAT previous_value; )"
       hp.at(emat_x).vs[Chi::E::LIW] == 0
         ? "++mu_perp_i"
         : std::string("mu_perp_i += MACRO_TILE_LENGTH_") + X + "/MICRO_" + X + "_TILE_PERP_UNROLL";
-    append_loop_var_bound_incr(ss, "mu_perp_i", bound_string, increment_string, X);
+    append_loop_var_bound_incr(ss, "mu_perp_i", bound_string, increment_string, emat_x);
   }
 
-  void append_load_for_pll(char X, std::stringstream& ss)
+  void append_load_for_pll(Mat::E emat_x, std::stringstream& ss)
   {
 
-    Mat::E emat_x = hp.get_eMat_from_char(X);
 
     std::string bound_string =
-      hp.at(emat_x).vs[Chi::E::LIW] == 0 ? std::string("MICRO_") + X + "_TILE_PLL_UNROLL" : "UNROLL";
+      hp.at(emat_x).vs[Chi::E::LIW] == 0 ? std::string("MICRO_") + Mat::M.name[emat_x] + "_TILE_PLL_UNROLL" : "UNROLL";
     std::string increment_string =
       hp.at(emat_x).vs[Chi::E::LIW] == 0 ? "++mu_pll_i" : std::string("mu_pll_i += UNROLL/MICRO_") +
-                                                          X + "_TILE_PLL_UNROLL";
-    append_loop_var_bound_incr(ss, "mu_pll_i", bound_string, increment_string, X);
+                                                          Mat::M.name[emat_x] + "_TILE_PLL_UNROLL";
+    append_loop_var_bound_incr(ss, "mu_pll_i", bound_string, increment_string, emat_x);
   }
 
   void append_final_write_element(std::stringstream& ss,
@@ -266,7 +266,7 @@ TFLOAT previous_value; )"
       ss,
       "row",
       hp.at(Mat::E::A).vs[Chi::E::MIW] == 0 ? "MICRO_TILE_LENGTH_A" : "MACRO_TILE_LENGTH_A",
-      hp.at(Mat::E::A).vs[Chi::E::MIW] == 0 ? "++row" : "row += N_MICRO_IN_MACRO_A", 'A');
+      hp.at(Mat::E::A).vs[Chi::E::MIW] == 0 ? "++row" : "row += N_MICRO_IN_MACRO_A", Mat::E::A);
     ss << " {\n";
 
     ss << dp.pragma_unroll_string;
@@ -274,7 +274,7 @@ TFLOAT previous_value; )"
       ss,
       "col",
       hp.at(Mat::E::B).vs[Chi::E::MIW] == 0 ? "MICRO_TILE_LENGTH_B" : "MACRO_TILE_LENGTH_B",
-      hp.at(Mat::E::B).vs[Chi::E::MIW] == 0 ? "++col" : "col += N_MICRO_IN_MACRO_B", 'B');
+      hp.at(Mat::E::B).vs[Chi::E::MIW] == 0 ? "++col" : "col += N_MICRO_IN_MACRO_B", Mat::E::B);
     ss << " {\n";
   }
 
@@ -356,8 +356,8 @@ write_start_a + row >= MACRO_TILE_LENGTH_A*(N_GROUPS_A - 1)
                                       size_t           special_first_unroll)
   {
 
-    append_load_into_LDS_string('a', ss, final_unroll, special_first_unroll);
-    append_load_into_LDS_string('b', ss, final_unroll, special_first_unroll);
+    append_load_into_LDS_string(Mat::E::A, ss, final_unroll, special_first_unroll);
+    append_load_into_LDS_string(Mat::E::B, ss, final_unroll, special_first_unroll);
 
     ss <<
       R"(
@@ -367,13 +367,14 @@ barrier(CLK_LOCAL_MEM_FENCE); )";
 
   // simple for loops. Could consider unrolling like Cobalt,
   // but for the moment I use the optional pragma unroll
-  void append_load_into_LDS_string(char               x,
+  void append_load_into_LDS_string(Mat::E emat_x,
                                    std::stringstream& ss,
                                    size_t           final_unroll,
                                    size_t           special_first_unroll)
   {
 
-    char X = (x == 'a') ? 'A' : 'B';
+    char X = Mat::M.name[emat_x];
+    char x = Mat::M.lcase_name[emat_x];
 
     std::string n_jumps_string = dp.main_split_on_k == 0 ? "UNROLL" : "G_UNROLL";
 
@@ -409,9 +410,9 @@ barrier(CLK_LOCAL_MEM_FENCE); )";
     }
 
     ss << '\n' << ss_comment.str() << '\n' << dp.pragma_unroll_string;
-    append_load_for_perp(X, ss);
+    append_load_for_perp(emat_x, ss);
     ss << " {\n" << dp.pragma_unroll_string;
-    append_load_for_pll(X, ss);
+    append_load_for_pll(emat_x, ss);
     ss << " {\n"
        << "local" << X << "[MACRO_TILE_LENGTH_" << X << "_AND_PAD*(" << x
        << "_offset_pll_unroll + mu_pll_i) + (" << x << "_offset_perp_unroll + mu_perp_i)] = \n"
@@ -426,12 +427,10 @@ barrier(CLK_LOCAL_MEM_FENCE); )";
     ss << '\n';
   }
 
-  std::string get_c_work_item_next(char X)
+  std::string get_c_work_item_next(Mat::E emat_x)
   {
 
-    Mat::E emat_x = hp.get_eMat_from_char(X);
-
-    return (hp.at(emat_x).vs[Chi::E::MIW] != 0) ? "1" : (std::string("MICRO_TILE_LENGTH_") + X);
+    return (hp.at(emat_x).vs[Chi::E::MIW] != 0) ? "1" : (std::string("MICRO_TILE_LENGTH_") + Mat::M.name[emat_x]);
   }
 
   // We previously had a variable unroll_the_math_section = False.
@@ -441,8 +440,8 @@ barrier(CLK_LOCAL_MEM_FENCE); )";
 
     std::string number_of_unrolls = use_k_remaining == 0 ? "UNROLL" : "k_remaining";
     ss << "\nfor (TSHORT u = 0; u < " << number_of_unrolls << "; ++u){\n";
-    append_load_to_register_string('a', ss);
-    append_load_to_register_string('b', ss);
+    append_load_to_register_string(Mat::E::A, ss);
+    append_load_to_register_string(Mat::E::B, ss);
     ss << '\n';
     append_compute_string(ss);
 
@@ -465,11 +464,13 @@ barrier(CLK_LOCAL_MEM_FENCE); )";
     append_load_ab_into_LDS_string(ss, final_unroll, special_first_unroll);
 
     ss << '\n';
-    for (char X : {'A', 'B'})
+    for (Mat::E emat_x : {Mat::E::A, Mat::E::B})
     {
-      char x = (X == 'A') ? 'a' : 'b';
+      char X = Mat::M.name[emat_x];
+      char x = Mat::M.lcase_name[emat_x];
+
       ss << '\n'
-         << "l" << X << " = local" << X << " + micro_id_" << x << "*" << get_c_work_item_next(X)
+         << "l" << X << " = local" << X << " + micro_id_" << x << "*" << get_c_work_item_next(emat_x)
          << ";";
     }
 
@@ -533,9 +534,10 @@ if (group_id_z == n_work_groups_with_1_more && k_remaining > 0){
        << "rC[row][col] += rA[row]*rB[col];   \n}\n}\n";
   }
 
-  void append_load_to_register_string(char x, std::stringstream& ss)
+  void append_load_to_register_string(Mat::E emat_x, std::stringstream& ss)
   {
-    char X = (x == 'a') ? 'A' : 'B';
+    char X = Mat::M.name[emat_x];
+    
     ss << '\n' << dp.pragma_unroll_string;
     ss << "for (TSHORT i = 0; i < MICRO_TILE_LENGTH_" << X << "; ++i){\n";
     ss << "r" << X << "[i] = l" << X << "["
@@ -722,29 +724,25 @@ TINTK k_plus_offset = __K__ + unroll_offset;
     }
   }
 
-  void append_id_string_sym(std::stringstream& ss, char x)
+  void append_id_string_sym(std::stringstream& ss, Mat::E emat_x)
   {
 
-    // set upper - lower case versions
-    char X = 'Z';
-    X      = (x == 'a') ? 'A' : ((x == 'b') ? 'B' : x);
-    x      = (x == 'B') ? 'b' : ((x == 'A') ? 'a' : x);
-
-    Mat::E emat_x = hp.get_eMat_from_char(x);
-
+    char X = Mat::M.name[emat_x];
+    char x = Mat::M.lcase_name[emat_x];
+    
     ss << '\n';
 
-    if (X == 'A')
+    if (emat_x == Mat::E::A)
       ss << "/* LDS memory */\n";
     ss << "__local TFLOAT local" << X << "[N_ELEMENTS_IN_PADDED_" << X << "_UNROLL];\n";
-    if (X == 'A')
+    if (emat_x == Mat::E::A)
       ss << "/* jumping pointer to locate the LDS to load into register memory "
             "*/\n";
     ss << "__local const TFLOAT * l" << X << ";\n";
-    if (X == 'A')
+    if (emat_x == Mat::E::A)
       ss << "/* register memory */ \n";
     ss << "TFLOAT r" << X << "[MICRO_TILE_LENGTH_" << X << "];\n";
-    if (X == 'A')
+    if (emat_x == Mat::E::A)
       ss << "/* Define which part of the C macro-tile this thread will process "
             "(% / or / % ? "
             "doesn't seem to make much difference) */\n";
@@ -752,7 +750,7 @@ TINTK k_plus_offset = __K__ + unroll_offset;
        << X << "; \n";
     if (dp.main_use_edge_trick != 0)
     {
-      if (X == 'A')
+      if (emat_x == Mat::E::A)
         ss << "/* tile on edge : pulling it in so no C overflow */\n";
       ss << "if (group_id_" << x << " == N_GROUPS_" << X << " - 1){\n";
       ss << "write_macro_tile_start_" << x << " -= (MACRO_TILE_LENGTH_" << X
@@ -760,13 +758,13 @@ TINTK k_plus_offset = __K__ + unroll_offset;
       ss << "}\n";
     }
     ss << "const TINT" << X << " write_start_" << x << " = write_macro_tile_start_" << x << " + micro_id_"
-       << x << "*" << get_c_work_item_next(X) << ";\n";
+       << x << "*" << get_c_work_item_next(emat_x) << ";\n";
 
     ss << "\n\n\n";
 
     if (hp.at(emat_x).vs[Chi::E::WOS] == Scratch::E::COPY || hp.at(emat_x).vs[Chi::E::WOS] == Scratch::E::NFORM)
     {
-      if (X == 'A')
+      if (emat_x == Mat::E::A)
         ss << "/* from workspace */\n";
       ss << "const TFLOAT * restrict " << x << " = w + w_offset + GLOBAL_OFFSET_" << X << ";\n";
     }
@@ -776,7 +774,7 @@ TINTK k_plus_offset = __K__ + unroll_offset;
       ss << x << " += " << x << "_offset;\n";
     }
 
-    if (X == 'A')
+    if (emat_x == Mat::E::A)
       ss << "/* Define what of A this thread will load from unroll tile in "
             "global to LDS (% / or / "
             "% ? looks like no difference ) */\n";
@@ -785,7 +783,7 @@ TINTK k_plus_offset = __K__ + unroll_offset;
     ss << "const TINT" << X << " perp_unroll_" << x << "_load_id = local_id / N_MICRO_" << X
        << "_TILES_PLL_UNROLL;\n";
 
-    if (X == 'A')
+    if (emat_x == Mat::E::A)
       ss << "/* Define which part of A this thread will read from (% / "
             "or / % ? doesn't "
             "seem to make much difference) */\n";
@@ -793,7 +791,7 @@ TINTK k_plus_offset = __K__ + unroll_offset;
        << X << "; \n";
     if (dp.main_use_edge_trick != 0 && hp.at(emat_x).vs[Chi::E::WOS] != Scratch::E::NFORM)
     {
-      if (X == 'A')
+      if (emat_x == Mat::E::A)
         ss << "/* tile on edge and A is not normal form: pulling in read zone "
               "so no C overflow */\n";
       ss << "if (group_id_" << x << " == N_GROUPS_" << X << " - 1){\n";
@@ -802,13 +800,13 @@ TINTK k_plus_offset = __K__ + unroll_offset;
       ss << "}\n";
     }
 
-    if (X == 'A')
+    if (emat_x == Mat::E::A)
       ss << "/* move to corner of the region required by the macro tile */\n";
     ss << x << " += read_macro_tile_start_" << x << "*MACRO_STRIDE_PERP_K_" << X << ";\n";
 
     if (dp.main_split_on_k != 0)
     {
-      if (X == 'A')
+      if (emat_x == Mat::E::A)
         ss << R"(/* a points to top left of region required, but this work group  */
 /* might not process the whole of a. So turn 90 and move to the start for this wg */
 )";
@@ -817,7 +815,7 @@ TINTK k_plus_offset = __K__ + unroll_offset;
 
     if (hp.at(Mat::E::C).vs[NonChi::E::UFO] != 0)
     {
-      if (X == 'A')
+      if (emat_x == Mat::E::A)
         ss << "/* UFO != 0, so offsetting the unroll */\n";
       ss << x << " -= unroll_offset*STRIDE_PLL_K_" << X << ";\n";
     }
@@ -829,7 +827,7 @@ TINTK k_plus_offset = __K__ + unroll_offset;
       str_n_pll  = std::string("MICRO_") + X + "_TILE_PLL_UNROLL *";
       str_n_perp = std::string("MICRO_") + X + "_TILE_PERP_UNROLL *";
     }
-    if (X == 'A')
+    if (emat_x == Mat::E::A)
       ss << "/* make the micro adjustments (A) for the thread, getting ready "
             "to load */\n";
     ss << "const TINT" << X << " " << x << "_offset_pll_unroll = " << str_n_pll << " pll_unroll_" << x
@@ -852,33 +850,35 @@ TINTK k_plus_offset = __K__ + unroll_offset;
 )";
   }
 
-  void add_predefine_chiral(char x, std::stringstream& ss)
+  void add_predefine_chiral(Mat::E emat_x, std::stringstream& ss)
   {
 
-    Mat::E emat_x = hp.get_eMat_from_char(x);
+    // TODO : should be X ... (upper case) ...
+    char x = Mat::M.name[emat_x];
 
-    auto defcom = [x, &ss](std::string&& comment) {
-      if (x == 'A')
+    auto defcom = [emat_x, &ss](std::string&& comment) {
+      if (emat_x == Mat::E::A)
         ss << "/*"
            << " " << comment << " : */\n";
     };
 
-    bool withcomments   = x == 'A';
+    bool withcomments  = emat_x == Mat::E::A;
+    
     bool with_x_in_name = true;
-    append_unroll_block_geometry(x, ss, withcomments, with_x_in_name);
+    append_unroll_block_geometry(emat_x, ss, withcomments, with_x_in_name);
 
-    append_stride_definitions(x, ss, hp.at(emat_x).vs[Chi::E::WOS], withcomments, "", with_x_in_name);
+    append_stride_definitions(emat_x, ss, hp.at(emat_x).vs[Chi::E::WOS], withcomments, "", with_x_in_name);
 
-    if (x == 'A')
+    if (emat_x == Mat::E::A)
       ss << "/* micro tiles define the pattern of C that individual threads "
             "process */\n";
     ss << "#define MICRO_TILE_LENGTH_" << x << " " << hp.at(emat_x).vs[Chi::E::MIC] << '\n';
 
-    if (x == 'A')
+    if (emat_x == Mat::E::A)
       ss << "/* the amount of padding of " << x
          << " in LDS (local) memory, to avoid bank comflicts */\n";
     ss << "#define PAD_LDS_" << x << "  " << hp.at(emat_x).vs[Chi::E::PAD] << '\n';
-    if (x == 'A')
+    if (emat_x == Mat::E::A)
       ss << "/* whether loading of " << x << " from global should try to be long in direction of "
                                              "unroll (1) or perpendicular to it (0) */\n";
     ss << "#define WORK_ITEM_LOAD_" << x << "_PLL_TO_UNROLL " << hp.at(emat_x).vs[Chi::E::PLU]
@@ -906,19 +906,19 @@ TINTK k_plus_offset = __K__ + unroll_offset;
     defcom("MACRO_TILE_LENGTH_A / MICRO_A_TILE_PLL_UNROLL");
     ss << "#define N_MICRO_" << x << "_TILES_PLL_UNROLL "
        << dp.at(emat_x).main_n_micro_tiles_pll_unroll << " \n";
-    if (x == 'A')
+    if (emat_x == Mat::E::A)
       ss << "/* Whether the load tiles are interwoven (ala Cobalt, (1)) or if "
             "the load tiles are "
             "truly contiguous tiles (0) */\n";
     ss << "#define LOAD_TO_LDS_INTERWOVEN_" << x << " " << hp.at(emat_x).vs[Chi::E::LIW] << '\n';
-    if (x == 'A')
+    if (emat_x == Mat::E::A)
       ss << "/* Whether micro tile being processed by a compute item is "
             "interwoven with other "
             "micro tiles (ala Cobalt, (1)) or if the micro tiles are "
             "contiguous in C */\n";
     ss << "#define C_MICRO_TILES_INTERWOVEN_" << x << " " << hp.at(emat_x).vs[Chi::E::MIW] << '\n';
 
-    if (x == 'A')
+    if (emat_x == Mat::E::A)
       ss << "/* depending on whether loads to c are interwoven, set as MIW == "
             "0 ? 1 : "
             "N_MICRO_IN_MACRO_A */\n";
@@ -928,7 +928,7 @@ TINTK k_plus_offset = __K__ + unroll_offset;
 
     if (hp.at(emat_x).vs[Chi::E::WOS] != Scratch::E::UNUSED)
     {
-      if (x == 'A')
+      if (emat_x == Mat::E::A)
         ss << "/* global memory offset, depends on type of copy of both a,b "
               "*/\n";
       ss << "#define GLOBAL_OFFSET_" << x << " " << dp.at(emat_x).cw_global_offset;
@@ -939,7 +939,7 @@ TINTK k_plus_offset = __K__ + unroll_offset;
 
   public:
   // the "main" kernel
-  KernelString get_kernelstring()
+  virtual KernelString get_kernelstring() override final
   {
 
     std::stringstream ss;
@@ -960,11 +960,12 @@ TINTK k_plus_offset = __K__ + unroll_offset;
 
 )";
 
-    for (auto x : {'A', 'B'})
+    for (auto emat_x : {Mat::E::A, Mat::E::B})
+
     {
-      ss << "\n/* ********************************** specific to " << x
+      ss << "\n/* ********************************** specific to " << Mat::M.name[emat_x]
          << " *************************************** */";
-      add_predefine_chiral(x, ss);
+      add_predefine_chiral(emat_x, ss);
     }
     
     ss << "\n/* integer types for navigating each of the memory buffers */\n";
@@ -1071,10 +1072,10 @@ TINTK k_plus_offset = __K__ + unroll_offset;
     append_id_string_nonsym(ss);
     ss << "\n\n/* *************************** A setup "
           "************************** */";
-    append_id_string_sym(ss, 'A');
+    append_id_string_sym(ss, Mat::E::A);
     ss << "\n\n/* *************************** B setup "
           "************************** */";
-    append_id_string_sym(ss, 'B');
+    append_id_string_sym(ss, Mat::E::B);
 
     ss << "\n\n\n";
 
@@ -1108,17 +1109,26 @@ TINTK k_plus_offset = __K__ + unroll_offset;
             dp.main_global_work_size,
             dp.main_n_work_items_per_workgroup};
   }
+
+
+virtual void set_type() override final{
+  type = dp.main_does_beta_c_inc ? "betac_alphaab" : "alphaab";
+}
+
+virtual void setup_final() override final{
+  
+}
+
 };
+
+
 
 KernelString get_alpha_kernelstring(const hyperparams::HyperParams&     hp,
                                     const Geometry&                     gg,
                                     const derivedparams::DerivedParams& dp)
 {
-
-  std::string    type = dp.main_does_beta_c_inc ? "betac_alphaab" : "alphaab";
-  AlphaGenerator ag(hp, gg, dp, type);
+  AlphaGenerator ag(hp, gg, dp);
   ag.setup();
-
   return ag.get_kernelstring();
 }
 }

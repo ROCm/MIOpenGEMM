@@ -353,7 +353,7 @@ std::string SubG::get_edges_string(size_t hpi)
     {
       ss << v << " ";
     }
-    ss << "\n";
+    ss << '\n';
   }
   return ss.str();
 }
@@ -367,7 +367,7 @@ std::string get_generic_range_string(std::string                  opener,
   {
     ss << x << " ";
   }
-  ss << "\n";
+  ss << '\n';
   return ss.str();
 }
 
@@ -393,7 +393,7 @@ std::string SubG::get_string(size_t hpi)
   {
     ss << x << " ";
   }
-  ss << "\n";
+  ss << '\n';
   return ss.str();
 }
 
@@ -924,19 +924,6 @@ std::tuple<bool, std::string> HyperParams::in_graph()
   return std::make_tuple(constraints_satisfied, in_graph_string);
 }
 
-Mat::E HyperParams::get_eMat_from_char(char X) const
-{
-  X = (X == 'a' ? 'A' : X);
-  X = (X == 'b' ? 'B' : X);
-  X = (X == 'c' ? 'C' : X);
 
-  if (X != 'A' && X != 'B' && X != 'C')
-  {
-    throw miog_error("Problem converting X (char) to Mat::E enumerated "
-                     "type in get_eMat_from_char : " +
-                     std::to_string(X));
-  }
-  return static_cast<Mat::E>(Mat::M.val.at(X));
-}
 }
 }

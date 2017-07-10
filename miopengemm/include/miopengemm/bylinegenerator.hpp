@@ -30,13 +30,13 @@ class ByLineGenerator : public prepgen::PrepGenerator
   size_t get_n_work_groups() override final;
 
   public:
-  ByLineGenerator(const hyperparams::HyperParams&     hp_,
+  ByLineGenerator(Mat::E emat_x,
+                  const hyperparams::HyperParams&     hp_,
                   const Geometry&                     gg_,
-                  const derivedparams::DerivedParams& dp_,
-                  std::string                         type_);
+                  const derivedparams::DerivedParams& dp_);
 
-  KernelString get_kernelstring() final override;
-  void         setup() final override;
+  virtual KernelString get_kernelstring() final override;
+  virtual void setup_final() final override;
 
   private:
   void append_description_string(std::stringstream& ss);

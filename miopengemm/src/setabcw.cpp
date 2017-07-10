@@ -44,35 +44,12 @@ void fill_uni(std::vector<TFloat>& v, size_t r_small, size_t r_big)
 }
 
 void set_nelmts_abc(const Geometry& gg, const Offsets& toff, size_t & n_a, size_t & n_b, size_t & n_c){
-  n_a = gg.ldX[Mat::E::A] * (gg.tX[Mat::E::A] == gg.isColMajor ? gg.m : gg.k) + toff.oa + toff.tail_off_a;
-  n_b = gg.ldX[Mat::E::B] * (gg.tX[Mat::E::B] == gg.isColMajor ? gg.k : gg.n) + toff.ob + toff.tail_off_b;
-  n_c = gg.ldX[Mat::E::C] * (gg.tX[Mat::E::C] == gg.isColMajor ? gg.m : gg.n) + toff.oc + toff.tail_off_c;
+  n_a = gg.ldX[Mat::E::A] * (gg.tX[Mat::E::A] == gg.isColMajor ? gg.m : gg.k) + toff.offsets[Mem::E::A] + toff.tails[Mem::E::A];
+  n_b = gg.ldX[Mat::E::B] * (gg.tX[Mat::E::B] == gg.isColMajor ? gg.k : gg.n) + toff.offsets[Mem::E::B] + toff.tails[Mem::E::B];
+  n_c = gg.ldX[Mat::E::C] * (gg.tX[Mat::E::C] == gg.isColMajor ? gg.m : gg.n) + toff.offsets[Mem::E::C] + toff.tails[Mem::E::C];
 }
 
 
-  //size_t n_a, n_b, n_c;
-  //set_nelmts_abc(gg, toff, n_a, n_b, n_c);
-  //size_t n_elmnts_limit = 20000 * 10000;
-  //if (n_a > n_elmnts_limit || n_b > n_elmnts_limit || n_c > n_elmnts_limit)
-  //{
-    //std::stringstream ss;
-    //ss << "currently, this code only generates random matrices of size less "
-       //<< "than " << n_elmnts_limit << " elements. The request here is for n_a=" << n_a << " n_b=" << n_b << " n_c= " << n_c;
-    //throw miog_error(ss.str());
-  //}
-  //// fill matrices with random floats.
-  //// Sometimes it seems to be important
-  //// to fill them with random floats,
-  //// as if they're integers, the kernel
-  //// can sometimes cheat! (runs faster)
-  //v_a.resize(n_a);
-  //v_b.resize(n_b);
-  //v_c.resize(n_c);
-  
-  //fill_uni<TFloat>(v_a, n_a - toff.tail_off_a, n_a);
-  //fill_uni<TFloat>(v_b, n_b - toff.tail_off_b, n_b);
-  //fill_uni<TFloat>(v_c, n_c - toff.tail_off_c, n_c);
-//}
 
 
 template <typename TFloat>
@@ -112,9 +89,9 @@ void set_multigeom_abc(std::vector<TFloat>& v_a,
   v_b.resize(n_b);
   v_c.resize(n_c);
   
-  fill_uni<TFloat>(v_a, n_a - toff.tail_off_a, n_a);
-  fill_uni<TFloat>(v_b, n_b - toff.tail_off_b, n_b);
-  fill_uni<TFloat>(v_c, n_c - toff.tail_off_c, n_c);
+  fill_uni<TFloat>(v_a, n_a - toff.tails[Mem::E::A], n_a);
+  fill_uni<TFloat>(v_b, n_b - toff.tails[Mem::E::B], n_b);
+  fill_uni<TFloat>(v_c, n_c - toff.tails[Mem::E::C], n_c);
   
 }
 
@@ -141,7 +118,7 @@ void set_abcw(std::vector<TFloat>& v_a,
 
   set_abc<TFloat>(v_a, v_b, v_c, gg, toff);
 
-  size_t n_workspace = gg.workspace_size + toff.oworkspace;
+  size_t n_workspace = gg.workspace_size + toff.offsets[Mem::E::W] + toff.tails[Mem::E::W];
 
   v_workspace.resize(n_workspace);
   fill_uni(v_workspace, n_workspace, n_workspace);

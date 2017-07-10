@@ -50,45 +50,59 @@ static const MultiFloatType m_beta(default_beta);
 class GPUMems
 {
   private:
-  cl_mem a_gpu;
-  cl_mem b_gpu;
-  cl_mem c_gpu;
-  cl_mem workspace_gpu;
+  
+  std::array<cl_mem, Mem::E::N> cl_mems;
 
   public:
-  GPUMems(cl_mem a_gpu_, cl_mem b_gpu_, cl_mem c_gpu_, cl_mem workspace_gpu_)
-    : a_gpu(a_gpu_), b_gpu(b_gpu_), c_gpu(c_gpu_), workspace_gpu(workspace_gpu_)
-  {
+  GPUMems(cl_mem a_gpu_, cl_mem b_gpu_, cl_mem c_gpu_, cl_mem workspace_gpu_){
+  cl_mems[Mem::E::A] = a_gpu_;
+  cl_mems[Mem::E::B] = b_gpu_;
+  cl_mems[Mem::E::C] = c_gpu_;    
+  cl_mems[Mem::E::W] = workspace_gpu_;      
   }
+    //: a_gpu(a_gpu_), b_gpu(b_gpu_), c_gpu(c_gpu_), workspace_gpu(workspace_gpu_)
+  //{
+  //}
 
-  cl_mem& operator[](char x)
+  cl_mem& operator[](Mem::E x)
   {
-    if (x == 'a')
-    {
-      return a_gpu;
-    }
-    else if (x == 'b')
-    {
-      return b_gpu;
-    }
-    else if (x == 'c')
-    {
-      return c_gpu;
-    }
-    else if (x == 'w')
-    {
-      return workspace_gpu;
-    }
-
-    else
-    {
-      std::stringstream ss;
-      ss << "Unrecognised char passed to operator[] of GPUMems. Should be one "
-         << "of a,b,c,w, not " << x;
-      throw miog_error(ss.str());
-    }
+    // TODO : bound check here if in debug mode.
+    return cl_mems[x];
   }
 };
+
+  //cl_mem a_gpu;
+  //cl_mem b_gpu;
+  //cl_mem c_gpu;
+  //cl_mem workspace_gpu;
+
+
+    //if (x == Mem::E::A)
+    //{
+      //return a_gpu;
+    //}
+    //else if (x == Mem::E::B)
+    //{
+      //return b_gpu;
+    //}
+    //else if (x == Mem::E::C)
+    //{
+      //return c_gpu;
+    //}
+    //else if (x == Mem::E::W)
+    //{
+      //return workspace_gpu;
+    //}
+
+    //else
+    //{
+      //std::stringstream ss;
+      //ss << "Unrecognised Mem::E passed to operator[] of GPUMems. Should be one "
+         //<< "of Mem::E::A, Mem::E::B, Mem::E::C, Mem::E::W not " << x;
+      //throw miog_error(ss.str());
+    //}
+  //}
+
 
 class OpenCLGemmEncapsulator
 {
@@ -106,7 +120,6 @@ class OpenCLGemmEncapsulator
   private:
   outputwriting::OutputWriter& mowri;
   // special purpose output writer
-  outputwriting::OutputWriter mowri_tracker;
   // vector of times over a set of runs on core loop
   std::vector<float> v_t_total;
   float              median_time;
@@ -136,10 +149,9 @@ class OpenCLGemmEncapsulator
                          cl_mem                       workspace_gpu_,
                          std::string                  constraints_string_,
                          bool                         full_constraints_expected,
-                         outputwriting::OutputWriter& mowri_,
-                         bool                         use_mowri_tracker)
-    :
-
+                         outputwriting::OutputWriter& mowri_):
+                         
+ 
       command_queue(command_queue_),
       gg(gg_),
       toff(toff_),
@@ -149,8 +161,7 @@ class OpenCLGemmEncapsulator
       constraints_string(constraints_string_),
       graph(gg, devinfo, constraints_string_, full_constraints_expected),
 
-      mowri(mowri_),
-      mowri_tracker(use_mowri_tracker, false, "")
+      mowri(mowri_)
   {
 
     tk_kernels.resize(BasicKernelType::E::N);
@@ -179,7 +190,7 @@ class OpenCLGemmEncapsulator
 
   void address_check_valid()
   {
-    if (gpum['c'] == gpum['a'] || gpum['c'] == gpum['b'])
+    if (gpum[Mem::E::C] == gpum[Mem::E::A] || gpum[Mem::E::C] == gpum[Mem::E::B])
     {
       throw miog_error("in address_check_valid, c should be distinct from a and b for gemm, "
                        "otherwise race condition arises (one thread writes its result to c "
@@ -187,19 +198,19 @@ class OpenCLGemmEncapsulator
                        "another one has finished reading from c)");
     }
 
-    if (gpum['c'] == nullptr)
+    if (gpum[Mem::E::C] == nullptr)
     {
       throw miog_error("in address_check_valid, c should not be nullptr");
     }
 
-    if (gpum['w'] == nullptr && gg.workspace_size != 0)
+    if (gpum[Mem::E::W] == nullptr && gg.workspace_size != 0)
     {
       throw miog_error("in address_check_valid, pointer to workspace memory is "
                        "the nullptr, but "
                        "workspace_size is not zero");
     }
 
-    if (gpum['w'] != nullptr && gg.workspace_size == 0)
+    if (gpum[Mem::E::W] != nullptr && gg.workspace_size == 0)
     {
       throw miog_error("in address_check_valid, pointer to workspace memory is not the "
                        "nullptr, "
@@ -209,8 +220,8 @@ class OpenCLGemmEncapsulator
                        "workspace used. The workspace offset should be zero too in this case ");
     }
 
-    if (gpum['w'] != nullptr &&
-        (gpum['w'] == gpum['a'] || gpum['w'] == gpum['b'] || gpum['w'] == gpum['c']))
+    if (gpum[Mem::E::W] != nullptr &&
+        (gpum[Mem::E::W] == gpum[Mem::E::A] || gpum[Mem::E::W] == gpum[Mem::E::B] || gpum[Mem::E::W] == gpum[Mem::E::C]))
     {
       throw miog_error("in address_check_valid, pointer to workspace memory is "
                        "not the nullptr, "
@@ -221,7 +232,7 @@ class OpenCLGemmEncapsulator
   void address_check_valid_and_reliable()
   {
     address_check_valid();
-    if (gpum['a'] == gpum['b'])
+    if (gpum[Mem::E::A] == gpum[Mem::E::B])
     {
       throw miog_error("in address_check_valid_and_reliable, a and b are the "
                        "same. this will "
@@ -238,12 +249,12 @@ class OpenCLGemmEncapsulator
     // parameter order rule: {a, oa, b, ob, c, oc, ws, ows}, alpha, beta
     std::vector<std::pair<size_t, const void*>> arg_sizes_values;
 
-    for (auto& x : {'a', 'b', 'c', 'w'})
+    for (auto x : {Mem::E::A, Mem::E::B, Mem::E::C, Mem::E::W})    
     {
       if (type.uses(x) == true)
       {
         arg_sizes_values.emplace_back(sizeof(cl_mem), (void*)&(gpum[x]));
-        arg_sizes_values.emplace_back(sizeof(size_t), &(toff[x]));
+        arg_sizes_values.emplace_back(sizeof(size_t), &(toff.offsets[x]));
       }
     }
 
@@ -442,24 +453,16 @@ class OpenCLGemmEncapsulator
     std::string backspaces = std::string(old_comment_string.size(), '\b');
     /* TODO : determine where to use mowri_tracker,
      * and enable to path to here */
-    mowri_tracker << backspaces << new_comment_string << Flush;
+    mowri.tracker << backspaces << new_comment_string << Flush;
   }
 
   openclutil::OpenCLResult core_gemm_loop(size_t max_n_runs, double max_time, bool print_asap)
   {
 
     update_total_elapsed_seconds();
-    if (mowri_tracker.to_terminal == true && mowri.to_terminal == true)
-    {
-      throw miog_error("either one of mowri_tracker.to_terminal and "
-                       "mowri.to_terminal must be false");
-    }
 
     reset_v_times();
-    if (mowri_tracker.to_terminal == true)
-    {
-      mowri_tracker_print();
-    }
+    mowri_tracker_print();
 
     std::vector<std::string> indi_run_strings;
     if (print_asap == true)
@@ -1045,7 +1048,7 @@ cl_mem get_copy(cl_command_queue   command_queue,
   cl_mem   c_copied;
   cl_event c_copy_event;
 
-  size_t n_c = gg.ldX[Mat::E::C] * (gg.tX[Mat::E::C] == gg.isColMajor ? gg.m : gg.n) + toff.oc;
+  size_t n_c = gg.ldX[Mat::E::C] * (gg.tX[Mat::E::C] == gg.isColMajor ? gg.m : gg.n) + toff.offsets[Mem::E::C];
   size_t c_memsize = gg.derived.float_size_bytes * n_c;
   openclutil::cl_set_buffer_from_command_queue(c_copied,
                                                command_queue,
@@ -1096,8 +1099,7 @@ Solution find(cl_command_queue             command_queue,
               const Geometry&              gg,
               const Offsets&               toff,
               outputwriting::OutputWriter& mowri,
-              bool                         c_is_const,
-              bool                         use_mowri_tracker)
+              bool                         c_is_const)
 {
 
   gg.check_ldx_consistent();
@@ -1125,8 +1127,7 @@ Solution find(cl_command_queue             command_queue,
                               workspace,
                               constraints_string,
                               full_constraints_expected,
-                              mowri,
-                              use_mowri_tracker);
+                              mowri);
   return oger.find(find_params);
 }
 
@@ -1191,7 +1192,7 @@ Solution get_default(const Geometry& gg)
 
   auto                         cached_soln = get_generic_cached_solution(constraints_string, gg);
   openclutil::OpenCLDeviceInfo devinfo;
-  outputwriting::OutputWriter  mowri(false, false, "");
+  outputwriting::OutputWriter  mowri(Ver::E::SILENT, "");
   hyperparams::Graph           graph(gg, devinfo, cached_soln.hyperstring, false);
   hyperparams::HyperParams     hp(graph);
 
@@ -1261,7 +1262,6 @@ void benchgemm(cl_command_queue             command_queue,
     openclutil::SafeClMem c_copied("copy of c in find");
     c_copied.clmem = c_cop;
 
-    bool                   use_mowri_tracker = false;
     OpenCLGemmEncapsulator oger(command_queue,
                                 gg,
                                 toff,
@@ -1271,14 +1271,13 @@ void benchgemm(cl_command_queue             command_queue,
                                 workspace_gpu,
                                 hyperstring,
                                 full_constraints_expected,
-                                mowri,
-                                use_mowri_tracker);
+                                mowri);
     oger.benchgemm(max_n_runs, max_time);
   }
 
   else
   {
-    bool                   use_mowri_tracker = false;
+
     OpenCLGemmEncapsulator oger(command_queue,
                                 gg,
                                 toff,
@@ -1288,8 +1287,8 @@ void benchgemm(cl_command_queue             command_queue,
                                 workspace_gpu,
                                 hyperstring,
                                 full_constraints_expected,
-                                mowri,
-                                use_mowri_tracker);
+                                mowri);
+
     oger.benchgemm(max_n_runs, max_time);
   }
 }
@@ -1301,7 +1300,7 @@ Solution find(float            allotted_time,
               cl_mem           c,
               bool             enforce_determinism,
               const Geometry&  tgg,
-              bool             verbose,
+//              bool             verbose,
               bool             with_warnings)
 {
 
@@ -1325,10 +1324,9 @@ Solution find(float            allotted_time,
     constraints_string += "__C_ICE1";
   }
 
-  Offsets toff(0, 0, 0, 0, 0, 0, 0);
+  Offsets toff(0, 0, 0, 0, 0, 0, 0, 0);
 
-  bool                        use_mowri_tracker = false;
-  outputwriting::OutputWriter mowri(verbose, false, "");
+  outputwriting::OutputWriter mowri(Ver::E::TERMINAL, "");
 
   bool c_is_const = true;
 
@@ -1390,8 +1388,7 @@ Solution find(float            allotted_time,
                            tgg,
                            toff,
                            mowri,
-                           c_is_const,
-                           use_mowri_tracker);
+                           c_is_const);
 
     if (std::get<0>(pair) == false)
     {

@@ -92,9 +92,9 @@ void gemm_3fors_generic_cpu(const Geometry& gg,
   // NN, TN, NT will have different FInner template parameters
   // TT should have have been redirected to NN at this point
 
-  a += toff.oa;
-  b += toff.ob;
-  c += toff.oc;
+  a += toff.offsets[Mem::E::A];
+  b += toff.offsets[Mem::E::B];
+  c += toff.offsets[Mem::E::C];
 
   FInner finner;
 
@@ -220,8 +220,8 @@ void gemms_cpu(Geometry                     gg,
                         gg.n,
                         gg.ldX[Mat::E::A],
                         gg.ldX[Mat::E::B],
-                        toff.oa,
-                        toff.ob,
+                        toff.offsets[Mem::E::A],
+                        toff.offsets[Mem::E::B],
                         a,
                         b);
   gg.tX[Mat::E::A] = tA;

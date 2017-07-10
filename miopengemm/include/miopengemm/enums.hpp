@@ -17,6 +17,7 @@ class EnumMapper{
   public:
     size_t n;
     std::vector<T> name;
+    std::vector<T> lcase_name;
     std::unordered_map<T, size_t> val;
     EnumMapper(const std::vector<T> & name_); 
 };
@@ -139,6 +140,18 @@ enum E{
   UNUSED = 0,
   COPY,
   NFORM 
+};
+}
+
+namespace Ver
+{
+enum E{
+  SILENT = 0,  // no output anywhere, absolute silence
+  TERMINAL,    // main output to terminal
+  SPLIT,       // main output to terminal and file
+  TOFILE,      // main output to file
+  TRACK,       // tracker output to terminal
+  STRACK,      // tracker output to terminal, main output to file
 };
 }
 

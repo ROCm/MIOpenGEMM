@@ -15,34 +15,17 @@ class NormalFormGenerator : public prepgen::PrepGenerator
 {
 
   public:
-  NormalFormGenerator(const hyperparams::HyperParams&     hp_,
+  NormalFormGenerator(Mat::E emat_x_, 
+                      const hyperparams::HyperParams&     hp_,
                       const Geometry&                     gg_,
-                      const derivedparams::DerivedParams& dp_,
-                      std::string                         type_)
-    : prepgen::PrepGenerator(hp_, gg_, dp_, type_)
+                      const derivedparams::DerivedParams& dp_)
+    : prepgen::PrepGenerator(emat_x_, hp_, gg_, dp_)
   {
   }
 
-  virtual void setup() override final
+  virtual void set_type() override final
   {
-
-    if (type.compare("nforma") == 0)
-    {
-      initialise_matrixtype('a');
-    }
-
-    else if (type.compare("nformb") == 0)
-    {
-      initialise_matrixtype('b');
-    }
-
-    else
-    {
-      throw miog_error("Unrecognised type in normalformgenerator.cpp : " + type +
-                       ". should be either nforma or nformb \n");
-    }
-
-    set_usage_from_matrixchar();
+    type = "nform" + mchar;
   }
 
   size_t get_local_work_size() override final { return dp.at(emat_x).cw2_local_work_size; }
@@ -54,7 +37,7 @@ class NormalFormGenerator : public prepgen::PrepGenerator
 
   void append_copy_string(std::stringstream& ss)
   {
-    ss << "w[mu_pll_i*WRITE_STRIDE_PLL_K + mu_perp_i*WRITE_STRIDE_PERP_K] = " << matrixchar
+    ss << "w[mu_pll_i*WRITE_STRIDE_PLL_K + mu_perp_i*WRITE_STRIDE_PERP_K] = " << mchar
        << "[mu_pll_i*READ_STRIDE_PLL_K + mu_perp_i*READ_STRIDE_PERP_K];";
   }
 
@@ -68,11 +51,11 @@ class NormalFormGenerator : public prepgen::PrepGenerator
        << "#define UNROLL " << hp.at(Mat::E::C).vs[NonChi::E::UNR] << '\n'
        << "#define __K__ " << gg.k << '\n';
 
-    append_unroll_block_geometry(matrixchar, ss, false, false);
+    append_unroll_block_geometry(emat_x, ss, false, false);
     ss << '\n';
-    append_stride_definitions(MATRIXCHAR, ss, 0, false, "READ_", false);
+    append_stride_definitions(emat_x, ss, 0, false, "READ_", false);
     ss << '\n';
-    append_stride_definitions(MATRIXCHAR, ss, 2, false, "WRITE_", false);
+    append_stride_definitions(emat_x, ss, 2, false, "WRITE_", false);
 
     ss << '\n'
        << "#define LOAD_PLL_TO_UNROLL " << dp.at(emat_x).cw2_load_pll_to_unroll << '\n'
@@ -116,19 +99,19 @@ size_t micro_id_perp_unroll = micro_id % N_MICRO_TILES_PERP_UNROLL;
 
 )";
 
-    ss << matrixchar << " += macro_id_pll_unroll*READ_MACRO_STRIDE_PLL_K*UNROLL;\n"
-       << matrixchar << " += "
+    ss << mchar << " += macro_id_pll_unroll*READ_MACRO_STRIDE_PLL_K*UNROLL;\n"
+       << mchar << " += "
        << "macro_id_perp_unroll*READ_MACRO_STRIDE_PERP_K*MACRO_"
        << "TILE_LENGTH;\n"
-       << matrixchar << " += micro_id_pll_unroll*READ_STRIDE_PLL_K * "
+       << mchar << " += micro_id_pll_unroll*READ_STRIDE_PLL_K * "
        << "MICRO_TILE_PLL_UNROLL;\n"
-       << matrixchar << " += micro_id_perp_unroll*READ_STRIDE_PERP_K * "
+       << mchar << " += micro_id_perp_unroll*READ_STRIDE_PERP_K * "
        << "MICRO_TILE_PERP_UNROLL;\n"
        << "\nif (macro_id_perp_unroll == N_GROUPS - 1){\n"
-       << matrixchar << " -= READ_MACRO_STRIDE_PERP_K*(MACRO_TILE_LENGTH - "
+       << mchar << " -= READ_MACRO_STRIDE_PERP_K*(MACRO_TILE_LENGTH - "
        << "PRESHIFT_FINAL_TILE)"
        << ";\n}\n"
-       << matrixchar << " += " << matrixchar << "_offset;\n\n"
+       << mchar << " += " << mchar << "_offset;\n\n"
        << "w += GLOBAL_WORKSPACE_OFFSET;\n"
        << "w += macro_id_pll_unroll  *WRITE_MACRO_STRIDE_PLL_K   *UNROLL;\n"
        << "w += macro_id_perp_unroll *WRITE_MACRO_STRIDE_PERP_K  "
@@ -176,25 +159,37 @@ for (size_t mu_perp_i = 0; mu_perp_i < MICRO_TILE_PERP_UNROLL; ++mu_perp_i) {
             get_global_work_size(),
             get_local_work_size()};
   }
+
+
+  virtual void setup_final() override final{}
+
+
 };
+
+
 
 KernelString get_nform_kernelstring(Mat::E emat_x, 
 const hyperparams::HyperParams&     hp,
-                                     const Geometry&                     gg,
-                                     const derivedparams::DerivedParams& dp)
+                                    const Geometry&                     gg,
+                                    const derivedparams::DerivedParams& dp)
 {
-
-  if (emat_x != Mat::E::A and emat_x != Mat::E::B){
-    throw miog_error("get_copy_kernelstring only for A and B matrices");
-  }
-  
-  std::string nform_string = emat_x == Mat::E::A ? "nforma" : "nformb";  
-  
-  NormalFormGenerator nfg(hp, gg, dp, nform_string);
+  NormalFormGenerator nfg(emat_x, hp, gg, dp);
   nfg.setup();
   return nfg.get_kernelstring();
 }
 
+}
+}
+
+
+
+  //if (emat_x != Mat::E::A and emat_x != Mat::E::B){
+    //throw miog_error("get_copy_kernelstring only for A and B matrices");
+  //}
+  
+  //std::string nform_string = emat_x == Mat::E::A ? "nforma" : "nformb";  
+  
+  
 //KernelString get_nformb_kernelstring(const hyperparams::HyperParams&     hp,
                                      //const Geometry&                     gg,
                                      //const derivedparams::DerivedParams& dp)
@@ -203,6 +198,4 @@ const hyperparams::HyperParams&     hp,
   //nfg.setup();
   //return nfg.get_kernelstring();
 //}
-}
-}
 

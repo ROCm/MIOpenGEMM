@@ -26,6 +26,7 @@
 #include <miopengemm/sizingup.hpp>
 #include <miopengemm/slowcpugemm.hpp>
 #include <miopengemm/stringutilbase.hpp>
+#include <miopengemm/setabcw.hpp>
 
 namespace MIOpenGEMM
 {
@@ -86,44 +87,23 @@ class Gemini
     opencl_memory_initialise();
   }
 
+
   size_t get_c_memsize()
   {
-    auto c_memsize = sizingup::get_n_elements_padded(gg.m,
-                                                     gg.n,
-                                                     gg.ldX[Mat::E::C],
-                                                     gg.isColMajor,
-                                                     gg.tX[Mat::E::C],
-                                                     toff.oc,
-                                                     toff.tail_off_c) *
-                     sizeof(TFloat);
-    return c_memsize;
+    return sizeof(TFloat)*(gg.get_padded_area(Mat::E::C) + toff.offsets[Mem::E::C] + toff.tails[Mem::E::C]);
   }
 
   size_t get_a_memsize()
   {
-    return sizingup::get_n_elements_padded(gg.m,
-                                           gg.k,
-                                           gg.ldX[Mat::E::A],
-                                           gg.isColMajor,
-                                           gg.tX[Mat::E::A],
-                                           toff.oa,
-                                           toff.tail_off_a) *
-           sizeof(TFloat);
+    return sizeof(TFloat)*(gg.get_padded_area(Mat::E::A) + toff.offsets[Mem::E::A] + toff.tails[Mem::E::A]);
   }
 
   size_t get_b_memsize()
   {
-    return sizingup::get_n_elements_padded(gg.k,
-                                           gg.n,
-                                           gg.ldX[Mat::E::B],
-                                           gg.isColMajor,
-                                           gg.tX[Mat::E::B],
-                                           toff.ob,
-                                           toff.tail_off_b) *
-           sizeof(TFloat);
+    return sizeof(TFloat)*(gg.get_padded_area(Mat::E::B) + toff.offsets[Mem::E::B] + toff.tails[Mem::E::B]);
   }
 
-  size_t get_workspace_memsize() { return (gg.workspace_size + toff.oworkspace) * sizeof(TFloat); }
+  size_t get_workspace_memsize() { return (gg.workspace_size + toff.offsets[Mem::E::W] + toff.tails[Mem::E::W]) * sizeof(TFloat); }
 
   void opencl_memory_initialise()
   {
@@ -225,7 +205,6 @@ class Gemini
   {
     // dev code's connection to the outside
     bool     c_is_const        = false;
-    bool     use_mowri_tracker = false;
     Solution tgs               = MIOpenGEMM::find(tgcq.command_queue,
                                     find_params,
                                     a_gpu_safemem.clmem,
@@ -236,8 +215,7 @@ class Gemini
                                     gg,
                                     toff,
                                     mowri,
-                                    c_is_const,
-                                    use_mowri_tracker);
+                                    c_is_const);
     return tgs;
   }
 
@@ -323,7 +301,6 @@ void accuracy_test(const std::string&           hyperstring,
                    const TFloat*                c_true_for_test,
                    outputwriting::OutputWriter& mowri)
 {
-
   Gemini<TFloat> gem(gg, toff, a, b, c, mowri);
   gem.accuracy_test(hyperstring, c_true_for_test);
 }
@@ -380,5 +357,62 @@ template Solution find(const FindParams&            find_params,
                        const Geometry&              gg,
                        const Offsets&               toff,
                        outputwriting::OutputWriter& mowri);
+                       
+
+template <typename TFloat>
+Solution tbasicfind(const Geometry&   geometry,
+                        const Offsets&    toff,
+                        const FindParams& find_params,
+                        int verbose,
+                        std::string logfile,
+                        std::string constraints_string){
+    
+    outputwriting::OutputWriter mowri(Ver::E::TERMINAL, "");
+    // generating cpu copies of data
+    mowri << "generating cpu data ... " << Flush;
+    std::vector<TFloat> v_a;
+    std::vector<TFloat> v_b;
+    std::vector<TFloat> v_c;
+    std::vector<TFloat> v_workspace;
+    setabcw::set_abcw(v_a, v_b, v_c, v_workspace, geometry, toff);
+    mowri << "done." << Endl;
+    return find(find_params, v_a.data(), v_b.data(), v_c.data(), constraints_string, geometry, toff, mowri);
+}
+
+Solution basicfind(const Geometry&   geometry,
+                        const Offsets&    toff,
+                        const FindParams& find_params,
+                        int verbose,
+                        std::string logfile,
+                        std::string constraints_string){
+
+
+
+  if (geometry.floattype == 'f'){
+    return tbasicfind<float>(geometry, toff, find_params, verbose, logfile, constraints_string);
+  }
+  
+  else{
+    return tbasicfind<double>(geometry, toff, find_params, verbose, logfile, constraints_string);
+  }
+  
+  
+
+
+}
+
+                       
+//Solution basicfind(const FindParams& find_params,
+                  //std::string constraints_string,
+                   //const Geometry& gg,
+                  //const Offsets& toff,
+                  //outputwriting::OutputWriter& mowri){
+
+  ////set-up a,b,c from gg and toff.
+  
+  //
+
+//}                      
+
 }
 }

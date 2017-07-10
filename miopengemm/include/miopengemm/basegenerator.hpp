@@ -24,9 +24,13 @@ class BaseGenerator
 
   size_t n_args_added;
 
+  // set in virtual function set_type. 
   std::string type;
+  
+  // set in function set_kernelname.
   std::string kernelname;
-
+  
+  // set in virtual function set_usage. 
   bool uses_a;
   bool uses_b;
   bool uses_c;
@@ -39,31 +43,55 @@ class BaseGenerator
   std::string get_how_string();
   std::string get_derived_string();
 
-  // append argument(s) to the function definition
-  void append_farg(bool, std::stringstream &, const std::string &);
+
+  private:
+  
+  virtual void set_type() = 0;
+  void set_kernelname() {
+    kernelname = "miog_" + type;
+  }
+  
+  virtual void set_usage() = 0;
+  virtual void setup_final() = 0;
 
   public:
-  
-  /* Does entire setup */
-  virtual void setup() = 0;
 
+  /* Does entire setup. Always called just after construction. */  
+  void setup(){
+    
+    set_type();
+    set_kernelname();
+    set_usage();
+    
+    // do anything else which needs to be done. 
+    setup_final();
+  }
+  
+  
+  
+  
+  
+  // TODO : set type and kernelname. (type_), kernelname("tg_" + type_)
   virtual KernelString get_kernelstring() = 0;
 
   BaseGenerator(const hyperparams::HyperParams&     hp_,
                 const Geometry&                     gg_,
-                const derivedparams::DerivedParams& dp_,
-                const std::string&                  type_);
+                const derivedparams::DerivedParams& dp_);
+
+
+  // append argument(s) to the function definition
+  void append_farg(bool, std::stringstream &, const std::string &);
 
   void append_fargs(std::stringstream& ss);
 
-  void append_unroll_block_geometry(char               x,
+  void append_unroll_block_geometry(Mat::E emat_x,
                                     std::stringstream& ss,
                                     bool               withcomments,
                                     bool               with_x_string);
 
-  void append_stride_definitions(char               x,
+  void append_stride_definitions(Mat::E emat_x,
                                  std::stringstream& ss,
-                                 size_t           workspace_type,
+                                 size_t            workspace_type,
                                  bool               withcomments,
                                  std::string        macro_prefix,
                                  bool               append_stride_definitions);

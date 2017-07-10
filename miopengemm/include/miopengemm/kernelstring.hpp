@@ -34,7 +34,7 @@ class KernelType
   bool uses_alpha;
   bool uses_beta;
 
-  bool uses(char c) const;
+  bool uses(Mem::E emat_x) const;
 
   KernelType(bool uses_a_,
              bool uses_b_,

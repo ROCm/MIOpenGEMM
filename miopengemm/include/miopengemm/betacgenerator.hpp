@@ -22,6 +22,8 @@ class BetacGenerator : public bylinegen::ByLineGenerator
 
   virtual void setup_additional() override final;
 
+  virtual void set_type() override final;
+  
   virtual void append_derived_definitions_additional(std::stringstream& ss) override final;
 
   size_t get_local_work_size() override final;

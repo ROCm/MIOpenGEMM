@@ -462,21 +462,6 @@ void DerivedParams::set_should_be_hyperparams()
   }
 }
 
-size_t DerivedParams::get_n_elements_in_x_unroll(char x)
-{
-  if (x == 'a')
-  {
-    return adps.n_elements_in_unroll;
-  }
-  else if (x == 'b')
-  {
-    return bdps.n_elements_in_unroll;
-  }
-  else
-  {
-    throw miog_error("unrecognised x in get_n_elements_in_x_unroll");
-  }
-}
 
 size_t DerivedParams::get_stride(Mat::E emat_x,
                                    bool       pll_k,

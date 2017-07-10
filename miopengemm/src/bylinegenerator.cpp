@@ -17,20 +17,20 @@ namespace MIOpenGEMM
 namespace bylinegen
 {
 
-void ByLineGenerator::setup()
+void ByLineGenerator::setup_final()
 {
 
   setup_additional();
 
-  if (static_cast<size_t>(emat_x) >= static_cast<size_t>(Mat::E::N))
+  if (emat_x >= Mat::E::N)
   {
     std::stringstream ss;
     ss << "in ByLineGenerator::setup, invalid emat_x : " << emat_x;
-    ss << "\nMATRIXCHAR is " << MATRIXCHAR;
-    ss << "\nmatrixchar is " << matrixchar;
+    ss << "\nMCHAR is " << MCHAR;
+    ss << "\nmchar is " << mchar;
     throw miog_error(ss.str());
   }
-
+  
   n_full_work_items_per_line = gg.get_coal(emat_x) / get_work_per_thread();
   n_work_items_per_line =
     n_full_work_items_per_line + (gg.get_coal(emat_x) % get_work_per_thread() != 0);
@@ -38,14 +38,14 @@ void ByLineGenerator::setup()
   n_work_items                 = n_work_items_per_line * gg.get_uncoal(emat_x);
   start_in_coal_last_work_item = get_work_per_thread() * n_full_work_items_per_line;
   work_for_last_item_in_coal   = gg.get_coal(emat_x) % get_work_per_thread();
-  set_usage_from_matrixchar();
+  //set_usage_from_mchar();
 }
 
-ByLineGenerator::ByLineGenerator(const hyperparams::HyperParams&     hp_,
+ByLineGenerator::ByLineGenerator(Mat::E emat_x_,
+                                 const hyperparams::HyperParams&     hp_,
                                  const Geometry&                     gg_,
-                                 const derivedparams::DerivedParams& dp_,
-                                 std::string                         type_)
-  : prepgen::PrepGenerator(hp_, gg_, dp_, type_)
+                                 const derivedparams::DerivedParams& dp_)
+  : prepgen::PrepGenerator(emat_x_, hp_, gg_, dp_)
 {
 }
 
@@ -108,11 +108,11 @@ void ByLineGenerator::append_setup_coordinates(std::stringstream& ss)
 {
 
   ss << "\n\n\n/* setting up where this thread works */";
-  ss << "TINT" << MATRIXCHAR << " group_id = get_group_id(0);\n";
+  ss << "TINT" << MCHAR << " group_id = get_group_id(0);\n";
   ss << "TSHORT local_id = get_local_id(0);\n";
-  ss << "TINT" << MATRIXCHAR << " global_id = group_id*N_WORK_ITEMS_PER_GROUP + local_id;\n";
-  ss << "TINT" << MATRIXCHAR << " start_uncoal = 0;\n";
-  ss << "TINT" << MATRIXCHAR << " start_coal = 0;\n";
+  ss << "TINT" << MCHAR << " global_id = group_id*N_WORK_ITEMS_PER_GROUP + local_id;\n";
+  ss << "TINT" << MCHAR << " start_uncoal = 0;\n";
+  ss << "TINT" << MCHAR << " start_coal = 0;\n";
   ss << "bool is_in_full_zone = (global_id < N_FULL_WORK_ITEMS);\n";
 
   if (n_full_work_items != 0)
@@ -141,10 +141,10 @@ start_coal = START_IN_COAL_LAST_WORK_ITEM;
 void ByLineGenerator::append_positioning_x_string(std::stringstream& ss)
 {
 
-  ss << "\n\n/* moving the " << matrixchar << " pointer to the first element to process */\n";
-  ss << matrixchar << " += " << matrixchar << "_offset;\n";
-  ss << matrixchar << " += start_uncoal * LD" << MATRIXCHAR << ";\n";
-  ss << matrixchar << " += start_coal;\n";
+  ss << "\n\n/* moving the " << mchar << " pointer to the first element to process */\n";
+  ss << mchar << " += " << mchar << "_offset;\n";
+  ss << mchar << " += start_uncoal * LD" << MCHAR << ";\n";
+  ss << mchar << " += start_coal;\n";
 }
 
 void ByLineGenerator::append_inner_work(std::stringstream& ss) { ss << inner_work_string; }
@@ -198,7 +198,7 @@ KernelString ByLineGenerator::get_kernelstring()
   append_derived_definitions(ss);
 
 
-  ss << "#define TINT" << MATRIXCHAR << " " << dp.tints[emat_x] << "\n";
+  ss << "#define TINT" << MCHAR << " " << dp.tints[emat_x] << "\n";
   ss << "#define TSHORT" << ' ' << dp.tshort << '\n';
 
 
@@ -215,7 +215,7 @@ KernelString ByLineGenerator::get_kernelstring()
   append_setup_coordinates(ss);
   append_positioning_x_string(ss);
 
-  if (matrixchar == 'a' || matrixchar == 'b')
+  if (emat_x == Mat::E::A || emat_x == Mat::E::B)
   {
     append_positioning_w_string(ss);
   }

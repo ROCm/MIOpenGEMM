@@ -18,7 +18,7 @@ namespace dev
 template <typename TFloat>
 void benchgemm(const std::vector<std::string>& hyperstrings,
                size_t                        max_n_runs,
-               double max_time,
+               double                         max_time,
                const Geometry&                 gg,
                const Offsets&                  toff,
                const TFloat*                   a,
@@ -47,8 +47,28 @@ Solution find(const FindParams&            find_params,
               outputwriting::OutputWriter& mowri);
 
 
+Solution basicfind(const Geometry&   geometry,
+                        const Offsets&    toff,
+                        const FindParams& find_params,
+                        int verbose,
+                        std::string logfile,
+                        std::string constraints_string);
+
+
 // TODO NOW : bring basicfind.hpp func here.
-                   
+
+// first : kill the mowri tracker. 
+//template <typename TFloat>
+//Solution base_basicfind(const Geometry&   geometry,
+                        //const Offsets&    toff,
+                        //const FindParams& find_params,
+                        //bool        verbose,
+                        //std::string logfile,
+                        //std::string constraints_string,
+                        //size_t    n_postfind_runs, // remove. 
+                        //bool        do_cpu_test, // remove.
+                        //bool        use_mowri_tracker) //absorbed in OutputWriter
+                        
 
 }
 }

@@ -202,8 +202,6 @@ class HyperParams
   const XHPs& at(Mat::E subgtype) const { return v_xhps[subgtype]; }
   XHPs& at(Mat::E subgtype) { return v_xhps[subgtype]; }
 
-  Mat::E get_eMat_from_char(char X) const;
-
   HyperParams(const Graph& graph);
 
   bool operator==(const HyperParams& hpr);

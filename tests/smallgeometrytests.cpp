@@ -2,7 +2,7 @@
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
  *******************************************************************************/
 #include <string>
-#include <miopengemm/basicfind.hpp>
+#include <miopengemm/devmiogemm.hpp>
 #include <miopengemm/miogemm.hpp>
 
 template <typename TFloat>
@@ -20,9 +20,10 @@ void geometrytest(bool isColMajor, bool tA, bool tB, bool tC, size_t m, size_t n
   size_t tail_off_a = 13;
   size_t tail_off_b = 17;
   size_t tail_off_c = 19;
+  size_t tail_off_w = 34;  
 
-  float                   allotted_time       = 0.001;
-  size_t                allotted_iterations = 1;
+  float                   allotted_time       = 5.001;
+  size_t                allotted_iterations = 2;
   size_t                max_max_n_runs_per_kernel   = 1;
   double max_time_per_kernel = 1e9;
   MIOpenGEMM::SummStat::E sumstat             = MIOpenGEMM::SummStat::E::MEDIAN;
@@ -44,12 +45,22 @@ void geometrytest(bool isColMajor, bool tA, bool tB, bool tC, size_t m, size_t n
   MIOpenGEMM::Geometry gg(
     isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype);
   MIOpenGEMM::Offsets offsets(
-    a_offset, b_offset, c_offset, workspace_offset, tail_off_a, tail_off_b, tail_off_c);
+    a_offset, b_offset, c_offset, workspace_offset, tail_off_a, tail_off_b, tail_off_c, tail_off_w);
   MIOpenGEMM::FindParams find_params(
     allotted_time, allotted_iterations, max_max_n_runs_per_kernel, max_time_per_kernel, sumstat);
-  MIOpenGEMM::basicfind(
-    gg, offsets, find_params, verbose, logfile, constraints_string, n_postfind_runs, do_cpu_test, use_mowri_tracker);
+  MIOpenGEMM::dev::basicfind(
+    gg, offsets, find_params, verbose, logfile, constraints_string);
 }
+
+
+//Solution basicfind(const Geometry&   geometry,
+                        //const Offsets&    toff,
+                        //const FindParams& find_params,
+                        //int verbose,
+                        //std::string logfile,
+                        //std::string constraints_string);
+
+
 
 int main()
 {
@@ -80,5 +91,7 @@ int main()
       }
     }
   }
+  
+  
   return 0;
 }

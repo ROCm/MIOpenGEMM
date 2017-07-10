@@ -18,46 +18,25 @@ namespace MIOpenGEMM
 Offsets::Offsets(size_t oa_,
                  size_t ob_,
                  size_t oc_,
-                 size_t oworkspace_,
-                 size_t tail_off_a_,
-                 size_t tail_off_b_,
-                 size_t tail_off_c_)
-  : oa(oa_),
-    ob(ob_),
-    oc(oc_),
-    oworkspace(oworkspace_),
-    tail_off_a(tail_off_a_),
-    tail_off_b(tail_off_b_),
-    tail_off_c(tail_off_c_)
-{
+                 size_t ow_,
+                 size_t ta_,
+                 size_t tb_,
+                 size_t tc_,
+                 size_t tw_){
+                   
+  offsets[Mem::E::A] = oa_;
+  offsets[Mem::E::B] = ob_;
+  offsets[Mem::E::C] = oc_;
+  offsets[Mem::E::W] = ow_;
+
+  tails[Mem::E::A] = ta_;
+  tails[Mem::E::B] = tb_;
+  tails[Mem::E::C] = tc_;
+  tails[Mem::E::W] = tw_;
+
 }
 
-const size_t& Offsets::operator[](char x) const
-{
-  if (x == 'a')
-  {
-    return oa;
-  }
-  else if (x == 'b')
-  {
-    return ob;
-  }
-  else if (x == 'c')
-  {
-    return oc;
-  }
-  else if (x == 'w')
-  {
-    return oworkspace;
-  }
 
-  else
-  {
-    throw miog_error("unrecognised char passed to operator[](char x) of Offsets. "
-                     "Should be one of a,b,c,w, not " +
-                     std::to_string(x));
-  }
-}
 
 char get_floattype(size_t nbits)
 {
@@ -100,7 +79,7 @@ void GeometryDerived::reset(char floattype)
 // return one of the dimensions of matrix a,b,c.
 // this has nothing to do with lda, ldb, ldc.
 // isCoal : the coalesced dimesion?
-// For example, for 'a' which is m x k,
+// For example, for A which is m x k,
 // if tA = false, isColMajor = false,
 // isCoal = true, then k is returned as k is
 // the coalesced dim.
@@ -196,16 +175,13 @@ void Geometry::check_ldx_consistent() const
     errm_ss << get_string();
     errm_ss << ", and the problems detected are:  ";
 
-    std::vector<char> m_chars(Mat::E::N);
-    m_chars[Mat::E::A] = 'a';
-    m_chars[Mat::E::B] = 'b';
-    m_chars[Mat::E::C] = 'c';
+
 
     for (auto x : {Mat::E::A, Mat::E::B, Mat::E::C})
     {
       if (ldX[x] < get_coal(x))
       {
-        errm_ss << "ld" << m_chars[x] << " (" << ldX[x] << ") <  coal_" << m_chars[x] << " ("
+        errm_ss << "ld" << Mat::M.name[x] << " (" << ldX[x] << ") <  coal_" << Mat::M.name[x] << " ("
                 << get_coal(x) << ").  ";
       }
     }
@@ -390,6 +366,10 @@ std::string Geometry::get_tabbed_string() const
 
     return geometry_stringstream.str();
 
+}
+
+size_t Geometry::get_padded_area(Mat::E M) const{
+  return get_uncoal(M)*ldX[M];
 }
   
 }

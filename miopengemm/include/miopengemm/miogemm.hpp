@@ -60,7 +60,6 @@ Solution find(float            allotted_time,
  * @param toff                The offsets of a,b,c and workspace
  * @param mowri               Controls writing to terminal and file
  * @param c_is_const          Whether matrix C may be modified
- * @param use_mowri_tracker   Controls writing to terminal of search summary
  * @return                    best Solution found during search
  */
 
@@ -74,8 +73,7 @@ Solution find(cl_command_queue             command_queue,
               const Geometry&              gg,
               const Offsets&               toff,
               outputwriting::OutputWriter& mowri,
-              bool                         c_is_const,
-              bool                         use_mowri_tracker);
+              bool                         c_is_const);
 
 /*! @brief Return a default Solution from cache, without exploring. If no Solution exists, an error
  * will be thrown.

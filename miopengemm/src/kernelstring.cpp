@@ -38,27 +38,27 @@ std::vector<std::vector<size_t>> get_kernel_dependencies()
 //const std::vector<std::string> basic_kernel_type_strings     = get_basic_kernel_type_strings();
 const std::vector<std::vector<size_t>> kernel_dependencies = get_kernel_dependencies();
 
-bool KernelType::uses(char c) const
+bool KernelType::uses(Mem::E emat_x) const//(char c) const
 {
-  if (c == 'a')
+  if (emat_x == Mem::E::A)
   {
     return uses_a;
   }
-  else if (c == 'b')
+  else if (emat_x == Mem::E::B)
   {
     return uses_b;
   }
-  else if (c == 'c')
+  else if (emat_x == Mem::E::C)
   {
     return uses_c;
   }
-  else if (c == 'w')
+  else if (emat_x == Mem::E::W)
   {
     return uses_workspace;
   }
   else
   {
-    throw miog_error(std::string("unrecognised char in uses in KernelType, ") + c);
+    throw miog_error(std::string("unrecognised char in uses in KernelType, ") + Mem::M.name[emat_x]);
   }
 }
 
@@ -71,7 +71,7 @@ KernelType::KernelType(
     uses_alpha(uses_alpha_),
     uses_beta(uses_beta_)
 {
-  for (auto& x : {'a', 'b', 'c', 'w'})
+  for (auto& x : {Mem::E::A, Mem::E::B, Mem::E::C, Mem::E::W})
   {
     if (uses(x))
     {
@@ -96,19 +96,19 @@ KernelType::KernelType(
     bkt_string        = BasicKernelType::M.name[BasicKernelType::MAIN];
   }
 
-  else if (uses_beta && uses('c'))
+  else if (uses_beta && uses(Mem::E::C))
   {
     basic_kernel_type = BasicKernelType::BETAC;
     bkt_string        = BasicKernelType::M.name[BasicKernelType::BETAC];
   }
 
-  else if (uses('a') && uses('w'))
+  else if (uses(Mem::E::A) && uses(Mem::E::W))
   {
     basic_kernel_type = BasicKernelType::WSA;
     bkt_string        = BasicKernelType::M.name[BasicKernelType::WSA];
   }
 
-  else if (uses('b') && uses('w'))
+  else if (uses(Mem::E::B) && uses(Mem::E::W))
   {
     basic_kernel_type = BasicKernelType::WSB;
     bkt_string        = BasicKernelType::M.name[BasicKernelType::WSB];

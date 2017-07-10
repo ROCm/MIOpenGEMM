@@ -8,14 +8,16 @@
 
 namespace MIOpenGEMM
 {
+  
 namespace basegen
 {
 
+
 BaseGenerator::BaseGenerator(const hyperparams::HyperParams&     hp_,
                              const Geometry&                     gg_,
-                             const derivedparams::DerivedParams& dp_,
-                             const std::string&                  type_)
-  : hp(hp_), gg(gg_), dp(dp_), n_args_added(0), type(type_), kernelname("tg_" + type_)
+                             const derivedparams::DerivedParams& dp_)
+
+  : hp(hp_), gg(gg_), dp(dp_), n_args_added(0)
 {
 }
 
@@ -46,7 +48,10 @@ void BaseGenerator::append_fargs(std::stringstream& ss)
   ss << ")\n";
 }
 
-void BaseGenerator::append_stride_definitions(char               x,
+
+
+// TODO : take in Mat::E as arguament 
+void BaseGenerator::append_stride_definitions(Mat::E emat_x,
                                               std::stringstream& ss,
                                               size_t           workspace_type,
                                               bool               withcomments,
@@ -54,8 +59,9 @@ void BaseGenerator::append_stride_definitions(char               x,
                                               bool               with_x_in_name)
 {
 
-  Mat::E emat_x = hp.get_eMat_from_char(x);
+//  Mat::E emat_x = hp.get_eMat_from_char(x);
 
+  char x = Mat::M.name[emat_x];
   if (withcomments == true)
     ss << "/* strides parallel to k (unroll) in " << x << ". MACRO_STRIDE_" << x
        << " is between unroll tiles, STRIDE_" << x << " is within unroll tiles  */\n";
@@ -71,16 +77,17 @@ void BaseGenerator::append_stride_definitions(char               x,
   }
 }
 
-void BaseGenerator::append_unroll_block_geometry(char               x,
+// TODO : take in Mat::E as arguament 
+void BaseGenerator::append_unroll_block_geometry(Mat::E emat_x,
                                                  std::stringstream& ss,
                                                  bool               withcomments,
                                                  bool               with_x_string)
 {
 
-  Mat::E emat_x = hp.get_eMat_from_char(x);
 
+  //TODO : should be X.
+  char x = Mat::M.name[emat_x];
   std::string x_string = with_x_string ? "_" + std::string(1, x) : "";
-  x                    = (x == 'a' ? 'A' : (x == 'b' ? 'B' : x));
 
   ss << '\n';
   if (withcomments == true)

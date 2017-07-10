@@ -13,8 +13,14 @@ namespace betacgen
 BetacGenerator::BetacGenerator(const hyperparams::HyperParams&     hp_,
                                const Geometry&                     gg_,
                                const derivedparams::DerivedParams& dp_)
-  : bylinegen::ByLineGenerator(hp_, gg_, dp_, "betac")
+                               
+  : bylinegen::ByLineGenerator(Mat::E::C, hp_, gg_, dp_)
 {
+}
+
+
+void BetacGenerator::set_type(){
+  type = "betac";
 }
 
 size_t BetacGenerator::get_local_work_size() { return dp.betac_local_work_size; }
@@ -23,8 +29,6 @@ size_t BetacGenerator::get_work_per_thread() { return dp.betac_work_per_thread; 
 
 void BetacGenerator::setup_additional()
 {
-  initialise_matrixtype('c');
-
   description_string = R"(
 /* ****************************************************
 * It is used to perform the beta*C step in GEMM, 

@@ -9,61 +9,86 @@
 #include <iostream>
 #include <string>
 
+#include <miopengemm/enums.hpp>
 namespace MIOpenGEMM
 {
 namespace outputwriting
 {
 
-class Flusher
-{
-  public:
-  void increment(){};
-};
+class Flusher {};
 
-class Endline
-{
-  public:
-  void increment(){};
-};
+class Endline {};
 
-class OutputWriter
+class BasicWriter
 {
 
-  public:
-  bool          to_terminal;
-  bool          to_file;
-  std::ofstream file;
-  std::string   filename;
+  private:  
+  bool            to_terminal;
+  std::ofstream * ptr_file;
 
-  OutputWriter();
-  ~OutputWriter();
-  OutputWriter(bool to_terminal, bool to_file, std::string filename = "");
-  void operator()(std::string);
+  public:
+  BasicWriter(bool to_terminal_, std::ofstream * ptr_file_): to_terminal(to_terminal_), ptr_file(ptr_file_) {}
+  BasicWriter():BasicWriter(false, nullptr){}
 
   template <typename T>
-  OutputWriter& operator<<(T t)
+  BasicWriter& operator<<(T t)
   {
-
     if (to_terminal)
     {
       std::cout << t;
     }
 
-    if (to_file)
+    if (ptr_file != nullptr)
     {
-      file << t;
+      (*ptr_file) << t;
     }
     return *this;
   }
 };
 
 template <>
-OutputWriter& OutputWriter::operator<<(Flusher f);
+BasicWriter& BasicWriter::operator<<(Flusher f);
 
 template <>
-OutputWriter& OutputWriter::operator<<(Endline e);
-}
+BasicWriter& BasicWriter::operator<<(Endline e);
 
+
+class OutputWriter
+{
+  private:
+    Ver::E v;
+    std::string filename;
+    // to extract from v
+    bool main_to_file;
+    bool main_to_terminal;
+    bool tracker_to_file;
+    bool tracker_to_terminal;
+    
+  
+    void set_v_bits();
+    void initialise_file();
+    
+  public:
+    std::ofstream file;
+   BasicWriter main;
+   BasicWriter tracker;
+  
+  public:
+  
+   OutputWriter();
+  ~OutputWriter();
+   OutputWriter(Ver::E v, std::string filename);
+
+  template <typename T>
+  OutputWriter& operator<<(T t)
+  {
+    main << t;
+    return  *this;
+  }
+
+};
+
+}
 extern outputwriting::Flusher Flush;
 extern outputwriting::Endline Endl;
 }

@@ -16,26 +16,20 @@ namespace MIOpenGEMM
 class Offsets
 {
   public:
-  // offsets of a,b,c and workspace
-  size_t oa;
-  size_t ob;
-  size_t oc;
-  size_t oworkspace;
-
-  // tails of a,b and c. why no workspace?
-  size_t tail_off_a;
-  size_t tail_off_b;
-  size_t tail_off_c;
-
+  
+  std::array<size_t, Mem::E::N> offsets;
+  std::array<size_t, Mem::E::N> tails;
+  
   Offsets(size_t oa,
           size_t ob,
           size_t oc,
-          size_t oworkspace,
-          size_t tail_off_a,
-          size_t tail_off_b,
-          size_t tail_off_c);
+          size_t ow,
+          size_t ta,
+          size_t tb,
+          size_t tc,
+          size_t tw);
 
-  const size_t& operator[](char c) const;
+  //const size_t& operator[](char c) const;
 };
 
 class GeometryDerived
@@ -123,6 +117,10 @@ class Geometry
   std::string get_tabbed_string() const;
 
   void check_ldx_consistent() const;
+  
+
+  size_t get_padded_area(Mat::E M) const;
+  
 };
 }
 

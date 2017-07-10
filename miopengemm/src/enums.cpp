@@ -2,7 +2,9 @@
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
  *******************************************************************************/
 
+#include <iostream>
 #include <array>
+#include <algorithm>
 #include <miopengemm/enums.hpp>
 
 namespace MIOpenGEMM {
@@ -40,7 +42,37 @@ std::unordered_map<T, size_t> get_val(const std::vector<T> & a){
 
 
 template <typename T>
-EnumMapper<T>::EnumMapper(const std::vector<T> & name_) :n(name_.size()), name(name_), val(get_val<T>(name)) {}
+T aslower(T X){
+  
+}
+
+template <>
+char aslower(char x){
+  char y = std::tolower(static_cast<unsigned char>(x));
+  std::cout << "---------- " << x << " : " << y << " ----------------\n";
+  
+
+  return y;
+}
+
+template <>
+std::string aslower(std::string X){
+  std::string Y = X;
+  std::transform(X.begin(), X.end(), Y.begin(), ::tolower);
+
+  std::cout << "---------- " << X << " : " << Y << " ----------------\n";
+
+  return Y;
+}
+
+template <typename T>
+EnumMapper<T>::EnumMapper(const std::vector<T> & name_) :n(name_.size()), name(name_), val(get_val<T>(name)) {
+
+  lcase_name.resize(name.size());
+  for (size_t i = 0; i < name.size(); ++i){
+    lcase_name[i] = aslower<T>(name[i]);
+  }
+}
 
 
 template <typename T>
@@ -53,10 +85,10 @@ namespace BasicKernelType
 {
   std::vector<std::string> get_name() {
     std::vector<std::string> X(E::N, unfilled<std::string>());
-    X[E::WSA] = "wsa";
-    X[E::WSB] = "wsb";
-    X[E::BETAC] = "betac";
-    X[E::MAIN] = "main";
+    X[E::WSA] = "WSA";
+    X[E::WSB] = "WSB";
+    X[E::BETAC] = "BETAC";
+    X[E::MAIN] = "MAIN";
     return X;
   }
   const EnumMapper<std::string> M = get_enum_mapper<std::string>(get_name(), "BasicKernelType");
@@ -67,9 +99,9 @@ namespace SummStat
 {
   std::vector<std::string> get_name() {
     std::vector<std::string> X(E::N, unfilled<std::string>());
-    X[E::MEAN] = "mean";
-    X[E::MEDIAN] = "median";
-    X[E::MAX] = "max";
+    X[E::MEAN] = "MEAN";
+    X[E::MEDIAN] = "MEDIAN";
+    X[E::MAX] = "MAX";
     return X;
   }
   const EnumMapper<std::string> M = get_enum_mapper<std::string>(get_name(), "SummStat");

@@ -4,7 +4,8 @@
 #include <sstream>
 #include <vector>
 #include <algorithm>
-#include <miopengemm/basicfind.hpp>
+//#include <miopengemm/basicfind.hpp>
+#include <miopengemm/devmiogemm.hpp>
 #include <miopengemm/geometryutil.hpp>
 #include <miopengemm/miogemm.hpp>
 #include <miopengemm/stringutilbase.hpp>
@@ -21,11 +22,11 @@ int run_find_experiments(const std::vector<Geometry>& geometries,
                          std::string                  fn_outer)
 {
 
-  outputwriting::OutputWriter mowri_outer(verbose_outer, fn_outer != "", fn_outer);
+  outputwriting::OutputWriter mowri_outer(Ver::E::TERMINAL, ""); // TODO : fix verbose_outer, fn_outer != "", fn_outer);
 
   std::string cache_write_string("");
 
-  Offsets  offsets(13, 24, 35, 46, 57, 67, 79);
+  Offsets  offsets(13, 24, 35, 46, 57, 67, 79, 101);
   size_t n_postfind_runs = 0;
   bool     do_cpu_test     = false;
 
@@ -86,16 +87,13 @@ int run_find_experiments(const std::vector<Geometry>& geometries,
         mowri_outer << logfile << Endl;
       }
 
-      bool use_mowri_tracker = true;
-      auto soln = basicfind(gg,
+      auto soln = dev::basicfind(gg,
                             offsets,
                             find_params,
                             verbose_inner,
                             logfile,
-                            constraints,
-                            n_postfind_runs,
-                            do_cpu_test,
-                            use_mowri_tracker);
+                            constraints);
+                            
       end = std::chrono::high_resolution_clock::now();
 
       cache_write_string += soln.get_cache_entry_string();
