@@ -11,6 +11,7 @@
 /* TODO : interwoven hyper-parameter */
 /* TODO : work-group size hyper-parameter (32 for vega) */
 
+
 namespace MIOpenGEMM
 {
 namespace bylinegen
@@ -198,7 +199,7 @@ KernelString ByLineGenerator::get_kernelstring()
 
 
   ss << "#define TINT" << MATRIXCHAR << " " << dp.tints[emat_x] << "\n";
-  ss << "#define TSHORT" << " ushort\n";
+  ss << "#define TSHORT" << ' ' << dp.tshort << '\n';
 
 
   ss << "\n\n"

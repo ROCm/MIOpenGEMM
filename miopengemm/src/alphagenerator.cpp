@@ -36,11 +36,11 @@ class AlphaGenerator : basegen::BaseGenerator
   void set_usage()
   {
 
-    uses_a = (hp.at(Mat::E::A).vs[Chi::E::WOS] == 0) ? true : false; // this worked. propogate.
-    uses_b = (hp.at(Mat::E::B).vs[Chi::E::WOS] == 0) ? true : false;
+    /* TODO enum the WOS */ 
+    uses_a = (hp.at(Mat::E::A).vs[Chi::E::WOS] == Scratch::E::UNUSED) ? true : false; 
+    uses_b = (hp.at(Mat::E::B).vs[Chi::E::WOS] == Scratch::E::UNUSED) ? true : false;
     uses_c = true;
-    uses_workspace =
-      (hp.at(Mat::E::A).vs[Chi::E::WOS] + hp.at(Mat::E::B).vs[Chi::E::WOS]) == 0 ? false : true;
+    uses_workspace = (not uses_a or not uses_b);
     uses_alpha = true;
     uses_beta  = dp.main_does_beta_c_inc;
   }
@@ -764,7 +764,7 @@ TINTK k_plus_offset = __K__ + unroll_offset;
 
     ss << "\n\n\n";
 
-    if (hp.at(emat_x).vs[Chi::E::WOS] == 1 || hp.at(emat_x).vs[Chi::E::WOS] == 2)
+    if (hp.at(emat_x).vs[Chi::E::WOS] == Scratch::E::COPY || hp.at(emat_x).vs[Chi::E::WOS] == Scratch::E::NFORM)
     {
       if (X == 'A')
         ss << "/* from workspace */\n";
@@ -791,7 +791,7 @@ TINTK k_plus_offset = __K__ + unroll_offset;
             "seem to make much difference) */\n";
     ss << "TINT" << X << " read_macro_tile_start_" << x << " = group_id_" << x << "*MACRO_TILE_LENGTH_"
        << X << "; \n";
-    if (dp.main_use_edge_trick != 0 && hp.at(emat_x).vs[Chi::E::WOS] != 2)
+    if (dp.main_use_edge_trick != 0 && hp.at(emat_x).vs[Chi::E::WOS] != Scratch::E::NFORM)
     {
       if (X == 'A')
         ss << "/* tile on edge and A is not normal form: pulling in read zone "
@@ -925,7 +925,8 @@ TINTK k_plus_offset = __K__ + unroll_offset;
     ss << "#define C_INTERWEAVE_STRIDE_" << x << " " << dp.at(emat_x).main_c_interweave_stride
        << '\n';
 
-    if (hp.at(emat_x).vs[Chi::E::WOS] != 0)
+
+    if (hp.at(emat_x).vs[Chi::E::WOS] != Scratch::E::UNUSED)
     {
       if (x == 'A')
         ss << "/* global memory offset, depends on type of copy of both a,b "
@@ -971,7 +972,7 @@ TINTK k_plus_offset = __K__ + unroll_offset;
       ss << "#define TINT" << Mem::M.name[i] << " " << dp.tints[i] << '\n';
     }
     ss << "\n/* type for integer in inner most loops (probably inlined anyway)  */\n";
-    ss << "#define TSHORT " << "ushort" << '\n';
+    ss << "#define TSHORT " << dp.tshort << '\n';
     ss << "\n/* type for integers which never exceeds __K__ + UNROLL (for UFO case) */\n";
     ss << "#define TINTK " << dp.tintk << '\n';
 

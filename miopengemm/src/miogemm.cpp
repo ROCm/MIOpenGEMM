@@ -286,7 +286,7 @@ class OpenCLGemmEncapsulator
 
     else if (type == BasicKernelType::E::WSA)
     {
-      if (tk_kernels.at(BasicKernelType::E::WSA).is_set() == false && new_hp.at(Mat::E::A).vs[Chi::E::WOS] != 0)
+      if (tk_kernels.at(BasicKernelType::E::WSA).is_set() == false && new_hp.at(Mat::E::A).vs[Chi::E::WOS] != Scratch::E::UNUSED)
       {
         return true;
       }
@@ -296,9 +296,10 @@ class OpenCLGemmEncapsulator
       }
     }
 
+
     else if (type == BasicKernelType::E::WSB)
     {
-      if (tk_kernels.at(BasicKernelType::E::WSB).is_set() == false && new_hp.at(Mat::E::B).vs[Chi::E::WOS] != 0)
+      if (tk_kernels.at(BasicKernelType::E::WSB).is_set() == false && new_hp.at(Mat::E::B).vs[Chi::E::WOS] != Scratch::E::UNUSED)
       {
         return true;
       }

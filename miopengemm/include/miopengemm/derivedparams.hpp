@@ -150,6 +150,7 @@ class DerivedParams
 
   std::array<std::string, Mem::E::N> tints;
   std::string tintk;
+  std::string tshort;
   
   void set_should_be_hyperparams();
   

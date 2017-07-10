@@ -486,7 +486,7 @@ void ChiralSubG::manual_override_start_range()
   start_range[Chi::E::PAD] = {1, 2};
   start_range[Chi::E::LIW] = {Binary::E::NO};
   start_range[Chi::E::MIW] = {Binary::E::YES};
-  start_range[Chi::E::WOS] = {0, 1, 2};
+  start_range[Chi::E::WOS] = {Scratch::E::UNUSED, Scratch::E::COPY, Scratch::E::NFORM};
 
   set_chirality_specific_start_range();
 }
@@ -541,8 +541,9 @@ void ChiralSubG::set_preconstraint_edges()
   edges[Chi::E::MIW] = {graph_binary};
 
   /* TODO : namespace the copy types */
-  edges[Chi::E::WOS] = {{0, {1, 2}}, {1, {0, 2}}, {2, {0, 1}}};
+  edges[Chi::E::WOS] = {{Scratch::E::UNUSED, {Scratch::E::COPY, Scratch::E::NFORM}}, {Scratch::E::COPY, {Scratch::E::UNUSED, Scratch::E::NFORM}}, {Scratch::E::NFORM, {Scratch::E::UNUSED, Scratch::E::COPY}}};
 }
+
 
 void CSubG::manual_override_start_range()
 {

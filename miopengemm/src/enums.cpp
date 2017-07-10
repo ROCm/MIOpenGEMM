@@ -106,6 +106,7 @@ namespace NonChi
   }
   const EnumMapper<std::string> M = get_enum_mapper<std::string>(get_name(), "NonChi");
 }
+ 
   
 namespace Mat
 {

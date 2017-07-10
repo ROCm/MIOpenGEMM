@@ -38,7 +38,7 @@ size_t get_copy_pad(Mat::E emat_x)
 
 void DerivedParams::reset_cw_params(Mat::E emat_x)
 {
-  if (emat_x == Mat::E::B && ptr_hp->at(Mat::E::A).vs[Chi::E::WOS] != 0 &&
+  if (emat_x == Mat::E::B && ptr_hp->at(Mat::E::A).vs[Chi::E::WOS] != Scratch::E::UNUSED &&
       adps.cw_n_elements == uninitialised_size_t)
   {
     throw miog_error("make sure reset acw1 params is called before reset_bcw1_params, we "
@@ -47,7 +47,7 @@ void DerivedParams::reset_cw_params(Mat::E emat_x)
   }
 
   // simple copy with padding
-  if (ptr_hp->at(emat_x).vs[Chi::E::WOS] == 1)
+  if (ptr_hp->at(emat_x).vs[Chi::E::WOS] == Scratch::E::COPY)
   {
     at(emat_x).cw1_smallest_possible_ldx =
       ptr_gg->coal_is_pll_k(emat_x) ? ptr_gg->k : ptr_gg->get_non_k_dim(emat_x);
@@ -56,7 +56,7 @@ void DerivedParams::reset_cw_params(Mat::E emat_x)
     at(emat_x).cw_n_elements = at(emat_x).cw1_target_ldx * ptr_gg->get_uncoal(emat_x);
   }
 
-  else if (ptr_hp->at(emat_x).vs[Chi::E::WOS] == 2)
+  else if (ptr_hp->at(emat_x).vs[Chi::E::WOS] == Scratch::E::NFORM)
   {
 
     at(emat_x).cw2_n_elements_perp_unroll = at(emat_x).n_groups * at(emat_x).macro_tile_length;
@@ -72,7 +72,7 @@ void DerivedParams::reset_cw_params(Mat::E emat_x)
                      "there's a call to reset_cw_params");
   }
 
-  at(emat_x).cw_global_offset = (emat_x == Mat::E::B && ptr_hp->at(Mat::E::A).vs[Chi::E::WOS] != 0)
+  at(emat_x).cw_global_offset = (emat_x == Mat::E::B && ptr_hp->at(Mat::E::A).vs[Chi::E::WOS] != Scratch::E::UNUSED)
                                   ? at(Mat::E::A).cw_n_elements
                                   : 0;
 }
@@ -178,13 +178,14 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
     at(emat_x).main_n_elements_to_load_per_workitem =
       at(emat_x).n_elements_in_unroll / main_n_work_items_per_workgroup;
 
-    if (ptr_hp->at(emat_x).vs[Chi::E::WOS] == 2)
+    if (ptr_hp->at(emat_x).vs[Chi::E::WOS] == Scratch::E::NFORM)
     {
       at(emat_x).cw2_n_elements_to_load_per_workitem =
         at(emat_x).n_elements_in_unroll / at(emat_x).cw2_local_work_size;
     }
 
-    if (ptr_hp->at(emat_x).vs[Chi::E::WOS] != 0)
+
+    if (ptr_hp->at(emat_x).vs[Chi::E::WOS] != Scratch::E::UNUSED)
     {
       reset_cw_params(emat_x);
       required_workspace += at(emat_x).cw_n_elements;
@@ -239,7 +240,7 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
       return tup;
     }
 
-    if (ptr_hp->at(emat_x).vs[Chi::E::WOS] == 2)
+    if (ptr_hp->at(emat_x).vs[Chi::E::WOS] == Scratch::E::NFORM)
     {
       auto tup_cw =
         is_div(emat_x, "at(emat_x).cw2_local_work_size", at(emat_x).cw2_local_work_size);
@@ -262,7 +263,7 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
       return tup;
     }
 
-    if (ptr_hp->at(emat_x).vs[Chi::E::WOS] == 2)
+    if (ptr_hp->at(emat_x).vs[Chi::E::WOS] == Scratch::E::NFORM)
     {
       tup = tiling::get_tileability(at(emat_x).macro_tile_length,
                                     ptr_hp->at(Mat::E::C).vs[NonChi::E::UNR],
@@ -350,7 +351,7 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams& hp_, const Geometry
                                 at(emat_x).main_n_elements_to_load_per_workitem,
                                 ptr_hp->at(emat_x).vs[Chi::E::PLU] == 0);
 
-    if (ptr_hp->at(emat_x).vs[Chi::E::WOS] == 2)
+    if (ptr_hp->at(emat_x).vs[Chi::E::WOS] == Scratch::E::NFORM)
     {
       tiling::set_tile_dimensions(at(emat_x).cw2_micro_tile_perp_unroll,
                                   at(emat_x).cw2_micro_tile_pll_unroll,
@@ -399,7 +400,7 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams& hp_, const Geometry
     at(emat_x).main_c_interweave_stride =
       ptr_hp->at(emat_x).vs[Chi::E::MIW] == 0 ? 1 : at(emat_x).main_n_micro_in_macro;
 
-    if (ptr_hp->at(emat_x).vs[Chi::E::WOS] == 2)
+    if (ptr_hp->at(emat_x).vs[Chi::E::WOS] == Scratch::E::NFORM)
     {
       at(emat_x).cw2_n_micro_tiles_pll_unroll =
         ptr_hp->at(Mat::E::C).vs[NonChi::E::UNR] / at(emat_x).cw2_micro_tile_pll_unroll;
@@ -429,6 +430,16 @@ DerivedParams::DerivedParams(const hyperparams::HyperParams& hp_, const Geometry
   tints[Mem::E::C] = get_tint(ptr_gg->get_uncoal(Mat::E::C)*(ptr_gg->ldX[Mat::E::C])); 
   tints[Mem::E::W] = get_tint(ptr_gg->workspace_size);
   tintk = get_tint(ptr_gg->k + 2*ptr_hp->at(Mat::E::C).vs[NonChi::E::UNR]); // TODO : make this tight and prove correct. 
+  tshort = "ushort";
+  
+
+  tints[Mem::E::A] = "size_t";
+  tints[Mem::E::B] = "size_t";
+  tints[Mem::E::C] = "size_t";
+  tints[Mem::E::W] = "size_t";
+  tintk = "size_t";
+  tshort = "size_t";
+    
 }
 
 

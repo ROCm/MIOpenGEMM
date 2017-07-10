@@ -20,12 +20,13 @@
 
 
 
+
 std::string get_hyperstring(std::string hyperstring = "")
 {
   //if (hyperstring.compare("") == 0)
   //{
-    hyperstring = "A_MIC6_PAD1_PLU1_LIW0_MIW0_WOS0__B_MIC5_PAD1_PLU1_LIW0_MIW1_WOS0__C_UNR8_GAL3_PUN1_ICE1_NAW16_UFO0_MAC4_SKW9";
-    //hyperstring = "A_MIC2_PAD0_PLU0_LIW0_MIW0_WOS0__B_MIC4_PAD0_PLU1_LIW0_MIW0_WOS0__C_UNR16_GAL1_PUN0_ICE1_NAW64_UFO0_MAC256_SKW9";
+    //hyperstring = "A_MIC6_PAD1_PLU1_LIW0_MIW0_WOS0__B_MIC5_PAD1_PLU1_LIW0_MIW1_WOS2__C_UNR8_GAL3_PUN1_ICE1_NAW16_UFO0_MAC4_SKW9";
+    hyperstring = "A_MIC2_PAD0_PLU0_LIW0_MIW0_WOS0__B_MIC4_PAD0_PLU1_LIW0_MIW0_WOS1__C_UNR16_GAL1_PUN0_ICE1_NAW64_UFO0_MAC256_SKW9";
   //}
   return hyperstring;
 }
@@ -34,7 +35,7 @@ template <typename TFloat>
 MIOpenGEMM::Geometry get_geometry()
 {
   //return {"tC0_tA0_tB0_colMaj1_m1024_n8_k10000_lda1024_ldb10000_ldc1024_ws1_f32"};
-  return {"tC0_tA1_tB0_colMaj1_m512_n48000_k2816_lda2816_ldb2816_ldc512_ws1_f32"};
+  return {"tC0_tA1_tB0_colMaj1_m512_n3000_k281_lda281_ldb281_ldc512_ws2000000_f32"};
 }
 
 MIOpenGEMM::Offsets get_offsets()
@@ -42,7 +43,7 @@ MIOpenGEMM::Offsets get_offsets()
   size_t a_offset         = 0;
   size_t b_offset         = 0;
   size_t c_offset         = 0;
-  size_t workspace_offset = 4;
+  size_t workspace_offset = 0;
   size_t tail_off_a       = 0;
   size_t tail_off_b       = 0;
   size_t tail_off_c       = 0;
@@ -89,10 +90,10 @@ int main()
   MIOpenGEMM::outputwriting::OutputWriter mowri(true, fout != "", fout);
 
   // what test(s) are you running ?
-  bool test_print     = false;
+  bool test_print     = true;
   bool test_benchgemm = false;
-  bool test_find      = true;
-  bool test_accuracy  = false;
+  bool test_find      = false;
+  bool test_accuracy  = true;
   bool test_default   = false;
 
   typedef float tfloat;

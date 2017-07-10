@@ -133,6 +133,16 @@ enum E{
 };
 }
 
+namespace Scratch
+{
+enum E{
+  UNUSED = 0,
+  COPY,
+  NFORM 
+};
+}
+
+
 
 
 }
