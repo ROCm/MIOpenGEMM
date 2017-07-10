@@ -59,22 +59,21 @@ void CopyGenerator::append_derived_definitions_additional(std::stringstream& ss)
   ss << "#define GLOBAL_OFFSET_W " << dp.at(emat_x).cw_global_offset << "\n";
 }
 
-KernelString get_copya_kernelstring(const hyperparams::HyperParams&     hp,
+KernelString get_copy_kernelstring(Mat::E emat_x,
+  const hyperparams::HyperParams&     hp,
                                     const Geometry&                     gg,
                                     const derivedparams::DerivedParams& dp)
 {
-  CopyGenerator cg(hp, gg, dp, "copya");
+  if (emat_x != Mat::E::A and emat_x != Mat::E::B){
+    throw miog_error("get_copy_kernelstring only for A and B matrices");
+  }
+  
+  std::string copy_string = emat_x == Mat::E::A ? "copya" : "copyb";
+  CopyGenerator cg(hp, gg, dp, copy_string);
   cg.setup();
   return cg.get_kernelstring();
 }
 
-KernelString get_copyb_kernelstring(const hyperparams::HyperParams&     hp,
-                                    const Geometry&                     gg,
-                                    const derivedparams::DerivedParams& dp)
-{
-  CopyGenerator cg(hp, gg, dp, "copyb");
-  cg.setup();
-  return cg.get_kernelstring();
-}
+
 }
 }

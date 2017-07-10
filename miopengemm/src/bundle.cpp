@@ -37,47 +37,31 @@ Bundle get_bundle(const hyperparams::HyperParams& hp,
   std::vector<KernelString>          v_tgks;
   std::vector<std::vector<size_t>> v_wait_indices;
 
-  if (hp.at(Mat::E::A).vs[Chi::E::WOS] == Scratch::E::UNUSED)
-  {
-    // no wsa kernel
+
+  for (auto emat_x : {Mat::E::A, Mat::E::B}){
+
+    if (hp.at(emat_x).vs[Chi::E::WOS] == Scratch::E::UNUSED)
+    {
+      // no workspace kernel
+    }
+  
+    else if (hp.at(emat_x).vs[Chi::E::WOS] == Scratch::E::COPY)
+    {
+      v_tgks.emplace_back(copygen::get_copy_kernelstring(emat_x, hp, gg, dp));
+    }
+  
+    else if (hp.at(emat_x).vs[Chi::E::WOS] == Scratch::E::NFORM)
+    {
+      v_tgks.emplace_back(nformgen::get_nform_kernelstring(emat_x, hp, gg, dp));
+    }
+  
+    else
+    {
+      throw miog_error("hp.at(emat_x).vs[Chi::E::WOS] should be 0, 1 or 2 (Scratch::E::UNUSED , Scratch::E::COPY or Scratch::E::NFORM)");
+    }
   }
-
-  else if (hp.at(Mat::E::A).vs[Chi::E::WOS] == Scratch::E::COPY)
-  {
-    v_tgks.emplace_back(copygen::get_copya_kernelstring(hp, gg, dp));
-  }
-
-  else if (hp.at(Mat::E::A).vs[Chi::E::WOS] == Scratch::E::NFORM)
-  {
-    v_tgks.emplace_back(nformgen::get_nforma_kernelstring(hp, gg, dp));
-  }
-
-  else
-  {
-    throw miog_error("hp.at(Mat::E::A).vs[Chi::E::WOS] should be 0, 1 or 2");
-  }
-
-  if (hp.at(Mat::E::B).vs[Chi::E::WOS] == Scratch::E::UNUSED)
-  {
-    // no wsb kernel
-  }
-
-  else if (hp.at(Mat::E::B).vs[Chi::E::WOS] == Scratch::E::NFORM)
-  {
-    v_tgks.emplace_back(copygen::get_copyb_kernelstring(hp, gg, dp));
-  }
-
-  else if (hp.at(Mat::E::B).vs[Chi::E::WOS] == Scratch::E::COPY)
-  {
-    v_tgks.emplace_back(nformgen::get_nformb_kernelstring(hp, gg, dp));
-  }
-
-
-  else
-  {
-    throw miog_error("hp.at(Mat::E::B).vs[Chi::E::WOS] should be Scratch::E::UNUSED , Scratch::E::COPY or Scratch::E::NFORM (0,1 or 2)");
-  }
-
+  
+  
   if (dp.main_does_beta_c_inc == 0)
   {
     v_tgks.emplace_back(betacgen::get_betac_kernelstring(hp, gg, dp));

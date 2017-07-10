@@ -178,23 +178,31 @@ for (size_t mu_perp_i = 0; mu_perp_i < MICRO_TILE_PERP_UNROLL; ++mu_perp_i) {
   }
 };
 
-KernelString get_nforma_kernelstring(const hyperparams::HyperParams&     hp,
+KernelString get_nform_kernelstring(Mat::E emat_x, 
+const hyperparams::HyperParams&     hp,
                                      const Geometry&                     gg,
                                      const derivedparams::DerivedParams& dp)
 {
-  NormalFormGenerator nfg(hp, gg, dp, "nforma");
+
+  if (emat_x != Mat::E::A and emat_x != Mat::E::B){
+    throw miog_error("get_copy_kernelstring only for A and B matrices");
+  }
+  
+  std::string nform_string = emat_x == Mat::E::A ? "nforma" : "nformb";  
+  
+  NormalFormGenerator nfg(hp, gg, dp, nform_string);
   nfg.setup();
   return nfg.get_kernelstring();
 }
 
-KernelString get_nformb_kernelstring(const hyperparams::HyperParams&     hp,
-                                     const Geometry&                     gg,
-                                     const derivedparams::DerivedParams& dp)
-{
-  NormalFormGenerator nfg(hp, gg, dp, "nformb");
-  nfg.setup();
-  return nfg.get_kernelstring();
-}
+//KernelString get_nformb_kernelstring(const hyperparams::HyperParams&     hp,
+                                     //const Geometry&                     gg,
+                                     //const derivedparams::DerivedParams& dp)
+//{
+  //NormalFormGenerator nfg(hp, gg, dp, "nformb");
+  //nfg.setup();
+  //return nfg.get_kernelstring();
+//}
 }
 }
 

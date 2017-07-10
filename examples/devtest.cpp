@@ -26,7 +26,7 @@ std::string get_hyperstring(std::string hyperstring = "")
   //if (hyperstring.compare("") == 0)
   //{
     //hyperstring = "A_MIC6_PAD1_PLU1_LIW0_MIW0_WOS0__B_MIC5_PAD1_PLU1_LIW0_MIW1_WOS2__C_UNR8_GAL3_PUN1_ICE1_NAW16_UFO0_MAC4_SKW9";
-    hyperstring = "A_MIC2_PAD0_PLU0_LIW0_MIW0_WOS0__B_MIC4_PAD0_PLU1_LIW0_MIW0_WOS1__C_UNR16_GAL1_PUN0_ICE1_NAW64_UFO0_MAC256_SKW9";
+    hyperstring = "A_MIC2_PAD0_PLU0_LIW0_MIW0_WOS1__B_MIC4_PAD0_PLU1_LIW0_MIW0_WOS2__C_UNR16_GAL1_PUN0_ICE1_NAW64_UFO0_MAC256_SKW9";
   //}
   return hyperstring;
 }

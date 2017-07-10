@@ -29,13 +29,14 @@ class CopyGenerator : public bylinegen::ByLineGenerator
   size_t get_work_per_thread() override final;
 };
 
-KernelString get_copya_kernelstring(const hyperparams::HyperParams&     hp,
+KernelString get_copy_kernelstring(Mat::E emat_x,
+const hyperparams::HyperParams&     hp,
                                     const Geometry&                     gg,
                                     const derivedparams::DerivedParams& dp);
 
-KernelString get_copyb_kernelstring(const hyperparams::HyperParams&     hp,
-                                    const Geometry&                     gg,
-                                    const derivedparams::DerivedParams& dp);
+//KernelString get_copyb_kernelstring(const hyperparams::HyperParams&     hp,
+                                    //const Geometry&                     gg,
+                                    //const derivedparams::DerivedParams& dp);
 }
 }
 

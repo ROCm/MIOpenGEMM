@@ -14,13 +14,14 @@ namespace MIOpenGEMM
 namespace nformgen
 {
 
-KernelString get_nforma_kernelstring(const hyperparams::HyperParams&     hp,
+KernelString get_nform_kernelstring(Mat::E emat_x, 
+const hyperparams::HyperParams&     hp,
                                      const Geometry&                     gg,
                                      const derivedparams::DerivedParams& dp);
 
-KernelString get_nformb_kernelstring(const hyperparams::HyperParams&     hp,
-                                     const Geometry&                     gg,
-                                     const derivedparams::DerivedParams& dp);
+//KernelString get_nformb_kernelstring(const hyperparams::HyperParams&     hp,
+                                     //const Geometry&                     gg,
+                                     //const derivedparams::DerivedParams& dp);
 }
 }
 
