@@ -265,53 +265,36 @@ Solution base_basicfind(const Geometry&   geometry,
 
       std::string enqhash =
         std::string("basicfind.hpp") + BasicKernelType::M.name[ks.type.basic_kernel_type];
-      size_t parameter_index = 0;
+//      size_t parameter_index = 0;
 
+
+
+
+
+      // parameter order rule: {a, oa, b, ob, c, oc, ws, ows}, alpha, beta
+      std::vector<std::pair<size_t, const void*>> arg_sizes_values;
+  
       for (auto& x : {'a', 'b', 'c', 'w'})
       {
         if (ks.type.uses(x) == true)
         {
-          openclutil::cl_set_kernel_arg(clkernels.back(),
-                                        parameter_index,
-                                        sizeof(cl_mem),
-                                        gpum[x],
-                                        enqhash + "gpumem " + x,
-                                        true);
-          ++parameter_index;
-
-          openclutil::cl_set_kernel_arg(clkernels.back(),
-                                        parameter_index,
-                                        sizeof(size_t),
-                                        &(toff[x]),
-                                        enqhash + "offset " + x,
-                                        true);
-          ++parameter_index;
+          arg_sizes_values.emplace_back(sizeof(cl_mem), gpum[x]);
+          arg_sizes_values.emplace_back(sizeof(size_t), &(toff[x]));
         }
       }
-
+  
       if (ks.type.uses_alpha)
       {
-
-        openclutil::cl_set_kernel_arg(clkernels.back(),
-                                      parameter_index,
-                                      sizeof(TFloat),
-                                      &alpha_true_type,
-                                      enqhash + " alpha",
-                                      true);
-        ++parameter_index;
+        arg_sizes_values.emplace_back(sizeof(TFloat), &alpha_true_type);
       }
-
+  
       if (ks.type.uses_beta)
       {
-        openclutil::cl_set_kernel_arg(clkernels.back(),
-                                      parameter_index,
-                                      sizeof(TFloat),
-                                      &beta_true_type,
-                                      enqhash + " beta",
-                                      true);
-        ++parameter_index;
+        arg_sizes_values.emplace_back(sizeof(TFloat), &beta_true_type);
       }
-    }
+  
+      openclutil::cl_set_kernel_args(clkernels.back(), arg_sizes_values, "in basicfind.cpp", true);
+     }
 
     // Enqueueing the kernel(s)
     auto enqueue_kernels_serial = [&soln, &clevents, &command_queue, &clkernels](std::string hash) {

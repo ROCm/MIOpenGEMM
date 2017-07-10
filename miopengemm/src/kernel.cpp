@@ -61,30 +61,9 @@ Kernel::~Kernel() { try_release(); }
 
 bool Kernel::is_set() { return (clprog != nullptr && clkern != nullptr); }
 
-void Kernel::set_kernel_arg(cl_uint arg_index, size_t arg_size, const void* arg_value)
-{
-
-  if (clkern == nullptr)
-  {
-    throw miog_error("Attempt to set kernel argument of uninitialised kernel");
-  }
-
-  openclutil::cl_set_kernel_arg(clkern,
-                                arg_index,
-                                arg_size,
-                                arg_value,
-                                "in set_kernel_arg of Kernel, " + hash + " index : " +
-                                  std::to_string(arg_index),
-                                true);
-}
-
 void Kernel::set_kernel_args(std::vector<std::pair<size_t, const void*>> arg_sizes_values)
 {
-  for (cl_uint arg_index = 0; arg_index < arg_sizes_values.size(); ++arg_index)
-  {
-    set_kernel_arg(
-      arg_index, arg_sizes_values[arg_index].first, arg_sizes_values[arg_index].second);
-  }
+  openclutil::cl_set_kernel_args(clkern, arg_sizes_values, "Kernel::set_kernel_args", true);
 }
 
 openclutil::OpenCLResult Kernel::enqueue(cl_uint         num_events_in_wait_list,

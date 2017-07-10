@@ -53,6 +53,11 @@ OpenCLResult cl_set_kernel_arg(cl_kernel&         kernel,
                                const std::string& hash,
                                bool               strict);
 
+OpenCLResult cl_set_kernel_args(cl_kernel&         kernel,
+                               std::vector<std::pair<size_t, const void*>> arg_sizes_values,
+                               const std::string& hash,
+                               bool               strict);
+
 OpenCLResult cl_flush(cl_command_queue command_queue, const std::string& hash, bool strict);
 OpenCLResult cl_wait_for_events(cl_uint            num_events,
                                 const cl_event*    event_list,

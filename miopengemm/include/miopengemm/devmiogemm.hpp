@@ -45,6 +45,11 @@ Solution find(const FindParams&            find_params,
               const Geometry&              gg,
               const Offsets&               toff,
               outputwriting::OutputWriter& mowri);
+
+
+// TODO NOW : bring basicfind.hpp func here.
+                   
+
 }
 }
 

@@ -86,9 +86,52 @@ OpenCLResult cl_set_kernel_arg(cl_kernel&         kernel,
                                const std::string& hash,
                                bool               strict)
 {
+  
+
+  if (kernel == nullptr)
+  {
+    std::stringstream errm;
+    errm << "In cl_set_kernel_arg."
+      << "Attempt to set kernel argument of uninitialised kernel."
+      << "hash : `" << hash << "'";
+      
+    throw miog_error(errm.str());
+  }
+
   cl_int ret = clSetKernelArg(kernel, arg_index, arg_size, arg_value);
+  
+
+
   return confirm_cl_status(ret, hash, "cl_set_kernel_arg", strict);
 }
+
+
+OpenCLResult cl_set_kernel_args(cl_kernel&         kernel,
+                               std::vector<std::pair<size_t, const void*>> arg_sizes_values,
+                               const std::string& hash,
+                               bool               strict)
+{
+
+  for (cl_uint arg_index = 0; arg_index < arg_sizes_values.size(); ++arg_index)
+  {
+    std::stringstream hashss;
+    hashss << "cl_set_kernel_args with hash : `" 
+    << hash << "'. Attempting to set arg at index " 
+    << arg_index << ".";
+    size_t arg_size = arg_sizes_values[arg_index].first;
+    const void * arg_value = arg_sizes_values[arg_index].second;
+    auto oclr = cl_set_kernel_arg(
+      kernel, arg_index, arg_size, arg_value, hashss.str(), strict);
+      
+    if (oclr.fail())
+    {
+      return oclr;
+    }
+  }
+  
+  return {};  
+}
+
 
 OpenCLResult cl_flush(cl_command_queue command_queue, const std::string& hash, bool strict)
 {
