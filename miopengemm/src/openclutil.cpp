@@ -638,7 +638,7 @@ OpenCLResult cl_set_platform_etc(cl_platform_id&              platform,
     }
 
     device_compute_unit_count_string += deviceName;
-    device_compute_unit_count_string += ", which as ";
+    device_compute_unit_count_string += ", which has ";
     device_compute_unit_count_string += std::to_string(max_compute_units);
     device_compute_unit_count_string += " compute units\n";
   }
@@ -661,6 +661,8 @@ OpenCLResult cl_set_platform_etc(cl_platform_id&              platform,
     if (oclr.fail())
       return oclr;
 
+    size_t min_allowed_max_CUS = 30;
+
     std::string platform_vendor = info_st.substr(0, info_size);
     // assuming that if it's Nvidia, it's correct
     if (platform_vendor.find("vidia") != std::string::npos ||
@@ -669,14 +671,15 @@ OpenCLResult cl_set_platform_etc(cl_platform_id&              platform,
     }
 
     // if not Nvidia, and fewer than 40 compute units
-    else if (max_max_compute_units < 40)
+    else if (max_max_compute_units < min_allowed_max_CUS)
     {
-      std::string errm = device_compute_unit_count_string;
-      errm += "As this is less than 40, an error is being thrown. \nIf you "
-              "wish to use a device "
-              "with fewer than 40 CUs, please make changes here (in "
-              "openclutil.cpp)";
-      throw miog_error(errm);
+      std::stringstream errm;
+      errm << device_compute_unit_count_string;
+      errm << "As this is less than 40, an error is being thrown. "
+      << "If you wish to use a devices with fewer than " << min_allowed_max_CUS << " CUs, "
+      << "please make changes here (in openclutil.cpp). The value " << min_allowed_max_CUS
+      << "was chosen arbitrarily.";
+      throw miog_error(errm.str());
     }
   }
 
