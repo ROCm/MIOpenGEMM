@@ -36,6 +36,9 @@ Offsets::Offsets(size_t oa_,
 
 }
 
+Offsets get_padding_offsets() {
+  return Offsets(11,17,13,22,61,15,18,7);
+}
 
 
 char get_floattype(size_t nbits)

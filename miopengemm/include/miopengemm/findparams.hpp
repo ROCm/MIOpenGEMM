@@ -30,6 +30,10 @@ class FindParams
   FindParams() = default;
   std::string get_string() const;
 };
+
+
+FindParams get_quick_find_params();
+
 }
 
 #endif

@@ -165,7 +165,29 @@ namespace Mem
     return X;
   }  
   const EnumMapper<char> M = get_enum_mapper<char>(get_name(), "Mem");
+
+  Mem::E mat_to_mem(Mat::E emat){
+    if (emat == Mat::E::A){
+      return Mem::E::A;
+    }
+    
+    else if (emat == Mat::E::B){
+      return Mem::E::B;
+    }
+    
+    else if (emat == Mat::E::C){
+      return Mem::E::C;
+    }
+    
+    else{
+      throw miog_error("no mem enum for supposed mat enum provided");
+    }
+  }
+
+
 }
+
+
 
 
  

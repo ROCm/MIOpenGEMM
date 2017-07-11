@@ -87,12 +87,12 @@ int run_find_experiments(const std::vector<Geometry>& geometries,
         mowri_outer << logfile << Endl;
       }
 
-      auto soln = dev::basicfind(gg,
+      auto soln = dev::basicfind(
+      find_params,constraints, gg,
                             offsets,
-                            find_params,
-                            verbose_inner,
-                            logfile,
-                            constraints);
+                            
+                            mowri_outer // TODO : this is obviously not correct, fix it.
+                            );
                             
       end = std::chrono::high_resolution_clock::now();
 

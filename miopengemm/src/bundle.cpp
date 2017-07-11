@@ -57,7 +57,10 @@ Bundle get_bundle(const hyperparams::HyperParams& hp,
   
     else
     {
-      throw miog_error("hp.at(emat_x).vs[Chi::E::WOS] should be 0, 1 or 2 (Scratch::E::UNUSED , Scratch::E::COPY or Scratch::E::NFORM)");
+      std::stringstream errm;
+      errm << "hp.at(emat_x).vs[Chi::E::WOS] should be 0, 1 or 2"
+      << "(Scratch::E::UNUSED , Scratch::E::COPY or Scratch::E::NFORM)";
+      throw miog_error(errm.str());
     }
   }
   
@@ -99,6 +102,7 @@ Bundle get_bundle(const hyperparams::HyperParams& hp,
     }
   }
 
+  // TODO : bundle_verbose should be mowri handled
   if (bundle_verbose == true)
   {
     mowri << "\n";

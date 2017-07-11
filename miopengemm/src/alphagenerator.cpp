@@ -49,12 +49,9 @@ class AlphaGenerator : public basegen::BaseGenerator
   AlphaGenerator(const hyperparams::HyperParams&     hp_,
                  const Geometry&                     gg_,
                  const derivedparams::DerivedParams& dp_)
-                 //std::string&                        type_)
-    : basegen::BaseGenerator(hp_, gg_, dp_)//, type_)
+    : basegen::BaseGenerator(hp_, gg_, dp_)
   {
   }
-
-  //virtual void setup() final override { set_usage(); }
 
   private:
   void append_group_allocation_string(std::stringstream& ss)

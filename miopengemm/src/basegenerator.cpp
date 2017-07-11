@@ -50,7 +50,6 @@ void BaseGenerator::append_fargs(std::stringstream& ss)
 
 
 
-// TODO : take in Mat::E as arguament 
 void BaseGenerator::append_stride_definitions(Mat::E emat_x,
                                               std::stringstream& ss,
                                               size_t           workspace_type,
@@ -58,8 +57,6 @@ void BaseGenerator::append_stride_definitions(Mat::E emat_x,
                                               std::string        macro_prefix,
                                               bool               with_x_in_name)
 {
-
-//  Mat::E emat_x = hp.get_eMat_from_char(x);
 
   char x = Mat::M.name[emat_x];
   if (withcomments == true)
@@ -77,7 +74,6 @@ void BaseGenerator::append_stride_definitions(Mat::E emat_x,
   }
 }
 
-// TODO : take in Mat::E as arguament 
 void BaseGenerator::append_unroll_block_geometry(Mat::E emat_x,
                                                  std::stringstream& ss,
                                                  bool               withcomments,
@@ -85,7 +81,7 @@ void BaseGenerator::append_unroll_block_geometry(Mat::E emat_x,
 {
 
 
-  //TODO : should be X.
+  //TODO : should be X., not x
   char x = Mat::M.name[emat_x];
   std::string x_string = with_x_string ? "_" + std::string(1, x) : "";
 

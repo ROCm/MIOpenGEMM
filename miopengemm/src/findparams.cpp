@@ -70,4 +70,20 @@ std::string FindParams::get_string() const
      << std::endl;
   return ss.str();
 }
+
+
+
+FindParams get_quick_find_params(){
+
+  float                   allotted_time       = 0.003;
+  size_t                allotted_iterations = 1;
+  size_t                max_n_runs_per_kernel   = 1;
+  double max_time_per_kernel = 1e12;
+  SummStat::E sumstat = SummStat::E::MEDIAN;
+
+  return FindParams(
+    allotted_time, allotted_iterations, max_n_runs_per_kernel, max_time_per_kernel, sumstat);
+}
+
+
 }

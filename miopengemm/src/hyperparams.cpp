@@ -540,8 +540,10 @@ void ChiralSubG::set_preconstraint_edges()
   edges[Chi::E::LIW] = {graph_binary};
   edges[Chi::E::MIW] = {graph_binary};
 
-  /* TODO : namespace the copy types */
-  edges[Chi::E::WOS] = {{Scratch::E::UNUSED, {Scratch::E::COPY, Scratch::E::NFORM}}, {Scratch::E::COPY, {Scratch::E::UNUSED, Scratch::E::NFORM}}, {Scratch::E::NFORM, {Scratch::E::UNUSED, Scratch::E::COPY}}};
+  
+  edges[Chi::E::WOS] = {{Scratch::E::UNUSED, {Scratch::E::COPY, Scratch::E::NFORM}}, 
+    {Scratch::E::COPY, {Scratch::E::UNUSED, Scratch::E::NFORM}}, 
+    {Scratch::E::NFORM, {Scratch::E::UNUSED, Scratch::E::COPY}}};
 }
 
 
@@ -572,9 +574,10 @@ void CSubG::set_preconstraint_edges()
 
   edges[NonChi::E::UNR] = {{8, {16}}, {16, {8, 32}}, {32, {16, 64}}, {64, {16, 32}}};
   edges[NonChi::E::NAW] = {{64, {16}}, {16, {64}}};
-  edges[NonChi::E::GAL] = {{GroupAllocation::E::BYROW, {GroupAllocation::E::BYCOL, GroupAllocation::E::SUCOL}},
-                      {GroupAllocation::E::BYCOL, {GroupAllocation::E::BYROW, GroupAllocation::E::SUCOL}},
-                      {GroupAllocation::E::SUCOL, {GroupAllocation::E::BYROW, GroupAllocation::E::BYCOL}}};
+  edges[NonChi::E::GAL] = 
+  {{GroupAllocation::E::BYROW,  {GroupAllocation::E::BYCOL, GroupAllocation::E::SUCOL}},
+  {GroupAllocation::E::BYCOL,   {GroupAllocation::E::BYROW, GroupAllocation::E::SUCOL}},
+  {GroupAllocation::E::SUCOL,   {GroupAllocation::E::BYROW, GroupAllocation::E::BYCOL}}};
 
   // MAC and SKW
 

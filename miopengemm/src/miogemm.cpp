@@ -59,9 +59,6 @@ class GPUMems
   cl_mems[Mem::E::C] = c_gpu_;    
   cl_mems[Mem::E::W] = workspace_gpu_;      
   }
-    //: a_gpu(a_gpu_), b_gpu(b_gpu_), c_gpu(c_gpu_), workspace_gpu(workspace_gpu_)
-  //{
-  //}
 
   cl_mem& operator[](Mem::E x)
   {
@@ -69,39 +66,6 @@ class GPUMems
     return cl_mems[x];
   }
 };
-
-  //cl_mem a_gpu;
-  //cl_mem b_gpu;
-  //cl_mem c_gpu;
-  //cl_mem workspace_gpu;
-
-
-    //if (x == Mem::E::A)
-    //{
-      //return a_gpu;
-    //}
-    //else if (x == Mem::E::B)
-    //{
-      //return b_gpu;
-    //}
-    //else if (x == Mem::E::C)
-    //{
-      //return c_gpu;
-    //}
-    //else if (x == Mem::E::W)
-    //{
-      //return workspace_gpu;
-    //}
-
-    //else
-    //{
-      //std::stringstream ss;
-      //ss << "Unrecognised Mem::E passed to operator[] of GPUMems. Should be one "
-         //<< "of Mem::E::A, Mem::E::B, Mem::E::C, Mem::E::W not " << x;
-      //throw miog_error(ss.str());
-    //}
-  //}
-
 
 class OpenCLGemmEncapsulator
 {

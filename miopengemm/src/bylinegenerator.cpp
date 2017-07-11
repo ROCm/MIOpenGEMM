@@ -38,7 +38,7 @@ void ByLineGenerator::setup_final()
   n_work_items                 = n_work_items_per_line * gg.get_uncoal(emat_x);
   start_in_coal_last_work_item = get_work_per_thread() * n_full_work_items_per_line;
   work_for_last_item_in_coal   = gg.get_coal(emat_x) % get_work_per_thread();
-  //set_usage_from_mchar();
+
 }
 
 ByLineGenerator::ByLineGenerator(Mat::E emat_x_,

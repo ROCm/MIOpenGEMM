@@ -105,7 +105,10 @@ enum E{
   N
 };
 extern const EnumMapper<char> M;
+Mem::E mat_to_mem(Mat::E);
 }
+
+
 
 
 
