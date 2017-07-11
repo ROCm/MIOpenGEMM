@@ -51,6 +51,7 @@ int main()
             std::cout << "\ntest " << testi << "/32";
             std::cout << "\nm=" << m << " n=" << n << " k=" << k << "\ntA=" << tA << " tB=" << tB
                       << " tC=" << tC << " isColMajor=" << isColMajor << std::endl;
+            
             std::cout << "<float>  ";
             geometrytest<float>(isColMajor, tA, tB, tC, m, n, k);
             std::cout << "\n<double> ";

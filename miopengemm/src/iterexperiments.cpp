@@ -87,12 +87,18 @@ int run_find_experiments(const std::vector<Geometry>& geometries,
         mowri_outer << logfile << Endl;
       }
 
-      auto soln = dev::basicfind(
-      find_params,constraints, gg,
-                            offsets,
+    
+      dev::Goa goa(gg, offsets, mowri_outer); //TODO : should be a mowri
+      Solution soln = goa.find(find_params, constraints);
+
+      //auto soln = dev::basicfind(
+      //find_params,
+      //constraints, 
+      //gg,
+      //offsets,
                             
-                            mowri_outer // TODO : this is obviously not correct, fix it.
-                            );
+                            //mowri_outer // TODO : this is obviously not correct, fix it.
+                            //);
                             
       end = std::chrono::high_resolution_clock::now();
 
