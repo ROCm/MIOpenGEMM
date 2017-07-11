@@ -21,10 +21,12 @@ void indentify(std::string& source)
 
   if (std::string::npos == last_lend)
   {
-    throw miog_error("the kernel up for indentification seems suspicious, it "
-                     "seems like it has no "
-                     "new lines in it :\n" +
-                     source);
+    std::stringstream errm;
+    
+    errm << "the kernel up for indentification seems suspicious: "
+    << "it seems like it has no new lines in it :\n" 
+    << source;
+    throw miog_error(errm.str());                 
   }
 
   std::string::size_type next_lend  = source.find("\n", last_lend + 1);

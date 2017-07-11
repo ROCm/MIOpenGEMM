@@ -45,9 +45,12 @@ std::tuple<bool, std::string> get_tileability(size_t TH, size_t TW, size_t tS)
 
   if (tS == 0)
   {
-    throw miog_error("In get_tileability, and tS is zero. This is worse than "
-                     "non-tileable, there "
-                     "is probably a bad input parameter.");
+    std::stringstream errm;
+    errm << "In get_tileability, and tS is zero. "
+    << "This is worse than non-tileable, "
+    << "there is probably a bad input parameter.";
+                     
+    throw miog_error(errm.str());
   }
 
   std::string       set_ds("");
@@ -78,8 +81,8 @@ std::tuple<bool, std::string> get_tileability(size_t TH, size_t TW, size_t tS)
   if (TW % tW != 0 || TH % TH != 0 || tW * tH != tS)
   {
     std::stringstream err_ss;
-    err_ss << "Problem in get_tileability. This isn't even non-tileable, this is "
-           << "a logic error. "
+    err_ss << "Problem in get_tileability."
+    << " This isn't even non-tileable, this is a logic error. "
            << "The found micro tile size is not consistent with the macro tile : " << input_string
            << "   tH : " << tH << " tW  " << tW;
     throw miog_error(err_ss.str());
@@ -99,13 +102,14 @@ void set_tile_dimensions(
 
   if (is_tileable == false)
   {
-    throw miog_error("In set_tile_dimensions, and the problem is not tileable. Call "
-                     "get_tileability as a check before set_tile_dimensions to catch this "
-                     "case "
-                     "without throwing an error. The string returned from "
-                     "set_tile_dimensions was "
-                     ": " +
-                     tileable_status);
+    std::stringstream errm;
+    errm << "In set_tile_dimensions, and the problem is not tileable."
+    << " Call get_tileability as a check before set_tile_dimensions to catch this case "
+   << "without throwing an error. "
+   << "The string returned from set_tile_dimensions was : "
+   << tileable_status;
+    
+    throw miog_error(errm.str());
   }
 
   // switch (tW <-> tH) and (TW <-> TH)

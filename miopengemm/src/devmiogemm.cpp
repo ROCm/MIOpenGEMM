@@ -23,7 +23,6 @@
 #include <miopengemm/openclutil.hpp>
 #include <miopengemm/outputwriter.hpp>
 #include <miopengemm/redirection.hpp>
-#include <miopengemm/sizingup.hpp>
 #include <miopengemm/slowcpugemm.hpp>
 #include <miopengemm/stringutilbase.hpp>
 #include <miopengemm/setabcw.hpp>
@@ -81,7 +80,7 @@ class Gemini
     {
       throw miog_error("float sizes don't agree in Gemini");
     }
-    sizingup::check_sizes_ok_for_size_t(gg, toff);
+    //sizingup::check_sizes_ok_for_size_t(gg, toff);
     c_copy.resize(get_c_memsize() / sizeof(TFloat));
     std::memcpy(c_copy.data(), c, get_c_memsize());
     opencl_memory_initialise();

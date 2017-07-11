@@ -7,7 +7,6 @@
 #include <string>
 #include <vector>
 #include <miopengemm/error.hpp>
-#include <miopengemm/sizingup.hpp>
 #include <miopengemm/solution.hpp>
 #include <miopengemm/stringutilbase.hpp>
 

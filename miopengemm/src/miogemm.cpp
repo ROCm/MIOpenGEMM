@@ -18,7 +18,6 @@
 #include <miopengemm/miogemm.hpp>
 #include <miopengemm/openclutil.hpp>
 #include <miopengemm/outputwriter.hpp>
-#include <miopengemm/sizingup.hpp>
 #include <miopengemm/solution.hpp>
 #include <miopengemm/stringutilbase.hpp>
 #include <sstream>
@@ -241,7 +240,7 @@ class OpenCLGemmEncapsulator
     }
   }
 
-  void run_checks() { sizingup::check_sizes_ok_for_size_t(gg, toff); }
+  void run_checks() { } //sizingup::check_sizes_ok_for_size_t(gg, toff); }
 
   void set_kern_args(const KernelType& type)
   {
