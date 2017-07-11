@@ -109,6 +109,9 @@ Mem::E mat_to_mem(Mat::E);
 }
 
 
+namespace Mat{
+Mat::E mem_to_mat(Mem::E);
+}
 
 
 

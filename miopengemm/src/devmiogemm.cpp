@@ -48,11 +48,15 @@ class Gemini
   std::vector<TFloat>          c_for_cpu_compute;
   outputwriting::OutputWriter& mowri;
 
+
   openclutil::CommandQueueInContext tgcq;
   
   // a, b, c and workspace, gpu memories. 
   std::vector<openclutil::SafeClMem> gpu_safemem;
-  
+
+  // sizes of a, b, c and workspace gpu memories.
+  std::vector<size_t> mem_size;
+    
   // read write permissions of gpu data. 
   std::vector<cl_mem_flags> rw_perms;
   
@@ -70,35 +74,39 @@ class Gemini
       mowri(mowri_),
       tgcq(mowri, "command queue of Gemini"),
       gpu_safemem(Mem::E::N, std::string("gpu_safemem vector in devmio")),
+      mem_size(Mem::E::N),
       rw_perms(Mem::E::N)
   {
       cpu_mem[Mat::E::A] = a_;
       cpu_mem[Mat::E::B] = b_;
       cpu_mem[Mat::E::C] = c_;
 
-      // TODO : these should be in enums
+      // TODO : these should be in enums in enum.hpp
       rw_perms[Mem::E::A] = CL_MEM_READ_ONLY;
       rw_perms[Mem::E::B] = CL_MEM_READ_ONLY;
       rw_perms[Mem::E::C] = CL_MEM_READ_WRITE;    
       rw_perms[Mem::E::W] = CL_MEM_READ_WRITE;    
   
+      for (auto emem : {Mem::E::A, Mem::E::B, Mem::E::C}){
+        mem_size[emem] = get_mat_memsize(emem);
+      }
+      mem_size[Mem::E::W] = get_workspace_memsize();
+      
       gg.check_ldx_consistent();
       if (gg.derived.float_size_bytes != sizeof(TFloat))
       {
         throw miog_error("float sizes don't agree in Gemini");
       }
-      auto c_mem_size = get_mat_memsize(Mat::E::C);
-      c_copy.resize(c_mem_size / sizeof(TFloat));
-      std::memcpy(c_copy.data(), cpu_mem[Mem::E::C], c_mem_size);
+      c_copy.resize(mem_size[Mem::E::C] / sizeof(TFloat));
+      std::memcpy(c_copy.data(), cpu_mem[Mem::E::C], mem_size[Mem::E::C]);
       opencl_memory_initialise();
     
     
   }
   
   
-  //TODO : mat_to_mem function
-  size_t get_mat_memsize(Mat::E emat){
-    Mem::E emem = Mem::mat_to_mem(emat);
+  size_t get_mat_memsize(Mem::E emem){
+    Mat::E emat = Mat::mem_to_mat(emem);
     return sizeof(TFloat)*(gg.get_padded_area(emat) + toff.offsets[emem] + toff.tails[emem]);
   }
 
@@ -108,34 +116,24 @@ class Gemini
   {
 
     // allocate memory for a,b,c on device, send it over    
-    for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C}){
-      Mem::E emem = Mem::mat_to_mem(emat);
+    for (auto emem : {Mem::E::A, Mem::E::B, Mem::E::C, Mem::E::W}){
+      //Mat::E emat = Mat::mem_to_mat(emem);
       std::stringstream hash;
       
-      hash << "GPU Mem " << Mat::M.name[emat] << " (Gemini)",
+      hash << "GPU Mem " << Mem::M.name[emem] << " (Gemini) "
+       << "with memory size " << mem_size[emem]  << ".";
       
-      openclutil::cl_set_buffer_from_command_queue(gpu_safemem[emem].clmem,
+      if (mem_size[emem] > 0){
+        openclutil::cl_set_buffer_from_command_queue(gpu_safemem[emem].clmem,
                                                  tgcq.command_queue,
                                                  rw_perms[emem],
-                                                 get_mat_memsize(emat),
+                                                 mem_size[emem],
                                                  NULL,
-      hash.str(),
+                                                 hash.str(),
                                                  true);
+      }
     }
     
-    std::stringstream ss_hash;
-    if (get_workspace_memsize() > 0)
-    {
-      ss_hash << "workspace_gpu in Gemini, with workspace_memsize : (" << get_workspace_memsize()
-              << "(bytes) )";
-      openclutil::cl_set_buffer_from_command_queue(gpu_safemem[Mem::E::W].clmem,
-                                                   tgcq.command_queue,
-                                                   rw_perms[Mem::E::W],
-                                                   get_workspace_memsize(),
-                                                   NULL,
-                                                   ss_hash.str(),
-                                                   true);
-    }
     
     for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C}){
       Mem::E emem = Mem::mat_to_mem(emat);
@@ -143,7 +141,7 @@ class Gemini
                                         gpu_safemem[emem].clmem,
                                         CL_TRUE,
                                         0,
-                                        get_mat_memsize(emat),
+                                        mem_size[emem],
                                         cpu_mem[emat],
                                         0,
                                         NULL,
@@ -196,7 +194,7 @@ class Gemini
   void accuracy_test(const std::string& hyperstring, const TFloat* c_true_for_test)
   {
     clEnqueueWriteBuffer(
-      tgcq.command_queue, gpu_safemem[Mem::E::C].clmem, CL_TRUE, 0,  get_mat_memsize(Mat::E::C), cpu_mem[Mat::E::C], 0, NULL, NULL);
+      tgcq.command_queue, gpu_safemem[Mem::E::C].clmem, CL_TRUE, 0,  mem_size[Mem::E::C], cpu_mem[Mat::E::C], 0, NULL, NULL);
 
     benchgemm({hyperstring}, 1, 1e12);
 
@@ -205,7 +203,7 @@ class Gemini
                                        gpu_safemem[Mat::E::C].clmem,
                                        CL_TRUE,
                                        0,
-                                       get_mat_memsize(Mat::E::C),
+                                       mem_size[Mem::E::C],
                                        c_copy.data(),
                                        0,
                                        NULL,
@@ -215,9 +213,8 @@ class Gemini
 
     if (c_true_for_test == nullptr)
     {
-      auto c_mem_size = get_mat_memsize(Mat::E::C);
-      c_for_cpu_compute.resize(c_mem_size / sizeof(TFloat));
-      std::memcpy(c_for_cpu_compute.data(), cpu_mem[Mat::E::C], c_mem_size);
+      c_for_cpu_compute.resize(mem_size[Mem::E::C] / sizeof(TFloat));
+      std::memcpy(c_for_cpu_compute.data(), cpu_mem[Mat::E::C], mem_size[Mem::E::C]);
 
       slowcpugemm::gemms_cpu<TFloat>(
         gg, toff, cpu_mem[Mat::E::A], cpu_mem[Mat::E::B], c_for_cpu_compute.data(), default_alpha, default_beta, {"3fors"}, mowri);

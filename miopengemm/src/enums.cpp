@@ -150,6 +150,26 @@ namespace Mat
     return X;
   }  
   const EnumMapper<char> M = get_enum_mapper<char>(get_name(), "Mat");
+
+
+  // TODO : rather make this an array for lookup
+  Mat::E mem_to_mat(Mem::E emat){
+    if (emat == Mem::E::A){
+      return Mat::E::A;
+    }
+    
+    else if (emat == Mem::E::B){
+      return Mat::E::B;
+    }
+    
+    else if (emat == Mem::E::C){
+      return Mat::E::C;
+    }
+    
+    else{
+      throw miog_error("no mat enum for supposed mem enum provided");
+    }
+  }
 }
 
 
@@ -183,8 +203,6 @@ namespace Mem
       throw miog_error("no mem enum for supposed mat enum provided");
     }
   }
-
-
 }
 
 
