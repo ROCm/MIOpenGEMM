@@ -130,6 +130,7 @@ class Geometry
 template<typename TFloat>
 MIOpenGEMM::Geometry get_padded_geometry(bool isColMajor, bool tA, bool tB, bool tC, size_t m, size_t n, size_t k, size_t workspace_size){
   char floattype = sizeof(TFloat) == 4 ? 'f' : 'd';
+  
   size_t lda = (tA == isColMajor ? k : m) + 9;
   size_t ldb = (tB == isColMajor ? n : k) + 10;
   size_t ldc = (tC == isColMajor ? n : m) + 12;

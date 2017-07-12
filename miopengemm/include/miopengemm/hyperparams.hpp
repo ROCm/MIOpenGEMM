@@ -11,7 +11,7 @@
 #include <vector>
 #include <miopengemm/error.hpp>
 #include <miopengemm/geometry.hpp>
-#include <miopengemm/openclutil.hpp>
+#include <miopengemm/oclutil.hpp>
 
 namespace MIOpenGEMM
 {
@@ -41,7 +41,7 @@ class SubG
        const Geometry&                     gg,
        std::string                         cs,
        bool                                csfull,
-       const openclutil::OpenCLDeviceInfo* ptr_devinfo);
+       const oclutil::DevInfo* ptr_devinfo);
 
   SubG() = default;
 
@@ -67,7 +67,7 @@ class SubG
   std::string subg_cs;
   bool        subg_csfull;
 
-  const openclutil::OpenCLDeviceInfo* ptr_devinfo;
+  const oclutil::DevInfo* ptr_devinfo;
 
   std::vector<size_t> constraints;
 
@@ -97,7 +97,7 @@ class CSubG : public SubG
   CSubG(const Geometry&                     gg,
         std::string                         cs,
         bool                                csfull,
-        const openclutil::OpenCLDeviceInfo* ptr_devinfo);
+        const oclutil::DevInfo* ptr_devinfo);
   virtual void initialise_maps() override final;
   virtual void set_preconstraint_edges() override final;
   virtual void manual_override_start_range() override final;
@@ -111,7 +111,7 @@ class ChiralSubG : public SubG
   ChiralSubG(const Geometry&                     gg,
              std::string                         cs,
              bool                                csfull,
-             const openclutil::OpenCLDeviceInfo* ptr_devinfo);
+             const oclutil::DevInfo* ptr_devinfo);
   virtual void initialise_maps() override final;
   virtual void set_preconstraint_edges() override final;
   virtual void manual_override_start_range() override final;
@@ -126,7 +126,7 @@ class ASubG : public ChiralSubG
   ASubG(const Geometry&                     gg,
         std::string                         cs,
         bool                                csfull,
-        const openclutil::OpenCLDeviceInfo* ptr_devinfo_)
+        const oclutil::DevInfo* ptr_devinfo_)
     : ChiralSubG(gg, cs, csfull, ptr_devinfo_)
   {
   }
@@ -141,7 +141,7 @@ class BSubG : public ChiralSubG
   BSubG(const Geometry&                     gg,
         std::string                         cs,
         bool                                csfull,
-        const openclutil::OpenCLDeviceInfo* ptr_devinfo_)
+        const oclutil::DevInfo* ptr_devinfo_)
     : ChiralSubG(gg, cs, csfull, ptr_devinfo_)
   {
   }
@@ -172,7 +172,7 @@ class Graph
     coupled_parameters;
 
   Graph(const Geometry&                     gg,
-        const openclutil::OpenCLDeviceInfo& devinfo,
+        const oclutil::DevInfo& devinfo,
         std::string                         constraint_string,
         bool                                full_constraints_expected);
 };

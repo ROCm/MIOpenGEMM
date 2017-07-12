@@ -12,7 +12,7 @@
 #include <miopengemm/enums.hpp>
 namespace MIOpenGEMM
 {
-namespace outputwriting
+namespace owrite
 {
 
 class Flusher {};
@@ -53,7 +53,7 @@ template <>
 BasicWriter& BasicWriter::operator<<(Endline e);
 
 
-class OutputWriter
+class Writer
 {
   private:
     Ver::E v;
@@ -75,12 +75,12 @@ class OutputWriter
   
   public:
   
-   OutputWriter();
-  ~OutputWriter();
-   OutputWriter(Ver::E v, std::string filename);
+   Writer();
+  ~Writer();
+   Writer(Ver::E v, std::string filename);
 
   template <typename T>
-  OutputWriter& operator<<(T t)
+  Writer& operator<<(T t)
   {
     main << t;
     return  *this;
@@ -89,8 +89,8 @@ class OutputWriter
 };
 
 }
-extern outputwriting::Flusher Flush;
-extern outputwriting::Endline Endl;
+extern owrite::Flusher Flush;
+extern owrite::Endline Endl;
 }
 
 #endif

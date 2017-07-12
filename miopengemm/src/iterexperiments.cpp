@@ -22,7 +22,7 @@ int run_find_experiments(const std::vector<Geometry>& geometries,
                          std::string                  fn_outer)
 {
 
-  outputwriting::OutputWriter mowri_outer(Ver::E::TERMINAL, ""); // TODO : fix verbose_outer, fn_outer != "", fn_outer);
+  owrite::Writer mowri_outer(Ver::E::TERMINAL, ""); // TODO : fix verbose_outer, fn_outer != "", fn_outer);
 
   std::string cache_write_string("");
 
@@ -88,7 +88,7 @@ int run_find_experiments(const std::vector<Geometry>& geometries,
       }
 
     
-      dev::Goa goa(gg, offsets, mowri_outer); //TODO : should be a mowri
+      dev::Boa goa(gg, offsets, mowri_outer); //TODO : should be a mowri
       Solution soln = goa.find(find_params, constraints);
 
       //auto soln = dev::basicfind(

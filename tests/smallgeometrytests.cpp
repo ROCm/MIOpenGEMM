@@ -18,15 +18,16 @@ void geometrytest(bool isColMajor, bool tA, bool tB, bool tC, size_t m, size_t n
   
   
   //create a mowri!
-  outputwriting::OutputWriter mowri(Ver::E::TRACK, "");
+  
 
   
   std::string constraints_string = "A_WOS0__B_WOS0__C_ICE3";
 
-  Solution soln = dev::basicfind(
-    find_params, constraints_string, gg, offsets, mowri);
-  
-  //dev::accuracy_test(
+  outputwriting::OutputWriter mowri(Ver::E::TERMINAL, "");
+  dev::Boa boa(gg, offsets, mowri);
+  Solution soln = boa.find(find_params, constraints_string);
+  boa.accuracy_test(soln.hyper_param_string);
+
 }
 
 
@@ -54,6 +55,7 @@ int main()
             
             std::cout << "<float>  ";
             geometrytest<float>(isColMajor, tA, tB, tC, m, n, k);
+            
             std::cout << "\n<double> ";
             geometrytest<double>(isColMajor, tA, tB, tC, m, n, k);
           }

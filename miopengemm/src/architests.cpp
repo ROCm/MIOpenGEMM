@@ -3,7 +3,7 @@
  *******************************************************************************/
 #include <sstream>
 #include <miopengemm/architests.hpp>
-#include <miopengemm/openclutil.hpp>
+#include <miopengemm/oclutil.hpp>
 
 namespace MIOpenGEMM
 {
@@ -20,7 +20,7 @@ std::tuple<bool, std::string> architecture_specific_tests(cl_command_queue comma
   std::stringstream status_ss;
   size_t            max_work_group_size;
 
-  openclutil::set_device_info_from_command_queue(
+  oclutil::set_device_info_from_command_queue(
     command_queue,
     CL_DEVICE_MAX_WORK_GROUP_SIZE,
     sizeof(size_t),
@@ -39,7 +39,7 @@ std::tuple<bool, std::string> architecture_specific_tests(cl_command_queue comma
 
   // check 0 : LDS
   cl_long max_LDS_bytes;
-  openclutil::set_device_info_from_command_queue(
+  oclutil::set_device_info_from_command_queue(
     command_queue,
     CL_DEVICE_LOCAL_MEM_SIZE,
     sizeof(size_t),

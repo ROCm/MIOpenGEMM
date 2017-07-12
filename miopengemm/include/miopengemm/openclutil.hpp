@@ -11,7 +11,7 @@
 namespace MIOpenGEMM
 {
 
-namespace openclutil
+namespace oclutil
 {
 
 class OpenCLResult
@@ -196,7 +196,7 @@ OpenCLResult cl_build_program(cl_program          program,
                               const char*         options,
                               void (*pfn_notify)(cl_program, void* user_data),
                               void*                        user_data,
-                              outputwriting::OutputWriter& mowri,
+                              owrite::Writer& mowri,
                               const std::string&           hash,
                               bool                         strict);
 
@@ -236,7 +236,7 @@ OpenCLResult cl_set_platform_etc(cl_platform_id&              platform,
                                  cl_uint&                     num_platforms,
                                  cl_context&                  context,
                                  cl_device_id&                device_id_to_use,
-                                 outputwriting::OutputWriter& mowri,
+                                 owrite::Writer& mowri,
                                  const std::string&           hash,
                                  bool                         strict);
 
@@ -245,11 +245,11 @@ OpenCLResult cl_set_program_and_kernel(const cl_command_queue&      command_queu
                                        const std::string&           kernel_function_name,
                                        cl_program&                  program,
                                        cl_kernel&                   kernel,
-                                       outputwriting::OutputWriter& mowri,
+                                       owrite::Writer& mowri,
                                        bool                         strict);
 
 OpenCLResult cl_auto_set_command_queue(cl_command_queue&            a_cl_command_queue,
-                                       outputwriting::OutputWriter& mowri,
+                                       owrite::Writer& mowri,
                                        cl_command_queue_properties  properties,
                                        const std::string&           hash,
                                        bool                         strict);
@@ -269,7 +269,7 @@ class CommandQueueInContext
   public:
   cl_command_queue command_queue;
   std::string      hash;
-  CommandQueueInContext(outputwriting::OutputWriter& mowri, const std::string& hash);
+  CommandQueueInContext(owrite::Writer& mowri, const std::string& hash);
   ~CommandQueueInContext();
 };
 
@@ -286,7 +286,7 @@ class OpenCLPlatformInfo
   std::string get_string() const;
 };
 
-class OpenCLDeviceInfo
+class DevInfo
 {
   public:
   OpenCLPlatformInfo platinfo;
@@ -303,8 +303,8 @@ class OpenCLDeviceInfo
   size_t    wg_atom_size;
 
   std::string get_string() const;
-  OpenCLDeviceInfo(const cl_command_queue& command_queue);
-  OpenCLDeviceInfo();
+  DevInfo(const cl_command_queue& command_queue);
+  DevInfo();
 };
 }
 }

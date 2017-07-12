@@ -23,7 +23,7 @@ void gemms_cpu(Geometry                     gg,
                TFloat                       alpha,
                TFloat                       beta,
                std::vector<std::string>     algs,
-               outputwriting::OutputWriter& mowri);
+               owrite::Writer& mowri);
 
 }
 }

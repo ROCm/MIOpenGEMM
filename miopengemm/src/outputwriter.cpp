@@ -10,11 +10,11 @@
 
 namespace MIOpenGEMM
 {
-namespace outputwriting
+namespace owrite
 {
 
 
-void OutputWriter::set_v_bits(){
+void Writer::set_v_bits(){
 
   main_to_file = false;
   main_to_terminal = false;
@@ -53,14 +53,14 @@ void OutputWriter::set_v_bits(){
 }
 
 
-void OutputWriter::initialise_file(){
+void Writer::initialise_file(){
   if (main_to_file || tracker_to_file)
   {
     if (filename.compare("") == 0)
     {
       std::stringstream errm;
       /* TODO : improve message getting string from enum verbse */
-      errm << "empty filename passed to OutputWriter,"
+      errm << "empty filename passed to Writer,"
        << "with to_file as true." 
        << "This is not allowed";
        throw miog_error(errm.str());
@@ -71,10 +71,10 @@ void OutputWriter::initialise_file(){
     if (file.good() == false)
     {
       std::stringstream errm;
-      errm  << "bad filename in constructor of OutputWriter object. "
+      errm  << "bad filename in constructor of Writer object. "
             << "The filename provided is `";
       errm <<  filename;
-      errm << "'. The directory of the file must exist, OutputWriters do not "
+      errm << "'. The directory of the file must exist, Writers do not "
             <<  "create directories. "
              << "Either create all directories in the path, or change the "
              <<  "provided path.  ";
@@ -84,7 +84,7 @@ void OutputWriter::initialise_file(){
 }
 
 
-OutputWriter::OutputWriter(Ver::E v_, std::string filename_): v(v_), filename(filename_){
+Writer::Writer(Ver::E v_, std::string filename_): v(v_), filename(filename_){
 
   set_v_bits();
   
@@ -101,7 +101,7 @@ OutputWriter::OutputWriter(Ver::E v_, std::string filename_): v(v_), filename(fi
 
 
 
-OutputWriter::~OutputWriter() { file.close(); }
+Writer::~Writer() { file.close(); }
 
 template <>
 BasicWriter& BasicWriter::operator<<(Flusher f)
@@ -139,6 +139,6 @@ BasicWriter& BasicWriter::operator<<(Endline e)
 
 }
 
-outputwriting::Endline Endl;
-outputwriting::Flusher Flush;
+owrite::Endline Endl;
+owrite::Flusher Flush;
 }

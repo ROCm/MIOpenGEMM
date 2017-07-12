@@ -21,7 +21,7 @@ void elementwise_compare(const TFloat*                c_before,
                          const TFloat*                c_cpu,
                          const TFloat*                c_gpu,
                          size_t                     nels,
-                         outputwriting::OutputWriter& mowri)
+                         owrite::Writer& mowri)
 {
   double                threshold         = 0.01;
   double                max_relerr        = 0.;
@@ -81,13 +81,13 @@ template void elementwise_compare(const float*                 c_before,
                                   const float*                 c_cpu,
                                   const float*                 c_gpu,
                                   size_t                     nels,
-                                  outputwriting::OutputWriter& mowri);
+                                  owrite::Writer& mowri);
 
 template void elementwise_compare(const double*                c_before,
                                   double                       beta,
                                   const double*                c_cpu,
                                   const double*                c_gpu,
                                   size_t                     nels,
-                                  outputwriting::OutputWriter& mowri);
+                                  owrite::Writer& mowri);
 }
 }

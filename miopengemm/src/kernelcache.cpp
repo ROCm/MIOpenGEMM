@@ -81,7 +81,7 @@ void enforce_constraints(std::string&       hps_to_update,
                          const Geometry&    gg)
 {
 
-  openclutil::OpenCLDeviceInfo devinfo;
+  oclutil::DevInfo devinfo;
   hyperparams::Graph           graph(gg, devinfo, hps_to_update, true);
   hyperparams::HyperParams     hp(graph);
 

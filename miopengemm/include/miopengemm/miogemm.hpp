@@ -72,7 +72,7 @@ Solution find(cl_command_queue             command_queue,
               const std::string            constraints_string,
               const Geometry&              gg,
               const Offsets&               toff,
-              outputwriting::OutputWriter& mowri,
+              owrite::Writer& mowri,
               bool                         c_is_const);
 
 /*! @brief Return a default Solution from cache, without exploring. If no Solution exists, an error
@@ -93,7 +93,7 @@ Solution get_default(cl_command_queue             command_queue,
                      std::string                  constraints_string,
                      const Geometry&              gg,
                      std::string                  k_comment,
-                     outputwriting::OutputWriter& mowri);
+                     owrite::Writer& mowri);
 
 /*! @brief Return a default Solution, independent of device. This version of get_default does not
  * require a Solution to exist in cache.
@@ -138,7 +138,7 @@ void benchgemm(cl_command_queue             command_queue,
                cl_mem                       b,
                cl_mem                       c,
                cl_mem                       workspace,
-               outputwriting::OutputWriter& mowri,
+               owrite::Writer& mowri,
                bool                         c_is_const = false);
 
 }

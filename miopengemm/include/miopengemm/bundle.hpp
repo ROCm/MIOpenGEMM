@@ -35,7 +35,7 @@ class Bundle
 
 Bundle get_bundle(const hyperparams::HyperParams& hp,
                   const Geometry&                 gg,
-                  outputwriting::OutputWriter&    mowri,
+                  owrite::Writer&    mowri,
                   bool                            bundle_verbose);
 }
 }

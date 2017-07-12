@@ -61,7 +61,7 @@ class Solution
 
   std::string hyper_param_string;
 
-  openclutil::OpenCLDeviceInfo devinfo;
+  oclutil::DevInfo devinfo;
 
   std::string constraints_string;
 
@@ -69,7 +69,7 @@ class Solution
            SolutionStatistics               tgss_,
            const std::vector<KernelString>& v_tgks_,
            std::string                      hyper_param_string_,
-           openclutil::OpenCLDeviceInfo     devinfo_,
+           oclutil::DevInfo     devinfo_,
            std::string                      constraints_string_)
     : geometry(geometry_),
       statistics(tgss_),

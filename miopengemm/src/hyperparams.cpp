@@ -139,7 +139,7 @@ std::vector<std::string> get_sub_constraints(std::string constraints_string)
 }
 
 Graph::Graph(const Geometry&                     gg,
-             const openclutil::OpenCLDeviceInfo& devinfo,
+             const oclutil::DevInfo& devinfo,
              std::string                         constraints_string,
              bool                                full_cs)
   : ptr_gg(&gg)
@@ -315,7 +315,7 @@ SubG::SubG(size_t                            nHPs_,
            const Geometry&                     gg,
            std::string                         cs,
            bool                                csfull,
-           const openclutil::OpenCLDeviceInfo* ptr_devinfo_)
+           const oclutil::DevInfo* ptr_devinfo_)
   : nHPs(nHPs_),
     ptr_gg(&gg),
     edges(nHPs_),
@@ -427,7 +427,7 @@ void SubG::confirm_start_is_subset()
 CSubG::CSubG(const Geometry&                     gg,
              std::string                         cs,
              bool                                csfull,
-             const openclutil::OpenCLDeviceInfo* ptr_devinfo_)
+             const oclutil::DevInfo* ptr_devinfo_)
   : SubG(NonChi::E::N, gg, cs, csfull, ptr_devinfo_)
 {
 }
@@ -435,7 +435,7 @@ CSubG::CSubG(const Geometry&                     gg,
 ChiralSubG::ChiralSubG(const Geometry&                     gg,
                        std::string                         cs,
                        bool                                csfull,
-                       const openclutil::OpenCLDeviceInfo* ptr_devinfo_)
+                       const oclutil::DevInfo* ptr_devinfo_)
   : SubG(Chi::E::N, gg, cs, csfull, ptr_devinfo_)
 {
 }

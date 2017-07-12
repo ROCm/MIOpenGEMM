@@ -206,7 +206,7 @@ void gemms_cpu(Geometry                     gg,
                TFloat                       alpha,
                TFloat                       beta,
                std::vector<std::string>     algs,
-               outputwriting::OutputWriter& mowri)
+               owrite::Writer& mowri)
 {
   check_cpu_algs(algs);
   bool tA = gg.tX[Mat::E::A];
@@ -254,7 +254,7 @@ template void gemms_cpu(Geometry                     gg,
                         float                        alpha,
                         float                        beta,
                         std::vector<std::string>     algs,
-                        outputwriting::OutputWriter& mowri);
+                        owrite::Writer& mowri);
 
 template void gemms_cpu(Geometry                     gg,
                         Offsets                      toff,
@@ -264,6 +264,6 @@ template void gemms_cpu(Geometry                     gg,
                         double                       alpha,
                         double                       beta,
                         std::vector<std::string>     algs,
-                        outputwriting::OutputWriter& mowri);
+                        owrite::Writer& mowri);
 }
 }

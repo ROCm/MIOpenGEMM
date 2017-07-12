@@ -5,7 +5,7 @@
 #include <iomanip>
 #include <miopengemm/error.hpp>
 #include <miopengemm/kernel.hpp>
-#include <miopengemm/openclutil.hpp>
+#include <miopengemm/oclutil.hpp>
 
 namespace MIOpenGEMM
 {
@@ -20,15 +20,15 @@ void Kernel::try_release()
 
   if (clprog != nullptr)
   {
-    openclutil::cl_release_program(clprog, "Kernel Destructor", true);
+    oclutil::cl_release_program(clprog, "Kernel Destructor", true);
   }
   if (clkern != nullptr)
   {
-    openclutil::cl_release_kernel(clkern, "Kernel Destructor", true);
+    oclutil::cl_release_kernel(clkern, "Kernel Destructor", true);
   }
 }
 
-openclutil::OpenCLResult Kernel::update(const KernelString& ks, outputwriting::OutputWriter& mowri)
+oclutil::OpenCLResult Kernel::update(const KernelString& ks, owrite::Writer& mowri)
 {
 
   try_release();
@@ -37,7 +37,7 @@ openclutil::OpenCLResult Kernel::update(const KernelString& ks, outputwriting::O
 
   auto start = std::chrono::high_resolution_clock::now();
 
-  auto oclr = openclutil::cl_set_program_and_kernel(
+  auto oclr = oclutil::cl_set_program_and_kernel(
     command_queue, tgk_strings.kernstr, tgk_strings.fname, clprog, clkern, mowri, false);
 
   auto                         end             = std::chrono::high_resolution_clock::now();
@@ -63,14 +63,14 @@ bool Kernel::is_set() { return (clprog != nullptr && clkern != nullptr); }
 
 void Kernel::set_kernel_args(std::vector<std::pair<size_t, const void*>> arg_sizes_values)
 {
-  openclutil::cl_set_kernel_args(clkern, arg_sizes_values, "Kernel::set_kernel_args", true);
+  oclutil::cl_set_kernel_args(clkern, arg_sizes_values, "Kernel::set_kernel_args", true);
 }
 
-openclutil::OpenCLResult Kernel::enqueue(cl_uint         num_events_in_wait_list,
+oclutil::OpenCLResult Kernel::enqueue(cl_uint         num_events_in_wait_list,
                                          const cl_event* event_wait_list)
 {
 
-  return openclutil::cl_enqueue_ndrange_kernel(command_queue,
+  return oclutil::cl_enqueue_ndrange_kernel(command_queue,
                                                clkern,
                                                1,
                                                NULL,
@@ -83,19 +83,19 @@ openclutil::OpenCLResult Kernel::enqueue(cl_uint         num_events_in_wait_list
                                                false);
 }
 
-openclutil::OpenCLResult Kernel::enqueue() { return enqueue(0, nullptr); }
+oclutil::OpenCLResult Kernel::enqueue() { return enqueue(0, nullptr); }
 
 void Kernel::update_times()
 {
 
-  openclutil::cl_set_event_profiling_info(clevent,
+  oclutil::cl_set_event_profiling_info(clevent,
                                           CL_PROFILING_COMMAND_START,
                                           sizeof(size_t),
                                           &t_start,
                                           nullptr,
                                           "in update_times",
                                           true);
-  openclutil::cl_set_event_profiling_info(
+  oclutil::cl_set_event_profiling_info(
     clevent, CL_PROFILING_COMMAND_END, sizeof(size_t), &t_end, nullptr, "in update_times", true);
   v_times.push_back(1e-6 * (t_end - t_start));
 }
