@@ -13,85 +13,13 @@
 #include <miopengemm/randomutil.hpp>
 #include <miopengemm/stringutilbase.hpp>
 #include <miopengemm/stringutilbase.hpp>
+#include <miopengemm/macgrid.hpp>
 
 namespace MIOpenGEMM
 {
 
-// macro tile shape
-// at skew = skew0, MAC in (64, 256, ...)
-// have a:b = 1:1 and MAC in (32, 128,...)
-// have a:b = 2:1
-// at skew = skew0, (64, 256) are a:b = 1:1 and (32, 128) have a:b = 2:1
-// at skew = skew0 + 1, (64, 256) are a:b = 1:4 and (32, 128) have a:b = 1:2
-// at skew0 = skew + 1, (64, 256) are a:b = 4:1 and (32, 128) have a:b = 8:1
-const size_t skew0 = 10;
 
-
-
-std::tuple<bool, std::string, std::array<size_t, 2>> get_mac_grid(size_t mac, size_t skew)
-{
-
-  double   dbl_lg2_mac = std::log2(static_cast<double>(mac));
-  size_t lg2_mac     = static_cast<size_t>(dbl_lg2_mac);
-
-  double na = std::exp2(lg2_mac / 2 + lg2_mac % 2);
-  double nb = static_cast<double>(mac) / na;
-  for (size_t i = skew0; i < skew; ++i)
-  {
-    na /= 2.;
-    nb *= 2.;
-  }
-
-  for (size_t i = skew; i < skew0; ++i)
-  {
-    na *= 2.;
-    nb /= 2.;
-  }
-
-  std::stringstream errm_ss;
-
-  errm_ss << "problem getting mac sizes: ";
-  std::array<size_t, 2> null_array = {0, 0};
-  size_t u_na = static_cast<size_t>(na);
-  size_t u_nb = static_cast<size_t>(nb);
-  if (std::abs(na * nb - static_cast<double>(u_na * u_nb)) > 1e-7)
-  {
-    errm_ss << "  casting non-ints. ";
-    errm_ss << "na: " << na << " nb:" << nb << " u_na:" << u_na << " u_nb:" << u_nb << "  ";
-    return std::make_tuple(false, errm_ss.str(), null_array);
-  }
-
-  if (u_na < 1 || u_nb < 1)
-  {
-    errm_ss << "  it appears that one of the lengths is zero. It could be that "
-               "the skewness "
-               "requested is too extreme. ";
-    return std::make_tuple(false, errm_ss.str(), null_array);
-  }
-
-  if (u_na * u_nb != mac)
-  {
-    errm_ss << "  it appears as though the product of the computed edge "
-               "lengths is not MAC.  ";
-    return std::make_tuple(false, errm_ss.str(), null_array);
-  }
-
-  std::array<size_t, 2> mac_grid;
-
-  if (Mat::E::A >= 2 || Mat::E::B >= 2)
-  {
-    errm_ss << "the std::array returned in get_mac_grid is too small";
-    throw miog_error(errm_ss.str());
-  }
-
-  mac_grid[Mat::E::A] = u_na;
-  mac_grid[Mat::E::B] = u_nb;
-
-  return std::make_tuple(true, "no error", mac_grid);
-}
-
-
-
+// TODO : this is clogging up the namespace, fix.
 RandomUtil radu;
 
 template <typename T>
@@ -154,15 +82,20 @@ Graph::Graph(const Geometry&                     gg,
   csubg = CSubG(gg, sub_constraints[Mat::E::C], full_cs, &devinfo);
   csubg.initialise();
 
-  p_subgs.resize(Mat::E::N);
   p_subgs[Mat::E::A] = &asubg;
   p_subgs[Mat::E::B] = &bsubg;
   p_subgs[Mat::E::C] = &csubg;
 
+
+  // TODO liberate these : they should not belong to one graph!
   coupled_parameters.push_back({{Mat::E::A, Chi::E::MIC}, {Mat::E::B, Chi::E::MIC}});
   coupled_parameters.push_back({{Mat::E::C, NonChi::E::UFO}, {Mat::E::C, NonChi::E::PUN}});
   coupled_parameters.push_back({{Mat::E::C, NonChi::E::UNR}, {Mat::E::C, NonChi::E::ICE}});
 }
+
+
+
+
 
 void Graph::force_start_node(std::string constraints_string)
 {
@@ -200,7 +133,7 @@ std::vector<size_t>
 get_constraints(std::string subg_cs, bool subg_csfull, const EnumMapper<std::string> * p_kv, char subg_hash)
 {
 
-  std::vector<size_t> constraints(p_kv->n, Status::E::UNDEFINED);
+  std::vector<size_t> constraints(p_kv->N, Status::E::UNDEFINED);
 
   std::vector<std::string> keyvalfrags;
   if (subg_cs.compare(""))
@@ -242,7 +175,7 @@ get_constraints(std::string subg_cs, bool subg_csfull, const EnumMapper<std::str
   // are supposed to be comprehensive
   if (subg_csfull == true)
   {
-    for (size_t hpi = 0; hpi < p_kv->n; ++hpi)
+    for (size_t hpi = 0; hpi < p_kv->N; ++hpi)
     {
       if (constraints[hpi] == Status::E::UNDEFINED)
       {
@@ -479,12 +412,10 @@ void BSubG::set_chirality_specific_start_range()
 
 void ChiralSubG::manual_override_start_range()
 {
-
   start_range[Chi::E::PAD] = {1, 2};
   start_range[Chi::E::LIW] = {Binary::E::NO};
   start_range[Chi::E::MIW] = {Binary::E::YES};
   start_range[Chi::E::WOS] = {Scratch::E::UNUSED, Scratch::E::COPY, Scratch::E::NFORM};
-
   set_chirality_specific_start_range();
 }
 
@@ -556,12 +487,12 @@ void CSubG::manual_override_start_range()
 
     if (ptr_devinfo->wg_atom_size == 32)
     {
-      start_range[NonChi::E::SKW] = {skew0, skew0 + 1};
+      start_range[NonChi::E::SKW] = {macgrid::skew0, macgrid::skew0 + 1};
     }
 
     else
     {
-      start_range[NonChi::E::SKW] = {skew0};
+      start_range[NonChi::E::SKW] = {macgrid::skew0};
     }
   }
 }
@@ -689,16 +620,6 @@ void HyperParams::checks() const
   }
 }
 
-void HyperParams::replace(const std::vector<std::vector<size_t>>& params)
-{
-  for (size_t mi = 0; mi < Mat::E::N; ++mi)
-  {
-    for (size_t hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi)
-    {
-      v_xhps[mi].vs[hpi] = params.at(mi).at(hpi);
-    }
-  }
-}
 
 // go through the params, and where it is not nHP::UNDEFINED,
 // use its value to replace this
@@ -711,22 +632,6 @@ void HyperParams::replace_where_source_defined(const std::vector<std::vector<siz
       if (params[mi][hpi] != Status::E::UNDEFINED)
       {
         v_xhps[mi].vs[hpi] = params[mi][hpi];
-      }
-    }
-  }
-}
-
-void HyperParams::replace_undefined_randomly()
-{
-  for (size_t mi = 0; mi < Mat::E::N; ++mi)
-  {
-    for (size_t hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi)
-    {
-      if (v_xhps[mi].vs[hpi] == Status::E::UNDEFINED)
-      {
-        auto&    a_range   = p_graph->p_subgs[mi]->start_range[hpi];
-        size_t index     = radu.get_from_range(a_range.size());
-        v_xhps[mi].vs[hpi] = a_range[index];
       }
     }
   }
@@ -774,6 +679,7 @@ std::vector<HyperParams> HyperParams::get_one_aways()
   std::vector<HyperParams> one_aways;
 
   // by changing just one hyper-parameter
+  // TODO : should changing an inactive parameter be allowed? Like, when GAL != 3, should GAW?
   for (size_t mi = 0; mi < Mat::E::N; ++mi)
   {
     for (size_t hpi = 0; hpi < p_graph->p_subgs[mi]->nHPs; ++hpi)
@@ -796,10 +702,10 @@ std::vector<HyperParams> HyperParams::get_one_aways()
   {
 
     // ratios of new to current tile grid sizes
-    auto curr_grid_size_tuple = get_mac_grid(curr_mac, v_xhps[Mat::E::C].vs[NonChi::E::SKW]);
+    auto curr_grid_size_tuple = macgrid::get_grid(curr_mac, v_xhps[Mat::E::C].vs[NonChi::E::SKW]);
     auto curr_grid_size       = std::get<2>(curr_grid_size_tuple);
 
-    auto new_grid_size_tuple = get_mac_grid(newmac, v_xhps[Mat::E::C].vs[NonChi::E::SKW]);
+    auto new_grid_size_tuple = macgrid::get_grid(newmac, v_xhps[Mat::E::C].vs[NonChi::E::SKW]);
     if (std::get<0>(new_grid_size_tuple) == false)
     {
       continue;

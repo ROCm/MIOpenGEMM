@@ -6,6 +6,10 @@
 #include <iomanip>
 #include <limits>
 #include <map>
+#include <sstream>
+#include <thread>
+#include <tuple>
+#include <vector>
 #include <miopengemm/architests.hpp>
 #include <miopengemm/bundle.hpp>
 #include <miopengemm/derivedparams.hpp>
@@ -20,10 +24,6 @@
 #include <miopengemm/outputwriter.hpp>
 #include <miopengemm/solution.hpp>
 #include <miopengemm/stringutilbase.hpp>
-#include <sstream>
-#include <thread>
-#include <tuple>
-#include <vector>
 #include <miopengemm/jinx.hpp>
 
 namespace MIOpenGEMM
@@ -49,7 +49,6 @@ cl_mems[Mem::E::A] = a_gpu_;
 cl_mems[Mem::E::B] = b_gpu_;
 cl_mems[Mem::E::W] = workspace_gpu_;      
 
-//cl_mems[Mem::E::C] = c_gpu_;    
   if (c_is_const == false){
     cl_mems[Mem::E::C] = c_gpu_;
   }
@@ -909,6 +908,7 @@ cl_mem& GpuMms::operator[](Mem::E x)
           auto hp_string = hp.get_string();
 
           auto in_graph_tuple = hp.in_graph();
+          
           if (std::count(one_aways.begin(), one_aways.end(), hp) > 1)
           {
             throw miog_error("duplicates in one_aways not allowed, should have already been "
@@ -938,6 +938,8 @@ cl_mem& GpuMms::operator[](Mem::E x)
           {
           }
 
+          //"A_MIC5_PAD2_PLU1_LIW0_MIW1_WOS0__B_MIC3_PAD2_PLU1_LIW0_MIW1_WOS0__C_UNR32_GAL3_PUN0_ICE1_NAW16_UFO0_MAC64_SKW11"
+           
           // looks ok, adding it to the hyper-front
           else
           {

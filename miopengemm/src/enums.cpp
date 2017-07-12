@@ -66,7 +66,7 @@ std::string aslower(std::string X){
 }
 
 template <typename T>
-EnumMapper<T>::EnumMapper(const std::vector<T> & name_) :n(name_.size()), name(name_), val(get_val<T>(name)) {
+EnumMapper<T>::EnumMapper(const std::vector<T> & name_) :N(name_.size()), name(name_), val(get_val<T>(name)) {
 
   lcase_name.resize(name.size());
   for (size_t i = 0; i < name.size(); ++i){
@@ -152,6 +152,15 @@ namespace Mat
   const EnumMapper<char> M = get_enum_mapper<char>(get_name(), "Mat");
 
 
+  const EnumMapper<std::string> * mat_to_xchi(Mat::E emat){
+    switch (emat){
+      case Mat::E::A : return &Chi::M;
+      case Mat::E::B : return &Chi::M;
+      case Mat::E::C : return &NonChi::M;
+      default : throw miog_error("unrecognised Mat::E in mat_to_xchi");
+    }
+  }
+  
   // TODO : rather make this an array for lookup
   Mat::E mem_to_mat(Mem::E emat){
     if (emat == Mem::E::A){

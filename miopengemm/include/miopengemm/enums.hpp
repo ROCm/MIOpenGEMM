@@ -15,7 +15,7 @@ namespace MIOpenGEMM {
 template <typename T>
 class EnumMapper{
   public:
-    size_t n;
+    size_t N;
     std::vector<T> name;
     std::vector<T> lcase_name;
     std::unordered_map<T, size_t> val;
@@ -110,7 +110,8 @@ Mem::E mat_to_mem(Mat::E);
 
 
 namespace Mat{
-Mat::E mem_to_mat(Mem::E);
+Mat::E mem_to_mat(Mem::E);  
+const EnumMapper<std::string> * mat_to_xchi(Mat::E);
 }
 
 

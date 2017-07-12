@@ -8,6 +8,7 @@
 #include <miopengemm/derivedparams.hpp>
 #include <miopengemm/error.hpp>
 #include <miopengemm/tiling.hpp>
+#include <miopengemm/macgrid.hpp>
 
 namespace MIOpenGEMM
 {
@@ -126,7 +127,7 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
   set_should_be_hyperparams();
 
   auto grid_size_tuple =
-    get_mac_grid(ptr_hp->at(Mat::E::C).vs[NonChi::E::MAC], ptr_hp->at(Mat::E::C).vs[NonChi::E::SKW]);
+    macgrid::get_grid(ptr_hp->at(Mat::E::C).vs[NonChi::E::MAC], ptr_hp->at(Mat::E::C).vs[NonChi::E::SKW]);
   if (std::get<0>(grid_size_tuple) == false)
   {
     return std::make_tuple(false, std::get<1>(grid_size_tuple));

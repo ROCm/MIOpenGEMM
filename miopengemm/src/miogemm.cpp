@@ -187,15 +187,15 @@ Solution get_default(cl_command_queue             command_queue,
 
 void benchgemm(cl_command_queue             command_queue,
                const std::string&           hyperstring,
-               size_t                     max_n_runs,
-               double                     max_time,
+               size_t                       max_n_runs,
+               double                       max_time,
                const Geometry&              gg,
                const Offsets&               toff,
                cl_mem                       a_gpu,
                cl_mem                       b_gpu,
                cl_mem                       c_gpu,
                cl_mem                       workspace_gpu,
-               owrite::Writer& mowri,
+               owrite::Writer&              mowri,
                bool                         c_is_const)
 {
 

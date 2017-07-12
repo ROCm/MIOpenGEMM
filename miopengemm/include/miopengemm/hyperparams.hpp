@@ -16,7 +16,6 @@
 namespace MIOpenGEMM
 {
 
-std::tuple<bool, std::string, std::array<size_t, 2>> get_mac_grid(size_t mac, size_t skew);
 
 std::vector<size_t>
 get_constraints(std::string subg_cs, bool subg_csfull, const EnumMapper<std::string> * p_kv, char subg_hash);
@@ -37,8 +36,8 @@ class SubG
   void apply_constraints();
 
   size_t        nHPs;
+  
   const Geometry* ptr_gg;
-
   const EnumMapper<std::string>* ptr_keys_vals;
 
   // all the possible edges from all the possible hyper parameter
@@ -52,6 +51,8 @@ class SubG
   // a subset of range, the possible values returned on a request for a random value
   // example : start_range[Chi::E::MIC] --> {2,8}. It can depend on geometry (from initialisation)
   std::vector<std::vector<size_t>> start_range;
+
+
 
   std::string subg_cs;
   bool        subg_csfull;
@@ -145,14 +146,21 @@ class Graph
   ASubG asubg;
   BSubG bsubg;
   CSubG csubg;
+  
 
   public:
+
+
+  std::array<SubG*, Mat::E::N> p_subgs; //(size_t) ;
+
   const Geometry* ptr_gg;
 
+  
   /* TODO if a Graph is copied this causes undefined behaviour.
    * can Graphs be copied? Make design clearer */
-  std::vector<SubG*> p_subgs;
-
+  
+  //std::vector<SubG*> p_subgs;
+  
   std::string constraints_string_in;
 
   void force_start_node(std::string);
@@ -182,8 +190,7 @@ class HyperParams
   std::vector<XHPs> v_xhps;
 
   public:
-  void replace_undefined_randomly();
-  void replace(const std::vector<std::vector<size_t>>& partial_params);
+
   void replace_where_source_defined(const std::vector<std::vector<size_t>>& params);
   bool in_graph(size_t mi, size_t hpi, size_t value);
   std::tuple<bool, std::string> in_graph();
