@@ -22,18 +22,18 @@ class Bundle
   const std::vector<KernelString>          v_tgks;
   const std::vector<std::vector<size_t>> v_wait_indices;
 
-  derivedparams::DerivedParams dp;
+  DerivedParams dp;
 
   /* TODO : when is std::move needed. */
   Bundle(std::vector<KernelString>&&          v_tgks_,
          std::vector<std::vector<size_t>>&& v_wait_indices_,
-         derivedparams::DerivedParams&&       dp_)
+         DerivedParams&&       dp_)
     : v_tgks(std::move(v_tgks_)), v_wait_indices(std::move(v_wait_indices_)), dp(std::move(dp_))
   {
   }
 };
 
-Bundle get_bundle(const hyperparams::HyperParams& hp,
+Bundle get_bundle(const HyperParams& hp,
                   const Geometry&                 gg,
                   owrite::Writer&    mowri,
                   bool                            bundle_verbose);

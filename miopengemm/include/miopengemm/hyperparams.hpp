@@ -16,18 +16,7 @@
 namespace MIOpenGEMM
 {
 
-
-
-namespace nsMAC
-{
-
 std::tuple<bool, std::string, std::array<size_t, 2>> get_mac_grid(size_t mac, size_t skew);
-}
-
-
-
-namespace hyperparams
-{
 
 std::vector<size_t>
 get_constraints(std::string subg_cs, bool subg_csfull, const EnumMapper<std::string> * p_kv, char subg_hash);
@@ -213,6 +202,6 @@ class HyperParams
 
 std::vector<std::vector<size_t>> get_all_constraints(std::string constraints_string);
 }
-}
+
 
 #endif

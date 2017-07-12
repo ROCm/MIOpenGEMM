@@ -15,17 +15,17 @@ namespace nformgen
 {
 
 KernelString get_nform_kernelstring(Mat::E emat_x, 
-const hyperparams::HyperParams&     hp,
+const HyperParams&     hp,
                                      const Geometry&                     gg,
-                                     const derivedparams::DerivedParams& dp);
+                                     const DerivedParams& dp);
 
 
 
 
   
-//KernelString get_nformb_kernelstring(const hyperparams::HyperParams&     hp,
+//KernelString get_nformb_kernelstring(const HyperParams&     hp,
                                      //const Geometry&                     gg,
-                                     //const derivedparams::DerivedParams& dp);
+                                     //const DerivedParams& dp);
 }
 }
 

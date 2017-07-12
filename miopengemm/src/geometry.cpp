@@ -14,6 +14,12 @@
 namespace MIOpenGEMM
 {
 
+size_t get_mat_memsize(const Geometry & gg,  const Offsets & toff, Mem::E emem)
+{
+  Mat::E emat = Mat::mem_to_mat(emem);
+  return gg.derived.float_size_bytes * (gg.get_padded_area(emat) + toff.offsets[emem] + toff.tails[emem]);
+}
+
 
 Offsets::Offsets(size_t oa_,
                  size_t ob_,

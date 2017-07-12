@@ -137,6 +137,10 @@ MIOpenGEMM::Geometry get_padded_geometry(bool isColMajor, bool tA, bool tB, bool
   return  MIOpenGEMM::Geometry(
     isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype);
 }
+
+
+size_t get_mat_memsize(const Geometry & gg,  const Offsets & toff, Mem::E emem);
+
   
 }
 

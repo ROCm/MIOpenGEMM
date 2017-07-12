@@ -11,9 +11,9 @@ namespace copygen
 {
 
 CopyGenerator::CopyGenerator(Mat::E                            emat_x_,
-                             const hyperparams::HyperParams&     hp_,
+                             const HyperParams&     hp_,
                              const Geometry&                     gg_,
-                             const derivedparams::DerivedParams& dp_)
+                             const DerivedParams& dp_)
   : bylinegen::ByLineGenerator(emat_x_, hp_, gg_, dp_)
 {
 
@@ -47,9 +47,9 @@ void CopyGenerator::append_derived_definitions_additional(std::stringstream& ss)
 
 KernelString get_copy_kernelstring(
   Mat::E emat_x,
-  const hyperparams::HyperParams&     hp,
+  const HyperParams&     hp,
   const Geometry&                     gg,
-  const derivedparams::DerivedParams& dp)
+  const DerivedParams& dp)
 {
   
   if (emat_x != Mat::E::A and emat_x != Mat::E::B){

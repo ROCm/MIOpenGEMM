@@ -18,9 +18,9 @@ class BaseGenerator
 {
 
   protected:
-  const hyperparams::HyperParams&     hp;
+  const HyperParams&     hp;
   const Geometry&                     gg;
-  const derivedparams::DerivedParams& dp;
+  const DerivedParams& dp;
 
   size_t n_args_added;
 
@@ -74,9 +74,9 @@ class BaseGenerator
   // TODO : set type and kernelname. (type_), kernelname("tg_" + type_)
   virtual KernelString get_kernelstring() = 0;
 
-  BaseGenerator(const hyperparams::HyperParams&     hp_,
+  BaseGenerator(const HyperParams&     hp_,
                 const Geometry&                     gg_,
-                const derivedparams::DerivedParams& dp_);
+                const DerivedParams& dp_);
 
 
   // append argument(s) to the function definition

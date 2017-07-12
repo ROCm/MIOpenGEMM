@@ -26,13 +26,13 @@ namespace MIOpenGEMM
 namespace kerngen
 {
 
-Bundle get_bundle(const hyperparams::HyperParams& hp,
+Bundle get_bundle(const HyperParams& hp,
                   const Geometry&                 gg,
                   owrite::Writer&    mowri,
                   bool                            bundle_verbose)
 {
 
-  derivedparams::DerivedParams dp(hp, gg);
+  DerivedParams dp(hp, gg);
 
   std::vector<KernelString>          v_tgks;
   std::vector<std::vector<size_t>> v_wait_indices;

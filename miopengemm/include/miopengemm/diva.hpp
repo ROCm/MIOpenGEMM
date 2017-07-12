@@ -70,7 +70,7 @@ class Diva
   // read write permissions of gpu data TODO : move to enums.cpp
   std::vector<cl_mem_flags> rw_perms;
 
-  size_t get_mat_memsize(Mem::E emem);
+  //size_t get_mat_memsize(Mem::E emem);
 
   size_t get_workspace_memsize();
 

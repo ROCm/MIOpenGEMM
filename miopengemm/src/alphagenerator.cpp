@@ -46,9 +46,9 @@ class AlphaGenerator : public basegen::BaseGenerator
   }
 
   public:
-  AlphaGenerator(const hyperparams::HyperParams&     hp_,
+  AlphaGenerator(const HyperParams&     hp_,
                  const Geometry&                     gg_,
-                 const derivedparams::DerivedParams& dp_)
+                 const DerivedParams& dp_)
     : basegen::BaseGenerator(hp_, gg_, dp_)
   {
   }
@@ -1120,9 +1120,9 @@ virtual void setup_final() override final{
 
 
 
-KernelString get_alpha_kernelstring(const hyperparams::HyperParams&     hp,
+KernelString get_alpha_kernelstring(const HyperParams&     hp,
                                     const Geometry&                     gg,
-                                    const derivedparams::DerivedParams& dp)
+                                    const DerivedParams& dp)
 {
   AlphaGenerator ag(hp, gg, dp);
   ag.setup();

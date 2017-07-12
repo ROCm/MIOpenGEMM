@@ -28,7 +28,7 @@ void Kernel::try_release()
   }
 }
 
-oclutil::OpenCLResult Kernel::update(const KernelString& ks, owrite::Writer& mowri)
+oclutil::Result Kernel::update(const KernelString& ks, owrite::Writer& mowri)
 {
 
   try_release();
@@ -66,7 +66,7 @@ void Kernel::set_kernel_args(std::vector<std::pair<size_t, const void*>> arg_siz
   oclutil::cl_set_kernel_args(clkern, arg_sizes_values, "Kernel::set_kernel_args", true);
 }
 
-oclutil::OpenCLResult Kernel::enqueue(cl_uint         num_events_in_wait_list,
+oclutil::Result Kernel::enqueue(cl_uint         num_events_in_wait_list,
                                          const cl_event* event_wait_list)
 {
 
@@ -83,7 +83,7 @@ oclutil::OpenCLResult Kernel::enqueue(cl_uint         num_events_in_wait_list,
                                                false);
 }
 
-oclutil::OpenCLResult Kernel::enqueue() { return enqueue(0, nullptr); }
+oclutil::Result Kernel::enqueue() { return enqueue(0, nullptr); }
 
 void Kernel::update_times()
 {

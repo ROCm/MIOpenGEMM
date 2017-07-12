@@ -30,7 +30,6 @@ namespace MIOpenGEMM
 
 class MFType
 {
-
   private:
   double v_d;
   float  v_f;
@@ -47,10 +46,12 @@ class GpuMms
 {
   private:
   std::array<cl_mem, Mem::E::N> cl_mems;
+  oclutil::SafeClMem c_copy {"to be used in the case that c_is_const"} ;
 
   public:
-  GpuMms(cl_mem a_gpu_, cl_mem b_gpu_, cl_mem c_gpu_, cl_mem workspace_gpu_);
+  GpuMms(cl_mem a_gpu_, cl_mem b_gpu_, cl_mem c_gpu_, bool c_is_const, cl_mem workspace_gpu_, size_t c_nbytes, cl_command_queue cq);
   cl_mem& operator[](Mem::E x);
+
 };
 
 class Jinx
@@ -63,6 +64,7 @@ class Jinx
        cl_mem           a_gpu_,
        cl_mem           b_gpu_,
        cl_mem           c_gpu_,
+       bool             c_is_const,
        cl_mem           workspace_gpu_,
        std::string      constraints_string_,
        bool             full_constraints_expected,
@@ -79,9 +81,10 @@ class Jinx
   const Geometry         gg;
   const Offsets          toff;
   GpuMms                 gpum;
+  
   const oclutil::DevInfo devinfo;
   std::string            constraints_string;
-  hyperparams::Graph     graph;
+  Graph                  graph;
   owrite::Writer&        mowri;
   // special purpose output writer
   // vector of times over a set of runs on core loop
@@ -109,26 +112,24 @@ class Jinx
   void address_check_valid_and_reliable();
   void run_checks();
   void set_kern_args(const KernelType& type);
-  bool refresh_needed(BasicKernelType::E                  type,
-                      const hyperparams::HyperParams&     new_hp,
-                      const derivedparams::DerivedParams& new_dp);
+  bool
+  refresh_needed(BasicKernelType::E type, const HyperParams& new_hp, const DerivedParams& new_dp);
 
-  oclutil::OpenCLResult refresh_kernel(const KernelString&                 ks,
-                                       const hyperparams::HyperParams&     hp,
-                                       const derivedparams::DerivedParams& dp);
+  oclutil::Result
+  refresh_kernel(const KernelString& ks, const HyperParams& hp, const DerivedParams& dp);
 
-  oclutil::OpenCLResult setup_tinykernels(const hyperparams::HyperParams& hp,
-                                          const kerngen::Bundle&          bundle);
+  oclutil::Result setup_tinykernels(const HyperParams& hp, const kerngen::Bundle& bundle);
+
   void update_run_times(cl_int status);
   std::string get_run_times_heading();
   std::string get_run_time_string(cl_int status);
-  void                  reset_v_times();
-  void                  mowri_tracker_print();
-  oclutil::OpenCLResult core_gemm_loop(size_t max_n_runs, double max_time, bool print_asap);
-  void deriveability_test(const hyperparams::HyperParams& hp, const std::string& hash);
+  void            reset_v_times();
+  void            mowri_tracker_print();
+  oclutil::Result core_gemm_loop(size_t max_n_runs, double max_time, bool print_asap);
+  void deriveability_test(const HyperParams& hp, const std::string& hash);
 
-  hyperparams::HyperParams get_hyper_param_start();
-  void                     update_total_elapsed_seconds();
+  HyperParams get_hyper_param_start();
+  void        update_total_elapsed_seconds();
   Solution single_descent_find(float allotted_time, const FindParams& find_params);
 };
 }

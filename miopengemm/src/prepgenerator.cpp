@@ -60,9 +60,9 @@ void PrepGenerator::append_basic_what_definitions(std::stringstream& ss)
 }
 
 PrepGenerator::PrepGenerator(Mat::E emat_x_,
-                             const hyperparams::HyperParams&     hp_,
+                             const HyperParams&     hp_,
                              const Geometry&                     gg_,
-                             const derivedparams::DerivedParams& dp_)
+                             const DerivedParams& dp_)
                              
   : basegen::BaseGenerator(hp_, gg_, dp_){
     emat_x = emat_x_;

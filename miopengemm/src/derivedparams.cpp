@@ -11,8 +11,8 @@
 
 namespace MIOpenGEMM
 {
-namespace derivedparams
-{
+//namespace derivedparams
+//{
 
 size_t DerivedParams::get_target_ld(Mat::E emat_x) const { return at(emat_x).cw1_target_ldx; }
 
@@ -98,14 +98,14 @@ void DerivedParams::reset_ga3_params()
   ga3_last_super_column_width = bdps.n_groups % ga3_super_column_width;
 }
 
-std::tuple<bool, std::string> get_deriveability(const hyperparams::HyperParams& hp,
+std::tuple<bool, std::string> get_deriveability(const HyperParams& hp,
                                                 const Geometry& gg)
 {
   DerivedParams dp(hp, gg, "uninitialised");
   return dp.set_fragile();
 }
 
-DerivedParams::DerivedParams(const hyperparams::HyperParams& hp_,
+DerivedParams::DerivedParams(const HyperParams& hp_,
                              const Geometry&                 gg_,
                              std::string                     s)
   : ptr_hp(&hp_), ptr_gg(&gg_)
@@ -126,7 +126,7 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
   set_should_be_hyperparams();
 
   auto grid_size_tuple =
-    nsMAC::get_mac_grid(ptr_hp->at(Mat::E::C).vs[NonChi::E::MAC], ptr_hp->at(Mat::E::C).vs[NonChi::E::SKW]);
+    get_mac_grid(ptr_hp->at(Mat::E::C).vs[NonChi::E::MAC], ptr_hp->at(Mat::E::C).vs[NonChi::E::SKW]);
   if (std::get<0>(grid_size_tuple) == false)
   {
     return std::make_tuple(false, std::get<1>(grid_size_tuple));
@@ -321,7 +321,7 @@ std::string get_tint(size_t memsize){
 
 
 
-DerivedParams::DerivedParams(const hyperparams::HyperParams& hp_, const Geometry& gg_)
+DerivedParams::DerivedParams(const HyperParams& hp_, const Geometry& gg_)
   : ptr_hp(&hp_), ptr_gg(&gg_)
 {
 
@@ -508,5 +508,5 @@ size_t DerivedParams::get_stride_cw2(Mat::E emat_x, bool pll_k, bool is_macro) c
     return pll_k == true ? at(emat_x).macro_tile_length : ptr_gg->k;
   }
 }
-}
+//}
 }

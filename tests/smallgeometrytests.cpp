@@ -23,7 +23,7 @@ void geometrytest(bool isColMajor, bool tA, bool tB, bool tC, size_t m, size_t n
   
   std::string constraints_string = "A_WOS0__B_WOS0__C_ICE3";
 
-  outputwriting::OutputWriter mowri(Ver::E::TERMINAL, "");
+  owrite::Writer mowri(Ver::E::TERMINAL, "");
   dev::Boa boa(gg, offsets, mowri);
   Solution soln = boa.find(find_params, constraints_string);
   boa.accuracy_test(soln.hyper_param_string);

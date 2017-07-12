@@ -42,9 +42,9 @@ void ByLineGenerator::setup_final()
 }
 
 ByLineGenerator::ByLineGenerator(Mat::E emat_x_,
-                                 const hyperparams::HyperParams&     hp_,
+                                 const HyperParams&     hp_,
                                  const Geometry&                     gg_,
-                                 const derivedparams::DerivedParams& dp_)
+                                 const DerivedParams& dp_)
   : prepgen::PrepGenerator(emat_x_, hp_, gg_, dp_)
 {
 }

@@ -31,9 +31,9 @@ class ByLineGenerator : public prepgen::PrepGenerator
 
   public:
   ByLineGenerator(Mat::E emat_x,
-                  const hyperparams::HyperParams&     hp_,
+                  const HyperParams&     hp_,
                   const Geometry&                     gg_,
-                  const derivedparams::DerivedParams& dp_);
+                  const DerivedParams& dp_);
 
   virtual KernelString get_kernelstring() final override;
   virtual void setup_final() final override;

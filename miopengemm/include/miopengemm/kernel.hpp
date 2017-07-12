@@ -47,7 +47,7 @@ class Kernel
 
   Kernel() : Kernel(nullptr, "default constructed Kernel") {}
 
-  oclutil::OpenCLResult update(const KernelString& ks, owrite::Writer& mowri);
+  oclutil::Result update(const KernelString& ks, owrite::Writer& mowri);
 
   ~Kernel();
 
@@ -56,9 +56,9 @@ class Kernel
   bool is_set();
   void set_kernel_args(std::vector<std::pair<size_t, const void*>> arg_sizes_values);
 
-  oclutil::OpenCLResult enqueue(cl_uint         num_events_in_wait_list,
+  oclutil::Result enqueue(cl_uint         num_events_in_wait_list,
                                    const cl_event* event_wait_list);
-  oclutil::OpenCLResult enqueue();
+  oclutil::Result enqueue();
 
   void update_times();
 

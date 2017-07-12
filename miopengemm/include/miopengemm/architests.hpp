@@ -14,9 +14,9 @@ namespace architests
 {
 
 std::tuple<bool, std::string> architecture_specific_tests(cl_command_queue,
-                                                          const derivedparams::DerivedParams&,
+                                                          const DerivedParams&,
                                                           const Geometry& gg,
-                                                          const hyperparams::HyperParams&);
+                                                          const HyperParams&);
 }
 }
 

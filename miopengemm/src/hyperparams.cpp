@@ -26,8 +26,7 @@ namespace MIOpenGEMM
 // at skew0 = skew + 1, (64, 256) are a:b = 4:1 and (32, 128) have a:b = 8:1
 const size_t skew0 = 10;
 
-namespace nsMAC
-{
+
 
 std::tuple<bool, std::string, std::array<size_t, 2>> get_mac_grid(size_t mac, size_t skew)
 {
@@ -90,10 +89,8 @@ std::tuple<bool, std::string, std::array<size_t, 2>> get_mac_grid(size_t mac, si
 
   return std::make_tuple(true, "no error", mac_grid);
 }
-}
 
-namespace hyperparams
-{
+
 
 RandomUtil radu;
 
@@ -799,10 +796,10 @@ std::vector<HyperParams> HyperParams::get_one_aways()
   {
 
     // ratios of new to current tile grid sizes
-    auto curr_grid_size_tuple = nsMAC::get_mac_grid(curr_mac, v_xhps[Mat::E::C].vs[NonChi::E::SKW]);
+    auto curr_grid_size_tuple = get_mac_grid(curr_mac, v_xhps[Mat::E::C].vs[NonChi::E::SKW]);
     auto curr_grid_size       = std::get<2>(curr_grid_size_tuple);
 
-    auto new_grid_size_tuple = nsMAC::get_mac_grid(newmac, v_xhps[Mat::E::C].vs[NonChi::E::SKW]);
+    auto new_grid_size_tuple = get_mac_grid(newmac, v_xhps[Mat::E::C].vs[NonChi::E::SKW]);
     if (std::get<0>(new_grid_size_tuple) == false)
     {
       continue;
@@ -928,5 +925,4 @@ std::tuple<bool, std::string> HyperParams::in_graph()
 }
 
 
-}
 }

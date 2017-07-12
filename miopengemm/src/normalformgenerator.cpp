@@ -16,9 +16,9 @@ class NormalFormGenerator : public prepgen::PrepGenerator
 
   public:
   NormalFormGenerator(Mat::E emat_x_, 
-                      const hyperparams::HyperParams&     hp_,
+                      const HyperParams&     hp_,
                       const Geometry&                     gg_,
-                      const derivedparams::DerivedParams& dp_)
+                      const DerivedParams& dp_)
     : prepgen::PrepGenerator(emat_x_, hp_, gg_, dp_)
   {
   }
@@ -169,9 +169,9 @@ for (size_t mu_perp_i = 0; mu_perp_i < MICRO_TILE_PERP_UNROLL; ++mu_perp_i) {
 
 
 KernelString get_nform_kernelstring(Mat::E emat_x, 
-const hyperparams::HyperParams&     hp,
+const HyperParams&     hp,
                                     const Geometry&                     gg,
-                                    const derivedparams::DerivedParams& dp)
+                                    const DerivedParams& dp)
 {
   NormalFormGenerator nfg(emat_x, hp, gg, dp);
   nfg.setup();
@@ -190,9 +190,9 @@ const hyperparams::HyperParams&     hp,
   //std::string nform_string = emat_x == Mat::E::A ? "nforma" : "nformb";  
   
   
-//KernelString get_nformb_kernelstring(const hyperparams::HyperParams&     hp,
+//KernelString get_nformb_kernelstring(const HyperParams&     hp,
                                      //const Geometry&                     gg,
-                                     //const derivedparams::DerivedParams& dp)
+                                     //const DerivedParams& dp)
 //{
   //NormalFormGenerator nfg(hp, gg, dp, "nformb");
   //nfg.setup();

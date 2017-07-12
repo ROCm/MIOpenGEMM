@@ -10,9 +10,9 @@ namespace MIOpenGEMM
 namespace betacgen
 {
 
-BetacGenerator::BetacGenerator(const hyperparams::HyperParams&     hp_,
+BetacGenerator::BetacGenerator(const HyperParams&     hp_,
                                const Geometry&                     gg_,
-                               const derivedparams::DerivedParams& dp_)
+                               const DerivedParams& dp_)
                                
   : bylinegen::ByLineGenerator(Mat::E::C, hp_, gg_, dp_)
 {
@@ -41,9 +41,9 @@ void BetacGenerator::setup_additional()
 
 void BetacGenerator::append_derived_definitions_additional(std::stringstream& ss) { ss << " "; }
 
-KernelString get_betac_kernelstring(const hyperparams::HyperParams&     hp,
+KernelString get_betac_kernelstring(const HyperParams&     hp,
                                     const Geometry&                     gg,
-                                    const derivedparams::DerivedParams& dp)
+                                    const DerivedParams& dp)
 {
   BetacGenerator bcg(hp, gg, dp);
   bcg.setup();

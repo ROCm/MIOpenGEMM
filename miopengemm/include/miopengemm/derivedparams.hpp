@@ -14,12 +14,11 @@
 
 namespace MIOpenGEMM
 {
-namespace derivedparams
-{
 
+// TODO : move this definition elsewhere, maybe to enums ? 
 const size_t uninitialised_size_t = std::numeric_limits<size_t>::max();
 
-std::tuple<bool, std::string> get_deriveability(const hyperparams::HyperParams& hp,
+std::tuple<bool, std::string> get_deriveability(const HyperParams& hp,
                                                 const Geometry& gg);
 
 class ChiralDerivedParams
@@ -69,7 +68,7 @@ class DerivedParams
 {
 
   private:
-  const hyperparams::HyperParams* ptr_hp;
+  const HyperParams* ptr_hp;
   const Geometry*                 ptr_gg;
 
   ChiralDerivedParams adps;
@@ -82,9 +81,9 @@ class DerivedParams
 
   public:
   // initiate all parameters, throwing an error if there is an incompatibility
-  DerivedParams(const hyperparams::HyperParams& hp, const Geometry& gg);
+  DerivedParams(const HyperParams& hp, const Geometry& gg);
 
-  DerivedParams(const hyperparams::HyperParams& hp, const Geometry& gg, std::string s);
+  DerivedParams(const HyperParams& hp, const Geometry& gg, std::string s);
 
   DerivedParams()                     = delete;
   DerivedParams(const DerivedParams&) = delete;
@@ -156,7 +155,7 @@ class DerivedParams
   
 
 };
-}
+//}
 }
 
 #endif

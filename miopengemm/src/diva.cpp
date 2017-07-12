@@ -53,7 +53,7 @@ void Diva<TFl>::initialise_common()
 
   for (auto emem : {Mem::E::A, Mem::E::B, Mem::E::C})
   {
-    mem_size[emem] = get_mat_memsize(emem);
+    mem_size[emem] = get_mat_memsize(gg, toff, emem);
   }
   mem_size[Mem::E::W] = get_workspace_memsize();
 
@@ -127,12 +127,6 @@ Diva<TFl>::Diva(Geometry gg_, Offsets toff_, owrite::Writer& mowri_)
   initialise_common();
 }
 
-template <typename TFl>
-size_t Diva<TFl>::get_mat_memsize(Mem::E emem)
-{
-  Mat::E emat = Mat::mem_to_mat(emem);
-  return sizeof(TFl) * (gg.get_padded_area(emat) + toff.offsets[emem] + toff.tails[emem]);
-}
 
 template <typename TFl>
 size_t Diva<TFl>::get_workspace_memsize()
@@ -189,7 +183,7 @@ void Diva<TFl>::benchgemm(const std::vector<std::string>& hyperstrings,
 {
 
   // dev code's connection to the outside
-  std::vector<hyperparams::HyperParams> hps;
+  std::vector<HyperParams> hps;
   for (auto& hyperstring : hyperstrings)
   {
     MIOpenGEMM::benchgemm(tgcq.command_queue,
@@ -211,6 +205,9 @@ Solution Diva<TFl>::find(const FindParams& find_params, std::string constraints_
 {
   // dev code's connection to the outside
   bool     c_is_const = false;
+ 
+ 
+  //zzzzzzzz 
   Solution tgs        = MIOpenGEMM::find(tgcq.command_queue,
                                   find_params,
                                   gpu_safemem[Mem::E::A].clmem,

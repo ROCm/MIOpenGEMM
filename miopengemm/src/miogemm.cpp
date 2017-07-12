@@ -30,40 +30,7 @@ namespace MIOpenGEMM
 {
 
 
-cl_mem get_copy(cl_command_queue   command_queue,
-                cl_mem             c,
-                const Geometry&    gg,
-                const Offsets&     toff,
-                const std::string& hash)
-{
-  cl_mem   c_copied;
-  cl_event c_copy_event;
 
-  size_t n_c = gg.ldX[Mat::E::C] * (gg.tX[Mat::E::C] == gg.isColMajor ? gg.m : gg.n) + toff.offsets[Mem::E::C];
-  size_t c_memsize = gg.derived.float_size_bytes * n_c;
-  oclutil::cl_set_buffer_from_command_queue(c_copied,
-                                               command_queue,
-                                               CL_MEM_READ_WRITE,
-                                               c_memsize,
-                                               NULL,
-                                               hash +
-                                                 ", in function get_copy which returns a cl_mem",
-                                               true);
-  oclutil::cl_enqueue_copy_buffer(command_queue,
-                                     c,
-                                     c_copied,
-                                     0,
-                                     0,
-                                     c_memsize,
-                                     0,
-                                     NULL,
-                                     &c_copy_event,
-                                     hash + ", in function get_copy which returns a cl_mem",
-                                     true);
-
-  oclutil::cl_wait_for_events(1, &c_copy_event, "in function find", true);
-  return c_copied;
-}
 
 cl_mem get_single(cl_command_queue command_queue, const std::string& hash)
 {
@@ -89,36 +56,25 @@ Solution find(cl_command_queue             command_queue,
               const std::string            constraints_string,
               const Geometry&              gg,
               const Offsets&               toff,
-              owrite::Writer& mowri,
+              owrite::Writer&              mowri,
               bool                         c_is_const)
 {
 
   gg.check_ldx_consistent();
   bool full_constraints_expected = false;
 
-  cl_mem                c_to_use(nullptr);
-  oclutil::SafeClMem c_copied("to be used in the case that c_is_const");
-  if (c_is_const == true)
-  {
-    c_to_use       = get_copy(command_queue, c, gg, toff, "c_is_const is true, making the copy");
-    c_copied.clmem = c_to_use;
-  }
-
-  else
-  {
-    c_to_use = c;
-  }
-
-  Jinx oger(command_queue,
+  Jinx oger(                  command_queue,
                               gg,
                               toff,
                               a,
                               b,
-                              c_to_use,
+                              c,
+                              c_is_const,
                               workspace,
                               constraints_string,
                               full_constraints_expected,
                               mowri);
+                              
   return oger.find(find_params);
 }
 
@@ -184,8 +140,8 @@ Solution get_default(const Geometry& gg)
   auto                         cached_soln = get_generic_cached_solution(constraints_string, gg);
   oclutil::DevInfo devinfo;
   owrite::Writer  mowri(Ver::E::SILENT, "");
-  hyperparams::Graph           graph(gg, devinfo, cached_soln.hyperstring, false);
-  hyperparams::HyperParams     hp(graph);
+  Graph           graph(gg, devinfo, cached_soln.hyperstring, false);
+  HyperParams     hp(graph);
 
   bool bundle_verbose_get_default = true;
   auto bundle                     = kerngen::get_bundle(hp, gg, mowri, bundle_verbose_get_default);
@@ -221,8 +177,8 @@ Solution get_default(cl_command_queue             command_queue,
   }
 
   // generating source files from cache
-  hyperparams::Graph       graph(gg, devinfo, cached_soln.hyperstring, false);
-  hyperparams::HyperParams hp(graph);
+  Graph       graph(gg, devinfo, cached_soln.hyperstring, false);
+  HyperParams hp(graph);
   bool                     bundle_verbose_get_default = true;
   auto                     bundle = kerngen::get_bundle(hp, gg, mowri, bundle_verbose_get_default);
 
@@ -245,43 +201,20 @@ void benchgemm(cl_command_queue             command_queue,
 
   bool full_constraints_expected = true;
 
-  gg.check_ldx_consistent();
-  if (c_is_const == true)
-  {
+  Jinx oger(command_queue,
+                              gg,
+                              toff,
+                              a_gpu,
+                              b_gpu,
+                              c_gpu,
+                              c_is_const,
+                              workspace_gpu,
+                              hyperstring,
+                              full_constraints_expected,
+                              mowri);
 
-    cl_mem c_cop = get_copy(command_queue, c_gpu, gg, toff, "copy of c in benchgemm");
-    oclutil::SafeClMem c_copied("copy of c in find");
-    c_copied.clmem = c_cop;
-
-    Jinx oger(command_queue,
-                                gg,
-                                toff,
-                                a_gpu,
-                                b_gpu,
-                                c_copied.clmem,
-                                workspace_gpu,
-                                hyperstring,
-                                full_constraints_expected,
-                                mowri);
-    oger.benchgemm(max_n_runs, max_time);
-  }
-
-  else
-  {
-
-    Jinx oger(command_queue,
-                                gg,
-                                toff,
-                                a_gpu,
-                                b_gpu,
-                                c_gpu,
-                                workspace_gpu,
-                                hyperstring,
-                                full_constraints_expected,
-                                mowri);
-
-    oger.benchgemm(max_n_runs, max_time);
-  }
+  oger.benchgemm(max_n_runs, max_time);
+  //}
 }
 
 Solution find(float            allotted_time,
@@ -291,7 +224,6 @@ Solution find(float            allotted_time,
               cl_mem           c,
               bool             enforce_determinism,
               const Geometry&  tgg,
-//              bool             verbose,
               bool             with_warnings)
 {
 

@@ -14,9 +14,9 @@ namespace MIOpenGEMM
 namespace alphagen
 {
 
-KernelString get_alpha_kernelstring(const hyperparams::HyperParams&     hp,
+KernelString get_alpha_kernelstring(const HyperParams&     hp,
                                     const Geometry&                     gg,
-                                    const derivedparams::DerivedParams& dp);
+                                    const DerivedParams& dp);
 }
 }
 

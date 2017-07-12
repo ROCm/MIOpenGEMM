@@ -13,9 +13,9 @@ namespace basegen
 {
 
 
-BaseGenerator::BaseGenerator(const hyperparams::HyperParams&     hp_,
+BaseGenerator::BaseGenerator(const HyperParams&     hp_,
                              const Geometry&                     gg_,
-                             const derivedparams::DerivedParams& dp_)
+                             const DerivedParams& dp_)
 
   : hp(hp_), gg(gg_), dp(dp_), n_args_added(0)
 {

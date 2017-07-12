@@ -39,9 +39,9 @@ class PrepGenerator : public basegen::BaseGenerator
 
   public:
   PrepGenerator (Mat::E emat_x,
-                const hyperparams::HyperParams&     hp_,
+                const HyperParams&     hp_,
                 const Geometry&                     gg_,
-                const derivedparams::DerivedParams& dp_);
+                const DerivedParams& dp_);
 };
 }
 }

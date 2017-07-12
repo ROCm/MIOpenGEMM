@@ -82,10 +82,10 @@ void enforce_constraints(std::string&       hps_to_update,
 {
 
   oclutil::DevInfo devinfo;
-  hyperparams::Graph           graph(gg, devinfo, hps_to_update, true);
-  hyperparams::HyperParams     hp(graph);
+  Graph           graph(gg, devinfo, hps_to_update, true);
+  HyperParams     hp(graph);
 
-  auto all_constraints = hyperparams::get_all_constraints(constraints_string);
+  auto all_constraints = get_all_constraints(constraints_string);
   hp.replace_where_source_defined(all_constraints);
   hps_to_update = hp.get_string();
 }

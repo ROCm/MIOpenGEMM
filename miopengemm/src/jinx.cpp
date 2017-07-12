@@ -30,6 +30,10 @@ namespace MIOpenGEMM
 {
 
 
+
+
+
+
 MFType::MFType(double v) : v_d(v), v_f(static_cast<float>(v)) {}
 void* MFType::operator[](char floattype) const
 {
@@ -37,11 +41,23 @@ void* MFType::operator[](char floattype) const
 }
 
 
-GpuMms::GpuMms(cl_mem a_gpu_, cl_mem b_gpu_, cl_mem c_gpu_, cl_mem workspace_gpu_){
+
+
+GpuMms::GpuMms(cl_mem a_gpu_, cl_mem b_gpu_, cl_mem c_gpu_, bool c_is_const, cl_mem workspace_gpu_, size_t c_nbytes, cl_command_queue cq){
+  
 cl_mems[Mem::E::A] = a_gpu_;
 cl_mems[Mem::E::B] = b_gpu_;
-cl_mems[Mem::E::C] = c_gpu_;    
 cl_mems[Mem::E::W] = workspace_gpu_;      
+
+//cl_mems[Mem::E::C] = c_gpu_;    
+  if (c_is_const == false){
+    cl_mems[Mem::E::C] = c_gpu_;
+  }
+  
+  else{
+    cl_mems[Mem::E::C] = oclutil::get_copy(cq, c_gpu_, c_nbytes, "c_is_const is true, making copy in GpuMms");
+    c_copy.clmem  = c_gpu_; // for correct destruction 
+  }
 }
 
 cl_mem& GpuMms::operator[](Mem::E x)
@@ -56,6 +72,7 @@ cl_mem& GpuMms::operator[](Mem::E x)
                          cl_mem                       a_gpu_,
                          cl_mem                       b_gpu_,
                          cl_mem                       c_gpu_,
+                         bool                         c_is_const,
                          cl_mem                       workspace_gpu_,
                          std::string                  constraints_string_,
                          bool                         full_constraints_expected,
@@ -65,14 +82,14 @@ cl_mem& GpuMms::operator[](Mem::E x)
       command_queue(command_queue_),
       gg(gg_),
       toff(toff_),
-      gpum(a_gpu_, b_gpu_, c_gpu_, workspace_gpu_),
-
+      
+      gpum(a_gpu_, b_gpu_, c_gpu_, c_is_const, workspace_gpu_, get_mat_memsize(gg, toff, Mem::E::C), command_queue_),
       devinfo(command_queue_),
       constraints_string(constraints_string_),
       graph(gg, devinfo, constraints_string_, full_constraints_expected),
-
       mowri(mowri_)
   {
+        
 
     tk_kernels.resize(BasicKernelType::E::N);
     for (size_t i = 0; i < BasicKernelType::E::N; ++i)
@@ -182,8 +199,8 @@ cl_mem& GpuMms::operator[](Mem::E x)
   }
 
   bool Jinx::refresh_needed(BasicKernelType::E                                 type,
-                      const hyperparams::HyperParams&     new_hp,
-                      const derivedparams::DerivedParams& new_dp)
+                      const HyperParams&     new_hp,
+                      const DerivedParams& new_dp)
   {
 
     /* TODO : check (here) hyper parameters to see if needed anew */
@@ -236,12 +253,12 @@ cl_mem& GpuMms::operator[](Mem::E x)
     }
   }
 
-  oclutil::OpenCLResult Jinx::refresh_kernel(const KernelString&                 ks,
-                                          const hyperparams::HyperParams&     hp,
-                                          const derivedparams::DerivedParams& dp)
+  oclutil::Result Jinx::refresh_kernel(const KernelString&                 ks,
+                                          const HyperParams&     hp,
+                                          const DerivedParams& dp)
   {
 
-    oclutil::OpenCLResult oclr;
+    oclutil::Result oclr;
     auto                     type = ks.type;
     if (refresh_needed(type.basic_kernel_type, hp, dp) == true)
     {
@@ -260,11 +277,11 @@ cl_mem& GpuMms::operator[](Mem::E x)
     return oclr;
   }
 
-  oclutil::OpenCLResult Jinx::setup_tinykernels(const hyperparams::HyperParams& hp,
+  oclutil::Result Jinx::setup_tinykernels(const HyperParams& hp,
                                              const kerngen::Bundle&          bundle)
   {
 
-    oclutil::OpenCLResult oclr;
+    oclutil::Result oclr;
 
     v_wait_indices = bundle.v_wait_indices;
     tk_kernels_active.resize(0);
@@ -380,7 +397,7 @@ cl_mem& GpuMms::operator[](Mem::E x)
     //mowri.tracker << backspaces << new_comment_string << Flush;
   }
 
-  oclutil::OpenCLResult Jinx::core_gemm_loop(size_t max_n_runs, double max_time, bool print_asap)
+  oclutil::Result Jinx::core_gemm_loop(size_t max_n_runs, double max_time, bool print_asap)
   {
 
     std::cout << "in core gemm loop " << std::endl;
@@ -426,7 +443,7 @@ cl_mem& GpuMms::operator[](Mem::E x)
         std::this_thread::sleep_for(std::chrono::milliseconds(0));
       }
 
-      oclutil::OpenCLResult oclr;
+      oclutil::Result oclr;
 
       for (size_t k_ind = 0; k_ind < tk_kernels_active.size(); ++k_ind)
       {
@@ -529,9 +546,9 @@ cl_mem& GpuMms::operator[](Mem::E x)
     return {};
   }
 
-  void Jinx::deriveability_test(const hyperparams::HyperParams& hp, const std::string& hash)
+  void Jinx::deriveability_test(const HyperParams& hp, const std::string& hash)
   {
-    auto deriveability = derivedparams::get_deriveability(hp, gg);
+    auto deriveability = get_deriveability(hp, gg);
     if (std::get<0>(deriveability) == false)
     {
       throw miog_error(hash + ": the hyper parameters in benchgemm are not consistent, "
@@ -553,7 +570,7 @@ cl_mem& GpuMms::operator[](Mem::E x)
       throw miog_error("max_n_runs to benchgemm should be a positive integer");
     }
 
-    hyperparams::HyperParams hp(graph);
+    HyperParams hp(graph);
     deriveability_test(hp, "in benchgemm");
 
     auto bundle = kerngen::get_bundle(hp, gg, mowri, bundle_verbose);
@@ -580,10 +597,10 @@ cl_mem& GpuMms::operator[](Mem::E x)
     }
   }
 
-  hyperparams::HyperParams Jinx::get_hyper_param_start()
+  HyperParams Jinx::get_hyper_param_start()
   {
 
-    hyperparams::HyperParams hyper_param_start(graph);
+    HyperParams hyper_param_start(graph);
     hyper_param_start.checks();
 
     bool              found_a_deriveable_goodarchi_hp = false;
@@ -597,9 +614,9 @@ cl_mem& GpuMms::operator[](Mem::E x)
 
     while (found_a_deriveable_goodarchi_hp == false && d_and_g_search_iteration < n_trials)
     {
-      hyper_param_start = hyperparams::HyperParams(graph);
+      hyper_param_start = HyperParams(graph);
       hyper_param_start.checks();
-      auto deriveability = derivedparams::get_deriveability(hyper_param_start, gg);
+      auto deriveability = get_deriveability(hyper_param_start, gg);
       if (std::get<0>(deriveability) == false)
       {
         d_and_g_ss << hyper_param_start.get_string()
@@ -608,7 +625,7 @@ cl_mem& GpuMms::operator[](Mem::E x)
 
       else
       {
-        auto dp = derivedparams::DerivedParams(hyper_param_start, gg);
+        auto dp = DerivedParams(hyper_param_start, gg);
         auto atr =
           architests::architecture_specific_tests(command_queue, dp, gg, hyper_param_start);
         if (std::get<0>(atr) == false)
@@ -644,9 +661,9 @@ cl_mem& GpuMms::operator[](Mem::E x)
 
       auto cached_soln = get_generic_cached_solution(graph.constraints_string_in, gg);
       graph.force_start_node(cached_soln.hyperstring);
-      hyper_param_start = hyperparams::HyperParams(graph);
+      hyper_param_start = HyperParams(graph);
       hyper_param_start.checks();
-      auto deriveability = derivedparams::get_deriveability(hyper_param_start, gg);
+      auto deriveability = get_deriveability(hyper_param_start, gg);
       if (std::get<0>(deriveability) == false)
       {
         mowri << "NOW, THE FALLBACK SOLUTION IS NOT EVEN DERIVEABLE: "
@@ -755,7 +772,7 @@ cl_mem& GpuMms::operator[](Mem::E x)
     // AND compiled AND benchmarked
     size_t global_counter = 0;
 
-    hyperparams::HyperParams hyper_param_current = get_hyper_param_start(); // fst);
+    HyperParams hyper_param_current = get_hyper_param_start(); // fst);
 
     if (allotted_time <= 0)
     {
@@ -770,7 +787,7 @@ cl_mem& GpuMms::operator[](Mem::E x)
 
     best_solns_path.clear();
 
-    std::vector<hyperparams::HyperParams> hyper_front = {hyper_param_current};
+    std::vector<HyperParams> hyper_front = {hyper_param_current};
 
     bool improvement_found_on_front = true;
     mowri << "allotted time : " << allotted_time << Endl;
@@ -917,7 +934,7 @@ cl_mem& GpuMms::operator[](Mem::E x)
           }
 
           // filtering out non-deriveables
-          else if (std::get<0>(derivedparams::get_deriveability(hp, gg)) == false)
+          else if (std::get<0>(get_deriveability(hp, gg)) == false)
           {
           }
 
