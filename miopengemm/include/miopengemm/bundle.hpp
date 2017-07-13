@@ -7,7 +7,6 @@
 #include <string>
 #include <miopengemm/derivedparams.hpp>
 #include <miopengemm/geometry.hpp>
-#include <miopengemm/hyperparams.hpp>
 #include <miopengemm/kernelstring.hpp>
 
 namespace MIOpenGEMM

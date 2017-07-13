@@ -11,7 +11,6 @@
 #include <miopengemm/derivedparams.hpp>
 #include <miopengemm/findparams.hpp>
 #include <miopengemm/geometry.hpp>
-#include <miopengemm/hyperparams.hpp>
 #include <miopengemm/kernelstring.hpp>
 
 namespace MIOpenGEMM

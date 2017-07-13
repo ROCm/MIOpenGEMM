@@ -11,7 +11,6 @@
 #include <miopengemm/derivedparams.hpp>
 #include <miopengemm/error.hpp>
 #include <miopengemm/findparams.hpp>
-#include <miopengemm/hyperparams.hpp>
 #include <miopengemm/kernel.hpp>
 #include <miopengemm/kernelcache.hpp>
 #include <miopengemm/kernelstring.hpp>

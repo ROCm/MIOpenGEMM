@@ -178,10 +178,9 @@ class Graph
   BSuGr bsubg;
   CSuGr csubg;
   const SuGr & at(size_t emat) const;    
-  // if you need a non-const version, page 23 of Meyers.
+  // if you need a non-const version of above, page 23 of Meyers.
 
-  public:
-  
+  public:  
   Graph(const Geometry &, const oclutil::DevInfo &, const Constraints &);   
   
   
@@ -195,9 +194,6 @@ class Graph
   void checks() const;
   
 };
-
-
-
 
 }
 

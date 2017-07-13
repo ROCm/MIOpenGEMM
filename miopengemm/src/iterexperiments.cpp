@@ -4,7 +4,8 @@
 #include <sstream>
 #include <vector>
 #include <algorithm>
-//#include <miopengemm/basicfind.hpp>
+
+
 #include <miopengemm/devmiogemm.hpp>
 #include <miopengemm/geometryutil.hpp>
 #include <miopengemm/miogemm.hpp>
@@ -27,8 +28,6 @@ int run_find_experiments(const std::vector<Geometry>& geometries,
   std::string cache_write_string("");
 
   Offsets  offsets(13, 24, 35, 46, 57, 67, 79, 101);
-  size_t n_postfind_runs = 0;
-  bool     do_cpu_test     = false;
 
   // We're tracking the overall run time with these
   auto                         start           = std::chrono::high_resolution_clock::now();
