@@ -702,20 +702,18 @@ std::vector<HyperParams> HyperParams::get_one_aways()
   {
 
     // ratios of new to current tile grid sizes
-    auto curr_grid_size_tuple = macgrid::get_grid(curr_mac, v_xhps[Mat::E::C].vs[NonChi::E::SKW]);
-    auto curr_grid_size       = std::get<2>(curr_grid_size_tuple);
+    macgrid::Grid curr_grid(curr_mac, v_xhps[Mat::E::C].vs[NonChi::E::SKW]);
 
-    auto new_grid_size_tuple = macgrid::get_grid(newmac, v_xhps[Mat::E::C].vs[NonChi::E::SKW]);
-    if (std::get<0>(new_grid_size_tuple) == false)
+    macgrid::Grid new_grid(newmac, v_xhps[Mat::E::C].vs[NonChi::E::SKW]);
+    if (!new_grid.is_good)
     {
       continue;
     }
-    auto new_grid_size = std::get<2>(new_grid_size_tuple);
 
-    double delta_na = static_cast<double>(new_grid_size[Mat::E::A]) /
-                      static_cast<double>(curr_grid_size[Mat::E::A]);
-    double delta_nb = static_cast<double>(new_grid_size[Mat::E::B]) /
-                      static_cast<double>(curr_grid_size[Mat::E::B]);
+    double delta_na = static_cast<double>(new_grid.at(Mat::E::A)) /
+                      static_cast<double>(curr_grid.at(Mat::E::A));
+    double delta_nb = static_cast<double>(new_grid.at(Mat::E::B)) /
+                      static_cast<double>(curr_grid.at(Mat::E::B));
 
     // mica scaled so that the macro tile
     // remains ~ the same in the a dimension

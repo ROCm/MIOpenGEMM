@@ -126,17 +126,14 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
 
   set_should_be_hyperparams();
 
-  auto grid_size_tuple =
-    macgrid::get_grid(ptr_hp->at(Mat::E::C).vs[NonChi::E::MAC], ptr_hp->at(Mat::E::C).vs[NonChi::E::SKW]);
-  if (std::get<0>(grid_size_tuple) == false)
+  macgrid::Grid grid(ptr_hp->at(Mat::E::C).vs[NonChi::E::MAC], ptr_hp->at(Mat::E::C).vs[NonChi::E::SKW]);
+  if (!grid.is_good)
   {
-    return std::make_tuple(false, std::get<1>(grid_size_tuple));
+    return std::make_tuple(false, grid.error_message);
   }
 
-  auto grid_size = std::get<2>(grid_size_tuple);
-
-  at(Mat::E::A).macro_tile_length = grid_size[Mat::E::A] * ptr_hp->at(Mat::E::A).vs[Chi::E::MIC];
-  at(Mat::E::B).macro_tile_length = grid_size[Mat::E::B] * ptr_hp->at(Mat::E::B).vs[Chi::E::MIC];
+  at(Mat::E::A).macro_tile_length = grid.at(Mat::E::A) * ptr_hp->at(Mat::E::A).vs[Chi::E::MIC];
+  at(Mat::E::B).macro_tile_length = grid.at(Mat::E::B) * ptr_hp->at(Mat::E::B).vs[Chi::E::MIC];
 
   for (auto emat_x : {Mat::E::A, Mat::E::B})
   {

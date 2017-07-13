@@ -10,10 +10,23 @@ namespace MIOpenGEMM
 
 namespace macgrid{
 
-std::tuple<bool, std::string, std::array<size_t, 2>> get_grid(size_t mac, size_t skew)
+
+void Grid::bad_initialise(const std::string & x){
+  is_good = false;
+  error_message = x;
+}
+
+void Grid::good_initialise(size_t gA, size_t gB){
+  grid_A = gA;
+  grid_B = gB;
+  is_good = true;
+  error_message = "";
+}
+
+Grid::Grid(size_t mac, size_t skew)
 {
 
-  double   dbl_lg2_mac = std::log2(static_cast<double>(mac));
+  double dbl_lg2_mac = std::log2(static_cast<double>(mac));
   size_t lg2_mac     = static_cast<size_t>(dbl_lg2_mac);
 
   double na = std::exp2(lg2_mac / 2 + lg2_mac % 2);
@@ -30,46 +43,46 @@ std::tuple<bool, std::string, std::array<size_t, 2>> get_grid(size_t mac, size_t
     nb /= 2.;
   }
 
-  std::stringstream errm_ss;
-
-  errm_ss << "problem getting mac sizes: ";
-  std::array<size_t, 2> null_array = {0, 0};
   size_t u_na = static_cast<size_t>(na);
   size_t u_nb = static_cast<size_t>(nb);
   if (std::abs(na * nb - static_cast<double>(u_na * u_nb)) > 1e-7)
   {
-    errm_ss << "  casting non-ints. ";
-    errm_ss << "na: " << na << " nb:" << nb << " u_na:" << u_na << " u_nb:" << u_nb << "  ";
-    return std::make_tuple(false, errm_ss.str(), null_array);
+    std::stringstream errm_ss;
+    errm_ss << "Casting non-ints. ";
+    errm_ss << "na: " << na << " nb:" << nb << " u_na:" << u_na << " u_nb:" << u_nb << '.';
+    bad_initialise(errm_ss.str());
+    return;
   }
 
   if (u_na < 1 || u_nb < 1)
   {
-    errm_ss << "  it appears that one of the lengths is zero. It could be that "
-               "the skewness "
-               "requested is too extreme. ";
-    return std::make_tuple(false, errm_ss.str(), null_array);
+    bad_initialise("One of the lengths is zero. Maybe skewness requested is too extreme.");
+    return;
   }
 
   if (u_na * u_nb != mac)
   {
-    errm_ss << "  it appears as though the product of the computed edge "
-               "lengths is not MAC.  ";
-    return std::make_tuple(false, errm_ss.str(), null_array);
+    bad_initialise("The product of the computed edge lengths is not MAC.");
+    return;
   }
 
-  std::array<size_t, 2> mac_grid;
+  good_initialise(u_na, u_nb);
+}
 
-  if (Mat::E::A >= 2 || Mat::E::B >= 2)
-  {
-    errm_ss << "the std::array returned in get grid is too small";
-    throw miog_error(errm_ss.str());
+size_t Grid::at(Mat::E emat){
+  if (is_good == false){
+    throw miog_error("at should not be called as is_good is false, internal logic error");
   }
-
-  mac_grid[Mat::E::A] = u_na;
-  mac_grid[Mat::E::B] = u_nb;
-
-  return std::make_tuple(true, "no error", mac_grid);
+  
+  if (emat == Mat::E::A){
+    return grid_A;
+  }
+  else if (emat == Mat::E::B){
+    return grid_B;
+  }
+  else{
+    throw miog_error("unrecognised emat in Grid::at, internal logic error");    
+  }
 }
 
 }
