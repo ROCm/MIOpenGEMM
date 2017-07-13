@@ -1046,6 +1046,15 @@ DevInfo::DevInfo(const cl_command_queue& command_queue)
   device_global_mem_size = a_ulong;
 
   oclutil::set_device_info_from_command_queue(command_queue,
+                                                CL_DEVICE_LOCAL_MEM_SIZE,
+                                                sizeof(cl_ulong),
+                                                &a_ulong,
+                                                NULL,
+                                                "obtaining CL_DEVICE_LOCAL_MEM_SIZE",
+                                                strict);
+  device_local_mem_size = a_ulong;
+
+  oclutil::set_device_info_from_command_queue(command_queue,
                                                  CL_DEVICE_MAX_CLOCK_FREQUENCY,
                                                  sizeof(cl_uint),
                                                  &a_uint,
@@ -1072,14 +1081,19 @@ DevInfo::DevInfo(const cl_command_queue& command_queue)
                                                  strict);
   device_max_work_group_size = a_ulong;
 
-  oclutil::set_device_info_from_command_queue(command_queue,
-                                                 CL_DEVICE_MAX_WORK_GROUP_SIZE,
-                                                 sizeof(cl_ulong),
-                                                 &a_ulong,
-                                                 NULL,
-                                                 "obtaining CL_DEVICE_MAX_WORK_GROUP_SIZE",
-                                                 strict);
-  device_max_work_group_size = a_ulong;
+
+
+
+
+
+  //oclutil::set_device_info_from_command_queue(command_queue,
+                                                 //CL_DEVICE_MAX_WORK_GROUP_SIZE,
+                                                 //sizeof(cl_ulong),
+                                                 //&a_ulong,
+                                                 //NULL,
+                                                 //"obtaining CL_DEVICE_MAX_WORK_GROUP_SIZE",
+                                                 //strict);
+  //device_max_work_group_size = a_ulong;
 
   oclutil::set_device_info_from_command_queue(command_queue,
                                                  CL_DEVICE_VERSION,
@@ -1098,6 +1112,11 @@ DevInfo::DevInfo(const cl_command_queue& command_queue)
                                                  "obtaining CL_DRIVER_VERSION",
                                                  strict);
   driver_version = info_st.substr(0, info_size - 1);
+
+
+
+
+
 
   if (platinfo.vendor.find("vidia") != std::string::npos ||
       platinfo.vendor.find("NVIDIA") != std::string::npos)

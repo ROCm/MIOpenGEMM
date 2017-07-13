@@ -49,7 +49,7 @@ Solution find(cl_command_queue             command_queue,
               cl_mem                       b,
               cl_mem                       c,
               cl_mem                       workspace,
-              const std::string            constraints_string,
+              const Constraints &          constraints,
               const Geometry&              gg,
               const Offsets&               toff,
               owrite::Writer&              mowri,
@@ -67,11 +67,11 @@ Solution find(cl_command_queue             command_queue,
                               c,
                               c_is_const,
                               workspace,
-                              constraints_string,
-                              full_constraints_expected,
+                              //constraints,
+                              //full_constraints_expected,
                               mowri);
                               
-  return oger.find(find_params);
+  return oger.find(constraints, find_params);
 }
 
 std::tuple<bool, std::string> check_for_default(cl_command_queue command_queue,
@@ -208,8 +208,8 @@ void benchgemm(cl_command_queue             command_queue,
                               c_gpu,
                               c_is_const,
                               workspace_gpu,
-                              hyperstring,
-                              full_constraints_expected,
+                              //hyperstring,
+                              //full_constraints_expected,
                               mowri);
 
   oger.benchgemm(HyPas(hyperstring), max_n_runs, max_time);

@@ -12,8 +12,8 @@
 
 namespace MIOpenGEMM
 {
-//namespace derivedparams
-//{
+
+
 
 size_t DerivedParams::get_target_ld(Mat::E emat_x) const { return at(emat_x).cw1_target_ldx; }
 
@@ -99,12 +99,23 @@ void DerivedParams::reset_ga3_params()
   ga3_last_super_column_width = bdps.n_groups % ga3_super_column_width;
 }
 
-std::tuple<bool, std::string> get_deriveability(const HyPas& hp,
-                                                const Geometry& gg)
-{
+
+
+
+
+Derivabilty::Derivabilty(const HyPas & hp, const Geometry& gg){
   DerivedParams dp(hp, gg, "uninitialised");
-  return dp.set_fragile();
+  auto tup = dp.set_fragile();
+  is_derivable = std::get<0>(tup);
+  msg = std::get<1>(tup);
 }
+
+bool is_dvble(const HyPas & hp, const Geometry& gg){
+  Derivabilty dble(hp, gg);
+  return dble.is_derivable;
+}
+
+
 
 DerivedParams::DerivedParams(const HyPas& hp_,
                              const Geometry&                 gg_,

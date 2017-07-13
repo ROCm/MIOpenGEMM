@@ -13,10 +13,16 @@ namespace MIOpenGEMM
 namespace architests
 {
 
-std::tuple<bool, std::string> architecture_specific_tests(cl_command_queue,
-                                                          const DerivedParams&,
-                                                          const Geometry& gg,
-                                                          const HyPas&);
+class Stat{
+  public:
+  
+  bool is_good; 
+  std::string msg;
+  Stat(const oclutil::DevInfo &, const DerivedParams&, const Geometry&, const HyPas&);
+  
+  
+};
+
 }
 }
 

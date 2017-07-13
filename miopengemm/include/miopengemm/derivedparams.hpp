@@ -18,8 +18,15 @@ namespace MIOpenGEMM
 // TODO : move this definition elsewhere, maybe to enums ? 
 const size_t uninitialised_size_t = std::numeric_limits<size_t>::max();
 
-std::tuple<bool, std::string> get_deriveability(const HyPas& hp,
-                                                const Geometry& gg);
+
+class Derivabilty{
+  public:
+  bool is_derivable;
+  std::string msg;
+  Derivabilty(const HyPas &, const Geometry& );
+};
+
+bool is_dvble(const HyPas &, const Geometry& );
 
 class ChiralDerivedParams
 {
@@ -99,7 +106,7 @@ class DerivedParams
     return emat_x == Mat::E::A ? adps : bdps;
   }
 
-  // does the minimum setting to confirm compatibitily. called by get_deriveability
+  // does the minimum setting to confirm compatibitily.
   std::tuple<bool, std::string> set_fragile();
 
   size_t main_macro_tile_area = uninitialised_size_t;

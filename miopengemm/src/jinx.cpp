@@ -72,8 +72,8 @@ cl_mem& GpuMms::operator[](Mem::E x)
                          cl_mem                       c_gpu_,
                          bool                         c_is_const,
                          cl_mem                       workspace_gpu_,
-                         std::string                  constraints_string_,
-                         bool                         full_constraints_expected,
+                         //std::string                  constraints_string_,
+                         //bool                         full_constraints_expected,
                          owrite::Writer& mowri_):
                          
  
@@ -544,18 +544,6 @@ cl_mem& GpuMms::operator[](Mem::E x)
     return {};
   }
 
-  void Jinx::deriveability_test(const HyPas& hp, const std::string& hash)
-  {
-    auto deriveability = get_deriveability(hp, gg);
-    if (std::get<0>(deriveability) == false)
-    {
-      throw miog_error(hash + ": the hyper parameters in benchgemm are not consistent, "
-                              "specifically, from get_deriveability \n" +
-                       std::get<1>(deriveability));
-    }
-  }
-
-
   void Jinx::benchgemm(const HyPas & hp, size_t max_n_runs, double max_time)
   {
     
@@ -572,10 +560,10 @@ cl_mem& GpuMms::operator[](Mem::E x)
     deriveability_test(hp, "in benchgemm");
 
     auto bundle = kerngen::get_bundle(hp, gg, mowri, bundle_verbose);
-    auto atr    = architests::architecture_specific_tests(command_queue, bundle.dp, gg, hp);
-    if (std::get<0>(atr) == false)
+    architests::Stat atr(command_queue, bundle.dp, gg, hp);
+    if (atr.is_good)
     {
-      throw miog_error(std::get<1>(atr));
+      throw miog_error(atr.msg);
     }
 
     auto oclr = setup_tinykernels(hp, bundle);
@@ -595,87 +583,13 @@ cl_mem& GpuMms::operator[](Mem::E x)
     }
   }
 
-  HyPas Jinx::get_hyper_param_start()
-  {
+  //HyPas Jinx::get_hyper_param_start()
+  //{
     
-    throw miog_error("get_hyper_param_start not impled");
+    //throw miog_error("get_hyper_param_start not impled");
 
-    //HyPas hyper_param_start();//graph);
-    //hyper_param_start.checks();
 
-    //bool              found_a_deriveable_goodarchi_hp = false;
-    //size_t          d_and_g_search_iteration        = 0;
-    //std::stringstream d_and_g_ss;
-
-    //// the number of attempts at finding a
-    //// deriveable HyPas given the
-    //// constraint string
-    //const size_t n_trials = 100000;
-
-    //while (found_a_deriveable_goodarchi_hp == false && d_and_g_search_iteration < n_trials)
-    //{
-      //hyper_param_start = HyPas(graph);
-      //hyper_param_start.checks();
-      //auto deriveability = get_deriveability(hyper_param_start, gg);
-      //if (std::get<0>(deriveability) == false)
-      //{
-        //d_and_g_ss << hyper_param_start.get_string()
-                   //<< " is not deriveable, because : " << std::get<1>(deriveability) << "\n\n";
-      //}
-
-      //else
-      //{
-        //auto dp = DerivedParams(hyper_param_start, gg);
-        //auto atr =
-          //architests::architecture_specific_tests(command_queue, dp, gg, hyper_param_start);
-        //if (std::get<0>(atr) == false)
-        //{
-          //d_and_g_ss << hyper_param_start.get_string()
-                     //<< "failed archotests because : " << std::get<1>(atr);
-        //}
-        //else
-        //{
-          //found_a_deriveable_goodarchi_hp = true;
-        //}
-      //}
-      //++d_and_g_search_iteration;
-    //}
-
-    //mowri << "n trials looking for a viable starting node in the graph : "
-          //<< d_and_g_search_iteration << Endl;
-
-    //// force the graph starting parameters
-    //if (found_a_deriveable_goodarchi_hp == false)
-    //{
-      //std::stringstream base_ss;
-      //base_ss << "\n\nStruggling to find a deriveable set of hyper parameters "
-                 //"which satisfy the "
-                 //"geometry and constraints. ";
-      //base_ss << "The number of attempts made is " << n_trials
-              //<< ".  To view the full output of the hyper parameters tried and "
-                 //"their reasons for "
-                 //"not being derivable, modify the code here (add "
-                 //"d_and_g_ss.str()). Attempting to "
-                 //"obtain hyper parameters using get_generic_solution. \n";
-      //mowri << base_ss.str() << "\n\n";
-
-      //auto cached_soln = get_generic_cached_solution(graph.constraints_string_in, gg);
-      //graph.force_start_node(cached_soln.hyperstring);
-      //hyper_param_start = HyPas(graph);
-      //hyper_param_start.checks();
-      //auto deriveability = get_deriveability(hyper_param_start, gg);
-      //if (std::get<0>(deriveability) == false)
-      //{
-        //mowri << "NOW, THE FALLBACK SOLUTION IS NOT EVEN DERIVEABLE: "
-              //<< hyper_param_start.get_string()
-              //<< " is not deriveable, because : " << std::get<1>(deriveability) << "\n\n";
-        //throw miog_error("\nfallback solution failed deriveability test in "
-                         //"get_hyper_param_start/\n");
-      //}
-    //}
-
-    //return hyper_param_start;
-  }
+  //}
 
   void Jinx::update_total_elapsed_seconds()
   {
@@ -687,6 +601,8 @@ cl_mem& GpuMms::operator[](Mem::E x)
   Solution Jinx::find(const Constraints & constraints, const FindParams& find_params)
   {
 
+
+    
     /* TODO : use sumstat */
     float  allotted_time   = find_params.allotted_time;
     size_t allotted_descents = find_params.allotted_descents;
@@ -721,7 +637,7 @@ cl_mem& GpuMms::operator[](Mem::E x)
       mowri << '\n' << stars << '\n' << titlestring << '\n' << stars << Endl;
 
       v_tgsolns.emplace_back(
-        single_descent_find(allotted_time - total_elapsed_seconds, find_params)); // fst,
+        single_descent_find(allotted_time - total_elapsed_seconds, constraints, find_params)); // fst,
 
       update_total_elapsed_seconds();
       ++total_elapsed_descents;
@@ -764,8 +680,12 @@ cl_mem& GpuMms::operator[](Mem::E x)
     return v_tgsolns[best_soln_index];
   }
 
-  Solution Jinx::single_descent_find(float allotted_time, const FindParams& find_params)
+  Solution Jinx::single_descent_find(float allotted_time, const Constraints & constraints, const FindParams& find_params)
   {
+
+    // re-creating the same graph for every single_descent is currently wasteful, but maybe in the future different constraints will be passed on each run :) 
+    const Graph graph(gg, devinfo, constraints, mowri);
+
 
     mowri << "geometry : " << gg.get_string() << Endl;
 
@@ -775,7 +695,7 @@ cl_mem& GpuMms::operator[](Mem::E x)
     // AND compiled AND benchmarked
     size_t global_counter = 0;
 
-    HyPas hyper_param_current = get_hyper_param_start(); // fst);
+    HyPas hyper_param_current = graph.get_random_valid_start(); //get_hyper_param_start(); // fst);
 
     if (allotted_time <= 0)
     {
@@ -828,11 +748,10 @@ cl_mem& GpuMms::operator[](Mem::E x)
               << elapsed_seconds;
         mowri << std::setprecision(6) << "s]\t" << hyper_param_current.get_string() << Endl;
 
-        auto atr = architests::architecture_specific_tests(
-          command_queue, bundle.dp, gg, hyper_param_current);
-        if (std::get<0>(atr) == false)
+        architests::Stat atr(command_queue, bundle.dp, gg, hyper_param_current);
+        if (atr.is_good == false)
         {
-          mowri << "Archtests failed : " << std::get<1>(atr) << Endl;
+          mowri << "Archtests failed : " << atr.msg << Endl;
         }
 
         else
@@ -887,7 +806,7 @@ cl_mem& GpuMms::operator[](Mem::E x)
                                              bundle.v_tgks,
                                              hyper_param_current.get_string(),
                                              devinfo,
-                                             constraints_string);
+                                             constraints.get_r_str()); // TODO : should rather be constraints NOT string
               }
             }
           }
@@ -952,7 +871,7 @@ cl_mem& GpuMms::operator[](Mem::E x)
           }
 
           // filtering out non-deriveables
-          else if (std::get<0>(get_deriveability(hp, gg)) == false)
+          else if (!is_dvble(hp, gg))
           {
           }
 

@@ -42,7 +42,9 @@ class Constraints{
   Constraints(const str_array & r);
   Constraints(const std::string & rconcat);
   Constraints(const str_array & r, const str_array & sr);
-  // TODO strings ?
+  std::string get_combo_str(const str_array & ) const;
+  std::string get_r_str() const; 
+  std::string get_sr_str() const;
 };
 
 
@@ -181,17 +183,25 @@ class Graph
   const SuGr & at(size_t emat) const;    
   // if you need a non-const version of above, page 23 of Meyers.
 
+  Geometry geometry;
+  oclutil::DevInfo devinfo;
+  Constraints constraints;
+  owrite::Writer & mowri; // makes Graphs difficult to copy etc.
+  
   public:  
-  Graph(const Geometry &, const oclutil::DevInfo &, const Constraints &);   
+  Graph(const Geometry &, const oclutil::DevInfo &, const Constraints &, owrite::Writer&);   
   
   
-  bool contains(Mat::E, size_t hpi, size_t value); 
-  bool contains(const HyPas &); 
-  std::vector<HyPas> get_one_aways(const HyPas &);
-  std::vector<HyPas> get_mic_mac_transformed(const HyPas &);
-  std::vector<HyPas> get_p_coupled_away(const HyPas &);
-  std::vector<HyPas> get_neighbors(const HyPas &);
-  HyPas get_random_start();
+  bool contains(Mat::E, size_t hpi, size_t value) const; 
+  bool contains(const HyPas &)  const; 
+  std::vector<HyPas> get_one_aways(const HyPas &)  const;
+  std::vector<HyPas> get_mic_mac_transformed(const HyPas &)  const;
+  std::vector<HyPas> get_p_coupled_away(const HyPas &)  const;
+  std::vector<HyPas> get_neighbors(const HyPas &)  const;
+  // any node in the start graph.
+  HyPas get_random_start() const;  
+  // any node in the start graph.
+  HyPas get_random_valid_start() const;
   void checks() const;
   
 };

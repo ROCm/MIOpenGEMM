@@ -66,12 +66,10 @@ class Jinx
        cl_mem           c_gpu_,
        bool             c_is_const,
        cl_mem           workspace_gpu_,
-       std::string      constraints_string_,
-       bool             full_constraints_expected,
        owrite::Writer&  mowri_);
 
   void benchgemm(const HyPas & hp, size_t max_n_runs, double max_time);
-  Solution find(const FindParams& find_params);
+  Solution find(const Constraints& constraint, const FindParams& find_params);
 
   ///////////////////////////////////////////////////////////////////////////////////////////
 
@@ -80,20 +78,15 @@ class Jinx
   std::string            outputfilename;
   const Geometry         gg;
   const Offsets          toff;
-  GpuMms                 gpum;
-  
+  GpuMms                 gpum;  
   const oclutil::DevInfo devinfo;
-  
-  //std::string            constraints_string;
-  //Graph                  graph;
-  
   owrite::Writer&        mowri;
   // special purpose output writer
   // vector of times over a set of runs on core loop
   std::vector<float> v_t_total;
   float              median_time;
   float              median_gflops;
-  // (for find) while generating, compiling and
+  // (for single_descent_find) while generating, compiling and
   // benchmarking kernels, we will keep track of the
   // fastest found thus far
   std::vector<Solution>                                       best_solns_path;
@@ -108,30 +101,32 @@ class Jinx
   std::string                                                 old_comment_string;
   std::string                                                 new_comment_string;
 
+  // TODO : floats to doubles
   float get_gflops(float timems);
+  
   void set_medians();
   void address_check_valid();
   void address_check_valid_and_reliable();
   void run_checks();
   void set_kern_args(const KernelType& type);
-  bool
-  refresh_needed(BasicKernelType::E type, const HyPas& new_hp, const DerivedParams& new_dp);
-
-  oclutil::Result
-  refresh_kernel(const KernelString& ks, const HyPas& hp, const DerivedParams& dp);
-
-  oclutil::Result setup_tinykernels(const HyPas& hp, const kerngen::Bundle& bundle);
-
   void update_run_times(cl_int status);
-  std::string get_run_times_heading();
-  std::string get_run_time_string(cl_int status);
-  void            reset_v_times();
-  void            mowri_tracker_print();
-  oclutil::Result core_gemm_loop(size_t max_n_runs, double max_time, bool print_asap);
+  void reset_v_times();
+  void mowri_tracker_print();
   void deriveability_test(const HyPas& hp, const std::string& hash);
 
-  HyPas get_hyper_param_start();
-  void        update_total_elapsed_seconds();
-  Solution single_descent_find(float allotted_time, const FindParams& find_params);
+  bool refresh_needed(BasicKernelType::E type, const HyPas& new_hp, const DerivedParams& new_dp);
+
+  oclutil::Result refresh_kernel(const KernelString& ks, const HyPas& hp, const DerivedParams& dp);
+  oclutil::Result setup_tinykernels(const HyPas& hp, const kerngen::Bundle& bundle);
+  oclutil::Result core_gemm_loop(size_t max_n_runs, double max_time, bool print_asap);
+
+  std::string get_run_times_heading();
+  std::string get_run_time_string(cl_int status);
+  
+  
+
+  //HyPas get_hyper_param_start();
+  void update_total_elapsed_seconds();
+  Solution single_descent_find(float allotted_time, const Constraints&, const FindParams &);
 };
 }

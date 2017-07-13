@@ -298,8 +298,9 @@ class DevInfo
   std::string device_version;
   std::string driver_version;
   std::string identifier;
-  bool        device_available;
-  size_t      device_global_mem_size;
+  bool       device_available;
+  size_t     device_global_mem_size;
+  size_t     device_local_mem_size;
   size_t    device_max_clock_frequency;
   size_t    device_max_compute_units;
   size_t    device_max_work_group_size;

@@ -4,6 +4,8 @@
 #include <miopengemm/macgrid.hpp>
 #include <miopengemm/randomutil.hpp>
 #include <miopengemm/stringutilbase.hpp>
+#include <miopengemm/derivedparams.hpp>
+#include <miopengemm/architests.hpp>
 
 namespace MIOpenGEMM
 {
@@ -11,7 +13,7 @@ namespace MIOpenGEMM
 RandomUtil radutil17;
 
 
-std::vector<HyPas> Graph::get_neighbors(const HyPas & hp0){
+std::vector<HyPas> Graph::get_neighbors(const HyPas & hp0)  const{
 
   std::vector<HyPas> neighbors(get_one_aways(hp0));
   radutil17.shuffle(0, neighbors.size(), neighbors);
@@ -27,7 +29,7 @@ std::vector<HyPas> Graph::get_neighbors(const HyPas & hp0){
   return neighbors;
 }
   
-std::vector<HyPas> Graph::get_p_coupled_away(const HyPas & hp0){
+std::vector<HyPas> Graph::get_p_coupled_away(const HyPas & hp0) const{
 
   std::vector<HyPas> p_coupled_away;
 
@@ -68,7 +70,7 @@ std::vector<HyPas> Graph::get_p_coupled_away(const HyPas & hp0){
 
 
 // changing MAC and one or both MICs, so as to semi-preserve the overall shape of the macro tile
-std::vector<HyPas> Graph::get_mic_mac_transformed(const HyPas & hp0){
+std::vector<HyPas> Graph::get_mic_mac_transformed(const HyPas & hp0)  const{
 
   std::vector<HyPas> mmt;
 
@@ -123,7 +125,7 @@ std::vector<HyPas> Graph::get_mic_mac_transformed(const HyPas & hp0){
   return mmt;
 }
 
-std::vector<HyPas> Graph::get_one_aways(const HyPas & hp0){
+std::vector<HyPas> Graph::get_one_aways(const HyPas & hp0) const{
   
   std::vector<HyPas> one_aways;
   
@@ -296,12 +298,75 @@ SuHy SuGr::get_random_start() const
   return SuHy(emat, std::move(hpvs));
 }
 
-HyPas Graph::get_random_start()
+HyPas Graph::get_random_start() const
 {
   return HyPas({at(Mat::E::A).get_random_start(),
                 at(Mat::E::B).get_random_start(),
                 at(Mat::E::C).get_random_start()});
 }
+
+
+HyPas Graph::get_random_valid_start() const{
+
+  // the number of attempts at finding a
+  // deriveable HyPas given the
+  // constraint string. TODO : define somewhere else. 
+
+  const size_t max_n_iter = static_cast<size_t>(1e6);
+  HyPas hp0(get_random_start());
+  
+  bool found = false;
+  size_t iter = 0;
+  std::stringstream ss;
+
+  while (found == false && iter < max_n_iter)
+  {
+    hp0 = get_random_start();
+    hp0.checks(); // TODO : this should not be necessary
+    
+    Derivabilty dble(hp0, geometry);
+    if (!dble.is_derivable)
+    {
+      ss << '\n' << hp0.get_string() << " isn't deriveable : " << dble.msg;
+    }
+
+    else
+    {
+      auto dp = DerivedParams(hp0, geometry);
+      architests::Stat atr(devinfo, dp, geometry, hp0);
+      
+      if (!atr.is_good)
+      {
+        ss << '\n' << hp0.get_string() << "failed architests : " << atr.msg;
+      }
+      else
+      {
+        found = true;
+      }
+    }
+    ++iter;
+  }
+
+
+  // force the graph starting parameters
+  if (!found)
+  {
+    std::stringstream base_ss;
+    base_ss << "\nStruggling to find hp satisying geometry, constraints and architecture."
+            << " The number of attempts made : " << max_n_iter << '.'
+            << " To view the full output of hps tried, "
+            << " and reasons for not being derivable, modify the code here -- " 
+            << " (add ss.str() to this string). Will attempt to obtain generic hp. ";
+    
+    throw miog_error(base_ss.str());      
+  }
+  else{
+    mowri << "#trials to find viable hp in graph : " << iter << Endl;
+  }
+  return hp0;  
+}
+  
+  
 
 std::string SuGr::get_string(size_t hpi) const
 {
@@ -366,6 +431,7 @@ bool SuHy::operator==(const SuHy& rhs) const { return vs == rhs.vs; }
 
 bool HyPas::operator==(const HyPas& rhs) const { return sus == rhs.sus; }
 
+
 std::string HyPas::get_string() const
 {
 
@@ -378,9 +444,43 @@ std::string HyPas::get_string() const
     }
     ss << sus[emat].get_string();
   }
-
   return ss.str();
 }
+
+
+std::string Constraints::get_combo_str(const str_array & strs) const{
+  std::stringstream ss;
+  bool empty = true;
+  for (auto x : strs){
+    if (x != ""){
+      if (!empty){
+        ss << "__";
+      }
+      ss << x;
+      empty = false;
+    }
+  }
+}
+
+std::string Constraints::get_r_str() const{
+  str_array strs;
+  for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C})
+  {
+    strs[emat] = sub[emat].get_r_str();
+  }
+  return get_combo_str(strs);
+}
+
+std::string Constraints::get_sr_str() const{
+  str_array strs;
+  for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C})
+  {
+    strs[emat] = sub[emat].get_sr_str();
+  }
+  return get_combo_str(strs);
+}
+
+
 
 void SuHy::replace_where_defined(const Constraint& constraint)
 {
@@ -420,6 +520,8 @@ std::string Constraint::get_r_str() const { return get_str(emat, range); }
 
 std::string Constraint::get_sr_str() const { return get_str(emat, start_range); }
 
+  
+  
 std::string SuHy::get_string() const { return get_str(emat, vs); }
 
 Constraint::Constraint(Mat::E e)
@@ -548,10 +650,14 @@ std::vector<size_t> get_hy_v(std::string hy_s, bool hy_s_full, Mat::E emat)
 const std::map<size_t, std::vector<size_t>> g_binary = {{Binary::E::NO, {Binary::E::YES}},
                                                         {Binary::E::YES, {Binary::E::NO}}};
 
-Graph::Graph(const Geometry& gg, const oclutil::DevInfo& devinfo, const Constraints& cs)
+Graph::Graph(const Geometry& gg, const oclutil::DevInfo& di, const Constraints& cs, owrite::Writer& mowri_)
   : asubg(gg, cs.sub[Mat::E::A], devinfo),
     bsubg(gg, cs.sub[Mat::E::B], devinfo),
-    csubg(gg, cs.sub[Mat::E::C], devinfo)
+    csubg(gg, cs.sub[Mat::E::C], devinfo),
+    geometry(gg),
+    devinfo(di),
+    constraints(cs),
+    mowri(mowri_)
 {
   asubg.initialise();
   bsubg.initialise();
@@ -564,7 +670,7 @@ Graph::Graph(const Geometry& gg, const oclutil::DevInfo& devinfo, const Constrai
   p_coupled.push_back({{Mat::E::C, NonChi::E::UNR}, {Mat::E::C, NonChi::E::ICE}});
 }
 
-bool Graph::contains(Mat::E emat, size_t hpi, size_t value)
+bool Graph::contains(Mat::E emat, size_t hpi, size_t value)  const
 {
   if (emat >= Mat::E::N)
   {
@@ -581,7 +687,7 @@ void HyPas::replace_where_defined(const Constraints& constraints)
   }
 }
 
-bool Graph::contains(const HyPas& hp)
+bool Graph::contains(const HyPas& hp)  const
 {
   for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C})
   {
