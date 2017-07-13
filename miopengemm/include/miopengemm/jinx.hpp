@@ -83,8 +83,10 @@ class Jinx
   GpuMms                 gpum;
   
   const oclutil::DevInfo devinfo;
-  std::string            constraints_string;
-  Graph                  graph;
+  
+  //std::string            constraints_string;
+  //Graph                  graph;
+  
   owrite::Writer&        mowri;
   // special purpose output writer
   // vector of times over a set of runs on core loop

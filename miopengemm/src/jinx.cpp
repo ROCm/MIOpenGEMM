@@ -83,8 +83,8 @@ cl_mem& GpuMms::operator[](Mem::E x)
       
       gpum(a_gpu_, b_gpu_, c_gpu_, c_is_const, workspace_gpu_, get_mat_memsize(gg, toff, Mem::E::C), command_queue_),
       devinfo(command_queue_),
-      constraints_string(constraints_string_),
-      graph(gg, devinfo, constraints_string_),// full_constraints_expected),
+      //constraints_string(constraints_string_),
+      //graph(gg, devinfo, constraints_string_),// full_constraints_expected),
       mowri(mowri_)
   {
         
@@ -684,7 +684,7 @@ cl_mem& GpuMms::operator[](Mem::E x)
     total_elapsed_seconds              = fp_ms.count();
   }
 
-  Solution Jinx::find(const FindParams& find_params)
+  Solution Jinx::find(const Constraints & constraints, const FindParams& find_params)
   {
 
     /* TODO : use sumstat */
@@ -696,7 +696,10 @@ cl_mem& GpuMms::operator[](Mem::E x)
       std::string k_comment("");
       mowri << "in find with allotted time = " << allotted_time
             << " and allotted_descents = " << allotted_descents << ", returning default" << Endl;
-      return get_default(command_queue, constraints_string, gg, k_comment, mowri);
+      
+      // TODO
+      throw miog_error("get_default not here yet");
+      //return get_default(command_queue, constraints_string, gg, k_comment, mowri);
     }
 
     find_start = std::chrono::high_resolution_clock::now();

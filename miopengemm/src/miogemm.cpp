@@ -6,6 +6,10 @@
 #include <iomanip>
 #include <limits>
 #include <map>
+#include <sstream>
+#include <thread>
+#include <tuple>
+#include <vector>
 #include <miopengemm/architests.hpp>
 #include <miopengemm/bundle.hpp>
 #include <miopengemm/derivedparams.hpp>
@@ -19,17 +23,10 @@
 #include <miopengemm/outputwriter.hpp>
 #include <miopengemm/solution.hpp>
 #include <miopengemm/stringutilbase.hpp>
-#include <sstream>
-#include <thread>
-#include <tuple>
-#include <vector>
 #include <miopengemm/jinx.hpp>
 
 namespace MIOpenGEMM
 {
-
-
-
 
 cl_mem get_single(cl_command_queue command_queue, const std::string& hash)
 {
