@@ -37,8 +37,8 @@ class AlphaGenerator : public basegen::BaseGenerator
   {
 
     /* TODO enum the WOS */ 
-    uses_a = (hp.at(Mat::E::A).vs[Chi::E::WOS] == Scratch::E::UNUSED) ? true : false; 
-    uses_b = (hp.at(Mat::E::B).vs[Chi::E::WOS] == Scratch::E::UNUSED) ? true : false;
+    uses_a = (hp.sus[Mat::E::A].vs[Chi::E::WOS] == Scratch::E::UNUSED) ? true : false; 
+    uses_b = (hp.sus[Mat::E::B].vs[Chi::E::WOS] == Scratch::E::UNUSED) ? true : false;
     uses_c = true;
     uses_workspace = (not uses_a or not uses_b);
     uses_alpha = true;
@@ -46,7 +46,7 @@ class AlphaGenerator : public basegen::BaseGenerator
   }
 
   public:
-  AlphaGenerator(const HyperParams&     hp_,
+  AlphaGenerator(const HyPas&     hp_,
                  const Geometry&                     gg_,
                  const DerivedParams& dp_)
     : basegen::BaseGenerator(hp_, gg_, dp_)
@@ -56,7 +56,7 @@ class AlphaGenerator : public basegen::BaseGenerator
   private:
   void append_group_allocation_string(std::stringstream& ss)
   {
-    if (hp.at(Mat::E::C).vs[NonChi::E::GAL] == GroupAllocation::E::BYCOL)
+    if (hp.sus[Mat::E::C].vs[NonChi::E::GAL] == GroupAllocation::E::BYCOL)
     {
       ss <<
         R"(
@@ -66,7 +66,7 @@ const TINTB group_id_b = group_id_xy / N_GROUPS_A;
 )";
     }
 
-    else if (hp.at(Mat::E::C).vs[NonChi::E::GAL] == GroupAllocation::E::BYROW)
+    else if (hp.sus[Mat::E::C].vs[NonChi::E::GAL] == GroupAllocation::E::BYROW)
     {
       ss <<
         R"(
@@ -76,7 +76,7 @@ TINTA group_id_a = group_id_xy / N_GROUPS_B;
 )";
     }
 
-    else if (hp.at(Mat::E::C).vs[NonChi::E::GAL] == GroupAllocation::E::SUCOL)
+    else if (hp.sus[Mat::E::C].vs[NonChi::E::GAL] == GroupAllocation::E::SUCOL)
     {
       ss <<
         R"(
@@ -140,7 +140,7 @@ group_id_a = (group_id_xy  - (N_GROUPS_B - LAST_SUPER_COLUMN_WIDTH)*N_GROUPS_A) 
     else
     {
       std::stringstream err_ss;
-      err_ss << "Invalid group_allocation parameter : " << hp.at(Mat::E::C).vs[NonChi::E::GAL]
+      err_ss << "Invalid group_allocation parameter : " << hp.sus[Mat::E::C].vs[NonChi::E::GAL]
              << ". It should be one of 1/2/3.";
       throw miog_error(err_ss.str());
     }
@@ -149,7 +149,7 @@ group_id_a = (group_id_xy  - (N_GROUPS_B - LAST_SUPER_COLUMN_WIDTH)*N_GROUPS_A) 
   void append_super_column_width_defn(std::stringstream& ss)
   {
 
-    if (hp.at(Mat::E::C).vs[NonChi::E::GAL] == 3)
+    if (hp.sus[Mat::E::C].vs[NonChi::E::GAL] == 3)
     {
 
       ss << "\n\n"
@@ -196,11 +196,11 @@ TFLOAT previous_value; )"
 
     char X = Mat::M.name[emat_x];
     
-    std::string bound_string = hp.at(emat_x).vs[Chi::E::LIW] == 0
+    std::string bound_string = hp.sus[emat_x].vs[Chi::E::LIW] == 0
                                  ? std::string("MICRO_") + X + "_TILE_PERP_UNROLL"
                                  : std::string("MACRO_TILE_LENGTH_") + X;
     std::string increment_string =
-      hp.at(emat_x).vs[Chi::E::LIW] == 0
+      hp.sus[emat_x].vs[Chi::E::LIW] == 0
         ? "++mu_perp_i"
         : std::string("mu_perp_i += MACRO_TILE_LENGTH_") + X + "/MICRO_" + X + "_TILE_PERP_UNROLL";
     append_loop_var_bound_incr(ss, "mu_perp_i", bound_string, increment_string, emat_x);
@@ -211,9 +211,9 @@ TFLOAT previous_value; )"
 
 
     std::string bound_string =
-      hp.at(emat_x).vs[Chi::E::LIW] == 0 ? std::string("MICRO_") + Mat::M.name[emat_x] + "_TILE_PLL_UNROLL" : "UNROLL";
+      hp.sus[emat_x].vs[Chi::E::LIW] == 0 ? std::string("MICRO_") + Mat::M.name[emat_x] + "_TILE_PLL_UNROLL" : "UNROLL";
     std::string increment_string =
-      hp.at(emat_x).vs[Chi::E::LIW] == 0 ? "++mu_pll_i" : std::string("mu_pll_i += UNROLL/MICRO_") +
+      hp.sus[emat_x].vs[Chi::E::LIW] == 0 ? "++mu_pll_i" : std::string("mu_pll_i += UNROLL/MICRO_") +
                                                           Mat::M.name[emat_x] + "_TILE_PLL_UNROLL";
     append_loop_var_bound_incr(ss, "mu_pll_i", bound_string, increment_string, emat_x);
   }
@@ -262,16 +262,16 @@ TFLOAT previous_value; )"
     append_loop_var_bound_incr(
       ss,
       "row",
-      hp.at(Mat::E::A).vs[Chi::E::MIW] == 0 ? "MICRO_TILE_LENGTH_A" : "MACRO_TILE_LENGTH_A",
-      hp.at(Mat::E::A).vs[Chi::E::MIW] == 0 ? "++row" : "row += N_MICRO_IN_MACRO_A", Mat::E::A);
+      hp.sus[Mat::E::A].vs[Chi::E::MIW] == 0 ? "MICRO_TILE_LENGTH_A" : "MACRO_TILE_LENGTH_A",
+      hp.sus[Mat::E::A].vs[Chi::E::MIW] == 0 ? "++row" : "row += N_MICRO_IN_MACRO_A", Mat::E::A);
     ss << " {\n";
 
     ss << dp.pragma_unroll_string;
     append_loop_var_bound_incr(
       ss,
       "col",
-      hp.at(Mat::E::B).vs[Chi::E::MIW] == 0 ? "MICRO_TILE_LENGTH_B" : "MACRO_TILE_LENGTH_B",
-      hp.at(Mat::E::B).vs[Chi::E::MIW] == 0 ? "++col" : "col += N_MICRO_IN_MACRO_B", Mat::E::B);
+      hp.sus[Mat::E::B].vs[Chi::E::MIW] == 0 ? "MICRO_TILE_LENGTH_B" : "MACRO_TILE_LENGTH_B",
+      hp.sus[Mat::E::B].vs[Chi::E::MIW] == 0 ? "++col" : "col += N_MICRO_IN_MACRO_B", Mat::E::B);
     ss << " {\n";
   }
 
@@ -427,7 +427,7 @@ barrier(CLK_LOCAL_MEM_FENCE); )";
   std::string get_c_work_item_next(Mat::E emat_x)
   {
 
-    return (hp.at(emat_x).vs[Chi::E::MIW] != 0) ? "1" : (std::string("MICRO_TILE_LENGTH_") + Mat::M.name[emat_x]);
+    return (hp.sus[emat_x].vs[Chi::E::MIW] != 0) ? "1" : (std::string("MICRO_TILE_LENGTH_") + Mat::M.name[emat_x]);
   }
 
   // We previously had a variable unroll_the_math_section = False.
@@ -504,7 +504,7 @@ if (group_id_z == n_work_groups_with_1_more && k_remaining > 0){
 
   void append_first_unroll_block(std::stringstream& ss)
   {
-    if (hp.at(Mat::E::C).vs[NonChi::E::UFO] != 0)
+    if (hp.sus[Mat::E::C].vs[NonChi::E::UFO] != 0)
     {
       ss << "\n\n/* This is where the first unroll will be performed. "
             "Identical to what is in the "
@@ -545,15 +545,15 @@ if (group_id_z == n_work_groups_with_1_more && k_remaining > 0){
 
   void append_group_allocation_defn_string(std::stringstream& ss)
   {
-    ss << "#define GROUP_ALLOCATION " << hp.at(Mat::E::C).vs[NonChi::E::GAL] << '\n';
-    if (hp.at(Mat::E::C).vs[NonChi::E::GAL] == 3)
+    ss << "#define GROUP_ALLOCATION " << hp.sus[Mat::E::C].vs[NonChi::E::GAL] << '\n';
+    if (hp.sus[Mat::E::C].vs[NonChi::E::GAL] == 3)
     {
       ss << "/* this variable is declared because we have GROUP_ALLOCATION "
             "type 3. */\n";
       ss << "/* It should define how many workgroups we expect to have active "
             "simulantaneuosly. "
             "*/\n";
-      ss << "#define N_TARGET_ACTIVE_WORKGROUPS " << hp.at(Mat::E::C).vs[NonChi::E::NAW] << '\n';
+      ss << "#define N_TARGET_ACTIVE_WORKGROUPS " << hp.sus[Mat::E::C].vs[NonChi::E::NAW] << '\n';
     }
   }
 
@@ -626,7 +626,7 @@ if (group_id_z == n_work_groups_with_1_more && k_remaining > 0){
         R"(/* the cumulative unroll. */
 /* For the (standard) case of N_WORK_ITEMS_PER_C_ELM = 1, G_UNROLL would just be UNROLL*/
 #define G_UNROLL )"
-         << hp.at(Mat::E::C).vs[NonChi::E::ICE] * hp.at(Mat::E::C).vs[NonChi::E::UNR]
+         << hp.sus[Mat::E::C].vs[NonChi::E::ICE] * hp.sus[Mat::E::C].vs[NonChi::E::UNR]
          << " // N_WORK_ITEMS_PER_C_ELM*UNROLL";
     }
   }
@@ -710,7 +710,7 @@ const TSHORT micro_id_b = local_id / N_MICRO_IN_MACRO_A;
 
     append_group_allocation_string(ss);
 
-    if (hp.at(Mat::E::C).vs[NonChi::E::UFO] != 0)
+    if (hp.sus[Mat::E::C].vs[NonChi::E::UFO] != 0)
     {
       ss <<
         R"(
@@ -759,7 +759,7 @@ TINTK k_plus_offset = __K__ + unroll_offset;
 
     ss << "\n\n\n";
 
-    if (hp.at(emat_x).vs[Chi::E::WOS] == Scratch::E::COPY || hp.at(emat_x).vs[Chi::E::WOS] == Scratch::E::NFORM)
+    if (hp.sus[emat_x].vs[Chi::E::WOS] == Scratch::E::COPY || hp.sus[emat_x].vs[Chi::E::WOS] == Scratch::E::NFORM)
     {
       if (emat_x == Mat::E::A)
         ss << "/* from workspace */\n";
@@ -786,7 +786,7 @@ TINTK k_plus_offset = __K__ + unroll_offset;
             "seem to make much difference) */\n";
     ss << "TINT" << X << " read_macro_tile_start_" << x << " = group_id_" << x << "*MACRO_TILE_LENGTH_"
        << X << "; \n";
-    if (dp.main_use_edge_trick != 0 && hp.at(emat_x).vs[Chi::E::WOS] != Scratch::E::NFORM)
+    if (dp.main_use_edge_trick != 0 && hp.sus[emat_x].vs[Chi::E::WOS] != Scratch::E::NFORM)
     {
       if (emat_x == Mat::E::A)
         ss << "/* tile on edge and A is not normal form: pulling in read zone "
@@ -810,7 +810,7 @@ TINTK k_plus_offset = __K__ + unroll_offset;
       ss << x << " += UNROLL*group_id_z*STRIDE_PLL_K_" << X << ";\n";
     }
 
-    if (hp.at(Mat::E::C).vs[NonChi::E::UFO] != 0)
+    if (hp.sus[Mat::E::C].vs[NonChi::E::UFO] != 0)
     {
       if (emat_x == Mat::E::A)
         ss << "/* UFO != 0, so offsetting the unroll */\n";
@@ -819,7 +819,7 @@ TINTK k_plus_offset = __K__ + unroll_offset;
 
     std::string str_n_pll("");
     std::string str_n_perp("");
-    if (hp.at(emat_x).vs[Chi::E::LIW] == 0)
+    if (hp.sus[emat_x].vs[Chi::E::LIW] == 0)
     {
       str_n_pll  = std::string("MICRO_") + X + "_TILE_PLL_UNROLL *";
       str_n_perp = std::string("MICRO_") + X + "_TILE_PERP_UNROLL *";
@@ -864,21 +864,21 @@ TINTK k_plus_offset = __K__ + unroll_offset;
     bool with_x_in_name = true;
     append_unroll_block_geometry(emat_x, ss, withcomments, with_x_in_name);
 
-    append_stride_definitions(emat_x, ss, hp.at(emat_x).vs[Chi::E::WOS], withcomments, "", with_x_in_name);
+    append_stride_definitions(emat_x, ss, hp.sus[emat_x].vs[Chi::E::WOS], withcomments, "", with_x_in_name);
 
     if (emat_x == Mat::E::A)
       ss << "/* micro tiles define the pattern of C that individual threads "
             "process */\n";
-    ss << "#define MICRO_TILE_LENGTH_" << x << " " << hp.at(emat_x).vs[Chi::E::MIC] << '\n';
+    ss << "#define MICRO_TILE_LENGTH_" << x << " " << hp.sus[emat_x].vs[Chi::E::MIC] << '\n';
 
     if (emat_x == Mat::E::A)
       ss << "/* the amount of padding of " << x
          << " in LDS (local) memory, to avoid bank comflicts */\n";
-    ss << "#define PAD_LDS_" << x << "  " << hp.at(emat_x).vs[Chi::E::PAD] << '\n';
+    ss << "#define PAD_LDS_" << x << "  " << hp.sus[emat_x].vs[Chi::E::PAD] << '\n';
     if (emat_x == Mat::E::A)
       ss << "/* whether loading of " << x << " from global should try to be long in direction of "
                                              "unroll (1) or perpendicular to it (0) */\n";
-    ss << "#define WORK_ITEM_LOAD_" << x << "_PLL_TO_UNROLL " << hp.at(emat_x).vs[Chi::E::PLU]
+    ss << "#define WORK_ITEM_LOAD_" << x << "_PLL_TO_UNROLL " << hp.sus[emat_x].vs[Chi::E::PLU]
        << '\n';
     defcom("MACRO_TILE_LENGTH_A + PAD_LDS_A");
     ss << "#define MACRO_TILE_LENGTH_" << x << "_AND_PAD "
@@ -907,13 +907,13 @@ TINTK k_plus_offset = __K__ + unroll_offset;
       ss << "/* Whether the load tiles are interwoven (ala Cobalt, (1)) or if "
             "the load tiles are "
             "truly contiguous tiles (0) */\n";
-    ss << "#define LOAD_TO_LDS_INTERWOVEN_" << x << " " << hp.at(emat_x).vs[Chi::E::LIW] << '\n';
+    ss << "#define LOAD_TO_LDS_INTERWOVEN_" << x << " " << hp.sus[emat_x].vs[Chi::E::LIW] << '\n';
     if (emat_x == Mat::E::A)
       ss << "/* Whether micro tile being processed by a compute item is "
             "interwoven with other "
             "micro tiles (ala Cobalt, (1)) or if the micro tiles are "
             "contiguous in C */\n";
-    ss << "#define C_MICRO_TILES_INTERWOVEN_" << x << " " << hp.at(emat_x).vs[Chi::E::MIW] << '\n';
+    ss << "#define C_MICRO_TILES_INTERWOVEN_" << x << " " << hp.sus[emat_x].vs[Chi::E::MIW] << '\n';
 
     if (emat_x == Mat::E::A)
       ss << "/* depending on whether loads to c are interwoven, set as MIW == "
@@ -923,7 +923,7 @@ TINTK k_plus_offset = __K__ + unroll_offset;
        << '\n';
 
 
-    if (hp.at(emat_x).vs[Chi::E::WOS] != Scratch::E::UNUSED)
+    if (hp.sus[emat_x].vs[Chi::E::WOS] != Scratch::E::UNUSED)
     {
       if (emat_x == Mat::E::A)
         ss << "/* global memory offset, depends on type of copy of both a,b "
@@ -985,12 +985,12 @@ TINTK k_plus_offset = __K__ + unroll_offset;
     ss << "/* in the same way as the final unroll populates LDS with zeros in "
           "k mod UNROLL != 0, "
           "the initial negative indices here populate with 0 */\n";
-    ss << "#define UNROLL_FOR_OFFSET " << hp.at(Mat::E::C).vs[NonChi::E::UFO] << '\n';
+    ss << "#define UNROLL_FOR_OFFSET " << hp.sus[Mat::E::C].vs[NonChi::E::UFO] << '\n';
 
     ss << "/* How much a workgroup loads (global -> LDS) in the k-direction at "
           "each iteration of "
           "the outer-most loop */\n";
-    ss << "#define UNROLL " << hp.at(Mat::E::C).vs[NonChi::E::UNR] << '\n';
+    ss << "#define UNROLL " << hp.sus[Mat::E::C].vs[NonChi::E::UNR] << '\n';
     ss << "/* whether or not this kernel uses the edge trick (SC17 submission) "
           "*/\n";
     ss << "/* this precompiler defn has no direct influence on the running the "
@@ -1004,7 +1004,7 @@ TINTK k_plus_offset = __K__ + unroll_offset;
           "~ k / "
           "N_WORK_ITEMS_PER_C_ELM of the multiply adds, to be atomically added "
           "at the end */ \n";
-    ss << "#define N_WORK_ITEMS_PER_C_ELM " << hp.at(Mat::E::C).vs[NonChi::E::ICE] << '\n';
+    ss << "#define N_WORK_ITEMS_PER_C_ELM " << hp.sus[Mat::E::C].vs[NonChi::E::ICE] << '\n';
 
     ss << R"(/* define the way in which work groups are assigned to tiles */
 /* 1 : column-by-column
@@ -1020,7 +1020,7 @@ TINTK k_plus_offset = __K__ + unroll_offset;
     ss << "/* Included here for user, in practice it has no direct effect on "
           "this kernel, as the "
           "relevent implementation has been done in make_kernel.py */\n";
-    ss << "#define PRAGMA_UNROLL_FORLOOPS " << hp.at(Mat::E::C).vs[NonChi::E::PUN] << '\n';
+    ss << "#define PRAGMA_UNROLL_FORLOOPS " << hp.sus[Mat::E::C].vs[NonChi::E::PUN] << '\n';
     ss << "/* (deprecated parameter, as of 17 Nov 2016, see git log) How many "
           "steps ahead are we "
           "reading into registers, as compared to doing the math. */\n";
@@ -1120,7 +1120,7 @@ virtual void setup_final() override final{
 
 
 
-KernelString get_alpha_kernelstring(const HyperParams&     hp,
+KernelString get_alpha_kernelstring(const HyPas&     hp,
                                     const Geometry&                     gg,
                                     const DerivedParams& dp)
 {

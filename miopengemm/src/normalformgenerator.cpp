@@ -16,7 +16,7 @@ class NormalFormGenerator : public prepgen::PrepGenerator
 
   public:
   NormalFormGenerator(Mat::E emat_x_, 
-                      const HyperParams&     hp_,
+                      const HyPas&     hp_,
                       const Geometry&                     gg_,
                       const DerivedParams& dp_)
     : prepgen::PrepGenerator(emat_x_, hp_, gg_, dp_)
@@ -48,7 +48,7 @@ class NormalFormGenerator : public prepgen::PrepGenerator
     ss << "#define TFLOAT " << dp.t_float << '\n'
        << "#define "
        << "N_WORK_ITEMS_PER_GROUP " << dp.at(emat_x).cw2_local_work_size << '\n'
-       << "#define UNROLL " << hp.at(Mat::E::C).vs[NonChi::E::UNR] << '\n'
+       << "#define UNROLL " << hp.sus[Mat::E::C].vs[NonChi::E::UNR] << '\n'
        << "#define __K__ " << gg.k << '\n';
 
     append_unroll_block_geometry(emat_x, ss, false, false);
@@ -74,9 +74,9 @@ class NormalFormGenerator : public prepgen::PrepGenerator
        << "\n#define GLOBAL_WORKSPACE_OFFSET " << dp.at(emat_x).cw_global_offset << '\n'
        << "\n#define PRESHIFT_FINAL_TILE " << dp.at(emat_x).preshift_final_tile << '\n';
 
-    size_t final_unroll_depth = gg.k % hp.at(Mat::E::C).vs[NonChi::E::UNR];
+    size_t final_unroll_depth = gg.k % hp.sus[Mat::E::C].vs[NonChi::E::UNR];
     final_unroll_depth =
-      (final_unroll_depth == 0 ? hp.at(Mat::E::C).vs[NonChi::E::UNR] : final_unroll_depth);
+      (final_unroll_depth == 0 ? hp.sus[Mat::E::C].vs[NonChi::E::UNR] : final_unroll_depth);
 
     ss << "\n#define FINAL_UNROLL_DEPTH " << final_unroll_depth << "\n\n\n"
        << "__attribute__((reqd_work_group_size(N_WORK_ITEMS_PER_GROUP,1,1)))" << '\n'
@@ -169,7 +169,7 @@ for (size_t mu_perp_i = 0; mu_perp_i < MICRO_TILE_PERP_UNROLL; ++mu_perp_i) {
 
 
 KernelString get_nform_kernelstring(Mat::E emat_x, 
-const HyperParams&     hp,
+const HyPas&     hp,
                                     const Geometry&                     gg,
                                     const DerivedParams& dp)
 {
@@ -190,7 +190,7 @@ const HyperParams&     hp,
   //std::string nform_string = emat_x == Mat::E::A ? "nforma" : "nformb";  
   
   
-//KernelString get_nformb_kernelstring(const HyperParams&     hp,
+//KernelString get_nformb_kernelstring(const HyPas&     hp,
                                      //const Geometry&                     gg,
                                      //const DerivedParams& dp)
 //{

@@ -6,7 +6,7 @@
 
 #include <miopengemm/derivedparams.hpp>
 #include <miopengemm/geometry.hpp>
-#include <miopengemm/hyperparams.hpp>
+#include <miopengemm/graph.hpp>
 #include <miopengemm/stringutilbase.hpp>
 #include <miopengemm/kernelstring.hpp>
 
@@ -18,7 +18,7 @@ class BaseGenerator
 {
 
   protected:
-  const HyperParams&     hp;
+  const HyPas&     hp;
   const Geometry&                     gg;
   const DerivedParams& dp;
 
@@ -74,7 +74,7 @@ class BaseGenerator
   // TODO : set type and kernelname. (type_), kernelname("tg_" + type_)
   virtual KernelString get_kernelstring() = 0;
 
-  BaseGenerator(const HyperParams&     hp_,
+  BaseGenerator(const HyPas&     hp_,
                 const Geometry&                     gg_,
                 const DerivedParams& dp_);
 

@@ -26,7 +26,7 @@ namespace MIOpenGEMM
 namespace kerngen
 {
 
-Bundle get_bundle(const HyperParams& hp,
+Bundle get_bundle(const HyPas& hp,
                   const Geometry&                 gg,
                   owrite::Writer&    mowri,
                   bool                            bundle_verbose)
@@ -40,17 +40,17 @@ Bundle get_bundle(const HyperParams& hp,
 
   for (auto emat_x : {Mat::E::A, Mat::E::B}){
 
-    if (hp.at(emat_x).vs[Chi::E::WOS] == Scratch::E::UNUSED)
+    if (hp.sus[emat_x].vs[Chi::E::WOS] == Scratch::E::UNUSED)
     {
       // no workspace kernel
     }
   
-    else if (hp.at(emat_x).vs[Chi::E::WOS] == Scratch::E::COPY)
+    else if (hp.sus[emat_x].vs[Chi::E::WOS] == Scratch::E::COPY)
     {
       v_tgks.emplace_back(copygen::get_copy_kernelstring(emat_x, hp, gg, dp));
     }
   
-    else if (hp.at(emat_x).vs[Chi::E::WOS] == Scratch::E::NFORM)
+    else if (hp.sus[emat_x].vs[Chi::E::WOS] == Scratch::E::NFORM)
     {
       v_tgks.emplace_back(nformgen::get_nform_kernelstring(emat_x, hp, gg, dp));
     }
@@ -58,7 +58,7 @@ Bundle get_bundle(const HyperParams& hp,
     else
     {
       std::stringstream errm;
-      errm << "hp.at(emat_x).vs[Chi::E::WOS] should be 0, 1 or 2"
+      errm << "hp.sus[emat_x].vs[Chi::E::WOS] should be 0, 1 or 2"
       << "(Scratch::E::UNUSED , Scratch::E::COPY or Scratch::E::NFORM)";
       throw miog_error(errm.str());
     }

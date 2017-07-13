@@ -84,7 +84,7 @@ cl_mem& GpuMms::operator[](Mem::E x)
       gpum(a_gpu_, b_gpu_, c_gpu_, c_is_const, workspace_gpu_, get_mat_memsize(gg, toff, Mem::E::C), command_queue_),
       devinfo(command_queue_),
       constraints_string(constraints_string_),
-      graph(gg, devinfo, constraints_string_, full_constraints_expected),
+      graph(gg, devinfo, constraints_string_),// full_constraints_expected),
       mowri(mowri_)
   {
         
@@ -197,7 +197,7 @@ cl_mem& GpuMms::operator[](Mem::E x)
   }
 
   bool Jinx::refresh_needed(BasicKernelType::E                                 type,
-                      const HyperParams&     new_hp,
+                      const HyPas&     new_hp,
                       const DerivedParams& new_dp)
   {
 
@@ -222,7 +222,7 @@ cl_mem& GpuMms::operator[](Mem::E x)
 
     else if (type == BasicKernelType::E::WSA)
     {
-      if (tk_kernels.at(BasicKernelType::E::WSA).is_set() == false && new_hp.at(Mat::E::A).vs[Chi::E::WOS] != Scratch::E::UNUSED)
+      if (tk_kernels.at(BasicKernelType::E::WSA).is_set() == false && new_hp.sus[Mat::E::A].vs[Chi::E::WOS] != Scratch::E::UNUSED)
       {
         return true;
       }
@@ -235,7 +235,7 @@ cl_mem& GpuMms::operator[](Mem::E x)
 
     else if (type == BasicKernelType::E::WSB)
     {
-      if (tk_kernels.at(BasicKernelType::E::WSB).is_set() == false && new_hp.at(Mat::E::B).vs[Chi::E::WOS] != Scratch::E::UNUSED)
+      if (tk_kernels.at(BasicKernelType::E::WSB).is_set() == false && new_hp.sus[Mat::E::B].vs[Chi::E::WOS] != Scratch::E::UNUSED)
       {
         return true;
       }
@@ -252,7 +252,7 @@ cl_mem& GpuMms::operator[](Mem::E x)
   }
 
   oclutil::Result Jinx::refresh_kernel(const KernelString&                 ks,
-                                          const HyperParams&     hp,
+                                          const HyPas&     hp,
                                           const DerivedParams& dp)
   {
 
@@ -275,7 +275,7 @@ cl_mem& GpuMms::operator[](Mem::E x)
     return oclr;
   }
 
-  oclutil::Result Jinx::setup_tinykernels(const HyperParams& hp,
+  oclutil::Result Jinx::setup_tinykernels(const HyPas& hp,
                                              const kerngen::Bundle&          bundle)
   {
 
@@ -544,7 +544,7 @@ cl_mem& GpuMms::operator[](Mem::E x)
     return {};
   }
 
-  void Jinx::deriveability_test(const HyperParams& hp, const std::string& hash)
+  void Jinx::deriveability_test(const HyPas& hp, const std::string& hash)
   {
     auto deriveability = get_deriveability(hp, gg);
     if (std::get<0>(deriveability) == false)
@@ -556,7 +556,7 @@ cl_mem& GpuMms::operator[](Mem::E x)
   }
 
 
-  void Jinx::benchgemm(size_t max_n_runs, double max_time)
+  void Jinx::benchgemm(const HyPas & hp, size_t max_n_runs, double max_time)
   {
     
     std::cout << "in benchgemm with max_nruns = " << max_n_runs << " and max_time = " << max_time <<std::endl;
@@ -568,7 +568,7 @@ cl_mem& GpuMms::operator[](Mem::E x)
       throw miog_error("max_n_runs to benchgemm should be a positive integer");
     }
 
-    HyperParams hp(graph);
+    //HyPas hp(graph);
     deriveability_test(hp, "in benchgemm");
 
     auto bundle = kerngen::get_bundle(hp, gg, mowri, bundle_verbose);
@@ -595,84 +595,86 @@ cl_mem& GpuMms::operator[](Mem::E x)
     }
   }
 
-  HyperParams Jinx::get_hyper_param_start()
+  HyPas Jinx::get_hyper_param_start()
   {
+    
+    throw miog_error("get_hyper_param_start not impled");
 
-    HyperParams hyper_param_start(graph);
-    hyper_param_start.checks();
+    //HyPas hyper_param_start();//graph);
+    //hyper_param_start.checks();
 
-    bool              found_a_deriveable_goodarchi_hp = false;
-    size_t          d_and_g_search_iteration        = 0;
-    std::stringstream d_and_g_ss;
+    //bool              found_a_deriveable_goodarchi_hp = false;
+    //size_t          d_and_g_search_iteration        = 0;
+    //std::stringstream d_and_g_ss;
 
-    // the number of attempts at finding a
-    // deriveable HyperParams given the
-    // constraint string
-    const size_t n_trials = 100000;
+    //// the number of attempts at finding a
+    //// deriveable HyPas given the
+    //// constraint string
+    //const size_t n_trials = 100000;
 
-    while (found_a_deriveable_goodarchi_hp == false && d_and_g_search_iteration < n_trials)
-    {
-      hyper_param_start = HyperParams(graph);
-      hyper_param_start.checks();
-      auto deriveability = get_deriveability(hyper_param_start, gg);
-      if (std::get<0>(deriveability) == false)
-      {
-        d_and_g_ss << hyper_param_start.get_string()
-                   << " is not deriveable, because : " << std::get<1>(deriveability) << "\n\n";
-      }
+    //while (found_a_deriveable_goodarchi_hp == false && d_and_g_search_iteration < n_trials)
+    //{
+      //hyper_param_start = HyPas(graph);
+      //hyper_param_start.checks();
+      //auto deriveability = get_deriveability(hyper_param_start, gg);
+      //if (std::get<0>(deriveability) == false)
+      //{
+        //d_and_g_ss << hyper_param_start.get_string()
+                   //<< " is not deriveable, because : " << std::get<1>(deriveability) << "\n\n";
+      //}
 
-      else
-      {
-        auto dp = DerivedParams(hyper_param_start, gg);
-        auto atr =
-          architests::architecture_specific_tests(command_queue, dp, gg, hyper_param_start);
-        if (std::get<0>(atr) == false)
-        {
-          d_and_g_ss << hyper_param_start.get_string()
-                     << "failed archotests because : " << std::get<1>(atr);
-        }
-        else
-        {
-          found_a_deriveable_goodarchi_hp = true;
-        }
-      }
-      ++d_and_g_search_iteration;
-    }
+      //else
+      //{
+        //auto dp = DerivedParams(hyper_param_start, gg);
+        //auto atr =
+          //architests::architecture_specific_tests(command_queue, dp, gg, hyper_param_start);
+        //if (std::get<0>(atr) == false)
+        //{
+          //d_and_g_ss << hyper_param_start.get_string()
+                     //<< "failed archotests because : " << std::get<1>(atr);
+        //}
+        //else
+        //{
+          //found_a_deriveable_goodarchi_hp = true;
+        //}
+      //}
+      //++d_and_g_search_iteration;
+    //}
 
-    mowri << "n trials looking for a viable starting node in the graph : "
-          << d_and_g_search_iteration << Endl;
+    //mowri << "n trials looking for a viable starting node in the graph : "
+          //<< d_and_g_search_iteration << Endl;
 
-    // force the graph starting parameters
-    if (found_a_deriveable_goodarchi_hp == false)
-    {
-      std::stringstream base_ss;
-      base_ss << "\n\nStruggling to find a deriveable set of hyper parameters "
-                 "which satisfy the "
-                 "geometry and constraints. ";
-      base_ss << "The number of attempts made is " << n_trials
-              << ".  To view the full output of the hyper parameters tried and "
-                 "their reasons for "
-                 "not being derivable, modify the code here (add "
-                 "d_and_g_ss.str()). Attempting to "
-                 "obtain hyper parameters using get_generic_solution. \n";
-      mowri << base_ss.str() << "\n\n";
+    //// force the graph starting parameters
+    //if (found_a_deriveable_goodarchi_hp == false)
+    //{
+      //std::stringstream base_ss;
+      //base_ss << "\n\nStruggling to find a deriveable set of hyper parameters "
+                 //"which satisfy the "
+                 //"geometry and constraints. ";
+      //base_ss << "The number of attempts made is " << n_trials
+              //<< ".  To view the full output of the hyper parameters tried and "
+                 //"their reasons for "
+                 //"not being derivable, modify the code here (add "
+                 //"d_and_g_ss.str()). Attempting to "
+                 //"obtain hyper parameters using get_generic_solution. \n";
+      //mowri << base_ss.str() << "\n\n";
 
-      auto cached_soln = get_generic_cached_solution(graph.constraints_string_in, gg);
-      graph.force_start_node(cached_soln.hyperstring);
-      hyper_param_start = HyperParams(graph);
-      hyper_param_start.checks();
-      auto deriveability = get_deriveability(hyper_param_start, gg);
-      if (std::get<0>(deriveability) == false)
-      {
-        mowri << "NOW, THE FALLBACK SOLUTION IS NOT EVEN DERIVEABLE: "
-              << hyper_param_start.get_string()
-              << " is not deriveable, because : " << std::get<1>(deriveability) << "\n\n";
-        throw miog_error("\nfallback solution failed deriveability test in "
-                         "get_hyper_param_start/\n");
-      }
-    }
+      //auto cached_soln = get_generic_cached_solution(graph.constraints_string_in, gg);
+      //graph.force_start_node(cached_soln.hyperstring);
+      //hyper_param_start = HyPas(graph);
+      //hyper_param_start.checks();
+      //auto deriveability = get_deriveability(hyper_param_start, gg);
+      //if (std::get<0>(deriveability) == false)
+      //{
+        //mowri << "NOW, THE FALLBACK SOLUTION IS NOT EVEN DERIVEABLE: "
+              //<< hyper_param_start.get_string()
+              //<< " is not deriveable, because : " << std::get<1>(deriveability) << "\n\n";
+        //throw miog_error("\nfallback solution failed deriveability test in "
+                         //"get_hyper_param_start/\n");
+      //}
+    //}
 
-    return hyper_param_start;
+    //return hyper_param_start;
   }
 
   void Jinx::update_total_elapsed_seconds()
@@ -770,7 +772,7 @@ cl_mem& GpuMms::operator[](Mem::E x)
     // AND compiled AND benchmarked
     size_t global_counter = 0;
 
-    HyperParams hyper_param_current = get_hyper_param_start(); // fst);
+    HyPas hyper_param_current = get_hyper_param_start(); // fst);
 
     if (allotted_time <= 0)
     {
@@ -779,13 +781,13 @@ cl_mem& GpuMms::operator[](Mem::E x)
     }
 
     // In here, we will store all previously considered
-    // HyperParams strings, used to check and
+    // HyPas strings, used to check and
     // ensure that we do not consider a HyperParam more than once
     std::vector<std::string> hyper_front_history;
 
     best_solns_path.clear();
 
-    std::vector<HyperParams> hyper_front = {hyper_param_current};
+    std::vector<HyPas> hyper_front = {hyper_param_current};
 
     bool improvement_found_on_front = true;
     mowri << "allotted time : " << allotted_time << Endl;
@@ -896,7 +898,9 @@ cl_mem& GpuMms::operator[](Mem::E x)
       {
 
         // getting all `one-away's
-        auto one_aways = hyper_param_current.get_one_aways();
+        
+        //TODO : change name from one_aways
+        auto one_aways = graph.get_neighbors(hyper_param_current);
 
         // refreshing hyper front
         hyper_front.clear();
@@ -906,7 +910,8 @@ cl_mem& GpuMms::operator[](Mem::E x)
 
           auto hp_string = hp.get_string();
 
-          auto in_graph_tuple = hp.in_graph();
+          // TODO : clearly this is not a tuple
+          auto in_graph_tuple = graph.contains(hp);
           
           if (std::count(one_aways.begin(), one_aways.end(), hp) > 1)
           {
@@ -914,19 +919,30 @@ cl_mem& GpuMms::operator[](Mem::E x)
                              "filtered. Could filter out here, but less efficient ");
           }
 
-          else if (std::get<0>(in_graph_tuple) == false)
-          {
+          else if (in_graph_tuple == false){ //std::get<0>(in_graph_tuple) == false)
+          
             std::stringstream errmss;
             errmss << "constraint violators not allowed, should have already been "
                       "filtered. Could "
                       "filter out here, but less efficient. \nThe hyperstring is\n"
                    << hp.get_string();
             errmss << "\nrecall the geometry is\n" << gg.get_string();
-            errmss << "\nthe constraint violations string is:\n" << std::get<1>(in_graph_tuple);
+            errmss << "\nthe constraint violations string is: NOMOREAVAILABEL\n";//  << std::get<1>(in_graph_tuple);
             throw miog_error(errmss.str());
           }
 
           // filtering out if it has already been considered
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          //TODO how to complare?
           else if (std::find(hyper_front_history.begin(), hyper_front_history.end(), hp_string) !=
                    hyper_front_history.end())
           {

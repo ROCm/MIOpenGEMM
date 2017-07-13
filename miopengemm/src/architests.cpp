@@ -13,7 +13,7 @@ namespace architests
 std::tuple<bool, std::string> architecture_specific_tests(cl_command_queue command_queue,
                                                           const DerivedParams& dp,
                                                           const Geometry&                     gg,
-                                                          const HyperParams&     hp)
+                                                          const HyPas&     hp)
 {
   (void)hp;
 

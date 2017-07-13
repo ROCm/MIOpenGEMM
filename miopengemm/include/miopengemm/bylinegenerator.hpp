@@ -31,7 +31,7 @@ class ByLineGenerator : public prepgen::PrepGenerator
 
   public:
   ByLineGenerator(Mat::E emat_x,
-                  const HyperParams&     hp_,
+                  const HyPas&     hp_,
                   const Geometry&                     gg_,
                   const DerivedParams& dp_);
 

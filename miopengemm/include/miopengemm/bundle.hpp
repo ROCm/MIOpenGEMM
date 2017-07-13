@@ -32,7 +32,7 @@ class Bundle
   }
 };
 
-Bundle get_bundle(const HyperParams& hp,
+Bundle get_bundle(const HyPas& hp,
                   const Geometry&                 gg,
                   owrite::Writer&    mowri,
                   bool                            bundle_verbose);

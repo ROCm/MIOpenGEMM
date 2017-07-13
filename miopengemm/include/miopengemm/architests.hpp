@@ -6,7 +6,7 @@
 
 #include <CL/cl.h>
 #include <miopengemm/derivedparams.hpp>
-#include <miopengemm/hyperparams.hpp>
+#include <miopengemm/graph.hpp>
 
 namespace MIOpenGEMM
 {
@@ -16,7 +16,7 @@ namespace architests
 std::tuple<bool, std::string> architecture_specific_tests(cl_command_queue,
                                                           const DerivedParams&,
                                                           const Geometry& gg,
-                                                          const HyperParams&);
+                                                          const HyPas&);
 }
 }
 

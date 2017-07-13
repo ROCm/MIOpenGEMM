@@ -68,6 +68,7 @@ class HyPas
   public:
   using str_array = std::array<std::string, Mat::E::N>;  
   HyPas(const str_array &);
+  HyPas(const std::string &); // TODO
   HyPas(std::array<SuHy, Mat::E::N> &&);
   HyPas(const HyPas &) = default;  
   std::array<SuHy, Mat::E::N> sus;

@@ -134,18 +134,20 @@ std::tuple<bool, std::string> check_for_default(cl_command_queue command_queue,
 // fall back solution
 Solution get_default(const Geometry& gg)
 {
-  std::string constraints_string = "";
+  
+  throw miog_error("get_default not implemented");
+  //std::string constraints_string = "";
 
-  auto                         cached_soln = get_generic_cached_solution(constraints_string, gg);
-  oclutil::DevInfo devinfo;
-  owrite::Writer  mowri(Ver::E::SILENT, "");
-  Graph           graph(gg, devinfo, cached_soln.hyperstring, false);
-  HyperParams     hp(graph);
+  //auto                         cached_soln = get_generic_cached_solution(constraints_string, gg);
+  //oclutil::DevInfo devinfo;
+  //owrite::Writer  mowri(Ver::E::SILENT, "");
+  //Graph           graph(gg, devinfo, cached_soln.hyperstring);//, false);
+  //HyPas     hp;//graph);
 
-  bool bundle_verbose_get_default = true;
-  auto bundle                     = kerngen::get_bundle(hp, gg, mowri, bundle_verbose_get_default);
+  //bool bundle_verbose_get_default = true;
+  //auto bundle                     = kerngen::get_bundle(hp, gg, mowri, bundle_verbose_get_default);
 
-  return {gg, cached_soln.stats, bundle.v_tgks, hp.get_string(), devinfo, constraints_string};
+  //return {gg, cached_soln.stats, bundle.v_tgks, hp.get_string(), devinfo, constraints_string};
 }
 
 Solution get_default(cl_command_queue             command_queue,
@@ -155,33 +157,34 @@ Solution get_default(cl_command_queue             command_queue,
                      owrite::Writer& mowri)
 {
 
-  oclutil::DevInfo devinfo(command_queue);
+  throw miog_error("get_default classless not impled");
+  //oclutil::DevInfo devinfo(command_queue);
 
-  std::string k_dev = devinfo.identifier;
-  std::string k_con = constraints_string;
-  std::string k_geo = gg.get_string();
+  //std::string k_dev = devinfo.identifier;
+  //std::string k_con = constraints_string;
+  //std::string k_geo = gg.get_string();
 
-  CachedSolution cached_soln;
-  auto           pair = check_for_default(command_queue, constraints_string, gg, k_comment);
-  if (std::get<0>(pair) == false)
-  {
-    miog_warning(std::get<1>(pair));
-    mowri << std::get<1>(pair);
-    cached_soln = get_generic_cached_solution(constraints_string, gg);
-  }
+  //CachedSolution cached_soln;
+  //auto           pair = check_for_default(command_queue, constraints_string, gg, k_comment);
+  //if (std::get<0>(pair) == false)
+  //{
+    //miog_warning(std::get<1>(pair));
+    //mowri << std::get<1>(pair);
+    //cached_soln = get_generic_cached_solution(constraints_string, gg);
+  //}
 
-  else
-  {
-    cached_soln = kernel_cache.at(k_dev).at(k_con).at(k_geo).at(k_comment);
-  }
+  //else
+  //{
+    //cached_soln = kernel_cache.at(k_dev).at(k_con).at(k_geo).at(k_comment);
+  //}
 
-  // generating source files from cache
-  Graph       graph(gg, devinfo, cached_soln.hyperstring, false);
-  HyperParams hp(graph);
-  bool                     bundle_verbose_get_default = true;
-  auto                     bundle = kerngen::get_bundle(hp, gg, mowri, bundle_verbose_get_default);
+  //// generating source files from cache
+  //Graph       graph(gg, devinfo, cached_soln.hyperstring, false);
+  //HyPas hp(graph);
+  //bool                     bundle_verbose_get_default = true;
+  //auto                     bundle = kerngen::get_bundle(hp, gg, mowri, bundle_verbose_get_default);
 
-  return {gg, cached_soln.stats, bundle.v_tgks, hp.get_string(), devinfo, constraints_string};
+  //return {gg, cached_soln.stats, bundle.v_tgks, hp.get_string(), devinfo, constraints_string};
 }
 
 void benchgemm(cl_command_queue             command_queue,
@@ -212,7 +215,7 @@ void benchgemm(cl_command_queue             command_queue,
                               full_constraints_expected,
                               mowri);
 
-  oger.benchgemm(max_n_runs, max_time);
+  oger.benchgemm(HyPas(hyperstring), max_n_runs, max_time);
   //}
 }
 

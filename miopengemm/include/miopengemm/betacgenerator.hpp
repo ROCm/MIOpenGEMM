@@ -16,7 +16,7 @@ class BetacGenerator : public bylinegen::ByLineGenerator
 {
 
   public:
-  BetacGenerator(const HyperParams&     hp_,
+  BetacGenerator(const HyPas&     hp_,
                  const Geometry&                     gg_,
                  const DerivedParams& dp_);
 
@@ -31,7 +31,7 @@ class BetacGenerator : public bylinegen::ByLineGenerator
   size_t get_work_per_thread() override final;
 };
 
-KernelString get_betac_kernelstring(const HyperParams&     hp,
+KernelString get_betac_kernelstring(const HyPas&     hp,
                                     const Geometry&                     gg,
                                     const DerivedParams& dp);
 }

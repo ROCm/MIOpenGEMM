@@ -18,7 +18,7 @@
 #include <miopengemm/error.hpp>
 #include <miopengemm/floattostring.hpp>
 #include <miopengemm/geometry.hpp>
-#include <miopengemm/hyperparams.hpp>
+#include <miopengemm/graph.hpp>
 #include <miopengemm/miogemm.hpp>
 #include <miopengemm/oclutil.hpp>
 #include <miopengemm/outputwriter.hpp>
@@ -183,7 +183,7 @@ void Diva<TFl>::benchgemm(const std::vector<std::string>& hyperstrings,
 {
 
   // dev code's connection to the outside
-  std::vector<HyperParams> hps;
+  std::vector<HyPas> hps;
   for (auto& hyperstring : hyperstrings)
   {
     MIOpenGEMM::benchgemm(tgcq.command_queue,

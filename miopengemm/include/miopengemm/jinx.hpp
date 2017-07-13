@@ -15,7 +15,7 @@
 #include <miopengemm/derivedparams.hpp>
 #include <miopengemm/error.hpp>
 #include <miopengemm/findparams.hpp>
-#include <miopengemm/hyperparams.hpp>
+#include <miopengemm/graph.hpp>
 #include <miopengemm/kernel.hpp>
 #include <miopengemm/kernelcache.hpp>
 #include <miopengemm/kernelstring.hpp>
@@ -70,7 +70,7 @@ class Jinx
        bool             full_constraints_expected,
        owrite::Writer&  mowri_);
 
-  void benchgemm(size_t max_n_runs, double max_time);
+  void benchgemm(const HyPas & hp, size_t max_n_runs, double max_time);
   Solution find(const FindParams& find_params);
 
   ///////////////////////////////////////////////////////////////////////////////////////////
@@ -113,12 +113,12 @@ class Jinx
   void run_checks();
   void set_kern_args(const KernelType& type);
   bool
-  refresh_needed(BasicKernelType::E type, const HyperParams& new_hp, const DerivedParams& new_dp);
+  refresh_needed(BasicKernelType::E type, const HyPas& new_hp, const DerivedParams& new_dp);
 
   oclutil::Result
-  refresh_kernel(const KernelString& ks, const HyperParams& hp, const DerivedParams& dp);
+  refresh_kernel(const KernelString& ks, const HyPas& hp, const DerivedParams& dp);
 
-  oclutil::Result setup_tinykernels(const HyperParams& hp, const kerngen::Bundle& bundle);
+  oclutil::Result setup_tinykernels(const HyPas& hp, const kerngen::Bundle& bundle);
 
   void update_run_times(cl_int status);
   std::string get_run_times_heading();
@@ -126,9 +126,9 @@ class Jinx
   void            reset_v_times();
   void            mowri_tracker_print();
   oclutil::Result core_gemm_loop(size_t max_n_runs, double max_time, bool print_asap);
-  void deriveability_test(const HyperParams& hp, const std::string& hash);
+  void deriveability_test(const HyPas& hp, const std::string& hash);
 
-  HyperParams get_hyper_param_start();
+  HyPas get_hyper_param_start();
   void        update_total_elapsed_seconds();
   Solution single_descent_find(float allotted_time, const FindParams& find_params);
 };

@@ -16,7 +16,7 @@ class CopyGenerator : public bylinegen::ByLineGenerator
 
   public:
   CopyGenerator(Mat::E emat_x, 
-                const HyperParams&     hp_,
+                const HyPas&     hp_,
                 const Geometry&                     gg_,
                 const DerivedParams& dp_);
 
@@ -33,7 +33,7 @@ class CopyGenerator : public bylinegen::ByLineGenerator
 
 KernelString get_copy_kernelstring(
                                     Mat::E emat_x,
-                                    const HyperParams&     hp,
+                                    const HyPas&     hp,
                                     const Geometry&                     gg,
                                     const DerivedParams& dp);
 

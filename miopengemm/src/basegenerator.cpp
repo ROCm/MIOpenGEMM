@@ -13,7 +13,7 @@ namespace basegen
 {
 
 
-BaseGenerator::BaseGenerator(const HyperParams&     hp_,
+BaseGenerator::BaseGenerator(const HyPas&     hp_,
                              const Geometry&                     gg_,
                              const DerivedParams& dp_)
 

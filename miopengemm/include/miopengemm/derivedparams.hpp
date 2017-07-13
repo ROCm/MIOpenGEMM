@@ -10,7 +10,7 @@
 #include <tuple>
 #include <vector>
 #include <miopengemm/geometry.hpp>
-#include <miopengemm/hyperparams.hpp>
+#include <miopengemm/graph.hpp>
 
 namespace MIOpenGEMM
 {
@@ -18,7 +18,7 @@ namespace MIOpenGEMM
 // TODO : move this definition elsewhere, maybe to enums ? 
 const size_t uninitialised_size_t = std::numeric_limits<size_t>::max();
 
-std::tuple<bool, std::string> get_deriveability(const HyperParams& hp,
+std::tuple<bool, std::string> get_deriveability(const HyPas& hp,
                                                 const Geometry& gg);
 
 class ChiralDerivedParams
@@ -68,7 +68,7 @@ class DerivedParams
 {
 
   private:
-  const HyperParams* ptr_hp;
+  const HyPas* ptr_hp;
   const Geometry*                 ptr_gg;
 
   ChiralDerivedParams adps;
@@ -81,9 +81,9 @@ class DerivedParams
 
   public:
   // initiate all parameters, throwing an error if there is an incompatibility
-  DerivedParams(const HyperParams& hp, const Geometry& gg);
+  DerivedParams(const HyPas& hp, const Geometry& gg);
 
-  DerivedParams(const HyperParams& hp, const Geometry& gg, std::string s);
+  DerivedParams(const HyPas& hp, const Geometry& gg, std::string s);
 
   DerivedParams()                     = delete;
   DerivedParams(const DerivedParams&) = delete;
