@@ -293,7 +293,7 @@ SuHy SuGr::get_random_start() const
     auto index = radutil17.get_from_range(start_range[i].size());
     hpvs[i]    = start_range[i][index];
   }
-  return SuHy(emat, std::move(hpvs));  // TODO hpvs moved in here.
+  return SuHy(emat, std::move(hpvs));
 }
 
 HyPas Graph::get_random_start()
@@ -424,9 +424,8 @@ std::string SuHy::get_string() const { return get_str(emat, vs); }
 
 Constraint::Constraint(Mat::E e)
   : emat(e),
-    p_enma(Mat::mat_to_xchi(emat)),
-    range(p_enma->N, Status::E::UNDEFINED),
-    start_range(p_enma->N, Status::E::UNDEFINED)
+    range(Mat::mat_to_xchi(emat)->N, Status::E::UNDEFINED),
+    start_range(Mat::mat_to_xchi(emat)->N, Status::E::UNDEFINED)
 {
 }
 
@@ -440,7 +439,7 @@ Constraint::Constraint(Mat::E e, const std::string& r, const std::string& sr) : 
   start_range = get_hy_v(sr, false, emat);
 }
 
-// TODO : Extract the essence from Constraints and Hyperparams
+// TODO : Extract the essence from Constraints and Hyperparams, use inheritance
 
 Constraints::Constraints(const str_array& cr_strings)
 {
@@ -559,7 +558,7 @@ Graph::Graph(const Geometry& gg, const oclutil::DevInfo& devinfo, const Constrai
   csubg.initialise();
 
 
-  // TODO liberate these : they should not belong to one graph!
+  // TODO liberate these : they should not belong to one graph
   p_coupled.push_back({{Mat::E::A, Chi::E::MIC}, {Mat::E::B, Chi::E::MIC}});
   p_coupled.push_back({{Mat::E::C, NonChi::E::UFO}, {Mat::E::C, NonChi::E::PUN}});
   p_coupled.push_back({{Mat::E::C, NonChi::E::UNR}, {Mat::E::C, NonChi::E::ICE}});
@@ -820,13 +819,12 @@ void ChiSuGr::set_start_mic()
 
 SuGr::SuGr(Mat::E e, const Geometry& gg, const Constraint& ct, const oclutil::DevInfo& di)
   : emat(e),
-    p_enma(Mat::mat_to_xchi(emat)),
     ptr_gg(&gg),
     ptr_constraint(&ct),
     ptr_devinfo(&di),
-    edges(p_enma->N),
-    range(p_enma->N),
-    start_range(p_enma->N)
+    edges(Mat::mat_to_xchi(emat)->N),
+    range(Mat::mat_to_xchi(emat)->N),
+    start_range(Mat::mat_to_xchi(emat)->N)
 {
 }
 
@@ -850,7 +848,8 @@ BSuGr::BSuGr(const Geometry& gg, const Constraint& constraint, const oclutil::De
 {
 }
 
-SuHy::SuHy(Mat::E e) : emat(e), p_enma(Mat::mat_to_xchi(emat)), vs(p_enma->N, Status::E::UNDEFINED)
+
+SuHy::SuHy(Mat::E e) : emat(e), vs(Mat::mat_to_xchi(emat)->N, Status::E::UNDEFINED)
 {
 }
 
@@ -859,7 +858,7 @@ SuHy::SuHy(Mat::E e, const std::string& hyperstring) : SuHy(e)
   vs = get_hy_v(hyperstring, true, emat);
 }
 
-SuHy::SuHy(Mat::E e, std::vector<size_t>&& vs_) : emat(e), p_enma(Mat::mat_to_xchi(emat)), vs(vs_)
+SuHy::SuHy(Mat::E e, std::vector<size_t>&& vs_) : emat(e), vs(vs_)
 {
 }
 
@@ -886,7 +885,7 @@ bool SuGr::contains(size_t hpi, size_t val) const
 
 bool SuGr::contains(const SuHy& suhy) const
 {
-  for (size_t hpi = 0; hpi < p_enma->N; ++hpi)
+  for (size_t hpi = 0; hpi < Mat::mat_to_xchi(emat)->N; ++hpi)
   {
     if (!contains(hpi, suhy.vs[hpi]))
     {

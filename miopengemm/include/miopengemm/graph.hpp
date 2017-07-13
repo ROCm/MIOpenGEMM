@@ -25,7 +25,6 @@ class Constraint{
   public:
   
   Mat::E emat;
-  const EnumMapper<std::string> *  p_enma;
   std::vector<size_t> range;
   std::vector<size_t> start_range;
   Constraint() = default;
@@ -49,15 +48,10 @@ class Constraints{
 
 class SuHy
 {
-
   public:
-  // TODO : duplicated using.
   using str_array = std::array<std::string, Mat::E::N>;
-
   Mat::E emat;
-  const EnumMapper<std::string> *  p_enma;
   std::vector<size_t> vs;
-  
   std::string get_string() const;
   bool operator==(const SuHy& rhs) const;
   void replace_where_defined(const Constraint & constraint);
@@ -71,12 +65,8 @@ class SuHy
 
 class HyPas
 {
-
   public:
-  // TODO : duplicated usage. (inheritance...)
-  
-  using str_array = std::array<std::string, Mat::E::N>;
-  
+  using str_array = std::array<std::string, Mat::E::N>;  
   HyPas(const str_array &);
   HyPas(std::array<SuHy, Mat::E::N> &&);
   HyPas(const HyPas &) = default;  
@@ -111,7 +101,6 @@ class SuGr
       const oclutil::DevInfo& devinfo);
 
   Mat::E emat;
-  const EnumMapper<std::string> *  p_enma;
   const Geometry * ptr_gg;
   const Constraint * ptr_constraint;
   const oclutil::DevInfo* ptr_devinfo;
