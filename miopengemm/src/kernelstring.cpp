@@ -1,15 +1,14 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <iostream>
 #include <limits>
+#include <miopengemm/enums.hpp>
 #include <miopengemm/error.hpp>
 #include <miopengemm/kernelstring.hpp>
-#include <miopengemm/enums.hpp>
 
 namespace MIOpenGEMM
 {
-
 
 std::vector<std::vector<size_t>> get_kernel_dependencies()
 {
@@ -22,7 +21,8 @@ std::vector<std::vector<size_t>> get_kernel_dependencies()
   kdps[BasicKernelType::WSA]   = {};
   kdps[BasicKernelType::WSB]   = {};
   kdps[BasicKernelType::BETAC] = {};
-  kdps[BasicKernelType::MAIN]  = {BasicKernelType::BETAC, BasicKernelType::WSA, BasicKernelType::WSB};
+  kdps[BasicKernelType::MAIN]  = {
+    BasicKernelType::BETAC, BasicKernelType::WSA, BasicKernelType::WSB};
 
   for (size_t i = 0; i < BasicKernelType::N; ++i)
   {
@@ -35,10 +35,10 @@ std::vector<std::vector<size_t>> get_kernel_dependencies()
   return kdps;
 }
 
-//const std::vector<std::string> basic_kernel_type_strings     = get_basic_kernel_type_strings();
+// const std::vector<std::string> basic_kernel_type_strings     = get_basic_kernel_type_strings();
 const std::vector<std::vector<size_t>> kernel_dependencies = get_kernel_dependencies();
 
-bool KernelType::uses(Mem::E emat_x) const//(char c) const
+bool KernelType::uses(Mem::E emat_x) const  //(char c) const
 {
   if (emat_x == Mem::E::A)
   {
@@ -58,7 +58,8 @@ bool KernelType::uses(Mem::E emat_x) const//(char c) const
   }
   else
   {
-    throw miog_error(std::string("unrecognised char in uses in KernelType, ") + Mem::M.name[emat_x]);
+    throw miog_error(std::string("unrecognised char in uses in KernelType, ") +
+                     Mem::M.name[emat_x]);
   }
 }
 

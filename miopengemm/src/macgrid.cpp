@@ -1,25 +1,27 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
-#include <miopengemm/macgrid.hpp>
-#include <sstream>
 #include <cmath>
+#include <sstream>
+#include <miopengemm/macgrid.hpp>
 
 namespace MIOpenGEMM
 {
 
-namespace macgrid{
+namespace macgrid
+{
 
-
-void Grid::bad_initialise(const std::string & x){
-  is_good = false;
+void Grid::bad_initialise(const std::string& x)
+{
+  is_good       = false;
   error_message = x;
 }
 
-void Grid::good_initialise(size_t gA, size_t gB){
-  grid_A = gA;
-  grid_B = gB;
-  is_good = true;
+void Grid::good_initialise(size_t gA, size_t gB)
+{
+  grid_A        = gA;
+  grid_B        = gB;
+  is_good       = true;
   error_message = "";
 }
 
@@ -69,21 +71,25 @@ Grid::Grid(size_t mac, size_t skew)
   good_initialise(u_na, u_nb);
 }
 
-size_t Grid::at(Mat::E emat){
-  if (is_good == false){
+size_t Grid::at(Mat::E emat)
+{
+  if (is_good == false)
+  {
     throw miog_error("at should not be called as is_good is false, internal logic error");
   }
-  
-  if (emat == Mat::E::A){
+
+  if (emat == Mat::E::A)
+  {
     return grid_A;
   }
-  else if (emat == Mat::E::B){
+  else if (emat == Mat::E::B)
+  {
     return grid_B;
   }
-  else{
-    throw miog_error("unrecognised emat in Grid::at, internal logic error");    
+  else
+  {
+    throw miog_error("unrecognised emat in Grid::at, internal logic error");
   }
 }
-
 }
 }

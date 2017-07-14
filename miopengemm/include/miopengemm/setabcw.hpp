@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #ifndef GUARD_MIOPENGEMM_SETABCW_HPP
 #define GUARD_MIOPENGEMM_SETABCW_HPP
@@ -20,11 +20,11 @@ void set_abc(std::vector<TFloat>& v_a,
 
 template <typename TFloat>
 void set_multigeom_abc(std::vector<TFloat>& v_a,
-             std::vector<TFloat>& v_b,
-             std::vector<TFloat>& v_c,
-             const std::vector<Geometry> &,
-             const Offsets&       toff);
-             
+                       std::vector<TFloat>& v_b,
+                       std::vector<TFloat>& v_c,
+                       const std::vector<Geometry>&,
+                       const Offsets& toff);
+
 template <typename TFloat>
 void set_abcw(std::vector<TFloat>& v_a,
               std::vector<TFloat>& v_b,

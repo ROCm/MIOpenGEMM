@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #ifndef GUARD_MIOPENGEMM_KERNEL_HPP
 #define GUARD_MIOPENGEMM_KERNEL_HPP
@@ -56,8 +56,7 @@ class Kernel
   bool is_set();
   void set_kernel_args(std::vector<std::pair<size_t, const void*>> arg_sizes_values);
 
-  oclutil::Result enqueue(cl_uint         num_events_in_wait_list,
-                                   const cl_event* event_wait_list);
+  oclutil::Result enqueue(cl_uint num_events_in_wait_list, const cl_event* event_wait_list);
   oclutil::Result enqueue();
 
   void update_times();

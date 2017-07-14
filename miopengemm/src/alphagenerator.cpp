@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <cmath>
 #include <fstream>
@@ -36,19 +36,17 @@ class AlphaGenerator : public basegen::BaseGenerator
   virtual void set_usage() override final
   {
 
-    /* TODO enum the WOS */ 
-    uses_a = (hp.sus[Mat::E::A].vs[Chi::E::WOS] == Scratch::E::UNUSED) ? true : false; 
-    uses_b = (hp.sus[Mat::E::B].vs[Chi::E::WOS] == Scratch::E::UNUSED) ? true : false;
-    uses_c = true;
+    /* TODO enum the WOS */
+    uses_a         = (hp.sus[Mat::E::A].vs[Chi::E::WOS] == Scratch::E::UNUSED) ? true : false;
+    uses_b         = (hp.sus[Mat::E::B].vs[Chi::E::WOS] == Scratch::E::UNUSED) ? true : false;
+    uses_c         = true;
     uses_workspace = (not uses_a or not uses_b);
-    uses_alpha = true;
-    uses_beta  = dp.main_does_beta_c_inc;
+    uses_alpha     = true;
+    uses_beta      = dp.main_does_beta_c_inc;
   }
 
   public:
-  AlphaGenerator(const HyPas&     hp_,
-                 const Geometry&                     gg_,
-                 const DerivedParams& dp_)
+  AlphaGenerator(const HyPas& hp_, const Geometry& gg_, const DerivedParams& dp_)
     : basegen::BaseGenerator(hp_, gg_, dp_)
   {
   }
@@ -183,19 +181,18 @@ TFLOAT previous_value; )"
   void append_loop_var_bound_incr(std::stringstream& ss,
                                   std::string        varname,
                                   std::string        bound_string,
-                                  std::string        increment_string, 
-                                  Mat::E emat_x)
+                                  std::string        increment_string,
+                                  Mat::E             emat_x)
   {
-    ss << "for (TINT" << Mat::M.name[emat_x] << ' ' << varname << " = 0; " << varname << " < " << bound_string << "; "
-       << increment_string << ")";
+    ss << "for (TINT" << Mat::M.name[emat_x] << ' ' << varname << " = 0; " << varname << " < "
+       << bound_string << "; " << increment_string << ")";
   }
 
   void append_load_for_perp(Mat::E emat_x, std::stringstream& ss)
   {
 
-
     char X = Mat::M.name[emat_x];
-    
+
     std::string bound_string = hp.sus[emat_x].vs[Chi::E::LIW] == 0
                                  ? std::string("MICRO_") + X + "_TILE_PERP_UNROLL"
                                  : std::string("MACRO_TILE_LENGTH_") + X;
@@ -209,19 +206,20 @@ TFLOAT previous_value; )"
   void append_load_for_pll(Mat::E emat_x, std::stringstream& ss)
   {
 
-
-    std::string bound_string =
-      hp.sus[emat_x].vs[Chi::E::LIW] == 0 ? std::string("MICRO_") + Mat::M.name[emat_x] + "_TILE_PLL_UNROLL" : "UNROLL";
+    std::string bound_string = hp.sus[emat_x].vs[Chi::E::LIW] == 0
+                                 ? std::string("MICRO_") + Mat::M.name[emat_x] + "_TILE_PLL_UNROLL"
+                                 : "UNROLL";
     std::string increment_string =
-      hp.sus[emat_x].vs[Chi::E::LIW] == 0 ? "++mu_pll_i" : std::string("mu_pll_i += UNROLL/MICRO_") +
-                                                          Mat::M.name[emat_x] + "_TILE_PLL_UNROLL";
+      hp.sus[emat_x].vs[Chi::E::LIW] == 0
+        ? "++mu_pll_i"
+        : std::string("mu_pll_i += UNROLL/MICRO_") + Mat::M.name[emat_x] + "_TILE_PLL_UNROLL";
     append_loop_var_bound_incr(ss, "mu_pll_i", bound_string, increment_string, emat_x);
   }
 
   void append_final_write_element(std::stringstream& ss,
-                                  size_t           atomic_increment,
-                                  size_t           with_beta_scaling,
-                                  size_t           with_alpha_increment)
+                                  size_t             atomic_increment,
+                                  size_t             with_beta_scaling,
+                                  size_t             with_alpha_increment)
   {
 
     // a good place to break kernel to check error checking.
@@ -263,7 +261,8 @@ TFLOAT previous_value; )"
       ss,
       "row",
       hp.sus[Mat::E::A].vs[Chi::E::MIW] == 0 ? "MICRO_TILE_LENGTH_A" : "MACRO_TILE_LENGTH_A",
-      hp.sus[Mat::E::A].vs[Chi::E::MIW] == 0 ? "++row" : "row += N_MICRO_IN_MACRO_A", Mat::E::A);
+      hp.sus[Mat::E::A].vs[Chi::E::MIW] == 0 ? "++row" : "row += N_MICRO_IN_MACRO_A",
+      Mat::E::A);
     ss << " {\n";
 
     ss << dp.pragma_unroll_string;
@@ -271,7 +270,8 @@ TFLOAT previous_value; )"
       ss,
       "col",
       hp.sus[Mat::E::B].vs[Chi::E::MIW] == 0 ? "MICRO_TILE_LENGTH_B" : "MACRO_TILE_LENGTH_B",
-      hp.sus[Mat::E::B].vs[Chi::E::MIW] == 0 ? "++col" : "col += N_MICRO_IN_MACRO_B", Mat::E::B);
+      hp.sus[Mat::E::B].vs[Chi::E::MIW] == 0 ? "++col" : "col += N_MICRO_IN_MACRO_B",
+      Mat::E::B);
     ss << " {\n";
   }
 
@@ -300,10 +300,10 @@ write_start_a + row >= MACRO_TILE_LENGTH_A*(N_GROUPS_A - 1)
   void append_check_wrapped_if_clause_close(std::stringstream& ss) { ss << "\n}"; }
 
   void append_checked_wrapped_loops_from_bools(std::stringstream& ss,
-                                               size_t           with_check,
-                                               size_t           atomic_increment,
-                                               size_t           with_beta_scaling,
-                                               size_t           with_alpha_increment)
+                                               size_t             with_check,
+                                               size_t             atomic_increment,
+                                               size_t             with_beta_scaling,
+                                               size_t             with_alpha_increment)
   {
 
     append_for_loops_for_c_write_open(ss);
@@ -349,8 +349,8 @@ write_start_a + row >= MACRO_TILE_LENGTH_A*(N_GROUPS_A - 1)
   // simple for loops. Could consider unrolling like Cobalt, but for the moment
   // I use the optional pragma unroll
   void append_load_ab_into_LDS_string(std::stringstream& ss,
-                                      size_t           final_unroll,
-                                      size_t           special_first_unroll)
+                                      size_t             final_unroll,
+                                      size_t             special_first_unroll)
   {
 
     append_load_into_LDS_string(Mat::E::A, ss, final_unroll, special_first_unroll);
@@ -364,10 +364,10 @@ barrier(CLK_LOCAL_MEM_FENCE); )";
 
   // simple for loops. Could consider unrolling like Cobalt,
   // but for the moment I use the optional pragma unroll
-  void append_load_into_LDS_string(Mat::E emat_x,
+  void append_load_into_LDS_string(Mat::E             emat_x,
                                    std::stringstream& ss,
-                                   size_t           final_unroll,
-                                   size_t           special_first_unroll)
+                                   size_t             final_unroll,
+                                   size_t             special_first_unroll)
   {
 
     char X = Mat::M.name[emat_x];
@@ -427,7 +427,9 @@ barrier(CLK_LOCAL_MEM_FENCE); )";
   std::string get_c_work_item_next(Mat::E emat_x)
   {
 
-    return (hp.sus[emat_x].vs[Chi::E::MIW] != 0) ? "1" : (std::string("MICRO_TILE_LENGTH_") + Mat::M.name[emat_x]);
+    return (hp.sus[emat_x].vs[Chi::E::MIW] != 0)
+             ? "1"
+             : (std::string("MICRO_TILE_LENGTH_") + Mat::M.name[emat_x]);
   }
 
   // We previously had a variable unroll_the_math_section = False.
@@ -446,8 +448,8 @@ barrier(CLK_LOCAL_MEM_FENCE); )";
   }
 
   void append_relocate_load_math_string(std::stringstream& ss,
-                                        size_t           final_unroll,
-                                        size_t           special_first_unroll)
+                                        size_t             final_unroll,
+                                        size_t             special_first_unroll)
   {
     if (final_unroll != 0 && special_first_unroll != 0)
     {
@@ -467,8 +469,8 @@ barrier(CLK_LOCAL_MEM_FENCE); )";
       char x = Mat::M.lcase_name[emat_x];
 
       ss << '\n'
-         << "l" << X << " = local" << X << " + micro_id_" << x << "*" << get_c_work_item_next(emat_x)
-         << ";";
+         << "l" << X << " = local" << X << " + micro_id_" << x << "*"
+         << get_c_work_item_next(emat_x) << ";";
     }
 
     ss << '\n';
@@ -534,7 +536,7 @@ if (group_id_z == n_work_groups_with_1_more && k_remaining > 0){
   void append_load_to_register_string(Mat::E emat_x, std::stringstream& ss)
   {
     char X = Mat::M.name[emat_x];
-    
+
     ss << '\n' << dp.pragma_unroll_string;
     ss << "for (TSHORT i = 0; i < MICRO_TILE_LENGTH_" << X << "; ++i){\n";
     ss << "r" << X << "[i] = l" << X << "["
@@ -726,7 +728,7 @@ TINTK k_plus_offset = __K__ + unroll_offset;
 
     char X = Mat::M.name[emat_x];
     char x = Mat::M.lcase_name[emat_x];
-    
+
     ss << '\n';
 
     if (emat_x == Mat::E::A)
@@ -743,8 +745,8 @@ TINTK k_plus_offset = __K__ + unroll_offset;
       ss << "/* Define which part of the C macro-tile this thread will process "
             "(% / or / % ? "
             "doesn't seem to make much difference) */\n";
-    ss << "TINT" << X << " write_macro_tile_start_" << x << " = group_id_" << x << "*MACRO_TILE_LENGTH_"
-       << X << "; \n";
+    ss << "TINT" << X << " write_macro_tile_start_" << x << " = group_id_" << x
+       << "*MACRO_TILE_LENGTH_" << X << "; \n";
     if (dp.main_use_edge_trick != 0)
     {
       if (emat_x == Mat::E::A)
@@ -754,12 +756,13 @@ TINTK k_plus_offset = __K__ + unroll_offset;
          << " - PRESHIFT_FINAL_TILE_" << X << ");\n";
       ss << "}\n";
     }
-    ss << "const TINT" << X << " write_start_" << x << " = write_macro_tile_start_" << x << " + micro_id_"
-       << x << "*" << get_c_work_item_next(emat_x) << ";\n";
+    ss << "const TINT" << X << " write_start_" << x << " = write_macro_tile_start_" << x
+       << " + micro_id_" << x << "*" << get_c_work_item_next(emat_x) << ";\n";
 
     ss << "\n\n\n";
 
-    if (hp.sus[emat_x].vs[Chi::E::WOS] == Scratch::E::COPY || hp.sus[emat_x].vs[Chi::E::WOS] == Scratch::E::NFORM)
+    if (hp.sus[emat_x].vs[Chi::E::WOS] == Scratch::E::COPY ||
+        hp.sus[emat_x].vs[Chi::E::WOS] == Scratch::E::NFORM)
     {
       if (emat_x == Mat::E::A)
         ss << "/* from workspace */\n";
@@ -784,8 +787,8 @@ TINTK k_plus_offset = __K__ + unroll_offset;
       ss << "/* Define which part of A this thread will read from (% / "
             "or / % ? doesn't "
             "seem to make much difference) */\n";
-    ss << "TINT" << X << " read_macro_tile_start_" << x << " = group_id_" << x << "*MACRO_TILE_LENGTH_"
-       << X << "; \n";
+    ss << "TINT" << X << " read_macro_tile_start_" << x << " = group_id_" << x
+       << "*MACRO_TILE_LENGTH_" << X << "; \n";
     if (dp.main_use_edge_trick != 0 && hp.sus[emat_x].vs[Chi::E::WOS] != Scratch::E::NFORM)
     {
       if (emat_x == Mat::E::A)
@@ -827,10 +830,10 @@ TINTK k_plus_offset = __K__ + unroll_offset;
     if (emat_x == Mat::E::A)
       ss << "/* make the micro adjustments (A) for the thread, getting ready "
             "to load */\n";
-    ss << "const TINT" << X << " " << x << "_offset_pll_unroll = " << str_n_pll << " pll_unroll_" << x
-       << "_load_id;\n";
-    ss << "const TINT" << X << " " << x << "_offset_perp_unroll = " << str_n_perp << " perp_unroll_" << x
-       << "_load_id;\n";
+    ss << "const TINT" << X << " " << x << "_offset_pll_unroll = " << str_n_pll << " pll_unroll_"
+       << x << "_load_id;\n";
+    ss << "const TINT" << X << " " << x << "_offset_perp_unroll = " << str_n_perp << " perp_unroll_"
+       << x << "_load_id;\n";
     ss << x << " += "
        << "STRIDE_PLL_K_" << X << " * " << x << "_offset_pll_unroll;\n";
     ss << x << " += "
@@ -859,12 +862,13 @@ TINTK k_plus_offset = __K__ + unroll_offset;
            << " " << comment << " : */\n";
     };
 
-    bool withcomments  = emat_x == Mat::E::A;
-    
+    bool withcomments = emat_x == Mat::E::A;
+
     bool with_x_in_name = true;
     append_unroll_block_geometry(emat_x, ss, withcomments, with_x_in_name);
 
-    append_stride_definitions(emat_x, ss, hp.sus[emat_x].vs[Chi::E::WOS], withcomments, "", with_x_in_name);
+    append_stride_definitions(
+      emat_x, ss, hp.sus[emat_x].vs[Chi::E::WOS], withcomments, "", with_x_in_name);
 
     if (emat_x == Mat::E::A)
       ss << "/* micro tiles define the pattern of C that individual threads "
@@ -922,7 +926,6 @@ TINTK k_plus_offset = __K__ + unroll_offset;
     ss << "#define C_INTERWEAVE_STRIDE_" << x << " " << dp.at(emat_x).main_c_interweave_stride
        << '\n';
 
-
     if (hp.sus[emat_x].vs[Chi::E::WOS] != Scratch::E::UNUSED)
     {
       if (emat_x == Mat::E::A)
@@ -947,8 +950,7 @@ TINTK k_plus_offset = __K__ + unroll_offset;
     ss << "#define __K__ " << gg.k << '\n';
     ss << "#define TFLOAT  " << dp.t_float << '\n';
     ss << "#define DOES_BETA_C_INC " << dp.main_does_beta_c_inc << '\n';
-    ss << "#define DOES_ALPHA_A_B_INC 1"
-       << '\n';
+    ss << "#define DOES_ALPHA_A_B_INC 1" << '\n';
 
     append_transpose_note(ss);
 
@@ -964,9 +966,10 @@ TINTK k_plus_offset = __K__ + unroll_offset;
          << " *************************************** */";
       add_predefine_chiral(emat_x, ss);
     }
-    
+
     ss << "\n/* integer types for navigating each of the memory buffers */\n";
-    for (size_t i = 0; i < Mem::E::N; ++i){
+    for (size_t i = 0; i < Mem::E::N; ++i)
+    {
       ss << "#define TINT" << Mem::M.name[i] << " " << dp.tints[i] << '\n';
     }
     ss << "\n/* type for integer in inner most loops (probably inlined anyway)  */\n";
@@ -1107,22 +1110,15 @@ TINTK k_plus_offset = __K__ + unroll_offset;
             dp.main_n_work_items_per_workgroup};
   }
 
+  virtual void set_type() override final
+  {
+    type = dp.main_does_beta_c_inc ? "betac_alphaab" : "alphaab";
+  }
 
-virtual void set_type() override final{
-  type = dp.main_does_beta_c_inc ? "betac_alphaab" : "alphaab";
-}
-
-virtual void setup_final() override final{
-  
-}
-
+  virtual void setup_final() override final {}
 };
 
-
-
-KernelString get_alpha_kernelstring(const HyPas&     hp,
-                                    const Geometry&                     gg,
-                                    const DerivedParams& dp)
+KernelString get_alpha_kernelstring(const HyPas& hp, const Geometry& gg, const DerivedParams& dp)
 {
   AlphaGenerator ag(hp, gg, dp);
   ag.setup();

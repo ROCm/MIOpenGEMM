@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #ifndef GUARD_MIOPENGEMM_KERNELSTRINGGENERATOR_HPP
 #define GUARD_MIOPENGEMM_KERNELSTRINGGENERATOR_HPP
@@ -18,24 +18,21 @@ namespace kerngen
 class Bundle
 {
   public:
-  const std::vector<KernelString>          v_tgks;
+  const std::vector<KernelString>        v_tgks;
   const std::vector<std::vector<size_t>> v_wait_indices;
 
   DerivedParams dp;
 
   /* TODO : when is std::move needed. */
-  Bundle(std::vector<KernelString>&&          v_tgks_,
+  Bundle(std::vector<KernelString>&&        v_tgks_,
          std::vector<std::vector<size_t>>&& v_wait_indices_,
-         DerivedParams&&       dp_)
+         DerivedParams&&                    dp_)
     : v_tgks(std::move(v_tgks_)), v_wait_indices(std::move(v_wait_indices_)), dp(std::move(dp_))
   {
   }
 };
 
-Bundle get_bundle(const HyPas& hp,
-                  const Geometry&                 gg,
-                  owrite::Writer&    mowri,
-                  bool                            bundle_verbose);
+Bundle get_bundle(const HyPas& hp, const Geometry& gg, owrite::Writer& mowri, bool bundle_verbose);
 }
 }
 

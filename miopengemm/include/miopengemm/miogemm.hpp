@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #ifndef GUARD_MIOPENGEMM_MIOGEMM_HPP
 #define GUARD_MIOPENGEMM_MIOGEMM_HPP
@@ -12,8 +12,6 @@
 
 namespace MIOpenGEMM
 {
-
-
 
 /*! @brief Find a Solution, considering only kernels without workspace requirements.
  *
@@ -61,17 +59,17 @@ Solution find(float            allotted_time,
  * @return                    best Solution found during search
  */
 
-Solution find(cl_command_queue             command_queue,
-              const FindParams&            find_params,
-              cl_mem                       a,
-              cl_mem                       b,
-              cl_mem                       c,
-              cl_mem                       workspace,
-              const std::string            constraints_string,
-              const Geometry&              gg,
-              const Offsets&               toff,
-              owrite::Writer& mowri,
-              bool                         c_is_const);
+Solution find(cl_command_queue  command_queue,
+              const FindParams& find_params,
+              cl_mem            a,
+              cl_mem            b,
+              cl_mem            c,
+              cl_mem            workspace,
+              const std::string constraints_string,
+              const Geometry&   gg,
+              const Offsets&    toff,
+              owrite::Writer&   mowri,
+              bool              c_is_const);
 
 /*! @brief Return a default Solution from cache, without exploring. If no Solution exists, an error
  * will be thrown.
@@ -87,11 +85,11 @@ Solution find(cl_command_queue             command_queue,
  * @return                    best Solution found during search
  */
 
-Solution get_default(cl_command_queue             command_queue,
-                     std::string                  constraints_string,
-                     const Geometry&              gg,
-                     std::string                  k_comment,
-                     owrite::Writer& mowri);
+Solution get_default(cl_command_queue command_queue,
+                     std::string      constraints_string,
+                     const Geometry&  gg,
+                     std::string      k_comment,
+                     owrite::Writer&  mowri);
 
 /*! @brief Return a default Solution, independent of device. This version of get_default does not
  * require a Solution to exist in cache.
@@ -126,18 +124,17 @@ std::tuple<bool, std::string> check_for_default(cl_command_queue command_queue,
  * @param gg                  The Geometry of the GEMM problem
  * @param toff                Offsets of a, b, c, workspace
  */
-void benchgemm(cl_command_queue             command_queue,
-               const std::string&           hyperstring,
-               size_t                       max_n_runs,
-               double max_time,
-               const Geometry&              gg,
-               const Offsets&               toff,
-               cl_mem                       a,
-               cl_mem                       b,
-               cl_mem                       c,
-               cl_mem                       workspace,
-               owrite::Writer& mowri,
-               bool                         c_is_const = false);
-
+void benchgemm(cl_command_queue   command_queue,
+               const std::string& hyperstring,
+               size_t             max_n_runs,
+               double             max_time,
+               const Geometry&    gg,
+               const Offsets&     toff,
+               cl_mem             a,
+               cl_mem             b,
+               cl_mem             c,
+               cl_mem             workspace,
+               owrite::Writer&    mowri,
+               bool               c_is_const = false);
 }
 #endif

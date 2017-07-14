@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <algorithm>
 #include <chrono>
@@ -26,45 +26,41 @@ namespace MIOpenGEMM
 namespace kerngen
 {
 
-Bundle get_bundle(const HyPas& hp,
-                  const Geometry&                 gg,
-                  owrite::Writer&    mowri,
-                  bool                            bundle_verbose)
+Bundle get_bundle(const HyPas& hp, const Geometry& gg, owrite::Writer& mowri, bool bundle_verbose)
 {
 
   DerivedParams dp(hp, gg);
 
-  std::vector<KernelString>          v_tgks;
+  std::vector<KernelString>        v_tgks;
   std::vector<std::vector<size_t>> v_wait_indices;
 
-
-  for (auto emat_x : {Mat::E::A, Mat::E::B}){
+  for (auto emat_x : {Mat::E::A, Mat::E::B})
+  {
 
     if (hp.sus[emat_x].vs[Chi::E::WOS] == Scratch::E::UNUSED)
     {
       // no workspace kernel
     }
-  
+
     else if (hp.sus[emat_x].vs[Chi::E::WOS] == Scratch::E::COPY)
     {
       v_tgks.emplace_back(copygen::get_copy_kernelstring(emat_x, hp, gg, dp));
     }
-  
+
     else if (hp.sus[emat_x].vs[Chi::E::WOS] == Scratch::E::NFORM)
     {
       v_tgks.emplace_back(nformgen::get_nform_kernelstring(emat_x, hp, gg, dp));
     }
-  
+
     else
     {
       std::stringstream errm;
       errm << "hp.sus[emat_x].vs[Chi::E::WOS] should be 0, 1 or 2"
-      << "(Scratch::E::UNUSED , Scratch::E::COPY or Scratch::E::NFORM)";
+           << "(Scratch::E::UNUSED , Scratch::E::COPY or Scratch::E::NFORM)";
       throw miog_error(errm.str());
     }
   }
-  
-  
+
   if (dp.main_does_beta_c_inc == 0)
   {
     v_tgks.emplace_back(betacgen::get_betac_kernelstring(hp, gg, dp));

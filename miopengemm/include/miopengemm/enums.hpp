@@ -1,35 +1,36 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #ifndef GUARD_MIOPENGEMM_ALLENUMS_HPP
 #define GUARD_MIOPENGEMM_ALLENUMS_HPP
 
-#include <vector>
 #include <unordered_map>
+#include <vector>
 #include <miopengemm/error.hpp>
 
-
-namespace MIOpenGEMM {
-
+namespace MIOpenGEMM
+{
 
 static const double default_alpha = 0.415693029182345929;
 static const double default_beta  = 0.273539340934809345;
 
 template <typename T>
-class EnumMapper{
+class EnumMapper
+{
   public:
-    size_t N;
-    std::vector<T> name;
-    std::vector<T> lcase_name;
-    std::unordered_map<T, size_t> val;
-    EnumMapper(const std::vector<T> & name_); 
+  size_t         N;
+  std::vector<T> name;
+  std::vector<T> lcase_name;
+  std::unordered_map<T, size_t> val;
+  EnumMapper(const std::vector<T>& name_);
 };
 
 // if you add a parameter to enum, make sure to add it before the final count N
 
 namespace BasicKernelType
 {
-enum E{
+enum E
+{
   WSA = 0,
   WSB,
   BETAC,
@@ -37,25 +38,24 @@ enum E{
   N  // how many BasicKernelTypes
 };
 extern const EnumMapper<std::string> M;
-
 }
-
 
 namespace SummStat
 {
-enum E{
+enum E
+{
   MEAN = 0,
   MEDIAN,
   MAX,
   N
 };
 extern const EnumMapper<std::string> M;
-
 }
 
 namespace Chi
 {
-enum E{
+enum E
+{
   MIC = 0,
   PAD,
   PLU,
@@ -67,10 +67,10 @@ enum E{
 extern const EnumMapper<std::string> M;
 }
 
-
 namespace NonChi
 {
-enum E{
+enum E
+{
   UNR = 0,
   GAL,
   PUN,
@@ -84,11 +84,10 @@ enum E{
 extern const EnumMapper<std::string> M;
 }
 
-
-
 namespace Mat
 {
-enum E{
+enum E
+{
   A = 0,
   B,
   C,
@@ -97,10 +96,10 @@ enum E{
 extern const EnumMapper<char> M;
 }
 
-
 namespace Mem
 {
-enum E{
+enum E
+{
   A,
   B,
   C,
@@ -108,28 +107,27 @@ enum E{
   N
 };
 extern const EnumMapper<char> M;
-Mem::E mat_to_mem(Mat::E);
+Mem::E                        mat_to_mem(Mat::E);
 }
 
-
-namespace Mat{
-Mat::E mem_to_mat(Mem::E);  
-const EnumMapper<std::string> * mat_to_xchi(Mat::E);
+namespace Mat
+{
+Mat::E                         mem_to_mat(Mem::E);
+const EnumMapper<std::string>* mat_to_xchi(Mat::E);
 }
-
-
-
 
 namespace Status
 {
-enum E{
+enum E
+{
   UNDEFINED = -1
 };
 }
 
 namespace Binary
 {
-enum E{
+enum E
+{
   NO  = 0,
   YES = 1
 };
@@ -137,7 +135,8 @@ enum E{
 
 namespace GroupAllocation
 {
-enum E{
+enum E
+{
   BYROW = 1,
   BYCOL = 2,
   SUCOL = 3
@@ -146,16 +145,18 @@ enum E{
 
 namespace Scratch
 {
-enum E{
+enum E
+{
   UNUSED = 0,
   COPY,
-  NFORM 
+  NFORM
 };
 }
 
 namespace Ver
 {
-enum E{
+enum E
+{
   SILENT = 0,  // no output anywhere, absolute silence
   TERMINAL,    // main output to terminal
   SPLIT,       // main output to terminal and file
@@ -164,10 +165,6 @@ enum E{
   STRACK,      // tracker output to terminal, main output to file
 };
 }
-
-
-
-
 }
 
 #endif

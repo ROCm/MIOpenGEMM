@@ -26,7 +26,6 @@
 #include <miopengemm/slowcpugemm.hpp>
 #include <miopengemm/stringutilbase.hpp>
 
-
 namespace MIOpenGEMM
 {
 namespace dev
@@ -34,7 +33,7 @@ namespace dev
 
 Boa::Boa(Geometry gg_, Offsets toff_, owrite::Writer& mowri_)
 {
-  
+
   switch (gg_.floattype)
   {
   case 'f': f_moa.reset(new Diva<float>(gg_, toff_, mowri_)); break;
@@ -56,16 +55,17 @@ void Boa::benchgemm(const std::vector<std::string>& hyperstrings,
   }
 }
 
-void Boa::accuracy_test(const std::string& hyperstring){
+void Boa::accuracy_test(const std::string& hyperstring)
+{
 
   switch (active_type)
   {
   case 'f': f_moa->accuracy_test(hyperstring, nullptr); break;
   case 'd': d_moa->accuracy_test(hyperstring, nullptr); break;
   default: throw miog_error("unrecognised floattype char in Boa accuracy_test with 1 parm");
-  }  
+  }
 }
-  
+
 Solution Boa::find(const FindParams& find_params, std::string constraints_string)
 {
   switch (active_type)
@@ -99,7 +99,5 @@ void Boa::set_active_type<double>()
 {
   active_type = 'd';
 }
-
 }
 }
-

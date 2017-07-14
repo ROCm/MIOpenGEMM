@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <iostream>
 #include <sstream>
@@ -10,18 +10,13 @@ namespace MIOpenGEMM
 namespace betacgen
 {
 
-BetacGenerator::BetacGenerator(const HyPas&     hp_,
-                               const Geometry&                     gg_,
-                               const DerivedParams& dp_)
-                               
+BetacGenerator::BetacGenerator(const HyPas& hp_, const Geometry& gg_, const DerivedParams& dp_)
+
   : bylinegen::ByLineGenerator(Mat::E::C, hp_, gg_, dp_)
 {
 }
 
-
-void BetacGenerator::set_type(){
-  type = "betac";
-}
+void BetacGenerator::set_type() { type = "betac"; }
 
 size_t BetacGenerator::get_local_work_size() { return dp.betac_local_work_size; }
 
@@ -41,9 +36,7 @@ void BetacGenerator::setup_additional()
 
 void BetacGenerator::append_derived_definitions_additional(std::stringstream& ss) { ss << " "; }
 
-KernelString get_betac_kernelstring(const HyPas&     hp,
-                                    const Geometry&                     gg,
-                                    const DerivedParams& dp)
+KernelString get_betac_kernelstring(const HyPas& hp, const Geometry& gg, const DerivedParams& dp)
 {
   BetacGenerator bcg(hp, gg, dp);
   bcg.setup();

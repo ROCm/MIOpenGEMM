@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <iostream>
 #include <sstream>
@@ -106,5 +106,4 @@ std::string Solution::get_cache_entry_string(std::string k_comment) const
                  << "summmary over runs */\n\n";
   return cache_write_ss.str();
 }
-
 }

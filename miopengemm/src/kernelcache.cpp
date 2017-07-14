@@ -1,22 +1,21 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <map>
 #include <sstream>
 #include <string>
-#include <miopengemm/kernelcache.hpp>
 #include <miopengemm/enums.hpp>
+#include <miopengemm/kernelcache.hpp>
 
 namespace MIOpenGEMM
 {
 
-CacheKeyPresence KernelCache::check_for(const CacheKey & ckey) const{
-
+CacheKeyPresence KernelCache::check_for(const CacheKey& ckey) const
+{
 
   std::string open = "Failed to find cache entry from keys: " + ckey.get_string();
   std::string reason;
   std::string close = " (see examples/gencache.cpp for example generating cache entry)";
-
 
   if (vals.count(ckey.dvc) == 0)
   {
@@ -37,17 +36,23 @@ CacheKeyPresence KernelCache::check_for(const CacheKey & ckey) const{
   {
     reason = "Unrecognised k_comment in cache";
   }
-  else{
+  else
+  {
     return {};
   }
   return open + reason + close;
 }
 
+CacheKey::CacheKey(const std::string& dvc_,
+                   const std::string& cns_,
+                   const std::string& geo_,
+                   const std::string& cmm_)
+  : dvc(dvc_), cns(cns_), geo(geo_), cmm(cmm_)
+{
+}
 
-CacheKey::CacheKey(const std::string& dvc_, const std::string& cns_, const std::string& geo_, const std::string& cmm_): dvc(dvc_), cns(cns_), geo(geo_), cmm(cmm_) {}
-
-
-std::string CacheKey::get_string() const{
+std::string CacheKey::get_string() const
+{
   std::stringstream ss;
   ss << "device       :   `" << dvc << "'\n";
   ss << "constraints  :   `" << cns << "'\n";
@@ -56,7 +61,6 @@ std::string CacheKey::get_string() const{
   return ss.str();
 }
 
-  
 const KernelCache kernel_cache = get_kernel_cache();
 
 KernelCache get_kernel_cache()
@@ -65,14 +69,15 @@ KernelCache get_kernel_cache()
 
   // There are two ways to add cache snip snippets, the first is
   // to paste them here like this
-  add_entry(kc,
-            "some_device_key",
-            "some_constraint_string",
-            "tC0_tA0_tB0_colMaj1_m5000_n5000_k5000_lda5000_ldb5000_ldc5000_ws1_f32",
-            "",
-            {"A_MIC8_PAD2_PLU0_LIW0_MIW0_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW0_WOS0__"
-             "C_UNR8_GAL2_PUN0_ICE1_NAW64_UFO0_MAC256_SKW10",
-             {59.2006, 4222.93, 3.32959, "Sun May 14 12:29:44 2017", {3, 2, 1,1e9,  SummStat::MAX}}});
+  add_entry(
+    kc,
+    "some_device_key",
+    "some_constraint_string",
+    "tC0_tA0_tB0_colMaj1_m5000_n5000_k5000_lda5000_ldb5000_ldc5000_ws1_f32",
+    "",
+    {"A_MIC8_PAD2_PLU0_LIW0_MIW0_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW0_WOS0__"
+     "C_UNR8_GAL2_PUN0_ICE1_NAW64_UFO0_MAC256_SKW10",
+     {59.2006, 4222.93, 3.32959, "Sun May 14 12:29:44 2017", {3, 2, 1, 1e9, SummStat::MAX}}});
 
 // and the second is to drop them into a txt file like like this
 #include "cacheexample.cachetxt"
@@ -93,27 +98,29 @@ void add_entry(KernelCache&       kc,
   kc.add(ckey, tgcs);
 }
 
-
-CachedSolution KernelCache::at(const CacheKey & ckey) const{
- CacheKeyPresence ckp = check_for(ckey);
-  if (!ckp.is_present){
+CachedSolution KernelCache::at(const CacheKey& ckey) const
+{
+  CacheKeyPresence ckp = check_for(ckey);
+  if (!ckp.is_present)
+  {
     throw miog_error(ckp.msg);
   }
   return vals.at(ckey.dvc).at(ckey.cns).at(ckey.geo).at(ckey.cmm);
 }
 
-void KernelCache::add(const CacheKey & ckey, const CachedSolution & tgcs){
+void KernelCache::add(const CacheKey& ckey, const CachedSolution& tgcs)
+{
   CacheKeyPresence ckp = check_for(ckey);
-  if (ckp.is_present){
+  if (ckp.is_present)
+  {
     std::stringstream ss;
-    ss << "Cannot add cache entry if one already exists, with. Keys: "
-    << ckey.get_string()
-    << "The existing entry is: " << at(ckey).get_string()
-    << "The proposed entry is, " << tgcs.get_string()
-    << "Please choose between these, and manually remove existing one if nec. ";
+    ss << "Cannot add cache entry if one already exists, with. Keys: " << ckey.get_string()
+       << "The existing entry is: " << at(ckey).get_string() << "The proposed entry is, "
+       << tgcs.get_string()
+       << "Please choose between these, and manually remove existing one if nec. ";
     throw miog_error(ss.str());
   }
-  
+
   if (vals.count(ckey.dvc) == 0)
   {
     vals[ckey.dvc] = {};
@@ -128,24 +135,25 @@ void KernelCache::add(const CacheKey & ckey, const CachedSolution & tgcs){
   {
     vals[ckey.dvc][ckey.cns][ckey.geo] = {};
   }
-      
-  vals[ckey.dvc][ckey.cns][ckey.geo][ckey.cmm] = tgcs;
 
+  vals[ckey.dvc][ckey.cns][ckey.geo][ckey.cmm] = tgcs;
 }
 
-void enforce_constraints(std::string&       hps_to_update,
-                         const std::string& constraints_string,
-                         const Geometry&    gg)
+void enforce_constraints()
 {
 
-  throw miog_error("enforce_constraints in kernelcache not implememented");
-  //oclutil::DevInfo devinfo;
-  //Graph           graph(gg, devinfo, constraints_string);
-  //HyPas     hp();
+  // std::string&       hps_to_update,
+  // const std::string& constraints_string,
+  // const Geometry&    gg)
 
-  //auto all_constraints = get_all_constraints(constraints_string);
-  //hp.replace_where_source_defined(all_constraints);
-  //hps_to_update = hp.get_string();
+  throw miog_error("enforce_constraints in kernelcache not implememented");
+  // oclutil::DevInfo devinfo;
+  // Graph           graph(gg, devinfo, constraints_string);
+  // HyPas     hp();
+
+  // auto all_constraints = get_all_constraints(constraints_string);
+  // hp.replace_where_source_defined(all_constraints);
+  // hps_to_update = hp.get_string();
 }
 
 /* TODO : certain of these kernels are slow,
@@ -223,7 +231,9 @@ CachedSolution get_generic_cached_solution(const std::string& constraints_string
                    {0, 0, 0, "None", {200, 10, 3, 1e12, SummStat::MAX}}};
   }
 
-  enforce_constraints(cached_soln.hyperstring, constraints_string, gg);
+  (void)constraints_string;
+  throw miog_error("get_generic_cached_solution not impled completeky");
+  // enforce_constraints(cached_soln.hyperstring, constraints_string, gg);
 
   return cached_soln;
 }
@@ -235,5 +245,4 @@ std::string CachedSolution::get_string() const
   ss << "(stats) " << stats.get_string();
   return ss.str();
 }
-
 }

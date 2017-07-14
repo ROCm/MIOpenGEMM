@@ -8,14 +8,11 @@
 
 namespace MIOpenGEMM
 {
-  
+
 namespace basegen
 {
 
-
-BaseGenerator::BaseGenerator(const HyPas&     hp_,
-                             const Geometry&                     gg_,
-                             const DerivedParams& dp_)
+BaseGenerator::BaseGenerator(const HyPas& hp_, const Geometry& gg_, const DerivedParams& dp_)
 
   : hp(hp_), gg(gg_), dp(dp_), n_args_added(0)
 {
@@ -48,11 +45,9 @@ void BaseGenerator::append_fargs(std::stringstream& ss)
   ss << ")\n";
 }
 
-
-
-void BaseGenerator::append_stride_definitions(Mat::E emat_x,
+void BaseGenerator::append_stride_definitions(Mat::E             emat_x,
                                               std::stringstream& ss,
-                                              size_t           workspace_type,
+                                              size_t             workspace_type,
                                               bool               withcomments,
                                               std::string        macro_prefix,
                                               bool               with_x_in_name)
@@ -74,15 +69,14 @@ void BaseGenerator::append_stride_definitions(Mat::E emat_x,
   }
 }
 
-void BaseGenerator::append_unroll_block_geometry(Mat::E emat_x,
+void BaseGenerator::append_unroll_block_geometry(Mat::E             emat_x,
                                                  std::stringstream& ss,
                                                  bool               withcomments,
                                                  bool               with_x_string)
 {
 
-
-  //TODO : should be X., not x
-  char x = Mat::M.name[emat_x];
+  // TODO : should be X., not x
+  char        x        = Mat::M.name[emat_x];
   std::string x_string = with_x_string ? "_" + std::string(1, x) : "";
 
   ss << '\n';
@@ -141,7 +135,7 @@ std::string BaseGenerator::get_time_string()
 }
 
 std::string BaseGenerator::get_what_string()
-{  
+{
   return stringutil::get_star_wrapped("These parameters define WHAT this kernel does");
 }
 

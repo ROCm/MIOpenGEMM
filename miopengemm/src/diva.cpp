@@ -19,13 +19,13 @@
 #include <miopengemm/floattostring.hpp>
 #include <miopengemm/geometry.hpp>
 #include <miopengemm/graph.hpp>
+#include <miopengemm/jinx.hpp>
 #include <miopengemm/oclutil.hpp>
 #include <miopengemm/outputwriter.hpp>
 #include <miopengemm/redirection.hpp>
 #include <miopengemm/setabcw.hpp>
 #include <miopengemm/slowcpugemm.hpp>
 #include <miopengemm/stringutilbase.hpp>
-#include <miopengemm/jinx.hpp>
 
 namespace MIOpenGEMM
 {
@@ -43,7 +43,6 @@ void Diva<TFl>::initialise_cpu_mem(const TFl* a_, const TFl* b_, const TFl* c_)
 template <typename TFl>
 void Diva<TFl>::initialise_common()
 {
-
 
   // TODO : these could be enums in enum.hpp
   rw_perms[Mem::E::A] = CL_MEM_READ_ONLY;
@@ -72,6 +71,15 @@ void Diva<TFl>::initialise_common()
   std::memcpy(c_copy.data(), cpu_mem[Mem::E::C], mem_size[Mem::E::C]);
   opencl_memory_initialise();
 
+  up_jinx.reset(new Jinx(tgcq.command_queue,
+                         gg,
+                         toff,
+                         gpu_safemem[Mem::E::A].clmem,
+                         gpu_safemem[Mem::E::B].clmem,
+                         gpu_safemem[Mem::E::C].clmem,
+                         false,  // c is not const
+                         gpu_safemem[Mem::E::W].clmem,
+                         mowri));
 }
 
 template <typename TFl>
@@ -83,62 +91,41 @@ Diva<TFl>::Diva(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, long)
     tgcq(mowri, "command queue of Diva"),
     gpu_safemem(Mem::E::N, std::string("gpu_safemem vector of Diva")),
     mem_size(Mem::E::N),
-    rw_perms(Mem::E::N),
-  
-      jinx(tgcq.command_queue,
-                          gg,
-                          toff,
-                          gpu_safemem[Mem::E::A].clmem,
-                          gpu_safemem[Mem::E::B].clmem,
-                          gpu_safemem[Mem::E::C].clmem,
-                          false, // c is not const
-                          gpu_safemem[Mem::E::W].clmem,
-                          mowri)
-                          {
-
-
-
+    rw_perms(Mem::E::N)
+{
 }
 
 template <typename TFl>
-Diva<TFl>::Diva(Geometry                     gg_,
-                Offsets                      toff_,
-                const TFl*                   a_,
-                const TFl*                   b_,
-                const TFl*                   c_,
-                owrite::Writer& mowri_)
+Diva<TFl>::Diva(
+  Geometry gg_, Offsets toff_, const TFl* a_, const TFl* b_, const TFl* c_, owrite::Writer& mowri_)
   : Diva(gg_, toff_, mowri_, 42)
 
 {
 
   initialise_cpu_mem(a_, b_, c_);
   initialise_common();
-
 }
 
 template <typename TFl>
 void Diva<TFl>::initialise_cpu_mem_from_scratch()
 {
 
-  
   setabcw::set_abc(__cpu_mem[Mat::E::A], __cpu_mem[Mat::E::B], __cpu_mem[Mat::E::C], gg, toff);
-    
-  for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C}){
+
+  for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C})
+  {
     cpu_mem[emat] = __cpu_mem[emat].data();
   }
-  
 }
 
 template <typename TFl>
-Diva<TFl>::Diva(Geometry gg_, Offsets toff_, owrite::Writer& mowri_)
-  : Diva(gg_, toff_, mowri_, 42)
+Diva<TFl>::Diva(Geometry gg_, Offsets toff_, owrite::Writer& mowri_) : Diva(gg_, toff_, mowri_, 42)
 
 {
 
   initialise_cpu_mem_from_scratch();
   initialise_common();
 }
-
 
 template <typename TFl>
 size_t Diva<TFl>::get_workspace_memsize()
@@ -161,12 +148,12 @@ void Diva<TFl>::opencl_memory_initialise()
     if (mem_size[emem] > 0)
     {
       oclutil::cl_set_buffer_from_command_queue(gpu_safemem[emem].clmem,
-                                                   tgcq.command_queue,
-                                                   rw_perms[emem],
-                                                   mem_size[emem],
-                                                   NULL,
-                                                   hash.str(),
-                                                   true);
+                                                tgcq.command_queue,
+                                                rw_perms[emem],
+                                                mem_size[emem],
+                                                NULL,
+                                                hash.str(),
+                                                true);
     }
   }
 
@@ -174,17 +161,16 @@ void Diva<TFl>::opencl_memory_initialise()
   {
     Mem::E emem = Mem::mat_to_mem(emat);
     oclutil::cl_enqueue_write_buffer(tgcq.command_queue,
-                                        gpu_safemem[emem].clmem,
-                                        CL_TRUE,
-                                        0,
-                                        mem_size[emem],
-                                        cpu_mem[emat],
-                                        0,
-                                        NULL,
-                                        NULL,
-                                        std::string("enqueueing ") + Mat::M.name[emat] +
-                                          " writebuff ",
-                                        true);
+                                     gpu_safemem[emem].clmem,
+                                     CL_TRUE,
+                                     0,
+                                     mem_size[emem],
+                                     cpu_mem[emat],
+                                     0,
+                                     NULL,
+                                     NULL,
+                                     std::string("enqueueing ") + Mat::M.name[emat] + " writebuff ",
+                                     true);
   }
 }
 
@@ -197,9 +183,8 @@ void Diva<TFl>::benchgemm(const std::vector<std::string>& hyperstrings,
   std::vector<HyPas> hps;
   for (auto& hyperstring : hyperstrings)
   {
-       
-    jinx.benchgemm(hyperstring, max_number_of_runs, max_time_per_kernel);
-    
+
+    up_jinx->benchgemm(hyperstring, max_number_of_runs, max_time_per_kernel);
   }
 }
 
@@ -207,8 +192,7 @@ template <typename TFl>
 Solution Diva<TFl>::find(const FindParams& find_params, std::string constraints_string)
 {
 
-                          
-Solution tgs = jinx.find(constraints_string, find_params);
+  Solution tgs = up_jinx->find(constraints_string, find_params);
 
   return tgs;
 }
@@ -216,8 +200,6 @@ Solution tgs = jinx.find(constraints_string, find_params);
 template <typename TFl>
 void Diva<TFl>::accuracy_test(const std::string& hyperstring, const TFl* c_true_for_test)
 {
-
-
 
   // copy the const cpu matrix to the gpu
   clEnqueueWriteBuffer(tgcq.command_queue,
@@ -230,26 +212,24 @@ void Diva<TFl>::accuracy_test(const std::string& hyperstring, const TFl* c_true_
                        NULL,
                        NULL);
 
-  
   // run gemm once on the gpu
   benchgemm({hyperstring}, 1, 1e12);
-
 
   // read the result to c_copy on the cpu
   cl_event event_read_c_back;
   oclutil::cl_enqueue_read_buffer(tgcq.command_queue,
-                                     gpu_safemem[Mat::E::C].clmem,
-                                     CL_TRUE,
-                                     0,
-                                     mem_size[Mem::E::C],
-                                     c_copy.data(),
-                                     0,
-                                     NULL,
-                                     &event_read_c_back,
-                                     "enqueue read to c, in base_basegemm_with_accuracy_test",
-                                     true);
+                                  gpu_safemem[Mat::E::C].clmem,
+                                  CL_TRUE,
+                                  0,
+                                  mem_size[Mem::E::C],
+                                  c_copy.data(),
+                                  0,
+                                  NULL,
+                                  &event_read_c_back,
+                                  "enqueue read to c, in base_basegemm_with_accuracy_test",
+                                  true);
 
-  // if the user has not provided the correct answer, compute it 
+  // if the user has not provided the correct answer, compute it
   if (c_true_for_test == nullptr)
   {
     // run gemm on the cpu, result stored in c_for_cpu_compute.
@@ -265,17 +245,15 @@ void Diva<TFl>::accuracy_test(const std::string& hyperstring, const TFl* c_true_
                                 default_beta,
                                 {"3fors"},
                                 mowri);
-                                
+
     c_true_for_test = c_for_cpu_compute.data();
   }
 
-  
   // make sure the gpu gemm is complete
   oclutil::cl_wait_for_events(
     1, &event_read_c_back, "waiting in accuracy test for gpu gemm to complete ", true);
-  
 
-  // compare cpu and gpu results 
+  // compare cpu and gpu results
   accuracytests::elementwise_compare(
     cpu_mem[Mat::E::C], default_beta, c_true_for_test, c_copy.data(), c_copy.size(), mowri);
 }

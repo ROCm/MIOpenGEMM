@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <sstream>
 #include <miopengemm/architests.hpp>
@@ -10,15 +10,15 @@ namespace MIOpenGEMM
 namespace architests
 {
 
-Stat::Stat(const oclutil::DevInfo & devinfo,
-                                                          const DerivedParams& dp,
-                                                          const Geometry&                     gg,
-                                                          const HyPas&     hp)
+Stat::Stat(const oclutil::DevInfo& devinfo,
+           const DerivedParams&    dp,
+           const Geometry&         gg,
+           const HyPas&            hp)
 {
   (void)hp;
 
   std::stringstream status_ss;
- 
+
   // check -1 : macro tile not too large
   if (dp.main_n_work_items_per_workgroup > devinfo.device_max_work_group_size)
   {
@@ -32,41 +32,36 @@ Stat::Stat(const oclutil::DevInfo & devinfo,
     gg.derived.float_size_bytes * ((dp.at(Mat::E::A).main_n_elements_in_padded_unroll +
                                     dp.at(Mat::E::B).main_n_elements_in_padded_unroll));
 
-  if (LDS_required >= devinfo.device_local_mem_size) //max_LDS_bytes)
+  if (LDS_required >= devinfo.device_local_mem_size)  // max_LDS_bytes)
   {
-    status_ss << "LDS_required (" << LDS_required << ")  >= max_LDS_bytes (" << devinfo.device_local_mem_size
-              << ") \n";
+    status_ss << "LDS_required (" << LDS_required << ")  >= max_LDS_bytes ("
+              << devinfo.device_local_mem_size << ") \n";
   }
 
-  msg = status_ss.str();
+  msg     = status_ss.str();
   is_good = (msg == "");
-
 }
 }
 }
 
+// size_t            max_work_group_size;
 
- //size_t            max_work_group_size;
+// oclutil::set_device_info_from_command_queue(
+// command_queue,
+// CL_DEVICE_MAX_WORK_GROUP_SIZE,
+// sizeof(size_t),
+//&max_work_group_size,
+// nullptr,
+//"getting CL_DEVICE_MAX_WORK_GROUP_SIZE in artcitecture specfic stests",
+// true);
 
-  //oclutil::set_device_info_from_command_queue(
-    //command_queue,
-    //CL_DEVICE_MAX_WORK_GROUP_SIZE,
-    //sizeof(size_t),
-    //&max_work_group_size,
-    //nullptr,
-    //"getting CL_DEVICE_MAX_WORK_GROUP_SIZE in artcitecture specfic stests",
-    //true);
-
-
-  //// check 0 : LDS
-  //cl_long max_LDS_bytes;
-  //oclutil::set_device_info_from_command_queue(
-    //command_queue,
-    //CL_DEVICE_LOCAL_MEM_SIZE,
-    //sizeof(size_t),
-    //&max_LDS_bytes,
-    //nullptr,
-    //"getting CL_DEVICE_LOCAL_MEM_SIZE in artcitecture specfic stests",
-    //true);
-    
-
+//// check 0 : LDS
+// cl_long max_LDS_bytes;
+// oclutil::set_device_info_from_command_queue(
+// command_queue,
+// CL_DEVICE_LOCAL_MEM_SIZE,
+// sizeof(size_t),
+//&max_LDS_bytes,
+// nullptr,
+//"getting CL_DEVICE_LOCAL_MEM_SIZE in artcitecture specfic stests",
+// true);

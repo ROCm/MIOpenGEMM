@@ -8,10 +8,9 @@
 #include <stdlib.h>
 #include <string>
 #include <vector>
+#include <miopengemm/diva.hpp>
 #include <miopengemm/geometry.hpp>
 #include <miopengemm/solution.hpp>
-#include <miopengemm/diva.hpp>
-
 
 namespace MIOpenGEMM
 {
@@ -22,9 +21,9 @@ class Boa
 {
 
   private:
-  std::unique_ptr<Diva<double>> d_moa {nullptr};
-  std::unique_ptr<Diva<float>>  f_moa {nullptr};
-  char                          active_type {'?'};
+  std::unique_ptr<Diva<double>> d_moa{nullptr};
+  std::unique_ptr<Diva<float>>  f_moa{nullptr};
+  char                          active_type{'?'};
 
   template <typename TFloat>
   std::unique_ptr<Diva<TFloat>>& get_up_moa()
@@ -40,11 +39,11 @@ class Boa
 
   public:
   template <typename TFloat>
-  Boa(Geometry                     gg_,
-      Offsets                      toff_,
-      const TFloat*                a_,
-      const TFloat*                b_,
-      const TFloat*                c_,
+  Boa(Geometry        gg_,
+      Offsets         toff_,
+      const TFloat*   a_,
+      const TFloat*   b_,
+      const TFloat*   c_,
       owrite::Writer& mowri_)
   {
     get_up_moa<TFloat>().reset(new Diva<TFloat>(gg_, toff_, a_, b_, c_, mowri_));
@@ -64,9 +63,8 @@ class Boa
   {
     get_up_moa<TFloat>->accuracy_test(hyperstring, c_true_for_test);
   }
-  
+
   void accuracy_test(const std::string& hyperstring);
-    
 };
 
 template <>
@@ -84,4 +82,3 @@ void Boa::set_active_type<double>();
 }
 
 #endif
-

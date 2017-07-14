@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #ifndef GUARD_MIOPENGEMM_DERIVEDPARAMS_HPP
 #define GUARD_MIOPENGEMM_DERIVEDPARAMS_HPP
@@ -15,18 +15,18 @@
 namespace MIOpenGEMM
 {
 
-// TODO : move this definition elsewhere, maybe to enums ? 
+// TODO : move this definition elsewhere, maybe to enums ?
 const size_t uninitialised_size_t = std::numeric_limits<size_t>::max();
 
-
-class Derivabilty{
+class Derivabilty
+{
   public:
-  bool is_derivable;
+  bool        is_derivable;
   std::string msg;
-  Derivabilty(const HyPas &, const Geometry& );
+  Derivabilty(const HyPas&, const Geometry&);
 };
 
-bool is_dvble(const HyPas &, const Geometry& );
+bool is_dvble(const HyPas&, const Geometry&);
 
 class ChiralDerivedParams
 {
@@ -75,8 +75,8 @@ class DerivedParams
 {
 
   private:
-  const HyPas* ptr_hp;
-  const Geometry*                 ptr_gg;
+  const HyPas*    ptr_hp;
+  const Geometry* ptr_gg;
 
   ChiralDerivedParams adps;
   ChiralDerivedParams bdps;
@@ -101,10 +101,7 @@ class DerivedParams
   std::vector<ChiralDerivedParams*> chis;
 
   ChiralDerivedParams& at(Mat::E emat_x) { return emat_x == Mat::E::A ? adps : bdps; }
-  const ChiralDerivedParams& at(Mat::E emat_x) const
-  {
-    return emat_x == Mat::E::A ? adps : bdps;
-  }
+  const ChiralDerivedParams& at(Mat::E emat_x) const { return emat_x == Mat::E::A ? adps : bdps; }
 
   // does the minimum setting to confirm compatibitily.
   std::tuple<bool, std::string> set_fragile();
@@ -157,10 +154,8 @@ class DerivedParams
   std::array<std::string, Mem::E::N> tints;
   std::string tintk;
   std::string tshort;
-  
-  void set_should_be_hyperparams();
-  
 
+  void set_should_be_hyperparams();
 };
 //}
 }

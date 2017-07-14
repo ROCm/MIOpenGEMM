@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #ifndef GUARD_MIOPENGEMM_SOLUTION_HPP
 #define GUARD_MIOPENGEMM_SOLUTION_HPP
@@ -68,7 +68,7 @@ class Solution
            SolutionStatistics               tgss_,
            const std::vector<KernelString>& v_tgks_,
            std::string                      hyper_param_string_,
-           oclutil::DevInfo     devinfo_,
+           oclutil::DevInfo                 devinfo_,
            std::string                      constraints_string_)
     : geometry(geometry_),
       statistics(tgss_),

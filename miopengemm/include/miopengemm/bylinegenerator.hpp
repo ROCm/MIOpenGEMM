@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #ifndef GUARD_MIOPENGEMM_FORALLGENERATOR_HPP
 #define GUARD_MIOPENGEMM_FORALLGENERATOR_HPP
@@ -30,13 +30,10 @@ class ByLineGenerator : public prepgen::PrepGenerator
   size_t get_n_work_groups() override final;
 
   public:
-  ByLineGenerator(Mat::E emat_x,
-                  const HyPas&     hp_,
-                  const Geometry&                     gg_,
-                  const DerivedParams& dp_);
+  ByLineGenerator(Mat::E emat_x, const HyPas& hp_, const Geometry& gg_, const DerivedParams& dp_);
 
   virtual KernelString get_kernelstring() final override;
-  virtual void setup_final() final override;
+  virtual void         setup_final() final override;
 
   private:
   void append_description_string(std::stringstream& ss);

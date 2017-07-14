@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <CL/cl.h>
 #include <algorithm>
@@ -13,8 +13,7 @@ namespace redirection
 {
 
 template <typename T>
-void redirect_base(
-  bool& isColMajor, bool& tA, bool& tB, bool& tC, size_t& m, size_t& n, T& a, T& b)
+void redirect_base(bool& isColMajor, bool& tA, bool& tB, bool& tC, size_t& m, size_t& n, T& a, T& b)
 {
   if (isColMajor == false)
   {
@@ -49,8 +48,8 @@ class MatrixBundle
 {
   public:
   const TFloat* x;
-  size_t      ldx;
-  size_t      x_offset;
+  size_t        ldx;
+  size_t        x_offset;
   MatrixBundle(const TFloat* x_, size_t ldx_, size_t x_offset_)
     : x(x_), ldx(ldx_), x_offset(x_offset_)
   {
@@ -62,12 +61,12 @@ void redirect(bool&          isColMajor,
               bool&          tA,
               bool&          tB,
               bool&          tC,
-              size_t&      m,
-              size_t&      n,
-              size_t&      lda,
-              size_t&      ldb,
-              size_t&      a_offset,
-              size_t&      b_offset,
+              size_t&        m,
+              size_t&        n,
+              size_t&        lda,
+              size_t&        ldb,
+              size_t&        a_offset,
+              size_t&        b_offset,
               const TFloat*& a,
               const TFloat*& b)
 {
@@ -89,12 +88,12 @@ template void redirect(bool&          isColMajor,
                        bool&          tA,
                        bool&          tB,
                        bool&          tC,
-                       size_t&      m,
-                       size_t&      n,
-                       size_t&      lda,
-                       size_t&      ldb,
-                       size_t&      a_offset,
-                       size_t&      b_offset,
+                       size_t&        m,
+                       size_t&        n,
+                       size_t&        lda,
+                       size_t&        ldb,
+                       size_t&        a_offset,
+                       size_t&        b_offset,
                        const double*& a,
                        const double*& b);
 
@@ -102,12 +101,12 @@ template void redirect(bool&         isColMajor,
                        bool&         tA,
                        bool&         tB,
                        bool&         tC,
-                       size_t&     m,
-                       size_t&     n,
-                       size_t&     lda,
-                       size_t&     ldb,
-                       size_t&     a_offset,
-                       size_t&     b_offset,
+                       size_t&       m,
+                       size_t&       n,
+                       size_t&       lda,
+                       size_t&       ldb,
+                       size_t&       a_offset,
+                       size_t&       b_offset,
                        const float*& a,
                        const float*& b);
 
@@ -115,8 +114,8 @@ void redirect(bool&        isColMajor,
               bool&        tA,
               bool&        tB,
               bool&        tC,
-              size_t&    m,
-              size_t&    n,
+              size_t&      m,
+              size_t&      n,
               std::string& a,
               std::string& b)
 {

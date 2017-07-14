@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #ifndef GUARD_MIOPENGEMM_STRINGUTILBASE_HPP
 #define GUARD_MIOPENGEMM_STRINGUTILBASE_HPP
@@ -31,15 +31,16 @@ std::tuple<std::string, size_t> splitnumeric(std::string alphanum);
 std::string get_padded(size_t x, size_t length = 4);
 
 template <typename T>
-std::string get_char_padded(const T& t, size_t length){
+std::string get_char_padded(const T& t, size_t length)
+{
   auto t_s = std::to_string(t);
   if (t_s.size() < length)
-  t_s.resize(length, ' ');
+    t_s.resize(length, ' ');
   return t_s;
 }
 
 std::string get_stars(size_t n_stars);
-std::string get_star_wrapped(const std::string & s);
+std::string get_star_wrapped(const std::string& s);
 
 void add_v_string(std::stringstream& ss, const std::vector<size_t>& values);
 }

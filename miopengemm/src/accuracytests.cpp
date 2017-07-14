@@ -1,10 +1,10 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <cmath>
+#include <vector>
 #include <miopengemm/accuracytests.hpp>
 #include <miopengemm/outputwriter.hpp>
-#include <vector>
 
 namespace MIOpenGEMM
 {
@@ -16,18 +16,18 @@ namespace accuracytests
  * Provide better diagnostics when not correct.
  * Output full matrices to files for visualisation. etc etc etc. */
 template <typename TFloat>
-void elementwise_compare(const TFloat*                c_before,
-                         double                       beta,
-                         const TFloat*                c_cpu,
-                         const TFloat*                c_gpu,
-                         size_t                     nels,
+void elementwise_compare(const TFloat*   c_before,
+                         double          beta,
+                         const TFloat*   c_cpu,
+                         const TFloat*   c_gpu,
+                         size_t          nels,
                          owrite::Writer& mowri)
 {
-  double                threshold         = 0.01;
-  double                max_relerr        = 0.;
+  double              threshold         = 0.01;
+  double              max_relerr        = 0.;
   size_t              i_max             = 0;
   std::vector<size_t> violating_indices = {};
-  std::vector<double>   violating_margins = {};
+  std::vector<double> violating_margins = {};
 
   for (size_t i = 0; i < nels; ++i)
   {
@@ -76,18 +76,18 @@ void elementwise_compare(const TFloat*                c_before,
   mowri << "max_relerr=" << max_relerr << Endl;
 }
 
-template void elementwise_compare(const float*                 c_before,
-                                  double                       beta,
-                                  const float*                 c_cpu,
-                                  const float*                 c_gpu,
-                                  size_t                     nels,
+template void elementwise_compare(const float*    c_before,
+                                  double          beta,
+                                  const float*    c_cpu,
+                                  const float*    c_gpu,
+                                  size_t          nels,
                                   owrite::Writer& mowri);
 
-template void elementwise_compare(const double*                c_before,
-                                  double                       beta,
-                                  const double*                c_cpu,
-                                  const double*                c_gpu,
-                                  size_t                     nels,
+template void elementwise_compare(const double*   c_before,
+                                  double          beta,
+                                  const double*   c_cpu,
+                                  const double*   c_gpu,
+                                  size_t          nels,
                                   owrite::Writer& mowri);
 }
 }

@@ -1,10 +1,9 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
+#include <algorithm>
 #include <sstream>
 #include <vector>
-#include <algorithm>
-
 
 #include <miopengemm/devmiogemm.hpp>
 #include <miopengemm/geometryutil.hpp>
@@ -16,17 +15,18 @@ namespace MIOpenGEMM
 int run_find_experiments(const std::vector<Geometry>& geometries,
                          std::vector<std::string>&    v_constraints,
                          const FindParams&            find_params,
-                         bool                         verbose_inner,
-                         std::string                  basedir_inner,
-                         bool                         verbose_outer,
-                         std::string                  fn_outer)
+                         // bool                         verbose_inner,
+                         std::string basedir_inner)
+// bool                         verbose_outer,
+// std::string                  fn_outer)
 {
 
-  owrite::Writer mowri_outer(Ver::E::TERMINAL, ""); // TODO : fix verbose_outer, fn_outer != "", fn_outer);
+  owrite::Writer mowri_outer(Ver::E::TERMINAL,
+                             "");  // TODO : fix verbose_outer, fn_outer != "", fn_outer);
 
   std::string cache_write_string("");
 
-  Offsets  offsets(13, 24, 35, 46, 57, 67, 79, 101);
+  Offsets offsets(13, 24, 35, 46, 57, 67, 79, 101);
 
   // We're tracking the overall run time with these
   auto                         start           = std::chrono::high_resolution_clock::now();
@@ -85,19 +85,18 @@ int run_find_experiments(const std::vector<Geometry>& geometries,
         mowri_outer << logfile << Endl;
       }
 
-    
-      dev::Boa goa(gg, offsets, mowri_outer); //TODO : should be a mowri
+      dev::Boa goa(gg, offsets, mowri_outer);  // TODO : should be a mowri
       Solution soln = goa.find(find_params, constraints);
 
-      //auto soln = dev::basicfind(
-      //find_params,
-      //constraints, 
-      //gg,
-      //offsets,
-                            
-                            //mowri_outer // TODO : this is obviously not correct, fix it.
-                            //);
-                            
+      // auto soln = dev::basicfind(
+      // find_params,
+      // constraints,
+      // gg,
+      // offsets,
+
+      // mowri_outer // TODO : this is obviously not correct, fix it.
+      //);
+
       end = std::chrono::high_resolution_clock::now();
 
       cache_write_string += soln.get_cache_entry_string();
@@ -218,7 +217,6 @@ std::vector<Geometry> get_old_deepbench_geometries(size_t workspace_size)
 
   return get_from_m_n_k_tA_tB(baiduproblems, workspace_size);
 }
-
 
 std::vector<Geometry> get_deepbench_geometries(size_t workspace_size)
 {
@@ -383,38 +381,36 @@ std::vector<Geometry> get_deepbench_geometries(size_t workspace_size)
     std::make_tuple(7680, 48000, 2560, true, false),
     std::make_tuple(7680, 48000, 2560, false, false),
     std::make_tuple(8448, 48000, 2816, true, false),
-    std::make_tuple(8448, 48000, 2816, false, false)
-  };
+    std::make_tuple(8448, 48000, 2816, false, false)};
   return get_from_m_n_k_tA_tB(baiduproblems, workspace_size);
 }
 
-
 std::vector<Geometry> get_new_deepbench_geometries(size_t workspace_size)
 {
-  auto allg = get_deepbench_geometries(workspace_size);
+  auto                     allg = get_deepbench_geometries(workspace_size);
   std::vector<std::string> oldg_strings;
-  for ( auto & x : get_old_deepbench_geometries(workspace_size)){
+  for (auto& x : get_old_deepbench_geometries(workspace_size))
+  {
     oldg_strings.emplace_back(x.get_string());
   }
-  
 
   std::vector<Geometry> newg;
-  for (auto & x : allg){
-    if (std::find(oldg_strings.begin(), oldg_strings.end(), x.get_string()) == oldg_strings.end()){
+  for (auto& x : allg)
+  {
+    if (std::find(oldg_strings.begin(), oldg_strings.end(), x.get_string()) == oldg_strings.end())
+    {
       newg.push_back(x);
     }
   }
-  
+
   return newg;
 }
 
-
-std::vector<Geometry> get_small_deepbench_geometries(size_t small_threshold,
-                                                     size_t workspace_size)
+std::vector<Geometry> get_small_deepbench_geometries(size_t small_threshold, size_t workspace_size)
 {
   auto                  all_geoms = get_deepbench_geometries(workspace_size);
   std::vector<Geometry> small_geoms;
-  size_t              count_small = 0;
+  size_t                count_small = 0;
   for (auto& gg : all_geoms)
   {
     if (gg.m * gg.n * gg.k < small_threshold)
@@ -426,8 +422,7 @@ std::vector<Geometry> get_small_deepbench_geometries(size_t small_threshold,
   return small_geoms;
 }
 
-std::vector<Geometry> get_large_deepbench_geometries(size_t large_threshold,
-                                                     size_t workspace_size)
+std::vector<Geometry> get_large_deepbench_geometries(size_t large_threshold, size_t workspace_size)
 {
   auto                  all_geoms = get_deepbench_geometries(workspace_size);
   std::vector<Geometry> large_geoms;

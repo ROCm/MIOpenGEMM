@@ -1,19 +1,19 @@
 #include <algorithm>
 #include <sstream>
+#include <miopengemm/architests.hpp>
+#include <miopengemm/derivedparams.hpp>
 #include <miopengemm/graph.hpp>
 #include <miopengemm/macgrid.hpp>
 #include <miopengemm/randomutil.hpp>
 #include <miopengemm/stringutilbase.hpp>
-#include <miopengemm/derivedparams.hpp>
-#include <miopengemm/architests.hpp>
 
 namespace MIOpenGEMM
 {
 
 RandomUtil radutil17;
 
-
-std::vector<HyPas> Graph::get_neighbors(const HyPas & hp0)  const{
+std::vector<HyPas> Graph::get_neighbors(const HyPas& hp0) const
+{
 
   std::vector<HyPas> neighbors(get_one_aways(hp0));
   radutil17.shuffle(0, neighbors.size(), neighbors);
@@ -21,15 +21,16 @@ std::vector<HyPas> Graph::get_neighbors(const HyPas & hp0)  const{
   auto p_coupled_away = get_p_coupled_away(hp0);
   radutil17.shuffle(0, p_coupled_away.size(), p_coupled_away);
   neighbors.insert(neighbors.end(), p_coupled_away.begin(), p_coupled_away.end());
-  
+
   auto mic_mac_transformed = get_mic_mac_transformed(hp0);
   radutil17.shuffle(0, mic_mac_transformed.size(), mic_mac_transformed);
   neighbors.insert(neighbors.end(), mic_mac_transformed.begin(), mic_mac_transformed.end());
 
   return neighbors;
 }
-  
-std::vector<HyPas> Graph::get_p_coupled_away(const HyPas & hp0) const{
+
+std::vector<HyPas> Graph::get_p_coupled_away(const HyPas& hp0) const
+{
 
   std::vector<HyPas> p_coupled_away;
 
@@ -63,20 +64,19 @@ std::vector<HyPas> Graph::get_p_coupled_away(const HyPas & hp0) const{
       }
     }
   }
-  
-  return p_coupled_away;
 
+  return p_coupled_away;
 }
 
-
 // changing MAC and one or both MICs, so as to semi-preserve the overall shape of the macro tile
-std::vector<HyPas> Graph::get_mic_mac_transformed(const HyPas & hp0)  const{
+std::vector<HyPas> Graph::get_mic_mac_transformed(const HyPas& hp0) const
+{
 
   std::vector<HyPas> mmt;
 
-  size_t curr_mac = hp0.sus[Mat::E::C].vs[NonChi::E::MAC];
+  size_t        curr_mac = hp0.sus[Mat::E::C].vs[NonChi::E::MAC];
   macgrid::Grid curr_grid(curr_mac, hp0.sus[Mat::E::C].vs[NonChi::E::SKW]);
-  
+
   for (auto& newmac : at(Mat::E::C).edges[NonChi::E::MAC].at(curr_mac))
   {
     macgrid::Grid new_grid(newmac, hp0.sus[Mat::E::C].vs[NonChi::E::SKW]);
@@ -85,11 +85,10 @@ std::vector<HyPas> Graph::get_mic_mac_transformed(const HyPas & hp0)  const{
       continue;
     }
 
-    double delta_na = static_cast<double>(new_grid.at(Mat::E::A)) /
-                      static_cast<double>(curr_grid.at(Mat::E::A));
-    double delta_nb = static_cast<double>(new_grid.at(Mat::E::B)) /
-                      static_cast<double>(curr_grid.at(Mat::E::B));
-
+    double delta_na =
+      static_cast<double>(new_grid.at(Mat::E::A)) / static_cast<double>(curr_grid.at(Mat::E::A));
+    double delta_nb =
+      static_cast<double>(new_grid.at(Mat::E::B)) / static_cast<double>(curr_grid.at(Mat::E::B));
 
     // mica scaled so that the macro tile remains ~ the same in the a dimension
     size_t curr_mica = hp0.sus[Mat::E::A].vs[Chi::E::MIC];
@@ -103,7 +102,7 @@ std::vector<HyPas> Graph::get_mic_mac_transformed(const HyPas & hp0)  const{
     {
       HyPas hp1(hp0);
       hp1.sus[Mat::E::C].vs[NonChi::E::MAC] = newmac;
-      hp1.sus[Mat::E::A].vs[Chi::E::MIC] = new_mica;
+      hp1.sus[Mat::E::A].vs[Chi::E::MIC]    = new_mica;
       mmt.push_back(hp1);
     }
 
@@ -111,7 +110,7 @@ std::vector<HyPas> Graph::get_mic_mac_transformed(const HyPas & hp0)  const{
     {
       HyPas hp1(hp0);
       hp1.sus[Mat::E::C].vs[NonChi::E::MAC] = newmac;
-      hp1.sus[Mat::E::B].vs[Chi::E::MIC] = new_micb;
+      hp1.sus[Mat::E::B].vs[Chi::E::MIC]    = new_micb;
       mmt.push_back(hp1);
 
       if (new_mica != curr_mica && contains(Mat::E::A, Chi::E::MIC, new_mica))
@@ -125,26 +124,29 @@ std::vector<HyPas> Graph::get_mic_mac_transformed(const HyPas & hp0)  const{
   return mmt;
 }
 
-std::vector<HyPas> Graph::get_one_aways(const HyPas & hp0) const{
-  
+std::vector<HyPas> Graph::get_one_aways(const HyPas& hp0) const
+{
+
   std::vector<HyPas> one_aways;
-  
+
   // the true one aways
-  for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C}){
-    for (size_t i = 0; i < Mat::mat_to_xchi(emat)->N; ++i){
+  for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C})
+  {
+    for (size_t i = 0; i < Mat::mat_to_xchi(emat)->N; ++i)
+    {
       size_t v0 = hp0.sus[emat].vs.at(i);
-      for (auto & x : at(emat).edges.at(i).at(v0)){
+      for (auto& x : at(emat).edges.at(i).at(v0))
+      {
         HyPas hp1(hp0);
         hp1.sus[emat].vs[i] = x;
         one_aways.push_back(hp1);
       }
     }
   }
-  
+
   return one_aways;
 }
-  
-  
+
 void SuHy::checks() const
 {
   if (vs.size() != Mat::mat_to_xchi(emat)->N)
@@ -178,7 +180,8 @@ std::string get_location_string(Mat::E emat, size_t hpi)
   }
 
   std::stringstream basess;
-  basess << " Sub-graph: " << Mat::M.name[emat] << "hyper-p: " << Mat::mat_to_xchi(emat)->name[hpi];
+  basess << " Sub-graph: " << Mat::M.name[emat]
+         << ". Hyper-p: " << Mat::mat_to_xchi(emat)->name[hpi];
   return basess.str();
 }
 
@@ -215,7 +218,7 @@ void SuGr::checks() const
     {
       if (std::find(eks.begin(), eks.end(), x) == eks.end())
       {
-        errm << get_location_string(emat, i) << ". Range value " << x << " is not an edge key."
+        errm << get_location_string(emat, i) << ". Range value " << x << " is not an edge key.\n"
              << get_string(i);
         throw miog_error(errm.str());
       }
@@ -265,6 +268,16 @@ void SuGr::apply_constraint()
   {
     if (ptr_constraint->start_range[i] != Status::E::UNDEFINED)
     {
+
+      if (ptr_constraint->range[i] != Status::E::UNDEFINED)
+      {
+        std::stringstream errm;
+        errm << "If a range constraint is provided, no start range constraint is allowed. ";
+        errm << "Range string :\n " << ptr_constraint->get_r_str() << '\n';
+        errm << "Start range string :\n " << ptr_constraint->get_sr_str() << '\n';
+        errm << get_string(i) << "\n";
+        throw miog_error(errm.str());
+      }
       size_t new_unique_start = ptr_constraint->start_range[i];
       start_range[i]          = {new_unique_start};
       if (std::find(range[i].begin(), range[i].end(), new_unique_start) == range[i].end())
@@ -276,12 +289,14 @@ void SuGr::apply_constraint()
 
   // range logic :
   // simply replace with unique value x, edges is {x:{}}.
+  // also, it overrides start_range
   for (size_t i = 0; i < Mat::mat_to_xchi(emat)->N; ++i)
   {
     if (ptr_constraint->range[i] != Status::E::UNDEFINED)
     {
       size_t new_unique = ptr_constraint->range[i];
       range[i]          = {new_unique};
+      start_range[i]    = {new_unique};
       edges[i]          = {{{new_unique}, {}}};
     }
   }
@@ -305,21 +320,20 @@ HyPas Graph::get_random_start() const
                 at(Mat::E::C).get_random_start()});
 }
 
-
-HyPas Graph::get_random_valid_start() const{
-
+HyPas Graph::get_random_valid_start() const
+{
 
   HyPas hp0(get_random_start());
-  
-  bool found = false;
-  size_t iter = 0;
+
+  bool              found = false;
+  size_t            iter  = 0;
   std::stringstream ss;
 
   while (found == false && iter < max_n_iter)
   {
     hp0 = get_random_start();
-    hp0.checks(); // TODO WHEN PASSING : this should not be necessary
-    
+    hp0.checks();  // TODO WHEN PASSING : this should not be necessary
+
     Derivabilty dble(hp0, geometry);
     if (!dble.is_derivable)
     {
@@ -328,9 +342,9 @@ HyPas Graph::get_random_valid_start() const{
 
     else
     {
-      auto dp = DerivedParams(hp0, geometry);
+      auto             dp = DerivedParams(hp0, geometry);
       architests::Stat atr(devinfo, dp, geometry, hp0);
-      
+
       if (!atr.is_good)
       {
         ss << '\n' << hp0.get_string() << "failed architests : " << atr.msg;
@@ -343,7 +357,6 @@ HyPas Graph::get_random_valid_start() const{
     ++iter;
   }
 
-
   // force the graph starting parameters
   if (!found)
   {
@@ -351,18 +364,17 @@ HyPas Graph::get_random_valid_start() const{
     base_ss << "\nStruggling to find hp satisying geometry, constraints and architecture."
             << " The number of attempts made : " << max_n_iter << '.'
             << " To view the full output of hps tried, "
-            << " and reasons for not being derivable, modify the code here -- " 
+            << " and reasons for not being derivable, modify the code here -- "
             << " (add ss.str() to this string). Will attempt to obtain generic hp. ";
-    
-    throw miog_error(base_ss.str());      
+
+    throw miog_error(base_ss.str());
   }
-  else{
+  else
+  {
     mowri << "#trials to find viable hp in graph : " << iter << Endl;
   }
-  return hp0;  
+  return hp0;
 }
-  
-  
 
 std::string SuGr::get_string(size_t hpi) const
 {
@@ -377,7 +389,7 @@ void SuGr::ss_init(size_t hpi, std::stringstream& ss, std::string name) const
   {
     throw miog_error("index too large while obtaining edges string, interal logic error");
   }
-  ss << stringutil::get_star_wrapped(name);
+  ss << '\n' << stringutil::get_star_wrapped(name) << '\n';
 }
 
 std::string SuGr::get_edges_string(size_t hpi) const
@@ -395,7 +407,6 @@ std::string SuGr::get_edges_string(size_t hpi) const
   }
   return ss.str();
 }
-
 
 std::string SuGr::get_range_string(size_t hpi) const
 {
@@ -417,7 +428,6 @@ bool SuHy::operator==(const SuHy& rhs) const { return vs == rhs.vs; }
 
 bool HyPas::operator==(const HyPas& rhs) const { return sus == rhs.sus; }
 
-
 std::string HyPas::get_string() const
 {
 
@@ -428,27 +438,32 @@ std::string HyPas::get_string() const
     {
       ss << "__";
     }
-    ss << sus[emat].get_string();
+    ss << Mat::M.name[emat] << '_' << sus[emat].get_string();
   }
   return ss.str();
 }
 
-
-std::string Constraints::get_combo_str(const str_array & strs) const{
+std::string Constraints::get_combo_str(const str_array& strs) const
+{
   std::stringstream ss;
-  bool empty = true;
-  for (auto x : strs){
-    if (x != ""){
-      if (!empty){
+  bool              empty = true;
+  for (auto x : strs)
+  {
+    if (x != "")
+    {
+      if (!empty)
+      {
         ss << "__";
       }
       ss << x;
       empty = false;
     }
   }
+  return ss.str();
 }
 
-std::string Constraints::get_r_str() const{
+std::string Constraints::get_r_str() const
+{
   str_array strs;
   for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C})
   {
@@ -457,7 +472,8 @@ std::string Constraints::get_r_str() const{
   return get_combo_str(strs);
 }
 
-std::string Constraints::get_sr_str() const{
+std::string Constraints::get_sr_str() const
+{
   str_array strs;
   for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C})
   {
@@ -465,8 +481,6 @@ std::string Constraints::get_sr_str() const{
   }
   return get_combo_str(strs);
 }
-
-
 
 void SuHy::replace_where_defined(const Constraint& constraint)
 {
@@ -506,8 +520,6 @@ std::string Constraint::get_r_str() const { return get_str(emat, range); }
 
 std::string Constraint::get_sr_str() const { return get_str(emat, start_range); }
 
-  
-  
 std::string SuHy::get_string() const { return get_str(emat, vs); }
 
 Constraint::Constraint(Mat::E e)
@@ -545,17 +557,17 @@ Constraints::Constraints(const str_array& cr, const str_array& csr)
   }
 }
 
-
 // included for deprecation reasons
-std::array<std::string, Mat::E::N> get_substrings(const std::string & rconcat){
-    
+std::array<std::string, Mat::E::N> get_substrings(const std::string& rconcat)
+{
+
   std::array<std::string, Mat::E::N> substrings;
   for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C})
   {
     substrings[emat] = "";
   }
 
-  auto megafrags = stringutil::split(rconcat, "__");
+  auto              megafrags = stringutil::split(rconcat, "__");
   std::stringstream ss;
   for (auto& megafrag : megafrags)
   {
@@ -565,7 +577,7 @@ std::array<std::string, Mat::E::N> get_substrings(const std::string & rconcat){
       ss << "the leading char, `" << megafrag[0] << "', was not recognised.\n";
       throw miog_error(ss.str());
     }
-    Mat::E emat  = static_cast<Mat::E>(Mat::M.val.at(megafrag[0]));
+    Mat::E emat    = static_cast<Mat::E>(Mat::M.val.at(megafrag[0]));
     size_t minsize = std::string("m__hv").size();
 
     if (megafrag.size() < minsize)
@@ -575,14 +587,13 @@ std::array<std::string, Mat::E::N> get_substrings(const std::string & rconcat){
     }
     substrings[emat] = megafrag.substr(2);
   }
+
+  return substrings;
 }
 
+Constraints::Constraints(const std::string& rconcat) : Constraints(get_substrings(rconcat)) {}
 
-
-
-Constraints::Constraints(const std::string& rconcat):Constraints(get_substrings(rconcat)){}
-
-HyPas::HyPas(const std::string & rconcat):HyPas(get_substrings(rconcat)){}
+HyPas::HyPas(const std::string& rconcat) : HyPas(get_substrings(rconcat)) {}
 
 std::vector<size_t> get_hy_v(std::string hy_s, bool hy_s_full, Mat::E emat)
 {
@@ -649,7 +660,10 @@ std::vector<size_t> get_hy_v(std::string hy_s, bool hy_s_full, Mat::E emat)
 const std::map<size_t, std::vector<size_t>> g_binary = {{Binary::E::NO, {Binary::E::YES}},
                                                         {Binary::E::YES, {Binary::E::NO}}};
 
-Graph::Graph(const Geometry& gg, const oclutil::DevInfo& di, const Constraints& cs, owrite::Writer& mowri_)
+Graph::Graph(const Geometry&         gg,
+             const oclutil::DevInfo& di,
+             const Constraints&      cs,
+             owrite::Writer&         mowri_)
   : asubg(gg, cs.sub[Mat::E::A], devinfo),
     bsubg(gg, cs.sub[Mat::E::B], devinfo),
     csubg(gg, cs.sub[Mat::E::C], devinfo),
@@ -667,7 +681,7 @@ Graph::Graph(const Geometry& gg, const oclutil::DevInfo& di, const Constraints& 
   p_coupled.push_back({{Mat::E::C, NonChi::E::UNR}, {Mat::E::C, NonChi::E::ICE}});
 }
 
-bool Graph::contains(Mat::E emat, size_t hpi, size_t value)  const
+bool Graph::contains(Mat::E emat, size_t hpi, size_t value) const
 {
   if (emat >= Mat::E::N)
   {
@@ -684,7 +698,7 @@ void HyPas::replace_where_defined(const Constraints& constraints)
   }
 }
 
-bool Graph::contains(const HyPas& hp)  const
+bool Graph::contains(const HyPas& hp) const
 {
   for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C})
   {
@@ -951,19 +965,14 @@ BSuGr::BSuGr(const Geometry& gg, const Constraint& constraint, const oclutil::De
 {
 }
 
-
-SuHy::SuHy(Mat::E e) : emat(e), vs(Mat::mat_to_xchi(emat)->N, Status::E::UNDEFINED)
-{
-}
+SuHy::SuHy(Mat::E e) : emat(e), vs(Mat::mat_to_xchi(emat)->N, Status::E::UNDEFINED) {}
 
 SuHy::SuHy(Mat::E e, const std::string& hyperstring) : SuHy(e)
 {
   vs = get_hy_v(hyperstring, true, emat);
 }
 
-SuHy::SuHy(Mat::E e, std::vector<size_t>&& vs_) : emat(e), vs(vs_)
-{
-}
+SuHy::SuHy(Mat::E e, std::vector<size_t>&& vs_) : emat(e), vs(vs_) {}
 
 HyPas::HyPas(const str_array& hyperstrings)
 {

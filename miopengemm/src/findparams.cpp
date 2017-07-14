@@ -1,10 +1,10 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <sstream>
+#include <miopengemm/enums.hpp>
 #include <miopengemm/error.hpp>
 #include <miopengemm/findparams.hpp>
-#include <miopengemm/enums.hpp>
 namespace MIOpenGEMM
 {
 
@@ -39,9 +39,9 @@ std::string get_sumstatkey(SummStat::E sumstat)
 
 /* TODO floats to doubles */
 FindParams::FindParams(float       allotted_time_,
-                       size_t    allotted_descents_,
-                       size_t    max_n_runs_per_kernel_,
-                       double    max_time_per_kernel_,
+                       size_t      allotted_descents_,
+                       size_t      max_n_runs_per_kernel_,
+                       double      max_time_per_kernel_,
                        SummStat::E sumstat_)
   : allotted_time(allotted_time_),
     allotted_descents(allotted_descents_),
@@ -66,24 +66,22 @@ std::string FindParams::get_string() const
 {
   std::stringstream ss;
   ss << "allotted time: " << allotted_time << " allotted_descents: " << allotted_descents
-     << " max_n_runs_per_kernel: " << max_n_runs_per_kernel << " max_time_per_kernel: " << max_time_per_kernel << "  sumstat: " << get_sumstatkey(sumstat)
+     << " max_n_runs_per_kernel: " << max_n_runs_per_kernel
+     << " max_time_per_kernel: " << max_time_per_kernel << "  sumstat: " << get_sumstatkey(sumstat)
      << std::endl;
   return ss.str();
 }
 
+FindParams get_quick_find_params()
+{
 
-
-FindParams get_quick_find_params(){
-
-  float                   allotted_time       = 0.003;
-  size_t                allotted_iterations = 1;
-  size_t                max_n_runs_per_kernel   = 1;
-  double max_time_per_kernel = 1e12;
-  SummStat::E sumstat = SummStat::E::MEDIAN;
+  float       allotted_time         = 0.003;
+  size_t      allotted_iterations   = 1;
+  size_t      max_n_runs_per_kernel = 1;
+  double      max_time_per_kernel   = 1e12;
+  SummStat::E sumstat               = SummStat::E::MEDIAN;
 
   return FindParams(
     allotted_time, allotted_iterations, max_n_runs_per_kernel, max_time_per_kernel, sumstat);
 }
-
-
 }

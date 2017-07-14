@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <iostream>
 #include <sstream>
@@ -10,7 +10,6 @@
 
 /* TODO : interwoven hyper-parameter */
 /* TODO : work-group size hyper-parameter (32 for vega) */
-
 
 namespace MIOpenGEMM
 {
@@ -30,7 +29,7 @@ void ByLineGenerator::setup_final()
     ss << "\nmchar is " << mchar;
     throw miog_error(ss.str());
   }
-  
+
   n_full_work_items_per_line = gg.get_coal(emat_x) / get_work_per_thread();
   n_work_items_per_line =
     n_full_work_items_per_line + (gg.get_coal(emat_x) % get_work_per_thread() != 0);
@@ -38,12 +37,11 @@ void ByLineGenerator::setup_final()
   n_work_items                 = n_work_items_per_line * gg.get_uncoal(emat_x);
   start_in_coal_last_work_item = get_work_per_thread() * n_full_work_items_per_line;
   work_for_last_item_in_coal   = gg.get_coal(emat_x) % get_work_per_thread();
-
 }
 
-ByLineGenerator::ByLineGenerator(Mat::E emat_x_,
-                                 const HyPas&     hp_,
-                                 const Geometry&                     gg_,
+ByLineGenerator::ByLineGenerator(Mat::E               emat_x_,
+                                 const HyPas&         hp_,
+                                 const Geometry&      gg_,
                                  const DerivedParams& dp_)
   : prepgen::PrepGenerator(emat_x_, hp_, gg_, dp_)
 {
@@ -93,8 +91,6 @@ void ByLineGenerator::append_derived_definitions(std::stringstream& ss)
         "DerivedParams) */\n";
 
   append_derived_definitions_additional(ss);
-  
-  
 }
 
 size_t ByLineGenerator::get_n_work_groups()
@@ -197,10 +193,8 @@ KernelString ByLineGenerator::get_kernelstring()
   ss << get_derived_string() << "\n";
   append_derived_definitions(ss);
 
-
   ss << "#define TINT" << MCHAR << " " << dp.tints[emat_x] << "\n";
   ss << "#define TSHORT" << ' ' << dp.tshort << '\n';
-
 
   ss << "\n\n"
      << "__attribute__((reqd_work_group_size(N_WORK_ITEMS_PER_GROUP,1,1)))"

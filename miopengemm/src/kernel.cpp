@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <chrono>
 #include <iomanip>
@@ -66,21 +66,20 @@ void Kernel::set_kernel_args(std::vector<std::pair<size_t, const void*>> arg_siz
   oclutil::cl_set_kernel_args(clkern, arg_sizes_values, "Kernel::set_kernel_args", true);
 }
 
-oclutil::Result Kernel::enqueue(cl_uint         num_events_in_wait_list,
-                                         const cl_event* event_wait_list)
+oclutil::Result Kernel::enqueue(cl_uint num_events_in_wait_list, const cl_event* event_wait_list)
 {
 
   return oclutil::cl_enqueue_ndrange_kernel(command_queue,
-                                               clkern,
-                                               1,
-                                               NULL,
-                                               &tgk_strings.global_work_size,
-                                               &tgk_strings.local_work_size,
-                                               num_events_in_wait_list,
-                                               event_wait_list,
-                                               &clevent,
-                                               "Kernel::enqueue",
-                                               false);
+                                            clkern,
+                                            1,
+                                            NULL,
+                                            &tgk_strings.global_work_size,
+                                            &tgk_strings.local_work_size,
+                                            num_events_in_wait_list,
+                                            event_wait_list,
+                                            &clevent,
+                                            "Kernel::enqueue",
+                                            false);
 }
 
 oclutil::Result Kernel::enqueue() { return enqueue(0, nullptr); }
@@ -89,12 +88,12 @@ void Kernel::update_times()
 {
 
   oclutil::cl_set_event_profiling_info(clevent,
-                                          CL_PROFILING_COMMAND_START,
-                                          sizeof(size_t),
-                                          &t_start,
-                                          nullptr,
-                                          "in update_times",
-                                          true);
+                                       CL_PROFILING_COMMAND_START,
+                                       sizeof(size_t),
+                                       &t_start,
+                                       nullptr,
+                                       "in update_times",
+                                       true);
   oclutil::cl_set_event_profiling_info(
     clevent, CL_PROFILING_COMMAND_END, sizeof(size_t), &t_end, nullptr, "in update_times", true);
   v_times.push_back(1e-6 * (t_end - t_start));

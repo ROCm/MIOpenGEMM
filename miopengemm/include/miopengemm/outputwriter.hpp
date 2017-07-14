@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #ifndef GUARD_MIOPENGEMM_OUTPUTWRITER_H
 #define GUARD_MIOPENGEMM_OUTPUTWRITER_H
@@ -15,20 +15,27 @@ namespace MIOpenGEMM
 namespace owrite
 {
 
-class Flusher {};
+class Flusher
+{
+};
 
-class Endline {};
+class Endline
+{
+};
 
 class BasicWriter
 {
 
-  private:  
-  bool            to_terminal;
-  std::ofstream * ptr_file;
+  private:
+  bool           to_terminal;
+  std::ofstream* ptr_file;
 
   public:
-  BasicWriter(bool to_terminal_, std::ofstream * ptr_file_): to_terminal(to_terminal_), ptr_file(ptr_file_) {}
-  BasicWriter():BasicWriter(false, nullptr){}
+  BasicWriter(bool to_terminal_, std::ofstream* ptr_file_)
+    : to_terminal(to_terminal_), ptr_file(ptr_file_)
+  {
+  }
+  BasicWriter() : BasicWriter(false, nullptr) {}
 
   template <typename T>
   BasicWriter& operator<<(T t)
@@ -52,42 +59,37 @@ BasicWriter& BasicWriter::operator<<(Flusher f);
 template <>
 BasicWriter& BasicWriter::operator<<(Endline e);
 
-
 class Writer
 {
   private:
-    Ver::E v;
-    std::string filename;
-    // to extract from v
-    bool main_to_file;
-    bool main_to_terminal;
-    bool tracker_to_file;
-    bool tracker_to_terminal;
-    
-  
-    void set_v_bits();
-    void initialise_file();
-    
+  Ver::E      v;
+  std::string filename;
+  // to extract from v
+  bool main_to_file;
+  bool main_to_terminal;
+  bool tracker_to_file;
+  bool tracker_to_terminal;
+
+  void set_v_bits();
+  void initialise_file();
+
   public:
-    std::ofstream file;
-   BasicWriter main;
-   BasicWriter tracker;
-  
+  std::ofstream file;
+  BasicWriter   main;
+  BasicWriter   tracker;
+
   public:
-  
-   Writer();
+  Writer();
   ~Writer();
-   Writer(Ver::E v, std::string filename);
+  Writer(Ver::E v, std::string filename);
 
   template <typename T>
   Writer& operator<<(T t)
   {
     main << t;
-    return  *this;
+    return *this;
   }
-
 };
-
 }
 extern owrite::Flusher Flush;
 extern owrite::Endline Endl;

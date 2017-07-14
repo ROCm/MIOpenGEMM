@@ -1,10 +1,10 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <cmath>
 #include <iostream>
-#include <tuple>
 #include <sstream>
+#include <tuple>
 #include <miopengemm/error.hpp>
 #include <miopengemm/stringutilbase.hpp>
 
@@ -22,11 +22,11 @@ void indentify(std::string& source)
   if (std::string::npos == last_lend)
   {
     std::stringstream errm;
-    
+
     errm << "the kernel up for indentification seems suspicious: "
-    << "it seems like it has no new lines in it :\n" 
-    << source;
-    throw miog_error(errm.str());                 
+         << "it seems like it has no new lines in it :\n"
+         << source;
+    throw miog_error(errm.str());
   }
 
   std::string::size_type next_lend  = source.find("\n", last_lend + 1);
@@ -203,18 +203,15 @@ std::string get_padded(size_t x, size_t length)
   return padded;
 }
 
+std::string get_stars(size_t n_stars) { return std::string(n_stars, '*'); }
 
-std::string get_stars(size_t n_stars){
-  return std::string(n_stars, '*');
-}
-
-std::string get_star_wrapped(const std::string & s){
-  auto n_stars = s.size() + 1;
+std::string get_star_wrapped(const std::string& s)
+{
+  auto              n_stars = s.size() + 1;
   std::stringstream ss;
-  ss  << "/* " << get_stars(n_stars) << "\n* " << s << " *\n" << get_stars(n_stars) << "  */";
+  ss << "/* " << get_stars(n_stars) << "\n* " << s << " *\n" << get_stars(n_stars) << "  */";
   return ss.str();
 }
-
 
 // TODO : this should be in stringutil, it is generic printing of a string.
 void add_v_string(std::stringstream& ss, const std::vector<size_t>& values)
@@ -226,7 +223,5 @@ void add_v_string(std::stringstream& ss, const std::vector<size_t>& values)
   }
   ss << "}\n";
 }
-
-
 }
 }

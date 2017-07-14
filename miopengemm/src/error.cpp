@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <iostream>
 #include <sstream>
@@ -13,12 +13,12 @@ std::string tgformat(const std::string& what_arg, std::string prefix, std::strin
 {
   std::stringstream fms;
   fms << "\n\n";
-  size_t    l_terminal = 95;
+  size_t      l_terminal = 95;
   auto        frags      = stringutil::split(what_arg, "\n");
   std::string space;
   space.resize(2 * l_terminal, ' ');
   std::string interspace("   ");
-  size_t    line_current = 1;
+  size_t      line_current = 1;
   for (auto& x : frags)
   {
     if (x.size() == 0)

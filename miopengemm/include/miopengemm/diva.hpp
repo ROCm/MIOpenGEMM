@@ -4,14 +4,14 @@
 #ifndef GUARD_MIOPENGEMM_DEVDIVA_HPP
 #define GUARD_MIOPENGEMM_DEVDIVA_HPP
 
+#include <array>
 #include <memory>
 #include <stdlib.h>
 #include <string>
 #include <vector>
-#include <array>
 #include <miopengemm/geometry.hpp>
-#include <miopengemm/solution.hpp>
 #include <miopengemm/jinx.hpp>
+#include <miopengemm/solution.hpp>
 
 namespace MIOpenGEMM
 {
@@ -23,16 +23,14 @@ class Diva
 {
 
   public:
-  Diva(Geometry                     gg_,
-       Offsets                      toff_,
-       const TFloat*                a_,
-       const TFloat*                b_,
-       const TFloat*                c_,
+  Diva(Geometry        gg_,
+       Offsets         toff_,
+       const TFloat*   a_,
+       const TFloat*   b_,
+       const TFloat*   c_,
        owrite::Writer& mowri_);
 
   Diva(Geometry gg_, Offsets toff_, owrite::Writer& mowri_);
-
-
 
   void benchgemm(const std::vector<std::string>& hyperstrings,
                  size_t                          max_number_of_runs,
@@ -54,9 +52,9 @@ class Diva
   // used when no pointer constructor is used.
   std::array<std::vector<TFloat>, Mat::E::N> __cpu_mem;
 
-  std::vector<TFloat>          c_copy;
-  std::vector<TFloat>          c_for_cpu_compute;
-  owrite::Writer& mowri;
+  std::vector<TFloat> c_copy;
+  std::vector<TFloat> c_for_cpu_compute;
+  owrite::Writer&     mowri;
 
   oclutil::CommandQueueInContext tgcq;
 
@@ -69,7 +67,7 @@ class Diva
   // read write permissions of gpu data TODO : move to enums.cpp
   std::vector<cl_mem_flags> rw_perms;
 
-  Jinx jinx;
+  std::unique_ptr<Jinx> up_jinx;
 
   size_t get_workspace_memsize();
 
@@ -84,8 +82,6 @@ class Diva
   // delegator constructor.
   Diva(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, long);
 };
-
-
 }
 }
 

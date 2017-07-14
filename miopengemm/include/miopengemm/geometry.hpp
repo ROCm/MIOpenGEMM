@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #ifndef GUARD_MIOPENGEMM_PROBLEMGEOMETRY_HPP
 #define GUARD_MIOPENGEMM_PROBLEMGEOMETRY_HPP
@@ -16,23 +16,16 @@ namespace MIOpenGEMM
 class Offsets
 {
   public:
-  
   std::array<size_t, Mem::E::N> offsets;
   std::array<size_t, Mem::E::N> tails;
-  
-  Offsets(size_t oa,
-          size_t ob,
-          size_t oc,
-          size_t ow,
-          size_t ta,
-          size_t tb,
-          size_t tc,
-          size_t tw);
 
-  //const size_t& operator[](char c) const;
+  Offsets(size_t oa, size_t ob, size_t oc, size_t ow, size_t ta, size_t tb, size_t tc, size_t tw);
+
+  // const size_t& operator[](char c) const;
 };
 
 Offsets get_padding_offsets();
+Offsets get_zero_offsets();
 
 class GeometryDerived
 {
@@ -46,10 +39,10 @@ class Geometry
 {
 
   private:
-  void initialise(bool     isColMajor_,
-                  bool     tA_,
-                  bool     tB_,
-                  bool     tC_,
+  void initialise(bool   isColMajor_,
+                  bool   tA_,
+                  bool   tB_,
+                  bool   tC_,
                   size_t lda_,
                   size_t ldb_,
                   size_t ldc_,
@@ -57,7 +50,7 @@ class Geometry
                   size_t n_,
                   size_t k_,
                   size_t workspace_size_,
-                  char     floattype_);
+                  char   floattype_);
 
   public:
   bool isColMajor;
@@ -81,10 +74,10 @@ class Geometry
   GeometryDerived derived;
 
   /* TODO : decide on style :  workspace_size vs workspaceSize. */
-  Geometry(bool     isColMajor,
-           bool     tA,
-           bool     tB,
-           bool     tC,
+  Geometry(bool   isColMajor,
+           bool   tA,
+           bool   tB,
+           bool   tC,
            size_t lda,
            size_t ldb,
            size_t ldc,
@@ -92,7 +85,7 @@ class Geometry
            size_t n,
            size_t k,
            size_t workspace_size,
-           char     floattype);
+           char   floattype);
 
   Geometry() = default;
 
@@ -115,33 +108,31 @@ class Geometry
   std::string get_string() const;
 
   std::string get_networkconfig_string() const;
-  
+
   std::string get_tabbed_string() const;
 
   void check_ldx_consistent() const;
-  
 
   size_t get_padded_area(Mat::E M) const;
-  
 };
 
+Geometry get_null_geometry();
 
-// TODO : move to cpp 
-template<typename TFloat>
-MIOpenGEMM::Geometry get_padded_geometry(bool isColMajor, bool tA, bool tB, bool tC, size_t m, size_t n, size_t k, size_t workspace_size){
+// TODO : move to cpp
+template <typename TFloat>
+MIOpenGEMM::Geometry get_padded_geometry(
+  bool isColMajor, bool tA, bool tB, bool tC, size_t m, size_t n, size_t k, size_t workspace_size)
+{
   char floattype = sizeof(TFloat) == 4 ? 'f' : 'd';
-  
+
   size_t lda = (tA == isColMajor ? k : m) + 9;
   size_t ldb = (tB == isColMajor ? n : k) + 10;
   size_t ldc = (tC == isColMajor ? n : m) + 12;
-  return  MIOpenGEMM::Geometry(
+  return MIOpenGEMM::Geometry(
     isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype);
 }
 
-
-size_t get_mat_memsize(const Geometry & gg,  const Offsets & toff, Mem::E emem);
-
-  
+size_t get_mat_memsize(const Geometry& gg, const Offsets& toff, Mem::E emem);
 }
 
 #endif

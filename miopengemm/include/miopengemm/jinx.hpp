@@ -1,7 +1,6 @@
 #ifndef GUARD_MIOPENGEMM_JINX_HPP
 #define GUARD_MIOPENGEMM_JINX_HPP
 
-
 /*******************************************************************************
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
@@ -49,12 +48,17 @@ class GpuMms
 {
   private:
   std::array<cl_mem, Mem::E::N> cl_mems;
-  oclutil::SafeClMem c_copy {"to be used in the case that c_is_const"} ;
+  oclutil::SafeClMem c_copy{"to be used in the case that c_is_const"};
 
   public:
-  GpuMms(cl_mem a_gpu_, cl_mem b_gpu_, cl_mem c_gpu_, bool c_is_const, cl_mem workspace_gpu_, size_t c_nbytes, cl_command_queue cq);
+  GpuMms(cl_mem           a_gpu_,
+         cl_mem           b_gpu_,
+         cl_mem           c_gpu_,
+         bool             c_is_const,
+         cl_mem           workspace_gpu_,
+         size_t           c_nbytes,
+         cl_command_queue cq);
   cl_mem& operator[](Mem::E x);
-
 };
 
 class Jinx
@@ -71,7 +75,10 @@ class Jinx
        cl_mem           workspace_gpu_,
        owrite::Writer&  mowri_);
 
-  void benchgemm(const HyPas & hp, size_t max_n_runs, double max_time);
+  //  Jinx(owrite::Writer& mowri_): gg(get_null_geometry()), toff(get_zero_offsets()), mowri(mowri_)
+  //  {}
+
+  void benchgemm(const HyPas& hp, size_t max_n_runs, double max_time);
   Solution find(const Constraints& constraint, const FindParams& find_params);
 
   ///////////////////////////////////////////////////////////////////////////////////////////
@@ -81,7 +88,7 @@ class Jinx
   std::string            outputfilename;
   const Geometry         gg;
   const Offsets          toff;
-  GpuMms                 gpum;  
+  GpuMms                 gpum;
   const oclutil::DevInfo devinfo;
   owrite::Writer&        mowri;
   // special purpose output writer
@@ -106,7 +113,7 @@ class Jinx
 
   // TODO : floats to doubles
   float get_gflops(float timems);
-  
+
   void set_medians();
   void address_check_valid();
   void address_check_valid_and_reliable();
@@ -125,12 +132,10 @@ class Jinx
 
   std::string get_run_times_heading();
   std::string get_run_time_string(cl_int status);
-  
-  
 
-  //HyPas get_hyper_param_start();
-  void update_total_elapsed_seconds();
-  Solution single_descent_find(float allotted_time, const Constraints&, const FindParams &);
+  // HyPas get_hyper_param_start();
+  void     update_total_elapsed_seconds();
+  Solution single_descent_find(float allotted_time, const Constraints&, const FindParams&);
 };
 }
 

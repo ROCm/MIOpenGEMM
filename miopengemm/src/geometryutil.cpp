@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <tuple>
 #include <miopengemm/geometryutil.hpp>
@@ -7,9 +7,9 @@
 namespace MIOpenGEMM
 {
 
-std::vector<Geometry> get_from_m_n_k_tA_tB(
-  const std::vector<std::tuple<size_t, size_t, size_t, bool, bool>>& basicgeos,
-  size_t workspace_size)
+std::vector<Geometry>
+get_from_m_n_k_tA_tB(const std::vector<std::tuple<size_t, size_t, size_t, bool, bool>>& basicgeos,
+                     size_t workspace_size)
 {
 
   std::vector<Geometry> geometries;
@@ -17,12 +17,12 @@ std::vector<Geometry> get_from_m_n_k_tA_tB(
   bool                  tA;
   bool                  tB;
   bool                  tC = false;
-  size_t              lda;
-  size_t              ldb;
-  size_t              ldc;
-  size_t              m;
-  size_t              n;
-  size_t              k;
+  size_t                lda;
+  size_t                ldb;
+  size_t                ldc;
+  size_t                m;
+  size_t                n;
+  size_t                k;
 
   bool ldx_offset = false;
 
@@ -38,8 +38,8 @@ std::vector<Geometry> get_from_m_n_k_tA_tB(
 }
 
 std::vector<Geometry> get_from_m_n_k_ldaABC_tA_tB(
-  const std::vector<
-    std::tuple<size_t, size_t, size_t, size_t, size_t, size_t, bool, bool>>& basicgeos,
+  const std::vector<std::tuple<size_t, size_t, size_t, size_t, size_t, size_t, bool, bool>>&
+         basicgeos,
   size_t workspace_size)
 {
 
@@ -48,12 +48,12 @@ std::vector<Geometry> get_from_m_n_k_ldaABC_tA_tB(
   bool                  tA;
   bool                  tB;
   bool                  tC = false;
-  size_t              lda;
-  size_t              ldb;
-  size_t              ldc;
-  size_t              m;
-  size_t              n;
-  size_t              k;
+  size_t                lda;
+  size_t                ldb;
+  size_t                ldc;
+  size_t                m;
+  size_t                n;
+  size_t                k;
 
   for (auto& problem : basicgeos)
   {

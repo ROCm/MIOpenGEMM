@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <cmath>
 #include <iostream>
@@ -14,22 +14,17 @@
 namespace MIOpenGEMM
 {
 
-size_t get_mat_memsize(const Geometry & gg,  const Offsets & toff, Mem::E emem)
+size_t get_mat_memsize(const Geometry& gg, const Offsets& toff, Mem::E emem)
 {
   Mat::E emat = Mat::mem_to_mat(emem);
-  return gg.derived.float_size_bytes * (gg.get_padded_area(emat) + toff.offsets[emem] + toff.tails[emem]);
+  return gg.derived.float_size_bytes *
+         (gg.get_padded_area(emat) + toff.offsets[emem] + toff.tails[emem]);
 }
 
+Offsets::Offsets(
+  size_t oa_, size_t ob_, size_t oc_, size_t ow_, size_t ta_, size_t tb_, size_t tc_, size_t tw_)
+{
 
-Offsets::Offsets(size_t oa_,
-                 size_t ob_,
-                 size_t oc_,
-                 size_t ow_,
-                 size_t ta_,
-                 size_t tb_,
-                 size_t tc_,
-                 size_t tw_){
-                   
   offsets[Mem::E::A] = oa_;
   offsets[Mem::E::B] = ob_;
   offsets[Mem::E::C] = oc_;
@@ -39,13 +34,13 @@ Offsets::Offsets(size_t oa_,
   tails[Mem::E::B] = tb_;
   tails[Mem::E::C] = tc_;
   tails[Mem::E::W] = tw_;
-
 }
 
-Offsets get_padding_offsets() {
-  return Offsets(11,17,13,22,61,15,18,7);
-}
+Offsets get_padding_offsets() { return Offsets(11, 17, 13, 22, 61, 15, 18, 7); }
 
+Offsets get_zero_offsets() { return Offsets(0, 0, 0, 0, 0, 0, 0, 0); }
+
+Geometry get_null_geometry() { return {false, false, false, false, 1, 1, 1, 1, 1, 1, 1, 'f'}; }
 
 char get_floattype(size_t nbits)
 {
@@ -184,14 +179,12 @@ void Geometry::check_ldx_consistent() const
     errm_ss << get_string();
     errm_ss << ", and the problems detected are:  ";
 
-
-
     for (auto x : {Mat::E::A, Mat::E::B, Mat::E::C})
     {
       if (ldX[x] < get_coal(x))
       {
-        errm_ss << "ld" << Mat::M.name[x] << " (" << ldX[x] << ") <  coal_" << Mat::M.name[x] << " ("
-                << get_coal(x) << ").  ";
+        errm_ss << "ld" << Mat::M.name[x] << " (" << ldX[x] << ") <  coal_" << Mat::M.name[x]
+                << " (" << get_coal(x) << ").  ";
       }
     }
 
@@ -211,10 +204,10 @@ bool Geometry::coal_is_pll_k(Mat::E M) const
          2;
 }
 
-void Geometry::initialise(bool     isColMajor_,
-                          bool     tA_,
-                          bool     tB_,
-                          bool     tC_,
+void Geometry::initialise(bool   isColMajor_,
+                          bool   tA_,
+                          bool   tB_,
+                          bool   tC_,
                           size_t lda_,
                           size_t ldb_,
                           size_t ldc_,
@@ -222,7 +215,7 @@ void Geometry::initialise(bool     isColMajor_,
                           size_t n_,
                           size_t k_,
                           size_t workspace_size_,
-                          char     floattype_)
+                          char   floattype_)
 {
 
   isColMajor     = isColMajor_;
@@ -252,10 +245,10 @@ void Geometry::initialise(bool     isColMajor_,
   derived.reset(floattype);
 }
 
-Geometry::Geometry(bool     isColMajor_,
-                   bool     tA_,
-                   bool     tB_,
-                   bool     tC_,
+Geometry::Geometry(bool   isColMajor_,
+                   bool   tA_,
+                   bool   tB_,
+                   bool   tC_,
                    size_t lda_,
                    size_t ldb_,
                    size_t ldc_,
@@ -263,7 +256,7 @@ Geometry::Geometry(bool     isColMajor_,
                    size_t n_,
                    size_t k_,
                    size_t workspace_size_,
-                   char     floattype_)
+                   char   floattype_)
 {
   initialise(isColMajor_, tA_, tB_, tC_, lda_, ldb_, ldc_, m_, n_, k_, workspace_size_, floattype_);
 }
@@ -348,37 +341,29 @@ std::string Geometry::get_string() const { return get_networkconfig_string(); }
 std::string Geometry::get_networkconfig_string() const
 {
   std::stringstream geometry_stringstream;
-  geometry_stringstream << "tC" << tX[Mat::E::C] << "_tA" << tX[Mat::E::A] << "_tB"
-                        << tX[Mat::E::B] << "_colMaj" << isColMajor << "_m" << m << "_n" << n
-                        << "_k" << k << "_lda" << ldX[Mat::E::A] << "_ldb" << ldX[Mat::E::B]
-                        << "_ldc" << ldX[Mat::E::C] << "_ws" << workspace_size << "_f"
-                        << derived.float_size_bits;
+  geometry_stringstream << "tC" << tX[Mat::E::C] << "_tA" << tX[Mat::E::A] << "_tB" << tX[Mat::E::B]
+                        << "_colMaj" << isColMajor << "_m" << m << "_n" << n << "_k" << k << "_lda"
+                        << ldX[Mat::E::A] << "_ldb" << ldX[Mat::E::B] << "_ldc" << ldX[Mat::E::C]
+                        << "_ws" << workspace_size << "_f" << derived.float_size_bits;
   return geometry_stringstream.str();
 }
 
 std::string Geometry::get_tabbed_string() const
 {
-  
+
   std::stringstream geometry_stringstream;
-  geometry_stringstream << "tC=" << tX[Mat::E::C] 
-                        << " tA=" << tX[Mat::E::A] 
-                        << " tB=" << tX[Mat::E::B] 
-                        << " colMaj=" << isColMajor
+  geometry_stringstream << "tC=" << tX[Mat::E::C] << " tA=" << tX[Mat::E::A]
+                        << " tB=" << tX[Mat::E::B] << " colMaj=" << isColMajor
                         << " m=" << stringutil::get_char_padded(m, 5)
                         << " n=" << stringutil::get_char_padded(n, 5)
-                        << " k=" << stringutil::get_char_padded(k, 5) 
-                        << " lda=" << stringutil::get_char_padded(ldX[Mat::E::A], 5) 
+                        << " k=" << stringutil::get_char_padded(k, 5)
+                        << " lda=" << stringutil::get_char_padded(ldX[Mat::E::A], 5)
                         << " ldb=" << stringutil::get_char_padded(ldX[Mat::E::B], 5)
                         << " ldc=" << stringutil::get_char_padded(ldX[Mat::E::C], 5)
-                        << " ws=" << workspace_size
-                        << " f=" << derived.float_size_bits;
+                        << " ws=" << workspace_size << " f=" << derived.float_size_bits;
 
-    return geometry_stringstream.str();
-
+  return geometry_stringstream.str();
 }
 
-size_t Geometry::get_padded_area(Mat::E M) const{
-  return get_uncoal(M)*ldX[M];
-}
-  
+size_t Geometry::get_padded_area(Mat::E M) const { return get_uncoal(M) * ldX[M]; }
 }

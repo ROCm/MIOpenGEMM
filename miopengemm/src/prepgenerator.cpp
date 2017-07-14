@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <sstream>
 #include <miopengemm/error.hpp>
@@ -9,7 +9,7 @@ namespace MIOpenGEMM
 {
 namespace prepgen
 {
-  
+
 void PrepGenerator::set_usage()
 {
 
@@ -39,10 +39,10 @@ void PrepGenerator::set_usage()
       uses_a = false;
       uses_b = true;
     }
-    
+
     else
     {
-      throw miog_error("Unrecognised emat_x in forallgenerator.cpp");    
+      throw miog_error("Unrecognised emat_x in forallgenerator.cpp");
     }
   }
 }
@@ -59,16 +59,16 @@ void PrepGenerator::append_basic_what_definitions(std::stringstream& ss)
      << "#define DIM_UNCOAL " << gg.get_uncoal(emat_x) << "\n\n";
 }
 
-PrepGenerator::PrepGenerator(Mat::E emat_x_,
-                             const HyPas&     hp_,
-                             const Geometry&                     gg_,
+PrepGenerator::PrepGenerator(Mat::E               emat_x_,
+                             const HyPas&         hp_,
+                             const Geometry&      gg_,
                              const DerivedParams& dp_)
-                             
-  : basegen::BaseGenerator(hp_, gg_, dp_){
-    emat_x = emat_x_;
-    MCHAR = Mat::M.name[emat_x];
-    mchar = Mat::M.lcase_name[emat_x];
-  }
-}
 
+  : basegen::BaseGenerator(hp_, gg_, dp_)
+{
+  emat_x = emat_x_;
+  MCHAR  = Mat::M.name[emat_x];
+  mchar  = Mat::M.lcase_name[emat_x];
+}
+}
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #ifndef GUARD_MIOPENGEMM_SCOTMACGRID_HPP
 #define GUARD_MIOPENGEMM_SCOTMACGRID_HPP
@@ -27,28 +27,24 @@ namespace macgrid
 // at skew0 = skew + 1, (64, 256) are a:b = 4:1 and (32, 128) have a:b = 8:1
 const size_t skew0 = 10;
 
-
-class Grid{
+class Grid
+{
 
   private:
-  void bad_initialise(const std::string & x);
-  void good_initialise(size_t gA, size_t gB);  
+  void bad_initialise(const std::string& x);
+  void good_initialise(size_t gA, size_t gB);
   size_t grid_A;
   size_t grid_B;
-  
+
   public:
-  bool is_good;
+  bool        is_good;
   std::string error_message;
   Grid(size_t mac, size_t skew);
   size_t at(Mat::E emat);
-  
 };
 
-
-//std::tuple<bool, std::string, std::array<size_t, 2>> get_grid(size_t mac, size_t skew);
-
+// std::tuple<bool, std::string, std::array<size_t, 2>> get_grid(size_t mac, size_t skew);
 }
 }
-
 
 #endif

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <chrono>
 #include <miopengemm/error.hpp>
@@ -19,13 +19,8 @@ template <typename TFloat>
 class NNInner
 {
   public:
-  inline TFloat operator()(const TFloat* a,
-                           const TFloat* b,
-                           size_t      x,
-                           size_t      y,
-                           size_t      lda,
-                           size_t      ldb,
-                           size_t      k)
+  inline TFloat
+  operator()(const TFloat* a, const TFloat* b, size_t x, size_t y, size_t lda, size_t ldb, size_t k)
   {
     TFloat inner = 0;
     for (size_t z = 0; z < k; ++z)
@@ -40,13 +35,8 @@ template <typename TFloat>
 class NTInner
 {
   public:
-  inline TFloat operator()(const TFloat* a,
-                           const TFloat* b,
-                           size_t      x,
-                           size_t      y,
-                           size_t      lda,
-                           size_t      ldb,
-                           size_t      k)
+  inline TFloat
+  operator()(const TFloat* a, const TFloat* b, size_t x, size_t y, size_t lda, size_t ldb, size_t k)
   {
     TFloat inner = 0;
     for (size_t z = 0; z < k; ++z)
@@ -61,13 +51,8 @@ template <typename TFloat>
 class TNInner
 {
   public:
-  inline TFloat operator()(const TFloat* a,
-                           const TFloat* b,
-                           size_t      x,
-                           size_t      y,
-                           size_t      lda,
-                           size_t      ldb,
-                           size_t      k)
+  inline TFloat
+  operator()(const TFloat* a, const TFloat* b, size_t x, size_t y, size_t lda, size_t ldb, size_t k)
   {
     TFloat inner = 0;
     for (size_t z = 0; z < k; ++z)
@@ -198,15 +183,15 @@ void check_cpu_algs(std::vector<std::string> cpu_algs)
 }
 
 template <typename TFloat>
-void gemms_cpu(Geometry                     gg,
-               Offsets                      toff,
-               const TFloat*                a,
-               const TFloat*                b,
-               TFloat*                      c,
-               TFloat                       alpha,
-               TFloat                       beta,
-               std::vector<std::string>     algs,
-               owrite::Writer& mowri)
+void gemms_cpu(Geometry                 gg,
+               Offsets                  toff,
+               const TFloat*            a,
+               const TFloat*            b,
+               TFloat*                  c,
+               TFloat                   alpha,
+               TFloat                   beta,
+               std::vector<std::string> algs,
+               owrite::Writer&          mowri)
 {
   check_cpu_algs(algs);
   bool tA = gg.tX[Mat::E::A];
@@ -246,24 +231,24 @@ void gemms_cpu(Geometry                     gg,
   }
 }
 
-template void gemms_cpu(Geometry                     gg,
-                        Offsets                      toff,
-                        const float*                 a,
-                        const float*                 b,
-                        float*                       c,
-                        float                        alpha,
-                        float                        beta,
-                        std::vector<std::string>     algs,
-                        owrite::Writer& mowri);
+template void gemms_cpu(Geometry                 gg,
+                        Offsets                  toff,
+                        const float*             a,
+                        const float*             b,
+                        float*                   c,
+                        float                    alpha,
+                        float                    beta,
+                        std::vector<std::string> algs,
+                        owrite::Writer&          mowri);
 
-template void gemms_cpu(Geometry                     gg,
-                        Offsets                      toff,
-                        const double*                a,
-                        const double*                b,
-                        double*                      c,
-                        double                       alpha,
-                        double                       beta,
-                        std::vector<std::string>     algs,
-                        owrite::Writer& mowri);
+template void gemms_cpu(Geometry                 gg,
+                        Offsets                  toff,
+                        const double*            a,
+                        const double*            b,
+                        double*                  c,
+                        double                   alpha,
+                        double                   beta,
+                        std::vector<std::string> algs,
+                        owrite::Writer&          mowri);
 }
 }

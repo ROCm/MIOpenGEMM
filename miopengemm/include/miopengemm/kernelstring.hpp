@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #ifndef GUARD_MIOPENGEMM_KERNELSTRINGS_HPP
 #define GUARD_MIOPENGEMM_KERNELSTRINGS_HPP
@@ -10,7 +10,6 @@
 
 namespace MIOpenGEMM
 {
-
 
 // maps dependencies of execution order of kernels
 extern const std::vector<std::vector<size_t>> kernel_dependencies;

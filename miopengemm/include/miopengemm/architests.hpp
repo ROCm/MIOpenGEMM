@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #ifndef GUARD_MIOPENGEMM_ARCHITESTS_HPP
 #define GUARD_MIOPENGEMM_ARCHITESTS_HPP
@@ -13,16 +13,13 @@ namespace MIOpenGEMM
 namespace architests
 {
 
-class Stat{
+class Stat
+{
   public:
-  
-  bool is_good; 
+  bool        is_good;
   std::string msg;
-  Stat(const oclutil::DevInfo &, const DerivedParams&, const Geometry&, const HyPas&);
-  
-  
+  Stat(const oclutil::DevInfo&, const DerivedParams&, const Geometry&, const HyPas&);
 };
-
 }
 }
 

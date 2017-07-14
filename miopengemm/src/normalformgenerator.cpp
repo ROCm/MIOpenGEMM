@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <sstream>
 #include <string>
@@ -15,18 +15,15 @@ class NormalFormGenerator : public prepgen::PrepGenerator
 {
 
   public:
-  NormalFormGenerator(Mat::E emat_x_, 
-                      const HyPas&     hp_,
-                      const Geometry&                     gg_,
+  NormalFormGenerator(Mat::E               emat_x_,
+                      const HyPas&         hp_,
+                      const Geometry&      gg_,
                       const DerivedParams& dp_)
     : prepgen::PrepGenerator(emat_x_, hp_, gg_, dp_)
   {
   }
 
-  virtual void set_type() override final
-  {
-    type = "nform" + mchar;
-  }
+  virtual void set_type() override final { type = "nform" + mchar; }
 
   size_t get_local_work_size() override final { return dp.at(emat_x).cw2_local_work_size; }
 
@@ -160,42 +157,30 @@ for (size_t mu_perp_i = 0; mu_perp_i < MICRO_TILE_PERP_UNROLL; ++mu_perp_i) {
             get_local_work_size()};
   }
 
-
-  virtual void setup_final() override final{}
-
-
+  virtual void setup_final() override final {}
 };
 
-
-
-KernelString get_nform_kernelstring(Mat::E emat_x, 
-const HyPas&     hp,
-                                    const Geometry&                     gg,
-                                    const DerivedParams& dp)
+KernelString
+get_nform_kernelstring(Mat::E emat_x, const HyPas& hp, const Geometry& gg, const DerivedParams& dp)
 {
   NormalFormGenerator nfg(emat_x, hp, gg, dp);
   nfg.setup();
   return nfg.get_kernelstring();
 }
-
 }
 }
 
-
-
-  //if (emat_x != Mat::E::A and emat_x != Mat::E::B){
-    //throw miog_error("get_copy_kernelstring only for A and B matrices");
-  //}
-  
-  //std::string nform_string = emat_x == Mat::E::A ? "nforma" : "nformb";  
-  
-  
-//KernelString get_nformb_kernelstring(const HyPas&     hp,
-                                     //const Geometry&                     gg,
-                                     //const DerivedParams& dp)
-//{
-  //NormalFormGenerator nfg(hp, gg, dp, "nformb");
-  //nfg.setup();
-  //return nfg.get_kernelstring();
+// if (emat_x != Mat::E::A and emat_x != Mat::E::B){
+// throw miog_error("get_copy_kernelstring only for A and B matrices");
 //}
 
+// std::string nform_string = emat_x == Mat::E::A ? "nforma" : "nformb";
+
+// KernelString get_nformb_kernelstring(const HyPas&     hp,
+// const Geometry&                     gg,
+// const DerivedParams& dp)
+//{
+// NormalFormGenerator nfg(hp, gg, dp, "nformb");
+// nfg.setup();
+// return nfg.get_kernelstring();
+//}

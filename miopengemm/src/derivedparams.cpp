@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <algorithm>
 #include <cmath>
@@ -7,20 +7,17 @@
 #include <sstream>
 #include <miopengemm/derivedparams.hpp>
 #include <miopengemm/error.hpp>
-#include <miopengemm/tiling.hpp>
 #include <miopengemm/macgrid.hpp>
+#include <miopengemm/tiling.hpp>
 
 namespace MIOpenGEMM
 {
-
-
 
 size_t DerivedParams::get_target_ld(Mat::E emat_x) const { return at(emat_x).cw1_target_ldx; }
 
 size_t get_target(size_t grid_size, size_t above_distance, size_t x)
 {
-  size_t to_grid_line =
-    (x - above_distance) / grid_size + ((x - above_distance) % grid_size != 0);
+  size_t to_grid_line = (x - above_distance) / grid_size + ((x - above_distance) % grid_size != 0);
 
   return grid_size * to_grid_line + above_distance;
 }
@@ -73,9 +70,10 @@ void DerivedParams::reset_cw_params(Mat::E emat_x)
                      "there's a call to reset_cw_params");
   }
 
-  at(emat_x).cw_global_offset = (emat_x == Mat::E::B && ptr_hp->sus[Mat::E::A].vs[Chi::E::WOS] != Scratch::E::UNUSED)
-                                  ? at(Mat::E::A).cw_n_elements
-                                  : 0;
+  at(emat_x).cw_global_offset =
+    (emat_x == Mat::E::B && ptr_hp->sus[Mat::E::A].vs[Chi::E::WOS] != Scratch::E::UNUSED)
+      ? at(Mat::E::A).cw_n_elements
+      : 0;
 }
 
 void DerivedParams::reset_ga3_params()
@@ -99,27 +97,21 @@ void DerivedParams::reset_ga3_params()
   ga3_last_super_column_width = bdps.n_groups % ga3_super_column_width;
 }
 
-
-
-
-
-Derivabilty::Derivabilty(const HyPas & hp, const Geometry& gg){
+Derivabilty::Derivabilty(const HyPas& hp, const Geometry& gg)
+{
   DerivedParams dp(hp, gg, "uninitialised");
-  auto tup = dp.set_fragile();
-  is_derivable = std::get<0>(tup);
-  msg = std::get<1>(tup);
+  auto          tup = dp.set_fragile();
+  is_derivable      = std::get<0>(tup);
+  msg               = std::get<1>(tup);
 }
 
-bool is_dvble(const HyPas & hp, const Geometry& gg){
+bool is_dvble(const HyPas& hp, const Geometry& gg)
+{
   Derivabilty dble(hp, gg);
   return dble.is_derivable;
 }
 
-
-
-DerivedParams::DerivedParams(const HyPas& hp_,
-                             const Geometry&                 gg_,
-                             std::string                     s)
+DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_, std::string s)
   : ptr_hp(&hp_), ptr_gg(&gg_)
 {
 
@@ -137,7 +129,8 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
 
   set_should_be_hyperparams();
 
-  macgrid::Grid grid(ptr_hp->sus[Mat::E::C].vs[NonChi::E::MAC], ptr_hp->sus[Mat::E::C].vs[NonChi::E::SKW]);
+  macgrid::Grid grid(ptr_hp->sus[Mat::E::C].vs[NonChi::E::MAC],
+                     ptr_hp->sus[Mat::E::C].vs[NonChi::E::SKW]);
   if (!grid.is_good)
   {
     return std::make_tuple(false, grid.error_message);
@@ -193,7 +186,6 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
         at(emat_x).n_elements_in_unroll / at(emat_x).cw2_local_work_size;
     }
 
-
     if (ptr_hp->sus[emat_x].vs[Chi::E::WOS] != Scratch::E::UNUSED)
     {
       reset_cw_params(emat_x);
@@ -204,8 +196,9 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
     if (ptr_gg->get_non_k_dim(emat_x) < at(emat_x).macro_tile_length)
     {
       set_status_ss << "ptr_gg->get_non_k_dim( " << Mat::M.name[emat_x] << " )  < at ( "
-                    << Mat::M.name[emat_x] << " ).macro_tile_length, this means the tile is too big "
-                                           "to work with  "
+                    << Mat::M.name[emat_x]
+                    << " ).macro_tile_length, this means the tile is too big "
+                       "to work with  "
                     << Mat::M.name[emat_x] << " . not considering this kernel. ";
     }
   }
@@ -308,30 +301,29 @@ void DerivedParams::initialise_chis()
   chis[Mat::E::B] = &bdps;
 }
 
+std::string get_tint(size_t memsize)
+{
 
-std::string get_tint(size_t memsize){
-  
   std::string tint;
-  if (memsize < std::pow(2, 16)){ // 2 bytes = 16 bits. 
+  if (memsize < std::pow(2, 16))
+  {  // 2 bytes = 16 bits.
     tint = "ushort";
   }
-  
-  else if (memsize < std::pow(2, 32)){ // 4 bytes = 32 bits. 
+
+  else if (memsize < std::pow(2, 32))
+  {  // 4 bytes = 32 bits.
     tint = "unsigned";
   }
-  
-  else{
+
+  else
+  {
     tint = "size_t";
   }
-  
+
   return tint;
-  
 }
 
-
-
-DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_)
-  : ptr_hp(&hp_), ptr_gg(&gg_)
+DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_) : ptr_hp(&hp_), ptr_gg(&gg_)
 {
 
   initialise_chis();
@@ -388,8 +380,9 @@ DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_)
 
   pragma_unroll_string = ptr_hp->sus[Mat::E::C].vs[NonChi::E::PUN] == 1 ? "#pragma unroll\n" : "";
 
-  effective_k_varies_string = ptr_hp->sus[Mat::E::C].vs[NonChi::E::UFO] == 0 ? "__K__" : "k_plus_offset";
-  t_float                   = ptr_gg->derived.float_size_bits == 32 ? "float" : "double";
+  effective_k_varies_string =
+    ptr_hp->sus[Mat::E::C].vs[NonChi::E::UFO] == 0 ? "__K__" : "k_plus_offset";
+  t_float = ptr_gg->derived.float_size_bits == 32 ? "float" : "double";
 
   main_n_work_groups = ptr_hp->sus[Mat::E::C].vs[NonChi::E::ICE] *
                        ((ptr_gg->m / at(Mat::E::A).macro_tile_length) +
@@ -434,25 +427,23 @@ DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_)
                                    : 0;
 
   // set tints. TODO here.
-  tints[Mem::E::A] = get_tint(ptr_gg->get_uncoal(Mat::E::A)*(ptr_gg->ldX[Mat::E::A])); // TODO : does UFO need increase here
-  tints[Mem::E::B] = get_tint(ptr_gg->get_uncoal(Mat::E::B)*(ptr_gg->ldX[Mat::E::B]));
-  tints[Mem::E::C] = get_tint(ptr_gg->get_uncoal(Mat::E::C)*(ptr_gg->ldX[Mat::E::C])); 
+  tints[Mem::E::A] = get_tint(ptr_gg->get_uncoal(Mat::E::A) *
+                              (ptr_gg->ldX[Mat::E::A]));  // TODO : does UFO need increase here
+  tints[Mem::E::B] = get_tint(ptr_gg->get_uncoal(Mat::E::B) * (ptr_gg->ldX[Mat::E::B]));
+  tints[Mem::E::C] = get_tint(ptr_gg->get_uncoal(Mat::E::C) * (ptr_gg->ldX[Mat::E::C]));
   tints[Mem::E::W] = get_tint(ptr_gg->workspace_size);
-  tintk = get_tint(ptr_gg->k + 2*ptr_hp->sus[Mat::E::C].vs[NonChi::E::UNR]); // TODO : make this tight and prove correct. 
+  tintk            = get_tint(
+    ptr_gg->k +
+    2 * ptr_hp->sus[Mat::E::C].vs[NonChi::E::UNR]);  // TODO : make this tight and prove correct.
   tshort = "ushort";
-  
 
   tints[Mem::E::A] = "size_t";
   tints[Mem::E::B] = "size_t";
   tints[Mem::E::C] = "size_t";
   tints[Mem::E::W] = "size_t";
-  tintk = "size_t";
-  tshort = "size_t";
-    
+  tintk            = "size_t";
+  tshort           = "size_t";
 }
-
-
-
 
 /* TODO : move to hyper params */
 void DerivedParams::set_should_be_hyperparams()
@@ -471,11 +462,8 @@ void DerivedParams::set_should_be_hyperparams()
   }
 }
 
-
-size_t DerivedParams::get_stride(Mat::E emat_x,
-                                   bool       pll_k,
-                                   bool       is_macro,
-                                   size_t   workspace_type_) const
+size_t
+DerivedParams::get_stride(Mat::E emat_x, bool pll_k, bool is_macro, size_t workspace_type_) const
 {
 
   if (workspace_type_ == 0)
