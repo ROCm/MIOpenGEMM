@@ -18,7 +18,6 @@
 #include <miopengemm/kernel.hpp>
 #include <miopengemm/kernelcache.hpp>
 #include <miopengemm/kernelstring.hpp>
-#include <miopengemm/miogemm.hpp>
 #include <miopengemm/oclutil.hpp>
 #include <miopengemm/outputwriter.hpp>
 #include <miopengemm/solution.hpp>

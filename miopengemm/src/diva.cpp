@@ -19,13 +19,13 @@
 #include <miopengemm/floattostring.hpp>
 #include <miopengemm/geometry.hpp>
 #include <miopengemm/graph.hpp>
-#include <miopengemm/miogemm.hpp>
 #include <miopengemm/oclutil.hpp>
 #include <miopengemm/outputwriter.hpp>
 #include <miopengemm/redirection.hpp>
 #include <miopengemm/setabcw.hpp>
 #include <miopengemm/slowcpugemm.hpp>
 #include <miopengemm/stringutilbase.hpp>
+#include <miopengemm/jinx.hpp>
 
 namespace MIOpenGEMM
 {
@@ -83,8 +83,20 @@ Diva<TFl>::Diva(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, long)
     tgcq(mowri, "command queue of Diva"),
     gpu_safemem(Mem::E::N, std::string("gpu_safemem vector of Diva")),
     mem_size(Mem::E::N),
-    rw_perms(Mem::E::N)
-{
+    rw_perms(Mem::E::N),
+  
+      jinx(tgcq.command_queue,
+                          gg,
+                          toff,
+                          gpu_safemem[Mem::E::A].clmem,
+                          gpu_safemem[Mem::E::B].clmem,
+                          gpu_safemem[Mem::E::C].clmem,
+                          false, // c is not const
+                          gpu_safemem[Mem::E::W].clmem,
+                          mowri)
+                          {
+
+
 
 }
 
@@ -182,43 +194,22 @@ void Diva<TFl>::benchgemm(const std::vector<std::string>& hyperstrings,
                           double                          max_time_per_kernel)
 {
 
-  // dev code's connection to the outside
   std::vector<HyPas> hps;
   for (auto& hyperstring : hyperstrings)
   {
-    MIOpenGEMM::benchgemm(tgcq.command_queue,
-                          hyperstring,
-                          max_number_of_runs,
-                          max_time_per_kernel,
-                          gg,
-                          toff,
-                          gpu_safemem[Mem::E::A].clmem,
-                          gpu_safemem[Mem::E::B].clmem,
-                          gpu_safemem[Mem::E::C].clmem,
-                          gpu_safemem[Mem::E::W].clmem,
-                          mowri);
+       
+    jinx.benchgemm(hyperstring, max_number_of_runs, max_time_per_kernel);
+    
   }
 }
 
 template <typename TFl>
 Solution Diva<TFl>::find(const FindParams& find_params, std::string constraints_string)
 {
-  // dev code's connection to the outside
-  bool     c_is_const = false;
- 
- 
-  //zzzzzzzz 
-  Solution tgs        = MIOpenGEMM::find(tgcq.command_queue,
-                                  find_params,
-                                  gpu_safemem[Mem::E::A].clmem,
-                                  gpu_safemem[Mem::E::B].clmem,
-                                  gpu_safemem[Mem::E::C].clmem,
-                                  gpu_safemem[Mem::E::W].clmem,
-                                  constraints_string,
-                                  gg,
-                                  toff,
-                                  mowri,
-                                  c_is_const);
+
+                          
+Solution tgs = jinx.find(constraints_string, find_params);
+
   return tgs;
 }
 

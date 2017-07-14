@@ -28,21 +28,6 @@
 namespace MIOpenGEMM
 {
 
-cl_mem get_single(cl_command_queue command_queue, const std::string& hash)
-{
-  size_t c_memsize = 1;
-  cl_mem single;
-  oclutil::cl_set_buffer_from_command_queue(
-    single,
-    command_queue,
-    CL_MEM_READ_WRITE,
-    c_memsize,
-    NULL,
-    hash + ", in function cl_mem get_single which returns a cl_mem",
-    true);
-  return single;
-}
-
 Solution find(cl_command_queue             command_queue,
               const FindParams&            find_params,
               cl_mem                       a,
@@ -57,82 +42,25 @@ Solution find(cl_command_queue             command_queue,
 {
 
   gg.check_ldx_consistent();
-  bool full_constraints_expected = false;
-
-  Jinx oger(                  command_queue,
-                              gg,
-                              toff,
-                              a,
-                              b,
-                              c,
-                              c_is_const,
-                              workspace,
-                              //constraints,
-                              //full_constraints_expected,
-                              mowri);
-                              
+  Jinx oger(command_queue, gg, toff, a, b, c, c_is_const, workspace, mowri);                              
   return oger.find(constraints, find_params);
 }
 
 std::tuple<bool, std::string> check_for_default(cl_command_queue command_queue,
-                                                std::string     constraints_string,
-                                                const Geometry& gg,
-                                                std::string     k_comment)
+                                                std::string      constraints_string,
+                                                const Geometry&  gg,
+                                                std::string      k_comment)
 {
-
   oclutil::DevInfo devinfo(command_queue);
-  std::string                  k_dev = devinfo.identifier;
-  std::string                  k_con = constraints_string;
-  std::string                  k_geo = gg.get_string();
-
-  std::stringstream ss;
-  ss << "\nfailed to find cache entry from keys:\n";
-  ss << get_cache_keys_string(k_dev, k_con, k_geo, k_comment);
-
-  std::string final_comment(
-    "(see tests/gencache.cpp for an example of generating a cache entry)\n");
-
-  if (kernel_cache.count(k_dev) == 0)
-  {
-    ss << "Unrecognised device identifier in cache.\nMaybe the cache needs to "
-          "be built for this "
-          "device? \n"
-       << final_comment;
-    return std::make_tuple(false, ss.str());
-  }
-
-  if (kernel_cache.at(k_dev).count(k_con) == 0)
-  {
-    ss << "Unrecognised constraints_string in cache.\nMaybe the cache needs to "
-          "be built with these "
-          "constraints? \n"
-       << final_comment;
-    return std::make_tuple(false, ss.str());
-  }
-
-  if (kernel_cache.at(k_dev).at(k_con).count(k_geo) == 0)
-  {
-    ss << "Unrecognised geometry key (gg.get_string()) in cache.\nMaybe a "
-          "cache entry needs to be "
-          "generated with this geometry? \n"
-       << final_comment;
-    return std::make_tuple(false, ss.str());
-  }
-
-  if (kernel_cache.at(k_dev).at(k_con).at(k_geo).count(k_comment) == 0)
-  {
-    ss << "Unrecognised k_comment in cache\n";
-    return std::make_tuple(false, ss.str());
-  }
-
-  return std::make_tuple(true, "");
+  CacheKey ckey(devinfo.identifier, constraints_string, gg.get_string(), k_comment);
+  throw miog_error("use class member function of kernel cache : implement this or (preferred) remove this duplicated functionality");
 }
 
 // fall back solution
-Solution get_default(const Geometry& gg)
+Solution get_generic(const Geometry& gg)
 {
   
-  throw miog_error("get_default not implemented");
+  throw miog_error("get_generic not implemented");
   //std::string constraints_string = "";
 
   //auto                         cached_soln = get_generic_cached_solution(constraints_string, gg);

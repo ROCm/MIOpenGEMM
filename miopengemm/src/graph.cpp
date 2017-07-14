@@ -308,11 +308,7 @@ HyPas Graph::get_random_start() const
 
 HyPas Graph::get_random_valid_start() const{
 
-  // the number of attempts at finding a
-  // deriveable HyPas given the
-  // constraint string. TODO : define somewhere else. 
 
-  const size_t max_n_iter = static_cast<size_t>(1e6);
   HyPas hp0(get_random_start());
   
   bool found = false;
@@ -322,7 +318,7 @@ HyPas Graph::get_random_valid_start() const{
   while (found == false && iter < max_n_iter)
   {
     hp0 = get_random_start();
-    hp0.checks(); // TODO : this should not be necessary
+    hp0.checks(); // TODO WHEN PASSING : this should not be necessary
     
     Derivabilty dble(hp0, geometry);
     if (!dble.is_derivable)
@@ -400,22 +396,12 @@ std::string SuGr::get_edges_string(size_t hpi) const
   return ss.str();
 }
 
-// TODO : this should be in stringutil, it is generic printing of a string.
-void SuGr::add_v_string(std::stringstream& ss, const std::vector<size_t>& values) const
-{
-  ss << " { ";
-  for (auto& x : values)
-  {
-    ss << x << ' ';
-  }
-  ss << "}\n";
-}
 
 std::string SuGr::get_range_string(size_t hpi) const
 {
   std::stringstream ss;
   ss_init(hpi, ss, "RANGE");
-  add_v_string(ss, range[hpi]);
+  stringutil::add_v_string(ss, range[hpi]);
   return ss.str();
 }
 
@@ -423,7 +409,7 @@ std::string SuGr::get_start_range_string(size_t hpi) const
 {
   std::stringstream ss;
   ss_init(hpi, ss, "START RANGE");
-  add_v_string(ss, start_range[hpi]);
+  stringutil::add_v_string(ss, start_range[hpi]);
   return ss.str();
 }
 
@@ -541,7 +527,7 @@ Constraint::Constraint(Mat::E e, const std::string& r, const std::string& sr) : 
   start_range = get_hy_v(sr, false, emat);
 }
 
-// TODO : Extract the essence from Constraints and Hyperparams, use inheritance
+// TODO : Constraints and Hyperparams are similar, consider inheritance
 
 Constraints::Constraints(const str_array& cr_strings)
 {
@@ -559,10 +545,17 @@ Constraints::Constraints(const str_array& cr, const str_array& csr)
   }
 }
 
+
 // included for deprecation reasons
-Constraints::Constraints(const std::string& rconcat)
-{
-  auto              megafrags = stringutil::split(rconcat, "__");
+std::array<std::string, Mat::E::N> get_substrings(const std::string & rconcat){
+    
+  std::array<std::string, Mat::E::N> substrings;
+  for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C})
+  {
+    substrings[emat] = "";
+  }
+
+  auto megafrags = stringutil::split(rconcat, "__");
   std::stringstream ss;
   for (auto& megafrag : megafrags)
   {
@@ -572,7 +565,7 @@ Constraints::Constraints(const std::string& rconcat)
       ss << "the leading char, `" << megafrag[0] << "', was not recognised.\n";
       throw miog_error(ss.str());
     }
-    Mat::E emat    = static_cast<Mat::E>(Mat::M.val.at(megafrag[0]));
+    Mat::E emat  = static_cast<Mat::E>(Mat::M.val.at(megafrag[0]));
     size_t minsize = std::string("m__hv").size();
 
     if (megafrag.size() < minsize)
@@ -580,10 +573,16 @@ Constraints::Constraints(const std::string& rconcat)
       ss << "sub constraint " << megafrag << " is too short, something is wrong. \n";
       throw miog_error(ss.str());
     }
-
-    sub[emat] = Constraint(emat, megafrag.substr(2));
+    substrings[emat] = megafrag.substr(2);
   }
 }
+
+
+
+
+Constraints::Constraints(const std::string& rconcat):Constraints(get_substrings(rconcat)){}
+
+HyPas::HyPas(const std::string & rconcat):HyPas(get_substrings(rconcat)){}
 
 std::vector<size_t> get_hy_v(std::string hy_s, bool hy_s_full, Mat::E emat)
 {
@@ -663,8 +662,6 @@ Graph::Graph(const Geometry& gg, const oclutil::DevInfo& di, const Constraints& 
   bsubg.initialise();
   csubg.initialise();
 
-
-  // TODO liberate these : they should not belong to one graph
   p_coupled.push_back({{Mat::E::A, Chi::E::MIC}, {Mat::E::B, Chi::E::MIC}});
   p_coupled.push_back({{Mat::E::C, NonChi::E::UFO}, {Mat::E::C, NonChi::E::PUN}});
   p_coupled.push_back({{Mat::E::C, NonChi::E::UNR}, {Mat::E::C, NonChi::E::ICE}});

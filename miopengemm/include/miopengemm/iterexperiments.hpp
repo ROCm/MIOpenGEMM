@@ -4,7 +4,6 @@
 #ifndef GUARD_MIOPENGEMM_ITEREXPERIMENS_HPP
 #define GUARD_MIOPENGEMM_ITEREXPERIMENS_HPP
 
-#include <miopengemm/miogemm.hpp>
 
 namespace MIOpenGEMM
 {

@@ -10,6 +10,53 @@
 namespace MIOpenGEMM
 {
 
+CacheKeyPresence KernelCache::check_for(const CacheKey & ckey) const{
+
+
+  std::string open = "Failed to find cache entry from keys: " + ckey.get_string();
+  std::string reason;
+  std::string close = " (see examples/gencache.cpp for example generating cache entry)";
+
+
+  if (vals.count(ckey.dvc) == 0)
+  {
+    reason = "Unrecognised device identifier in cache, maybe no cache for this device yet. ";
+  }
+
+  else if (vals.at(ckey.dvc).count(ckey.cns) == 0)
+  {
+    reason = "Unrecognised constraints in cache";
+  }
+
+  else if (vals.at(ckey.dvc).at(ckey.cns).count(ckey.geo) == 0)
+  {
+    reason = "Unrecognised geometry in cache";
+  }
+
+  else if (vals.at(ckey.dvc).at(ckey.cns).at(ckey.geo).count(ckey.cmm) == 0)
+  {
+    reason = "Unrecognised k_comment in cache";
+  }
+  else{
+    return {};
+  }
+  return open + reason + close;
+}
+
+
+CacheKey::CacheKey(const std::string& dvc_, const std::string& cns_, const std::string& geo_, const std::string& cmm_): dvc(dvc_), cns(cns_), geo(geo_), cmm(cmm_) {}
+
+
+std::string CacheKey::get_string() const{
+  std::stringstream ss;
+  ss << "device       :   `" << dvc << "'\n";
+  ss << "constraints  :   `" << cns << "'\n";
+  ss << "geometry     :   `" << geo << "'\n";
+  ss << "comment      :   `" << cmm << "'\n";
+  return ss.str();
+}
+
+  
 const KernelCache kernel_cache = get_kernel_cache();
 
 KernelCache get_kernel_cache()
@@ -42,38 +89,48 @@ void add_entry(KernelCache&       kc,
                CachedSolution     tgcs)
 {
 
-  if (kc.count(k_dev) == 0)
-  {
-    kc[k_dev] = {};
-  }
+  CacheKey ckey(k_dev, k_con, k_geo, k_comment);
+  kc.add(ckey, tgcs);
+}
 
-  if (kc.at(k_dev).count(k_con) == 0)
-  {
-    kc[k_dev][k_con] = {};
-  }
 
-  if (kc.at(k_dev).at(k_con).count(k_geo) == 0)
-  {
-    kc[k_dev][k_con][k_geo] = {};
+CachedSolution KernelCache::at(const CacheKey & ckey) const{
+ CacheKeyPresence ckp = check_for(ckey);
+  if (!ckp.is_present){
+    throw miog_error(ckp.msg);
   }
+  return vals.at(ckey.dvc).at(ckey.cns).at(ckey.geo).at(ckey.cmm);
+}
 
-  if (kc.at(k_dev).at(k_con).at(k_geo).count(k_comment) == 0)
-  {
-    kc[k_dev][k_con][k_geo][k_comment] = tgcs;
-  }
-
-  else
-  {
+void KernelCache::add(const CacheKey & ckey, const CachedSolution & tgcs){
+  CacheKeyPresence ckp = check_for(ckey);
+  if (ckp.is_present){
     std::stringstream ss;
-    ss << "An attempt to add a cache entry where one already exists, with "
-       << "keys:\n"
-       << get_cache_keys_string(k_dev, k_con, k_geo, k_comment) << "\n\n"
-       << "The existing entry is, " << kc[k_dev][k_con][k_geo][k_comment].get_string() << "\n\n"
-       << "The proposed entry is, " << tgcs.get_string() << "\n\n"
-       << "Please choose between these, and remove one.";
-
+    ss << "Cannot add cache entry if one already exists, with. Keys: "
+    << ckey.get_string()
+    << "The existing entry is: " << at(ckey).get_string()
+    << "The proposed entry is, " << tgcs.get_string()
+    << "Please choose between these, and manually remove existing one if nec. ";
     throw miog_error(ss.str());
   }
+  
+  if (vals.count(ckey.dvc) == 0)
+  {
+    vals[ckey.dvc] = {};
+  }
+
+  if (vals.at(ckey.dvc).count(ckey.cns) == 0)
+  {
+    vals[ckey.dvc][ckey.cns] = {};
+  }
+
+  if (vals.at(ckey.dvc).at(ckey.cns).count(ckey.geo) == 0)
+  {
+    vals[ckey.dvc][ckey.cns][ckey.geo] = {};
+  }
+      
+  vals[ckey.dvc][ckey.cns][ckey.geo][ckey.cmm] = tgcs;
+
 }
 
 void enforce_constraints(std::string&       hps_to_update,
@@ -171,7 +228,7 @@ CachedSolution get_generic_cached_solution(const std::string& constraints_string
   return cached_soln;
 }
 
-std::string CachedSolution::get_string()
+std::string CachedSolution::get_string() const
 {
   std::stringstream ss;
   ss << "(hyperstring) " << hyperstring << "\n";
@@ -179,16 +236,4 @@ std::string CachedSolution::get_string()
   return ss.str();
 }
 
-std::string get_cache_keys_string(std::string k_dev,
-                                  std::string k_con,
-                                  std::string k_geo,
-                                  std::string k_comment)
-{
-  std::stringstream ss;
-  ss << "device key         :   `" << k_dev << "'\n";
-  ss << "constraints_string :   `" << k_con << "'\n";
-  ss << "geometry key       :   `" << k_geo << "'\n";
-  ss << "comment key        :   `" << k_comment << "'\n";
-  return ss.str();
-}
 }

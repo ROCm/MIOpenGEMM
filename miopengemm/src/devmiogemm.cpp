@@ -18,7 +18,7 @@
 #include <miopengemm/error.hpp>
 #include <miopengemm/floattostring.hpp>
 #include <miopengemm/geometry.hpp>
-#include <miopengemm/miogemm.hpp>
+#include <miopengemm/jinx.hpp>
 #include <miopengemm/oclutil.hpp>
 #include <miopengemm/outputwriter.hpp>
 #include <miopengemm/redirection.hpp>

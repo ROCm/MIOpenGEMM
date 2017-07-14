@@ -11,6 +11,7 @@
 #include <array>
 #include <miopengemm/geometry.hpp>
 #include <miopengemm/solution.hpp>
+#include <miopengemm/jinx.hpp>
 
 namespace MIOpenGEMM
 {
@@ -38,8 +39,6 @@ class Diva
                  double                          max_time_per_kernel);
 
   Solution find(const FindParams& find_params, std::string constraints_string);
-
-
 
   void accuracy_test(const std::string& hyperstring, const TFloat* c_true_for_test);
 
@@ -70,7 +69,7 @@ class Diva
   // read write permissions of gpu data TODO : move to enums.cpp
   std::vector<cl_mem_flags> rw_perms;
 
-  //size_t get_mat_memsize(Mem::E emem);
+  Jinx jinx;
 
   size_t get_workspace_memsize();
 

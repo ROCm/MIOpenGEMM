@@ -41,6 +41,7 @@ std::string get_char_padded(const T& t, size_t length){
 std::string get_stars(size_t n_stars);
 std::string get_star_wrapped(const std::string & s);
 
+void add_v_string(std::stringstream& ss, const std::vector<size_t>& values);
 }
 }
 

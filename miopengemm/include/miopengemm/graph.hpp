@@ -15,8 +15,6 @@
 namespace MIOpenGEMM
 {
   
-// TODO : remove p_enma, go direct from emat. Or some type of inheritance for all "subs" ?
-
 
 std::vector<size_t> get_hy_v(std::string hy_s, bool hy_s_full, Mat::E emat);
 std::string get_str(Mat::E emat, const std::vector<size_t> & vs);
@@ -57,7 +55,7 @@ class SuHy
   std::string get_string() const;
   bool operator==(const SuHy& rhs) const;
   void replace_where_defined(const Constraint & constraint);
-  void checks() const;  // TODO
+  void checks() const;
   SuHy() = default;
   SuHy(Mat::E);
   SuHy(Mat::E, const std::string &);
@@ -70,7 +68,7 @@ class HyPas
   public:
   using str_array = std::array<std::string, Mat::E::N>;  
   HyPas(const str_array &);
-  HyPas(const std::string &); // TODO
+  HyPas(const std::string &);
   HyPas(std::array<SuHy, Mat::E::N> &&);
   HyPas(const HyPas &) = default;  
   std::array<SuHy, Mat::E::N> sus;
@@ -91,8 +89,7 @@ class SuGr
   void initialise_start_range();
   // certain geometries should not start at certain nodes, this function prunes
   virtual void refine_start_range() = 0; 
-  void apply_constraint(); // TODO
-  void add_v_string(std::stringstream & ss, const std::vector<size_t> & values) const;
+  void apply_constraint();
   void ss_init(size_t, std::stringstream &, std::string) const;
   
   public:
@@ -129,7 +126,7 @@ class SuGr
   bool contains(size_t hpi, size_t val) const;
   bool contains(const SuHy &) const;
   SuHy get_random_start() const;
-  void checks() const; // TODO
+  void checks() const;
 };
 
 class CSuGr : public SuGr
@@ -174,6 +171,12 @@ class Graph
   private:
   
   
+  // the number of attempts at finding a
+  // deriveable HyPas given the
+  // constraint string.
+
+  const size_t max_n_iter = static_cast<size_t>(1e6);
+
   std::vector<std::pair<std::pair<size_t, size_t>, std::pair<size_t, size_t>>> p_coupled;
 
   

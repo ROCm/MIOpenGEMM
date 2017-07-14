@@ -1,3 +1,7 @@
+#ifndef GUARD_MIOPENGEMM_JINX_HPP
+#define GUARD_MIOPENGEMM_JINX_HPP
+
+
 /*******************************************************************************
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
@@ -19,7 +23,6 @@
 #include <miopengemm/kernel.hpp>
 #include <miopengemm/kernelcache.hpp>
 #include <miopengemm/kernelstring.hpp>
-#include <miopengemm/miogemm.hpp>
 #include <miopengemm/oclutil.hpp>
 #include <miopengemm/outputwriter.hpp>
 #include <miopengemm/solution.hpp>
@@ -130,3 +133,5 @@ class Jinx
   Solution single_descent_find(float allotted_time, const Constraints&, const FindParams &);
 };
 }
+
+#endif

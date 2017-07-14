@@ -215,5 +215,18 @@ std::string get_star_wrapped(const std::string & s){
   return ss.str();
 }
 
+
+// TODO : this should be in stringutil, it is generic printing of a string.
+void add_v_string(std::stringstream& ss, const std::vector<size_t>& values)
+{
+  ss << " { ";
+  for (auto& x : values)
+  {
+    ss << x << ' ';
+  }
+  ss << "}\n";
+}
+
+
 }
 }

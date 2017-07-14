@@ -5,7 +5,6 @@
 #define GUARD_MIOPENGEMM_MIOGEMM_HPP
 
 #include <CL/cl.h>
-#include <miopengemm/error.hpp>
 #include <miopengemm/findparams.hpp>
 #include <miopengemm/geometry.hpp>
 #include <miopengemm/outputwriter.hpp>
@@ -14,8 +13,7 @@
 namespace MIOpenGEMM
 {
 
-static const double default_alpha = 0.415693029182345929;
-static const double default_beta  = 0.273539340934809345;
+
 
 /*! @brief Find a Solution, considering only kernels without workspace requirements.
  *
@@ -130,8 +128,8 @@ std::tuple<bool, std::string> check_for_default(cl_command_queue command_queue,
  */
 void benchgemm(cl_command_queue             command_queue,
                const std::string&           hyperstring,
-               size_t                     max_n_runs,
-       double max_time,
+               size_t                       max_n_runs,
+               double max_time,
                const Geometry&              gg,
                const Offsets&               toff,
                cl_mem                       a,

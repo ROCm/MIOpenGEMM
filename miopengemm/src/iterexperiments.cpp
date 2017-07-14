@@ -8,7 +8,6 @@
 
 #include <miopengemm/devmiogemm.hpp>
 #include <miopengemm/geometryutil.hpp>
-#include <miopengemm/miogemm.hpp>
 #include <miopengemm/stringutilbase.hpp>
 
 namespace MIOpenGEMM

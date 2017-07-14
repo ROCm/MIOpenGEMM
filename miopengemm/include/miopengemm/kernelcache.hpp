@@ -9,10 +9,30 @@
 namespace MIOpenGEMM
 {
 
-std::string get_cache_keys_string(std::string k_dev,
-                                  std::string k_con,
-                                  std::string k_geo,
-                                  std::string k_comment);
+class CacheKeyPresence{
+ public:
+ bool is_present;
+ std::string msg;
+ 
+ CacheKeyPresence():is_present(true), msg("") {}
+ CacheKeyPresence(const std::string & msg_):is_present(false), msg(msg_) {}
+
+ 
+};
+
+
+class CacheKey{
+  
+public:
+std::string dvc; // device
+std::string cns; // constraint 
+std::string geo; // geometry
+std::string cmm; // comment
+CacheKey(const std::string&, const std::string&, const std::string&, const std::string&);
+std::string get_string() const;
+  
+};
+
 
 class CachedSolution
 {
@@ -25,15 +45,26 @@ class CachedSolution
   }
   CachedSolution() = default;
 
-  std::string get_string();
+  std::string get_string() const;
 };
 
-/* TODO : unordered maps are faster */
-using KernelCache =
-  std::map<std::string,
-           std::map<std::string, std::map<std::string, std::map<std::string, CachedSolution>>>>;
+
+class KernelCache{
+  /* TODO : unordered maps are faster */
+  private:
+  using St = std::string;
+  std::map<St, std::map<St, std::map<St, std::map<St, CachedSolution>>>> vals;
+  
+  public:
+  CacheKeyPresence check_for(const CacheKey & ck) const;  
+  CachedSolution at(const CacheKey & ck) const;
+  void add(const CacheKey & ckey, const CachedSolution & tgcs);
+    
+};
 
 KernelCache get_kernel_cache();
+
+
 
 CachedSolution get_generic_cached_solution(const std::string& constraints_string,
                                            const Geometry&    gg);
