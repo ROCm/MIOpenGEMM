@@ -87,15 +87,12 @@ oclutil::Result Kernel::enqueue() { return enqueue(0, nullptr); }
 void Kernel::update_times()
 {
 
-  oclutil::cl_set_event_profiling_info(clevent,
-                                       CL_PROFILING_COMMAND_START,
-                                       sizeof(size_t),
-                                       &t_start,
-                                       nullptr,
-                                       "in update_times",
-                                       true);
+  oclutil::cl_set_event_profiling_info(
+    clevent, CL_PROFILING_COMMAND_START, sizeof(size_t), &t_start, nullptr, "u_times", true);
+
   oclutil::cl_set_event_profiling_info(
     clevent, CL_PROFILING_COMMAND_END, sizeof(size_t), &t_end, nullptr, "in update_times", true);
+
   v_times.push_back(1e-6 * (t_end - t_start));
 }
 

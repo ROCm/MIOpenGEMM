@@ -43,14 +43,12 @@ Boa::Boa(Geometry gg_, Offsets toff_, owrite::Writer& mowri_)
   active_type = gg_.floattype;
 }
 
-void Boa::benchgemm(const std::vector<std::string>& hyperstrings,
-                    size_t                          max_number_of_runs,
-                    double                          max_time_per_kernel)
+void Boa::benchgemm(const std::vector<std::string>& hyperstrings, const Halt & hl)
 {
   switch (active_type)
   {
-  case 'f': f_moa->benchgemm(hyperstrings, max_number_of_runs, max_time_per_kernel); break;
-  case 'd': d_moa->benchgemm(hyperstrings, max_number_of_runs, max_time_per_kernel); break;
+  case 'f': f_moa->benchgemm(hyperstrings, hl); break;
+  case 'd': d_moa->benchgemm(hyperstrings, hl); break;
   default: throw miog_error("unrecognised floattype char in Boa benchgemm");
   }
 }

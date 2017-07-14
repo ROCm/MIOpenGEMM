@@ -52,9 +52,7 @@ class Boa
 
   Boa(Geometry gg_, Offsets toff_, owrite::Writer& mowri_);
 
-  void benchgemm(const std::vector<std::string>& hyperstrings,
-                 size_t                          max_number_of_runs,
-                 double                          max_time_per_kernel);
+  void benchgemm(const std::vector<std::string>& hyperstrings, const Halt & hl);
 
   Solution find(const FindParams& find_params, std::string constraints_string);
 

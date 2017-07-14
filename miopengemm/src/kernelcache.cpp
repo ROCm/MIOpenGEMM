@@ -77,7 +77,7 @@ KernelCache get_kernel_cache()
     "",
     {"A_MIC8_PAD2_PLU0_LIW0_MIW0_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW0_WOS0__"
      "C_UNR8_GAL2_PUN0_ICE1_NAW64_UFO0_MAC256_SKW10",
-     {59.2006, 4222.93, 3.32959, "Sun May 14 12:29:44 2017", {3, 2, 1, 1e9, SummStat::MAX}}});
+     {59.2006, 4222.93, 3.32959, "Sun May 14 12:29:44 2017", {3, 2, 1, 1e9, SummStat::E::MAX}}});
 
 // and the second is to drop them into a txt file like like this
 #include "cacheexample.cachetxt"

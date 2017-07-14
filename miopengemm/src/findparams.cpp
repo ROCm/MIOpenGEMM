@@ -8,6 +8,40 @@
 namespace MIOpenGEMM
 {
 
+
+Halt::Halt(size_t max_runs_, double max_time_):max_runs(max_runs_), max_time(max_time_) {
+  if (max_time <= 0)
+  {
+    throw miog_error("max_time should be strictly positive, in Halt constructor");
+  }
+
+  if (max_runs == 0)
+  {
+    throw miog_error("max_runs should be strictly positive, in Halt constructor");
+  }    
+}
+
+std::string Halt::get_status(size_t ri, double et) const{
+  if (halt(ri, et)){
+    return "(HALT)";
+  }
+  std::stringstream ss;
+  ss << "@t=" << et << " [s] (<" << max_time << " [s]) @i=" << ri << " (<" << max_runs << " )";
+  return ss.str();
+}
+
+bool Halt::halt(size_t ri, double et) const{
+  return (ri >= max_runs || et >= max_time);
+}
+
+std::string Halt::get_string()  const{
+  std::stringstream ss;
+  ss << "max_time=" << max_time << " max_runs=" << max_runs;
+  return ss.str();
+}
+
+
+
 std::vector<std::string> get_sumstatkey()
 {
   std::vector<std::string> ssv(SummStat::E::N, "unset");
@@ -29,7 +63,6 @@ const std::vector<std::string> sumstatkey = get_sumstatkey();
 
 std::string get_sumstatkey(SummStat::E sumstat)
 {
-
   if (sumstat >= SummStat::E::N)
   {
     throw miog_error("unrecognised sumstat key in get_sumstatkey");
@@ -37,51 +70,37 @@ std::string get_sumstatkey(SummStat::E sumstat)
   return sumstatkey[sumstat];
 }
 
-/* TODO floats to doubles */
-FindParams::FindParams(float       allotted_time_,
-                       size_t      allotted_descents_,
-                       size_t      max_n_runs_per_kernel_,
-                       double      max_time_per_kernel_,
-                       SummStat::E sumstat_)
-  : allotted_time(allotted_time_),
-    allotted_descents(allotted_descents_),
-    max_n_runs_per_kernel(max_n_runs_per_kernel_),
-    max_time_per_kernel(max_time_per_kernel_),
-    sumstat(sumstat_)
-{
+FindParams::FindParams(
 
-  if (allotted_time <= 0)
-  {
-    throw miog_error("allotted_time should be strictly positive, in FindParams constructor");
-  }
-
-  if (allotted_descents == 0)
-  {
-    throw miog_error("allotted_descents should be strictly positive, in "
-                     "FindParams constructor");
-  }
-}
+             size_t      max_descents,
+             double      max_time_outer,
+             size_t      max_per_kernel,
+             double      max_time_core,
+             SummStat::E sumstat_)
+             
+  : hl_outer(max_descents, max_time_outer),
+    hl_core(max_per_kernel, max_time_core),
+    sumstat(sumstat_){}
 
 std::string FindParams::get_string() const
 {
   std::stringstream ss;
-  ss << "allotted time: " << allotted_time << " allotted_descents: " << allotted_descents
-     << " max_n_runs_per_kernel: " << max_n_runs_per_kernel
-     << " max_time_per_kernel: " << max_time_per_kernel << "  sumstat: " << get_sumstatkey(sumstat)
-     << std::endl;
+  ss 
+  << "(OUTER)   " << hl_outer.get_string() 
+  << "(INNER)   " << hl_core.get_string() 
+  << "(SUMSTAT) " << get_sumstatkey(sumstat);
   return ss.str();
 }
 
 FindParams get_quick_find_params()
 {
+  size_t      max_descents = 1;
+  double      max_time_outer = 0.003;
+  size_t      max_per_kernel = 1;
+  double      max_time_core = 1e12;
+  SummStat::E sumstat = SummStat::E::MEDIAN;
 
-  float       allotted_time         = 0.003;
-  size_t      allotted_iterations   = 1;
-  size_t      max_n_runs_per_kernel = 1;
-  double      max_time_per_kernel   = 1e12;
-  SummStat::E sumstat               = SummStat::E::MEDIAN;
-
-  return FindParams(
-    allotted_time, allotted_iterations, max_n_runs_per_kernel, max_time_per_kernel, sumstat);
+  return FindParams(max_descents, max_time_outer, max_per_kernel, max_time_core, sumstat);
 }
+
 }

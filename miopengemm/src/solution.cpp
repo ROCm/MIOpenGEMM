@@ -96,10 +96,11 @@ std::string Solution::get_cache_entry_string(std::string k_comment) const
                  << ", \"" << statistics.date << "\""
                  << ", /* solution stats (time [ms], gflops, time found "
                  << "(within descent), date found */\n"
-                 << "{" << statistics.find_params.allotted_time << ", "
-                 << statistics.find_params.allotted_descents << ", "
-                 << statistics.find_params.max_n_runs_per_kernel << ", "
-                 << statistics.find_params.max_time_per_kernel << ", "
+                 << '{'
+                 << statistics.find_params.hl_outer.max_runs << ", "
+                 << statistics.find_params.hl_outer.max_time << ", "
+                 << statistics.find_params.hl_core.max_runs << ", "
+                 << statistics.find_params.hl_core.max_time << ", "
                  << get_sumstatkey(statistics.find_params.sumstat)
                  << "}}}); /* find param: allotted time, allotted descents, n "
                  << "runs per kernel, "

@@ -175,16 +175,14 @@ void Diva<TFl>::opencl_memory_initialise()
 }
 
 template <typename TFl>
-void Diva<TFl>::benchgemm(const std::vector<std::string>& hyperstrings,
-                          size_t                          max_number_of_runs,
-                          double                          max_time_per_kernel)
+void Diva<TFl>::benchgemm(const std::vector<std::string>& hyperstrings, const Halt & hl)
 {
 
   std::vector<HyPas> hps;
   for (auto& hyperstring : hyperstrings)
   {
 
-    up_jinx->benchgemm(hyperstring, max_number_of_runs, max_time_per_kernel);
+    up_jinx->benchgemm(hyperstring, hl);
   }
 }
 
@@ -213,7 +211,7 @@ void Diva<TFl>::accuracy_test(const std::string& hyperstring, const TFl* c_true_
                        NULL);
 
   // run gemm once on the gpu
-  benchgemm({hyperstring}, 1, 1e12);
+  benchgemm({hyperstring}, {1, 1e12});
 
   // read the result to c_copy on the cpu
   cl_event event_read_c_back;

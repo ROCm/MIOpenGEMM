@@ -27,6 +27,25 @@
 namespace MIOpenGEMM
 {
 
+
+// TODO : find a new home for Timer
+class Timer{
+  std::chrono::time_point<std::chrono::high_resolution_clock> t0;
+  
+  public:
+  
+  void start(){
+    t0 = std::chrono::high_resolution_clock::now();
+  }
+  
+  double get_elapsed(){
+    std::chrono::duration<double> fp_ms = std::chrono::high_resolution_clock::now() - t0;
+    return fp_ms.count();    
+  }
+  
+};
+
+
 MFType::MFType(double v) : v_d(v), v_f(static_cast<float>(v)) {}
 void* MFType::operator[](char floattype) const
 {
@@ -73,8 +92,6 @@ Jinx::Jinx(cl_command_queue command_queue_,
            cl_mem           c_gpu_,
            bool             c_is_const,
            cl_mem           workspace_gpu_,
-           // std::string                  constraints_string_,
-           // bool                         full_constraints_expected,
            owrite::Writer& mowri_)
   :
 
@@ -90,8 +107,6 @@ Jinx::Jinx(cl_command_queue command_queue_,
          get_mat_memsize(gg, toff, Mem::E::C),
          command_queue_),
     devinfo(command_queue_),
-    // constraints_string(constraints_string_),
-    // graph(gg, devinfo, constraints_string_),// full_constraints_expected),
     mowri(mowri_)
 {
 
@@ -100,21 +115,9 @@ Jinx::Jinx(cl_command_queue command_queue_,
   {
     tk_kernels[i] = Kernel(command_queue, BasicKernelType::M.name[i]);
   }
-
-  run_checks();
 }
 
 /* TODO : option for median / max / mean */
-void Jinx::set_medians()
-{
-
-  auto v_t_total_copy = v_t_total;
-
-  std::sort(v_t_total_copy.begin(), v_t_total_copy.end());
-  // Taking the fastest or median? [v_t_total.size()/2]
-  median_time   = v_t_total_copy[0];
-  median_gflops = get_gflops(median_time);
-}
 
 float Jinx::get_gflops(float timems) { return (2. * gg.m * gg.n * gg.k) / (timems * 10e5); }
 
@@ -178,7 +181,6 @@ void Jinx::address_check_valid_and_reliable()
   }
 }
 
-void Jinx::run_checks() {}  // sizingup::check_sizes_ok_for_size_t(gg, toff); }
 
 void Jinx::set_kern_args(const KernelType& type)
 {
@@ -291,6 +293,7 @@ oclutil::Result Jinx::setup_tinykernels(const HyPas& hp, const kerngen::Bundle& 
 
   oclutil::Result oclr;
 
+  // TODO : make enum so accessible to end-users
   v_wait_indices = bundle.v_wait_indices;
   tk_kernels_active.resize(0);
 
@@ -313,26 +316,6 @@ oclutil::Result Jinx::setup_tinykernels(const HyPas& hp, const kerngen::Bundle& 
   return oclr;
 }
 
-void Jinx::update_run_times(cl_int status)
-{
-
-  if (status == CL_SUCCESS)
-  {
-    for (auto& ptr_tk_kernel : tk_kernels_active)
-    {
-      ptr_tk_kernel->update_times();
-    }
-    // end time of last kernel - start time of first kernel
-    v_t_total.push_back(1e-6 * (tk_kernels_active.back()->t_end - tk_kernels_active[0]->t_start));
-  }
-
-  else
-  {
-    throw miog_error("in update_run_times, status is not CL_SUCCESS. The "
-                     "logic has changed, this "
-                     "logic branch should be impossible");
-  }
-}
 
 std::string Jinx::get_run_times_heading()
 {
@@ -346,34 +329,7 @@ std::string Jinx::get_run_times_heading()
   return ss.str();
 }
 
-std::string Jinx::get_run_time_string(cl_int status)
-{
-  std::stringstream ss;
-  if (status == CL_SUCCESS)
-  {
-    ss << std::fixed << std::setprecision(3) << v_t_total.back() << "\t";
-    for (size_t k_ind = 0; k_ind < tk_kernels_active.size(); ++k_ind)
-    {
-      ss << " " << tk_kernels_active[k_ind]->v_times.back() << "\t";
-    }
-    ss << " " << 2.0 * gg.m * gg.n * gg.k / (v_t_total.back() * 1e6) << std::setprecision(6);
-  }
 
-  else
-  {
-    ss << "(failed run)";
-  }
-  return ss.str();
-}
-
-void Jinx::reset_v_times()
-{
-  v_t_total.resize(0);
-  for (auto& ptr_tk_kernel : tk_kernels_active)
-  {
-    ptr_tk_kernel->reset_times();
-  }
-}
 
 void Jinx::mowri_tracker_print()
 {
@@ -398,151 +354,123 @@ void Jinx::mowri_tracker_print()
   // mowri.tracker << backspaces << new_comment_string << Flush;
 }
 
-oclutil::Result Jinx::core_gemm_loop(size_t max_n_runs, double max_time, bool print_asap)
-{
 
-  update_total_elapsed_seconds();
 
-  reset_v_times();
-
-  mowri_tracker_print();
-
-  std::vector<std::string> indi_run_strings;
-  if (print_asap == true)
+std::string Jinx::get_run_time_string(cl_int status, double extime){
+  std::stringstream ss;
+  if (status == CL_SUCCESS)
   {
-    mowri << get_run_times_heading();
+    ss << std::fixed << std::setprecision(3) << extime << '\t';
+    for (size_t k_ind = 0; k_ind < tk_kernels_active.size(); ++k_ind)
+    {
+      ss << " " << tk_kernels_active[k_ind]->v_times.back() << "\t";
+    }
+    ss << " " << 2.0 * gg.m * gg.n * gg.k / (extime * 1e6) << std::setprecision(6);
   }
 
-  size_t runi                  = 0;
-  double local_elapsed_seconds = 0;
-  auto   start_kernel_run0     = std::chrono::high_resolution_clock::now();
-
-  while (runi < max_n_runs && local_elapsed_seconds < max_time)
+  else
   {
+    ss << "(failed run)";
+  }
+  return ss.str();
+}  
 
-    // see `oeverheat' comment at bottome
-    if (max_n_runs > 1)
-    {
-      std::this_thread::sleep_for(std::chrono::milliseconds(0));
-    }
-
-    oclutil::Result oclr;
+oclutil::Result Jinx::true_core(std::function<void(double, std::string)> acton, const Halt & hl){
+  
+  
+  size_t runi{0};
+  oclutil::Result oclr;
+  
+  Timer timer;
+  timer.start();
+  
+  while (!hl.halt(runi, timer.get_elapsed()))
+  {
+    // see `overheat' comment at bottom
 
     for (size_t k_ind = 0; k_ind < tk_kernels_active.size(); ++k_ind)
     {
       // At this point, the kernel has been succesfully compiled,
-      // but it is still possible that the resources necessary (LDS etc) are
-      // not sufficient on this machine. We catch this case here.
-
-      /* TODO : architests can go some way to catching these before */
+      // but it is still possible that it does not run. We catch that here.
+      // if anything is caught here, consider testing for it in architests.
 
       std::vector<cl_event> clevent_waits;
-      for (auto& evi : v_wait_indices[k_ind])
+      for (auto& evi : v_wait_indices[k_ind]) 
       {
         // see `cl-events' comment at bottom
         clevent_waits.emplace_back(tk_kernels_active[evi]->clevent);
       }
 
-      size_t          num_events_int_wait_list = clevent_waits.size();
-      const cl_event* event_wait_list =
-        num_events_int_wait_list == 0 ? nullptr : clevent_waits.data();
-      oclr = tk_kernels_active[k_ind]->enqueue(num_events_int_wait_list, event_wait_list);
+      const cl_event* event_wait_list = clevent_waits.size() == 0 ? nullptr : clevent_waits.data();
+      oclr = tk_kernels_active[k_ind]->enqueue(clevent_waits.size(), event_wait_list);
+
       // see `in-series' comment at bottom
 
-      // Set the run time(s) and append to vectors
-      if (oclr.success == CL_OUT_OF_RESOURCES)
+      if (oclr.success == CL_SUCCESS){
+        // good 
+      }
+      
+      else if (oclr.success == CL_OUT_OF_RESOURCES)
       {
         oclutil::cl_flush(command_queue, "cl flushing in core gemm loop", true);
-        oclr.message += " (CL_OUT_OF_RESOURCES in core_gemm_loop) ";
+        oclr.message += " (CL_OUT_OF_RESOURCES in true_core) ";
         return oclr;
       }
-
-      else if (oclr.success != CL_SUCCESS)
-      {
-        std::stringstream ss;
-        ss << "OpenCL error status : " << oclr.success << ". ";
-        ss << "This seems like a logic error. How can this not be CL_SUCCESS "
-              "or "
-              "CL_OUT_OF_RESOURCES? Maybe an algo prob, come fix. Is status "
-              "10111? Maybe there "
-              "are no kernels? Maybe there's a runtime/compiler issue? One "
-              "option is to lump "
-              "this error with CL_OUT_OF_RESOURCES (ie throw oclr) ";
-        ss << "The error from opencl was " << oclr.message;
-        throw miog_error(ss.str());
-      }
+      
 
       else
       {
-        // CL_SUCCESS
+        std::stringstream ss;
+        ss << "OpenCL error status : " << oclr.success << ". "
+           << "Neither CL_SUCCESS nor CL_OUT_OF_RESOURCES.  "
+           << "Maybe there are no kernels? Internal logic error. "
+           << "could catch with CL_OUT_OF_RESOURCES (ie throw oclr) "
+           << "The error from opencl was " << oclr.message;
+        throw miog_error(ss.str());
       }
     }
 
-    oclutil::cl_flush(command_queue, "cl flushing in core gemm loop", true);
+    oclutil::cl_flush(command_queue, "cl flush in core gemm loop", true);
 
     // Wait for kernels to complete
-    oclutil::cl_wait_for_events(1,
-                                &(tk_kernels_active.back()->clevent),
-                                "with status == CL_SUCCESS in core gemm loops",
-                                true);
+    oclutil::cl_wait_for_events(1, &(tk_kernels_active.back()->clevent), "core gemm loops", true);
 
-    update_run_times(oclr.success);
-    indi_run_strings.push_back(get_run_time_string(oclr.success));
-    if (print_asap == true)
+
+
+    for (auto& ptr_tk_kernel : tk_kernels_active)
     {
-      mowri << indi_run_strings[runi] << '\n';
+      ptr_tk_kernel->update_times();
     }
+    //// end time of last kernel - start time of first kernel
+    //v_t_total.push_back
+    
+    double extime  = (1e-6 * (tk_kernels_active.back()->t_end - tk_kernels_active[0]->t_start));
+  
+
+    
+    //act on the results string. 
+    acton(extime, get_run_time_string(oclr.success, extime));
     ++runi;
-
-    auto                          t_now = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> fp_ms = t_now - start_kernel_run0;
-    local_elapsed_seconds               = fp_ms.count();
   }
-  size_t runs_completed = runi;
-
-  set_medians();
-
-  if (print_asap == false)
-  {
-    mowri << get_run_times_heading();
-    for (size_t ir = 0; ir < runs_completed; ++ir)
-    {
-      mowri << indi_run_strings[ir];
-      if (median_time == v_t_total[ir])
-      {
-        mowri << " (median) ";
-        if (best_solns_path.size() > 0 &&
-            (best_solns_path.back().statistics.median_benchmark_time >= median_time))
-        {
-          mowri << " (NEW BEST) ";
-        }
-      }
-      mowri << '\n';
-    }
-  }
-
-  ++total_kernels_tested;
   return {};
-}
+} 
+   
+     
 
-void Jinx::benchgemm(const HyPas& hp, size_t max_n_runs, double max_time)
+
+void Jinx::benchgemm(const HyPas& hp, const Halt & hl)
 {
 
   address_check_valid();
-
-  if (max_n_runs == 0)
-  {
-    throw miog_error("max_n_runs to benchgemm should be a positive integer");
-  }
-
-  // HyPas hp(graph);
   Derivabilty dblt(hp, gg);
   if (dblt.is_derivable == false)
   {
     throw miog_error("Non-derivable in benchgemm : " + dblt.msg);
   }
 
-  auto             bundle = kerngen::get_bundle(hp, gg, mowri, bundle_verbose);
+  bool bundle_verbose = false;
+  auto bundle = kerngen::get_bundle(hp, gg, mowri, bundle_verbose);
+  
   architests::Stat atr(command_queue, bundle.dp, gg, hp);
   if (!atr.is_good)
   {
@@ -555,81 +483,43 @@ void Jinx::benchgemm(const HyPas& hp, size_t max_n_runs, double max_time)
     throw miog_error(oclr.message);
   }
 
-  mowri << "(benchgemm) hp   :" << hp.get_string() << Endl;
-  mowri << "(benchgemm) geometry  \t:" << gg.get_string() << "\nEntering the core gemm loops"
-        << Endl;
-  oclr = core_gemm_loop(max_n_runs, max_time, true);
-
-  if (oclr.fail())
-  {
-    throw miog_error(oclr.message);
-  }
+  mowri << "(benchgemm) hp   :" << hp.get_string() << '\n'
+  << "(benchgemm) geometry  \t:" << gg.get_string() << '\n'
+  << "Entering the core gemm loops" << Endl;
+        
+  mowri << get_run_times_heading();
+  true_core([this](double a, std::string x){(void)a, mowri << x << '\n';}, hl);
 }
 
-// HyPas Jinx::get_hyper_param_start()
-//{
-
-// throw miog_error("get_hyper_param_start not impled");
-
-//}
-
-void Jinx::update_total_elapsed_seconds()
+Solution Jinx::find(const Constraints& constraints, const FindParams& fparms)
 {
-  auto                         end   = std::chrono::high_resolution_clock::now();
-  std::chrono::duration<float> fp_ms = end - find_start;
-  total_elapsed_seconds              = fp_ms.count();
-}
+  
+  address_check_valid_and_reliable();
 
-Solution Jinx::find(const Constraints& constraints, const FindParams& find_params)
-{
 
-  /* TODO : use sumstat */
-  float  allotted_time     = find_params.allotted_time;
-  size_t allotted_descents = find_params.allotted_descents;
+  Timer timer;
+  timer.start();
+  std::vector<Solution> v_solns;
+  size_t n_descents = 0;
 
-  if (allotted_time <= 0 || allotted_descents == 0)
-  {
-    std::string k_comment("");
-    mowri << "in find with allotted time = " << allotted_time
-          << " and allotted_descents = " << allotted_descents << ", returning default" << Endl;
+  while (!fparms.hl_outer.halt(n_descents, timer.get_elapsed())){
 
-    // TODO
-    throw miog_error("get_default not here yet");
-    // return get_default(command_queue, constraints_string, gg, k_comment, mowri);
-  }
+    mowri << "\nEntering new descent. \n"
+     << fparms.hl_outer.get_status(n_descents, timer.get_elapsed()) << '\n';
 
-  find_start = std::chrono::high_resolution_clock::now();
-
-  std::vector<Solution> v_tgsolns;
-
-  std::string stars("");
-
-  while (total_elapsed_seconds <= allotted_time && total_elapsed_descents < allotted_descents)
-  {
-
-    std::stringstream sss;
-    sss << "Entering single_descent_find, at t = " << total_elapsed_seconds << " [s] ( < "
-        << allotted_time << " [s]) and iteration = " << total_elapsed_descents << " ( < "
-        << allotted_descents << " )";
-    std::string titlestring = sss.str();
-
-    stars.resize(titlestring.size(), '*');
-    mowri << '\n' << stars << '\n' << titlestring << '\n' << stars << Endl;
-
-    v_tgsolns.emplace_back(single_descent_find(
-      allotted_time - total_elapsed_seconds, constraints, find_params));  // fst,
-
-    update_total_elapsed_seconds();
-    ++total_elapsed_descents;
+    double allotted_sd = std::max(0.1, fparms.hl_outer.max_time - timer.get_elapsed());
+    auto soln = single_descent_find(allotted_sd, constraints, fparms.hl_core, fparms); // fparms here hacked on
+    v_solns.emplace_back(soln);
+    ++n_descents;
   }
 
   float              best_gflops     = 0;
   size_t             best_soln_index = 0;
   std::vector<float> soln_gflops;
-  for (size_t si = 0; si < v_tgsolns.size(); ++si)
+  for (size_t si = 0; si < v_solns.size(); ++si)
   {
 
-    float gflops = v_tgsolns[si].statistics.median_benchmark_gflops;
+    float gflops = v_solns[si].statistics.median_benchmark_gflops;
     soln_gflops.push_back(gflops);
     if (gflops > best_gflops)
     {
@@ -638,13 +528,11 @@ Solution Jinx::find(const Constraints& constraints, const FindParams& find_param
     }
   }
 
-  std::string header("The gflops found by single descents:");
-  stars.resize(header.size(), '*');
 
-  mowri << '\n'
-        << "(find finished) elapsed seconds: " << total_elapsed_seconds
-        << "    elapsed descents: " << total_elapsed_descents << Endl;
-  mowri << header << '\n' << stars << '\n';
+  mowri      << "\ntotal elapsed seconds: " << total_elapsed_seconds
+        << "\ntotal elapsed descents: " << total_elapsed_descents
+  << '\n' << stringutil::get_star_wrapped("The gflops found by single descents:") << '\n';
+  
   std::sort(soln_gflops.begin(), soln_gflops.end());
   for (auto& x : soln_gflops)
   {
@@ -653,69 +541,70 @@ Solution Jinx::find(const Constraints& constraints, const FindParams& find_param
   mowri << "\n\n";
 
   mowri << " -- snip -- -- -- snip --\n" << Endl;
-  mowri << v_tgsolns[best_soln_index].get_cache_entry_string();
+  mowri << v_solns[best_soln_index].get_cache_entry_string();
   mowri << " -- snip -- -- -- snip --" << Endl;
 
-  return v_tgsolns[best_soln_index];
+  return v_solns[best_soln_index];
 }
 
 Solution Jinx::single_descent_find(float              allotted_time,
                                    const Constraints& constraints,
-                                   const FindParams&  find_params)
+                                   const Halt&  core_halt,
+                                   const FindParams & fps) // TODO : fp only needed to push onto solution path: should not be needed here
 {
 
-  // re-creating the same graph for every single_descent is currently wasteful, but maybe in the
-  // future different constraints will be passed on each run :)
+
+  Timer timer;
+  timer.start();
+
+  mowri << "geometry : " << gg.get_string() << "\nallotted time : " << allotted_time << Endl;
+
+
+  // re-creating the same graph for every single_descent is currently wasteful, 
+  // but maybe in the future different constraints will be passed on each run
   const Graph graph(gg, devinfo, constraints, mowri);
 
-  mowri << "geometry : " << gg.get_string() << Endl;
+  // number of kernels whose strings are generated
+  size_t single_descent_counter = 0;
 
-  address_check_valid_and_reliable();
-
-  // we will count how many kernels are successfully generated
-  // AND compiled AND benchmarked
-  size_t global_counter = 0;
-
-  HyPas hyper_param_current = graph.get_random_valid_start();  // get_hyper_param_start(); // fst);
-
-  if (allotted_time <= 0)
-  {
-    throw miog_error("in single_descent_find with allotted_time <= 0, this "
-                     "should never happen (logic error)");
-  }
-
-  // In here, we will store all previously considered
-  // HyPas strings, used to check and
+  // We will store all previously considered HyPas, used to check and
   // ensure that we do not consider a HyperParam more than once
-  std::vector<std::string> hyper_front_history;
+  // TODO : maybe this should be in the outer find loop. 
+  // Although then the stats between runs are no longer independent... 
+  std::vector<HyPas> hyper_front_history;
 
-  best_solns_path.clear();
+  // Keep track of the `world records' as they get broken
+  std::vector<Solution> best_solns_path;
 
-  std::vector<HyPas> hyper_front = {hyper_param_current};
 
+
+  std::vector<float> v_t_total;
+  float              median_time;
+  float              median_gflops;
+
+
+  // the hyper params to be considered on a single wave 
+  // TODO: what if I put 2 or three here ? might help fast escape from bad region
+  std::vector<HyPas> hyper_front = {graph.get_random_valid_start()};
+  
+  
+  HyPas hyper_param_current = hyper_front[0]; // NULL initialisation
+  
   bool improvement_found_on_front = true;
-  mowri << "allotted time : " << allotted_time << Endl;
-
-  float elapsed_seconds;
-  auto  start = std::chrono::high_resolution_clock::now();
-
-  auto update_elapsed_seconds = [&elapsed_seconds, &start]() {
-    auto                         end   = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<float> fp_ms = end - start;
-    elapsed_seconds                    = fp_ms.count();
-  };
 
   while (improvement_found_on_front == true)
   {
-    update_elapsed_seconds();
     improvement_found_on_front = false;
     size_t hfi                 = 0;
+   
     while (hfi < hyper_front.size() && improvement_found_on_front == false &&
-           elapsed_seconds < allotted_time)
+           timer.get_elapsed() < allotted_time)
     {
-      hyper_param_current   = hyper_front[hfi];
-      std::string hp_string = hyper_param_current.get_string();
-      hyper_front_history.push_back(hp_string);
+      
+      
+      hyper_param_current = hyper_front[hfi];
+      
+      hyper_front_history.push_back(hyper_param_current);
 
       // extra precaution, should be able to remove this
       Derivabilty dblt(hyper_param_current, gg);
@@ -724,90 +613,104 @@ Solution Jinx::single_descent_find(float              allotted_time,
         throw miog_error("Non-derivable in single descent find : " + dblt.msg);
       }
 
+    // TODO : bundle verbose must go
+    bool bundle_verbose = true;
       auto bundle = kerngen::get_bundle(hyper_param_current, gg, mowri, bundle_verbose);
       // the OpenCL string was succesfully generated,
       // we can now attempt to compile and benchmark it
-      ++global_counter;
+      ++single_descent_counter;
 
-      mowri << "\n[" << global_counter << ", " << std::fixed << std::setprecision(2)
-            << elapsed_seconds;
-      mowri << std::setprecision(6) << "s]\t" << hyper_param_current.get_string() << Endl;
+      mowri << "\n[" << single_descent_counter << ", " << std::fixed << std::setprecision(2)
+            << timer.get_elapsed() << std::setprecision(6) << "s]\t"
+            << hyper_param_current.get_string() << Endl;
 
       architests::Stat atr(command_queue, bundle.dp, gg, hyper_param_current);
       if (atr.is_good == false)
       {
-        mowri << "Archtests failed : " << atr.msg << Endl;
+        mowri << "architest failed: " << atr.msg << Endl;
+        ++hfi;
+        continue;
       }
 
-      else
+      // kernel compilation
+      auto oclr = setup_tinykernels(hyper_param_current, bundle);
+      if (oclr.fail())
       {
-        // kernel compilation
-        auto oclr = setup_tinykernels(hyper_param_current, bundle);
-
-        if (oclr.fail())
-        {
-
-          std::stringstream ss;
-          ss << "** failed in setup : " << hyper_param_current.get_string()
-             << " message : " << oclr.message;
-          ss << "error status : " << oclr.success;
-          ss << "Is this error related to this thread : "
-                "https://github.com/BVLC/caffe/issues/5610  ? ";
-          ss << "  did you see errors about local memory exceeded? That is "
-                "coming from runtime, "
-                "bailing";
-          throw miog_error(ss.str());
-        }
-
-        else
-        {
-          // run kernels
-          oclr = core_gemm_loop(
-            find_params.max_n_runs_per_kernel, find_params.max_time_per_kernel, false);
-
-          if (oclr.fail())
-          {
-            mowri << "** failed in core_gemm_loop : " << hyper_param_current.get_string() << Endl;
-          }
-
-          else
-          {
-
-            // A new best kernel found
-            if (best_solns_path.size() == 0 ||
-                median_time < 1.000 * best_solns_path.back().statistics.median_benchmark_time)
-            {
-              update_elapsed_seconds();
-              improvement_found_on_front = true;
-
-              std::time_t generation_time =
-                std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-              auto sstats = SolutionStatistics(median_time,
-                                               median_gflops,
-                                               elapsed_seconds,
-                                               std::ctime(&generation_time),
-                                               find_params);
-              best_solns_path.emplace_back(
-                gg,
-                sstats,
-                bundle.v_tgks,
-                hyper_param_current.get_string(),
-                devinfo,
-                constraints.get_r_str());  // TODO : should rather be constraints NOT string
-            }
-          }
-        }
+        std::stringstream ss;
+        ss << "Failed in setup. " << hyper_param_current.get_string()
+           << " Message: " << oclr.message <<  "Error status : " << oclr.success
+           << " Maybe related : https://github.com/BVLC/caffe/issues/5610  (?) "
+           << " Maybe a runtime error? Bailing, please report if possible ";
+        throw miog_error(ss.str());
       }
 
-      ++hfi;
-      update_elapsed_seconds();
+      mowri_tracker_print();
+      v_t_total.resize(0);
+      for (auto& ptr_tk_kernel : tk_kernels_active)
+      {
+        ptr_tk_kernel->reset_times();
+      }
+      std::vector<std::string> summary;
+      oclr = true_core([&summary, &v_t_total](double a, std::string x){
+        v_t_total.push_back(a);
+        summary.push_back(x);
+      }, core_halt);
+
+      if (oclr.fail()){
+        mowri << "cl out of resources: " << atr.msg << Endl;
+        ++hfi;
+        continue;        
+      }       
+
+
+
+      auto v_t_total_copy = v_t_total;
+      
+      std::sort(v_t_total_copy.begin(), v_t_total_copy.end());
+      // Taking the fastest or median? [v_t_total.size()/2]
+      median_time   = v_t_total_copy[0];
+      median_gflops = get_gflops(median_time);
+      
+    
+
+
+      mowri << get_run_times_heading();
+      for (size_t ir = 0; ir < summary.size(); ++ir)
+      {
+        mowri << summary[ir];
+        if (median_time == v_t_total[ir])
+        {
+          mowri << " (median) ";
+          if (best_solns_path.size() > 0 &&
+             (best_solns_path.back().statistics.median_benchmark_time >= median_time))
+          {
+            mowri << " (NEW BEST) ";
+            improvement_found_on_front = true;
+  
+            std::time_t generation_time =
+              std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+            auto sstats = SolutionStatistics(median_time,
+                                             median_gflops,
+                                             timer.get_elapsed(),
+                                             std::ctime(&generation_time),
+                                             fps); //TODO : here is the fps which should be here
+            best_solns_path.emplace_back(
+              gg,
+              sstats,
+              bundle.v_tgks,
+              hyper_param_current.get_string(),
+              devinfo,
+              constraints.get_r_str());  // TODO : should rather be constraints NOT string
+
+          }
+        }
+        mowri << '\n';
+      }
+      ++total_kernels_tested;
     }
 
-    if (improvement_found_on_front == true && allotted_time > elapsed_seconds)
+    if (improvement_found_on_front == true && allotted_time > timer.get_elapsed())
     {
-
-      // getting all `one-away's
-
       // TODO : change name from one_aways
       auto one_aways = graph.get_neighbors(hyper_param_current);
 
@@ -816,37 +719,22 @@ Solution Jinx::single_descent_find(float              allotted_time,
 
       for (auto& hp : one_aways)
       {
-
-        auto hp_string = hp.get_string();
-
-        // TODO : clearly this is not a tuple
-        auto in_graph_tuple = graph.contains(hp);
-
         if (std::count(one_aways.begin(), one_aways.end(), hp) > 1)
         {
           throw miog_error("duplicates in one_aways not allowed, should have already been "
                            "filtered. Could filter out here, but less efficient ");
         }
 
-        else if (in_graph_tuple == false)
-        {  // std::get<0>(in_graph_tuple) == false)
-
+        else if (graph.contains(hp) == false)
+        {
           std::stringstream errmss;
-          errmss << "constraint violators not allowed, should have already been "
-                    "filtered. Could "
-                    "filter out here, but less efficient. \nThe hyperstring is\n"
-                 << hp.get_string();
-          errmss << "\nrecall the geometry is\n" << gg.get_string();
-          errmss
-            << "\nthe constraint violations string is: NOMOREAVAILABEL\n";  //  <<
-                                                                            //  std::get<1>(in_graph_tuple);
+          errmss << "constraint violators not allowed, should have already been filtered out."
+           << "Could filter out here, but less efficient. The hyperstring is\n" << hp.get_string();
           throw miog_error(errmss.str());
         }
 
         // filtering out if it has already been considered
-
-        // TODO how to complare?
-        else if (std::find(hyper_front_history.begin(), hyper_front_history.end(), hp_string) !=
+        else if (std::find(hyper_front_history.begin(), hyper_front_history.end(), hp) !=
                  hyper_front_history.end())
         {
         }
@@ -855,8 +743,6 @@ Solution Jinx::single_descent_find(float              allotted_time,
         else if (!is_dvble(hp, gg))
         {
         }
-
-        //"A_MIC5_PAD2_PLU1_LIW0_MIW1_WOS0__B_MIC3_PAD2_PLU1_LIW0_MIW1_WOS0__C_UNR32_GAL3_PUN0_ICE1_NAW16_UFO0_MAC64_SKW11"
 
         // looks ok, adding it to the hyper-front
         else
@@ -867,16 +753,14 @@ Solution Jinx::single_descent_find(float              allotted_time,
     }
   }
 
-  if (allotted_time <= elapsed_seconds)
+  if (timer.get_elapsed() >= allotted_time)
   {
-    mowri << "stopping the search because the allotted time has been surpassed" << Endl;
+    mowri << "stopping the search because allotted time has been surpassed" << Endl;
   }
 
   else if (improvement_found_on_front == false)
   {
-    mowri << "stopping the search because a locally minimal kernel has been "
-             "found"
-          << Endl;
+    mowri << "stopping the search because a locally minimal kernel has been found" << Endl;
   }
 
   else
