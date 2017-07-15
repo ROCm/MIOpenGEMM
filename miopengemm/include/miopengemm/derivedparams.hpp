@@ -10,7 +10,7 @@
 #include <tuple>
 #include <vector>
 #include <miopengemm/geometry.hpp>
-#include <miopengemm/graph.hpp>
+#include <miopengemm/hyperparams.hpp>
 
 namespace MIOpenGEMM
 {

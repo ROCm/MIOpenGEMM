@@ -14,6 +14,9 @@
 namespace MIOpenGEMM
 {
 
+
+
+
 size_t get_mat_memsize(const Geometry& gg, const Offsets& toff, Mem::E emem)
 {
   Mat::E emat = Mat::mem_to_mat(emem);
@@ -214,7 +217,7 @@ void Geometry::initialise(bool   isColMajor_,
                           size_t m_,
                           size_t n_,
                           size_t k_,
-                          size_t workspace_size_,
+                          size_t wSpaceSize_,
                           char   floattype_)
 {
 
@@ -222,7 +225,7 @@ void Geometry::initialise(bool   isColMajor_,
   m              = m_;
   n              = n_;
   k              = k_;
-  workspace_size = workspace_size_;
+  wSpaceSize = wSpaceSize_;
   floattype      = floattype_;
 
   tX.resize(Mat::E::N);
@@ -255,10 +258,10 @@ Geometry::Geometry(bool   isColMajor_,
                    size_t m_,
                    size_t n_,
                    size_t k_,
-                   size_t workspace_size_,
+                   size_t wSpaceSize_,
                    char   floattype_)
 {
-  initialise(isColMajor_, tA_, tB_, tC_, lda_, ldb_, ldc_, m_, n_, k_, workspace_size_, floattype_);
+  initialise(isColMajor_, tA_, tB_, tC_, lda_, ldb_, ldc_, m_, n_, k_, wSpaceSize_, floattype_);
 }
 
 std::map<std::string, size_t> get_key_val_map(std::string geometry_string)
@@ -344,7 +347,7 @@ std::string Geometry::get_networkconfig_string() const
   geometry_stringstream << "tC" << tX[Mat::E::C] << "_tA" << tX[Mat::E::A] << "_tB" << tX[Mat::E::B]
                         << "_colMaj" << isColMajor << "_m" << m << "_n" << n << "_k" << k << "_lda"
                         << ldX[Mat::E::A] << "_ldb" << ldX[Mat::E::B] << "_ldc" << ldX[Mat::E::C]
-                        << "_ws" << workspace_size << "_f" << derived.float_size_bits;
+                        << "_ws" << wSpaceSize << "_f" << derived.float_size_bits;
   return geometry_stringstream.str();
 }
 
@@ -360,7 +363,7 @@ std::string Geometry::get_tabbed_string() const
                         << " lda=" << stringutil::get_char_padded(ldX[Mat::E::A], 5)
                         << " ldb=" << stringutil::get_char_padded(ldX[Mat::E::B], 5)
                         << " ldc=" << stringutil::get_char_padded(ldX[Mat::E::C], 5)
-                        << " ws=" << workspace_size << " f=" << derived.float_size_bits;
+                        << " ws=" << wSpaceSize << " f=" << derived.float_size_bits;
 
   return geometry_stringstream.str();
 }

@@ -10,6 +10,16 @@
 namespace MIOpenGEMM
 {
 
+
+namespace Floating{
+MFType::MFType(double v) : v_d(v), v_f(static_cast<float>(v)) {}
+void* MFType::operator[](char floattype) const
+{
+  return floattype == 'd' ? (void*)(&v_d) : (void*)(&v_f);
+}
+}
+
+
 template <typename T>
 T unfilled();
 
@@ -87,7 +97,7 @@ EnumMapper<T> get_enum_mapper(const std::vector<T>& name_, std::string enum_name
   return EnumMapper<T>(name_);
 }
 
-namespace BasicKernelType
+namespace KType
 {
 std::vector<std::string> get_name()
 {
@@ -98,7 +108,7 @@ std::vector<std::string> get_name()
   X[E::MAIN]  = "MAIN";
   return X;
 }
-const EnumMapper<std::string> M = get_enum_mapper<std::string>(get_name(), "BasicKernelType");
+const EnumMapper<std::string> M = get_enum_mapper<std::string>(get_name(), "KType");
 }
 
 namespace SummStat
@@ -171,32 +181,19 @@ const EnumMapper<std::string>* mat_to_xchi(Mat::E emat)
   }
 }
 
-// TODO : rather make this an array for lookup
+
 Mat::E mem_to_mat(Mem::E emat)
 {
-  if (emat == Mem::E::A)
-  {
-    return Mat::E::A;
-  }
-
-  else if (emat == Mem::E::B)
-  {
-    return Mat::E::B;
-  }
-
-  else if (emat == Mem::E::C)
-  {
-    return Mat::E::C;
-  }
-
-  else
-  {
-    throw miog_error("no mat enum for supposed mem enum provided");
+  switch (emat){
+    case Mem::E::A : return Mat::E::A;
+    case Mem::E::B : return Mat::E::B;
+    case Mem::E::C : return Mat::E::C;
+    default : throw miog_error("no mat enum for supposed mem enum provided");
   }
 }
+
 }
 
-// TODO : make use of this new enum more widely.
 namespace Mem
 {
 std::vector<char> get_name()
@@ -233,4 +230,39 @@ Mem::E mat_to_mem(Mat::E emat)
   }
 }
 }
+
+
+namespace KType{
+std::array<std::vector<size_t>, E::N> get_dependencies()
+{
+
+  std::vector<size_t> uninitialised_vector{std::numeric_limits<size_t>::max()};
+
+  std::array<std::vector<size_t>, E::N> kdps;
+  for (size_t i = 0; i < E::N; ++i)
+  { 
+    kdps[i] = uninitialised_vector;
+  }
+
+  kdps[E::WSA]   = {};
+  kdps[E::WSB]   = {};
+  kdps[E::BETAC] = {};
+  kdps[E::MAIN]  = {E::BETAC, E::WSA, E::WSB};
+
+  for (auto & x : kdps)
+  {
+    if (x == uninitialised_vector)
+    {
+      throw miog_error("dependencies does not appear to be initialised entirely");
+    }
+  }
+
+  return kdps;
+}
+
+// const std::vector<std::string> basic_kernel_type_strings     = get_basic_kernel_type_strings();
+std::array<std::vector<size_t>, KType::N> dependencies = get_dependencies();
+}
+
+
 }

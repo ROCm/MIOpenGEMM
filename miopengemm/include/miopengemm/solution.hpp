@@ -19,23 +19,23 @@ namespace MIOpenGEMM
 class SolutionStatistics
 {
   public:
-  // the median time and flop/s recorded with
+  // the median time and flops recorded with
   // the(se) kernel(s) on the specified benchmarked problem
-  float median_benchmark_time;
-  float median_benchmark_gflops;
+  double seconds;
+  double gflops;
 
   // the time in seconds at which this solution
   // was discovered  (from start of descent)
-  float solution_discovery_time;
+  double discovery;
 
   // timestamp (date) when found
   std::string date;
 
   FindParams find_params;
 
-  SolutionStatistics(float             median_benchmark_time,
-                     float             median_benchmark_gflops,
-                     float             solution_discovery_time,
+  SolutionStatistics(double             seconds,
+                     double             gflops,
+                     double             discovery,
                      std::string       date,
                      const FindParams& find_params);
   SolutionStatistics(std::string cache_string);
@@ -55,27 +55,27 @@ class Solution
 
   SolutionStatistics statistics;
 
-  // the kernels of which the solution is comprised
-  std::vector<KernelString> v_tgks;
+  // the OpenCL kernel strings
+  std::vector<KernBlobg> v_tgks;
 
-  std::string hyper_param_string;
+  HyPas hypas;
 
   oclutil::DevInfo devinfo;
 
-  std::string constraints_string;
+  Constraints constraints;
 
   Solution(const Geometry&                  geometry_,
            SolutionStatistics               tgss_,
-           const std::vector<KernelString>& v_tgks_,
+           const std::vector<KernBlobg>& v_tgks_,
            std::string                      hyper_param_string_,
            oclutil::DevInfo                 devinfo_,
-           std::string                      constraints_string_)
+           const Constraints &    constraints_)
     : geometry(geometry_),
       statistics(tgss_),
       v_tgks(v_tgks_),
-      hyper_param_string(hyper_param_string_),
+      hypas(hyper_param_string_),
       devinfo(devinfo_),
-      constraints_string(constraints_string_)
+      constraints(constraints_)
   {
   }
 

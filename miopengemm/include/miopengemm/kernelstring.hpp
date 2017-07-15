@@ -11,20 +11,14 @@
 namespace MIOpenGEMM
 {
 
-// maps dependencies of execution order of kernels
-extern const std::vector<std::vector<size_t>> kernel_dependencies;
-
-class KernelType
+class KernUses
 {
 
   public:
-  // summary of uses_a, uses_b, uses_c etc
+  // summarises use of uses_a, uses_b, uses_c
   std::string full;
 
-  // one of wsa, wsb, betac, main
-  std::string bkt_string;
-
-  BasicKernelType::E basic_kernel_type;
+  KType::E e_kerntype;
 
   bool uses_a;
   bool uses_b;
@@ -35,29 +29,29 @@ class KernelType
 
   bool uses(Mem::E emat_x) const;
 
-  KernelType(bool uses_a_,
+  KernUses(bool uses_a_,
              bool uses_b_,
              bool uses_c_,
              bool uses_workspace_,
              bool uses_alpha_,
              bool uses_beta_);
 
-  KernelType() = default;
+  KernUses() = default;
 };
 
 // TODO : this is a bad class name, as this is more than a *string*. change and propogate.
-class KernelString
+class KernBlobg
 {
   public:
   // type : betac_alphab, betac_workspace, etc
-  KernelType  type;
+  KernUses  type;
   std::string kernstr;
   std::string fname;
 
   size_t global_work_size;
   size_t local_work_size;
 
-  KernelString(const KernelType&  type_,
+  KernBlobg(const KernUses&  type_,
                std::string&&      kernstr_,
                const std::string& fname_,
                size_t             global_work_size_,
@@ -70,7 +64,7 @@ class KernelString
   {
   }
 
-  KernelString() = default;
+  KernBlobg() = default;
 };
 }
 

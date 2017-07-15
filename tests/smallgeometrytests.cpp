@@ -10,24 +10,24 @@ void geometrytest(bool isColMajor, bool tA, bool tB, bool tC, size_t m, size_t n
 {
 
   using namespace MIOpenGEMM;
-  
   Offsets offsets = get_padding_offsets(); 
-  size_t  workspace_size   = 3;
+  size_t  workspace_size   = 300000;
   Geometry gg = get_padded_geometry<TFloat>(isColMajor, tA, tB, tC, m, n, k, workspace_size); 
-  FindParams find_params = get_quick_find_params();
-  
-  
-  //create a mowri!
-  
 
+  //FindParams find_params = get_quick_find_params();
   
-  std::string constraints_string = "A_WOS0__B_WOS0__C_ICE3";
+  FindParams find_params(1, 10., 1, 10., SummStat::E::MEDIAN);
 
+
+  std::string constraints_string = "A_WOS1__B_WOS1__C_ICE3";
+  
   owrite::Writer mowri(Ver::E::TERMINAL, "");
+  
   dev::Boa boa(gg, offsets, mowri);
   Solution soln = boa.find(find_params, constraints_string);
-  boa.accuracy_test(soln.hyper_param_string);
+  boa.accuracy_test(soln.hypas);
 
+  
 }
 
 

@@ -16,7 +16,7 @@ namespace MIOpenGEMM
 std::string SolutionStatistics::get_string() const
 {
   std::stringstream ss;
-  ss << "runtime:" << median_benchmark_time << "  gflops:" << median_benchmark_gflops
+  ss << "runtime:" << seconds << "  gflops:" << gflops
      << "  date:" << date << "  (find_params) " << find_params.get_string();
 
   std::string stroo("");
@@ -31,14 +31,14 @@ std::string SolutionStatistics::get_string() const
   return stroo;
 }
 
-SolutionStatistics::SolutionStatistics(float             median_benchmark_time_,
-                                       float             median_benchmark_gflops_,
-                                       float             solution_discovery_time_,
+SolutionStatistics::SolutionStatistics(double             seconds_,
+                                       double             gflops_,
+                                       double             discovery_,
                                        std::string       date_,
                                        const FindParams& find_params_)
-  : median_benchmark_time(median_benchmark_time_),
-    median_benchmark_gflops(median_benchmark_gflops_),
-    solution_discovery_time(solution_discovery_time_),
+  : seconds(seconds_),
+    gflops(gflops_),
+    discovery(discovery_),
     date(date_),
     find_params(find_params_)
 {
@@ -70,9 +70,9 @@ SolutionStatistics::SolutionStatistics(std::string cache_string)
     return X[1];
   };
 
-  median_benchmark_time   = std::stof(get_X(0));
-  median_benchmark_gflops = std::stof(get_X(1));
-  solution_discovery_time = 0;
+  seconds   = std::stof(get_X(0));
+  gflops = std::stof(get_X(1));
+  discovery = 0;
   date                    = get_X(2);
 }
 
@@ -81,18 +81,18 @@ std::string Solution::get_networkconfig_string() const
   return geometry.get_networkconfig_string();
 }
 
-std::string Solution::get_hyper_param_string() const { return hyper_param_string; }
+std::string Solution::get_hyper_param_string() const { return hypas.get_string(); }
 
 std::string Solution::get_cache_entry_string(std::string k_comment) const
 {
   std::stringstream cache_write_ss;
   cache_write_ss << "add_entry(kc, \"" << devinfo.identifier << "\", /* device key */\n"
-                 << "\"" << constraints_string << "\", /* constraint key */\n"
+                 << "\"" << constraints.get_r_str() << "\", /* constraint key */\n"  // TODO : should also have start constraints...
                  << "\"" << geometry.get_string() << "\", /* geometry key */\n"
                  << "\"" << k_comment << "\", /* comment key */\n"
-                 << "{\"" << hyper_param_string << "\", /* solution hyper string */\n"
-                 << "{" << statistics.median_benchmark_time << ", "
-                 << statistics.median_benchmark_gflops << ", " << statistics.solution_discovery_time
+                 << "{\"" << hypas.get_string() << "\", /* solution hyper string */\n" // TODO : make it 3 parts. 
+                 << "{" << statistics.seconds << ", "
+                 << statistics.gflops << ", " << statistics.discovery
                  << ", \"" << statistics.date << "\""
                  << ", /* solution stats (time [ms], gflops, time found "
                  << "(within descent), date found */\n"

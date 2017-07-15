@@ -204,9 +204,9 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
   }
 
   // check -1 : enough workspace memory
-  if (ptr_gg->workspace_size < required_workspace)
+  if (ptr_gg->wSpaceSize < required_workspace)
   {
-    set_status_ss << "ptr_gg->workspace_size ( " << ptr_gg->workspace_size
+    set_status_ss << "ptr_gg->wSpaceSize ( " << ptr_gg->wSpaceSize
                   << " ) is less then the required workspace ( " << required_workspace << " ). ";
   }
 
@@ -431,7 +431,7 @@ DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_) : ptr_hp(&hp
                               (ptr_gg->ldX[Mat::E::A]));  // TODO : does UFO need increase here
   tints[Mem::E::B] = get_tint(ptr_gg->get_uncoal(Mat::E::B) * (ptr_gg->ldX[Mat::E::B]));
   tints[Mem::E::C] = get_tint(ptr_gg->get_uncoal(Mat::E::C) * (ptr_gg->ldX[Mat::E::C]));
-  tints[Mem::E::W] = get_tint(ptr_gg->workspace_size);
+  tints[Mem::E::W] = get_tint(ptr_gg->wSpaceSize);
   tintk            = get_tint(
     ptr_gg->k +
     2 * ptr_hp->sus[Mat::E::C].vs[NonChi::E::UNR]);  // TODO : make this tight and prove correct.

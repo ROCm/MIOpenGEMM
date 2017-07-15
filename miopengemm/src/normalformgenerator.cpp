@@ -23,7 +23,7 @@ class NormalFormGenerator : public prepgen::PrepGenerator
   {
   }
 
-  virtual void set_type() override final { type = "nform" + mchar; }
+  virtual void set_type() override final { type = "nform" + std::string(1,mchar); }
 
   size_t get_local_work_size() override final { return dp.at(emat_x).cw2_local_work_size; }
 
@@ -38,7 +38,7 @@ class NormalFormGenerator : public prepgen::PrepGenerator
        << "[mu_pll_i*READ_STRIDE_PLL_K + mu_perp_i*READ_STRIDE_PERP_K];";
   }
 
-  KernelString get_kernelstring()
+  KernBlobg get_kernelstring()
   {
     std::stringstream ss;
 
@@ -160,7 +160,7 @@ for (size_t mu_perp_i = 0; mu_perp_i < MICRO_TILE_PERP_UNROLL; ++mu_perp_i) {
   virtual void setup_final() override final {}
 };
 
-KernelString
+KernBlobg
 get_nform_kernelstring(Mat::E emat_x, const HyPas& hp, const Geometry& gg, const DerivedParams& dp)
 {
   NormalFormGenerator nfg(emat_x, hp, gg, dp);
@@ -176,7 +176,7 @@ get_nform_kernelstring(Mat::E emat_x, const HyPas& hp, const Geometry& gg, const
 
 // std::string nform_string = emat_x == Mat::E::A ? "nforma" : "nformb";
 
-// KernelString get_nformb_kernelstring(const HyPas&     hp,
+// KernBlobg get_nformb_kernelstring(const HyPas&     hp,
 // const Geometry&                     gg,
 // const DerivedParams& dp)
 //{

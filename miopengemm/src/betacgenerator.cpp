@@ -36,7 +36,7 @@ void BetacGenerator::setup_additional()
 
 void BetacGenerator::append_derived_definitions_additional(std::stringstream& ss) { ss << " "; }
 
-KernelString get_betac_kernelstring(const HyPas& hp, const Geometry& gg, const DerivedParams& dp)
+KernBlobg get_betac_kernelstring(const HyPas& hp, const Geometry& gg, const DerivedParams& dp)
 {
   BetacGenerator bcg(hp, gg, dp);
   bcg.setup();

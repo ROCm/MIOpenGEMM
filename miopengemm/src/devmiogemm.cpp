@@ -43,33 +43,33 @@ Boa::Boa(Geometry gg_, Offsets toff_, owrite::Writer& mowri_)
   active_type = gg_.floattype;
 }
 
-void Boa::benchgemm(const std::vector<std::string>& hyperstrings, const Halt & hl)
+void Boa::benchgemm(const std::vector<HyPas>& hps, const Halt & hl)
 {
   switch (active_type)
   {
-  case 'f': f_moa->benchgemm(hyperstrings, hl); break;
-  case 'd': d_moa->benchgemm(hyperstrings, hl); break;
+  case 'f': f_moa->benchgemm(hps, hl); break;
+  case 'd': d_moa->benchgemm(hps, hl); break;
   default: throw miog_error("unrecognised floattype char in Boa benchgemm");
   }
 }
 
-void Boa::accuracy_test(const std::string& hyperstring)
+void Boa::accuracy_test(const HyPas & hp)
 {
 
   switch (active_type)
   {
-  case 'f': f_moa->accuracy_test(hyperstring, nullptr); break;
-  case 'd': d_moa->accuracy_test(hyperstring, nullptr); break;
+  case 'f': f_moa->accuracy_test(hp, nullptr); break;
+  case 'd': d_moa->accuracy_test(hp, nullptr); break;
   default: throw miog_error("unrecognised floattype char in Boa accuracy_test with 1 parm");
   }
 }
 
-Solution Boa::find(const FindParams& find_params, std::string constraints_string)
+Solution Boa::find(const FindParams& find_params, const Constraints & constraints)
 {
   switch (active_type)
   {
-  case 'f': return f_moa->find(find_params, constraints_string);
-  case 'd': return d_moa->find(find_params, constraints_string);
+  case 'f': return f_moa->find(find_params, constraints);
+  case 'd': return d_moa->find(find_params, constraints);
   default: throw miog_error("unrecognised floattype char in Boa find");
   }
 }

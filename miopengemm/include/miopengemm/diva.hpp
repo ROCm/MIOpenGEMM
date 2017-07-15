@@ -32,11 +32,11 @@ class Diva
 
   Diva(Geometry gg_, Offsets toff_, owrite::Writer& mowri_);
 
-  void benchgemm(const std::vector<std::string>& hyperstrings, const Halt &); 
+  void benchgemm(const std::vector<HyPas>& hps, const Halt &); 
 
-  Solution find(const FindParams& find_params, std::string constraints_string);
+  Solution find(const FindParams& find_params, const Constraints & constraints);
 
-  void accuracy_test(const std::string& hyperstring, const TFloat* c_true_for_test);
+  void accuracy_test(const HyPas& hp, const TFloat* c_true_for_test);
 
   ///////////////////////////////////
 

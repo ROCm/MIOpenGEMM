@@ -32,7 +32,7 @@ class ByLineGenerator : public prepgen::PrepGenerator
   public:
   ByLineGenerator(Mat::E emat_x, const HyPas& hp_, const Geometry& gg_, const DerivedParams& dp_);
 
-  virtual KernelString get_kernelstring() final override;
+  virtual KernBlobg get_kernelstring() final override;
   virtual void         setup_final() final override;
 
   private:

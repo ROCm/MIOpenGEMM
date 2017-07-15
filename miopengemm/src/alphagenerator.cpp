@@ -939,7 +939,7 @@ TINTK k_plus_offset = __K__ + unroll_offset;
 
   public:
   // the "main" kernel
-  virtual KernelString get_kernelstring() override final
+  virtual KernBlobg get_kernelstring() override final
   {
 
     std::stringstream ss;
@@ -1118,7 +1118,7 @@ TINTK k_plus_offset = __K__ + unroll_offset;
   virtual void setup_final() override final {}
 };
 
-KernelString get_alpha_kernelstring(const HyPas& hp, const Geometry& gg, const DerivedParams& dp)
+KernBlobg get_alpha_kernelstring(const HyPas& hp, const Geometry& gg, const DerivedParams& dp)
 {
   AlphaGenerator ag(hp, gg, dp);
   ag.setup();

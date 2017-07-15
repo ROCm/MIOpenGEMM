@@ -26,13 +26,13 @@ namespace MIOpenGEMM
 namespace kerngen
 {
 
-Bundle get_bundle(const HyPas& hp, const Geometry& gg, owrite::Writer& mowri, bool bundle_verbose)
+Bundle get_bundle(const HyPas& hp, const Geometry& gg, owrite::Writer& mowri)
 {
 
   DerivedParams dp(hp, gg);
 
-  std::vector<KernelString>        v_tgks;
-  std::vector<std::vector<size_t>> v_wait_indices;
+  std::vector<KernBlobg>        v_tgks;
+  std::vector<std::vector<size_t>> wait_indices;
 
   for (auto emat_x : {Mat::E::A, Mat::E::B})
   {
@@ -77,7 +77,7 @@ Bundle get_bundle(const HyPas& hp, const Geometry& gg, owrite::Writer& mowri, bo
     stringutil::indentify(x.kernstr);
   }
 
-  std::vector<KernelType> types;
+  std::vector<KernUses> types;
   for (size_t i = 0; i < v_tgks.size(); ++i)
   {
     types.push_back(v_tgks[i].type);
@@ -85,50 +85,44 @@ Bundle get_bundle(const HyPas& hp, const Geometry& gg, owrite::Writer& mowri, bo
 
   for (size_t i = 0; i < v_tgks.size(); ++i)
   {
-    v_wait_indices.push_back({});
+    wait_indices.push_back({});
     for (size_t j = 0; j < v_tgks.size(); ++j)
     {
-      if (std::find(kernel_dependencies.at(types[i].basic_kernel_type).begin(),
-                    kernel_dependencies.at(types[i].basic_kernel_type).end(),
-                    types[j].basic_kernel_type) !=
-          kernel_dependencies.at(types[i].basic_kernel_type).end())
+      if (std::find(KType::dependencies.at(types[i].e_kerntype).begin(),
+                    KType::dependencies.at(types[i].e_kerntype).end(),
+                    types[j].e_kerntype) !=
+          KType::dependencies.at(types[i].e_kerntype).end())
       {
-        v_wait_indices.back().push_back(j);
+        wait_indices.back().push_back(j);
       }
     }
   }
-
-  // TODO : bundle_verbose should be mowri handled
-  if (bundle_verbose == true)
+    
+  mowri.deps << "\nnetwork of kernel dependencies: \n";
+  for (size_t i = 0; i < v_tgks.size(); ++i)
   {
-    mowri << "\n";
-    mowri << "network of kernel dependencies: \n";
-    for (size_t i = 0; i < v_tgks.size(); ++i)
-    {
-      std::stringstream pre_waits_for_ss;
-      pre_waits_for_ss << "kernel " << i << " ( " << types[i].full << " )";
-      std::string pre_waits_for = pre_waits_for_ss.str();
-      mowri << pre_waits_for;
-      int         base_space(26);
-      std::string space1(std::max(1, base_space - static_cast<int>(pre_waits_for.size())), ' ');
-      mowri << space1 << "waits for   " << Flush;
-
-      if (v_wait_indices[i].size() == 0)
-      {
-        mowri << "(nothing)";
-      }
-
-      for (size_t j = 0; j < v_wait_indices[i].size(); ++j)
-      {
-        mowri << "(kernel " << v_wait_indices[i][j] << " ( " << types[v_wait_indices[i][j]].full
-              << " ))   " << Flush;
-      }
-      mowri << Endl;
+    std::stringstream ss1;
+    ss1 << "kernel " << i << " {" << types[i].full << "}";
+    std::string pre_waits_for = ss1.str(); 
+    
+    if (pre_waits_for.size() < 35){
+      pre_waits_for.resize(37, ' ');
     }
-    mowri << "\n";
-  }
+    mowri.deps << pre_waits_for << " waits for :  " << Flush;
+    if (wait_indices[i].size() == 0)
+    {
+      mowri.deps << "nothing";
+    }
 
-  return Bundle(std::move(v_tgks), std::move(v_wait_indices), std::move(dp));
+    for (size_t j = 0; j < wait_indices[i].size(); ++j)
+    {
+      mowri.deps << wait_indices[i][j]  << '{' << types[wait_indices[i][j]].full  << "} " << Flush;
+    }
+    mowri.deps << Endl;
+  }
+  mowri.deps << '\n';
+
+  return Bundle(std::move(v_tgks), std::move(wait_indices), std::move(dp));
 }
 }
 }

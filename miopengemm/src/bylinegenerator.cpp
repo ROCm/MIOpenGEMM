@@ -176,7 +176,7 @@ w += start_coal;
 )";
 }
 
-KernelString ByLineGenerator::get_kernelstring()
+KernBlobg ByLineGenerator::get_kernelstring()
 {
 
   std::stringstream ss;

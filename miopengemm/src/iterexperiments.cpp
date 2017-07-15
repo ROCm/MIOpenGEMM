@@ -13,12 +13,9 @@ namespace MIOpenGEMM
 {
 
 int run_find_experiments(const std::vector<Geometry>& geometries,
-                         std::vector<std::string>&    v_constraints,
+                         const std::vector<Constraints>&    v_constraints,
                          const FindParams&            find_params,
-                         // bool                         verbose_inner,
                          std::string basedir_inner)
-// bool                         verbose_outer,
-// std::string                  fn_outer)
 {
 
   owrite::Writer mowri_outer(Ver::E::TERMINAL,
@@ -46,7 +43,8 @@ int run_find_experiments(const std::vector<Geometry>& geometries,
       }
 
       std::stringstream fulldir_inner_ss;
-      fulldir_inner_ss << basedir_inner << "cs" << constraints << "/";
+      //TODO : get_r_str not complete
+      fulldir_inner_ss << basedir_inner << "cs" << constraints.get_r_str() << "/";
       fulldir_inner = fulldir_inner_ss.str();
       /* TODO WARNING : only works on Linux (makes directory)  */
       std::string syscall = std::string("mkdir -p  ") + fulldir_inner;
@@ -64,7 +62,8 @@ int run_find_experiments(const std::vector<Geometry>& geometries,
       }
     }
 
-    mowri_outer << "\nEntering experiment with constraints_string = `" << constraints << "'"
+    // TODO : get_r_string not accurate, get all 
+    mowri_outer << "\nEntering experiment with constraints `" << constraints.get_r_str() << "'"
                 << Endl;
 
     for (size_t prob_i = 0; prob_i < geometries.size(); ++prob_i)
@@ -109,8 +108,8 @@ int run_find_experiments(const std::vector<Geometry>& geometries,
         mowri_outer << " \t " << Endl;
       }
 
-      mowri_outer << "soln median gflops :  " << soln.statistics.median_benchmark_gflops
-                  << "  \t soln median time : " << soln.statistics.median_benchmark_time
+      mowri_outer << "soln median gflops :  " << soln.statistics.gflops
+                  << "  \t soln median time : " << soln.statistics.seconds
                   << "  \t  elapsed time : " << elapsed_seconds << " [s] " << Endl;
 
       if (basedir_inner != "")
@@ -131,7 +130,7 @@ int run_find_experiments(const std::vector<Geometry>& geometries,
   return 0;
 }
 
-std::vector<Geometry> get_old_deepbench_geometries(size_t workspace_size)
+std::vector<Geometry> get_old_deepbench_geometries(size_t wSpaceSize)
 {
 
   std::vector<std::tuple<size_t, size_t, size_t, bool, bool>> baiduproblems = {
@@ -215,10 +214,10 @@ std::vector<Geometry> get_old_deepbench_geometries(size_t workspace_size)
     // std::make_tuple(4096, 7133, 4096, false, true),
   };
 
-  return get_from_m_n_k_tA_tB(baiduproblems, workspace_size);
+  return get_from_m_n_k_tA_tB(baiduproblems, wSpaceSize);
 }
 
-std::vector<Geometry> get_deepbench_geometries(size_t workspace_size)
+std::vector<Geometry> get_deepbench_geometries(size_t wSpaceSize)
 {
 
   std::vector<std::tuple<size_t, size_t, size_t, bool, bool>> baiduproblems = {
@@ -382,14 +381,14 @@ std::vector<Geometry> get_deepbench_geometries(size_t workspace_size)
     std::make_tuple(7680, 48000, 2560, false, false),
     std::make_tuple(8448, 48000, 2816, true, false),
     std::make_tuple(8448, 48000, 2816, false, false)};
-  return get_from_m_n_k_tA_tB(baiduproblems, workspace_size);
+  return get_from_m_n_k_tA_tB(baiduproblems, wSpaceSize);
 }
 
-std::vector<Geometry> get_new_deepbench_geometries(size_t workspace_size)
+std::vector<Geometry> get_new_deepbench_geometries(size_t wSpaceSize)
 {
-  auto                     allg = get_deepbench_geometries(workspace_size);
+  auto                     allg = get_deepbench_geometries(wSpaceSize);
   std::vector<std::string> oldg_strings;
-  for (auto& x : get_old_deepbench_geometries(workspace_size))
+  for (auto& x : get_old_deepbench_geometries(wSpaceSize))
   {
     oldg_strings.emplace_back(x.get_string());
   }
@@ -406,9 +405,9 @@ std::vector<Geometry> get_new_deepbench_geometries(size_t workspace_size)
   return newg;
 }
 
-std::vector<Geometry> get_small_deepbench_geometries(size_t small_threshold, size_t workspace_size)
+std::vector<Geometry> get_small_deepbench_geometries(size_t small_threshold, size_t wSpaceSize)
 {
-  auto                  all_geoms = get_deepbench_geometries(workspace_size);
+  auto                  all_geoms = get_deepbench_geometries(wSpaceSize);
   std::vector<Geometry> small_geoms;
   size_t                count_small = 0;
   for (auto& gg : all_geoms)
@@ -422,9 +421,9 @@ std::vector<Geometry> get_small_deepbench_geometries(size_t small_threshold, siz
   return small_geoms;
 }
 
-std::vector<Geometry> get_large_deepbench_geometries(size_t large_threshold, size_t workspace_size)
+std::vector<Geometry> get_large_deepbench_geometries(size_t large_threshold, size_t wSpaceSize)
 {
-  auto                  all_geoms = get_deepbench_geometries(workspace_size);
+  auto                  all_geoms = get_deepbench_geometries(wSpaceSize);
   std::vector<Geometry> large_geoms;
   for (auto& gg : all_geoms)
   {
@@ -450,7 +449,7 @@ std::vector<Geometry> get_problem_geometries()
   return large_geoms;
 }
 
-std::vector<Geometry> get_backconvwrw_geometries(size_t workspace_size)
+std::vector<Geometry> get_backconvwrw_geometries(size_t wSpaceSize)
 {
 
   // m ,  n ,  k , lda ,ldb ,ldc , tA , tB
@@ -485,10 +484,10 @@ std::vector<Geometry> get_backconvwrw_geometries(size_t workspace_size)
 
     };
 
-  return get_from_m_n_k_ldaABC_tA_tB(backcwrwr_problems, workspace_size);
+  return get_from_m_n_k_ldaABC_tA_tB(backcwrwr_problems, wSpaceSize);
 }
 
-std::vector<Geometry> get_small_growing_geometries(size_t workspace_size)
+std::vector<Geometry> get_small_growing_geometries(size_t wSpaceSize)
 {
 
   std::vector<std::tuple<size_t, size_t, size_t, bool, bool>> scalingproblems = {
@@ -506,10 +505,10 @@ std::vector<Geometry> get_small_growing_geometries(size_t workspace_size)
     std::make_tuple(250, 250, 102400, false, false),
   };
 
-  return get_from_m_n_k_tA_tB(scalingproblems, workspace_size);
+  return get_from_m_n_k_tA_tB(scalingproblems, wSpaceSize);
 }
 
-std::vector<Geometry> get_square_geometries(size_t workspace_size)
+std::vector<Geometry> get_square_geometries(size_t wSpaceSize)
 {
 
   std::vector<std::tuple<size_t, size_t, size_t, bool, bool>> squareproblems;
@@ -521,6 +520,6 @@ std::vector<Geometry> get_square_geometries(size_t workspace_size)
     squareproblems.push_back(std::make_tuple(dim, dim, dim, true, false));
   };
 
-  return get_from_m_n_k_tA_tB(squareproblems, workspace_size);
+  return get_from_m_n_k_tA_tB(squareproblems, wSpaceSize);
 }
 }

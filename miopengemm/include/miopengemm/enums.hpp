@@ -6,13 +6,35 @@
 
 #include <unordered_map>
 #include <vector>
+#include <array>
 #include <miopengemm/error.hpp>
 
 namespace MIOpenGEMM
 {
 
+
+namespace Floating{
+
 static const double default_alpha = 0.415693029182345929;
 static const double default_beta  = 0.273539340934809345;
+
+class MFType
+{
+  private:
+  double v_d;
+  float  v_f;
+
+  public:
+  MFType(double v);
+  void* operator[](char floattype) const;
+};
+
+static const MFType m_alpha(default_alpha);
+static const MFType m_beta(default_beta);
+
+}
+
+
 
 template <typename T>
 class EnumMapper
@@ -27,7 +49,7 @@ class EnumMapper
 
 // if you add a parameter to enum, make sure to add it before the final count N
 
-namespace BasicKernelType
+namespace KType
 {
 enum E
 {
@@ -35,10 +57,18 @@ enum E
   WSB,
   BETAC,
   MAIN,
-  N  // how many BasicKernelTypes
+  N  // how many KTypes
 };
 extern const EnumMapper<std::string> M;
+
+
+// maps the depencices of kernels. 
+// For example deps[MAIN] = {WSA, WSB, BETAC} as all of these must first complete
+// before MAIN can execute 
+extern std::array<std::vector<size_t>, E::N> dependencies;
+
 }
+
 
 namespace SummStat
 {
@@ -100,7 +130,7 @@ namespace Mem
 {
 enum E
 {
-  A,
+  A = 0,
   B,
   C,
   W,
@@ -165,6 +195,12 @@ enum E
   STRACK,      // tracker output to terminal, main output to file
 };
 }
+
+
+
+
+
+
 }
 
 #endif

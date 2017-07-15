@@ -18,14 +18,14 @@ CopyGenerator::CopyGenerator(Mat::E               emat_x_,
 {
 }
 
-void   CopyGenerator::set_type() { type = "copy" + mchar; }
+void   CopyGenerator::set_type() { type = "copy" + std::string(1, mchar); }
 size_t CopyGenerator::get_local_work_size() { return dp.at(emat_x).cw1_local_work_size; }
 size_t CopyGenerator::get_work_per_thread() { return dp.at(emat_x).cw1_work_per_thread; }
 
 void CopyGenerator::setup_additional()
 {
   description_string = R"()";
-  inner_work_string  = std::string("\n/* the copy */\nw[i] = ") + mchar + "[i];";
+  inner_work_string  = std::string("\n/* the copy */\nw[i] = ") + std::string(1, mchar) + "[i];";
 }
 
 void CopyGenerator::append_derived_definitions_additional(std::stringstream& ss)
@@ -34,7 +34,7 @@ void CopyGenerator::append_derived_definitions_additional(std::stringstream& ss)
   {
     std::stringstream errm;
     errm << "Call to append_derived_definitions_additional, "
-         << " but mchar is neither a not b, but rather  " << mchar;
+         << " but mchar is neither a nor b, but it's rather  " << mchar;
     throw miog_error(errm.str());
   }
 
@@ -42,7 +42,7 @@ void CopyGenerator::append_derived_definitions_additional(std::stringstream& ss)
   ss << "#define GLOBAL_OFFSET_W " << dp.at(emat_x).cw_global_offset << "\n";
 }
 
-KernelString
+KernBlobg
 get_copy_kernelstring(Mat::E emat_x, const HyPas& hp, const Geometry& gg, const DerivedParams& dp)
 {
 

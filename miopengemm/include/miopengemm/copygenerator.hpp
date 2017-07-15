@@ -28,7 +28,7 @@ class CopyGenerator : public bylinegen::ByLineGenerator
   size_t get_work_per_thread() override final;
 };
 
-KernelString
+KernBlobg
 get_copy_kernelstring(Mat::E emat_x, const HyPas& hp, const Geometry& gg, const DerivedParams& dp);
 }
 }

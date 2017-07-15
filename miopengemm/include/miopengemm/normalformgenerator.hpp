@@ -14,10 +14,10 @@ namespace MIOpenGEMM
 namespace nformgen
 {
 
-KernelString
+KernBlobg
 get_nform_kernelstring(Mat::E emat_x, const HyPas& hp, const Geometry& gg, const DerivedParams& dp);
 
-// KernelString get_nformb_kernelstring(const HyPas&     hp,
+// KernBlobg get_nformb_kernelstring(const HyPas&     hp,
 // const Geometry&                     gg,
 // const DerivedParams& dp);
 }

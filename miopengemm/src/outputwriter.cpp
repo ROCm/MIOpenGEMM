@@ -20,6 +20,10 @@ void Writer::set_v_bits()
   main_to_terminal    = false;
   tracker_to_file     = false;
   tracker_to_terminal = false;
+  
+  // currently deps just copies main (JN July 15 2017). 
+  deps_to_file     = false;
+  deps_to_terminal = false;  
 
   if (v == Ver::E::SILENT)
   {
@@ -28,17 +32,22 @@ void Writer::set_v_bits()
   else if (v == Ver::E::TERMINAL)
   {
     main_to_terminal = true;
+    deps_to_terminal = true;
   }
 
   else if (v == Ver::E::SPLIT)
   {
     main_to_file     = true;
     main_to_terminal = true;
+    deps_to_file     = true;
+    deps_to_terminal = true;
+
   }
 
   else if (v == Ver::E::TOFILE)
   {
     main_to_file = true;
+    deps_to_file = true;
   }
 
   else if (v == Ver::E::TRACK)
@@ -49,6 +58,7 @@ void Writer::set_v_bits()
   else if (v == Ver::E::STRACK)
   {
     main_to_file        = true;
+    deps_to_file        = true;
     tracker_to_terminal = true;
   }
 
@@ -60,12 +70,11 @@ void Writer::set_v_bits()
 
 void Writer::initialise_file()
 {
-  if (main_to_file || tracker_to_file)
+  if (main_to_file || tracker_to_file || deps_to_file)
   {
     if (filename.compare("") == 0)
     {
       std::stringstream errm;
-      /* TODO : improve message getting string from enum verbse */
       errm << "empty filename passed to Writer,"
            << "with to_file as true."
            << "This is not allowed";
@@ -101,6 +110,9 @@ Writer::Writer(Ver::E v_, std::string filename_) : v(v_), filename(filename_)
 
   std::ofstream* tracker_ptr_file = tracker_to_file ? &file : nullptr;
   tracker                         = BasicWriter(tracker_to_terminal, tracker_ptr_file);
+  
+  std::ofstream* deps_ptr_file = deps_to_file ? &file : nullptr;
+  deps                         = BasicWriter(deps_to_terminal, deps_ptr_file);
 }
 
 Writer::~Writer() { file.close(); }

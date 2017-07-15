@@ -6,7 +6,7 @@
 
 #include <miopengemm/derivedparams.hpp>
 #include <miopengemm/geometry.hpp>
-#include <miopengemm/graph.hpp>
+#include <miopengemm/hyperparams.hpp>
 #include <miopengemm/kernelstring.hpp>
 #include <miopengemm/stringutilbase.hpp>
 
@@ -45,7 +45,9 @@ class BaseGenerator
 
   private:
   virtual void set_type() = 0;
-  void         set_kernelname() { kernelname = "miog_" + type; }
+  void         set_kernelname() {
+    kernelname = "miog_" + type; 
+  }
 
   virtual void set_usage()   = 0;
   virtual void setup_final() = 0;
@@ -56,6 +58,7 @@ class BaseGenerator
   {
 
     set_type();
+    
     set_kernelname();
     set_usage();
 
@@ -63,8 +66,7 @@ class BaseGenerator
     setup_final();
   }
 
-  // TODO : set type and kernelname. (type_), kernelname("tg_" + type_)
-  virtual KernelString get_kernelstring() = 0;
+  virtual KernBlobg get_kernelstring() = 0;
 
   BaseGenerator(const HyPas& hp_, const Geometry& gg_, const DerivedParams& dp_);
 

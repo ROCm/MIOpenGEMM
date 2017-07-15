@@ -28,12 +28,12 @@ void Kernel::try_release()
   }
 }
 
-oclutil::Result Kernel::update(const KernelString& ks, owrite::Writer& mowri)
+oclutil::Result Kernel::update(const KernBlobg& ks, owrite::Writer& mowri)
 {
 
   try_release();
   tgk_strings = ks;
-  mowri << "compiling " << ks.type.bkt_string << ". " << Flush;
+  mowri << "compiling " << KType::M.name[ks.type.e_kerntype] << ". " << Flush;
 
   auto start = std::chrono::high_resolution_clock::now();
 

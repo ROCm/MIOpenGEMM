@@ -23,34 +23,47 @@
 #include <miopengemm/outputwriter.hpp>
 #include <miopengemm/solution.hpp>
 #include <miopengemm/stringutilbase.hpp>
+#include <miopengemm/graph.hpp>
 
 namespace MIOpenGEMM
 {
 
 
-// TODO : find a new home for Timer
-class Timer{
-  std::chrono::time_point<std::chrono::high_resolution_clock> t0;
-  
-  public:
-  
-  void start(){
-    t0 = std::chrono::high_resolution_clock::now();
-  }
-  
-  double get_elapsed(){
-    std::chrono::duration<double> fp_ms = std::chrono::high_resolution_clock::now() - t0;
-    return fp_ms.count();    
-  }
-  
-};
-
-
-MFType::MFType(double v) : v_d(v), v_f(static_cast<float>(v)) {}
-void* MFType::operator[](char floattype) const
-{
-  return floattype == 'd' ? (void*)(&v_d) : (void*)(&v_f);
+void Timer::start(){
+  t0 = std::chrono::high_resolution_clock::now();
 }
+
+double Timer::get_elapsed() const{
+  std::chrono::duration<double> fp_ms = std::chrono::high_resolution_clock::now() - t0;
+  return fp_ms.count();    
+}
+
+
+
+void FindTracker::start() {timer.start();}
+double FindTracker::get_elapsed() const
+{return timer.get_elapsed();}
+
+void FindTracker::incr_descents(){++descents;}
+void FindTracker::incr_kernels(){++kernels;}
+
+size_t FindTracker::get_descents() const
+{return descents;}
+
+std::string FindTracker::get_string() const
+{
+  auto format = [](const size_t & x){
+    return std::string("") + stringutil::get_padded(x, 7);
+  };
+  std::stringstream track_ss;
+  track_ss << "[ELAPSED[s]:" 
+  << format(static_cast<int>(timer.get_elapsed())) << "  #RESTARTS:" << format(descents)
+  << "  #GEMMS:" << format(kernels) << "]       ";
+  return track_ss.str();
+}
+
+
+
 
 GpuMms::GpuMms(cl_mem           a_gpu_,
                cl_mem           b_gpu_,
@@ -80,7 +93,6 @@ GpuMms::GpuMms(cl_mem           a_gpu_,
 
 cl_mem& GpuMms::operator[](Mem::E x)
 {
-  // TODO : bound check here if in debug mode.
   return cl_mems[x];
 }
 
@@ -110,16 +122,16 @@ Jinx::Jinx(cl_command_queue command_queue_,
     mowri(mowri_)
 {
 
-  tk_kernels.resize(BasicKernelType::E::N);
-  for (size_t i = 0; i < BasicKernelType::E::N; ++i)
+  tk_kernels.resize(KType::E::N);
+  for (size_t i = 0; i < KType::E::N; ++i)
   {
-    tk_kernels[i] = Kernel(command_queue, BasicKernelType::M.name[i]);
+    tk_kernels[i] = Kernel(command_queue, KType::M.name[i]);
   }
 }
 
-/* TODO : option for median / max / mean */
+/* TODO : option for median / max */
 
-float Jinx::get_gflops(float timems) { return (2. * gg.m * gg.n * gg.k) / (timems * 10e5); }
+double Jinx::get_gflops(double timems) { return (2. * gg.m * gg.n * gg.k) / (timems * 10e5); }
 
 void Jinx::address_check_valid()
 {
@@ -142,18 +154,18 @@ void Jinx::address_check_valid()
     throw miog_error("in address_check_valid, c should not be nullptr");
   }
 
-  if (gpum[Mem::E::W] == nullptr && gg.workspace_size != 0)
+  if (gpum[Mem::E::W] == nullptr && gg.wSpaceSize != 0)
   {
     throw miog_error("in address_check_valid, pointer to workspace memory is "
                      "the nullptr, but "
-                     "workspace_size is not zero");
+                     "wSpaceSize is not zero");
   }
 
-  if (gpum[Mem::E::W] != nullptr && gg.workspace_size == 0)
+  if (gpum[Mem::E::W] != nullptr && gg.wSpaceSize == 0)
   {
     throw miog_error("in address_check_valid, pointer to workspace memory is not the "
                      "nullptr, "
-                     "but workspace_size is zero. if workspace_size is zero please set "
+                     "but wSpaceSize is zero. if wSpaceSize is zero please set "
                      "workspace_gpu to the nullptr to make super clear that there will be "
                      "no "
                      "workspace used. The workspace offset should be zero too in this case ");
@@ -182,7 +194,7 @@ void Jinx::address_check_valid_and_reliable()
 }
 
 
-void Jinx::set_kern_args(const KernelType& type)
+void Jinx::set_kern_args(const KernUses& type)
 {
 
   // parameter order rule: {a, oa, b, ob, c, oc, ws, ows}, alpha, beta
@@ -199,25 +211,25 @@ void Jinx::set_kern_args(const KernelType& type)
 
   if (type.uses_alpha)
   {
-    arg_sizes_values.emplace_back(gg.derived.float_size_bytes, m_alpha[gg.floattype]);
+    arg_sizes_values.emplace_back(gg.derived.float_size_bytes, Floating::m_alpha[gg.floattype]);
   }
 
   if (type.uses_beta)
   {
-    arg_sizes_values.emplace_back(gg.derived.float_size_bytes, m_beta[gg.floattype]);
+    arg_sizes_values.emplace_back(gg.derived.float_size_bytes, Floating::m_beta[gg.floattype]);
   }
 
-  tk_kernels.at(type.basic_kernel_type).set_kernel_args(arg_sizes_values);
+  tk_kernels.at(type.e_kerntype).set_kernel_args(arg_sizes_values);
 }
 
-bool Jinx::refresh_needed(BasicKernelType::E type, const HyPas& new_hp, const DerivedParams& new_dp)
+bool Jinx::refresh_needed(KType::E type, const HyPas& new_hp, const DerivedParams& new_dp)
 {
 
   /* TODO : check (here) hyper parameters to see if needed anew */
 
-  if (type == BasicKernelType::E::BETAC)
+  if (type == KType::E::BETAC)
   {
-    if (tk_kernels.at(BasicKernelType::E::BETAC).is_set() == false &&
+    if (tk_kernels.at(KType::E::BETAC).is_set() == false &&
         new_dp.main_does_beta_c_inc == 0)
     {
       return true;
@@ -228,14 +240,14 @@ bool Jinx::refresh_needed(BasicKernelType::E type, const HyPas& new_hp, const De
     }
   }
 
-  else if (type == BasicKernelType::E::MAIN)
+  else if (type == KType::E::MAIN)
   {
     return true;
   }
 
-  else if (type == BasicKernelType::E::WSA)
+  else if (type == KType::E::WSA)
   {
-    if (tk_kernels.at(BasicKernelType::E::WSA).is_set() == false &&
+    if (tk_kernels.at(KType::E::WSA).is_set() == false &&
         new_hp.sus[Mat::E::A].vs[Chi::E::WOS] != Scratch::E::UNUSED)
     {
       return true;
@@ -246,9 +258,9 @@ bool Jinx::refresh_needed(BasicKernelType::E type, const HyPas& new_hp, const De
     }
   }
 
-  else if (type == BasicKernelType::E::WSB)
+  else if (type == KType::E::WSB)
   {
-    if (tk_kernels.at(BasicKernelType::E::WSB).is_set() == false &&
+    if (tk_kernels.at(KType::E::WSB).is_set() == false &&
         new_hp.sus[Mat::E::B].vs[Chi::E::WOS] != Scratch::E::UNUSED)
     {
       return true;
@@ -266,15 +278,15 @@ bool Jinx::refresh_needed(BasicKernelType::E type, const HyPas& new_hp, const De
 }
 
 oclutil::Result
-Jinx::refresh_kernel(const KernelString& ks, const HyPas& hp, const DerivedParams& dp)
+Jinx::refresh_kernel(const KernBlobg& ks, const HyPas& hp, const DerivedParams& dp)
 {
 
   oclutil::Result oclr;
   auto            type = ks.type;
-  if (refresh_needed(type.basic_kernel_type, hp, dp) == true)
+  if (refresh_needed(type.e_kerntype, hp, dp) == true)
   {
 
-    oclr = tk_kernels.at(type.basic_kernel_type).update(ks, mowri);
+    oclr = tk_kernels.at(type.e_kerntype).update(ks, mowri);
     if (oclr.fail() == false)
     {
       set_kern_args(type);
@@ -293,14 +305,13 @@ oclutil::Result Jinx::setup_tinykernels(const HyPas& hp, const kerngen::Bundle& 
 
   oclutil::Result oclr;
 
-  // TODO : make enum so accessible to end-users
   v_wait_indices = bundle.v_wait_indices;
   tk_kernels_active.resize(0);
 
   for (size_t ksi = 0; ksi < bundle.v_tgks.size(); ++ksi)
   {
 
-    BasicKernelType::E basic = bundle.v_tgks[ksi].type.basic_kernel_type;
+    KType::E basic = bundle.v_tgks[ksi].type.e_kerntype;
     oclr                     = refresh_kernel(bundle.v_tgks[ksi], hp, bundle.dp);
     if (oclr.fail() == false)
     {
@@ -331,28 +342,6 @@ std::string Jinx::get_run_times_heading()
 
 
 
-void Jinx::mowri_tracker_print()
-{
-
-  std::cout << "in mowri_tracker_print. " << total_elapsed_seconds << "  " << total_kernels_tested
-            << "." << std::endl;
-  std::stringstream comment_string_ss;
-  comment_string_ss << "[ TOTAL TIME:"
-                    << stringutil::get_padded(static_cast<int>(total_elapsed_seconds), 7);
-  comment_string_ss << "  #RESTARTS:" << stringutil::get_padded(total_elapsed_descents, 7);
-  comment_string_ss << "  #GEMMS CONSIDERED:" << stringutil::get_padded(total_kernels_tested, 7)
-                    << "]       ";
-
-  old_comment_string = new_comment_string;
-  new_comment_string = comment_string_ss.str();
-
-  std::string backspaces = std::string(old_comment_string.size(), '\b');
-
-  /* TODO : determine where to use mowri_tracker,
-   * and enable to path to here */
-
-  // mowri.tracker << backspaces << new_comment_string << Flush;
-}
 
 
 
@@ -468,8 +457,7 @@ void Jinx::benchgemm(const HyPas& hp, const Halt & hl)
     throw miog_error("Non-derivable in benchgemm : " + dblt.msg);
   }
 
-  bool bundle_verbose = false;
-  auto bundle = kerngen::get_bundle(hp, gg, mowri, bundle_verbose);
+   auto bundle = kerngen::get_bundle(hp, gg, mowri);
   
   architests::Stat atr(command_queue, bundle.dp, gg, hp);
   if (!atr.is_good)
@@ -497,29 +485,28 @@ Solution Jinx::find(const Constraints& constraints, const FindParams& fparms)
   address_check_valid_and_reliable();
 
 
-  Timer timer;
-  timer.start();
+  FindTracker ftrack;
+  ftrack.start();
   std::vector<Solution> v_solns;
-  size_t n_descents = 0;
 
-  while (!fparms.hl_outer.halt(n_descents, timer.get_elapsed())){
+  while (!fparms.hl_outer.halt(ftrack.get_descents(), ftrack.get_elapsed())){
 
     mowri << "\nEntering new descent. \n"
-     << fparms.hl_outer.get_status(n_descents, timer.get_elapsed()) << '\n';
+     << fparms.hl_outer.get_status(ftrack.get_descents(), ftrack.get_elapsed()) << '\n';
 
-    double allotted_sd = std::max(0.1, fparms.hl_outer.max_time - timer.get_elapsed());
-    auto soln = single_descent_find(allotted_sd, constraints, fparms.hl_core, fparms); // fparms here hacked on
+    double allotted_sd = std::max(0.1, fparms.hl_outer.max_time - ftrack.get_elapsed());
+    auto soln = single_descent_find(allotted_sd, constraints, fparms.hl_core, ftrack, fparms); // fparms here hacked on
     v_solns.emplace_back(soln);
-    ++n_descents;
+    ftrack.incr_descents();
   }
 
-  float              best_gflops     = 0;
+  double              best_gflops     = 0;
   size_t             best_soln_index = 0;
-  std::vector<float> soln_gflops;
+  std::vector<double> soln_gflops;
   for (size_t si = 0; si < v_solns.size(); ++si)
   {
 
-    float gflops = v_solns[si].statistics.median_benchmark_gflops;
+    double gflops = v_solns[si].statistics.gflops;
     soln_gflops.push_back(gflops);
     if (gflops > best_gflops)
     {
@@ -529,9 +516,8 @@ Solution Jinx::find(const Constraints& constraints, const FindParams& fparms)
   }
 
 
-  mowri      << "\ntotal elapsed seconds: " << total_elapsed_seconds
-        << "\ntotal elapsed descents: " << total_elapsed_descents
-  << '\n' << stringutil::get_star_wrapped("The gflops found by single descents:") << '\n';
+  mowri << ftrack.get_string() << '\n' 
+  << stringutil::get_star_wrapped("The gflops found by single descents:") << '\n';
   
   std::sort(soln_gflops.begin(), soln_gflops.end());
   for (auto& x : soln_gflops)
@@ -547,10 +533,12 @@ Solution Jinx::find(const Constraints& constraints, const FindParams& fparms)
   return v_solns[best_soln_index];
 }
 
-Solution Jinx::single_descent_find(float              allotted_time,
+Solution Jinx::single_descent_find(double              allotted_time,
                                    const Constraints& constraints,
                                    const Halt&  core_halt,
-                                   const FindParams & fps) // TODO : fp only needed to push onto solution path: should not be needed here
+                                   FindTracker & ftrack, 
+                                   // fp only needed to push onto solution path: should not be needed here
+                                   const FindParams & fps) 
 {
 
 
@@ -558,7 +546,6 @@ Solution Jinx::single_descent_find(float              allotted_time,
   timer.start();
 
   mowri << "geometry : " << gg.get_string() << "\nallotted time : " << allotted_time << Endl;
-
 
   // re-creating the same graph for every single_descent is currently wasteful, 
   // but maybe in the future different constraints will be passed on each run
@@ -569,26 +556,30 @@ Solution Jinx::single_descent_find(float              allotted_time,
 
   // We will store all previously considered HyPas, used to check and
   // ensure that we do not consider a HyperParam more than once
-  // TODO : maybe this should be in the outer find loop. 
-  // Although then the stats between runs are no longer independent... 
+  // Maybe this should be in the outer find loop ? 
+  // Although then the stats between runs wouldn't be indep. 
   std::vector<HyPas> hyper_front_history;
 
   // Keep track of the `world records' as they get broken
   std::vector<Solution> best_solns_path;
 
 
+  // used for tracker messages
+  std::string old_track_msg;
+  std::string new_track_msg;
 
-  std::vector<float> v_t_total;
-  float              median_time;
-  float              median_gflops;
+
+  std::vector<double> v_t_total;
+  double              median_time;
+  double              median_gflops;
 
 
   // the hyper params to be considered on a single wave 
-  // TODO: what if I put 2 or three here ? might help fast escape from bad region
+  // what if I put 2 or three here ? might help fast escape from bad region
   std::vector<HyPas> hyper_front = {graph.get_random_valid_start()};
   
   
-  HyPas hyper_param_current = hyper_front[0]; // NULL initialisation
+  HyPas hp_curr = hyper_front[0]; // NULL initialisation
   
   bool improvement_found_on_front = true;
 
@@ -602,29 +593,27 @@ Solution Jinx::single_descent_find(float              allotted_time,
     {
       
       
-      hyper_param_current = hyper_front[hfi];
+      hp_curr = hyper_front[hfi];
       
-      hyper_front_history.push_back(hyper_param_current);
+      hyper_front_history.push_back(hp_curr);
 
       // extra precaution, should be able to remove this
-      Derivabilty dblt(hyper_param_current, gg);
+      Derivabilty dblt(hp_curr, gg);
       if (dblt.is_derivable == false)
       {
         throw miog_error("Non-derivable in single descent find : " + dblt.msg);
       }
 
-    // TODO : bundle verbose must go
-    bool bundle_verbose = true;
-      auto bundle = kerngen::get_bundle(hyper_param_current, gg, mowri, bundle_verbose);
+      auto bundle = kerngen::get_bundle(hp_curr, gg, mowri);
       // the OpenCL string was succesfully generated,
       // we can now attempt to compile and benchmark it
       ++single_descent_counter;
 
       mowri << "\n[" << single_descent_counter << ", " << std::fixed << std::setprecision(2)
             << timer.get_elapsed() << std::setprecision(6) << "s]\t"
-            << hyper_param_current.get_string() << Endl;
+            << hp_curr.get_string() << Endl;
 
-      architests::Stat atr(command_queue, bundle.dp, gg, hyper_param_current);
+      architests::Stat atr(command_queue, bundle.dp, gg, hp_curr);
       if (atr.is_good == false)
       {
         mowri << "architest failed: " << atr.msg << Endl;
@@ -633,24 +622,37 @@ Solution Jinx::single_descent_find(float              allotted_time,
       }
 
       // kernel compilation
-      auto oclr = setup_tinykernels(hyper_param_current, bundle);
+      auto oclr = setup_tinykernels(hp_curr, bundle);
       if (oclr.fail())
       {
         std::stringstream ss;
-        ss << "Failed in setup. " << hyper_param_current.get_string()
+        ss << "Failed in setup. " << hp_curr.get_string()
            << " Message: " << oclr.message <<  "Error status : " << oclr.success
            << " Maybe related : https://github.com/BVLC/caffe/issues/5610  (?) "
            << " Maybe a runtime error? Bailing, please report if possible ";
         throw miog_error(ss.str());
       }
 
-      mowri_tracker_print();
+
+
+
+
+      old_track_msg = new_track_msg;
+      new_track_msg = ftrack.get_string();
+      // TODO : does this work?
+      mowri.tracker << std::string(old_track_msg.size(), '\b') << new_track_msg << Flush;
+
+
+
+
+      
       v_t_total.resize(0);
       for (auto& ptr_tk_kernel : tk_kernels_active)
       {
         ptr_tk_kernel->reset_times();
       }
       std::vector<std::string> summary;
+      
       oclr = true_core([&summary, &v_t_total](double a, std::string x){
         v_t_total.push_back(a);
         summary.push_back(x);
@@ -682,46 +684,53 @@ Solution Jinx::single_descent_find(float              allotted_time,
         {
           mowri << " (median) ";
           if (best_solns_path.size() > 0 &&
-             (best_solns_path.back().statistics.median_benchmark_time >= median_time))
+             (best_solns_path.back().statistics.seconds >= median_time))
           {
             mowri << " (NEW BEST) ";
             improvement_found_on_front = true;
-  
-            std::time_t generation_time =
-              std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-            auto sstats = SolutionStatistics(median_time,
-                                             median_gflops,
-                                             timer.get_elapsed(),
-                                             std::ctime(&generation_time),
-                                             fps); //TODO : here is the fps which should be here
-            best_solns_path.emplace_back(
-              gg,
-              sstats,
-              bundle.v_tgks,
-              hyper_param_current.get_string(),
-              devinfo,
-              constraints.get_r_str());  // TODO : should rather be constraints NOT string
-
           }
         }
         mowri << '\n';
       }
-      ++total_kernels_tested;
+      
+      
+      if (best_solns_path.size() == 0 ||
+             (best_solns_path.back().statistics.seconds >= median_time))
+        {
+
+
+      std::time_t g_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+      auto sstats = SolutionStatistics(median_time,
+                                       median_gflops,
+                                       timer.get_elapsed(),
+                                       std::ctime(&g_time),
+                                       fps); //TODO : here is the fps which should be here
+      best_solns_path.emplace_back(
+        gg,
+        sstats,
+        bundle.v_tgks,
+        hp_curr.get_string(),
+        devinfo,
+        constraints);
+      }
+      
+      
+      
+      ftrack.incr_kernels();
     }
 
     if (improvement_found_on_front == true && allotted_time > timer.get_elapsed())
     {
-      // TODO : change name from one_aways
-      auto one_aways = graph.get_neighbors(hyper_param_current);
+      auto neighbors = graph.get_neighbors(hp_curr);
 
       // refreshing hyper front
       hyper_front.clear();
 
-      for (auto& hp : one_aways)
+      for (auto& hp : neighbors)
       {
-        if (std::count(one_aways.begin(), one_aways.end(), hp) > 1)
+        if (std::count(neighbors.begin(), neighbors.end(), hp) > 1)
         {
-          throw miog_error("duplicates in one_aways not allowed, should have already been "
+          throw miog_error("duplicates in neighbors not allowed, should have already been "
                            "filtered. Could filter out here, but less efficient ");
         }
 
@@ -778,14 +787,14 @@ Solution Jinx::single_descent_find(float              allotted_time,
                      "printed which sheds "
                      "light on this? Probably with a modification to the "
                      "FindStartType or the "
-                     "constraints_string, this should be resolved. For "
+                     "constraints, this should be resolved. For "
                      "example, the unroll UNR "
                      "can be reduced if the problem is memory. jn should "
                      "catch certain problems "
                      "in architests ");
   }
 
-  auto leading_size = best_solns_path.back().hyper_param_string.size() + 2;
+  auto leading_size = best_solns_path.back().hypas.get_string().size() + 2;
 
   std::string startstring = "hyper parameter string:";
   startstring.resize(leading_size, ' ');
@@ -793,10 +802,10 @@ Solution Jinx::single_descent_find(float              allotted_time,
 
   for (auto& x : best_solns_path)
   {
-    std::string solnstring = x.get_hyper_param_string();
+    std::string solnstring = x.hypas.get_string();
     solnstring.resize(leading_size, ' ');
-    mowri << std::fixed << solnstring << "\t " << x.statistics.solution_discovery_time << "\t\t "
-          << x.statistics.median_benchmark_gflops << Endl;
+    mowri << std::fixed << solnstring << "\t " << x.statistics.discovery << "\t\t "
+          << x.statistics.gflops << Endl;
   }
 
   return best_solns_path.back();

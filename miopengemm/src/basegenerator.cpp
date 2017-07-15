@@ -75,9 +75,9 @@ void BaseGenerator::append_unroll_block_geometry(Mat::E             emat_x,
                                                  bool               with_x_string)
 {
 
-  // TODO : should be X., not x
-  char        x        = Mat::M.name[emat_x];
-  std::string x_string = with_x_string ? "_" + std::string(1, x) : "";
+
+  char        X        = Mat::M.name[emat_x];
+  std::string X_string = with_x_string ? "_" + std::string(1, X) : "";
 
   ss << '\n';
   if (withcomments == true)
@@ -86,38 +86,38 @@ void BaseGenerator::append_unroll_block_geometry(Mat::E             emat_x,
        << "(threads with shared local memory) process */\n";
   }
 
-  ss << "#define MACRO_TILE_LENGTH" << x_string << " " << dp.at(emat_x).macro_tile_length << '\n';
+  ss << "#define MACRO_TILE_LENGTH" << X_string << " " << dp.at(emat_x).macro_tile_length << '\n';
 
   if (withcomments == true)
   {
     ss << "/* number of elements in load block : "
-       << "MACRO_TILE_LENGTH" << x_string << " * UNROLL */\n";
+       << "MACRO_TILE_LENGTH" << X_string << " * UNROLL */\n";
   }
 
-  ss << "#define N_ELEMENTS_IN" << x_string << "_UNROLL " << dp.at(emat_x).n_elements_in_unroll
+  ss << "#define N_ELEMENTS_IN" << X_string << "_UNROLL " << dp.at(emat_x).n_elements_in_unroll
      << '\n';
 
   if (withcomments == true)
   {
-    ss << "/* number of groups covering " << (x == 'A' ? 'M' : 'N') << " / MACRO_TILE_LENGTH"
-       << x_string;
+    ss << "/* number of groups covering " << (X == 'A' ? 'M' : 'N') << " / MACRO_TILE_LENGTH"
+       << X_string;
 
     if (dp.main_use_edge_trick == 1)
     {
-      ss << " + (PRESHIFT_FINAL_TILE" << x_string << " != MACRO_TILE_LENGTH" << x_string << ")";
+      ss << " + (PRESHIFT_FINAL_TILE" << X_string << " != MACRO_TILE_LENGTH" << X_string << ")";
     }
     ss << " */\n";
   }
-  ss << "#define N_GROUPS" << x_string << ' ' << dp.at(emat_x).n_groups << '\n';
+  ss << "#define N_GROUPS" << X_string << ' ' << dp.at(emat_x).n_groups << '\n';
 
   if (dp.main_use_edge_trick != 0)
   {
     if (withcomments == true)
     {
-      ss << "/* 1 + (" << (x == 'A' ? 'M' : 'N') << " - 1) % MACRO_TILE_LENGTH" << x_string
-         << ". somewhere in 1 ... MACRO_TILE_LENGTH" << x_string << "  */ \n";
+      ss << "/* 1 + (" << (X == 'A' ? 'M' : 'N') << " - 1) % MACRO_TILE_LENGTH" << X_string
+         << ". somewhere in 1 ... MACRO_TILE_LENGTH" << X_string << "  */ \n";
     }
-    ss << "#define PRESHIFT_FINAL_TILE" << x_string << ' ' << dp.at(emat_x).preshift_final_tile
+    ss << "#define PRESHIFT_FINAL_TILE" << X_string << ' ' << dp.at(emat_x).preshift_final_tile
        << '\n';
   }
 }

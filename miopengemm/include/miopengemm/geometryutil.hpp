@@ -14,11 +14,11 @@ namespace MIOpenGEMM
 std::vector<Geometry> get_from_m_n_k_ldaABC_tA_tB(
   const std::vector<std::tuple<size_t, size_t, size_t, size_t, size_t, size_t, bool, bool>>&
          basicgeos,
-  size_t workspace_size);
+  size_t wSpaceSize);
 
 std::vector<Geometry>
 get_from_m_n_k_tA_tB(const std::vector<std::tuple<size_t, size_t, size_t, bool, bool>>& basicgeos,
-                     size_t workspace_size);
+                     size_t wSpaceSize);
 }
 
 #endif

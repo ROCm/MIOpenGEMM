@@ -6,7 +6,7 @@
 
 #include <CL/cl.h>
 #include <miopengemm/derivedparams.hpp>
-#include <miopengemm/graph.hpp>
+#include <miopengemm/hyperparams.hpp>
 
 namespace MIOpenGEMM
 {

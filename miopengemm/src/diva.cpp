@@ -18,7 +18,7 @@
 #include <miopengemm/error.hpp>
 #include <miopengemm/floattostring.hpp>
 #include <miopengemm/geometry.hpp>
-#include <miopengemm/graph.hpp>
+#include <miopengemm/hyperparams.hpp>
 #include <miopengemm/jinx.hpp>
 #include <miopengemm/oclutil.hpp>
 #include <miopengemm/outputwriter.hpp>
@@ -44,7 +44,6 @@ template <typename TFl>
 void Diva<TFl>::initialise_common()
 {
 
-  // TODO : these could be enums in enum.hpp
   rw_perms[Mem::E::A] = CL_MEM_READ_ONLY;
   rw_perms[Mem::E::B] = CL_MEM_READ_ONLY;
   rw_perms[Mem::E::C] = CL_MEM_READ_WRITE;
@@ -130,7 +129,7 @@ Diva<TFl>::Diva(Geometry gg_, Offsets toff_, owrite::Writer& mowri_) : Diva(gg_,
 template <typename TFl>
 size_t Diva<TFl>::get_workspace_memsize()
 {
-  return (gg.workspace_size + toff.offsets[Mem::E::W] + toff.tails[Mem::E::W]) * sizeof(TFl);
+  return (gg.wSpaceSize + toff.offsets[Mem::E::W] + toff.tails[Mem::E::W]) * sizeof(TFl);
 }
 
 template <typename TFl>
@@ -175,28 +174,27 @@ void Diva<TFl>::opencl_memory_initialise()
 }
 
 template <typename TFl>
-void Diva<TFl>::benchgemm(const std::vector<std::string>& hyperstrings, const Halt & hl)
+void Diva<TFl>::benchgemm(const std::vector<HyPas>& hps, const Halt & hl)
 {
 
-  std::vector<HyPas> hps;
-  for (auto& hyperstring : hyperstrings)
+  for (auto& hp : hps)
   {
 
-    up_jinx->benchgemm(hyperstring, hl);
+    up_jinx->benchgemm(hp, hl);
   }
 }
 
 template <typename TFl>
-Solution Diva<TFl>::find(const FindParams& find_params, std::string constraints_string)
+Solution Diva<TFl>::find(const FindParams& find_params, const Constraints & constraints)
 {
 
-  Solution tgs = up_jinx->find(constraints_string, find_params);
+  Solution tgs = up_jinx->find(constraints, find_params);
 
   return tgs;
 }
 
 template <typename TFl>
-void Diva<TFl>::accuracy_test(const std::string& hyperstring, const TFl* c_true_for_test)
+void Diva<TFl>::accuracy_test(const HyPas& hp, const TFl* c_true_for_test)
 {
 
   // copy the const cpu matrix to the gpu
@@ -211,7 +209,7 @@ void Diva<TFl>::accuracy_test(const std::string& hyperstring, const TFl* c_true_
                        NULL);
 
   // run gemm once on the gpu
-  benchgemm({hyperstring}, {1, 1e12});
+  benchgemm({hp}, {1, 1e12});
 
   // read the result to c_copy on the cpu
   cl_event event_read_c_back;
@@ -239,8 +237,8 @@ void Diva<TFl>::accuracy_test(const std::string& hyperstring, const TFl* c_true_
                                 cpu_mem[Mat::E::A],
                                 cpu_mem[Mat::E::B],
                                 c_for_cpu_compute.data(),
-                                default_alpha,
-                                default_beta,
+                                Floating::default_alpha,
+                                Floating::default_beta,
                                 {"3fors"},
                                 mowri);
 
@@ -253,7 +251,7 @@ void Diva<TFl>::accuracy_test(const std::string& hyperstring, const TFl* c_true_
 
   // compare cpu and gpu results
   accuracytests::elementwise_compare(
-    cpu_mem[Mat::E::C], default_beta, c_true_for_test, c_copy.data(), c_copy.size(), mowri);
+    cpu_mem[Mat::E::C], Floating::default_beta, c_true_for_test, c_copy.data(), c_copy.size(), mowri);
 }
 
 template class Diva<float>;

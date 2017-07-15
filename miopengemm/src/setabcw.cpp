@@ -118,7 +118,7 @@ void set_abcw(std::vector<TFloat>& v_a,
 
   set_abc<TFloat>(v_a, v_b, v_c, gg, toff);
 
-  size_t n_workspace = gg.workspace_size + toff.offsets[Mem::E::W] + toff.tails[Mem::E::W];
+  size_t n_workspace = gg.wSpaceSize + toff.offsets[Mem::E::W] + toff.tails[Mem::E::W];
 
   v_workspace.resize(n_workspace);
   fill_uni(v_workspace, n_workspace, n_workspace);

@@ -19,7 +19,7 @@ class Kernel
 
   public:
   cl_command_queue command_queue;
-  KernelString     tgk_strings;
+  KernBlobg     tgk_strings;
 
   // used for getting performance of kernel
   cl_event clevent;
@@ -47,7 +47,7 @@ class Kernel
 
   Kernel() : Kernel(nullptr, "default constructed Kernel") {}
 
-  oclutil::Result update(const KernelString& ks, owrite::Writer& mowri);
+  oclutil::Result update(const KernBlobg& ks, owrite::Writer& mowri);
 
   ~Kernel();
 

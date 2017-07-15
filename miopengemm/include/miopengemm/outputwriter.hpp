@@ -69,6 +69,8 @@ class Writer
   bool main_to_terminal;
   bool tracker_to_file;
   bool tracker_to_terminal;
+  bool deps_to_file;
+  bool deps_to_terminal;
 
   void set_v_bits();
   void initialise_file();
@@ -77,6 +79,7 @@ class Writer
   std::ofstream file;
   BasicWriter   main;
   BasicWriter   tracker;
+  BasicWriter   deps;
 
   public:
   Writer();

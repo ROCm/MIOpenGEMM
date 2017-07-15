@@ -141,19 +141,7 @@ void KernelCache::add(const CacheKey& ckey, const CachedSolution& tgcs)
 
 void enforce_constraints()
 {
-
-  // std::string&       hps_to_update,
-  // const std::string& constraints_string,
-  // const Geometry&    gg)
-
   throw miog_error("enforce_constraints in kernelcache not implememented");
-  // oclutil::DevInfo devinfo;
-  // Graph           graph(gg, devinfo, constraints_string);
-  // HyPas     hp();
-
-  // auto all_constraints = get_all_constraints(constraints_string);
-  // hp.replace_where_source_defined(all_constraints);
-  // hps_to_update = hp.get_string();
 }
 
 /* TODO : certain of these kernels are slow,

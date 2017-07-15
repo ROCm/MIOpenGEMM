@@ -18,7 +18,7 @@
 #include <miopengemm/derivedparams.hpp>
 #include <miopengemm/error.hpp>
 #include <miopengemm/findparams.hpp>
-#include <miopengemm/graph.hpp>
+#include <miopengemm/hyperparams.hpp>
 #include <miopengemm/kernel.hpp>
 #include <miopengemm/kernelcache.hpp>
 #include <miopengemm/kernelstring.hpp>
@@ -28,30 +28,46 @@
 #include <miopengemm/stringutilbase.hpp>
 
 
-  // TODO : floats to doubles
   
 namespace MIOpenGEMM
 {
 
-class MFType
-{
+// Simple stop-watch
+class Timer{
+  
   private:
-  double v_d;
-  float  v_f;
-
+  std::chrono::time_point<std::chrono::high_resolution_clock> t0;  
+  
   public:
-  MFType(double v);
-  void* operator[](char floattype) const;
+  void start();
+  double get_elapsed() const;
 };
 
-static const MFType m_alpha(default_alpha);
-static const MFType m_beta(default_beta);
+class FindTracker{
+  
+  private:
+  Timer timer;  
+  size_t descents{0};
+  size_t kernels{0};
+  
+  public:
+  void start();
+  double get_elapsed() const;
+  void incr_descents();
+  void incr_kernels();
+  
+  size_t get_descents() const;
+  
+  std::string get_string() const;
+  
+};
+
 
 class GpuMms
 {
   private:
   std::array<cl_mem, Mem::E::N> cl_mems;
-  oclutil::SafeClMem c_copy{"to be used in the case that c_is_const"};
+  oclutil::SafeClMem c_copy{"initialised when c_is_const"};
 
   public:
   GpuMms(cl_mem           a_gpu_,
@@ -65,13 +81,10 @@ class GpuMms
 };
 
 
-//class Timer{
-  
-//};
-
 class Jinx
 {
 
+  // TODO : miogemm class with interface to public jinx. 
   public:
   Jinx(cl_command_queue command_queue_,
        const Geometry   gg_,
@@ -103,31 +116,23 @@ class Jinx
   std::vector<Kernel>                                         tk_kernels;
   std::vector<Kernel*>                                        tk_kernels_active;
   std::vector<std::vector<size_t>>                            v_wait_indices;
-  float                                                       total_elapsed_seconds{0};
-  size_t                                                      total_elapsed_descents{0};
-  size_t                                                      total_kernels_tested{0};
-  std::chrono::time_point<std::chrono::high_resolution_clock> find_start;
-  std::string                                                 old_comment_string;
-  std::string                                                 new_comment_string;
+  
 
-
-  float get_gflops(float timems);
+  double get_gflops(double timems);
 
   std::string get_run_times_heading();
   std::string get_run_time_string(cl_int status);
   
   void address_check_valid();
   void address_check_valid_and_reliable();
-  void set_kern_args(const KernelType& type);
+  void set_kern_args(const KernUses& type);
 
   std::string get_run_time_string(cl_int status, double extime);
-    
-  void mowri_tracker_print(); // TODO : no longer need this
-  
-  bool refresh_needed(BasicKernelType::E type, const HyPas& new_hp, const DerivedParams& new_dp);
-  oclutil::Result refresh_kernel(const KernelString& ks, const HyPas& hp, const DerivedParams& dp);
+      
+  bool refresh_needed(KType::E type, const HyPas& new_hp, const DerivedParams& new_dp);
+  oclutil::Result refresh_kernel(const KernBlobg& ks, const HyPas& hp, const DerivedParams& dp);
   oclutil::Result setup_tinykernels(const HyPas& hp, const kerngen::Bundle& bundle);
-  Solution single_descent_find(float allotted_time, const Constraints&, const Halt& core_hl, const FindParams &); //TODO FindParams should not be needed
+  Solution single_descent_find(double allotted_time, const Constraints&, const Halt& core_hl, FindTracker & ftrack, const FindParams &); //TODO FindParams should not be needed
 
   oclutil::Result true_core(std::function<void(double, std::string)> acton, const Halt & hl);
 
