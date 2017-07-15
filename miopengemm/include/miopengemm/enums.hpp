@@ -193,6 +193,7 @@ enum E
   TOFILE,      // main output to file
   TRACK,       // tracker output to terminal
   STRACK,      // tracker output to terminal, main output to file
+  ACCURACY,    // tracker and accuracy to terminal
 };
 }
 

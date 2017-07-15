@@ -225,12 +225,16 @@ void Jinx::set_kern_args(const KernUses& type)
 bool Jinx::refresh_needed(KType::E type, const HyPas& new_hp, const DerivedParams& new_dp)
 {
 
+  // TOP PRIORITY TODO.
+  // make map from KType to hyperparams, of dependency. if any dependent hyperparam has changes, 
+  // then recompile. 
+  
   /* TODO : check (here) hyper parameters to see if needed anew */
 
   if (type == KType::E::BETAC)
   {
-    if (tk_kernels.at(KType::E::BETAC).is_set() == false &&
-        new_dp.main_does_beta_c_inc == 0)
+    if (//tk_kernels.at(KType::E::BETAC).is_set() == false &&
+        new_hp.sus[Mat::E::C].vs[NonChi::E::ICE] != 1)
     {
       return true;
     }
@@ -247,7 +251,7 @@ bool Jinx::refresh_needed(KType::E type, const HyPas& new_hp, const DerivedParam
 
   else if (type == KType::E::WSA)
   {
-    if (tk_kernels.at(KType::E::WSA).is_set() == false &&
+    if (//tk_kernels.at(KType::E::WSA).is_set() == false &&
         new_hp.sus[Mat::E::A].vs[Chi::E::WOS] != Scratch::E::UNUSED)
     {
       return true;
@@ -260,7 +264,7 @@ bool Jinx::refresh_needed(KType::E type, const HyPas& new_hp, const DerivedParam
 
   else if (type == KType::E::WSB)
   {
-    if (tk_kernels.at(KType::E::WSB).is_set() == false &&
+    if (//tk_kernels.at(KType::E::WSB).is_set() == false &&
         new_hp.sus[Mat::E::B].vs[Chi::E::WOS] != Scratch::E::UNUSED)
     {
       return true;
@@ -426,6 +430,7 @@ oclutil::Result Jinx::true_core(std::function<void(double, std::string)> acton, 
 
 
 
+
     for (auto& ptr_tk_kernel : tk_kernels_active)
     {
       ptr_tk_kernel->update_times();
@@ -500,7 +505,7 @@ Solution Jinx::find(const Constraints& constraints, const FindParams& fparms)
     ftrack.incr_descents();
   }
 
-  double              best_gflops     = 0;
+  double              best_gflops    = 0;
   size_t             best_soln_index = 0;
   std::vector<double> soln_gflops;
   for (size_t si = 0; si < v_solns.size(); ++si)
@@ -526,9 +531,9 @@ Solution Jinx::find(const Constraints& constraints, const FindParams& fparms)
   }
   mowri << "\n\n";
 
-  mowri << " -- snip -- -- -- snip --\n" << Endl;
-  mowri << v_solns[best_soln_index].get_cache_entry_string();
-  mowri << " -- snip -- -- -- snip --" << Endl;
+  //mowri << " -- snip -- -- -- snip --\n" << Endl;
+  //mowri << v_solns[best_soln_index].get_cache_entry_string();
+  //mowri << " -- snip -- -- -- snip --" << Endl;
 
   return v_solns[best_soln_index];
 }

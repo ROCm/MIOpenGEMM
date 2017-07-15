@@ -57,17 +57,9 @@ void Diva<TFl>::initialise_common()
 
   gg.check_ldx_consistent();
 
-  if (gg.derived.float_size_bytes != sizeof(TFl))
-  {
-    std::stringstream errm;
-    errm << "float sizes don't agree in Diva. ";
-    errm << "the size from geometry is " << gg.derived.float_size_bytes << ". ";
-    errm << "the size from the template parameter is " << sizeof(TFl) << ".";
-    throw miog_error(errm.str());
-  }
-
   c_copy.resize(mem_size[Mem::E::C] / sizeof(TFl));
   std::memcpy(c_copy.data(), cpu_mem[Mem::E::C], mem_size[Mem::E::C]);
+  
   opencl_memory_initialise();
 
   up_jinx.reset(new Jinx(tgcq.command_queue,
@@ -76,7 +68,8 @@ void Diva<TFl>::initialise_common()
                          gpu_safemem[Mem::E::A].clmem,
                          gpu_safemem[Mem::E::B].clmem,
                          gpu_safemem[Mem::E::C].clmem,
-                         false,  // c is not const
+                         
+                         false,//   MAKES NO DIFF (BUG 13)
                          gpu_safemem[Mem::E::W].clmem,
                          mowri));
 }
@@ -92,6 +85,16 @@ Diva<TFl>::Diva(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, long)
     mem_size(Mem::E::N),
     rw_perms(Mem::E::N)
 {
+  
+  if (gg.derived.float_size_bytes != sizeof(TFl))
+  {
+    std::stringstream errm;
+    errm << "float sizes don't agree in Diva. ";
+    errm << "the size from geometry is " << gg.derived.float_size_bytes << ". ";
+    errm << "the size from the template parameter is " << sizeof(TFl) << ".";
+    throw miog_error(errm.str());
+  }
+
 }
 
 template <typename TFl>
@@ -176,10 +179,8 @@ void Diva<TFl>::opencl_memory_initialise()
 template <typename TFl>
 void Diva<TFl>::benchgemm(const std::vector<HyPas>& hps, const Halt & hl)
 {
-
   for (auto& hp : hps)
   {
-
     up_jinx->benchgemm(hp, hl);
   }
 }
@@ -187,26 +188,44 @@ void Diva<TFl>::benchgemm(const std::vector<HyPas>& hps, const Halt & hl)
 template <typename TFl>
 Solution Diva<TFl>::find(const FindParams& find_params, const Constraints & constraints)
 {
-
   Solution tgs = up_jinx->find(constraints, find_params);
-
   return tgs;
 }
 
 template <typename TFl>
 void Diva<TFl>::accuracy_test(const HyPas& hp, const TFl* c_true_for_test)
 {
+  
+ 
+  // this destroys results/ 
+  //Solution tgs = up_jinx->find({hp.get_string()}, get_quick_find_params());
+  //Solution tgs = up_jinx->find({""}, get_quick_find_params());
 
+  //up_jinx->benchgemm({"A_MIC1_PAD2_PLU0_LIW0_MIW1_WOS1__B_MIC1_PAD2_PLU0_LIW0_MIW1_WOS2__C_UNR16_GAL2_PUN1_ICE1_NAW16_UFO0_MAC64_SKW11"}, {5, 1e12});
+
+  // WORKSPACE IS MESSED UP
+
+
+
+                               
   // copy the const cpu matrix to the gpu
-  clEnqueueWriteBuffer(tgcq.command_queue,
+  cl_event event_write_c_to_gpu;
+  //cl_uint n_events = 1;
+  oclutil::cl_enqueue_write_buffer(
+                      tgcq.command_queue,
                        gpu_safemem[Mem::E::C].clmem,
                        CL_TRUE,
                        0,
                        mem_size[Mem::E::C],
                        cpu_mem[Mat::E::C],
                        0,
-                       NULL,
-                       NULL);
+                       nullptr,
+                       &event_write_c_to_gpu,
+                       "write of correct c in accuracy", 
+                       true);
+
+  // make sure the copy to gpu is complete
+  oclutil::cl_wait_for_events(1, &event_write_c_to_gpu, "in accuracy test, waiting GEMM gpu ", true);
 
   // run gemm once on the gpu
   benchgemm({hp}, {1, 1e12});
@@ -245,9 +264,8 @@ void Diva<TFl>::accuracy_test(const HyPas& hp, const TFl* c_true_for_test)
     c_true_for_test = c_for_cpu_compute.data();
   }
 
-  // make sure the gpu gemm is complete
-  oclutil::cl_wait_for_events(
-    1, &event_read_c_back, "waiting in accuracy test for gpu gemm to complete ", true);
+  // make sure the read back is complete complete
+  oclutil::cl_wait_for_events(1, &event_read_c_back, "in accuracy test, waiting GEMM gpu ", true);
 
   // compare cpu and gpu results
   accuracytests::elementwise_compare(

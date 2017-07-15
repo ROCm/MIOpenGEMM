@@ -25,6 +25,9 @@ void Writer::set_v_bits()
   deps_to_file     = false;
   deps_to_terminal = false;  
 
+  accu_to_file     = false;
+  accu_to_terminal = false;  
+
   if (v == Ver::E::SILENT)
   {
   }
@@ -33,6 +36,8 @@ void Writer::set_v_bits()
   {
     main_to_terminal = true;
     deps_to_terminal = true;
+    accu_to_terminal = true;  
+
   }
 
   else if (v == Ver::E::SPLIT)
@@ -41,6 +46,8 @@ void Writer::set_v_bits()
     main_to_terminal = true;
     deps_to_file     = true;
     deps_to_terminal = true;
+    accu_to_file     = true;
+    accu_to_terminal = true;  
 
   }
 
@@ -59,6 +66,11 @@ void Writer::set_v_bits()
   {
     main_to_file        = true;
     deps_to_file        = true;
+    tracker_to_terminal = true;
+  }
+  
+  else if (v == Ver::E::ACCURACY){
+    accu_to_terminal = true;
     tracker_to_terminal = true;
   }
 
@@ -113,6 +125,9 @@ Writer::Writer(Ver::E v_, std::string filename_) : v(v_), filename(filename_)
   
   std::ofstream* deps_ptr_file = deps_to_file ? &file : nullptr;
   deps                         = BasicWriter(deps_to_terminal, deps_ptr_file);
+  
+  std::ofstream* accu_ptr_file = accu_to_file ? &file : nullptr;
+  accu                         = BasicWriter(accu_to_terminal, accu_ptr_file);
 }
 
 Writer::~Writer() { file.close(); }

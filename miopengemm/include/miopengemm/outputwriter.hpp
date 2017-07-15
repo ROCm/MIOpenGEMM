@@ -71,6 +71,8 @@ class Writer
   bool tracker_to_terminal;
   bool deps_to_file;
   bool deps_to_terminal;
+  bool accu_to_file;
+  bool accu_to_terminal;
 
   void set_v_bits();
   void initialise_file();
@@ -80,6 +82,7 @@ class Writer
   BasicWriter   main;
   BasicWriter   tracker;
   BasicWriter   deps;
+  BasicWriter   accu;
 
   public:
   Writer();

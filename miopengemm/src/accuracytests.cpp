@@ -73,7 +73,7 @@ void elementwise_compare(const TFloat*   c_before,
     throw miog_error(ss.str());
   }
 
-  mowri << "max_relerr=" << max_relerr << Endl;
+  mowri.accu << "max_relerr=" << max_relerr << Flush;
 }
 
 template void elementwise_compare(const float*    c_before,
