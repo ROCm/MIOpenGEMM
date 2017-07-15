@@ -18,7 +18,7 @@ void redirect_base(
 {
   if (isColMajor == false)
   {
-    // perform minimal changes to get into row major
+    // perform minimal changes to get into col major
     std::swap(tA, tB);
     std::swap(a, b);
     std::swap(m, n);
