@@ -74,12 +74,12 @@ void Diva<TFl>::initialise_common()
 }
 
 template <typename TFl>
-Diva<TFl>::Diva(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, long)
+Diva<TFl>::Diva(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint & devhint, long)
   : gg(gg_),
     toff(toff_),
     cpu_mem(Mat::E::N),
     mowri(mowri_),
-    tgcq(mowri, "command queue of Diva"),
+    tgcq(mowri, devhint, "command queue of Diva"),
     gpu_safemem(Mem::E::N, std::string("gpu_safemem vector of Diva")),
     mem_size(Mem::E::N),
     rw_perms(Mem::E::N)
@@ -98,8 +98,8 @@ Diva<TFl>::Diva(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, long)
 
 template <typename TFl>
 Diva<TFl>::Diva(
-  Geometry gg_, Offsets toff_, const TFl* a_, const TFl* b_, const TFl* c_, owrite::Writer& mowri_)
-  : Diva(gg_, toff_, mowri_, 42)
+  Geometry gg_, Offsets toff_, const TFl* a_, const TFl* b_, const TFl* c_, owrite::Writer& mowri_, const CLHint & devhint)
+  : Diva(gg_, toff_, mowri_, devhint, 42)
 
 {
 
@@ -120,7 +120,7 @@ void Diva<TFl>::initialise_cpu_mem_from_scratch()
 }
 
 template <typename TFl>
-Diva<TFl>::Diva(Geometry gg_, Offsets toff_, owrite::Writer& mowri_) : Diva(gg_, toff_, mowri_, 42)
+Diva<TFl>::Diva(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint & devhint) : Diva(gg_, toff_, mowri_, devhint, 42)
 
 {
 

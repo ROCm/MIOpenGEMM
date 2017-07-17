@@ -28,9 +28,10 @@ class Diva
        const TFloat*   a_,
        const TFloat*   b_,
        const TFloat*   c_,
-       owrite::Writer& mowri_);
+       owrite::Writer& mowri_,
+       const CLHint & devhint);
 
-  Diva(Geometry gg_, Offsets toff_, owrite::Writer& mowri_);
+  Diva(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint & devhint);
 
   void benchgemm(const std::vector<HyPas>& hps, const Halt &); 
 
@@ -78,7 +79,7 @@ class Diva
   void initialise_common();
 
   // delegator constructor.
-  Diva(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, long);
+  Diva(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint & devhint, long);
 };
 }
 }

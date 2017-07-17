@@ -31,13 +31,13 @@ namespace MIOpenGEMM
 namespace dev
 {
 
-Boa::Boa(Geometry gg_, Offsets toff_, owrite::Writer& mowri_)
+Boa::Boa(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint & devhint)
 {
 
   switch (gg_.floattype)
   {
-  case 'f': f_moa.reset(new Diva<float>(gg_, toff_, mowri_)); break;
-  case 'd': d_moa.reset(new Diva<double>(gg_, toff_, mowri_)); break;
+  case 'f': f_moa.reset(new Diva<float>(gg_, toff_, mowri_, devhint)); break;
+  case 'd': d_moa.reset(new Diva<double>(gg_, toff_, mowri_, devhint)); break;
   default: throw miog_error("unrecognised floattype char in Boa constructor");
   }
   active_type = gg_.floattype;

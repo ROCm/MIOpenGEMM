@@ -15,7 +15,8 @@ namespace MIOpenGEMM
 int run_find_experiments(const std::vector<Geometry>& geometries,
                          const std::vector<Constraints>&    v_constraints,
                          const FindParams&            find_params,
-                         std::string basedir_inner)
+                         std::string basedir_inner, 
+                         const CLHint & devhint)
 {
 
   owrite::Writer mowri_outer(Ver::E::TERMINAL,
@@ -84,7 +85,7 @@ int run_find_experiments(const std::vector<Geometry>& geometries,
         mowri_outer << logfile << Endl;
       }
 
-      dev::Boa goa(gg, offsets, mowri_outer);  // TODO : should be a mowri
+      dev::Boa goa(gg, offsets, mowri_outer, devhint);  // TODO : should be a mowri
       Solution soln = goa.find(find_params, constraints);
 
       // auto soln = dev::basicfind(

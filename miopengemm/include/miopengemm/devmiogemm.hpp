@@ -11,6 +11,7 @@
 #include <miopengemm/diva.hpp>
 #include <miopengemm/geometry.hpp>
 #include <miopengemm/solution.hpp>
+#include <miopengemm/oclutil.hpp>
 
 namespace MIOpenGEMM
 {
@@ -44,13 +45,14 @@ class Boa
       const TFloat*   a_,
       const TFloat*   b_,
       const TFloat*   c_,
-      owrite::Writer& mowri_)
+      owrite::Writer& mowri_,
+      const CLHint & devhint)
   {
-    get_up_moa<TFloat>().reset(new Diva<TFloat>(gg_, toff_, a_, b_, c_, mowri_));
+    get_up_moa<TFloat>().reset(new Diva<TFloat>(gg_, toff_, a_, b_, c_, mowri_, devhint));
     set_active_type<TFloat>();
   }
 
-  Boa(Geometry gg_, Offsets toff_, owrite::Writer& mowri_);
+  Boa(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint & devhint);
 
   void benchgemm(const std::vector<HyPas>& hps, const Halt & hl);
 

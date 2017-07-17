@@ -13,7 +13,8 @@ int run_find_experiments(const std::vector<Geometry>& geometries,
                          bool                         verbose_inner,
                          std::string                  basedir_inner,
                          bool                         verbose_outer,
-                         std::string                  fn_outer);
+                         std::string                  fn_outer, 
+                         const CLHint &     devhint);
 
 std::vector<Geometry> get_deepbench_geometries(size_t wSpaceSize = 1);
 

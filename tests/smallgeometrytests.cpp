@@ -7,16 +7,17 @@
 
 template <typename TFloat>
 void geometrytest(const MIOpenGEMM::Geometry & gg)
-
 {
   using namespace MIOpenGEMM;
+  
+  CLHint devhint; //{};//(0,0);
   Offsets offsets = get_padding_offsets(); 
+  owrite::Writer mowri(Ver::E::ACCURACY, "");
+  dev::Boa boa(gg, offsets, mowri, devhint);  
 
-  //FindParams find_params = get_quick_find_params();  
+  //FindParams find_params = get_quick_find_params();    
   FindParams find_params(1, 1.14, 2, 200., SummStat::E::MAX);
   std::string constraints_string = "A_WOS2";
-  owrite::Writer mowri(Ver::E::ACCURACY, "");
-  dev::Boa boa(gg, offsets, mowri);  
   Solution soln = boa.find(find_params, constraints_string);
   std::cout << '\n' << soln.hypas.get_string() << '\n';
   boa.accuracy_test(soln.hypas);
