@@ -194,7 +194,7 @@ void Jinx::address_check_valid_and_reliable()
 }
 
 
-void Jinx::set_kern_args(const KernUses& type)
+void Jinx::set_kern_args(const KernBlob& kblob)
 {
 
   // parameter order rule: {a, oa, b, ob, c, oc, ws, ows}, alpha, beta
@@ -202,135 +202,56 @@ void Jinx::set_kern_args(const KernUses& type)
 
   for (auto x : {Mem::E::A, Mem::E::B, Mem::E::C, Mem::E::W})
   {
-    if (type.uses(x) == true)
+    if (kblob.kuses.at(x) == true)
     {
       arg_sizes_values.emplace_back(sizeof(cl_mem), (void*)&(gpum[x]));
       arg_sizes_values.emplace_back(sizeof(size_t), &(toff.offsets[x]));
     }
   }
 
-  if (type.uses_alpha)
+  if (kblob.kuses.u_alpha)
   {
     arg_sizes_values.emplace_back(gg.derived.float_size_bytes, Floating::m_alpha[gg.floattype]);
   }
 
-  if (type.uses_beta)
+  if (kblob.kuses.u_beta)
   {
     arg_sizes_values.emplace_back(gg.derived.float_size_bytes, Floating::m_beta[gg.floattype]);
   }
 
-  tk_kernels.at(type.e_kerntype).set_kernel_args(arg_sizes_values);
+  tk_kernels.at(kblob.e_ktype).set_kernel_args(arg_sizes_values);
 }
 
-bool Jinx::refresh_needed(KType::E type, const HyPas& new_hp, const DerivedParams& new_dp)
-{
 
-  // TOP PRIORITY TODO.
-  // make map from KType to hyperparams, of dependency. if any dependent hyperparam has changes, 
-  // then recompile. 
-  
-  /* TODO : check (here) hyper parameters to see if needed anew */
 
-  if (type == KType::E::BETAC)
-  {
-    if (//tk_kernels.at(KType::E::BETAC).is_set() == false &&
-        new_hp.sus[Mat::E::C].vs[NonChi::E::ICE] != 1)
-    {
-      return true;
-    }
-    else
-    {
-      return false;
-    }
-  }
-
-  else if (type == KType::E::MAIN)
-  {
-    return true;
-  }
-
-  else if (type == KType::E::WSA)
-  {
-    if (//tk_kernels.at(KType::E::WSA).is_set() == false &&
-        new_hp.sus[Mat::E::A].vs[Chi::E::WOS] != Scratch::E::UNUSED)
-    {
-      return true;
-    }
-    else
-    {
-      return false;
-    }
-  }
-
-  else if (type == KType::E::WSB)
-  {
-    if (//tk_kernels.at(KType::E::WSB).is_set() == false &&
-        new_hp.sus[Mat::E::B].vs[Chi::E::WOS] != Scratch::E::UNUSED)
-    {
-      return true;
-    }
-    else
-    {
-      return false;
-    }
-  }
-
-  else
-  {
-    throw miog_error("what is the type of this kernel? Don't recognise it : " + type);
-  }
-}
-
-oclutil::Result
-Jinx::refresh_kernel(const KernBlobg& ks, const HyPas& hp, const DerivedParams& dp)
+oclutil::Result Jinx::setup_tinykernels(const kerngen::Bundle& bundle)
 {
 
   oclutil::Result oclr;
-  auto            type = ks.type;
-  if (refresh_needed(type.e_kerntype, hp, dp) == true)
-  {
-
-    oclr = tk_kernels.at(type.e_kerntype).update(ks, mowri);
-    if (oclr.fail() == false)
-    {
-      set_kern_args(type);
-    }
-
-    else
-    {
-      oclr.message += " (failed from refresh_kernel) ";
-    }
-  }
-  return oclr;
-}
-
-oclutil::Result Jinx::setup_tinykernels(const HyPas& hp, const kerngen::Bundle& bundle)
-{
-
-  oclutil::Result oclr;
-
+  // TODO setting v_wait_indices here not CLEAR 
   v_wait_indices = bundle.v_wait_indices;
+  
   tk_kernels_active.resize(0);
 
   for (size_t ksi = 0; ksi < bundle.v_tgks.size(); ++ksi)
   {
-
-    KType::E basic = bundle.v_tgks[ksi].type.e_kerntype;
-    oclr                     = refresh_kernel(bundle.v_tgks[ksi], hp, bundle.dp);
-    if (oclr.fail() == false)
-    {
-      tk_kernels_active.push_back(&tk_kernels[basic]);
+    const KernBlob & kblob = bundle.v_tgks[ksi];
+    if (tk_kernels.at(kblob.e_ktype).update_needed(kblob)){
+      oclr = tk_kernels.at(kblob.e_ktype).update(kblob, mowri);
+      if (oclr.fail() == false)
+      {
+        set_kern_args(kblob);
+      }
+      else{
+        
+        // TODO : throw the error from here, currently duplicated. 
+        return oclr;
+      }
     }
-    else
-    {
-      oclr.message += " (failed in setup_tinykernels) ";
-      return oclr;
-    }
+    tk_kernels_active.push_back(&tk_kernels[bundle.v_tgks[ksi].e_ktype]);
   }
-
   return oclr;
 }
-
 
 std::string Jinx::get_run_times_heading()
 {
@@ -343,9 +264,6 @@ std::string Jinx::get_run_times_heading()
   ss << " Gflops/s:\n";
   return ss.str();
 }
-
-
-
 
 
 
@@ -371,6 +289,8 @@ std::string Jinx::get_run_time_string(cl_int status, double extime){
 oclutil::Result Jinx::true_core(std::function<void(double, std::string)> acton, const Halt & hl){
   
   
+  std::cout << "In true core " << std::endl;
+  
   size_t runi{0};
   oclutil::Result oclr;
   
@@ -379,8 +299,14 @@ oclutil::Result Jinx::true_core(std::function<void(double, std::string)> acton, 
   
   while (!hl.halt(runi, timer.get_elapsed()))
   {
+    std::cout << "in while" << std::endl;
     // see `overheat' comment at bottom
 
+    if (tk_kernels_active.size() == 0){
+      
+      throw miog_error("zero kernels active : internal logic error");
+    }
+    
     for (size_t k_ind = 0; k_ind < tk_kernels_active.size(); ++k_ind)
     {
       // At this point, the kernel has been succesfully compiled,
@@ -388,6 +314,8 @@ oclutil::Result Jinx::true_core(std::function<void(double, std::string)> acton, 
       // if anything is caught here, consider testing for it in architests.
 
       std::vector<cl_event> clevent_waits;
+      
+      std::cout << "\n --------- " << k_ind << " ||||| " << v_wait_indices.size() << std::endl;
       for (auto& evi : v_wait_indices[k_ind]) 
       {
         // see `cl-events' comment at bottom
@@ -446,6 +374,7 @@ oclutil::Result Jinx::true_core(std::function<void(double, std::string)> acton, 
     acton(extime, get_run_time_string(oclr.success, extime));
     ++runi;
   }
+  std::cout << "returning" << std::endl;
   return {};
 } 
    
@@ -462,7 +391,7 @@ void Jinx::benchgemm(const HyPas& hp, const Halt & hl)
     throw miog_error("Non-derivable in benchgemm : " + dblt.msg);
   }
 
-   auto bundle = kerngen::get_bundle(hp, gg, mowri);
+  auto bundle = kerngen::get_bundle(hp, gg, mowri);
   
   architests::Stat atr(command_queue, bundle.dp, gg, hp);
   if (!atr.is_good)
@@ -470,7 +399,7 @@ void Jinx::benchgemm(const HyPas& hp, const Halt & hl)
     throw miog_error(atr.msg);
   }
 
-  auto oclr = setup_tinykernels(hp, bundle);
+  auto oclr = setup_tinykernels(bundle);
   if (oclr.fail())
   {
     throw miog_error(oclr.message);
@@ -584,9 +513,10 @@ Solution Jinx::single_descent_find(double              allotted_time,
   std::vector<HyPas> hyper_front = {graph.get_random_valid_start()};
   
   
-  HyPas hp_curr = hyper_front[0]; // NULL initialisation
+  HyPas hp_curr;
   
   bool improvement_found_on_front = true;
+
 
   while (improvement_found_on_front == true)
   {
@@ -596,6 +526,8 @@ Solution Jinx::single_descent_find(double              allotted_time,
     while (hfi < hyper_front.size() && improvement_found_on_front == false &&
            timer.get_elapsed() < allotted_time)
     {
+      
+      
       
       
       hp_curr = hyper_front[hfi];
@@ -627,7 +559,7 @@ Solution Jinx::single_descent_find(double              allotted_time,
       }
 
       // kernel compilation
-      auto oclr = setup_tinykernels(hp_curr, bundle);
+      auto oclr = setup_tinykernels(bundle);
       if (oclr.fail())
       {
         std::stringstream ss;
@@ -692,7 +624,6 @@ Solution Jinx::single_descent_find(double              allotted_time,
              (best_solns_path.back().statistics.seconds >= median_time))
           {
             mowri << " (NEW BEST) ";
-            improvement_found_on_front = true;
           }
         }
         mowri << '\n';
@@ -703,6 +634,7 @@ Solution Jinx::single_descent_find(double              allotted_time,
              (best_solns_path.back().statistics.seconds >= median_time))
         {
 
+      improvement_found_on_front = true;
 
       std::time_t g_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
       auto sstats = SolutionStatistics(median_time,
@@ -720,7 +652,7 @@ Solution Jinx::single_descent_find(double              allotted_time,
       }
       
       
-      
+      ++hfi;
       ftrack.incr_kernels();
     }
 

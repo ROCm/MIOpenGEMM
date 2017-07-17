@@ -31,7 +31,7 @@ Bundle get_bundle(const HyPas& hp, const Geometry& gg, owrite::Writer& mowri)
 
   DerivedParams dp(hp, gg);
 
-  std::vector<KernBlobg>        v_tgks;
+  std::vector<KernBlob>        v_tgks;
   std::vector<std::vector<size_t>> wait_indices;
 
   for (auto emat_x : {Mat::E::A, Mat::E::B})
@@ -77,21 +77,15 @@ Bundle get_bundle(const HyPas& hp, const Geometry& gg, owrite::Writer& mowri)
     stringutil::indentify(x.kernstr);
   }
 
-  std::vector<KernUses> types;
-  for (size_t i = 0; i < v_tgks.size(); ++i)
-  {
-    types.push_back(v_tgks[i].type);
-  }
-
   for (size_t i = 0; i < v_tgks.size(); ++i)
   {
     wait_indices.push_back({});
     for (size_t j = 0; j < v_tgks.size(); ++j)
     {
-      if (std::find(KType::dependencies.at(types[i].e_kerntype).begin(),
-                    KType::dependencies.at(types[i].e_kerntype).end(),
-                    types[j].e_kerntype) !=
-          KType::dependencies.at(types[i].e_kerntype).end())
+      if (std::find(KType::dependencies.at(v_tgks[i].e_ktype).begin(),
+                    KType::dependencies.at(v_tgks[i].e_ktype).end(),
+                    v_tgks[j].e_ktype) !=
+          KType::dependencies.at(v_tgks[i].e_ktype).end())
       {
         wait_indices.back().push_back(j);
       }
@@ -102,7 +96,7 @@ Bundle get_bundle(const HyPas& hp, const Geometry& gg, owrite::Writer& mowri)
   for (size_t i = 0; i < v_tgks.size(); ++i)
   {
     std::stringstream ss1;
-    ss1 << "kernel " << i << " {" << types[i].full << "}";
+    ss1 << "kernel " << i << " {" << v_tgks[i].kuses.full << "}";
     std::string pre_waits_for = ss1.str(); 
     
     if (pre_waits_for.size() < 35){
@@ -116,7 +110,7 @@ Bundle get_bundle(const HyPas& hp, const Geometry& gg, owrite::Writer& mowri)
 
     for (size_t j = 0; j < wait_indices[i].size(); ++j)
     {
-      mowri.deps << wait_indices[i][j]  << '{' << types[wait_indices[i][j]].full  << "} " << Flush;
+      mowri.deps << wait_indices[i][j]  << '{' << v_tgks[wait_indices[i][j]].kuses.full  << "} " << Flush;
     }
     mowri.deps << Endl;
   }

@@ -11,6 +11,32 @@ namespace MIOpenGEMM
 {
 
 
+
+
+bool HyPas::is_different(KType::E e_ktype, const HyPas & rhs){
+  
+  
+  //return true;
+  
+  for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C}){
+
+    for (auto i : KType::hpDeps[e_ktype][emat]){
+      if (i >= Mat::mat_to_xchi(emat)->N){
+        throw miog_error("bad index in is_different");
+      }
+      if (sus[emat].vs[i] != rhs.sus[emat].vs[i]){
+
+
+        return true;
+      }
+    }
+  }
+
+
+  
+  return false;
+}
+
 void SuHy::checks() const
 {
   if (vs.size() != Mat::mat_to_xchi(emat)->N)
@@ -293,6 +319,7 @@ HyPas::HyPas(const str_array& hyperstrings)
     sus[emat] = SuHy(emat, hyperstrings[emat]);
   }
 }
+
 
 HyPas::HyPas(std::array<SuHy, Mat::E::N>&& suhys) : sus(suhys) {}
 

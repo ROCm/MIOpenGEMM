@@ -196,18 +196,7 @@ template <typename TFl>
 void Diva<TFl>::accuracy_test(const HyPas& hp, const TFl* c_true_for_test)
 {
   
- 
-  // this destroys results/ 
-  //Solution tgs = up_jinx->find({hp.get_string()}, get_quick_find_params());
-  //Solution tgs = up_jinx->find({""}, get_quick_find_params());
-
-  //up_jinx->benchgemm({"A_MIC1_PAD2_PLU0_LIW0_MIW1_WOS1__B_MIC1_PAD2_PLU0_LIW0_MIW1_WOS2__C_UNR16_GAL2_PUN1_ICE1_NAW16_UFO0_MAC64_SKW11"}, {5, 1e12});
-
-  // WORKSPACE IS MESSED UP
-
-
-
-                               
+                                
   // copy the const cpu matrix to the gpu
   cl_event event_write_c_to_gpu;
   //cl_uint n_events = 1;

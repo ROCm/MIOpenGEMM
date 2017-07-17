@@ -176,7 +176,7 @@ w += start_coal;
 )";
 }
 
-KernBlobg ByLineGenerator::get_kernelstring()
+KernBlob ByLineGenerator::get_kernelstring()
 {
 
   std::stringstream ss;
@@ -218,7 +218,8 @@ KernBlobg ByLineGenerator::get_kernelstring()
 
   ss << "\n}\n\n\n";
 
-  return {{uses_a, uses_b, uses_c, uses_workspace, uses_alpha, uses_beta},
+  return {get_ktype(),
+          {u_a, u_b, u_c, u_w, u_alpha, u_beta},
           ss.str(),
           kernelname,
           get_global_work_size(),

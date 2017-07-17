@@ -21,6 +21,8 @@ class CopyGenerator : public bylinegen::ByLineGenerator
 
   virtual void set_type() override final;
 
+  virtual KType::E get_ktype() override final;
+
   virtual void append_derived_definitions_additional(std::stringstream& ss) override final;
 
   size_t get_local_work_size() override final;
@@ -28,7 +30,7 @@ class CopyGenerator : public bylinegen::ByLineGenerator
   size_t get_work_per_thread() override final;
 };
 
-KernBlobg
+KernBlob
 get_copy_kernelstring(Mat::E emat_x, const HyPas& hp, const Geometry& gg, const DerivedParams& dp);
 }
 }

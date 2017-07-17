@@ -13,31 +13,31 @@ namespace prepgen
 void PrepGenerator::set_usage()
 {
 
-  uses_alpha = false;
+  u_alpha = false;
   if (emat_x == Mat::E::C)
   {
-    uses_a         = false;
-    uses_b         = false;
-    uses_c         = true;
-    uses_workspace = false;
-    uses_beta      = true;
+    u_a         = false;
+    u_b         = false;
+    u_c         = true;
+    u_w = false;
+    u_beta      = true;
   }
 
   else
   {
-    uses_c         = false;
-    uses_workspace = true;
-    uses_beta      = false;
+    u_c         = false;
+    u_w = true;
+    u_beta      = false;
 
     if (emat_x == Mat::E::A)
     {
-      uses_a = true;
-      uses_b = false;
+      u_a = true;
+      u_b = false;
     }
     else if (emat_x == Mat::E::B)
     {
-      uses_a = false;
-      uses_b = true;
+      u_a = false;
+      u_b = true;
     }
 
     else

@@ -18,12 +18,12 @@ namespace kerngen
 class Bundle
 {
   public:
-  const std::vector<KernBlobg>        v_tgks;
+  const std::vector<KernBlob>        v_tgks;
   const std::vector<std::vector<size_t>> v_wait_indices;
 
   DerivedParams dp;
 
-  Bundle(std::vector<KernBlobg>&&        v_tgks_,
+  Bundle(std::vector<KernBlob>&&        v_tgks_,
          std::vector<std::vector<size_t>>&& v_wait_indices_,
          DerivedParams&&                    dp_)
     : v_tgks(std::move(v_tgks_)), v_wait_indices(std::move(v_wait_indices_)), dp(std::move(dp_))

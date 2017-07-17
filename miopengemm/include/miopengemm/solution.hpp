@@ -56,7 +56,7 @@ class Solution
   SolutionStatistics statistics;
 
   // the OpenCL kernel strings
-  std::vector<KernBlobg> v_tgks;
+  std::vector<KernBlob> v_tgks;
 
   HyPas hypas;
 
@@ -66,7 +66,7 @@ class Solution
 
   Solution(const Geometry&                  geometry_,
            SolutionStatistics               tgss_,
-           const std::vector<KernBlobg>& v_tgks_,
+           const std::vector<KernBlob>& v_tgks_,
            std::string                      hyper_param_string_,
            oclutil::DevInfo                 devinfo_,
            const Constraints &    constraints_)

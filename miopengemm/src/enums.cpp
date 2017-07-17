@@ -80,8 +80,10 @@ std::string aslower(std::string X)
 
 template <typename T>
 EnumMapper<T>::EnumMapper(const std::vector<T>& name_)
-  : N(name_.size()), name(name_), val(get_val<T>(name))
+  : N(name_.size()), name(name_), all_enum(name.size()), val(get_val<T>(name))
 {
+
+  std::iota(all_enum.begin(), all_enum.end(), 0);
 
   lcase_name.resize(name.size());
   for (size_t i = 0; i < name.size(); ++i)
@@ -235,20 +237,16 @@ Mem::E mat_to_mem(Mat::E emat)
 namespace KType{
 std::array<std::vector<size_t>, E::N> get_dependencies()
 {
-
   std::vector<size_t> uninitialised_vector{std::numeric_limits<size_t>::max()};
-
   std::array<std::vector<size_t>, E::N> kdps;
   for (size_t i = 0; i < E::N; ++i)
   { 
     kdps[i] = uninitialised_vector;
   }
-
   kdps[E::WSA]   = {};
   kdps[E::WSB]   = {};
   kdps[E::BETAC] = {};
   kdps[E::MAIN]  = {E::BETAC, E::WSA, E::WSB};
-
   for (auto & x : kdps)
   {
     if (x == uninitialised_vector)
@@ -256,13 +254,83 @@ std::array<std::vector<size_t>, E::N> get_dependencies()
       throw miog_error("dependencies does not appear to be initialised entirely");
     }
   }
-
   return kdps;
 }
-
-// const std::vector<std::string> basic_kernel_type_strings     = get_basic_kernel_type_strings();
 std::array<std::vector<size_t>, KType::N> dependencies = get_dependencies();
+
+
+
+
+
+std::array <std::array<std::vector<size_t>, Mat::E::N> , KType::E::N> get_hpDeps()
+{
+  std::array <std::array<std::vector<size_t>, Mat::E::N> , KType::E::N> x;
+
+  std::vector<size_t> uninitialised_vector{std::numeric_limits<size_t>::max()};
+  std::vector<size_t> no_hp_dependencies{};
+
+  for (size_t ki = 0; ki < E::N; ++ki)
+  { 
+    for (size_t mi = 0; mi < Mat::E::N; ++mi)
+    {
+      x[ki][mi] = uninitialised_vector;
+    }
+  }
+
+  x[E::BETAC][Mat::E::A] = no_hp_dependencies;
+  x[E::BETAC][Mat::E::B] = no_hp_dependencies;
+  x[E::BETAC][Mat::E::C] = no_hp_dependencies;
+  
+
+  x[E::WSA][Mat::E::A] = {Chi::E::WOS};
+  x[E::WSA][Mat::E::B] = {Chi::E::WOS};
+  // normal for kernel depends on unroll. 
+  x[E::WSA][Mat::E::C] =  {NonChi::E::UNR};
+  
+  
+  // note that if WSA changes, ther the WSB B changes (different offset). 
+  x[E::WSB][Mat::E::A] = {Chi::E::WOS};
+  x[E::WSB][Mat::E::B] = {Chi::E::WOS};
+  x[E::WSB][Mat::E::C] =  {NonChi::E::UNR};
+
+  x[E::MAIN][Mat::E::A] = Chi::M.all_enum;
+  x[E::MAIN][Mat::E::B] = Chi::M.all_enum;
+  x[E::MAIN][Mat::E::C] = NonChi::M.all_enum;
+
+
+
+  // The above dependencies can get subtle. If in doubt, 
+  // don't play with fire and just recompile all kernels 
+  // all the time. 
+  bool dont_play_with_fire = false;
+  if (dont_play_with_fire == true){
+    for (auto w : KType::M.all_enum){
+      x[w][Mat::E::A] = Chi::M.all_enum;
+      x[w][Mat::E::B] = Chi::M.all_enum;
+      x[w][Mat::E::C] = NonChi::M.all_enum;
+    }
+  }
+
+
+  for (size_t ki = 0; ki < E::N; ++ki)
+  { 
+    for (size_t mi = 0; mi < Mat::E::N; ++mi)
+    {
+    if (x[ki][mi] == uninitialised_vector)
+      {
+        throw miog_error("hpDeps does not appear to be initialised entirely");
+      }
+    }
+  }
+  return x;
 }
+std::array <std::array<std::vector<size_t>, Mat::E::N> , KType::E::N> hpDeps = get_hpDeps();
+
+}
+
+
+
+
 
 
 }

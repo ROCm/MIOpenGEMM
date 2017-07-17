@@ -28,17 +28,19 @@ void Kernel::try_release()
   }
 }
 
-oclutil::Result Kernel::update(const KernBlobg& ks, owrite::Writer& mowri)
-{
 
+oclutil::Result Kernel::update(const KernBlob& ks, owrite::Writer& mowri)
+{
+  
+  
   try_release();
-  tgk_strings = ks;
-  mowri << "compiling " << KType::M.name[ks.type.e_kerntype] << ". " << Flush;
+  kblob = ks;
+  mowri << "compiling " << KType::M.name[kblob.e_ktype] << ". " << Flush;
 
   auto start = std::chrono::high_resolution_clock::now();
 
   auto oclr = oclutil::cl_set_program_and_kernel(
-    command_queue, tgk_strings.kernstr, tgk_strings.fname, clprog, clkern, mowri, false);
+    command_queue, kblob.kernstr, kblob.fname, clprog, clkern, mowri, false);
 
   auto                         end             = std::chrono::high_resolution_clock::now();
   std::chrono::duration<float> fp_ms           = end - start;
@@ -61,6 +63,28 @@ Kernel::~Kernel() { try_release(); }
 
 bool Kernel::is_set() { return (clprog != nullptr && clkern != nullptr); }
 
+
+bool Kernel::update_needed(const KernBlob & kb_new){
+  if (!is_set()){
+    return true;
+  }
+
+  auto no_change =  (kb_new.kernstr == kblob.kernstr);
+ 
+ 
+  std::cout << "\n   " << KType::M.name[kb_new.e_ktype] << " " // << KType::M.name[kblob.e_ktype] << ','
+  << "   " << kb_new.kernstr.size() << "  " << kblob.kernstr.size() << "  " << no_change << std::endl;
+
+
+  bool change = !no_change;
+  return change;
+ 
+ //string comparison, can't go wrong!!!!
+ 
+ //std::cout << "\n------------------- " << kb_new.kernstr.size() << kblob.kernstr.size() << std::endl;
+
+}
+
 void Kernel::set_kernel_args(std::vector<std::pair<size_t, const void*>> arg_sizes_values)
 {
   oclutil::cl_set_kernel_args(clkern, arg_sizes_values, "Kernel::set_kernel_args", true);
@@ -73,8 +97,8 @@ oclutil::Result Kernel::enqueue(cl_uint num_events_in_wait_list, const cl_event*
                                             clkern,
                                             1,
                                             NULL,
-                                            &tgk_strings.global_work_size,
-                                            &tgk_strings.local_work_size,
+                                            &kblob.global_work_size,
+                                            &kblob.local_work_size,
                                             num_events_in_wait_list,
                                             event_wait_list,
                                             &clevent,

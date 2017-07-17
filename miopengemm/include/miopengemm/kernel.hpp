@@ -10,16 +10,19 @@
 #include <miopengemm/kernelstring.hpp>
 #include <miopengemm/oclutil.hpp>
 #include <miopengemm/outputwriter.hpp>
+#include <miopengemm/hyperparams.hpp>
 
 namespace MIOpenGEMM
 {
 
 class Kernel
 {
+  
+  private:
 
   public:
   cl_command_queue command_queue;
-  KernBlobg     tgk_strings;
+  KernBlob     kblob;
 
   // used for getting performance of kernel
   cl_event clevent;
@@ -47,7 +50,8 @@ class Kernel
 
   Kernel() : Kernel(nullptr, "default constructed Kernel") {}
 
-  oclutil::Result update(const KernBlobg& ks, owrite::Writer& mowri);
+  bool update_needed(const KernBlob&);
+  oclutil::Result update(const KernBlob&, owrite::Writer&);
 
   ~Kernel();
 

@@ -18,10 +18,10 @@ BaseGenerator::BaseGenerator(const HyPas& hp_, const Geometry& gg_, const Derive
 {
 }
 
-void BaseGenerator::append_farg(bool uses_x, std::stringstream& ss, const std::string& argfrag)
+void BaseGenerator::append_farg(bool u_x, std::stringstream& ss, const std::string& argfrag)
 {
   char token = n_args_added == 0 ? ' ' : ',';
-  if (uses_x == true)
+  if (u_x == true)
   {
     ss << token << argfrag;
     ++n_args_added;
@@ -31,17 +31,17 @@ void BaseGenerator::append_farg(bool uses_x, std::stringstream& ss, const std::s
 void BaseGenerator::append_fargs(std::stringstream& ss)
 {
   ss << "\n(";
-  append_farg(uses_a, ss, "\n__global const TFLOAT * restrict a, \nconst size_t a_offset");
-  append_farg(uses_b, ss, "\n__global const TFLOAT * restrict b, \nconst size_t b_offset");
-  append_farg(uses_c, ss, "\n__global TFLOAT       *          c, \nconst size_t c_offset");
+  append_farg(u_a, ss, "\n__global const TFLOAT * restrict a, \nconst size_t a_offset");
+  append_farg(u_b, ss, "\n__global const TFLOAT * restrict b, \nconst size_t b_offset");
+  append_farg(u_c, ss, "\n__global TFLOAT       *          c, \nconst size_t c_offset");
   // if using c, we assume workspace is const.
   // this is a hacky, as we might have a kernel
   // which uses c and modifies w as well.
-  std::string cness = (uses_c == true) ? "const " : "";
+  std::string cness = (u_c == true) ? "const " : "";
   append_farg(
-    uses_workspace, ss, "\n__global " + cness + "TFLOAT * restrict w,\nconst size_t w_offset");
-  append_farg(uses_alpha, ss, "\nconst TFLOAT alpha");
-  append_farg(uses_beta, ss, "\nconst TFLOAT beta");
+    u_w, ss, "\n__global " + cness + "TFLOAT * restrict w,\nconst size_t w_offset");
+  append_farg(u_alpha, ss, "\nconst TFLOAT alpha");
+  append_farg(u_beta, ss, "\nconst TFLOAT beta");
   ss << ")\n";
 }
 
@@ -130,7 +130,15 @@ std::string BaseGenerator::get_time_string()
 
   std::stringstream ss;
   ss << "This " << type << " kernel string was generated on " << std::ctime(&generation_time);
+
+
+
   std::string time_stamp_string = ss.str();
+
+  //std::cout << time_stamp_string << std::endl;
+  //std::abort();
+
+  return "// time makes different";
   return stringutil::get_star_wrapped(time_stamp_string.substr(0, time_stamp_string.size() - 1));
 }
 

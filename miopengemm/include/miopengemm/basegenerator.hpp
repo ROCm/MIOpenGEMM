@@ -31,12 +31,12 @@ class BaseGenerator
   std::string kernelname;
 
   // set in virtual function set_usage.
-  bool uses_a;
-  bool uses_b;
-  bool uses_c;
-  bool uses_workspace;
-  bool uses_alpha;
-  bool uses_beta;
+  bool u_a;
+  bool u_b;
+  bool u_c;
+  bool u_w;
+  bool u_alpha;
+  bool u_beta;
 
   std::string get_time_string();
   std::string get_what_string();
@@ -66,8 +66,10 @@ class BaseGenerator
     setup_final();
   }
 
-  virtual KernBlobg get_kernelstring() = 0;
+  virtual KernBlob get_kernelstring() = 0;
 
+  virtual KType::E get_ktype() = 0;
+  
   BaseGenerator(const HyPas& hp_, const Geometry& gg_, const DerivedParams& dp_);
 
   // append argument(s) to the function definition

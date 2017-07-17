@@ -38,7 +38,7 @@ class NormalFormGenerator : public prepgen::PrepGenerator
        << "[mu_pll_i*READ_STRIDE_PLL_K + mu_perp_i*READ_STRIDE_PERP_K];";
   }
 
-  KernBlobg get_kernelstring()
+  KernBlob get_kernelstring()
   {
     std::stringstream ss;
 
@@ -150,7 +150,8 @@ for (size_t mu_perp_i = 0; mu_perp_i < MICRO_TILE_PERP_UNROLL; ++mu_perp_i) {
 
     ss << "\n}\n";
 
-    return {{uses_a, uses_b, uses_c, uses_workspace, uses_alpha, uses_beta},
+    return {get_ktype(), 
+            {u_a, u_b, u_c, u_w, u_alpha, u_beta},
             ss.str(),
             kernelname,
             get_global_work_size(),
@@ -158,9 +159,17 @@ for (size_t mu_perp_i = 0; mu_perp_i < MICRO_TILE_PERP_UNROLL; ++mu_perp_i) {
   }
 
   virtual void setup_final() override final {}
+  
+  virtual KType::E get_ktype() override final{
+    switch (emat_x){
+      case Mat::E::A : return KType::E::WSA; 
+      case Mat::E::B : return KType::E::WSB; 
+      default : throw miog_error("unrecognised emat_x in get_type of normalformgenerator");
+       }
+  }
 };
 
-KernBlobg
+KernBlob
 get_nform_kernelstring(Mat::E emat_x, const HyPas& hp, const Geometry& gg, const DerivedParams& dp)
 {
   NormalFormGenerator nfg(emat_x, hp, gg, dp);
@@ -176,7 +185,7 @@ get_nform_kernelstring(Mat::E emat_x, const HyPas& hp, const Geometry& gg, const
 
 // std::string nform_string = emat_x == Mat::E::A ? "nforma" : "nformb";
 
-// KernBlobg get_nformb_kernelstring(const HyPas&     hp,
+// KernBlob get_nformb_kernelstring(const HyPas&     hp,
 // const Geometry&                     gg,
 // const DerivedParams& dp)
 //{

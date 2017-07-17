@@ -37,12 +37,12 @@ class AlphaGenerator : public basegen::BaseGenerator
   {
 
     /* TODO enum the WOS */
-    uses_a         = (hp.sus[Mat::E::A].vs[Chi::E::WOS] == Scratch::E::UNUSED) ? true : false;
-    uses_b         = (hp.sus[Mat::E::B].vs[Chi::E::WOS] == Scratch::E::UNUSED) ? true : false;
-    uses_c         = true;
-    uses_workspace = (not uses_a or not uses_b);
-    uses_alpha     = true;
-    uses_beta      = dp.main_does_beta_c_inc;
+    u_a         = (hp.sus[Mat::E::A].vs[Chi::E::WOS] == Scratch::E::UNUSED) ? true : false;
+    u_b         = (hp.sus[Mat::E::B].vs[Chi::E::WOS] == Scratch::E::UNUSED) ? true : false;
+    u_c         = true;
+    u_w = (not u_a or not u_b);
+    u_alpha     = true;
+    u_beta      = dp.main_does_beta_c_inc;
   }
 
   public:
@@ -939,7 +939,7 @@ TINTK k_plus_offset = __K__ + unroll_offset;
 
   public:
   // the "main" kernel
-  virtual KernBlobg get_kernelstring() override final
+  virtual KernBlob get_kernelstring() override final
   {
 
     std::stringstream ss;
@@ -1103,7 +1103,8 @@ TINTK k_plus_offset = __K__ + unroll_offset;
     append_final_write_all(ss);
     ss << "\n}\n";
 
-    return {{uses_a, uses_b, uses_c, uses_workspace, uses_alpha, uses_beta},
+    return {get_ktype(),
+            {u_a, u_b, u_c, u_w, u_alpha, u_beta},
             ss.str(),
             kernelname,
             dp.main_global_work_size,
@@ -1116,9 +1117,18 @@ TINTK k_plus_offset = __K__ + unroll_offset;
   }
 
   virtual void setup_final() override final {}
+
+
+  virtual KType::E get_ktype() override final{
+    return KType::E::MAIN;
+  }
+
 };
 
-KernBlobg get_alpha_kernelstring(const HyPas& hp, const Geometry& gg, const DerivedParams& dp)
+
+
+  
+KernBlob get_alpha_kernelstring(const HyPas& hp, const Geometry& gg, const DerivedParams& dp)
 {
   AlphaGenerator ag(hp, gg, dp);
   ag.setup();

@@ -14,7 +14,7 @@ namespace MIOpenGEMM
 namespace alphagen
 {
 
-KernBlobg get_alpha_kernelstring(const HyPas& hp, const Geometry& gg, const DerivedParams& dp);
+KernBlob get_alpha_kernelstring(const HyPas& hp, const Geometry& gg, const DerivedParams& dp);
 }
 }
 

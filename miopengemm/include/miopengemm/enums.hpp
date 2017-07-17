@@ -43,31 +43,13 @@ class EnumMapper
   size_t         N;
   std::vector<T> name;
   std::vector<T> lcase_name;
+  std::vector<size_t> all_enum;
   std::unordered_map<T, size_t> val;
   EnumMapper(const std::vector<T>& name_);
 };
 
 // if you add a parameter to enum, make sure to add it before the final count N
 
-namespace KType
-{
-enum E
-{
-  WSA = 0,
-  WSB,
-  BETAC,
-  MAIN,
-  N  // how many KTypes
-};
-extern const EnumMapper<std::string> M;
-
-
-// maps the depencices of kernels. 
-// For example deps[MAIN] = {WSA, WSB, BETAC} as all of these must first complete
-// before MAIN can execute 
-extern std::array<std::vector<size_t>, E::N> dependencies;
-
-}
 
 
 namespace SummStat
@@ -197,6 +179,31 @@ enum E
 };
 }
 
+
+
+namespace KType
+{
+enum E
+{
+  WSA = 0,
+  WSB,
+  BETAC,
+  MAIN,
+  N  // how many KTypes
+};
+extern const EnumMapper<std::string> M;
+
+// maps the depencices of kernels, order of exection 
+// For example deps[MAIN] = {WSA, WSB, BETAC},
+// as all of these must first complete
+// before MAIN can execute 
+extern std::array<std::vector<size_t>, E::N> dependencies;
+
+// maps the depency of kernels of hps, used to determine 
+// whether recompilation is necessary
+extern std::array <std::array<std::vector<size_t>, Mat::E::N> , KType::E::N> hpDeps; 
+
+}
 
 
 

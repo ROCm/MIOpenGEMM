@@ -52,12 +52,10 @@ class FindTracker{
   
   public:
   void start();
-  double get_elapsed() const;
   void incr_descents();
   void incr_kernels();
-  
+  double get_elapsed() const;
   size_t get_descents() const;
-  
   std::string get_string() const;
   
 };
@@ -125,15 +123,12 @@ class Jinx
   
   void address_check_valid();
   void address_check_valid_and_reliable();
-  void set_kern_args(const KernUses& type);
+  void set_kern_args(const KernBlob& kblob);
 
   std::string get_run_time_string(cl_int status, double extime);
       
-  bool refresh_needed(KType::E type, const HyPas& new_hp, const DerivedParams& new_dp);
-  oclutil::Result refresh_kernel(const KernBlobg& ks, const HyPas& hp, const DerivedParams& dp);
-  oclutil::Result setup_tinykernels(const HyPas& hp, const kerngen::Bundle& bundle);
+  oclutil::Result setup_tinykernels(const kerngen::Bundle& bundle);
   Solution single_descent_find(double allotted_time, const Constraints&, const Halt& core_hl, FindTracker & ftrack, const FindParams &); //TODO FindParams should not be needed
-
   oclutil::Result true_core(std::function<void(double, std::string)> acton, const Halt & hl);
 
 };

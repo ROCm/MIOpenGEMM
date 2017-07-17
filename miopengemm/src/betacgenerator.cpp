@@ -22,6 +22,10 @@ size_t BetacGenerator::get_local_work_size() { return dp.betac_local_work_size; 
 
 size_t BetacGenerator::get_work_per_thread() { return dp.betac_work_per_thread; }
 
+KType::E BetacGenerator::get_ktype(){
+  return KType::E::BETAC;
+}
+
 void BetacGenerator::setup_additional()
 {
   description_string = R"(
@@ -36,7 +40,7 @@ void BetacGenerator::setup_additional()
 
 void BetacGenerator::append_derived_definitions_additional(std::stringstream& ss) { ss << " "; }
 
-KernBlobg get_betac_kernelstring(const HyPas& hp, const Geometry& gg, const DerivedParams& dp)
+KernBlob get_betac_kernelstring(const HyPas& hp, const Geometry& gg, const DerivedParams& dp)
 {
   BetacGenerator bcg(hp, gg, dp);
   bcg.setup();

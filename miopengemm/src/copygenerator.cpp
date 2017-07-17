@@ -22,6 +22,15 @@ void   CopyGenerator::set_type() { type = "copy" + std::string(1, mchar); }
 size_t CopyGenerator::get_local_work_size() { return dp.at(emat_x).cw1_local_work_size; }
 size_t CopyGenerator::get_work_per_thread() { return dp.at(emat_x).cw1_work_per_thread; }
 
+
+KType::E CopyGenerator::get_ktype(){
+  switch (emat_x){
+    case Mat::E::A : return KType::E::WSA;
+    case Mat::E::B : return KType::E::WSB;
+    default : throw miog_error("unrecogised emat_x in get_ktype of CopyGenerator");
+  }
+}
+  
 void CopyGenerator::setup_additional()
 {
   description_string = R"()";
@@ -42,7 +51,7 @@ void CopyGenerator::append_derived_definitions_additional(std::stringstream& ss)
   ss << "#define GLOBAL_OFFSET_W " << dp.at(emat_x).cw_global_offset << "\n";
 }
 
-KernBlobg
+KernBlob
 get_copy_kernelstring(Mat::E emat_x, const HyPas& hp, const Geometry& gg, const DerivedParams& dp)
 {
 

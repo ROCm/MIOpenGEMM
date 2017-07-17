@@ -28,7 +28,7 @@ void geometrytest(bool isColMajor, bool tA, bool tB, bool tC, size_t m, size_t n
 //(benchgemm) geometry  	:tC0_tA1_tB0_colMaj0_m55_n65_k124_lda64_ldb75_ldc77_ws300000_f64
 
 
-  owrite::Writer mowri(Ver::E::ACCURACY, "");
+  owrite::Writer mowri(Ver::E::TERMINAL, "");
   dev::Boa boa(gg, offsets, mowri);  
   Solution soln = boa.find(find_params, constraints_string);
   
