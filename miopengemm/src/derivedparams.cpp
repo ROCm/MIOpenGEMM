@@ -66,8 +66,11 @@ void DerivedParams::reset_cw_params(Mat::E emat_x)
 
   else
   {
-    throw miog_error("copy type is neither 1 nor 2, so can't be correct that "
-                     "there's a call to reset_cw_params");
+    std::stringstream errm;
+    errm << "In [" << Mat::M.name[emat_x] << "] [" << Chi::M.name[Chi::E::WOS] << "] . ";
+    errm << " Input is " << ptr_hp->sus[emat_x].vs[Chi::E::WOS] << " . ";
+    errm << " It should be 1 or 2 in reset_cw_params ";
+    throw miog_error(errm.str());
   }
 
   at(emat_x).cw_global_offset =
@@ -76,26 +79,6 @@ void DerivedParams::reset_cw_params(Mat::E emat_x)
       : 0;
 }
 
-void DerivedParams::reset_ga3_params()
-{
-  if (main_split_on_k == 1)
-  {
-    ga3_super_column_width = static_cast<size_t>(
-      std::floor(std::sqrt(static_cast<double>(ptr_hp->sus[Mat::E::C].vs[NonChi::E::NAW]) /
-                           static_cast<double>(ptr_hp->sus[Mat::E::C].vs[NonChi::E::ICE]))));
-  }
-  else if (main_split_on_k == 0)
-  {
-    ga3_super_column_width = static_cast<size_t>(
-      std::floor(std::sqrt(static_cast<double>(ptr_hp->sus[Mat::E::C].vs[NonChi::E::NAW]))));
-  }
-  else
-  {
-    throw miog_error("main_split_on_k is neither 0 nor 1, how can this be? "
-                     "Logic error in reset_ga3_params");
-  }
-  ga3_last_super_column_width = bdps.n_groups % ga3_super_column_width;
-}
 
 Derivabilty::Derivabilty(const HyPas& hp, const Geometry& gg)
 {
@@ -284,6 +267,38 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
       return std::make_tuple(false, "UFO = yes, so UNR must be greater that k");
     }
   }
+  
+  
+  main_split_on_k      = ptr_hp->sus[Mat::E::C].vs[NonChi::E::ICE] == 1 ? 0 : 1;
+  main_does_beta_c_inc = main_split_on_k == 1 ? 0 : 1;
+
+
+  if (ptr_hp->sus[Mat::E::C].vs[NonChi::E::GAL] == 3)
+  {
+    if (main_split_on_k == 1)
+    {
+      ga3_super_column_width = static_cast<size_t>(
+        std::floor(std::sqrt(static_cast<double>(ptr_hp->sus[Mat::E::C].vs[NonChi::E::NAW]) /
+                             static_cast<double>(ptr_hp->sus[Mat::E::C].vs[NonChi::E::ICE]))));
+    }
+    else if (main_split_on_k == 0)
+    {
+      ga3_super_column_width = static_cast<size_t>(
+        std::floor(std::sqrt(static_cast<double>(ptr_hp->sus[Mat::E::C].vs[NonChi::E::NAW]))));
+    }
+    else
+    {
+      throw miog_error("main_split_on_k is neither 0 nor 1, how can this be? Logic error");
+    }
+    
+    if (ga3_super_column_width == 0){
+      return std::make_tuple(false, 
+      "ga3_super_column_width would be 0 ( ICE >  NAW) ");
+    }
+    
+    ga3_last_super_column_width = bdps.n_groups % ga3_super_column_width;
+  }
+  
 
   // ran the gauntlet, returning deriveable is true
   return std::make_tuple(true, "");
@@ -363,8 +378,6 @@ DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_) : ptr_hp(&hp
     }
   }
 
-  main_split_on_k      = ptr_hp->sus[Mat::E::C].vs[NonChi::E::ICE] == 1 ? 0 : 1;
-  main_does_beta_c_inc = main_split_on_k == 1 ? 0 : 1;
 
   if (ptr_hp->sus[Mat::E::C].vs[NonChi::E::ICE] == 1)
   {
@@ -411,10 +424,6 @@ DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_) : ptr_hp(&hp
     }
   }
 
-  if (ptr_hp->sus[Mat::E::C].vs[NonChi::E::GAL] == 3)
-  {
-    reset_ga3_params();
-  }
 
   // these are hyper params, with a check if not optional ?
   main_use_edge_trick = (ptr_gg->m % at(Mat::E::A).macro_tile_length == 0 &&

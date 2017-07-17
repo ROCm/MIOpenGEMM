@@ -1,9 +1,10 @@
-#ifndef GUARD_MIOPENGEMM_JINX_HPP
-#define GUARD_MIOPENGEMM_JINX_HPP
-
 /*******************************************************************************
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
+#ifndef GUARD_MIOPENGEMM_JINX_HPP
+#define GUARD_MIOPENGEMM_JINX_HPP
+
+
 #include <algorithm>
 #include <chrono>
 #include <iomanip>
@@ -26,22 +27,12 @@
 #include <miopengemm/outputwriter.hpp>
 #include <miopengemm/solution.hpp>
 #include <miopengemm/stringutilbase.hpp>
-
+#include <miopengemm/timer.hpp>
 
   
 namespace MIOpenGEMM
 {
 
-// Simple stop-watch
-class Timer{
-  
-  private:
-  std::chrono::time_point<std::chrono::high_resolution_clock> t0;  
-  
-  public:
-  void start();
-  double get_elapsed() const;
-};
 
 class FindTracker{
   

@@ -165,18 +165,39 @@ enum E
 };
 }
 
+namespace OutPart{
+enum E
+{
+  MAI = 0,
+  TRA,
+  DEP,
+  ACC,
+  WRN,
+  N
+};
+extern const EnumMapper<std::string> M;
+}
+
+
 namespace Ver
 {
 enum E
 {
   SILENT = 0,  // no output anywhere, absolute silence
-  TERMINAL,    // main output to terminal
+  TERMINAL,    // all output to terminal, other than tracker
   SPLIT,       // main output to terminal and file
   TOFILE,      // main output to file
   TRACK,       // tracker output to terminal
   STRACK,      // tracker output to terminal, main output to file
   ACCURACY,    // tracker and accuracy to terminal
+  N
 };
+extern const EnumMapper<std::string> M;
+extern const std::array<bool, E::N> fileRequired;
+extern const std::array<std::array<bool, OutPart::E::N>, E::N> toFile;
+extern const std::array<std::array<bool, OutPart::E::N>, E::N> toTerm;
+
+
 }
 
 
@@ -199,9 +220,9 @@ extern const EnumMapper<std::string> M;
 // before MAIN can execute 
 extern std::array<std::vector<size_t>, E::N> dependencies;
 
-// maps the depency of kernels of hps, used to determine 
-// whether recompilation is necessary
-extern std::array <std::array<std::vector<size_t>, Mat::E::N> , KType::E::N> hpDeps; 
+//// maps the depency of kernels of hps, used to determine 
+//// whether recompilation is necessary
+//extern std::array <std::array<std::vector<size_t>, Mat::E::N> , KType::E::N> hpDeps; 
 
 }
 

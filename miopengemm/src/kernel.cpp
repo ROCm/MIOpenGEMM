@@ -68,21 +68,10 @@ bool Kernel::update_needed(const KernBlob & kb_new){
   if (!is_set()){
     return true;
   }
-
-  auto no_change =  (kb_new.kernstr == kblob.kernstr);
- 
- 
-  std::cout << "\n   " << KType::M.name[kb_new.e_ktype] << " " // << KType::M.name[kblob.e_ktype] << ','
-  << "   " << kb_new.kernstr.size() << "  " << kblob.kernstr.size() << "  " << no_change << std::endl;
-
-
+  auto no_change =  (kb_new.kernstr == kblob.kernstr); 
   bool change = !no_change;
   return change;
  
- //string comparison, can't go wrong!!!!
- 
- //std::cout << "\n------------------- " << kb_new.kernstr.size() << kblob.kernstr.size() << std::endl;
-
 }
 
 void Kernel::set_kernel_args(std::vector<std::pair<size_t, const void*>> arg_sizes_values)

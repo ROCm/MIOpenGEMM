@@ -142,6 +142,47 @@ std::vector<std::string> get_name()
 const EnumMapper<std::string> M = get_enum_mapper<std::string>(get_name(), "Chi");
 }
 
+
+
+namespace OutPart
+{
+std::vector<std::string> get_name()
+{
+  std::vector<std::string> X(E::N, unfilled<std::string>());
+  X[E::MAI] = "MAI";
+  X[E::TRA] = "TRA";
+  X[E::DEP] = "DEP";
+  X[E::ACC] = "ACC";
+  X[E::WRN] = "WRN";
+  return X;
+}
+const EnumMapper<std::string> M = get_enum_mapper<std::string>(get_name(), "OutPart");
+}
+
+
+
+
+
+namespace Ver
+{
+std::vector<std::string> get_name()
+{
+  std::vector<std::string> X(E::N, unfilled<std::string>());
+  X[E::SILENT] = "SILENT";
+  X[E::TERMINAL] = "TERMINAL";
+  X[E::SPLIT] = "SPLIT";
+  X[E::TOFILE] = "TOFILE";
+  X[E::TRACK] = "TRACK";
+  X[E::STRACK] = "STRACK";
+  X[E::ACCURACY] = "ACCURACY";
+  return X;
+}
+const EnumMapper<std::string> M = get_enum_mapper<std::string>(get_name(), "Ver");
+
+}
+
+
+
 namespace NonChi
 {
 std::vector<std::string> get_name()
@@ -258,79 +299,164 @@ std::array<std::vector<size_t>, E::N> get_dependencies()
 }
 std::array<std::vector<size_t>, KType::N> dependencies = get_dependencies();
 
+}
 
+namespace Ver{
 
-
-
-std::array <std::array<std::vector<size_t>, Mat::E::N> , KType::E::N> get_hpDeps()
-{
-  std::array <std::array<std::vector<size_t>, Mat::E::N> , KType::E::N> x;
-
-  std::vector<size_t> uninitialised_vector{std::numeric_limits<size_t>::max()};
-  std::vector<size_t> no_hp_dependencies{};
-
-  for (size_t ki = 0; ki < E::N; ++ki)
-  { 
-    for (size_t mi = 0; mi < Mat::E::N; ++mi)
+std::array<std::array<bool, OutPart::E::N>, E::N> get_base_toX(){
+  
+  std::array<std::array<bool, OutPart::E::N>, E::N> x;
+  
+  for (size_t vi = 0; vi < E::N; ++vi)
+  {
+    
+    for (size_t op = 0; op < OutPart::E::N; ++op)
     {
-      x[ki][mi] = uninitialised_vector;
-    }
-  }
-
-  x[E::BETAC][Mat::E::A] = no_hp_dependencies;
-  x[E::BETAC][Mat::E::B] = no_hp_dependencies;
-  x[E::BETAC][Mat::E::C] = no_hp_dependencies;
-  
-
-  x[E::WSA][Mat::E::A] = {Chi::E::WOS};
-  x[E::WSA][Mat::E::B] = {Chi::E::WOS};
-  // normal for kernel depends on unroll. 
-  x[E::WSA][Mat::E::C] =  {NonChi::E::UNR};
-  
-  
-  // note that if WSA changes, ther the WSB B changes (different offset). 
-  x[E::WSB][Mat::E::A] = {Chi::E::WOS};
-  x[E::WSB][Mat::E::B] = {Chi::E::WOS};
-  x[E::WSB][Mat::E::C] =  {NonChi::E::UNR};
-
-  x[E::MAIN][Mat::E::A] = Chi::M.all_enum;
-  x[E::MAIN][Mat::E::B] = Chi::M.all_enum;
-  x[E::MAIN][Mat::E::C] = NonChi::M.all_enum;
-
-
-
-  // The above dependencies can get subtle. If in doubt, 
-  // don't play with fire and just recompile all kernels 
-  // all the time. 
-  bool dont_play_with_fire = false;
-  if (dont_play_with_fire == true){
-    for (auto w : KType::M.all_enum){
-      x[w][Mat::E::A] = Chi::M.all_enum;
-      x[w][Mat::E::B] = Chi::M.all_enum;
-      x[w][Mat::E::C] = NonChi::M.all_enum;
-    }
-  }
-
-
-  for (size_t ki = 0; ki < E::N; ++ki)
-  { 
-    for (size_t mi = 0; mi < Mat::E::N; ++mi)
-    {
-    if (x[ki][mi] == uninitialised_vector)
-      {
-        throw miog_error("hpDeps does not appear to be initialised entirely");
-      }
+      x[vi][op] = false;
     }
   }
   return x;
 }
-std::array <std::array<std::vector<size_t>, Mat::E::N> , KType::E::N> hpDeps = get_hpDeps();
+
+
+std::array<std::array<bool, OutPart::E::N>, E::N> get_toTerm()
+{
+  auto x = get_base_toX();
+  
+  
+  // all output to terminal, other than tracker
+  x[E::TERMINAL][OutPart::E::MAI] = true;
+  x[E::TERMINAL][OutPart::E::DEP] = true;
+  x[E::TERMINAL][OutPart::E::ACC] = true;  
+  
+  // copy TERMINAL
+  x[E::SPLIT] = x[E::TERMINAL];
+ 
+  
+  // just tracker output to terminal
+  x[E::TRACK][OutPart::E::TRA] = true;
+  x[E::TRACK][OutPart::E::WRN] = true;
+
+  // just tracker output to terminal
+  x[E::STRACK][OutPart::E::TRA] = true;
+    
+  // like tracker, but with accuracy
+  x[E::ACCURACY] = x[E::TRACK];
+  x[E::ACCURACY][OutPart::E::ACC] = true;    
+
+  
+  return x;
+}
+const std::array<std::array<bool, OutPart::E::N>, E::N> toTerm = get_toTerm();
+  
+
+std::array<std::array<bool, OutPart::E::N>, E::N> get_toFile()
+{
+  auto x = get_base_toX();
+  // all output to file, other than tracker
+  x[E::TOFILE][OutPart::E::MAI] = true;
+  x[E::TOFILE][OutPart::E::DEP] = true;
+  x[E::TOFILE][OutPart::E::ACC] = true;  
+
+  // copy TOFILE
+  x[E::SPLIT] = x[E::TOFILE];
+  
+  // copy TOFILE
+  x[E::STRACK][E::TOFILE] = true;
+    
+  return x;
+}
+const std::array<std::array<bool, OutPart::E::N>, E::N> toFile = get_toFile();
+
+
+std::array<bool, E::N> get_fileRequired(){
+  std::array<bool, E::N> X;
+  X[E::SILENT] = false;
+  X[E::TERMINAL] = false;
+  X[E::SPLIT] = true;
+  X[E::TOFILE] = true;
+  X[E::TRACK] = false;
+  X[E::STRACK] = true;
+  X[E::ACCURACY] = false;
+  return X;
+}
+const std::array<bool, E::N> fileRequired = get_fileRequired();
+
+
+}
 
 }
 
 
 
+//std::array <std::array<std::vector<size_t>, Mat::E::N> , KType::E::N> get_hpDeps()
+//{
+  //std::array <std::array<std::vector<size_t>, Mat::E::N> , KType::E::N> x;
+
+  //std::vector<size_t> uninitialised_vector{std::numeric_limits<size_t>::max()};
+  //std::vector<size_t> no_hp_dependencies{};
+
+  //for (size_t ki = 0; ki < E::N; ++ki)
+  //{ 
+    //for (size_t mi = 0; mi < Mat::E::N; ++mi)
+    //{
+      //x[ki][mi] = uninitialised_vector;
+    //}
+  //}
+
+  //x[E::BETAC][Mat::E::A] = no_hp_dependencies;
+  //x[E::BETAC][Mat::E::B] = no_hp_dependencies;
+  //x[E::BETAC][Mat::E::C] = no_hp_dependencies;
+  
+
+  //x[E::WSA][Mat::E::A] = {Chi::E::WOS};
+  //x[E::WSA][Mat::E::B] = {Chi::E::WOS};
+  //// normal for kernel depends on unroll. 
+  //x[E::WSA][Mat::E::C] =  {NonChi::E::UNR};
+  
+  
+  //// note that if WSA changes, ther the WSB B changes (different offset). 
+  //x[E::WSB][Mat::E::A] = {Chi::E::WOS};
+  //x[E::WSB][Mat::E::B] = {Chi::E::WOS};
+  //x[E::WSB][Mat::E::C] =  {NonChi::E::UNR};
+
+  //x[E::MAIN][Mat::E::A] = Chi::M.all_enum;
+  //x[E::MAIN][Mat::E::B] = Chi::M.all_enum;
+  //x[E::MAIN][Mat::E::C] = NonChi::M.all_enum;
 
 
 
-}
+  //// The above dependencies can get subtle. If in doubt, 
+  //// don't play with fire and just recompile all kernels 
+  //// all the time. 
+  //bool dont_play_with_fire = false;
+  //if (dont_play_with_fire == true){
+    //for (auto w : KType::M.all_enum){
+      //x[w][Mat::E::A] = Chi::M.all_enum;
+      //x[w][Mat::E::B] = Chi::M.all_enum;
+      //x[w][Mat::E::C] = NonChi::M.all_enum;
+    //}
+  //}
+
+
+  //for (size_t ki = 0; ki < E::N; ++ki)
+  //{ 
+    //for (size_t mi = 0; mi < Mat::E::N; ++mi)
+    //{
+    //if (x[ki][mi] == uninitialised_vector)
+      //{
+        //throw miog_error("hpDeps does not appear to be initialised entirely");
+      //}
+    //}
+  //}
+  //return x;
+//}
+//std::array <std::array<std::vector<size_t>, Mat::E::N> , KType::E::N> hpDeps = get_hpDeps();
+
+//}
+
+
+
+
+
+

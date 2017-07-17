@@ -76,7 +76,7 @@ class HyPas
   std::string get_string() const;
   bool operator==(const HyPas& rhs) const;
   void checks() const;
-  bool is_different(KType::E e_ktype, const HyPas & rhs); 
+  //bool is_different(KType::E e_ktype, const HyPas & rhs); 
 };
 
 

@@ -24,22 +24,10 @@
 #include <miopengemm/solution.hpp>
 #include <miopengemm/stringutilbase.hpp>
 #include <miopengemm/graph.hpp>
-
-namespace MIOpenGEMM
-{
+#include <miopengemm/timer.hpp>
 
 
-void Timer::start(){
-  t0 = std::chrono::high_resolution_clock::now();
-}
-
-double Timer::get_elapsed() const{
-  std::chrono::duration<double> fp_ms = std::chrono::high_resolution_clock::now() - t0;
-  return fp_ms.count();    
-}
-
-
-
+namespace MIOpenGEMM{
 void FindTracker::start() {timer.start();}
 double FindTracker::get_elapsed() const
 {return timer.get_elapsed();}
@@ -289,8 +277,6 @@ std::string Jinx::get_run_time_string(cl_int status, double extime){
 oclutil::Result Jinx::true_core(std::function<void(double, std::string)> acton, const Halt & hl){
   
   
-  std::cout << "In true core " << std::endl;
-  
   size_t runi{0};
   oclutil::Result oclr;
   
@@ -299,7 +285,6 @@ oclutil::Result Jinx::true_core(std::function<void(double, std::string)> acton, 
   
   while (!hl.halt(runi, timer.get_elapsed()))
   {
-    std::cout << "in while" << std::endl;
     // see `overheat' comment at bottom
 
     if (tk_kernels_active.size() == 0){
@@ -315,7 +300,7 @@ oclutil::Result Jinx::true_core(std::function<void(double, std::string)> acton, 
 
       std::vector<cl_event> clevent_waits;
       
-      std::cout << "\n --------- " << k_ind << " ||||| " << v_wait_indices.size() << std::endl;
+
       for (auto& evi : v_wait_indices[k_ind]) 
       {
         // see `cl-events' comment at bottom
@@ -374,7 +359,7 @@ oclutil::Result Jinx::true_core(std::function<void(double, std::string)> acton, 
     acton(extime, get_run_time_string(oclr.success, extime));
     ++runi;
   }
-  std::cout << "returning" << std::endl;
+
   return {};
 } 
    
@@ -577,7 +562,7 @@ Solution Jinx::single_descent_find(double              allotted_time,
       old_track_msg = new_track_msg;
       new_track_msg = ftrack.get_string();
       // TODO : does this work?
-      mowri.tracker << std::string(old_track_msg.size(), '\b') << new_track_msg << Flush;
+      mowri.bw[OutPart::E::TRA] << std::string(old_track_msg.size(), '\b') << new_track_msg << Flush;
 
 
 

@@ -1,3 +1,6 @@
+/*******************************************************************************
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
+ *******************************************************************************/
 #include <algorithm>
 #include <sstream>
 #include <miopengemm/architests.hpp>
@@ -6,6 +9,7 @@
 #include <miopengemm/macgrid.hpp>
 #include <miopengemm/randomutil.hpp>
 #include <miopengemm/stringutilbase.hpp>
+#include <miopengemm/timer.hpp>
 
 namespace MIOpenGEMM
 {
@@ -658,8 +662,14 @@ HyPas Graph::get_random_valid_start() const
   size_t            iter  = 0;
   std::stringstream ss;
 
+  double impatience_time = 0.2; // seconds before terimnal silence becomes annoying
+  Timer timer;
+  timer.start();
+  
   while (found == false && iter < max_n_iter)
   {
+    
+
     hp0 = get_random_start();
     hp0.checks();  // This should not be necessary
 
@@ -684,6 +694,11 @@ HyPas Graph::get_random_valid_start() const
       }
     }
     ++iter;
+    
+    if (timer.get_elapsed() > impatience_time){
+      mowri.bw[OutPart::E::WRN] << "(still looking for valid start in graph @i=" << iter << ")" << Endl;
+      timer.start();
+    }
   }
 
   // force the graph starting parameters
@@ -694,7 +709,7 @@ HyPas Graph::get_random_valid_start() const
             << " The number of attempts made : " << max_n_iter << '.'
             << " To view the full output of hps tried, "
             << " and reasons for not being derivable, modify the code here -- "
-            << " (add ss.str() to this string). Will attempt to obtain generic hp. ";
+            << " (add ss.str() to this string). Will not attempt to obtain generic hp. ";
 
     throw miog_error(base_ss.str());
   }

@@ -1,3 +1,7 @@
+/*******************************************************************************
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
+ *******************************************************************************/
+
 #include <algorithm>
 #include <sstream>
 #include <miopengemm/architests.hpp>
@@ -13,29 +17,29 @@ namespace MIOpenGEMM
 
 
 
-bool HyPas::is_different(KType::E e_ktype, const HyPas & rhs){
+//bool HyPas::is_different(KType::E e_ktype, const HyPas & rhs){
   
   
-  //return true;
+  ////return true;
   
-  for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C}){
+  //for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C}){
 
-    for (auto i : KType::hpDeps[e_ktype][emat]){
-      if (i >= Mat::mat_to_xchi(emat)->N){
-        throw miog_error("bad index in is_different");
-      }
-      if (sus[emat].vs[i] != rhs.sus[emat].vs[i]){
+    //for (auto i : KType::hpDeps[e_ktype][emat]){
+      //if (i >= Mat::mat_to_xchi(emat)->N){
+        //throw miog_error("bad index in is_different");
+      //}
+      //if (sus[emat].vs[i] != rhs.sus[emat].vs[i]){
 
 
-        return true;
-      }
-    }
-  }
+        //return true;
+      //}
+    //}
+  //}
 
 
   
-  return false;
-}
+  //return false;
+//}
 
 void SuHy::checks() const
 {

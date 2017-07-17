@@ -92,7 +92,7 @@ Bundle get_bundle(const HyPas& hp, const Geometry& gg, owrite::Writer& mowri)
     }
   }
     
-  mowri.deps << "\nnetwork of kernel dependencies: \n";
+  mowri.bw[OutPart::E::DEP] << "\nnetwork of kernel dependencies: \n";
   for (size_t i = 0; i < v_tgks.size(); ++i)
   {
     std::stringstream ss1;
@@ -102,19 +102,19 @@ Bundle get_bundle(const HyPas& hp, const Geometry& gg, owrite::Writer& mowri)
     if (pre_waits_for.size() < 35){
       pre_waits_for.resize(37, ' ');
     }
-    mowri.deps << pre_waits_for << " waits for :  " << Flush;
+    mowri.bw[OutPart::E::DEP] << pre_waits_for << " waits for :  " << Flush;
     if (wait_indices[i].size() == 0)
     {
-      mowri.deps << "nothing";
+      mowri.bw[OutPart::E::DEP] << "nothing";
     }
 
     for (size_t j = 0; j < wait_indices[i].size(); ++j)
     {
-      mowri.deps << wait_indices[i][j]  << '{' << v_tgks[wait_indices[i][j]].kuses.full  << "} " << Flush;
+      mowri.bw[OutPart::E::DEP] << wait_indices[i][j]  << '{' << v_tgks[wait_indices[i][j]].kuses.full  << "} " << Flush;
     }
-    mowri.deps << Endl;
+    mowri.bw[OutPart::E::DEP] << Endl;
   }
-  mowri.deps << '\n';
+  mowri.bw[OutPart::E::DEP] << '\n';
 
   return Bundle(std::move(v_tgks), std::move(wait_indices), std::move(dp));
 }

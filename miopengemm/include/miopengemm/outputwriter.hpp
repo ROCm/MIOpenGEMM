@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
@@ -64,39 +63,30 @@ class Writer
   private:
   Ver::E      v;
   std::string filename;
-  // to extract from v
-  bool main_to_file;
-  bool main_to_terminal;
-  bool tracker_to_file;
-  bool tracker_to_terminal;
-  bool deps_to_file;
-  bool deps_to_terminal;
-  bool accu_to_file;
-  bool accu_to_terminal;
 
   void set_v_bits();
   void initialise_file();
 
   public:
-  std::ofstream file;
-  BasicWriter   main;
-  BasicWriter   tracker;
-  BasicWriter   deps;
-  BasicWriter   accu;
+  std::ofstream file;  
+  std::array<BasicWriter, OutPart::N> bw;
+  
 
   public:
   Writer();
   ~Writer();
   Writer(Ver::E v, std::string filename);
 
+  // a short-cut function
   template <typename T>
   Writer& operator<<(T t)
   {
-    main << t;
+    bw[OutPart::E::MAI] << t;
     return *this;
   }
 };
 }
+
 extern owrite::Flusher Flush;
 extern owrite::Endline Endl;
 }
