@@ -97,9 +97,6 @@ bool is_dvble(const HyPas& hp, const Geometry& gg)
 DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_, std::string s)
   : ptr_hp(&hp_), ptr_gg(&gg_)
 {
-
-  initialise_chis();
-
   if (s.compare("uninitialised") != 0)
   {
     throw miog_error("the only string with which a DerivedParams object can be "
@@ -304,17 +301,6 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
   return std::make_tuple(true, "");
 }
 
-void DerivedParams::initialise_chis()
-{
-  chis.resize(2);
-  if (Mat::E::A > 2 || Mat::E::B > 2)
-  {
-    throw miog_error("In DeriverParams constructor, enums too large (strange)");
-  }
-
-  chis[Mat::E::A] = &adps;
-  chis[Mat::E::B] = &bdps;
-}
 
 std::string get_tint(size_t memsize)
 {
@@ -340,8 +326,6 @@ std::string get_tint(size_t memsize)
 
 DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_) : ptr_hp(&hp_), ptr_gg(&gg_)
 {
-
-  initialise_chis();
 
   auto tup = set_fragile();
 

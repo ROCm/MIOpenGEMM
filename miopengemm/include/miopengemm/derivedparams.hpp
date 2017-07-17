@@ -80,7 +80,6 @@ class DerivedParams
 
   ChiralDerivedParams adps;
   ChiralDerivedParams bdps;
-  void                initialise_chis();
 
   void reset_ga3_params();
 
@@ -95,10 +94,6 @@ class DerivedParams
   DerivedParams()                     = delete;
   DerivedParams(const DerivedParams&) = delete;
   DerivedParams(DerivedParams&&)      = default;
-
-  /* TODO if copied, this causes undefined behaviour. Currently not used
-   * Before doing this, make sure what's up with construction options.  */
-  std::vector<ChiralDerivedParams*> chis;
 
   ChiralDerivedParams& at(Mat::E emat_x) { return emat_x == Mat::E::A ? adps : bdps; }
   const ChiralDerivedParams& at(Mat::E emat_x) const { return emat_x == Mat::E::A ? adps : bdps; }
