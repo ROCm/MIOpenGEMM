@@ -29,10 +29,6 @@ namespace kerngen
 Bundle::Bundle(const HyPas& hp_, const Geometry& gg_, owrite::Writer& mowri):hp(hp_), gg(gg_), dp(hp, gg)
 {
 
-
-  //std::vector<KernBlob>  v_tgks;
-  //std::vector<std::vector<size_t>>v_wait_indices;
-
   for (auto emat_x : {Mat::E::A, Mat::E::B})
   {
 
@@ -114,8 +110,6 @@ Bundle::Bundle(const HyPas& hp_, const Geometry& gg_, owrite::Writer& mowri):hp(
     mowri.bw[OutPart::E::DEP] << Endl;
   }
   mowri.bw[OutPart::E::DEP] << '\n';
-
-  //return Bundle(std::move(v_tgks), std::move(wait_indices), std::move(dp));
 }
 }
 }

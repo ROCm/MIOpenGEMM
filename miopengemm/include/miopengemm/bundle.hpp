@@ -30,12 +30,6 @@ class Bundle
   
   Bundle(const HyPas& hp, const Geometry& gg, owrite::Writer& mowri);
   
-  //Bundle(std::vector<KernBlob>&&        v_tgks_,
-         //std::vector<std::vector<size_t>>&& v_wait_indices_,
-         //DerivedParams&&                    dp_)
-    //: v_tgks(std::move(v_tgks_)), v_wait_indices(std::move(v_wait_indices_)), dp(std::move(dp_))
-  //{
-  //}
 };
 
 //Bundle get_bundle(const HyPas& hp, const Geometry& gg, owrite::Writer& mowri);

@@ -8,9 +8,7 @@
 template <typename TFloat>
 void geometrytest(const MIOpenGEMM::Geometry & gg)
 
-//bool isColMajor, bool tA, bool tB, bool tC, size_t m, size_t n, size_t k)
 {
-
   using namespace MIOpenGEMM;
   Offsets offsets = get_padding_offsets(); 
 
@@ -52,11 +50,11 @@ int main()
             std::cout << "\n\n\ntest " << testi << "/32\n";            
             Geometry gg = get_padded_geometry<float> (isColMajor, tA, tB, tC, m, n, k, workspace_size); 
             std::cout << "<float>  " << gg.get_string() << '\n';
-            geometrytest<float>(gg);//isColMajor, tA, tB, tC, m, n, k);
+            geometrytest<float>(gg);
             
             gg = get_padded_geometry<double> (isColMajor, tA, tB, tC, m, n, k, workspace_size); 
             std::cout << "\n\n<double>  " << gg.get_string() << '\n';
-            geometrytest<double>(gg);//isColMajor, tA, tB, tC, m, n, k);
+            geometrytest<double>(gg);
           }
         }
       }
