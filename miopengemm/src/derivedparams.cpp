@@ -419,7 +419,7 @@ DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_) : ptr_hp(&hp
                                    ? 1
                                    : 0;
 
-  // set tints. TODO here.
+
   tints[Mem::E::A] = get_tint(ptr_gg->get_uncoal(Mat::E::A) *
                               (ptr_gg->ldX[Mat::E::A]));  // TODO : does UFO need increase here
   tints[Mem::E::B] = get_tint(ptr_gg->get_uncoal(Mat::E::B) * (ptr_gg->ldX[Mat::E::B]));

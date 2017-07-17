@@ -36,7 +36,6 @@ class AlphaGenerator : public basegen::BaseGenerator
   virtual void set_usage() override final
   {
 
-    /* TODO enum the WOS */
     u_a         = (hp.sus[Mat::E::A].vs[Chi::E::WOS] == Scratch::E::UNUSED) ? true : false;
     u_b         = (hp.sus[Mat::E::B].vs[Chi::E::WOS] == Scratch::E::UNUSED) ? true : false;
     u_c         = true;
@@ -853,7 +852,6 @@ TINTK k_plus_offset = __K__ + unroll_offset;
   void add_predefine_chiral(Mat::E emat_x, std::stringstream& ss)
   {
 
-    // TODO : should be X ... (upper case) ...
     char x = Mat::M.name[emat_x];
 
     auto defcom = [emat_x, &ss](std::string&& comment) {
