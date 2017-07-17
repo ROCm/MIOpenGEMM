@@ -50,9 +50,6 @@ std::string FindTracker::get_string() const
   return track_ss.str();
 }
 
-
-
-
 GpuMms::GpuMms(cl_mem           a_gpu_,
                cl_mem           b_gpu_,
                cl_mem           c_gpu_,
@@ -117,7 +114,6 @@ Jinx::Jinx(cl_command_queue command_queue_,
   }
 }
 
-/* TODO : option for median / max */
 
 double Jinx::get_gflops(double timems) { return (2. * gg.m * gg.n * gg.k) / (timems * 10e5); }
 
@@ -210,9 +206,7 @@ void Jinx::set_kern_args(const KernBlob& kblob)
   tk_kernels.at(kblob.e_ktype).set_kernel_args(arg_sizes_values);
 }
 
-
-
-oclutil::Result Jinx::setup_tinykernels(const kerngen::Bundle& bundle)
+void Jinx::setup_tinykernels(const kerngen::Bundle& bundle)
 {
 
   oclutil::Result oclr;
@@ -231,14 +225,16 @@ oclutil::Result Jinx::setup_tinykernels(const kerngen::Bundle& bundle)
         set_kern_args(kblob);
       }
       else{
-        
-        // TODO : throw the error from here, currently duplicated. 
-        return oclr;
+        std::stringstream ss;
+        // Maybe related : https://github.com/BVLC/caffe/issues/5610  (?)
+        ss << "Failed in setup tinykernels. " << bundle.hp.get_string()
+           << " Message: " << oclr.message <<  "Error status : " << oclr.success
+           << " Bailing, please report if possible. ";
+        throw miog_error(ss.str());
       }
     }
     tk_kernels_active.push_back(&tk_kernels[bundle.v_tgks[ksi].e_ktype]);
   }
-  return oclr;
 }
 
 std::string Jinx::get_run_times_heading()
@@ -341,17 +337,12 @@ oclutil::Result Jinx::true_core(std::function<void(double, std::string)> acton, 
     // Wait for kernels to complete
     oclutil::cl_wait_for_events(1, &(tk_kernels_active.back()->clevent), "core gemm loops", true);
 
-
-
-
     for (auto& ptr_tk_kernel : tk_kernels_active)
     {
       ptr_tk_kernel->update_times();
     }
     
     double extime  = (1e-6 * (tk_kernels_active.back()->t_end - tk_kernels_active[0]->t_start));
-  
-
     
     //act on the results string. 
     acton(extime, get_run_time_string(oclr.success, extime));
@@ -374,7 +365,7 @@ void Jinx::benchgemm(const HyPas& hp, const Halt & hl)
     throw miog_error("Non-derivable in benchgemm : " + dblt.msg);
   }
 
-  auto bundle = kerngen::get_bundle(hp, gg, mowri);
+  kerngen::Bundle bundle(hp, gg, mowri);
   
   architests::Stat atr(command_queue, bundle.dp, gg, hp);
   if (!atr.is_good)
@@ -382,11 +373,7 @@ void Jinx::benchgemm(const HyPas& hp, const Halt & hl)
     throw miog_error(atr.msg);
   }
 
-  auto oclr = setup_tinykernels(bundle);
-  if (oclr.fail())
-  {
-    throw miog_error(oclr.message);
-  }
+  setup_tinykernels(bundle);
 
   mowri << "(benchgemm) hp   :" << hp.get_string() << '\n'
   << "(benchgemm) geometry  \t:" << gg.get_string() << '\n'
@@ -454,7 +441,7 @@ Solution Jinx::single_descent_find(double              allotted_time,
                                    const Constraints& constraints,
                                    const Halt&  core_halt,
                                    FindTracker & ftrack, 
-                                   // fp only needed to push onto solution path: should not be needed here
+                                   // fp only needed to push onto solution path: should not be needed here   
                                    const FindParams & fps) 
 {
 
@@ -480,15 +467,14 @@ Solution Jinx::single_descent_find(double              allotted_time,
   // Keep track of the `world records' as they get broken
   std::vector<Solution> best_solns_path;
 
-
   // used for tracker messages
   std::string old_track_msg;
   std::string new_track_msg;
 
 
   std::vector<double> v_t_total;
-  double              median_time;
-  double              median_gflops;
+  double              k_seconds;
+  double              k_gflops;
 
 
   // the hyper params to be considered on a single wave 
@@ -510,9 +496,6 @@ Solution Jinx::single_descent_find(double              allotted_time,
            timer.get_elapsed() < allotted_time)
     {
       
-      
-      
-      
       hp_curr = hyper_front[hfi];
       
       hyper_front_history.push_back(hp_curr);
@@ -524,7 +507,7 @@ Solution Jinx::single_descent_find(double              allotted_time,
         throw miog_error("Non-derivable in single descent find : " + dblt.msg);
       }
 
-      auto bundle = kerngen::get_bundle(hp_curr, gg, mowri);
+      kerngen::Bundle bundle(hp_curr, gg, mowri);
       // the OpenCL string was succesfully generated,
       // we can now attempt to compile and benchmark it
       ++single_descent_counter;
@@ -542,29 +525,11 @@ Solution Jinx::single_descent_find(double              allotted_time,
       }
 
       // kernel compilation
-      auto oclr = setup_tinykernels(bundle);
-      if (oclr.fail())
-      {
-        std::stringstream ss;
-        ss << "Failed in setup. " << hp_curr.get_string()
-           << " Message: " << oclr.message <<  "Error status : " << oclr.success
-           << " Maybe related : https://github.com/BVLC/caffe/issues/5610  (?) "
-           << " Maybe a runtime error? Bailing, please report if possible ";
-        throw miog_error(ss.str());
-      }
-
-
-
-
+      setup_tinykernels(bundle);
 
       old_track_msg = new_track_msg;
       new_track_msg = ftrack.get_string();
-      // TODO : does this work?
       mowri.bw[OutPart::E::TRA] << std::string(old_track_msg.size(), '\b') << new_track_msg << Flush;
-
-
-
-
       
       v_t_total.resize(0);
       for (auto& ptr_tk_kernel : tk_kernels_active)
@@ -573,7 +538,7 @@ Solution Jinx::single_descent_find(double              allotted_time,
       }
       std::vector<std::string> summary;
       
-      oclr = true_core([&summary, &v_t_total](double a, std::string x){
+      auto oclr = true_core([&summary, &v_t_total](double a, std::string x){
         v_t_total.push_back(a);
         summary.push_back(x);
       }, core_halt);
@@ -584,47 +549,46 @@ Solution Jinx::single_descent_find(double              allotted_time,
         continue;        
       }       
 
-
-
       auto v_t_total_copy = v_t_total;
-      
+            
       std::sort(v_t_total_copy.begin(), v_t_total_copy.end());
-      // Taking the fastest or median? [v_t_total.size()/2]
-      median_time   = v_t_total_copy[0];
-      median_gflops = get_gflops(median_time);
-      
-    
+      switch (fps.sumstat){
+        case SummStat::E::MAX : k_seconds = v_t_total_copy[0]; break;
+        case SummStat::E::MEDIAN : k_seconds = v_t_total_copy[v_t_total.size()/2]; break;
+        case SummStat::E::MEAN : k_seconds = std::accumulate(v_t_total.begin(),v_t_total.end(), 0.) / v_t_total.size(); break;
+        default : throw miog_error("unrecgnised SummStat in find");
+      }
 
+      k_gflops = get_gflops(k_seconds);
 
       mowri << get_run_times_heading();
       for (size_t ir = 0; ir < summary.size(); ++ir)
       {
         mowri << summary[ir];
-        if (median_time == v_t_total[ir])
+        if (v_t_total[ir] == k_seconds)
         {
-          mowri << " (median) ";
+          mowri << " (" << SummStat::M.name[fps.sumstat] << ')';
           if (best_solns_path.size() > 0 &&
-             (best_solns_path.back().statistics.seconds >= median_time))
+             (best_solns_path.back().statistics.seconds >= k_seconds))
           {
             mowri << " (NEW BEST) ";
           }
         }
         mowri << '\n';
       }
-      
-      
+            
       if (best_solns_path.size() == 0 ||
-             (best_solns_path.back().statistics.seconds >= median_time))
+             (best_solns_path.back().statistics.seconds >= k_seconds))
         {
 
       improvement_found_on_front = true;
 
       std::time_t g_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-      auto sstats = SolutionStatistics(median_time,
-                                       median_gflops,
+      auto sstats = SolutionStatistics(k_seconds,
+                                       k_gflops,
                                        timer.get_elapsed(),
                                        std::ctime(&g_time),
-                                       fps); //TODO : here is the fps which should be here
+                                       fps); 
       best_solns_path.emplace_back(
         gg,
         sstats,
@@ -718,8 +682,8 @@ Solution Jinx::single_descent_find(double              allotted_time,
 
   std::string startstring = "hyper parameter string:";
   startstring.resize(leading_size, ' ');
-  mowri << '\n' << startstring << "\t time when found:\t median Gflops/s:" << Endl;
-
+  mowri << '\n' << startstring << "\t time when found:\t " <<  SummStat::M.lcase_name[fps.sumstat] << " gflops:" << Endl;
+  
   for (auto& x : best_solns_path)
   {
     std::string solnstring = x.hypas.get_string();
@@ -727,6 +691,7 @@ Solution Jinx::single_descent_find(double              allotted_time,
     mowri << std::fixed << solnstring << "\t " << x.statistics.discovery << "\t\t "
           << x.statistics.gflops << Endl;
   }
+
 
   return best_solns_path.back();
 }

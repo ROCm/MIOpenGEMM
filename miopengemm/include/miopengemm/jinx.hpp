@@ -118,7 +118,7 @@ class Jinx
 
   std::string get_run_time_string(cl_int status, double extime);
       
-  oclutil::Result setup_tinykernels(const kerngen::Bundle& bundle);
+  void setup_tinykernels(const kerngen::Bundle& bundle);
   Solution single_descent_find(double allotted_time, const Constraints&, const Halt& core_hl, FindTracker & ftrack, const FindParams &); //TODO FindParams should not be needed
   oclutil::Result true_core(std::function<void(double, std::string)> acton, const Halt & hl);
 

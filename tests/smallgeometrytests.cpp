@@ -11,12 +11,12 @@ void geometrytest(bool isColMajor, bool tA, bool tB, bool tC, size_t m, size_t n
 
   using namespace MIOpenGEMM;
   Offsets offsets = get_padding_offsets(); 
-  size_t  workspace_size   = 30; // TODO : checks on workspace size
+  size_t  workspace_size   = 300000000; // TODO : checks on workspace size
   Geometry gg = get_padded_geometry<TFloat> (isColMajor, tA, tB, tC, m, n, k, workspace_size); 
   //FindParams find_params = get_quick_find_params();  
-  FindParams find_params(1, 0.8, 1, 200., SummStat::E::MEDIAN);
+  FindParams find_params(1, 1.65, 8, 200., SummStat::E::MEAN);
   std::string constraints_string = "A_WOS2";
-  owrite::Writer mowri(Ver::E::ACCURACY, "");
+  owrite::Writer mowri(Ver::E::TERMINAL, "");
   dev::Boa boa(gg, offsets, mowri);  
   Solution soln = boa.find(find_params, constraints_string);
   

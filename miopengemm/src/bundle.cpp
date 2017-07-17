@@ -26,13 +26,12 @@ namespace MIOpenGEMM
 namespace kerngen
 {
 
-Bundle get_bundle(const HyPas& hp, const Geometry& gg, owrite::Writer& mowri)
+Bundle::Bundle(const HyPas& hp_, const Geometry& gg_, owrite::Writer& mowri):hp(hp_), gg(gg_), dp(hp, gg)
 {
 
-  DerivedParams dp(hp, gg);
 
-  std::vector<KernBlob>        v_tgks;
-  std::vector<std::vector<size_t>> wait_indices;
+  //std::vector<KernBlob>  v_tgks;
+  //std::vector<std::vector<size_t>>v_wait_indices;
 
   for (auto emat_x : {Mat::E::A, Mat::E::B})
   {
@@ -79,7 +78,7 @@ Bundle get_bundle(const HyPas& hp, const Geometry& gg, owrite::Writer& mowri)
 
   for (size_t i = 0; i < v_tgks.size(); ++i)
   {
-    wait_indices.push_back({});
+   v_wait_indices.push_back({});
     for (size_t j = 0; j < v_tgks.size(); ++j)
     {
       if (std::find(KType::dependencies.at(v_tgks[i].e_ktype).begin(),
@@ -87,7 +86,7 @@ Bundle get_bundle(const HyPas& hp, const Geometry& gg, owrite::Writer& mowri)
                     v_tgks[j].e_ktype) !=
           KType::dependencies.at(v_tgks[i].e_ktype).end())
       {
-        wait_indices.back().push_back(j);
+       v_wait_indices.back().push_back(j);
       }
     }
   }
@@ -103,20 +102,20 @@ Bundle get_bundle(const HyPas& hp, const Geometry& gg, owrite::Writer& mowri)
       pre_waits_for.resize(37, ' ');
     }
     mowri.bw[OutPart::E::DEP] << pre_waits_for << " waits for :  " << Flush;
-    if (wait_indices[i].size() == 0)
+    if (v_wait_indices[i].size() == 0)
     {
       mowri.bw[OutPart::E::DEP] << "nothing";
     }
 
-    for (size_t j = 0; j < wait_indices[i].size(); ++j)
+    for (size_t j = 0; j <v_wait_indices[i].size(); ++j)
     {
-      mowri.bw[OutPart::E::DEP] << wait_indices[i][j]  << '{' << v_tgks[wait_indices[i][j]].kuses.full  << "} " << Flush;
+      mowri.bw[OutPart::E::DEP] << v_wait_indices[i][j]  << '{' << v_tgks[v_wait_indices[i][j]].kuses.full  << "} " << Flush;
     }
     mowri.bw[OutPart::E::DEP] << Endl;
   }
   mowri.bw[OutPart::E::DEP] << '\n';
 
-  return Bundle(std::move(v_tgks), std::move(wait_indices), std::move(dp));
+  //return Bundle(std::move(v_tgks), std::move(wait_indices), std::move(dp));
 }
 }
 }
