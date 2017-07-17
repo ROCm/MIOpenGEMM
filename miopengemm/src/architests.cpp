@@ -43,25 +43,3 @@ Stat::Stat(const oclutil::DevInfo& devinfo,
 }
 }
 }
-
-// size_t            max_work_group_size;
-
-// oclutil::set_device_info_from_command_queue(
-// command_queue,
-// CL_DEVICE_MAX_WORK_GROUP_SIZE,
-// sizeof(size_t),
-//&max_work_group_size,
-// nullptr,
-//"getting CL_DEVICE_MAX_WORK_GROUP_SIZE in artcitecture specfic stests",
-// true);
-
-//// check 0 : LDS
-// cl_long max_LDS_bytes;
-// oclutil::set_device_info_from_command_queue(
-// command_queue,
-// CL_DEVICE_LOCAL_MEM_SIZE,
-// sizeof(size_t),
-//&max_LDS_bytes,
-// nullptr,
-//"getting CL_DEVICE_LOCAL_MEM_SIZE in artcitecture specfic stests",
-// true);

@@ -68,8 +68,7 @@ void Diva<TFl>::initialise_common()
                          gpu_safemem[Mem::E::A].clmem,
                          gpu_safemem[Mem::E::B].clmem,
                          gpu_safemem[Mem::E::C].clmem,
-                         
-                         false,//   MAKES NO DIFF (BUG 13)
+                         false, // is not const
                          gpu_safemem[Mem::E::W].clmem,
                          mowri));
 }

@@ -1067,15 +1067,6 @@ DevInfo::DevInfo(const cl_command_queue& command_queue)
                                               strict);
   device_max_work_group_size = a_ulong;
 
-  // oclutil::set_device_info_from_command_queue(command_queue,
-  // CL_DEVICE_MAX_WORK_GROUP_SIZE,
-  // sizeof(cl_ulong),
-  //&a_ulong,
-  // NULL,
-  //"obtaining CL_DEVICE_MAX_WORK_GROUP_SIZE",
-  // strict);
-  // device_max_work_group_size = a_ulong;
-
   oclutil::set_device_info_from_command_queue(command_queue,
                                               CL_DEVICE_VERSION,
                                               info_st.size(),

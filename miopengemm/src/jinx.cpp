@@ -216,7 +216,7 @@ oclutil::Result Jinx::setup_tinykernels(const kerngen::Bundle& bundle)
 {
 
   oclutil::Result oclr;
-  // TODO setting v_wait_indices here not CLEAR 
+  // TODO setting v_wait_indices here not very clear code
   v_wait_indices = bundle.v_wait_indices;
   
   tk_kernels_active.resize(0);
@@ -348,8 +348,6 @@ oclutil::Result Jinx::true_core(std::function<void(double, std::string)> acton, 
     {
       ptr_tk_kernel->update_times();
     }
-    //// end time of last kernel - start time of first kernel
-    //v_t_total.push_back
     
     double extime  = (1e-6 * (tk_kernels_active.back()->t_end - tk_kernels_active[0]->t_start));
   

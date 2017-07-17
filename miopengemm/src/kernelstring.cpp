@@ -10,9 +10,7 @@
 namespace MIOpenGEMM
 {
 
-  //size_t              uninitialised_value{std::numeric_limits<size_t>::max()};
-
-bool KernUses::at(Mem::E emat_x) const  //(char c) const
+bool KernUses::at(Mem::E emat_x) const
 {
   
   switch (emat_x){
@@ -53,31 +51,5 @@ KernUses::KernUses(
     full += "_beta";
   }
 
-  ////  we assume here that the main kernel will always use alpha
-  //if (u_alpha)
-  //{
-    //e_kerntype = KType::MAIN;
-  //}
-
-  //else if (u_beta && at(Mem::E::C))
-  //{
-    //e_kerntype = KType::BETAC;
-  //}
-
-  //else if (at(Mem::E::A) && at(Mem::E::W))
-  //{
-    //e_kerntype = KType::WSA;
-  //}
-
-  //else if (at(Mem::E::B) && at(Mem::E::W))
-  //{
-    //e_kerntype = KType::WSB;
-  //}
-
-  //else
-  //{
-    //throw miog_error("determining `basic' string of KernUses, not sure what "
-                     //"this kernel does. Its full string is " + full);
-  //}
 }
 }

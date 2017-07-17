@@ -179,17 +179,3 @@ get_nform_kernelstring(Mat::E emat_x, const HyPas& hp, const Geometry& gg, const
 }
 }
 
-// if (emat_x != Mat::E::A and emat_x != Mat::E::B){
-// throw miog_error("get_copy_kernelstring only for A and B matrices");
-//}
-
-// std::string nform_string = emat_x == Mat::E::A ? "nforma" : "nformb";
-
-// KernBlob get_nformb_kernelstring(const HyPas&     hp,
-// const Geometry&                     gg,
-// const DerivedParams& dp)
-//{
-// NormalFormGenerator nfg(hp, gg, dp, "nformb");
-// nfg.setup();
-// return nfg.get_kernelstring();
-//}
