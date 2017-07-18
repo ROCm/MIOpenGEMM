@@ -21,7 +21,6 @@ class Offsets
 
   Offsets(size_t oa, size_t ob, size_t oc, size_t ow, size_t ta, size_t tb, size_t tc, size_t tw);
 
-  // const size_t& operator[](char c) const;
 };
 
 Offsets get_padding_offsets();

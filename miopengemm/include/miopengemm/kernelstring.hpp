@@ -18,8 +18,6 @@ class KernUses
   // summarises use of u_a, u_b, u_c
   std::string full;
 
-  // KType::E e_kerntype;
-
   bool u_a;
   bool u_b;
   bool u_c;
@@ -38,7 +36,6 @@ class KernBlob
 {
   public:
   KType::E e_ktype;
-  // type : betac_alphab, betac_workspace, etc
   KernUses    kuses;
   std::string kernstr;
   std::string fname;

@@ -7,8 +7,8 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-
 #include <miopengemm/enums.hpp>
+
 namespace MIOpenGEMM
 {
 namespace owrite

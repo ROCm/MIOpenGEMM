@@ -43,7 +43,6 @@ class Grid
   size_t at(Mat::E emat);
 };
 
-// std::tuple<bool, std::string, std::array<size_t, 2>> get_grid(size_t mac, size_t skew);
 }
 }
 

@@ -211,9 +211,7 @@ extern const EnumMapper<std::string> M;
 // before MAIN can execute
 extern std::array<std::vector<size_t>, E::N> dependencies;
 
-//// maps the depency of kernels of hps, used to determine
-//// whether recompilation is necessary
-// extern std::array <std::array<std::vector<size_t>, Mat::E::N> , KType::E::N> hpDeps;
+
 }
 }
 

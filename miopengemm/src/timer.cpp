@@ -1,8 +1,8 @@
 /*******************************************************************************
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
-
 #include <miopengemm/timer.hpp>
+
 namespace MIOpenGEMM
 {
 

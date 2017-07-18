@@ -17,9 +17,6 @@ namespace nformgen
 KernBlob
 get_nform_kernelstring(Mat::E emat_x, const HyPas& hp, const Geometry& gg, const DerivedParams& dp);
 
-// KernBlob get_nformb_kernelstring(const HyPas&     hp,
-// const Geometry&                     gg,
-// const DerivedParams& dp);
 }
 }
 

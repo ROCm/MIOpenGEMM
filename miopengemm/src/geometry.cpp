@@ -154,30 +154,26 @@ void Geometry::check_ldx_consistent() const
 
     std::stringstream errm_ss;
 
-    errm_ss << "Checking that lda, ldb, ldc are consistent with m,n,k. ";
-    errm_ss << "In particulary, checking that ldx is at least as large as "
-               "coalesced dimension, "
-               "coal_x (for x in {a,b,c}) given by:  ";
-    errm_ss << "coal_a = (tA == isColMajor ? k : m),  ";
-    errm_ss << "coal_b = (tB == isColMajor ? n : k),  ";
-    errm_ss << "coal_c = (tC == isColMajor ? k : m).  ";
-    errm_ss << "\n\n";
-
-    errm_ss << "ldx = coal_x + pad_x, and so for consisteny it must be true "
-               "that ldx >= coal_x "
-               "(can't have negative pad_x).  ";
-    errm_ss << "As an example, if tA = false and isColMajor = false, then "
-               "coal_a = k.  ";
-    errm_ss << "A full table of the lower bounds of ldx for x in {a,b,c} can "
-               "be found at, "
-               "https://software.intel.com/en-us/"
-               "mkl-developer-reference-c-cblas-gemm.  ";
-    errm_ss << "\n\n";
-
-    errm_ss << "The particular geometry received by in geometry "
-               "check_ldx_consistent is  ";
-    errm_ss << get_string();
-    errm_ss << ", and the problems detected are:  ";
+    errm_ss << "Checking that lda, ldb, ldc are consistent with m,n,k. "
+            << "In particulary, checking that ldx is at least as large as "
+            << "coalesced dimension, "
+            << "coal_x (for x in {a,b,c}) given by:  "
+            << "coal_a = (tA == isColMajor ? k : m),  "
+            << "coal_b = (tB == isColMajor ? n : k),  "
+            << "coal_c = (tC == isColMajor ? k : m).  "
+            << "\n\n"
+            << "ldx = coal_x + pad_x, and so for consisteny it must be true "
+            << "that ldx >= coal_x (can't have negative pad_x).  "
+            << "As an example, if tA = false and isColMajor = false, then "
+            << "coal_a = k.  "
+            << "A full table of the lower bounds of ldx for x in {a,b,c} can "
+            << "be found at, "
+            << "https://software.intel.com/en-us/"
+            << "mkl-developer-reference-c-cblas-gemm.  "
+            << "\n\n"
+            << "The particular geometry received by in geometry "
+            << "check_ldx_consistent is  " << get_string()
+            << ", and the problems detected are:  ";
 
     for (auto x : {Mat::E::A, Mat::E::B, Mat::E::C})
     {

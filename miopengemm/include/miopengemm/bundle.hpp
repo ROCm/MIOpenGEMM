@@ -28,7 +28,6 @@ class Bundle
   Bundle(const HyPas& hp, const Geometry& gg, owrite::Writer& mowri);
 };
 
-// Bundle get_bundle(const HyPas& hp, const Geometry& gg, owrite::Writer& mowri);
 }
 }
 

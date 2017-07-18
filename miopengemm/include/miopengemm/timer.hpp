@@ -9,7 +9,7 @@
 namespace MIOpenGEMM
 {
 
-// Simple stop-watch
+// A stop-watch (with only a start button)
 class Timer
 {
 

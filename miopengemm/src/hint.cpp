@@ -27,7 +27,7 @@ size_t BasicHint::get_id() const
   return id;
 }
 
-// Matches defaults to "" which is essentially *
+// Matches defaults to "" (essentially *)
 BasicHint::BasicHint() : id(hintless), matches({""}) {}
 
 BasicHint::BasicHint(size_t id_, const std::vector<std::string>& matches_)
@@ -138,7 +138,5 @@ CLHint::CLHint(size_t pla_id, size_t dev_id)
   : pla(pla_id, {}), dev(dev_id, {})
 {
 }
-
-//CLHint::CLHint() = default {}
 
 }

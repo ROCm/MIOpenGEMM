@@ -47,7 +47,7 @@ class CachedSolution
 
 class KernelCache
 {
-  /* TODO : unordered maps are faster */
+  /* TODO : maybe unordered maps are faster */
   private:
   using St = std::string;
   std::map<St, std::map<St, std::map<St, std::map<St, CachedSolution>>>> vals;

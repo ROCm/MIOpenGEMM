@@ -347,7 +347,7 @@ std::array<std::array<bool, OutPart::E::N>, E::N> get_toFile()
   x[E::SPLIT] = x[E::TOFILE];
 
   // copy TOFILE
-  x[E::STRACK][E::TOFILE] = true;
+  x[E::STRACK] = x[E::TOFILE];
 
   return x;
 }

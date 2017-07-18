@@ -5,11 +5,9 @@
 #define GUARD_MIOPENGEMM_OPENCLUTIL_H
 
 #include <miopengemm/hint.hpp>
-
 #include <CL/cl.h>
 #include <tuple>
 #include <miopengemm/outputwriter.hpp>
-
 #include <limits>
 
 namespace MIOpenGEMM

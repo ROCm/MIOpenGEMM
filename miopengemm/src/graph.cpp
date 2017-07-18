@@ -657,7 +657,7 @@ HyPas Graph::get_random_valid_start() const
   size_t            iter  = 0;
   std::stringstream ss;
 
-  double impatience_time = 0.2;  // seconds before terimnal silence becomes annoying
+  double impatience_time = 0.2;  // #seconds before terminal silence becomes annoying
   Timer  timer;
   timer.start();
 
