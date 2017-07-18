@@ -3,7 +3,6 @@
  *******************************************************************************/
 #include <string>
 #include <miopengemm/devmiogemm.hpp>
-#include <miopengemm/miogemm.hpp>
 
   // TODO : benchthecache flag for `all' or `device specific' 
   // TODO : checks on constraints to check for cleary non-derivables

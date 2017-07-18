@@ -14,6 +14,15 @@
 namespace MIOpenGEMM
 {
 
+Geometry::Geometry(bool tA_,
+           bool   tB_,
+           size_t m_,
+           size_t n_,
+           size_t k_,
+           size_t wSpaceSize_,
+           char   floattype_):Geometry(true, tA_, tB_, false, tA_ ? k_ : m_, tB_ ? n_ : k_, m_, m_, n_, k_, wSpaceSize_, floattype_) {}
+
+
 size_t get_mat_memsize(const Geometry& gg, const Offsets& toff, Mem::E emem)
 {
   Mat::E emat = Mat::mem_to_mat(emem);
@@ -40,7 +49,7 @@ Offsets get_padding_offsets() { return Offsets(11, 17, 13, 22, 61, 15, 18, 7); }
 
 Offsets get_zero_offsets() { return Offsets(0, 0, 0, 0, 0, 0, 0, 0); }
 
-Geometry get_null_geometry() { return {false, false, false, false, 1, 1, 1, 1, 1, 1, 1, 'f'}; }
+Geometry get_tight_geometry() { return {false, false, false, false, 1, 1, 1, 1, 1, 1, 1, 'f'}; }
 
 char get_floattype(size_t nbits)
 {
@@ -81,7 +90,6 @@ void GeometryDerived::reset(char floattype)
 }
 
 // return one of the dimensions of matrix a,b,c.
-// this has nothing to do with lda, ldb, ldc.
 // isCoal : the coalesced dimesion?
 // For example, for A which is m x k,
 // if tA = false, isColMajor = false,
@@ -188,8 +196,10 @@ void Geometry::check_ldx_consistent() const
   }
 }
 
+
 size_t Geometry::get_uncoal(Mat::E M) const { return get_padless_dim(M, false); }
 
+// this is lda, ldb, ldc if they are minimal.
 size_t Geometry::get_coal(Mat::E M) const { return get_padless_dim(M, true); }
 
 bool Geometry::coal_is_pll_k(Mat::E M) const

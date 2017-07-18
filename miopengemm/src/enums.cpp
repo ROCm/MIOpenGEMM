@@ -151,6 +151,7 @@ std::vector<std::string> get_name()
   X[E::DEP] = "DEP";
   X[E::ACC] = "ACC";
   X[E::WRN] = "WRN";
+  X[E::CCH] = "CCH";
   return X;
 }
 const EnumMapper<std::string> M = get_enum_mapper<std::string>(get_name(), "OutPart");
@@ -163,6 +164,7 @@ std::vector<std::string> get_name()
   std::vector<std::string> X(E::N, unfilled<std::string>());
   X[E::SILENT]   = "SILENT";
   X[E::TERMINAL] = "TERMINAL";
+  X[E::TERMWITHDEPS] = "TERMWITHDEPS";
   X[E::SPLIT]    = "SPLIT";
   X[E::TOFILE]   = "TOFILE";
   X[E::TRACK]    = "TRACK";
@@ -314,7 +316,6 @@ std::array<std::array<bool, OutPart::E::N>, E::N> get_toTerm()
 
   // all output to terminal, other than tracker
   x[E::TERMINAL][OutPart::E::MAI] = true;
-  x[E::TERMINAL][OutPart::E::DEP] = true;
   x[E::TERMINAL][OutPart::E::ACC] = true;
 
   // copy TERMINAL
@@ -331,6 +332,10 @@ std::array<std::array<bool, OutPart::E::N>, E::N> get_toTerm()
   x[E::ACCURACY]                  = x[E::TRACK];
   x[E::ACCURACY][OutPart::E::ACC] = true;
 
+  // like terminal, but with dependency of kernels printed
+  x[E::TERMWITHDEPS] = x[E::TERMINAL];
+  x[E::TERMWITHDEPS][OutPart::E::DEP] = true;
+
   return x;
 }
 const std::array<std::array<bool, OutPart::E::N>, E::N> toTerm = get_toTerm();
@@ -340,7 +345,6 @@ std::array<std::array<bool, OutPart::E::N>, E::N> get_toFile()
   auto x = get_base_toX();
   // all output to file, other than tracker
   x[E::TOFILE][OutPart::E::MAI] = true;
-  x[E::TOFILE][OutPart::E::DEP] = true;
   x[E::TOFILE][OutPart::E::ACC] = true;
 
   // copy TOFILE
@@ -348,6 +352,7 @@ std::array<std::array<bool, OutPart::E::N>, E::N> get_toFile()
 
   // copy TOFILE
   x[E::STRACK] = x[E::TOFILE];
+  x[E::STRACK][OutPart::E::CCH] = true;
 
   return x;
 }
@@ -356,13 +361,14 @@ const std::array<std::array<bool, OutPart::E::N>, E::N> toFile = get_toFile();
 std::array<bool, E::N> get_fileRequired()
 {
   std::array<bool, E::N> X;
-  X[E::SILENT]   = false;
-  X[E::TERMINAL] = false;
-  X[E::SPLIT]    = true;
-  X[E::TOFILE]   = true;
-  X[E::TRACK]    = false;
-  X[E::STRACK]   = true;
-  X[E::ACCURACY] = false;
+  X[E::SILENT]       = false;
+  X[E::TERMINAL]     = false;
+  X[E::TERMWITHDEPS] = false;
+  X[E::SPLIT]        = true;
+  X[E::TOFILE]       = true;
+  X[E::TRACK]        = false;
+  X[E::STRACK]       = true;
+  X[E::ACCURACY]     = false;
   return X;
 }
 const std::array<bool, E::N> fileRequired = get_fileRequired();

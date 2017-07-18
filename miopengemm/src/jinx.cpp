@@ -200,7 +200,8 @@ void Jinx::setup_tinykernels(const kerngen::Bundle& bundle)
 {
 
   oclutil::Result oclr;
-  // TODO setting v_wait_indices here not very clear code
+ 
+  // TODO setting v_wait_indices here not clear code
   v_wait_indices = bundle.v_wait_indices;
 
   tk_kernels_active.resize(0);
@@ -363,8 +364,8 @@ void Jinx::benchgemm(const HyPas& hp, const Halt& hl)
 
   setup_tinykernels(bundle);
 
-  mowri << "(benchgemm) hp   :" << hp.get_string() << '\n'
-        << "(benchgemm) geometry  \t:" << gg.get_string() << '\n'
+  mowri << "hyper-p   :" << hp.get_string() << '\n'
+        << "geometry  :" << gg.get_string() << '\n'
         << "Entering the core gemm loops" << Endl;
 
   mowri << get_run_times_heading();
@@ -418,9 +419,10 @@ Solution Jinx::find(const Constraints& constraints, const FindParams& fparms)
   }
   mowri << "\n\n";
 
-  // mowri << " -- snip -- -- -- snip --\n" << Endl;
-  // mowri << v_solns[best_soln_index].get_cache_entry_string();
-  // mowri << " -- snip -- -- -- snip --" << Endl;
+  
+  mowri.bw[OutPart::CCH] << "\n\n\n -- snip -- -- -- snip --\n\n" << Endl;
+  mowri.bw[OutPart::CCH] << v_solns[best_soln_index].get_cache_entry_string();
+  mowri.bw[OutPart::CCH] << "\n -- snip -- -- -- snip --\n\n\n" << Endl;
 
   return v_solns[best_soln_index];
 }
@@ -430,7 +432,6 @@ Jinx::single_descent_find(double             allotted_time,
                           const Constraints& constraints,
                           const Halt&        core_halt,
                           FindTracker&       ftrack,
-                          // fp only needed to push onto solution path: should not be needed here
                           const FindParams& fps)
 {
 
@@ -452,7 +453,7 @@ Jinx::single_descent_find(double             allotted_time,
   // Although then the stats between runs wouldn't be indep.
   std::vector<HyPas> hyper_front_history;
 
-  // Keep track of the `world records' as they get broken
+  // Keep track of the `records' as they get broken
   std::vector<Solution> best_solns_path;
 
   // used for tracker messages

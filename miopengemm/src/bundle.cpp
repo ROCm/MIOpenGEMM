@@ -67,7 +67,7 @@ Bundle::Bundle(const HyPas& hp_, const Geometry& gg_, owrite::Writer& mowri)
   // indent the kernel strings, in case someone wants to
   // print them. For (v-minorly) better
   // performance, this should not be done
-  /* TODO : can clang-format be used for this ? */
+  // Maybe clang-format could do this, but better without the dependency 
   for (auto& x : v_tgks)
   {
     stringutil::indentify(x.kernstr);

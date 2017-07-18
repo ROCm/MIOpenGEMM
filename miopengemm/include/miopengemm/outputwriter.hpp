@@ -63,8 +63,6 @@ class Writer
   private:
   Ver::E      v;
   std::string filename;
-
-  void set_v_bits();
   void initialise_file();
 
   public:

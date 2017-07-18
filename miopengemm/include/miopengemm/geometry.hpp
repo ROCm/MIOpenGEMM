@@ -85,6 +85,17 @@ class Geometry
            size_t wSpaceSize,
            char   floattype);
 
+
+           
+  // assumes isColMajor is true, tC is false, lda, ldb, ldc are minimal.
+  Geometry(bool   tA,
+           bool   tB,
+           size_t m,
+           size_t n,
+           size_t k,
+           size_t wSpaceSize,
+           char   floattype);
+           
   Geometry() = default;
 
   Geometry(const Geometry&) = default;
@@ -114,20 +125,41 @@ class Geometry
   size_t get_padded_area(Mat::E M) const;
 };
 
-Geometry get_null_geometry();
+
 
 template <typename TFloat>
-MIOpenGEMM::Geometry get_padded_geometry(
+Geometry get_geometry_from_padding(
+bool isColMajor, bool tA, bool tB, bool tC, size_t m, size_t n, size_t k, size_t wSpaceSize, size_t pad_a, size_t pad_b, size_t pad_c){
+  char floattype;
+  switch (sizeof(TFloat)){
+    case 4 : floattype = 'f'; break;
+    case 8 : floattype = 'd'; break;
+    default : throw miog_error("unrecognised float size in get_geometry_from_padding");
+  }
+  size_t lda = (tA == isColMajor ? k : m) + pad_a;
+  size_t ldb = (tB == isColMajor ? n : k) + pad_b;
+  size_t ldc = (tC == isColMajor ? n : m) + pad_c;
+  return Geometry(isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, wSpaceSize, floattype);
+}
+
+
+           
+           
+template <typename TFloat>
+Geometry get_padded_geometry(
   bool isColMajor, bool tA, bool tB, bool tC, size_t m, size_t n, size_t k, size_t wSpaceSize)
 {
-  char floattype = sizeof(TFloat) == 4 ? 'f' : 'd';
-
-  size_t lda = (tA == isColMajor ? k : m) + 9;
-  size_t ldb = (tB == isColMajor ? n : k) + 10;
-  size_t ldc = (tC == isColMajor ? n : m) + 12;
-  return MIOpenGEMM::Geometry(
-    isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, wSpaceSize, floattype);
+  return get_geometry_from_padding<TFloat>(isColMajor, tA, tB, tC, m, n, k, wSpaceSize, 9, 10, 12);
 }
+
+// lda, ldb, ldc are minimal. 
+template <typename TFloat>
+Geometry get_tight_geometry(
+  bool isColMajor, bool tA, bool tB, bool tC, size_t m, size_t n, size_t k, size_t wSpaceSize)
+{
+  return get_geometry_from_padding<TFloat>(isColMajor, tA, tB, tC, m, n, k, wSpaceSize, 0,0,0);
+}
+
 
 size_t get_mat_memsize(const Geometry& gg, const Offsets& toff, Mem::E emem);
 }

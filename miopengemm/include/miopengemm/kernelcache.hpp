@@ -5,6 +5,8 @@
 #define GUARD_MIOPENGEMM_KERNELCACHE_HPP
 
 #include <miopengemm/solution.hpp>
+#include <unordered_map>
+#include <functional>
 
 namespace MIOpenGEMM
 {
@@ -12,45 +14,69 @@ namespace MIOpenGEMM
 class CacheKeyPresence
 {
   public:
-  bool        is_present;
+  bool        is_present;  
   std::string msg;
-
   CacheKeyPresence() : is_present(true), msg("") {}
   CacheKeyPresence(const std::string& msg_) : is_present(false), msg(msg_) {}
 };
 
+
 class CacheKey
 {
 
+  private:
+    
+  std::string dvc;
+  Constraints constraints;
+  Geometry gg;
+  std::string concatenated;  
+
+
   public:
-  std::string dvc;  // device
-  std::string cns;  // constraint
-  std::string geo;  // geometry
-  std::string cmm;  // comment
-  CacheKey(const std::string&, const std::string&, const std::string&, const std::string&);
+
+  std::string get_concatenated() const{
+    return concatenated;
+  }
+ 
+  bool operator==(const CacheKey & rhs) const{
+    return concatenated == rhs.concatenated;
+  }
+  
+  CacheKey(const std::string&, const Constraints&, const Geometry&);
   std::string get_string() const;
 };
+
+class CacheKeyHash{
+  private:
+  std::hash<std::string> __hash;
+  
+  public:
+  size_t operator()(const CacheKey & ck) const;
+};
+
 
 class CachedSolution
 {
   public:
-  std::string        hyperstring;
+  HyPas hp;
   SolutionStatistics stats;
-  CachedSolution(std::string hyperstring_, SolutionStatistics stats_)
-    : hyperstring(hyperstring_), stats(stats_)
+  
+  CachedSolution(const HyPas & hp_, SolutionStatistics stats_)
+    : hp(hp_), stats(stats_)
   {
   }
+  
   CachedSolution() = default;
-
   std::string get_string() const;
 };
 
 class KernelCache
 {
-  /* TODO : maybe unordered maps are faster */
+  // TODO : ordered vs unordered maps
   private:
   using St = std::string;
-  std::map<St, std::map<St, std::map<St, std::map<St, CachedSolution>>>> vals;
+  //std::map<St, std::unordered_map<St, std::map<St, CachedSolution>>> vals;
+  std::unordered_map<CacheKey, CachedSolution, CacheKeyHash> vals;
 
   public:
   CacheKeyPresence check_for(const CacheKey& ck) const;
@@ -60,18 +86,12 @@ class KernelCache
 
 KernelCache get_kernel_cache();
 
-CachedSolution get_generic_cached_solution(const std::string& constraints_string,
+CachedSolution get_generic_cached_solution(const Constraints& constraints,
                                            const Geometry&    gg);
 
-// [device][constraint][geometry][further_comment] -> cached solution
+// [device][constraint][geometry] -> cached solution
 extern const KernelCache kernel_cache;
 
-void add_entry(KernelCache&       kc,
-               const std::string& k_dev,
-               const std::string& k_con,
-               const std::string  k_geo,
-               const std::string  k_comment,
-               CachedSolution     tgcs);
 }
 
 #endif

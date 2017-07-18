@@ -68,7 +68,7 @@ class GpuMms
 class Jinx
 {
 
-  // TODO : miogemm class with interface to public jinx.
+  // TODO : (in miogemm.hpp) miogemm class with interface to public jinx.
   public:
   Jinx(cl_command_queue command_queue_,
        const Geometry   gg_,
@@ -116,7 +116,7 @@ class Jinx
                                const Constraints&,
                                const Halt&  core_hl,
                                FindTracker& ftrack,
-                               const FindParams&);  // TODO FindParams should not be needed
+                               const FindParams&);
   oclutil::Result true_core(std::function<void(double, std::string)> acton, const Halt& hl);
 };
 }

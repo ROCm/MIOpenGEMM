@@ -15,9 +15,8 @@ class PrepGenerator : public basegen::BaseGenerator
 {
 
   protected:
-  // TODO why are these not in base generator?
+  
   size_t n_work_items;
-  size_t n_work_groups;
 
   Mat::E emat_x;
   char   MCHAR;
@@ -26,8 +25,7 @@ class PrepGenerator : public basegen::BaseGenerator
   virtual void set_usage() override final;
   void append_basic_what_definitions(std::stringstream& ss);
 
-  virtual size_t get_local_work_size() = 0;
-  virtual size_t get_n_work_groups()   = 0;
+
 
   size_t get_global_work_size()
   {

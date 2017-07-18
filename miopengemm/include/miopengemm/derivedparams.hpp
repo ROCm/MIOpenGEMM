@@ -15,7 +15,6 @@
 namespace MIOpenGEMM
 {
 
-// TODO : move this definition elsewhere, maybe to enums ?
 const size_t uninitialised_size_t = std::numeric_limits<size_t>::max();
 
 class Derivabilty

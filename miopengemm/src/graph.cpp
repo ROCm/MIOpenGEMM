@@ -11,6 +11,9 @@
 #include <miopengemm/stringutilbase.hpp>
 #include <miopengemm/timer.hpp>
 
+
+// TODO : run an example, and print the examples which failed to be viable in the 
+// search for a viable start. It might help in improving the initial graph. 
 namespace MIOpenGEMM
 {
 
@@ -180,20 +183,22 @@ void SuGr::checks() const
     }
 
     // eks should be (a subset of) union(range, start_range)
+    // but start_range must be a subset of range,
+    // so eks must = range
     for (auto x : eks)
     {
       if (std::find(start_range[i].begin(), start_range[i].end(), x) == start_range[i].end() &&
           std::find(range[i].begin(), range[i].end(), x) == range[i].end())
       {
         errm << get_location_string(emat, i) << ". Edge key " << x
-             << " in in neither range nor edge_range."
+             << " in in neither range nor edge_range. It should be in range."
              << " Being pedantic and bailing. ";
         errm << get_string(i);
         throw miog_error(errm.str());
       }
     }
 
-    // range must be a subset of edge keys
+    // range must be equal to edge keys (here checking it's a subset)
     for (auto x : range[i])
     {
       if (std::find(eks.begin(), eks.end(), x) == eks.end())
@@ -204,7 +209,7 @@ void SuGr::checks() const
       }
     }
 
-    // start_range must be a subset of edge keys
+    // start_range must be a subset of edge keys ( = range)
     for (auto x : start_range[i])
     {
       if (std::find(eks.begin(), eks.end(), x) == eks.end())
@@ -241,35 +246,10 @@ void Graph::checks() const
 void SuGr::apply_constraint()
 {
 
-  // start range logic :
-  // if in range, leave edges.
-  // if not in range, fully connect outbound.
-  for (size_t i = 0; i < Mat::mat_to_xchi(emat)->N; ++i)
-  {
-    if (ptr_constraint->start_range[i] != Status::E::UNDEFINED)
-    {
-
-      if (ptr_constraint->range[i] != Status::E::UNDEFINED)
-      {
-        std::stringstream errm;
-        errm << "If a range constraint is provided, no start range constraint is allowed. ";
-        errm << "Range string :\n " << ptr_constraint->get_r_str() << '\n';
-        errm << "Start range string :\n " << ptr_constraint->get_sr_str() << '\n';
-        errm << get_string(i) << "\n";
-        throw miog_error(errm.str());
-      }
-      size_t new_unique_start = ptr_constraint->start_range[i];
-      start_range[i]          = {new_unique_start};
-      if (std::find(range[i].begin(), range[i].end(), new_unique_start) == range[i].end())
-      {
-        edges[i][new_unique_start] = range[i];
-      }
-    }
-  }
 
   // range logic :
   // simply replace with unique value x, edges is {x:{}}.
-  // also, it overrides start_range
+  // it overrides start_range
   for (size_t i = 0; i < Mat::mat_to_xchi(emat)->N; ++i)
   {
     if (ptr_constraint->range[i] != Status::E::UNDEFINED)
@@ -278,6 +258,29 @@ void SuGr::apply_constraint()
       range[i]          = {new_unique};
       start_range[i]    = {new_unique};
       edges[i]          = {{{new_unique}, {}}};
+    }
+  }
+
+  // start range logic :
+  // must be subset of range.
+  for (size_t i = 0; i < Mat::mat_to_xchi(emat)->N; ++i)
+  {
+    if (ptr_constraint->start_range[i] != Status::E::UNDEFINED)
+    {
+
+      size_t new_unique_start = ptr_constraint->start_range[i];
+      if (std::find(range[i].begin(), range[i].end(), new_unique_start) == range[i].end())
+      {    
+        std::stringstream errm;
+        errm << "start_range constraint not possible, as it does not belong to range. ";
+        errm << "start_range of a Graph must be a subset of its range."; 
+        errm << "Constraint range string :\n " << ptr_constraint->get_r_str() << '\n';
+        errm << "Constraint start range string :\n " << ptr_constraint->get_sr_str() << '\n';
+        errm << get_string(i) << "\n";
+        throw miog_error(errm.str());
+      }
+
+      start_range[i] = {new_unique_start};
     }
   }
 }

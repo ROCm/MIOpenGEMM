@@ -9,14 +9,13 @@
 #include <miopengemm/error.hpp>
 #include <miopengemm/geometry.hpp>
 #include <miopengemm/hyperparams.hpp>
-#include <miopengemm/miogemm.hpp>
 #include <miopengemm/outputwriter.hpp>
 #include <miopengemm/stringutilbase.hpp>
 #include <miopengemm/setabcw.hpp>
 
 /* (13/11/2016) most testing is done through dev/python scripts */
 /* (30/01/2017) this is the preferred place for doing testing */
-/* (17/06/2017) much testing is now done in an indepent project, using OpenBLAS */
+/* (17/06/2017) much testing is now done in an independent project, using OpenBLAS */
 
 
 

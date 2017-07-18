@@ -63,7 +63,7 @@ class Diva
   // sizes of a, b, c and workspace gpu memories.
   std::vector<size_t> mem_size;
 
-  // read write permissions of gpu data TODO : move to enums.cpp
+  // read write permissions of gpu data
   std::vector<cl_mem_flags> rw_perms;
 
   std::unique_ptr<Jinx> up_jinx;
