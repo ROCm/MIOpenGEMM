@@ -10,15 +10,14 @@
 namespace MIOpenGEMM
 {
 
-
-namespace Floating{
+namespace Floating
+{
 MFType::MFType(double v) : v_d(v), v_f(static_cast<float>(v)) {}
 void* MFType::operator[](char floattype) const
 {
   return floattype == 'd' ? (void*)(&v_d) : (void*)(&v_f);
 }
 }
-
 
 template <typename T>
 T unfilled();
@@ -142,8 +141,6 @@ std::vector<std::string> get_name()
 const EnumMapper<std::string> M = get_enum_mapper<std::string>(get_name(), "Chi");
 }
 
-
-
 namespace OutPart
 {
 std::vector<std::string> get_name()
@@ -159,29 +156,22 @@ std::vector<std::string> get_name()
 const EnumMapper<std::string> M = get_enum_mapper<std::string>(get_name(), "OutPart");
 }
 
-
-
-
-
 namespace Ver
 {
 std::vector<std::string> get_name()
 {
   std::vector<std::string> X(E::N, unfilled<std::string>());
-  X[E::SILENT] = "SILENT";
+  X[E::SILENT]   = "SILENT";
   X[E::TERMINAL] = "TERMINAL";
-  X[E::SPLIT] = "SPLIT";
-  X[E::TOFILE] = "TOFILE";
-  X[E::TRACK] = "TRACK";
-  X[E::STRACK] = "STRACK";
+  X[E::SPLIT]    = "SPLIT";
+  X[E::TOFILE]   = "TOFILE";
+  X[E::TRACK]    = "TRACK";
+  X[E::STRACK]   = "STRACK";
   X[E::ACCURACY] = "ACCURACY";
   return X;
 }
 const EnumMapper<std::string> M = get_enum_mapper<std::string>(get_name(), "Ver");
-
 }
-
-
 
 namespace NonChi
 {
@@ -224,17 +214,16 @@ const EnumMapper<std::string>* mat_to_xchi(Mat::E emat)
   }
 }
 
-
 Mat::E mem_to_mat(Mem::E emat)
 {
-  switch (emat){
-    case Mem::E::A : return Mat::E::A;
-    case Mem::E::B : return Mat::E::B;
-    case Mem::E::C : return Mat::E::C;
-    default : throw miog_error("no mat enum for supposed mem enum provided");
+  switch (emat)
+  {
+  case Mem::E::A: return Mat::E::A;
+  case Mem::E::B: return Mat::E::B;
+  case Mem::E::C: return Mat::E::C;
+  default: throw miog_error("no mat enum for supposed mem enum provided");
   }
 }
-
 }
 
 namespace Mem
@@ -274,21 +263,21 @@ Mem::E mat_to_mem(Mat::E emat)
 }
 }
 
-
-namespace KType{
+namespace KType
+{
 std::array<std::vector<size_t>, E::N> get_dependencies()
 {
   std::vector<size_t> uninitialised_vector{std::numeric_limits<size_t>::max()};
   std::array<std::vector<size_t>, E::N> kdps;
   for (size_t i = 0; i < E::N; ++i)
-  { 
+  {
     kdps[i] = uninitialised_vector;
   }
   kdps[E::WSA]   = {};
   kdps[E::WSB]   = {};
   kdps[E::BETAC] = {};
   kdps[E::MAIN]  = {E::BETAC, E::WSA, E::WSB};
-  for (auto & x : kdps)
+  for (auto& x : kdps)
   {
     if (x == uninitialised_vector)
     {
@@ -298,18 +287,19 @@ std::array<std::vector<size_t>, E::N> get_dependencies()
   return kdps;
 }
 std::array<std::vector<size_t>, KType::N> dependencies = get_dependencies();
-
 }
 
-namespace Ver{
+namespace Ver
+{
 
-std::array<std::array<bool, OutPart::E::N>, E::N> get_base_toX(){
-  
+std::array<std::array<bool, OutPart::E::N>, E::N> get_base_toX()
+{
+
   std::array<std::array<bool, OutPart::E::N>, E::N> x;
-  
+
   for (size_t vi = 0; vi < E::N; ++vi)
   {
-    
+
     for (size_t op = 0; op < OutPart::E::N; ++op)
     {
       x[vi][op] = false;
@@ -318,37 +308,32 @@ std::array<std::array<bool, OutPart::E::N>, E::N> get_base_toX(){
   return x;
 }
 
-
 std::array<std::array<bool, OutPart::E::N>, E::N> get_toTerm()
 {
   auto x = get_base_toX();
-  
-  
+
   // all output to terminal, other than tracker
   x[E::TERMINAL][OutPart::E::MAI] = true;
   x[E::TERMINAL][OutPart::E::DEP] = true;
-  x[E::TERMINAL][OutPart::E::ACC] = true;  
-  
+  x[E::TERMINAL][OutPart::E::ACC] = true;
+
   // copy TERMINAL
   x[E::SPLIT] = x[E::TERMINAL];
- 
-  
+
   // just tracker output to terminal
   x[E::TRACK][OutPart::E::TRA] = true;
   x[E::TRACK][OutPart::E::WRN] = true;
 
   // just tracker output to terminal
   x[E::STRACK][OutPart::E::TRA] = true;
-    
-  // like tracker, but with accuracy
-  x[E::ACCURACY] = x[E::TRACK];
-  x[E::ACCURACY][OutPart::E::ACC] = true;    
 
-  
+  // like tracker, but with accuracy
+  x[E::ACCURACY]                  = x[E::TRACK];
+  x[E::ACCURACY][OutPart::E::ACC] = true;
+
   return x;
 }
 const std::array<std::array<bool, OutPart::E::N>, E::N> toTerm = get_toTerm();
-  
 
 std::array<std::array<bool, OutPart::E::N>, E::N> get_toFile()
 {
@@ -356,31 +341,30 @@ std::array<std::array<bool, OutPart::E::N>, E::N> get_toFile()
   // all output to file, other than tracker
   x[E::TOFILE][OutPart::E::MAI] = true;
   x[E::TOFILE][OutPart::E::DEP] = true;
-  x[E::TOFILE][OutPart::E::ACC] = true;  
+  x[E::TOFILE][OutPart::E::ACC] = true;
 
   // copy TOFILE
   x[E::SPLIT] = x[E::TOFILE];
-  
+
   // copy TOFILE
   x[E::STRACK][E::TOFILE] = true;
-    
+
   return x;
 }
 const std::array<std::array<bool, OutPart::E::N>, E::N> toFile = get_toFile();
 
-
-std::array<bool, E::N> get_fileRequired(){
+std::array<bool, E::N> get_fileRequired()
+{
   std::array<bool, E::N> X;
-  X[E::SILENT] = false;
+  X[E::SILENT]   = false;
   X[E::TERMINAL] = false;
-  X[E::SPLIT] = true;
-  X[E::TOFILE] = true;
-  X[E::TRACK] = false;
-  X[E::STRACK] = true;
+  X[E::SPLIT]    = true;
+  X[E::TOFILE]   = true;
+  X[E::TRACK]    = false;
+  X[E::STRACK]   = true;
   X[E::ACCURACY] = false;
   return X;
 }
 const std::array<bool, E::N> fileRequired = get_fileRequired();
-
 }
 }

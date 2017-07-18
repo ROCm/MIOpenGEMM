@@ -14,7 +14,6 @@
 namespace MIOpenGEMM
 {
 
-
 void SuHy::checks() const
 {
   if (vs.size() != Mat::mat_to_xchi(emat)->N)
@@ -61,7 +60,7 @@ std::string HyPas::get_string() const
 std::string Constraints::get_combo_str(const str_array& strs) const
 {
   std::stringstream ss;
-  bool empty = true;
+  bool              empty = true;
   for (auto x : strs)
   {
     if (x != "")
@@ -189,8 +188,8 @@ std::array<std::string, Mat::E::N> get_substrings(const std::string& rconcat)
     if (Mat::M.val.count(megafrag[0]) == 0)
     {
       ss << "\nWhile reading hyperstring in get-params-from-string,"
-      <<  "the leading char, `" << megafrag[0] << "', was not recognised. "
-       << "The fragment in question is " << megafrag << '.';
+         << "the leading char, `" << megafrag[0] << "', was not recognised. "
+         << "The fragment in question is " << megafrag << '.';
       throw miog_error(ss.str());
     }
     Mat::E emat    = static_cast<Mat::E>(Mat::M.val.at(megafrag[0]));
@@ -298,8 +297,5 @@ HyPas::HyPas(const str_array& hyperstrings)
   }
 }
 
-
 HyPas::HyPas(std::array<SuHy, Mat::E::N>&& suhys) : sus(suhys) {}
-
-
 }

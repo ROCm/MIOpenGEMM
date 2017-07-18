@@ -13,7 +13,6 @@ namespace MIOpenGEMM
 namespace owrite
 {
 
-
 void Writer::initialise_file()
 {
   if (filename.compare("") == 0)
@@ -38,18 +37,22 @@ void Writer::initialise_file()
 
 Writer::Writer(Ver::E v_, std::string filename_) : v(v_), filename(filename_)
 {
-  if (Ver::fileRequired[v]){
+  if (Ver::fileRequired[v])
+  {
     initialise_file();
   }
-  else if (filename != ""){
+  else if (filename != "")
+  {
     throw miog_error("Non-empty filename, but no file writing in Writer. Performing pedantic bail");
   }
-  else{
+  else
+  {
     // no filename and no filename required, good to continue
   }
-  
+
   std::ofstream* ptr_file;
-  for (size_t op = 0; op < OutPart::E::N; ++op){
+  for (size_t op = 0; op < OutPart::E::N; ++op)
+  {
     ptr_file = Ver::toFile[v][op] ? &file : nullptr;
     bw[op]   = BasicWriter(Ver::toTerm[v][op], ptr_file);
   }

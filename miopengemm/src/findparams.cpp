@@ -8,8 +8,8 @@
 namespace MIOpenGEMM
 {
 
-
-Halt::Halt(size_t max_runs_, double max_time_):max_runs(max_runs_), max_time(max_time_) {
+Halt::Halt(size_t max_runs_, double max_time_) : max_runs(max_runs_), max_time(max_time_)
+{
   if (max_time <= 0)
   {
     throw miog_error("max_time should be strictly positive, in Halt constructor");
@@ -18,11 +18,13 @@ Halt::Halt(size_t max_runs_, double max_time_):max_runs(max_runs_), max_time(max
   if (max_runs == 0)
   {
     throw miog_error("max_runs should be strictly positive, in Halt constructor");
-  }    
+  }
 }
 
-std::string Halt::get_status(size_t ri, double et) const{
-  if (halt(ri, et)){
+std::string Halt::get_status(size_t ri, double et) const
+{
+  if (halt(ri, et))
+  {
     return "(HALT)";
   }
   std::stringstream ss;
@@ -30,17 +32,14 @@ std::string Halt::get_status(size_t ri, double et) const{
   return ss.str();
 }
 
-bool Halt::halt(size_t ri, double et) const{
-  return (ri >= max_runs || et >= max_time);
-}
+bool Halt::halt(size_t ri, double et) const { return (ri >= max_runs || et >= max_time); }
 
-std::string Halt::get_string()  const{
+std::string Halt::get_string() const
+{
   std::stringstream ss;
   ss << "max_time=" << max_time << " max_runs=" << max_runs;
   return ss.str();
 }
-
-
 
 std::vector<std::string> get_sumstatkey()
 {
@@ -72,37 +71,34 @@ std::string get_sumstatkey(SummStat::E sumstat)
 
 FindParams::FindParams(
 
-             size_t      max_descents,
-             double      max_time_outer,
-             size_t      max_per_kernel,
-             double      max_time_core,
-             SummStat::E sumstat_)
-             
+  size_t      max_descents,
+  double      max_time_outer,
+  size_t      max_per_kernel,
+  double      max_time_core,
+  SummStat::E sumstat_)
+
   : hl_outer(max_descents, max_time_outer),
     hl_core(max_per_kernel, max_time_core),
-    sumstat(sumstat_){}
+    sumstat(sumstat_)
+{
+}
 
 std::string FindParams::get_string() const
 {
   std::stringstream ss;
-  ss 
-  << "(OUTER)   " << hl_outer.get_string() 
-  << "(INNER)   " << hl_core.get_string() 
-  << "(SUMSTAT) " << get_sumstatkey(sumstat);
+  ss << "(OUTER)   " << hl_outer.get_string() << "(INNER)   " << hl_core.get_string()
+     << "(SUMSTAT) " << get_sumstatkey(sumstat);
   return ss.str();
 }
 
 FindParams get_quick_find_params()
 {
-  size_t      max_descents = 1;
+  size_t      max_descents   = 1;
   double      max_time_outer = 0.003;
   size_t      max_per_kernel = 1;
-  double      max_time_core = 1e12;
-  SummStat::E sumstat = SummStat::E::MEDIAN;
+  double      max_time_core  = 1e12;
+  SummStat::E sumstat        = SummStat::E::MEDIAN;
 
   return FindParams(max_descents, max_time_outer, max_per_kernel, max_time_core, sumstat);
 }
-
-
-
 }

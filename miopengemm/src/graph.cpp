@@ -282,7 +282,6 @@ void SuGr::apply_constraint()
   }
 }
 
-
 std::string SuGr::get_string(size_t hpi) const
 {
   std::stringstream ss;
@@ -331,7 +330,6 @@ std::string SuGr::get_start_range_string(size_t hpi) const
   return ss.str();
 }
 
-
 const std::map<size_t, std::vector<size_t>> g_binary = {{Binary::E::NO, {Binary::E::YES}},
                                                         {Binary::E::YES, {Binary::E::NO}}};
 
@@ -364,7 +362,6 @@ bool Graph::contains(Mat::E emat, size_t hpi, size_t value) const
   }
   return at(emat).contains(hpi, value);
 }
-
 
 bool Graph::contains(const HyPas& hp) const
 {
@@ -544,7 +541,6 @@ void ChiSuGr::refine_start_range()
   start_range[Chi::E::WOS] = {Scratch::E::UNUSED, Scratch::E::COPY, Scratch::E::NFORM};
 
   set_start_mic();
-
 }
 
 void CSuGr::refine_start_range()
@@ -645,7 +641,6 @@ bool SuGr::contains(const SuHy& suhy) const
   return true;
 }
 
-
 HyPas Graph::get_random_start() const
 {
   return HyPas({at(Mat::E::A).get_random_start(),
@@ -662,13 +657,12 @@ HyPas Graph::get_random_valid_start() const
   size_t            iter  = 0;
   std::stringstream ss;
 
-  double impatience_time = 0.2; // seconds before terimnal silence becomes annoying
-  Timer timer;
+  double impatience_time = 0.2;  // seconds before terimnal silence becomes annoying
+  Timer  timer;
   timer.start();
-  
+
   while (found == false && iter < max_n_iter)
   {
-    
 
     hp0 = get_random_start();
     hp0.checks();  // This should not be necessary
@@ -694,9 +688,11 @@ HyPas Graph::get_random_valid_start() const
       }
     }
     ++iter;
-    
-    if (timer.get_elapsed() > impatience_time){
-      mowri.bw[OutPart::E::WRN] << "(still looking for valid start in graph @i=" << iter << ")" << Endl;
+
+    if (timer.get_elapsed() > impatience_time)
+    {
+      mowri.bw[OutPart::E::WRN] << "(still looking for valid start in graph @i=" << iter << ")"
+                                << Endl;
       timer.start();
     }
   }
@@ -737,14 +733,12 @@ bool SuGr::contains(size_t hpi, size_t val) const
   {
     std::stringstream errm;
     errm << "in SuGr::contains, range size <= hpi, internal logic err"
-    << "\nrange size = " << range.size() << " and hpi = " << hpi
-    << '\n' << get_string(hpi);
+         << "\nrange size = " << range.size() << " and hpi = " << hpi << '\n'
+         << get_string(hpi);
     throw miog_error(errm.str());
   }
   bool x =
     (std::find(range[hpi].begin(), range[hpi].end(), val) == range[hpi].end()) ? false : true;
   return x;
 }
-
-
 }

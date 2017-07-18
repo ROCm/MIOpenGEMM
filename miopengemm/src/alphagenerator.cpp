@@ -36,12 +36,12 @@ class AlphaGenerator : public basegen::BaseGenerator
   virtual void set_usage() override final
   {
 
-    u_a         = (hp.sus[Mat::E::A].vs[Chi::E::WOS] == Scratch::E::UNUSED) ? true : false;
-    u_b         = (hp.sus[Mat::E::B].vs[Chi::E::WOS] == Scratch::E::UNUSED) ? true : false;
-    u_c         = true;
-    u_w = (not u_a or not u_b);
-    u_alpha     = true;
-    u_beta      = dp.main_does_beta_c_inc;
+    u_a     = (hp.sus[Mat::E::A].vs[Chi::E::WOS] == Scratch::E::UNUSED) ? true : false;
+    u_b     = (hp.sus[Mat::E::B].vs[Chi::E::WOS] == Scratch::E::UNUSED) ? true : false;
+    u_c     = true;
+    u_w     = (not u_a or not u_b);
+    u_alpha = true;
+    u_beta  = dp.main_does_beta_c_inc;
   }
 
   public:
@@ -1116,16 +1116,9 @@ TINTK k_plus_offset = __K__ + unroll_offset;
 
   virtual void setup_final() override final {}
 
-
-  virtual KType::E get_ktype() override final{
-    return KType::E::MAIN;
-  }
-
+  virtual KType::E get_ktype() override final { return KType::E::MAIN; }
 };
 
-
-
-  
 KernBlob get_alpha_kernelstring(const HyPas& hp, const Geometry& gg, const DerivedParams& dp)
 {
   AlphaGenerator ag(hp, gg, dp);

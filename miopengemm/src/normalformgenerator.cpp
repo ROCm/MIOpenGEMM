@@ -23,7 +23,7 @@ class NormalFormGenerator : public prepgen::PrepGenerator
   {
   }
 
-  virtual void set_type() override final { type = "nform" + std::string(1,mchar); }
+  virtual void set_type() override final { type = "nform" + std::string(1, mchar); }
 
   size_t get_local_work_size() override final { return dp.at(emat_x).cw2_local_work_size; }
 
@@ -150,7 +150,7 @@ for (size_t mu_perp_i = 0; mu_perp_i < MICRO_TILE_PERP_UNROLL; ++mu_perp_i) {
 
     ss << "\n}\n";
 
-    return {get_ktype(), 
+    return {get_ktype(),
             {u_a, u_b, u_c, u_w, u_alpha, u_beta},
             ss.str(),
             kernelname,
@@ -159,13 +159,15 @@ for (size_t mu_perp_i = 0; mu_perp_i < MICRO_TILE_PERP_UNROLL; ++mu_perp_i) {
   }
 
   virtual void setup_final() override final {}
-  
-  virtual KType::E get_ktype() override final{
-    switch (emat_x){
-      case Mat::E::A : return KType::E::WSA; 
-      case Mat::E::B : return KType::E::WSB; 
-      default : throw miog_error("unrecognised emat_x in get_type of normalformgenerator");
-       }
+
+  virtual KType::E get_ktype() override final
+  {
+    switch (emat_x)
+    {
+    case Mat::E::A: return KType::E::WSA;
+    case Mat::E::B: return KType::E::WSB;
+    default: throw miog_error("unrecognised emat_x in get_type of normalformgenerator");
+    }
   }
 };
 
@@ -178,4 +180,3 @@ get_nform_kernelstring(Mat::E emat_x, const HyPas& hp, const Geometry& gg, const
 }
 }
 }
-

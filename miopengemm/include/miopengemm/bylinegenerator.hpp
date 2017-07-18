@@ -33,7 +33,7 @@ class ByLineGenerator : public prepgen::PrepGenerator
   ByLineGenerator(Mat::E emat_x, const HyPas& hp_, const Geometry& gg_, const DerivedParams& dp_);
 
   virtual KernBlob get_kernelstring() final override;
-  virtual void         setup_final() final override;
+  virtual void     setup_final() final override;
 
   private:
   void append_description_string(std::stringstream& ss);

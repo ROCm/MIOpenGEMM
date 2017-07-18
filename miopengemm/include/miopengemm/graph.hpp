@@ -10,14 +10,13 @@
 #include <vector>
 #include <miopengemm/error.hpp>
 #include <miopengemm/geometry.hpp>
-#include <miopengemm/oclutil.hpp>
 #include <miopengemm/hyperparams.hpp>
+#include <miopengemm/oclutil.hpp>
 
 namespace MIOpenGEMM
 {
 
 std::string get_location_string(Mat::E emat, size_t hpi);
-
 
 class SuGr
 {

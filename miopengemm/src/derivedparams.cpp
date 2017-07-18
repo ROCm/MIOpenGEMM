@@ -79,7 +79,6 @@ void DerivedParams::reset_cw_params(Mat::E emat_x)
       : 0;
 }
 
-
 Derivabilty::Derivabilty(const HyPas& hp, const Geometry& gg)
 {
   DerivedParams dp(hp, gg, "uninitialised");
@@ -264,11 +263,9 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
       return std::make_tuple(false, "UFO = yes, so UNR must be greater that k");
     }
   }
-  
-  
+
   main_split_on_k      = ptr_hp->sus[Mat::E::C].vs[NonChi::E::ICE] == 1 ? 0 : 1;
   main_does_beta_c_inc = main_split_on_k == 1 ? 0 : 1;
-
 
   if (ptr_hp->sus[Mat::E::C].vs[NonChi::E::GAL] == 3)
   {
@@ -287,20 +284,18 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
     {
       throw miog_error("main_split_on_k is neither 0 nor 1, how can this be? Logic error");
     }
-    
-    if (ga3_super_column_width == 0){
-      return std::make_tuple(false, 
-      "ga3_super_column_width would be 0 ( ICE >  NAW) ");
+
+    if (ga3_super_column_width == 0)
+    {
+      return std::make_tuple(false, "ga3_super_column_width would be 0 ( ICE >  NAW) ");
     }
-    
+
     ga3_last_super_column_width = bdps.n_groups % ga3_super_column_width;
   }
-  
 
   // ran the gauntlet, returning deriveable is true
   return std::make_tuple(true, "");
 }
-
 
 std::string get_tint(size_t memsize)
 {
@@ -362,7 +357,6 @@ DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_) : ptr_hp(&hp
     }
   }
 
-
   if (ptr_hp->sus[Mat::E::C].vs[NonChi::E::ICE] == 1)
   {
     infa = "n_work_items_per_c_elm is 1, should not be using atomics";
@@ -408,7 +402,6 @@ DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_) : ptr_hp(&hp
     }
   }
 
-
   // these are hyper params, with a check if not optional ?
   main_use_edge_trick = (ptr_gg->m % at(Mat::E::A).macro_tile_length == 0 &&
                          ptr_gg->n % at(Mat::E::B).macro_tile_length == 0)
@@ -418,7 +411,6 @@ DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_) : ptr_hp(&hp
                                   ptr_gg->k % ptr_hp->sus[Mat::E::C].vs[NonChi::E::UNR] != 0)
                                    ? 1
                                    : 0;
-
 
   tints[Mem::E::A] = get_tint(ptr_gg->get_uncoal(Mat::E::A) *
                               (ptr_gg->ldX[Mat::E::A]));  // TODO : does UFO need increase here

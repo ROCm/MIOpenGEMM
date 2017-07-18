@@ -33,9 +33,9 @@ class SolutionStatistics
 
   FindParams find_params;
 
-  SolutionStatistics(double             seconds,
-                     double             gflops,
-                     double             discovery,
+  SolutionStatistics(double            seconds,
+                     double            gflops,
+                     double            discovery,
                      std::string       date,
                      const FindParams& find_params);
   SolutionStatistics(std::string cache_string);
@@ -64,12 +64,12 @@ class Solution
 
   Constraints constraints;
 
-  Solution(const Geometry&                  geometry_,
-           SolutionStatistics               tgss_,
+  Solution(const Geometry&              geometry_,
+           SolutionStatistics           tgss_,
            const std::vector<KernBlob>& v_tgks_,
-           std::string                      hyper_param_string_,
-           oclutil::DevInfo                 devinfo_,
-           const Constraints &    constraints_)
+           std::string                  hyper_param_string_,
+           oclutil::DevInfo             devinfo_,
+           const Constraints&           constraints_)
     : geometry(geometry_),
       statistics(tgss_),
       v_tgks(v_tgks_),

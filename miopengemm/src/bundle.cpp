@@ -26,7 +26,8 @@ namespace MIOpenGEMM
 namespace kerngen
 {
 
-Bundle::Bundle(const HyPas& hp_, const Geometry& gg_, owrite::Writer& mowri):hp(hp_), gg(gg_), dp(hp, gg)
+Bundle::Bundle(const HyPas& hp_, const Geometry& gg_, owrite::Writer& mowri)
+  : hp(hp_), gg(gg_), dp(hp, gg)
 {
 
   for (auto emat_x : {Mat::E::A, Mat::E::B})
@@ -74,27 +75,27 @@ Bundle::Bundle(const HyPas& hp_, const Geometry& gg_, owrite::Writer& mowri):hp(
 
   for (size_t i = 0; i < v_tgks.size(); ++i)
   {
-   v_wait_indices.push_back({});
+    v_wait_indices.push_back({});
     for (size_t j = 0; j < v_tgks.size(); ++j)
     {
       if (std::find(KType::dependencies.at(v_tgks[i].e_ktype).begin(),
                     KType::dependencies.at(v_tgks[i].e_ktype).end(),
-                    v_tgks[j].e_ktype) !=
-          KType::dependencies.at(v_tgks[i].e_ktype).end())
+                    v_tgks[j].e_ktype) != KType::dependencies.at(v_tgks[i].e_ktype).end())
       {
-       v_wait_indices.back().push_back(j);
+        v_wait_indices.back().push_back(j);
       }
     }
   }
-    
+
   mowri.bw[OutPart::E::DEP] << "\nnetwork of kernel dependencies: \n";
   for (size_t i = 0; i < v_tgks.size(); ++i)
   {
     std::stringstream ss1;
     ss1 << "kernel " << i << " {" << v_tgks[i].kuses.full << "}";
-    std::string pre_waits_for = ss1.str(); 
-    
-    if (pre_waits_for.size() < 35){
+    std::string pre_waits_for = ss1.str();
+
+    if (pre_waits_for.size() < 35)
+    {
       pre_waits_for.resize(37, ' ');
     }
     mowri.bw[OutPart::E::DEP] << pre_waits_for << " waits for :  " << Flush;
@@ -103,9 +104,10 @@ Bundle::Bundle(const HyPas& hp_, const Geometry& gg_, owrite::Writer& mowri):hp(
       mowri.bw[OutPart::E::DEP] << "nothing";
     }
 
-    for (size_t j = 0; j <v_wait_indices[i].size(); ++j)
+    for (size_t j = 0; j < v_wait_indices[i].size(); ++j)
     {
-      mowri.bw[OutPart::E::DEP] << v_wait_indices[i][j]  << '{' << v_tgks[v_wait_indices[i][j]].kuses.full  << "} " << Flush;
+      mowri.bw[OutPart::E::DEP] << v_wait_indices[i][j] << '{'
+                                << v_tgks[v_wait_indices[i][j]].kuses.full << "} " << Flush;
     }
     mowri.bw[OutPart::E::DEP] << Endl;
   }

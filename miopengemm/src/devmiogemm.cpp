@@ -31,7 +31,7 @@ namespace MIOpenGEMM
 namespace dev
 {
 
-Boa::Boa(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint & devhint)
+Boa::Boa(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint& devhint)
 {
 
   switch (gg_.floattype)
@@ -43,7 +43,7 @@ Boa::Boa(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint & dev
   active_type = gg_.floattype;
 }
 
-void Boa::benchgemm(const std::vector<HyPas>& hps, const Halt & hl)
+void Boa::benchgemm(const std::vector<HyPas>& hps, const Halt& hl)
 {
   switch (active_type)
   {
@@ -53,7 +53,7 @@ void Boa::benchgemm(const std::vector<HyPas>& hps, const Halt & hl)
   }
 }
 
-void Boa::accuracy_test(const HyPas & hp)
+void Boa::accuracy_test(const HyPas& hp)
 {
 
   switch (active_type)
@@ -64,7 +64,7 @@ void Boa::accuracy_test(const HyPas & hp)
   }
 }
 
-Solution Boa::find(const FindParams& find_params, const Constraints & constraints)
+Solution Boa::find(const FindParams& find_params, const Constraints& constraints)
 {
   switch (active_type)
   {

@@ -27,9 +27,8 @@ class BetacGenerator : public bylinegen::ByLineGenerator
   size_t get_local_work_size() override final;
 
   size_t get_work_per_thread() override final;
-  
-  virtual KType::E get_ktype() override final;
 
+  virtual KType::E get_ktype() override final;
 };
 
 KernBlob get_betac_kernelstring(const HyPas& hp, const Geometry& gg, const DerivedParams& dp);

@@ -65,9 +65,9 @@ class HyPas
 {
   public:
   std::array<SuHy, Mat::E::N> sus;
-  
+
   using str_array = std::array<std::string, Mat::E::N>;
-  HyPas() = default;
+  HyPas()         = default;
   HyPas(const str_array&);
   HyPas(const std::string&);
   HyPas(std::array<SuHy, Mat::E::N>&&);
@@ -76,12 +76,10 @@ class HyPas
   std::string get_string() const;
   bool operator==(const HyPas& rhs) const;
   void checks() const;
-  //bool is_different(KType::E e_ktype, const HyPas & rhs); 
+  // bool is_different(KType::E e_ktype, const HyPas & rhs);
 };
 
-
-//HyPas get_null_hp();
-
+// HyPas get_null_hp();
 }
 
 #endif

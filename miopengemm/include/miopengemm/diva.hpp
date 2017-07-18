@@ -29,13 +29,13 @@ class Diva
        const TFloat*   b_,
        const TFloat*   c_,
        owrite::Writer& mowri_,
-       const CLHint & devhint);
+       const CLHint&   devhint);
 
-  Diva(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint & devhint);
+  Diva(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint& devhint);
 
-  void benchgemm(const std::vector<HyPas>& hps, const Halt &); 
+  void benchgemm(const std::vector<HyPas>& hps, const Halt&);
 
-  Solution find(const FindParams& find_params, const Constraints & constraints);
+  Solution find(const FindParams& find_params, const Constraints& constraints);
 
   void accuracy_test(const HyPas& hp, const TFloat* c_true_for_test);
 
@@ -79,7 +79,7 @@ class Diva
   void initialise_common();
 
   // delegator constructor.
-  Diva(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint & devhint, long);
+  Diva(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint& devhint, long);
 };
 }
 }

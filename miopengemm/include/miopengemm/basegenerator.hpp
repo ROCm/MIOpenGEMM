@@ -45,9 +45,7 @@ class BaseGenerator
 
   private:
   virtual void set_type() = 0;
-  void         set_kernelname() {
-    kernelname = "miog_" + type; 
-  }
+  void         set_kernelname() { kernelname = "miog_" + type; }
 
   virtual void set_usage()   = 0;
   virtual void setup_final() = 0;
@@ -58,7 +56,7 @@ class BaseGenerator
   {
 
     set_type();
-    
+
     set_kernelname();
     set_usage();
 
@@ -69,7 +67,7 @@ class BaseGenerator
   virtual KernBlob get_kernelstring() = 0;
 
   virtual KType::E get_ktype() = 0;
-  
+
   BaseGenerator(const HyPas& hp_, const Geometry& gg_, const DerivedParams& dp_);
 
   // append argument(s) to the function definition

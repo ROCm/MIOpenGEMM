@@ -7,22 +7,21 @@
 #include <CL/cl.h>
 #include <algorithm>
 #include <vector>
+#include <miopengemm/hyperparams.hpp>
 #include <miopengemm/kernelstring.hpp>
 #include <miopengemm/oclutil.hpp>
 #include <miopengemm/outputwriter.hpp>
-#include <miopengemm/hyperparams.hpp>
 
 namespace MIOpenGEMM
 {
 
 class Kernel
 {
-  
-  private:
 
+  private:
   public:
   cl_command_queue command_queue;
-  KernBlob     kblob;
+  KernBlob         kblob;
 
   // used for getting performance of kernel
   cl_event clevent;
@@ -50,7 +49,7 @@ class Kernel
 
   Kernel() : Kernel(nullptr, "default constructed Kernel") {}
 
-  bool update_needed(const KernBlob&);
+  bool            update_needed(const KernBlob&);
   oclutil::Result update(const KernBlob&, owrite::Writer&);
 
   ~Kernel();

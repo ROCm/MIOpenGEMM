@@ -5,6 +5,10 @@
 #include <miopengemm/devmiogemm.hpp>
 #include <miopengemm/miogemm.hpp>
 
+  // TODO : benchthecache flag for `all' or `device specific' 
+  // TODO : checks on constraints to check for cleary non-derivables
+  // TODO : checks on workspace size
+  
 template <typename TFloat>
 void geometrytest(const MIOpenGEMM::Geometry & gg)
 {
@@ -22,7 +26,7 @@ void geometrytest(const MIOpenGEMM::Geometry & gg)
   std::cout << '\n' << soln.hypas.get_string() << '\n';
   boa.accuracy_test(soln.hypas);
 
-  // TODO : checks on constraints to check for cleary non-derivealboes !!!  
+
 }
 
 
@@ -34,7 +38,7 @@ int main()
   size_t m     = 45;
   size_t k     = 39;
   size_t testi = 0;
-  size_t  workspace_size   = 1000*1000; // TODO : checks on workspace size
+  size_t  workspace_size   = 1000*1000; 
 
   for (bool tC : {false, true})
   {

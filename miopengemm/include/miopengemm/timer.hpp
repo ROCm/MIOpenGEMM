@@ -5,21 +5,21 @@
 #define GUARD_MIOPENGEMM_TIMER_HPP
 
 #include <chrono>
-  
+
 namespace MIOpenGEMM
 {
 
 // Simple stop-watch
-class Timer{
-  
+class Timer
+{
+
   private:
-  std::chrono::time_point<std::chrono::high_resolution_clock> t0;  
-  
+  std::chrono::time_point<std::chrono::high_resolution_clock> t0;
+
   public:
-  void start();
+  void   start();
   double get_elapsed() const;
 };
-
 }
 
 #endif

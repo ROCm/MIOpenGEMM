@@ -20,8 +20,6 @@ namespace oclutil
 
 cl_mem get_copy(cl_command_queue cq, cl_mem c, size_t c_nbytes, const std::string& hash);
 
-
-
 class Result
 {
 
@@ -245,7 +243,7 @@ Result cl_set_platform_etc(cl_platform_id&    platform,
                            cl_context&        context,
                            cl_device_id&      device_id_to_use,
                            owrite::Writer&    mowri,
-                           const CLHint &    devhint,
+                           const CLHint&      devhint,
                            const std::string& hash,
                            bool               strict);
 
@@ -260,7 +258,7 @@ Result cl_set_program_and_kernel(const cl_command_queue& command_queue,
 Result cl_auto_set_command_queue(cl_command_queue&           a_cl_command_queue,
                                  owrite::Writer&             mowri,
                                  cl_command_queue_properties properties,
-                                 const CLHint &             devhint,
+                                 const CLHint&               devhint,
                                  const std::string&          hash,
                                  bool                        strict);
 
@@ -279,7 +277,7 @@ class CommandQueueInContext
   public:
   cl_command_queue command_queue;
   std::string      hash;
-  CommandQueueInContext(owrite::Writer& mowri, const CLHint & devhint, const std::string& hash);
+  CommandQueueInContext(owrite::Writer& mowri, const CLHint& devhint, const std::string& hash);
   ~CommandQueueInContext();
 };
 
@@ -298,15 +296,12 @@ class OpenCLPlatformInfo
 
 class DevInfo
 {
-  
+
   private:
-  void initialise();
+  void         initialise();
   cl_device_id device;
-  
+
   public:
-
-//  OpenCLPlatformInfo platinfo;
-
   std::string device_name;
   std::string device_version;
   std::string driver_version;
@@ -321,8 +316,7 @@ class DevInfo
 
   std::string get_string() const;
   DevInfo(const cl_command_queue& command_queue);
-  DevInfo(const cl_device_id & device);
- // DevInfo();
+  DevInfo(const cl_device_id& device);
 };
 }
 }

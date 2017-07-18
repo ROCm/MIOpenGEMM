@@ -28,11 +28,9 @@ void Kernel::try_release()
   }
 }
 
-
 oclutil::Result Kernel::update(const KernBlob& ks, owrite::Writer& mowri)
 {
-  
-  
+
   try_release();
   kblob = ks;
   mowri << "compiling " << KType::M.name[kblob.e_ktype] << ". " << Flush;
@@ -63,15 +61,15 @@ Kernel::~Kernel() { try_release(); }
 
 bool Kernel::is_set() { return (clprog != nullptr && clkern != nullptr); }
 
-
-bool Kernel::update_needed(const KernBlob & kb_new){
-  if (!is_set()){
+bool Kernel::update_needed(const KernBlob& kb_new)
+{
+  if (!is_set())
+  {
     return true;
   }
-  auto no_change =  (kb_new.kernstr == kblob.kernstr); 
-  bool change = !no_change;
+  auto no_change = (kb_new.kernstr == kblob.kernstr);
+  bool change    = !no_change;
   return change;
- 
 }
 
 void Kernel::set_kernel_args(std::vector<std::pair<size_t, const void*>> arg_sizes_values)

@@ -4,16 +4,16 @@
 #ifndef GUARD_MIOPENGEMM_ALLENUMS_HPP
 #define GUARD_MIOPENGEMM_ALLENUMS_HPP
 
+#include <array>
 #include <unordered_map>
 #include <vector>
-#include <array>
 #include <miopengemm/error.hpp>
 
 namespace MIOpenGEMM
 {
 
-
-namespace Floating{
+namespace Floating
+{
 
 static const double default_alpha = 0.415693029182345929;
 static const double default_beta  = 0.273539340934809345;
@@ -31,26 +31,21 @@ class MFType
 
 static const MFType m_alpha(default_alpha);
 static const MFType m_beta(default_beta);
-
 }
-
-
 
 template <typename T>
 class EnumMapper
 {
   public:
-  size_t         N;
-  std::vector<T> name;
-  std::vector<T> lcase_name;
+  size_t              N;
+  std::vector<T>      name;
+  std::vector<T>      lcase_name;
   std::vector<size_t> all_enum;
   std::unordered_map<T, size_t> val;
   EnumMapper(const std::vector<T>& name_);
 };
 
 // if you add a parameter to enum, make sure to add it before the final count N
-
-
 
 namespace SummStat
 {
@@ -165,7 +160,8 @@ enum E
 };
 }
 
-namespace OutPart{
+namespace OutPart
+{
 enum E
 {
   MAI = 0,
@@ -177,7 +173,6 @@ enum E
 };
 extern const EnumMapper<std::string> M;
 }
-
 
 namespace Ver
 {
@@ -196,11 +191,7 @@ extern const EnumMapper<std::string> M;
 extern const std::array<bool, E::N> fileRequired;
 extern const std::array<std::array<bool, OutPart::E::N>, E::N> toFile;
 extern const std::array<std::array<bool, OutPart::E::N>, E::N> toTerm;
-
-
 }
-
-
 
 namespace KType
 {
@@ -214,22 +205,16 @@ enum E
 };
 extern const EnumMapper<std::string> M;
 
-// maps the depencices of kernels, order of exection 
+// maps the depencices of kernels, order of exection
 // For example deps[MAIN] = {WSA, WSB, BETAC},
 // as all of these must first complete
-// before MAIN can execute 
+// before MAIN can execute
 extern std::array<std::vector<size_t>, E::N> dependencies;
 
-//// maps the depency of kernels of hps, used to determine 
+//// maps the depency of kernels of hps, used to determine
 //// whether recompilation is necessary
-//extern std::array <std::array<std::vector<size_t>, Mat::E::N> , KType::E::N> hpDeps; 
-
+// extern std::array <std::array<std::vector<size_t>, Mat::E::N> , KType::E::N> hpDeps;
 }
-
-
-
-
-
 }
 
 #endif

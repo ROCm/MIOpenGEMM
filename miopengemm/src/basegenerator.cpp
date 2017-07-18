@@ -38,8 +38,7 @@ void BaseGenerator::append_fargs(std::stringstream& ss)
   // this is a hacky, as we might have a kernel
   // which uses c and modifies w as well.
   std::string cness = (u_c == true) ? "const " : "";
-  append_farg(
-    u_w, ss, "\n__global " + cness + "TFLOAT * restrict w,\nconst size_t w_offset");
+  append_farg(u_w, ss, "\n__global " + cness + "TFLOAT * restrict w,\nconst size_t w_offset");
   append_farg(u_alpha, ss, "\nconst TFLOAT alpha");
   append_farg(u_beta, ss, "\nconst TFLOAT beta");
   ss << ")\n";
@@ -74,7 +73,6 @@ void BaseGenerator::append_unroll_block_geometry(Mat::E             emat_x,
                                                  bool               withcomments,
                                                  bool               with_x_string)
 {
-
 
   char        X        = Mat::M.name[emat_x];
   std::string X_string = with_x_string ? "_" + std::string(1, X) : "";
@@ -131,11 +129,7 @@ std::string BaseGenerator::get_time_string()
   std::stringstream ss;
   ss << "This " << type << " kernel string was generated on " << std::ctime(&generation_time);
 
-
-
   std::string time_stamp_string = ss.str();
-
-
 
   return "// (no longer including time-stamp here to ease string comparison) ";
   return stringutil::get_star_wrapped(time_stamp_string.substr(0, time_stamp_string.size() - 1));

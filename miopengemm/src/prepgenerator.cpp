@@ -16,18 +16,18 @@ void PrepGenerator::set_usage()
   u_alpha = false;
   if (emat_x == Mat::E::C)
   {
-    u_a         = false;
-    u_b         = false;
-    u_c         = true;
-    u_w = false;
-    u_beta      = true;
+    u_a    = false;
+    u_b    = false;
+    u_c    = true;
+    u_w    = false;
+    u_beta = true;
   }
 
   else
   {
-    u_c         = false;
-    u_w = true;
-    u_beta      = false;
+    u_c    = false;
+    u_w    = true;
+    u_beta = false;
 
     if (emat_x == Mat::E::A)
     {
@@ -69,7 +69,6 @@ PrepGenerator::PrepGenerator(Mat::E               emat_x_,
   emat_x = emat_x_;
   MCHAR  = Mat::M.name[emat_x];
   mchar  = Mat::M.lcase_name[emat_x];
-   
 }
 }
 }

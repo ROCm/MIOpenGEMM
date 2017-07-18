@@ -12,11 +12,11 @@
 namespace MIOpenGEMM
 {
 
-int run_find_experiments(const std::vector<Geometry>& geometries,
-                         const std::vector<Constraints>&    v_constraints,
-                         const FindParams&            find_params,
-                         std::string basedir_inner, 
-                         const CLHint & devhint)
+int run_find_experiments(const std::vector<Geometry>&    geometries,
+                         const std::vector<Constraints>& v_constraints,
+                         const FindParams&               find_params,
+                         std::string                     basedir_inner,
+                         const CLHint&                   devhint)
 {
 
   owrite::Writer mowri_outer(Ver::E::TERMINAL,
@@ -44,7 +44,7 @@ int run_find_experiments(const std::vector<Geometry>& geometries,
       }
 
       std::stringstream fulldir_inner_ss;
-      //TODO : get_r_str not complete
+      // TODO : get_r_str not complete
       fulldir_inner_ss << basedir_inner << "cs" << constraints.get_r_str() << "/";
       fulldir_inner = fulldir_inner_ss.str();
       /* TODO WARNING : only works on Linux (makes directory)  */
@@ -63,7 +63,7 @@ int run_find_experiments(const std::vector<Geometry>& geometries,
       }
     }
 
-    // TODO : get_r_string not accurate, get all 
+    // TODO : get_r_string not accurate, get all
     mowri_outer << "\nEntering experiment with constraints `" << constraints.get_r_str() << "'"
                 << Endl;
 

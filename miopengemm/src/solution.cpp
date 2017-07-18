@@ -16,8 +16,8 @@ namespace MIOpenGEMM
 std::string SolutionStatistics::get_string() const
 {
   std::stringstream ss;
-  ss << "runtime:" << seconds << "  gflops:" << gflops
-     << "  date:" << date << "  (find_params) " << find_params.get_string();
+  ss << "runtime:" << seconds << "  gflops:" << gflops << "  date:" << date << "  (find_params) "
+     << find_params.get_string();
 
   std::string stroo("");
   for (char x : ss.str())
@@ -31,9 +31,9 @@ std::string SolutionStatistics::get_string() const
   return stroo;
 }
 
-SolutionStatistics::SolutionStatistics(double             seconds_,
-                                       double             gflops_,
-                                       double             discovery_,
+SolutionStatistics::SolutionStatistics(double            seconds_,
+                                       double            gflops_,
+                                       double            discovery_,
                                        std::string       date_,
                                        const FindParams& find_params_)
   : seconds(seconds_),
@@ -71,9 +71,9 @@ SolutionStatistics::SolutionStatistics(std::string cache_string)
   };
 
   seconds   = std::stof(get_X(0));
-  gflops = std::stof(get_X(1));
+  gflops    = std::stof(get_X(1));
   discovery = 0;
-  date                    = get_X(2);
+  date      = get_X(2);
 }
 
 std::string Solution::get_networkconfig_string() const
@@ -87,17 +87,17 @@ std::string Solution::get_cache_entry_string(std::string k_comment) const
 {
   std::stringstream cache_write_ss;
   cache_write_ss << "add_entry(kc, \"" << devinfo.identifier << "\", /* device key */\n"
-                 << "\"" << constraints.get_r_str() << "\", /* constraint key */\n"  // TODO : should also have start constraints...
+                 << "\"" << constraints.get_r_str()
+                 << "\", /* constraint key */\n"  // TODO : should also have start constraints...
                  << "\"" << geometry.get_string() << "\", /* geometry key */\n"
                  << "\"" << k_comment << "\", /* comment key */\n"
-                 << "{\"" << hypas.get_string() << "\", /* solution hyper string */\n" // TODO : make it 3 parts. 
-                 << "{" << statistics.seconds << ", "
-                 << statistics.gflops << ", " << statistics.discovery
-                 << ", \"" << statistics.date << "\""
+                 << "{\"" << hypas.get_string()
+                 << "\", /* solution hyper string */\n"  // TODO : make it 3 parts.
+                 << "{" << statistics.seconds << ", " << statistics.gflops << ", "
+                 << statistics.discovery << ", \"" << statistics.date << "\""
                  << ", /* solution stats (time [ms], gflops, time found "
                  << "(within descent), date found */\n"
-                 << '{'
-                 << statistics.find_params.hl_outer.max_runs << ", "
+                 << '{' << statistics.find_params.hl_outer.max_runs << ", "
                  << statistics.find_params.hl_outer.max_time << ", "
                  << statistics.find_params.hl_core.max_runs << ", "
                  << statistics.find_params.hl_core.max_time << ", "

@@ -68,9 +68,8 @@ class Writer
   void initialise_file();
 
   public:
-  std::ofstream file;  
+  std::ofstream file;
   std::array<BasicWriter, OutPart::N> bw;
-  
 
   public:
   Writer();

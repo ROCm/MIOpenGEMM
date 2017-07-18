@@ -6,14 +6,11 @@
 namespace MIOpenGEMM
 {
 
+void Timer::start() { t0 = std::chrono::high_resolution_clock::now(); }
 
-void Timer::start(){
-  t0 = std::chrono::high_resolution_clock::now();
-}
-
-double Timer::get_elapsed() const{
+double Timer::get_elapsed() const
+{
   std::chrono::duration<double> fp_ms = std::chrono::high_resolution_clock::now() - t0;
-  return fp_ms.count();    
+  return fp_ms.count();
 }
-
 }

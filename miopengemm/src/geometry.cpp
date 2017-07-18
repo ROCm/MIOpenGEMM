@@ -14,9 +14,6 @@
 namespace MIOpenGEMM
 {
 
-
-
-
 size_t get_mat_memsize(const Geometry& gg, const Offsets& toff, Mem::E emem)
 {
   Mat::E emat = Mat::mem_to_mat(emem);
@@ -221,12 +218,12 @@ void Geometry::initialise(bool   isColMajor_,
                           char   floattype_)
 {
 
-  isColMajor     = isColMajor_;
-  m              = m_;
-  n              = n_;
-  k              = k_;
+  isColMajor = isColMajor_;
+  m          = m_;
+  n          = n_;
+  k          = k_;
   wSpaceSize = wSpaceSize_;
-  floattype      = floattype_;
+  floattype  = floattype_;
 
   tX.resize(Mat::E::N);
   tX[Mat::E::A] = tA_;

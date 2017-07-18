@@ -59,8 +59,7 @@ confirm_cl_status(cl_int ret, const std::string& hash, const std::string& functi
   if (ret != CL_SUCCESS)
   {
     errms << "Reporting an opencl error (grep this code: `" << hash
-          << "') which returned with cl_int " << ret << " from function " << function << "."
-          << std::endl;
+          << "') which returned with cl_int " << ret << " from function " << function << ".";
   }
 
   if (strict == true && ret != CL_SUCCESS)
@@ -560,20 +559,21 @@ Result cl_set_platform_etc(cl_platform_id&    platform,
                            cl_context&        context,
                            cl_device_id&      device,
                            owrite::Writer&    mowri,
-                           const CLHint &    devhint,
+                           const CLHint&      devhint,
                            const std::string& hash,
                            bool               strict)
 {
-  
-  //////////////////////////////// set platform /////////////////////////////////////  
-  cl_uint num_platforms;
+
+  //////////////////////////////// set platform /////////////////////////////////////
+  cl_uint                     num_platforms;
   std::vector<cl_platform_id> platforms(100);
-  auto oclr = cl_set_platform_ids(
+  auto                        oclr = cl_set_platform_ids(
     platforms.size(), &platforms[0], &num_platforms, hash + " in cl_set_platform_etc", strict);
-  if (oclr.fail()){
+  if (oclr.fail())
+  {
     return oclr;
   }
-  
+
   std::vector<std::string> platform_strings;
   for (size_t i = 0; i < num_platforms; ++i)
   {
@@ -583,7 +583,7 @@ Result cl_set_platform_etc(cl_platform_id&    platform,
   size_t platform_index;
   devhint.pla.set(platform_index, platform_strings);
   platform = platforms[platform_index];
-  
+
   //////////////////////////////// set context /////////////////////////////////////
   cl_context_properties cps[3] = {
     CL_CONTEXT_PLATFORM, reinterpret_cast<cl_context_properties>(platform), 0};
@@ -595,10 +595,10 @@ Result cl_set_platform_etc(cl_platform_id&    platform,
                                   nullptr,
                                   hash + " in cl_set_platform_etc...",
                                   strict);
-  if (oclr.fail()){
+  if (oclr.fail())
+  {
     return oclr;
   }
-
 
   //////////////////////////////// set device /////////////////////////////////////
   // Query the number of devices
@@ -610,7 +610,8 @@ Result cl_set_platform_etc(cl_platform_id&    platform,
                              nullptr,
                              hash + " getting deviceListSize",
                              strict);
-  if (oclr.fail()){
+  if (oclr.fail())
+  {
     return oclr;
   }
 
@@ -630,12 +631,14 @@ Result cl_set_platform_etc(cl_platform_id&    platform,
                              nullptr,
                              hash + " getting the devices",
                              strict);
-  if (oclr.fail()){
+  if (oclr.fail())
+  {
     return oclr;
   }
-  
+
   std::vector<std::string> device_strings;
-  for (auto & x : devices){
+  for (auto& x : devices)
+  {
     device_strings.push_back(DevInfo(x).get_string());
   }
   size_t device_index;
@@ -643,12 +646,10 @@ Result cl_set_platform_etc(cl_platform_id&    platform,
   device = devices[device_index];
 
   DevInfo findev(device);
-  mowri << "Using device " 
-  << findev.device_name 
-  << " @{[" << findev.device_max_compute_units 
-  << " CUs]  [" << findev.device_max_clock_frequency << " GHz]}. "
-  << " Use a CLHint to change the device.\n";
-  
+  mowri << "Using device " << findev.device_name << " @{[" << findev.device_max_compute_units
+        << " CUs]  [" << findev.device_max_clock_frequency << " GHz]}. "
+        << " Use a CLHint to change the device.\n";
+
   return {};
 }
 
@@ -744,18 +745,16 @@ SafeClMem::~SafeClMem()
 Result cl_auto_set_command_queue(cl_command_queue&           a_cl_command_queue,
                                  owrite::Writer&             mowri,
                                  cl_command_queue_properties properties,
-                                 const CLHint &             devhint,
+                                 const CLHint&               devhint,
                                  const std::string&          hash,
                                  bool                        strict)
 {
 
   cl_platform_id platform = nullptr;
-  //cl_uint        num_platforms;
-  cl_context     context;
-  cl_device_id   device_id_to_use;
+  cl_context   context;
+  cl_device_id device_id_to_use;
 
   auto oclr = oclutil::cl_set_platform_etc(platform,
-    //                                       num_platforms,
                                            context,
                                            device_id_to_use,
                                            mowri,
@@ -773,15 +772,19 @@ Result cl_auto_set_command_queue(cl_command_queue&           a_cl_command_queue,
                               strict);
 }
 
-CommandQueueInContext::CommandQueueInContext(owrite::Writer& mowri, const CLHint & devhint, const std::string& hash_)
+CommandQueueInContext::CommandQueueInContext(owrite::Writer&    mowri,
+                                             const CLHint&      devhint,
+                                             const std::string& hash_)
   : hash(hash_)
 {
   bool strict = true;
-  cl_auto_set_command_queue(
-    command_queue, mowri, CL_QUEUE_PROFILING_ENABLE, devhint, "CommandQueueInContext constructor", strict);
+  cl_auto_set_command_queue(command_queue,
+                            mowri,
+                            CL_QUEUE_PROFILING_ENABLE,
+                            devhint,
+                            "CommandQueueInContext constructor",
+                            strict);
 }
-
-
 
 CommandQueueInContext::~CommandQueueInContext()
 {
@@ -852,7 +855,7 @@ std::string GetDeviceNameFromMap(const std::string& name)
 {
 
   static std::map<std::string, std::string> device_name_map = {
-    {"Ellesmere", fiji_string},
+    {"Ellesmere", fiji_string}, // TODO : is this correct?
     {"Baffin", fiji_string},
     {"RacerX", fiji_string},
     {"Polaris10", fiji_string},
@@ -882,32 +885,30 @@ std::string GetDeviceNameFromMap(const std::string& name)
 DevInfo::DevInfo(const cl_command_queue& command_queue)
 {
 
-
   bool strict = true;
-//  
+  //
   auto oclr = cl_set_command_queue_info(command_queue,
                                         CL_QUEUE_DEVICE,
                                         sizeof(cl_device_id),
                                         &device,
                                         nullptr,
                                         "(in DevInfo constructor)",
-                                        strict);  
+                                        strict);
 
   initialise();
 }
 
-DevInfo::DevInfo(const cl_device_id & device_){
+DevInfo::DevInfo(const cl_device_id& device_)
+{
   device = device_;
   initialise();
 }
 
-
-void DevInfo::initialise(){
-
+void DevInfo::initialise()
+{
 
   bool strict = true;
 
-  
   std::string info_st("");
   info_st.resize(2048, '-');
   size_t info_size;
@@ -916,13 +917,9 @@ void DevInfo::initialise(){
   cl_ulong a_ulong;
   cl_uint  a_uint;
 
-
-
-
-
   cl_platform_id platform;
-  cl_set_device_info(//_from_command_queue(
-    device, //command_queue,
+  cl_set_device_info( 
+    device,            
     CL_DEVICE_PLATFORM,
     sizeof(cl_platform_id),
     &platform,
@@ -930,102 +927,89 @@ void DevInfo::initialise(){
     "getting CL_DEVICE_PLATFORM in xyz",
     strict);
 
-
   OpenCLPlatformInfo platinfo(platform);
+  
+  oclutil::cl_set_device_info(device,
+                              CL_DEVICE_NAME,
+                              info_st.size(),
+                              &info_st[0],
+                              &info_size,
+                              "obtaining CL_DEVICE_NAME",
+                              strict);
 
-
-  //return cl_set_device_info(device,
-                            //param_name,
-                            //param_value_size,
-                            //param_value,
-                            //param_value_size_ret,
-                            //hash + " + (in set_device_info_from_command_queue)",
-                            //strict);
-                            
-
-
-  oclutil::cl_set_device_info(                device,
-                                              CL_DEVICE_NAME,
-                                              info_st.size(),
-                                              &info_st[0],
-                                              &info_size,
-                                              "obtaining CL_DEVICE_NAME",
-                                              strict);
-                                              
-                                              
   device_name = info_st.substr(0, info_size - 1);
   device_name = GetDeviceNameFromMap(device_name);
 
-cl_set_device_info(device,
-                                              CL_DEVICE_AVAILABLE,
-                                              sizeof(cl_bool),
-                                              &a_bool,
-                                              NULL,
-                                              "obtaining CL_DEVICE_AVAILABLE",
-                                              strict);
+  cl_set_device_info(device,
+                     CL_DEVICE_AVAILABLE,
+                     sizeof(cl_bool),
+                     &a_bool,
+                     NULL,
+                     "obtaining CL_DEVICE_AVAILABLE",
+                     strict);
   device_available = a_bool;
 
-cl_set_device_info(device,
-                                              CL_DEVICE_GLOBAL_MEM_SIZE,
-                                              sizeof(cl_ulong),
-                                              &a_ulong,
-                                              NULL,
-                                              "obtaining CL_DEVICE_GLOBAL_MEM_SIZE",
-                                              strict);
+  cl_set_device_info(device,
+                     CL_DEVICE_GLOBAL_MEM_SIZE,
+                     sizeof(cl_ulong),
+                     &a_ulong,
+                     NULL,
+                     "obtaining CL_DEVICE_GLOBAL_MEM_SIZE",
+                     strict);
   device_global_mem_size = a_ulong;
 
-cl_set_device_info(device,
-                                              CL_DEVICE_LOCAL_MEM_SIZE,
-                                              sizeof(cl_ulong),
-                                              &a_ulong,
-                                              NULL,
-                                              "obtaining CL_DEVICE_LOCAL_MEM_SIZE",
-                                              strict);
+  cl_set_device_info(device,
+                     CL_DEVICE_LOCAL_MEM_SIZE,
+                     sizeof(cl_ulong),
+                     &a_ulong,
+                     NULL,
+                     "obtaining CL_DEVICE_LOCAL_MEM_SIZE",
+                     strict);
   device_local_mem_size = a_ulong;
 
-cl_set_device_info(device,
-                                              CL_DEVICE_MAX_CLOCK_FREQUENCY,
-                                              sizeof(cl_uint),
-                                              &a_uint,
-                                              NULL,
-                                              "obtaining CL_DEVICE_MAX_CLOCK_FREQUENCY",
-                                              strict);
+  cl_set_device_info(device,
+                     CL_DEVICE_MAX_CLOCK_FREQUENCY,
+                     sizeof(cl_uint),
+                     &a_uint,
+                     NULL,
+                     "obtaining CL_DEVICE_MAX_CLOCK_FREQUENCY",
+                     strict);
   device_max_clock_frequency = a_uint;
 
-cl_set_device_info(device,
-                                              CL_DEVICE_MAX_COMPUTE_UNITS,
-                                              sizeof(cl_uint),
-                                              &a_uint,
-                                              NULL,
-                                              "obtaining CL_DEVICE_MAX_COMPUTE_UNITS",
-                                              strict);
+  cl_set_device_info(device,
+                     CL_DEVICE_MAX_COMPUTE_UNITS,
+                     sizeof(cl_uint),
+                     &a_uint,
+                     NULL,
+                     "obtaining CL_DEVICE_MAX_COMPUTE_UNITS",
+                     strict);
   device_max_compute_units = a_uint;
 
-cl_set_device_info(device,
-                                              CL_DEVICE_MAX_WORK_GROUP_SIZE,
-                                              sizeof(cl_ulong),
-                                              &a_ulong,
-                                              NULL,
-                                              "obtaining CL_DEVICE_MAX_WORK_GROUP_SIZE",
-                                              strict);
+  cl_set_device_info(device,
+                     CL_DEVICE_MAX_WORK_GROUP_SIZE,
+                     sizeof(cl_ulong),
+                     &a_ulong,
+                     NULL,
+                     "obtaining CL_DEVICE_MAX_WORK_GROUP_SIZE",
+                     strict);
   device_max_work_group_size = a_ulong;
 
-cl_set_device_info(device,
-                                              CL_DEVICE_VERSION,
-                                              info_st.size(),
-                                              &info_st[0],
-                                              &info_size,
-                                              "obtaining CL_DEVICE_VERSION",
-                                              strict);
+  cl_set_device_info(device,
+                     CL_DEVICE_VERSION,
+                     info_st.size(),
+                     &info_st[0],
+                     &info_size,
+                     "obtaining CL_DEVICE_VERSION",
+                     strict);
   device_version = info_st.substr(0, info_size - 1);
 
-cl_set_device_info(device,
-                                              CL_DRIVER_VERSION,
-                                              info_st.size(),
-                                              &info_st[0],
-                                              &info_size,
-                                              "obtaining CL_DRIVER_VERSION",
-                                              strict);
+  cl_set_device_info(device,
+                     CL_DRIVER_VERSION,
+                     info_st.size(),
+                     &info_st[0],
+                     &info_size,
+                     "obtaining CL_DRIVER_VERSION",
+                     strict);
   driver_version = info_st.substr(0, info_size - 1);
 
   if (platinfo.vendor.find("vidia") != std::string::npos ||
@@ -1055,7 +1039,7 @@ cl_set_device_info(device,
     throw miog_error(" has not been tested on any platform from vendor " + platinfo.vendor +
                      " yet. Are you sure you want to try "
                      "this ? If so, remove error message "
-                     "hyiar");
+                     "here ");
   }
 
   // setting identifier
@@ -1090,7 +1074,6 @@ cl_set_device_info(device,
   }
 }
 
-//DevInfo::DevInfo() { device_name = "unknown_default_constructed"; }
 
 std::string OpenCLPlatformInfo::get_string() const
 {
@@ -1106,7 +1089,6 @@ std::string OpenCLPlatformInfo::get_string() const
 std::string DevInfo::get_string() const
 {
   std::stringstream ss;
-  //ss << platinfo.get_string();
   ss << "device name : " << device_name << "\n";
   ss << "device version : " << device_version << "\n";
   ss << "driver version : " << driver_version << "\n";
@@ -1122,12 +1104,3 @@ std::string DevInfo::get_string() const
 }
 }
 }
-
-
-
-      //if (platinfo.vendor.find("NVIDIA") != std::string::npos ||
-          //platinfo.vendor.find("vidia") != std::string::npos)
-      //{
-        //platform                 = platforms[i];
-        //multi_platforms_resolved = true;
-      //}

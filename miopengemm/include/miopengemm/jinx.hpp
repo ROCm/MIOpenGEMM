@@ -4,7 +4,6 @@
 #ifndef GUARD_MIOPENGEMM_JINX_HPP
 #define GUARD_MIOPENGEMM_JINX_HPP
 
-
 #include <algorithm>
 #include <chrono>
 #include <iomanip>
@@ -29,28 +28,25 @@
 #include <miopengemm/stringutilbase.hpp>
 #include <miopengemm/timer.hpp>
 
-  
 namespace MIOpenGEMM
 {
 
+class FindTracker
+{
 
-class FindTracker{
-  
   private:
-  Timer timer;  
+  Timer  timer;
   size_t descents{0};
   size_t kernels{0};
-  
-  public:
-  void start();
-  void incr_descents();
-  void incr_kernels();
-  double get_elapsed() const;
-  size_t get_descents() const;
-  std::string get_string() const;
-  
-};
 
+  public:
+  void        start();
+  void        incr_descents();
+  void        incr_kernels();
+  double      get_elapsed() const;
+  size_t      get_descents() const;
+  std::string get_string() const;
+};
 
 class GpuMms
 {
@@ -69,11 +65,10 @@ class GpuMms
   cl_mem& operator[](Mem::E x);
 };
 
-
 class Jinx
 {
 
-  // TODO : miogemm class with interface to public jinx. 
+  // TODO : miogemm class with interface to public jinx.
   public:
   Jinx(cl_command_queue command_queue_,
        const Geometry   gg_,
@@ -85,7 +80,7 @@ class Jinx
        cl_mem           workspace_gpu_,
        owrite::Writer&  mowri_);
 
-  void benchgemm(const HyPas& hp, const Halt & hl);
+  void benchgemm(const HyPas& hp, const Halt& hl);
   Solution find(const Constraints& constraint, const FindParams& find_params);
 
   ///////////////////////////////////////////////////////////////////////////////////////////
@@ -98,30 +93,31 @@ class Jinx
   const oclutil::DevInfo devinfo;
   owrite::Writer&        mowri;
 
-  
   // (for single_descent_find) while generating, compiling and
   // benchmarking kernels, we will keep track of the
   // fastest found thus far
-  std::vector<Kernel>                                         tk_kernels;
-  std::vector<Kernel*>                                        tk_kernels_active;
-  std::vector<std::vector<size_t>>                            v_wait_indices;
-  
+  std::vector<Kernel>              tk_kernels;
+  std::vector<Kernel*>             tk_kernels_active;
+  std::vector<std::vector<size_t>> v_wait_indices;
 
   double get_gflops(double timems);
 
   std::string get_run_times_heading();
   std::string get_run_time_string(cl_int status);
-  
+
   void address_check_valid();
   void address_check_valid_and_reliable();
   void set_kern_args(const KernBlob& kblob);
 
   std::string get_run_time_string(cl_int status, double extime);
-      
-  void setup_tinykernels(const kerngen::Bundle& bundle);
-  Solution single_descent_find(double allotted_time, const Constraints&, const Halt& core_hl, FindTracker & ftrack, const FindParams &); //TODO FindParams should not be needed
-  oclutil::Result true_core(std::function<void(double, std::string)> acton, const Halt & hl);
 
+  void setup_tinykernels(const kerngen::Bundle& bundle);
+  Solution single_descent_find(double allotted_time,
+                               const Constraints&,
+                               const Halt&  core_hl,
+                               FindTracker& ftrack,
+                               const FindParams&);  // TODO FindParams should not be needed
+  oclutil::Result true_core(std::function<void(double, std::string)> acton, const Halt& hl);
 };
 }
 

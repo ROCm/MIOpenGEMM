@@ -18,7 +18,7 @@ class KernUses
   // summarises use of u_a, u_b, u_c
   std::string full;
 
-  //KType::E e_kerntype;
+  // KType::E e_kerntype;
 
   bool u_a;
   bool u_b;
@@ -29,37 +29,29 @@ class KernUses
 
   bool at(Mem::E emat_x) const;
 
-  KernUses(bool u_a_,
-             bool u_b_,
-             bool u_c_,
-             bool u_w_,
-             bool u_alpha_,
-             bool u_beta_);
+  KernUses(bool u_a_, bool u_b_, bool u_c_, bool u_w_, bool u_alpha_, bool u_beta_);
 
   KernUses() = default;
 };
 
-
 class KernBlob
 {
   public:
-  
-  
   KType::E e_ktype;
   // type : betac_alphab, betac_workspace, etc
-  KernUses  kuses;
+  KernUses    kuses;
   std::string kernstr;
   std::string fname;
 
   size_t global_work_size;
   size_t local_work_size;
 
-  KernBlob(KType::E e_ktype_,
-            const KernUses&  kuses_,
-               std::string&&      kernstr_,
-               const std::string& fname_,
-               size_t             global_work_size_,
-               size_t             local_work_size_)
+  KernBlob(KType::E           e_ktype_,
+           const KernUses&    kuses_,
+           std::string&&      kernstr_,
+           const std::string& fname_,
+           size_t             global_work_size_,
+           size_t             local_work_size_)
     : e_ktype(e_ktype_),
       kuses(kuses_),
       kernstr(kernstr_),

@@ -10,8 +10,8 @@
 #include <vector>
 #include <miopengemm/diva.hpp>
 #include <miopengemm/geometry.hpp>
-#include <miopengemm/solution.hpp>
 #include <miopengemm/oclutil.hpp>
+#include <miopengemm/solution.hpp>
 
 namespace MIOpenGEMM
 {
@@ -46,25 +46,25 @@ class Boa
       const TFloat*   b_,
       const TFloat*   c_,
       owrite::Writer& mowri_,
-      const CLHint & devhint)
+      const CLHint&   devhint)
   {
     get_up_moa<TFloat>().reset(new Diva<TFloat>(gg_, toff_, a_, b_, c_, mowri_, devhint));
     set_active_type<TFloat>();
   }
 
-  Boa(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint & devhint);
+  Boa(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint& devhint);
 
-  void benchgemm(const std::vector<HyPas>& hps, const Halt & hl);
+  void benchgemm(const std::vector<HyPas>& hps, const Halt& hl);
 
-  Solution find(const FindParams& find_params, const Constraints & constraints);
+  Solution find(const FindParams& find_params, const Constraints& constraints);
 
   template <typename TFloat>
-  void accuracy_test(const HyPas & hp, const TFloat* c_true_for_test)
+  void accuracy_test(const HyPas& hp, const TFloat* c_true_for_test)
   {
     get_up_moa<TFloat>->accuracy_test(hp, c_true_for_test);
   }
 
-  void accuracy_test(const HyPas & hp);
+  void accuracy_test(const HyPas& hp);
 };
 
 template <>

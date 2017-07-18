@@ -117,7 +117,6 @@ class Geometry
 
 Geometry get_null_geometry();
 
-
 template <typename TFloat>
 MIOpenGEMM::Geometry get_padded_geometry(
   bool isColMajor, bool tA, bool tB, bool tC, size_t m, size_t n, size_t k, size_t wSpaceSize)
