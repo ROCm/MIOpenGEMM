@@ -90,11 +90,13 @@ class Geometry
 
            
   // assumes isColMajor is true, tC is false, lda, ldb, ldc are minimal.
-  Geometry(bool   tA,
-           bool   tB,
-           size_t m,
+  Geometry(
+            size_t m,
            size_t n,
            size_t k,
+           bool   tA,
+           bool   tB,
+
            size_t wSpaceSize,
            char   floattype);
            
@@ -165,7 +167,9 @@ Geometry get_tight_geometry(
 }
 
 
-size_t get_mat_memsize(const Geometry& gg, const Offsets& toff, Mem::E emem);
+size_t get_mat_size(const Geometry& gg, const Offsets& toff, Mat::E emat);
+size_t get_mat_memsize(const Geometry& gg, const Offsets& toff, Mat::E emat);
+
 }
 
 #endif

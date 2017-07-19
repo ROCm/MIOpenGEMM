@@ -43,122 +43,100 @@ void fill_uni(std::vector<TFloat>& v, size_t r_small, size_t r_big)
   }
 }
 
-void set_nelmts_abc(const Geometry& gg, const Offsets& toff, size_t& n_a, size_t& n_b, size_t& n_c)
-{
-  n_a = gg.ldX[Mat::E::A] * (gg.tX[Mat::E::A] == gg.isColMajor ? gg.m : gg.k) +
-        toff.offsets[Mem::E::A] + toff.tails[Mem::E::A];
-  n_b = gg.ldX[Mat::E::B] * (gg.tX[Mat::E::B] == gg.isColMajor ? gg.k : gg.n) +
-        toff.offsets[Mem::E::B] + toff.tails[Mem::E::B];
-  n_c = gg.ldX[Mat::E::C] * (gg.tX[Mat::E::C] == gg.isColMajor ? gg.m : gg.n) +
-        toff.offsets[Mem::E::C] + toff.tails[Mem::E::C];
-}
-
 template <typename TFloat>
-void set_multigeom_abc(std::vector<TFloat>&         v_a,
-                       std::vector<TFloat>&         v_b,
-                       std::vector<TFloat>&         v_c,
+void set_multigeom_abc(
+                        const MatData<TFloat> & v_abc,
+        
                        const std::vector<Geometry>& ggs,
                        const Offsets&               toff)
 {
-
-  size_t n_a{0};
-  size_t n_b{0};
-  size_t n_c{0};
-  size_t tn_a, tn_b, tn_c;
-
-  for (auto& gg : ggs)
-  {
-    set_nelmts_abc(gg, toff, tn_a, tn_b, tn_c);
-    n_a = std::max(n_a, tn_a);
-    n_b = std::max(n_b, tn_b);
-    n_c = std::max(n_c, tn_c);
+  if (v_abc.size() != Mat::E::N){
+    throw miog_error("vector should contain Mat::E::N (3) pointers in set_multigeom_abc");
+  }
+  
+  std::vector<size_t> max_n(Mat::E::N, 0);
+  for (auto& gg : ggs){
+    if (gg.derived.float_size_bytes != sizeof(TFloat)){
+      throw miog_error("geometry is not of correct floattype in set_multigeom_abc");      
+    }
+    for (auto emat_x : {Mat::E::A, Mat::E::B, Mat::E::C}){
+      max_n[emat_x] = std::max<size_t>(max_n[emat_x], get_mat_size(gg, toff, emat_x));
+    }
   }
 
-  size_t n_elmnts_limit = std::numeric_limits<size_t>::max() / 2;
-  if (n_a > n_elmnts_limit || n_b > n_elmnts_limit || n_c > n_elmnts_limit)
-  {
-    std::stringstream ss;
-    ss << "currently, this code only generates random matrices of size less "
-       << "than " << n_elmnts_limit << " elements. The request here is for n_a=" << n_a
-       << " n_b=" << n_b << " n_c= " << n_c;
-    throw miog_error(ss.str());
+  size_t n_elmnts_limit = static_cast<size_t>(16e9/sizeof(TFloat));
+  for (auto emat_x : {Mat::E::A, Mat::E::B, Mat::E::C}){
+    if (max_n[emat_x] > n_elmnts_limit){
+      std::stringstream ss;
+      ss << "currently, this code only generates random matrices with fewer than "
+       << n_elmnts_limit << " elements. The request here is for " << Mat::M.name[emat_x]
+       << " to have " << max_n[emat_x] << "elements. ";
+      throw miog_error(ss.str());
+    }
   }
   // fill matrices with random floats.
   // Sometimes it seems to be important
   // to fill them with random floats,
   // as if they're integers, the kernel
-  // can sometimes cheat! (runs faster)
-  v_a.resize(n_a);
-  v_b.resize(n_b);
-  v_c.resize(n_c);
-
-  fill_uni<TFloat>(v_a, n_a - toff.tails[Mem::E::A], n_a);
-  fill_uni<TFloat>(v_b, n_b - toff.tails[Mem::E::B], n_b);
-  fill_uni<TFloat>(v_c, n_c - toff.tails[Mem::E::C], n_c);
+  // can sometimes  run faster.
+  
+  for (auto emat_x : {Mat::E::A, Mat::E::B, Mat::E::C}){
+    v_abc[emat_x]->resize(max_n[emat_x]);
+    auto emem_x = Mem::mat_to_mem(emat_x);
+    fill_uni<TFloat>(*v_abc[emat_x], max_n[emat_x] - toff.tails[emem_x], max_n[emat_x]);
+  }  
 }
 
 template <typename TFloat>
-void set_abc(std::vector<TFloat>& v_a,
-             std::vector<TFloat>& v_b,
-             std::vector<TFloat>& v_c,
+void set_abc(const MatData<TFloat> & v_abc,
              const Geometry&      gg,
              const Offsets&       toff)
 {
-  set_multigeom_abc(v_a, v_b, v_c, {gg}, toff);
+  set_multigeom_abc(v_abc, {gg}, toff);
 }
 
 template <typename TFloat>
-void set_abcw(std::vector<TFloat>& v_a,
-              std::vector<TFloat>& v_b,
-              std::vector<TFloat>& v_c,
-              std::vector<TFloat>& v_workspace,
+void set_abcw(const MatData<TFloat> & v_abcw,
               const Geometry&      gg,
               const Offsets&       toff)
 {
 
-  set_abc<TFloat>(v_a, v_b, v_c, gg, toff);
+  if (v_abcw.size() != Mem::E::N){
+    throw miog_error("vector should contain Mat::E::N (4) pointers in set_abcw");
+  }
+  
+  MatData<TFloat> v_abc = v_abcw;
+  v_abc.pop_back();
+  set_abc<TFloat>(v_abc, gg, toff);
 
+  // TODO : not the only place where this calcuation place is done. 
   size_t n_workspace = gg.wSpaceSize + toff.offsets[Mem::E::W] + toff.tails[Mem::E::W];
 
-  v_workspace.resize(n_workspace);
-  fill_uni(v_workspace, n_workspace, n_workspace);
+  v_abcw[Mem::E::W]->resize(n_workspace);
+  fill_uni(*(v_abcw[Mem::E::W]), n_workspace, n_workspace);
 }
 
-template void set_abc(std::vector<double>& v_a,
-                      std::vector<double>& v_b,
-                      std::vector<double>& v_c,
+template void set_abc(const MatData<double> & v_abc,
                       const Geometry&      gg,
                       const Offsets&       toff);
 
-template void set_abc(std::vector<float>& v_a,
-                      std::vector<float>& v_b,
-                      std::vector<float>& v_c,
+template void set_abc(const MatData<float> & v_abc,
                       const Geometry&     gg,
                       const Offsets&      toff);
 
-template void set_multigeom_abc(std::vector<double>& v_a,
-                                std::vector<double>& v_b,
-                                std::vector<double>& v_c,
+template void set_multigeom_abc(const MatData<double> & v_abc,
                                 const std::vector<Geometry>&,
                                 const Offsets& toff);
 
-template void set_multigeom_abc(std::vector<float>& v_a,
-                                std::vector<float>& v_b,
-                                std::vector<float>& v_c,
+template void set_multigeom_abc(const MatData<float> & v_abc,
                                 const std::vector<Geometry>&,
                                 const Offsets& toff);
 
-template void set_abcw(std::vector<double>& v_a,
-                       std::vector<double>& v_b,
-                       std::vector<double>& v_c,
-                       std::vector<double>& v_workspace,
+template void set_abcw(const MatData<double> & v_abcw,
                        const Geometry&      gg,
                        const Offsets&       toff);
 
-template void set_abcw(std::vector<float>& v_a,
-                       std::vector<float>& v_b,
-                       std::vector<float>& v_c,
-                       std::vector<float>& v_workspace,
+template void set_abcw(const MatData<float> & v_abcw,
                        const Geometry&     gg,
                        const Offsets&      toff);
 }

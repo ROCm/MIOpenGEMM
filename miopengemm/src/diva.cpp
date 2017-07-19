@@ -49,9 +49,10 @@ void Diva<TFl>::initialise_common()
   rw_perms[Mem::E::C] = CL_MEM_READ_WRITE;
   rw_perms[Mem::E::W] = CL_MEM_READ_WRITE;
 
-  for (auto emem : {Mem::E::A, Mem::E::B, Mem::E::C})
+  for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C})
   {
-    mem_size[emem] = get_mat_memsize(gg, toff, emem);
+    auto emem = Mem::mat_to_mem(emat);
+    mem_size[emem] = get_mat_memsize(gg, toff, emat);
   }
   mem_size[Mem::E::W] = get_workspace_memsize();
 
@@ -111,11 +112,21 @@ Diva<TFl>::Diva(Geometry        gg_,
   initialise_common();
 }
 
+
+template <typename TFl>
+Diva<TFl>::Diva(Geometry        gg_,
+                Offsets         toff_,
+                std::array<const TFl*, Mat::E::N> abc_,
+                owrite::Writer& mowri_,
+                const CLHint&   devhint): Diva(gg_, toff_, abc_[Mat::E::A], abc_[Mat::E::B], abc_[Mat::E::C], mowri_, devhint) {}
+
+
+
 template <typename TFl>
 void Diva<TFl>::initialise_cpu_mem_from_scratch()
 {
 
-  setabcw::set_abc(__cpu_mem[Mat::E::A], __cpu_mem[Mat::E::B], __cpu_mem[Mat::E::C], gg, toff);
+  setabcw::set_abc<TFl>({&__cpu_mem[Mat::E::A], &__cpu_mem[Mat::E::B], &__cpu_mem[Mat::E::C]}, gg, toff);
 
   for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C})
   {

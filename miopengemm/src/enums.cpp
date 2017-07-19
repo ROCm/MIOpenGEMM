@@ -152,6 +152,7 @@ std::vector<std::string> get_name()
   X[E::ACC] = "ACC";
   X[E::WRN] = "WRN";
   X[E::CCH] = "CCH";
+  X[E::BEN] = "BEN";
   return X;
 }
 const EnumMapper<std::string> M = get_enum_mapper<std::string>(get_name(), "OutPart");
@@ -170,6 +171,7 @@ std::vector<std::string> get_name()
   X[E::TRACK]    = "TRACK";
   X[E::STRACK]   = "STRACK";
   X[E::ACCURACY] = "ACCURACY";
+  X[E::MULTIBENCH] = "MULTIBENCH";  
   return X;
 }
 const EnumMapper<std::string> M = get_enum_mapper<std::string>(get_name(), "Ver");
@@ -335,6 +337,10 @@ std::array<std::array<bool, OutPart::E::N>, E::N> get_toTerm()
   // like terminal, but with dependency of kernels printed
   x[E::TERMWITHDEPS] = x[E::TERMINAL];
   x[E::TERMWITHDEPS][OutPart::E::DEP] = true;
+  
+  
+  x[E::MULTIBENCH][OutPart::E::BEN] = true;
+
 
   return x;
 }
@@ -369,6 +375,7 @@ std::array<bool, E::N> get_fileRequired()
   X[E::TRACK]        = false;
   X[E::STRACK]       = true;
   X[E::ACCURACY]     = false;
+  X[E::MULTIBENCH]   = false;
   return X;
 }
 const std::array<bool, E::N> fileRequired = get_fileRequired();

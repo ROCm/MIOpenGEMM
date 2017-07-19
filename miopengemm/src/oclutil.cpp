@@ -646,9 +646,9 @@ Result cl_set_platform_etc(cl_platform_id&    platform,
   device = devices[device_index];
 
   DevInfo findev(device);
-  mowri << "Using device " << findev.device_name << " @{[" << findev.device_max_compute_units
+  mowri << "Found device " << findev.device_name << " @{[" << findev.device_max_compute_units
         << " CUs]  [" << findev.device_max_clock_frequency << " GHz]}. "
-        << " Use a CLHint to change the device.\n";
+        << " Use/modify a CLHint to change.\n";
 
   return {};
 }
@@ -897,6 +897,8 @@ DevInfo::DevInfo(const cl_command_queue& command_queue)
 
   initialise();
 }
+
+DevInfo::DevInfo(const CLHint & hint, owrite::Writer & mowri):DevInfo(CommandQueueInContext(mowri, hint, "DevInfo from hint").command_queue){}
 
 DevInfo::DevInfo(const cl_device_id& device_)
 {

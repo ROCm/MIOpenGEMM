@@ -315,6 +315,8 @@ class DevInfo
   std::string get_string() const;
   DevInfo(const cl_command_queue& command_queue);
   DevInfo(const cl_device_id& device);
+  DevInfo(const CLHint & hint, owrite::Writer & mowri);
+  
 };
 }
 }

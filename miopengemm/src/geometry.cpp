@@ -14,21 +14,33 @@
 namespace MIOpenGEMM
 {
 
-Geometry::Geometry(bool tA_,
-           bool   tB_,
+Geometry::Geometry(
            size_t m_,
            size_t n_,
            size_t k_,
+           bool tA_,
+           bool   tB_,
            size_t wSpaceSize_,
-           char   floattype_):Geometry(true, tA_, tB_, false, tA_ ? k_ : m_, tB_ ? n_ : k_, m_, m_, n_, k_, wSpaceSize_, floattype_) {}
+           char   floattype_):
+           Geometry(true, tA_, tB_, false, 
+           tA_ ? k_ : m_, 
+           tB_ ? n_ : k_, 
+           m_, m_, n_, k_, 
+           wSpaceSize_, floattype_) {}
 
 
-size_t get_mat_memsize(const Geometry& gg, const Offsets& toff, Mem::E emem)
+size_t get_mat_size(const Geometry& gg, const Offsets& toff, Mat::E emat)
 {
-  Mat::E emat = Mat::mem_to_mat(emem);
-  return gg.derived.float_size_bytes *
-         (gg.get_padded_area(emat) + toff.offsets[emem] + toff.tails[emem]);
+  auto emem = Mem::mat_to_mem(emat);
+  return (gg.get_padded_area(emat) + toff.offsets[emem] + toff.tails[emem]);
 }
+
+
+size_t get_mat_memsize(const Geometry& gg, const Offsets& toff, Mat::E emat)
+{
+  return gg.derived.float_size_bytes * get_mat_size(gg, toff, emat);
+}
+
 
 Offsets::Offsets(
   size_t oa_, size_t ob_, size_t oc_, size_t ow_, size_t ta_, size_t tb_, size_t tc_, size_t tw_)

@@ -48,34 +48,7 @@ const KernelCache kernel_cache = get_kernel_cache();
 KernelCache get_kernel_cache()
 {
   KernelCache kc;
-
-  //#include "deepbench.cachetxt"
-
-kc.add(
-{"Fiji", // device 
-{"A_MIC8"},  // constraints
-{"tC0_tA0_tB0_colMaj1_m5000_n5000_k5000_lda5000_ldb5000_ldc5000_ws1_f32"}}, // geometry
-{{{ // hyperparam
-"MIC8_PAD2_PLU0_LIW0_MIW1_WOS0",
-"MIC6_PAD1_PLU0_LIW1_MIW0_WOS0",
-"UNR8_GAL2_PUN0_ICE1_NAW64_UFO0_MAC256_SKW10"}},
-{ //stats           
- 59.2006, 4222.93, 3.32959, "Sun May 14 12:29:44 2017", {3, 2, 1, 1e12, SummStat::E::MAX}}
-});
-
-
-kc.add(
-{"gfx803",  //device
-{"A_WOS0__B_WOS0"}, //constraints
-{"tC0_tA0_tB0_colMaj1_m5124_n9124_k2048_lda5124_ldb2048_ldc5124_ws1_f32"}}, //geometry
-{{{ //hyperparams
-"MIC8_PAD0_PLU0_LIW0_MIW1_WOS0",
-"MIC6_PAD1_PLU1_LIW1_MIW1_WOS0",
-"UNR8_GAL2_PUN1_ICE1_NAW64_UFO0_MAC256_SKW10"}},
-{ //stats
- 38.7336,4943.87,65.5205,"FriJun1623:41:572017", {360,40,3,1e12,SummStat::E::MAX}}};
-
-
+  #include "deepbench.cachetxt"
   return kc;
 }
 
@@ -104,10 +77,10 @@ void KernelCache::add(const CacheKey& ckey, const CachedSolution& tgcs)
   vals[ckey] = tgcs;
 }
 
-CachedSolution get_generic_solution(const Constraints& constraints, const Geometry&  gg)
-{
-  throw miog_error("get_generic_cached_solution not impled");
-}
+//CachedSolution get_generic_solution(const Constraints& constraints, const Geometry&  gg)
+//{
+  //throw miog_error("get_generic_cached_solution not impled");
+//}
 
 std::string CachedSolution::get_string() const
 {
@@ -119,24 +92,75 @@ std::string CachedSolution::get_string() const
 }
 
 
-std::vector<CacheKey> KernelCache::get_filtered(const std::vector<std::string> & device_frags, const std::vector<Geometry> & geometries) const{
-  
-  std::vector<CacheKey> filtered;
+std::vector<CacheKey> KernelCache::get_keys() const{
+  std::vector<CacheKey> keys;
   for (auto & x : vals){
     auto ck = std::get<0>(x);
-    if (std::find(geometries.begin(), geometries.end(), ck.gg) != geometries.end()){
-      for (const auto & frag : device_frags){
-        if (ck.dvc.find(frag) != std::string::npos) {
-          if (std::find(filtered.begin(), filtered.end(), ck) != filtered.end()){
-            filtered.push_back(ck);
-          }
-       }
-     }
-   }
- }
- return filtered;
-  
+    keys.push_back(ck);
+  }
+  return keys;
 }
+    
+  
+  //filtered(const std::vector<std::string> & device_frags, const std::vector<Geometry> & geometries) const{
+  
+  //std::vector<CacheKey> filtered;
+  //for (auto & x : vals){
+    //auto ck = std::get<0>(x);
+
+    ////for  (auto & C : geometries){
+      ////std::cout << C.get_string() << std::endl;
+    ////}
+    ////std::abort();
+
+    
+      //for (const auto & frag : device_frags){
+        //if (ck.dvc.find(frag) != std::string::npos) {
+          //if (std::find(filtered.begin(), filtered.end(), ck) == filtered.end()){
+            //filtered.push_back(ck);
+          //}
+       //}
+     //}
+   //}
+ //}
+ //return filtered;
+  
+//}
+
+void filter_device(std::vector<CacheKey> & cks, const std::vector<std::string> & device_frags){
+  std::vector<CacheKey> valid;
+  for (auto & ck : cks){
+    for (const auto & frag : device_frags){
+      if (ck.dvc.find(frag) != std::string::npos){
+        valid.push_back(ck);
+        break;
+      }
+    }
+  }
+  cks = std::move(valid);
+}
+
+void filter_geometries(std::vector<CacheKey> & cks, const std::vector<Geometry> & geometries){
+  std::vector<CacheKey> valid;
+  for (auto & ck : cks){
+    if (std::find(geometries.begin(), geometries.end(), ck.gg) != geometries.end()){
+      valid.push_back(ck);
+    }
+  }
+  cks = std::move(valid);
+}
+
+void filter_floattype(std::vector<CacheKey> & cks, size_t float_size_bytes){
+  std::vector<CacheKey> valid;
+  for (auto & ck : cks){
+    if (ck.gg.derived.float_size_bytes == float_size_bytes){
+      valid.push_back(ck);
+    }
+  }
+  cks = std::move(valid);
+}
+
+
 
 
 }

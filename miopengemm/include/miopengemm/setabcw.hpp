@@ -12,24 +12,21 @@ namespace setabcw
 {
 
 template <typename TFloat>
-void set_abc(std::vector<TFloat>& v_a,
-             std::vector<TFloat>& v_b,
-             std::vector<TFloat>& v_c,
-             const Geometry&      gg,
-             const Offsets&       toff);
+using MatData = std::vector<std::vector<TFloat> * >;
 
 template <typename TFloat>
-void set_multigeom_abc(std::vector<TFloat>& v_a,
-                       std::vector<TFloat>& v_b,
-                       std::vector<TFloat>& v_c,
+void set_abc(
+const MatData<TFloat> & v_abc,
+const Geometry& gg, 
+const Offsets& toff);
+
+template <typename TFloat>
+void set_multigeom_abc(const MatData<TFloat> & v_abc,
                        const std::vector<Geometry>&,
                        const Offsets& toff);
 
 template <typename TFloat>
-void set_abcw(std::vector<TFloat>& v_a,
-              std::vector<TFloat>& v_b,
-              std::vector<TFloat>& v_c,
-              std::vector<TFloat>& v_workspace,
+void set_abcw(const MatData<TFloat> & v_abcw,
               const Geometry&      gg,
               const Offsets&       toff);
 }

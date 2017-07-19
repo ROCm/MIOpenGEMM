@@ -170,6 +170,7 @@ enum E
   ACC,
   WRN,
   CCH,
+  BEN,
   N
 };
 extern const EnumMapper<std::string> M;
@@ -187,6 +188,7 @@ enum E
   STRACK,      // tracker output to terminal, main output to file
   ACCURACY,    // tracker and accuracy to terminal
   TERMWITHDEPS,    // like terminal, with additionally the dependencies between kernels
+  MULTIBENCH,
   N
 };
 extern const EnumMapper<std::string> M;

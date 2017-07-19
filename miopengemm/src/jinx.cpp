@@ -93,7 +93,7 @@ Jinx::Jinx(cl_command_queue command_queue_,
          c_gpu_,
          c_is_const,
          workspace_gpu_,
-         get_mat_memsize(gg, toff, Mem::E::C),
+         get_mat_memsize(gg, toff, Mat::E::C),
          command_queue_),
     devinfo(command_queue_),
     mowri(mowri_)
@@ -271,6 +271,8 @@ oclutil::Result Jinx::true_core(std::function<void(double, std::string)> acton, 
   Timer timer;
   timer.start();
 
+  std::vector<double> all_times;
+  
   while (!hl.halt(runi, timer.get_elapsed()))
   {
     // see `overheat' comment at bottom
@@ -339,7 +341,12 @@ oclutil::Result Jinx::true_core(std::function<void(double, std::string)> acton, 
     // act on the results string.
     acton(extime, get_run_time_string(oclr.success, extime));
     ++runi;
+    all_times.push_back(extime);
   }
+  
+  auto best_time = *std::min_element(all_times.begin(), all_times.end());
+  double gflops = get_gflops(best_time);
+  mowri.bw[OutPart::BEN] << gg.get_tabbed_string() << "  time[ms]:"  << stringutil::get_char_padded(best_time, 10) << "  gflops:" << gflops << Endl;
 
   return {};
 }

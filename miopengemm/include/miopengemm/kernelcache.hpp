@@ -81,8 +81,14 @@ class KernelCache
   
   
   // TODO : implement this and use it in runcache. 
-  std::vector<CacheKey> get_filtered(const std::vector<std::string> & device_frags, const std::vector<Geometry> & geometries)  const;
+  std::vector<CacheKey> get_keys()  const;
 };
+
+
+void filter_device(std::vector<CacheKey> &, const std::vector<std::string> & device_frags);
+void filter_geometries(std::vector<CacheKey> &, const std::vector<Geometry> & geometries);
+void filter_floattype(std::vector<CacheKey> &, size_t);
+
 
 
 
