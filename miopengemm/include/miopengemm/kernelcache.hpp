@@ -23,28 +23,27 @@ class CacheKeyPresence
 
 class CacheKey
 {
-
-  private:
-    
-  std::string dvc;
-  Constraints constraints;
-  Geometry gg;
-  std::string concatenated;  
-
-
   public:
+  const std::string dvc;
+  const Constraints constraints;
+  const Geometry gg;  
+  const std::string concatenated;
+  
 
-  std::string get_concatenated() const{
-    return concatenated;
-  }
+  //std::string get_concatenated() const{
+    //return concatenated;
+  //}
  
   bool operator==(const CacheKey & rhs) const{
     return concatenated == rhs.concatenated;
   }
   
+  
   CacheKey(const std::string&, const Constraints&, const Geometry&);
   std::string get_string() const;
 };
+
+
 
 class CacheKeyHash{
   private:
@@ -72,24 +71,27 @@ class CachedSolution
 
 class KernelCache
 {
-  // TODO : ordered vs unordered maps
   private:
-  using St = std::string;
-  //std::map<St, std::unordered_map<St, std::map<St, CachedSolution>>> vals;
   std::unordered_map<CacheKey, CachedSolution, CacheKeyHash> vals;
-
+  
   public:
   CacheKeyPresence check_for(const CacheKey& ck) const;
   CachedSolution at(const CacheKey& ck) const;
   void add(const CacheKey& ckey, const CachedSolution& tgcs);
+  
+  
+  // TODO : implement this and use it in runcache. 
+  std::vector<CacheKey> get_filtered(const std::vector<std::string> & device_frags, const std::vector<Geometry> & geometries)  const;
 };
+
+
+
 
 KernelCache get_kernel_cache();
 
 CachedSolution get_generic_cached_solution(const Constraints& constraints,
-                                           const Geometry&    gg);
+                                           const Geometry&  gg);
 
-// [device][constraint][geometry] -> cached solution
 extern const KernelCache kernel_cache;
 
 }

@@ -372,4 +372,20 @@ std::string Geometry::get_tabbed_string() const
 }
 
 size_t Geometry::get_padded_area(Mat::E M) const { return get_uncoal(M) * ldX[M]; }
+
+
+// Safer would be compare via get_string(), assuming get_string() is comprehensive.
+bool Geometry::operator==(const Geometry& rhs) const{
+  return 
+    (isColMajor == rhs.isColMajor 
+    && tX == rhs.tX 
+    && ldX == rhs.ldX
+    && m == rhs.m 
+    && n == rhs.n 
+    && k == rhs.k
+    && wSpaceSize == rhs.wSpaceSize
+    && floattype == rhs.floattype);
+}
+
+
 }

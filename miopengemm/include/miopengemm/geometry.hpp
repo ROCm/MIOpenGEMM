@@ -51,6 +51,8 @@ class Geometry
                   size_t wSpaceSize_,
                   char   floattype_);
 
+
+
   public:
   bool isColMajor;
 
@@ -103,6 +105,8 @@ class Geometry
   Geometry(std::string geometry_string);
 
   Geometry& operator=(const Geometry&) = default;
+
+  bool operator==(const Geometry&) const;
 
   size_t get_padless_dim(Mat::E M, bool isCoal) const;
 

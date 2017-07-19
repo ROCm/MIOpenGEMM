@@ -4,39 +4,24 @@
 #include <string>
 #include <miopengemm/devmiogemm.hpp>
 #include <miopengemm/kernelcache.hpp>
-  
+#include <miopengemm/geometries.hpp>
 
 int main(){  
   using namespace MIOpenGEMM;
 
+  Offsets offsets = get_padding_offsets();
 
-  auto bla = kernel_cache.check_for({"gfx803",
-"A_WOS0__B_WOS0",
-"tC0_tA0_tB0_colMaj0_m28_n2048_k2048_lda2048_ldb2048_ldc2048_ws5000000_f32",
-""});
-
-  std::cout << bla.msg;
+  owrite::Writer mowri(Ver::E::TRACK, "");
+  CLHint devhint;
+  auto cache_keys = kernel_cache.get_filtered({""}, get_deepbench(0));
+  
+  for (auto & ck : cache_keys){
+    auto soln = kernel_cache.at(ck);
+    dev::Boa boa(ck.gg, offsets, mowri, devhint);  
+    boa.benchgemm({soln.hp},{5, 10.});    
+  }
   return 0;
 }
 
 
-  //std::string dvc;  // device
-  //std::string cns;  // constraint
-  //std::string geo;  // geometry
-  //std::string cmm;  // comment
-  //CacheKey(const std::string&, const std::string&, const std::string&, const std::string&);
 
-
-  //Geometry gg();
-  //Constraints constraints("A_MIC1_PAD1_PLU0_LIW0_MIW1_WOS2__C_ICE3");
-  //FindParams find_params(100, 2., 3, 1., SummStat::E::MEDIAN);
-  //Offsets offsets = get_padding_offsets();
-  //owrite::Writer mowri(Ver::E::TRACK, "");
-  //CLHint devhint;
-  //dev::Boa boa(gg, offsets, mowri, devhint);  
-  //Solution soln = boa.find(find_params, constraints);    
-  
-  //std::cout << " \n\n\nThe following string can be cut and paste into kernelcache.cpp";
-  //std::cout << " \n\n-- snip -- -- -- snip --\n\n";
-  //std::cout << soln.get_cache_entry_string();
-  //std::cout << " -- snip -- -- -- snip --\n\n";
