@@ -49,7 +49,7 @@ KernelCache get_kernel_cache()
 {
   KernelCache kc;
 
-  #include "deepbench.cachetxt"
+  //#include "deepbench.cachetxt"
 
 kc.add(
 {"Fiji", // device 
@@ -62,6 +62,19 @@ kc.add(
 { //stats           
  59.2006, 4222.93, 3.32959, "Sun May 14 12:29:44 2017", {3, 2, 1, 1e12, SummStat::E::MAX}}
 });
+
+
+kc.add(
+{"gfx803",  //device
+{"A_WOS0__B_WOS0"}, //constraints
+{"tC0_tA0_tB0_colMaj1_m5124_n9124_k2048_lda5124_ldb2048_ldc5124_ws1_f32"}}, //geometry
+{{{ //hyperparams
+"MIC8_PAD0_PLU0_LIW0_MIW1_WOS0",
+"MIC6_PAD1_PLU1_LIW1_MIW1_WOS0",
+"UNR8_GAL2_PUN1_ICE1_NAW64_UFO0_MAC256_SKW10"}},
+{ //stats
+ 38.7336,4943.87,65.5205,"FriJun1623:41:572017", {360,40,3,1e12,SummStat::E::MAX}}};
+
 
   return kc;
 }
