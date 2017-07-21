@@ -417,23 +417,26 @@ DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_) : ptr_hp(&hp
                                    ? 1
                                    : 0;
 
+
   tints[Mem::E::A] = get_tint(ptr_gg->get_uncoal(Mat::E::A) *
-                              (ptr_gg->ldX[Mat::E::A]));  // TODO : does UFO need increase here
+                              (ptr_gg->ldX[Mat::E::A]));  // TODO : does UFO need increase here ? 
   tints[Mem::E::B] = get_tint(ptr_gg->get_uncoal(Mat::E::B) * (ptr_gg->ldX[Mat::E::B]));
   tints[Mem::E::C] = get_tint(ptr_gg->get_uncoal(Mat::E::C) * (ptr_gg->ldX[Mat::E::C]));
   tints[Mem::E::W] = get_tint(ptr_gg->wSpaceSize);
-
-  tintk            = get_tint(
-    ptr_gg->k +
+  tintk            = get_tint( ptr_gg->k +
     2 * ptr_hp->sus[Mat::E::C].vs[NonChi::E::ICE] * ptr_hp->sus[Mat::E::C].vs[NonChi::E::UNR]);  // TODO : make this tight and prove correct.
+  
+  if (ptr_hp->sus[Mat::E::C].vs[NonChi::E::SZT] == true){
+    tints[Mem::E::A] = "size_t";
+    tints[Mem::E::B] = "size_t";
+    tints[Mem::E::C] = "size_t";
+    tints[Mem::E::W] = "size_t";
+    tintk            = "size_t";
+  }
+  
   tshort = "ushort";
+  
 
-  //tints[Mem::E::A] = "size_t";
-  //tints[Mem::E::B] = "size_t";
-  //tints[Mem::E::C] = "size_t";
-  //tints[Mem::E::W] = "size_t";
-  //tintk            = "size_t";
-  //tshort           = "size_t";
 }
 
 /* TODO : move to hyper params */

@@ -94,6 +94,7 @@ enum E
   PUN,
   ICE,
   IWI,
+  SZT,
   NAW,
   UFO,
   MAC,

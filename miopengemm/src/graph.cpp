@@ -130,6 +130,27 @@ std::vector<HyPas> Graph::get_mic_mac_transformed(const HyPas& hp0) const
   return mmt;
 }
 
+
+// TODO : where should this function go ?
+bool has_no_effect(const HyPas & hp0, Mat::E emat_x, size_t i){
+  // if GAL is not SUCOL, then NAW has no effect.
+  if (hp0.sus.at(Mat::E::C).vs[NonChi::E::GAL] != GroupAllocation::E::SUCOL){
+    if (emat_x == Mat::E::C && i == NonChi::E::NAW){
+      return true;
+    }
+  }
+  
+  // if ICE is 1, the IWI has no effect
+  if (hp0.sus.at(Mat::E::C).vs[NonChi::E::ICE] == 1){
+    if (emat_x == Mat::E::C && i == NonChi::E::IWI){
+      return true;
+    }    
+  }
+  return false;
+}
+
+
+
 std::vector<HyPas> Graph::get_one_aways(const HyPas& hp0) const
 {
 
@@ -143,15 +164,19 @@ std::vector<HyPas> Graph::get_one_aways(const HyPas& hp0) const
       size_t v0 = hp0.sus[emat].vs.at(i);
       for (auto& x : at(emat).edges.at(i).at(v0))
       {
-        HyPas hp1(hp0);
-        hp1.sus[emat].vs[i] = x;
-        one_aways.push_back(hp1);
+        // has_no_effect : like NAW when GAL != 3. 
+        if (!has_no_effect(hp0, emat, i)){
+          HyPas hp1(hp0);
+          hp1.sus[emat].vs[i] = x;
+          one_aways.push_back(hp1);
+        }
       }
     }
   }
 
   return one_aways;
 }
+
 
 std::string get_location_string(Mat::E emat, size_t hpi)
 {
@@ -533,6 +558,7 @@ void CSuGr::initialise_edges()
   edges[NonChi::E::PUN] = {g_binary};
   edges[NonChi::E::IWI] = {g_binary};
   edges[NonChi::E::UFO] = {g_binary};
+  edges[NonChi::E::SZT] = {g_binary};
 }
 
 void ChiSuGr::refine_start_range()
@@ -550,7 +576,9 @@ void CSuGr::refine_start_range()
 
   start_range[NonChi::E::UNR] = {8, 16};
   start_range[NonChi::E::ICE] = {1};
+  start_range[NonChi::E::IWI] = {Binary::E::YES};
   start_range[NonChi::E::UFO] = {Binary::E::NO};
+  start_range[NonChi::E::SZT] = {Binary::E::NO};
 
   if ((ptr_gg->m) > 200 && (ptr_gg->n) > 200)
   {

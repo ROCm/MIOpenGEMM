@@ -22,7 +22,6 @@
 /* TODO : float4 */
 /* TODO : volatile int id (Nugteren) to prevent unrolling */
 /* TODO : play with restrict keyword */
-/* TODO : add ICE > 1 with non-interwoven partitioning */
 
 namespace MIOpenGEMM
 {

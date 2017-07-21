@@ -13,7 +13,7 @@ int main()
   bool test_accuracy_of_soln = false;
   bool bench_the_soln        = false;
 
-  Geometry       gg("tC0_tA0_tB0_colMaj1_m400_n400_k400_lda8448_ldb2816_ldc8448_ws0_f32");
+  Geometry       gg("tC0_tA0_tB0_colMaj1_m400_n400_k3000_lda8448_ldb12816_ldc8448_ws0_f32");
   CLHint         devhint;
   Offsets        offsets = get_zero_offsets();
   owrite::Writer mowri(Ver::E::TERMINAL, "");
