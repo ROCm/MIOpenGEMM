@@ -1109,16 +1109,9 @@ TINTK k_plus_offset = __K__ + unroll_offset;
             dp.main_n_work_items_per_workgroup};
   }
 
+  virtual size_t get_local_work_size() override final { return dp.main_n_work_items_per_workgroup; }
 
-  virtual size_t get_local_work_size() override final{
-    return dp.main_n_work_items_per_workgroup;
-  }
-  
-  virtual size_t get_n_work_groups() override final{
-    return dp.main_n_work_groups;
-  }
- 
- 
+  virtual size_t get_n_work_groups() override final { return dp.main_n_work_groups; }
 
   virtual void set_type() override final
   {

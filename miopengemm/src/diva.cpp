@@ -51,7 +51,7 @@ void Diva<TFl>::initialise_common()
 
   for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C})
   {
-    auto emem = Mem::mat_to_mem(emat);
+    auto emem      = Mem::mat_to_mem(emat);
     mem_size[emem] = get_mat_memsize(gg, toff, emat);
   }
   mem_size[Mem::E::W] = get_workspace_memsize();
@@ -112,21 +112,22 @@ Diva<TFl>::Diva(Geometry        gg_,
   initialise_common();
 }
 
-
 template <typename TFl>
-Diva<TFl>::Diva(Geometry        gg_,
-                Offsets         toff_,
+Diva<TFl>::Diva(Geometry gg_,
+                Offsets  toff_,
                 std::array<const TFl*, Mat::E::N> abc_,
                 owrite::Writer& mowri_,
-                const CLHint&   devhint): Diva(gg_, toff_, abc_[Mat::E::A], abc_[Mat::E::B], abc_[Mat::E::C], mowri_, devhint) {}
-
-
+                const CLHint&   devhint)
+  : Diva(gg_, toff_, abc_[Mat::E::A], abc_[Mat::E::B], abc_[Mat::E::C], mowri_, devhint)
+{
+}
 
 template <typename TFl>
 void Diva<TFl>::initialise_cpu_mem_from_scratch()
 {
 
-  setabcw::set_abc<TFl>({&__cpu_mem[Mat::E::A], &__cpu_mem[Mat::E::B], &__cpu_mem[Mat::E::C]}, gg, toff);
+  setabcw::set_abc<TFl>(
+    {&__cpu_mem[Mat::E::A], &__cpu_mem[Mat::E::B], &__cpu_mem[Mat::E::C]}, gg, toff);
 
   for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C})
   {
@@ -147,7 +148,7 @@ Diva<TFl>::Diva(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHin
 template <typename TFl>
 size_t Diva<TFl>::get_workspace_memsize()
 {
-  return (gg.wSpaceSize + toff.offsets[Mem::E::W] + toff.tails[Mem::E::W]) * sizeof(TFl);
+  return get_total_workspace(gg, toff) * sizeof(TFl);
 }
 
 template <typename TFl>
@@ -231,7 +232,7 @@ void Diva<TFl>::accuracy_test(const HyPas& hp, const TFl* c_true_for_test)
     1, &event_write_c_to_gpu, "in accuracy test, waiting GEMM gpu ", true);
 
   // run gemm once on the gpu
-  benchgemm({hp}, {1, 1e12});
+  benchgemm({hp}, {{0, 1}, {0, 1e12}});
 
   // read the result to c_copy on the cpu
   cl_event event_read_c_back;

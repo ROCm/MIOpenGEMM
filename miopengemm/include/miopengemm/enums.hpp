@@ -59,6 +59,17 @@ enum E
 extern const EnumMapper<std::string> M;
 }
 
+namespace Xtr
+{
+enum E
+{
+  MIN = 0,
+  MAX,
+  N
+};
+extern const EnumMapper<std::string> M;
+}
+
 namespace Chi
 {
 enum E
@@ -180,14 +191,14 @@ namespace Ver
 {
 enum E
 {
-  SILENT = 0,  // no output anywhere, absolute silence
-  TERMINAL,    // all output to terminal, other than tracker
-  SPLIT,       // main output to terminal and file
-  TOFILE,      // main output to file
-  TRACK,       // tracker output to terminal
-  STRACK,      // tracker output to terminal, main output to file
-  ACCURACY,    // tracker and accuracy to terminal
-  TERMWITHDEPS,    // like terminal, with additionally the dependencies between kernels
+  SILENT = 0,    // no output anywhere, absolute silence
+  TERMINAL,      // all output to terminal, other than tracker
+  SPLIT,         // main output to terminal and file
+  TOFILE,        // main output to file
+  TRACK,         // tracker output to terminal
+  STRACK,        // tracker output to terminal, main output to file
+  ACCURACY,      // tracker and accuracy to terminal
+  TERMWITHDEPS,  // like terminal, with additionally the dependencies between kernels
   MULTIBENCH,
   N
 };
@@ -214,8 +225,6 @@ extern const EnumMapper<std::string> M;
 // as all of these must first complete
 // before MAIN can execute
 extern std::array<std::vector<size_t>, E::N> dependencies;
-
-
 }
 }
 

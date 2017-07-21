@@ -42,7 +42,6 @@ class Grid
   Grid(size_t mac, size_t skew);
   size_t at(Mat::E emat);
 };
-
 }
 }
 

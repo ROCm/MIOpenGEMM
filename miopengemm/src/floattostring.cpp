@@ -12,25 +12,25 @@ namespace floattostring
 std::string float_string_type(double x)
 {
   // Keeping -Wunused-parameter warning quiet
-  (void)x; 
+  (void)x;
   return "double";
 }
 
 std::string float_string_type(float x)
 {
-  (void)x; 
+  (void)x;
   return "float";
 }
 
 char float_char_type(double x)
 {
-  (void)x; 
+  (void)x;
   return 'd';
 }
 
 char float_char_type(float x)
 {
-  (void)x; 
+  (void)x;
   return 'f';
 }
 

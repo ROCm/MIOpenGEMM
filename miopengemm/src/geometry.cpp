@@ -15,19 +15,11 @@ namespace MIOpenGEMM
 {
 
 Geometry::Geometry(
-           size_t m_,
-           size_t n_,
-           size_t k_,
-           bool tA_,
-           bool   tB_,
-           size_t wSpaceSize_,
-           char   floattype_):
-           Geometry(true, tA_, tB_, false, 
-           tA_ ? k_ : m_, 
-           tB_ ? n_ : k_, 
-           m_, m_, n_, k_, 
-           wSpaceSize_, floattype_) {}
-
+  size_t m_, size_t n_, size_t k_, bool tA_, bool tB_, size_t wSpaceSize_, char floattype_)
+  : Geometry(
+      true, tA_, tB_, false, tA_ ? k_ : m_, tB_ ? n_ : k_, m_, m_, n_, k_, wSpaceSize_, floattype_)
+{
+}
 
 size_t get_mat_size(const Geometry& gg, const Offsets& toff, Mat::E emat)
 {
@@ -35,12 +27,10 @@ size_t get_mat_size(const Geometry& gg, const Offsets& toff, Mat::E emat)
   return (gg.get_padded_area(emat) + toff.offsets[emem] + toff.tails[emem]);
 }
 
-
 size_t get_mat_memsize(const Geometry& gg, const Offsets& toff, Mat::E emat)
 {
   return gg.derived.float_size_bytes * get_mat_size(gg, toff, emat);
 }
-
 
 Offsets::Offsets(
   size_t oa_, size_t ob_, size_t oc_, size_t ow_, size_t ta_, size_t tb_, size_t tc_, size_t tw_)
@@ -192,8 +182,7 @@ void Geometry::check_ldx_consistent() const
             << "mkl-developer-reference-c-cblas-gemm.  "
             << "\n\n"
             << "The particular geometry received by in geometry "
-            << "check_ldx_consistent is  " << get_string()
-            << ", and the problems detected are:  ";
+            << "check_ldx_consistent is  " << get_string() << ", and the problems detected are:  ";
 
     for (auto x : {Mat::E::A, Mat::E::B, Mat::E::C})
     {
@@ -207,7 +196,6 @@ void Geometry::check_ldx_consistent() const
     throw miog_error(errm_ss.str());
   }
 }
-
 
 size_t Geometry::get_uncoal(Mat::E M) const { return get_padless_dim(M, false); }
 
@@ -261,6 +249,10 @@ void Geometry::initialise(bool   isColMajor_,
   check_ldx_consistent();
 
   derived.reset(floattype);
+
+  metric_co[0] = std::log2(static_cast<double>(k));
+  metric_co[1] = std::log2(static_cast<double>(m)) - std::log2(static_cast<double>(n));
+  metric_co[2] = std::log2(static_cast<double>(m)) + std::log2(static_cast<double>(n));
 }
 
 Geometry::Geometry(bool   isColMajor_,
@@ -372,12 +364,12 @@ std::string Geometry::get_tabbed_string() const
   std::stringstream geometry_stringstream;
   geometry_stringstream << "tC=" << tX[Mat::E::C] << " tA=" << tX[Mat::E::A]
                         << " tB=" << tX[Mat::E::B] << " colMaj=" << isColMajor
-                        << " m=" << stringutil::get_char_padded(m, 5)
-                        << " n=" << stringutil::get_char_padded(n, 5)
-                        << " k=" << stringutil::get_char_padded(k, 5)
-                        << " lda=" << stringutil::get_char_padded(ldX[Mat::E::A], 5)
-                        << " ldb=" << stringutil::get_char_padded(ldX[Mat::E::B], 5)
-                        << " ldc=" << stringutil::get_char_padded(ldX[Mat::E::C], 5)
+                        << " m=" << stringutil::get_char_padded(m, 6)
+                        << " n=" << stringutil::get_char_padded(n, 6)
+                        << " k=" << stringutil::get_char_padded(k, 6)
+                        << " lda=" << stringutil::get_char_padded(ldX[Mat::E::A], 6)
+                        << " ldb=" << stringutil::get_char_padded(ldX[Mat::E::B], 6)
+                        << " ldc=" << stringutil::get_char_padded(ldX[Mat::E::C], 6)
                         << " ws=" << wSpaceSize << " f=" << derived.float_size_bits;
 
   return geometry_stringstream.str();
@@ -385,19 +377,38 @@ std::string Geometry::get_tabbed_string() const
 
 size_t Geometry::get_padded_area(Mat::E M) const { return get_uncoal(M) * ldX[M]; }
 
-
 // Safer would be compare via get_string(), assuming get_string() is comprehensive.
-bool Geometry::operator==(const Geometry& rhs) const{
-  return 
-    (isColMajor == rhs.isColMajor 
-    && tX == rhs.tX 
-    && ldX == rhs.ldX
-    && m == rhs.m 
-    && n == rhs.n 
-    && k == rhs.k
-    && wSpaceSize == rhs.wSpaceSize
-    && floattype == rhs.floattype);
+bool Geometry::operator==(const Geometry& rhs) const
+{
+  return (isColMajor == rhs.isColMajor && tX == rhs.tX && ldX == rhs.ldX && m == rhs.m &&
+          n == rhs.n && k == rhs.k && wSpaceSize == rhs.wSpaceSize && floattype == rhs.floattype);
 }
 
+double Geometry::get_gflops(double extime) const { return (2. * m * n * k) / (extime * 10e5); }
 
+bool Geometry::same_transposes(const Geometry& g2) const
+{
+  return ((tX == g2.tX) && (isColMajor == g2.isColMajor));
+}
+
+double Geometry::get_distance(const Geometry& g2) const
+{
+
+  if (same_transposes(g2) == false)
+  {
+    return std::numeric_limits<double>::max();
+  }
+
+  double distance = 0;
+  for (unsigned i = 0; i < 3; ++i)
+  {
+    distance += std::abs(metric_co[i] - g2.metric_co[i]);
+  }
+  return distance;
+}
+
+size_t get_total_workspace(const Geometry& gg, const Offsets& toff)
+{
+  return gg.wSpaceSize + toff.offsets[Mem::E::W] + toff.tails[Mem::E::W];
+}
 }

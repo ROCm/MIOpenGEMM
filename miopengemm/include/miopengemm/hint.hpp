@@ -28,20 +28,21 @@ class BasicHint
   virtual std::string get_description() const = 0;
 };
 
-class PlatformHint : public BasicHint{
+class PlatformHint : public BasicHint
+{
   public:
-  virtual std::string get_description() const override final { return "platforms";}  
+  virtual std::string get_description() const override final { return "platforms"; }
   PlatformHint() = default;
-  PlatformHint(size_t id_, const std::vector<std::string>& matches_):BasicHint(id_, matches_) {}
+  PlatformHint(size_t id_, const std::vector<std::string>& matches_) : BasicHint(id_, matches_) {}
 };
 
-class DeviceHint : public BasicHint{
+class DeviceHint : public BasicHint
+{
   public:
-  virtual std::string get_description() const override final { return "devices";}  
+  virtual std::string get_description() const override final { return "devices"; }
   DeviceHint() = default;
-  DeviceHint(size_t id_, const std::vector<std::string>& matches_):BasicHint(id_, matches_) {}
+  DeviceHint(size_t id_, const std::vector<std::string>& matches_) : BasicHint(id_, matches_) {}
 };
-
 
 class CLHint
 {

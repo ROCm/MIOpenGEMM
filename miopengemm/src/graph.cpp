@@ -11,9 +11,8 @@
 #include <miopengemm/stringutilbase.hpp>
 #include <miopengemm/timer.hpp>
 
-
-// TODO : run an example, and print the examples which failed to be viable in the 
-// search for a viable start. It might help in improving the initial graph. 
+// TODO : run an example, and print the examples which failed to be viable in the
+// search for a viable start. It might help in improving the initial graph.
 namespace MIOpenGEMM
 {
 
@@ -246,7 +245,6 @@ void Graph::checks() const
 void SuGr::apply_constraint()
 {
 
-
   // range logic :
   // simply replace with unique value x, edges is {x:{}}.
   // it overrides start_range
@@ -270,10 +268,10 @@ void SuGr::apply_constraint()
 
       size_t new_unique_start = ptr_constraint->start_range[i];
       if (std::find(range[i].begin(), range[i].end(), new_unique_start) == range[i].end())
-      {    
+      {
         std::stringstream errm;
         errm << "start_range constraint not possible, as it does not belong to range. ";
-        errm << "start_range of a Graph must be a subset of its range."; 
+        errm << "start_range of a Graph must be a subset of its range.";
         errm << "Constraint range string :\n " << ptr_constraint->get_r_str() << '\n';
         errm << "Constraint start range string :\n " << ptr_constraint->get_sr_str() << '\n';
         errm << get_string(i) << "\n";

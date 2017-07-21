@@ -31,13 +31,18 @@ void Kernel::try_release()
 oclutil::Result Kernel::update(const KernBlob& ks, owrite::Writer& mowri)
 {
 
+  oclutil::Result oclr;
+
+  // for (unsigned i = 0; i < 2000; ++i)
+  //{
+
   try_release();
   kblob = ks;
   mowri << "compiling " << KType::M.name[kblob.e_ktype] << ". " << Flush;
 
   auto start = std::chrono::high_resolution_clock::now();
 
-  auto oclr = oclutil::cl_set_program_and_kernel(
+  oclr = oclutil::cl_set_program_and_kernel(
     command_queue, kblob.kernstr, kblob.fname, clprog, clkern, mowri, false);
 
   auto                         end             = std::chrono::high_resolution_clock::now();
@@ -54,6 +59,8 @@ oclutil::Result Kernel::update(const KernBlob& ks, owrite::Writer& mowri)
     mowri << "Done in " << std::setprecision(3) << elapsed_seconds << std::setprecision(6) << " [s]"
           << Endl;
   }
+
+  //}
   return oclr;
 }
 

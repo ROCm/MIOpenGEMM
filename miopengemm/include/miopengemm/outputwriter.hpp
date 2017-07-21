@@ -63,7 +63,7 @@ class Writer
   private:
   Ver::E      v;
   std::string filename;
-  void initialise_file();
+  void        initialise_file();
 
   public:
   std::ofstream file;

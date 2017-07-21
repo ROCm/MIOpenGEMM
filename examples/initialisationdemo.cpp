@@ -1,7 +1,7 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
-#include <CL/cl.h>	
+#include <CL/cl.h>
 #include <chrono>
 #include <iostream>
 #include <stdexcept>

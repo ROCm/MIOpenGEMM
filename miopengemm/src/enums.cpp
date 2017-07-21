@@ -125,6 +125,18 @@ std::vector<std::string> get_name()
 const EnumMapper<std::string> M = get_enum_mapper<std::string>(get_name(), "SummStat");
 }
 
+namespace Xtr
+{
+std::vector<std::string> get_name()
+{
+  std::vector<std::string> X(E::N, unfilled<std::string>());
+  X[E::MIN] = "MIN";
+  X[E::MAX] = "MAX";
+  return X;
+}
+const EnumMapper<std::string> M = get_enum_mapper<std::string>(get_name(), "Xtr");
+}
+
 namespace Chi
 {
 std::vector<std::string> get_name()
@@ -163,15 +175,15 @@ namespace Ver
 std::vector<std::string> get_name()
 {
   std::vector<std::string> X(E::N, unfilled<std::string>());
-  X[E::SILENT]   = "SILENT";
-  X[E::TERMINAL] = "TERMINAL";
+  X[E::SILENT]       = "SILENT";
+  X[E::TERMINAL]     = "TERMINAL";
   X[E::TERMWITHDEPS] = "TERMWITHDEPS";
-  X[E::SPLIT]    = "SPLIT";
-  X[E::TOFILE]   = "TOFILE";
-  X[E::TRACK]    = "TRACK";
-  X[E::STRACK]   = "STRACK";
-  X[E::ACCURACY] = "ACCURACY";
-  X[E::MULTIBENCH] = "MULTIBENCH";  
+  X[E::SPLIT]        = "SPLIT";
+  X[E::TOFILE]       = "TOFILE";
+  X[E::TRACK]        = "TRACK";
+  X[E::STRACK]       = "STRACK";
+  X[E::ACCURACY]     = "ACCURACY";
+  X[E::MULTIBENCH]   = "MULTIBENCH";
   return X;
 }
 const EnumMapper<std::string> M = get_enum_mapper<std::string>(get_name(), "Ver");
@@ -319,6 +331,7 @@ std::array<std::array<bool, OutPart::E::N>, E::N> get_toTerm()
   // all output to terminal, other than tracker
   x[E::TERMINAL][OutPart::E::MAI] = true;
   x[E::TERMINAL][OutPart::E::ACC] = true;
+  x[E::TERMINAL][OutPart::E::WRN] = true;
 
   // copy TERMINAL
   x[E::SPLIT] = x[E::TERMINAL];
@@ -335,12 +348,10 @@ std::array<std::array<bool, OutPart::E::N>, E::N> get_toTerm()
   x[E::ACCURACY][OutPart::E::ACC] = true;
 
   // like terminal, but with dependency of kernels printed
-  x[E::TERMWITHDEPS] = x[E::TERMINAL];
+  x[E::TERMWITHDEPS]                  = x[E::TERMINAL];
   x[E::TERMWITHDEPS][OutPart::E::DEP] = true;
-  
-  
-  x[E::MULTIBENCH][OutPart::E::BEN] = true;
 
+  x[E::MULTIBENCH][OutPart::E::BEN] = true;
 
   return x;
 }
@@ -352,12 +363,13 @@ std::array<std::array<bool, OutPart::E::N>, E::N> get_toFile()
   // all output to file, other than tracker
   x[E::TOFILE][OutPart::E::MAI] = true;
   x[E::TOFILE][OutPart::E::ACC] = true;
+  x[E::TOFILE][OutPart::E::WRN] = true;
 
   // copy TOFILE
   x[E::SPLIT] = x[E::TOFILE];
 
   // copy TOFILE
-  x[E::STRACK] = x[E::TOFILE];
+  x[E::STRACK]                  = x[E::TOFILE];
   x[E::STRACK][OutPart::E::CCH] = true;
 
   return x;

@@ -2,41 +2,22 @@
 convert cache entries to new format. 
 """
 
-olds = open("are/you/sure/miopengemm/src/olddeepbench.cachetxt").read()
-nct = "// clang-format off \n"
+olds = open("/home/james/miopengemm/MIOpenGEMM/miopengemm/src/deepbench1.cachetxt").read()
 blobs = olds.split("kc.add(")
+
+filly = open("newdeep.txt", "w")
+
+filly.write("// clang-format off \n\n")
 
 for blob in blobs[1::]:
   x = ""
-  lines = blob.split()
-  for l in lines:
-    x += l
-  
-  x = x.replace(r'""', "")
-  x = x.replace(r'/*', "\n")
-  x = x.replace(r'*/', "\n")
-  x = x.replace(r'{', "")
-  x = x.replace(r'}', "")
-  x = x.replace(r'",', r'"')
-  x = x.replace(r');', r'')
-  
-  f = x.split("\n")
-  dev = f[0]
-  con = f[2]
-  gg = f[4]
-  soln = f[8]
-  ggf = [r'"' + z[2::] + r'"' for z in soln[1:-1].split("__")]
-  stats =f[10]
-  fp = f[12]
-
-  nct += "kc.add(\n{%s,  // dev\n{%s}, // con\n{%s}}, // gg\n{{{ // hp\n"%(dev, con, gg)
-  nct += (ggf[0] + ",\n" + ggf[1] + ",\n"  + ggf[2] + '}},\n{ //stats\n %s, {%s}}};\n'%(stats, fp))
-  nct += "\n\n"
-
-nct += "// clang-format on"
+  new_blob = "kc.add(\n" + blob.split("{ //stats")[0].strip()[0:-1] + ");\n\n" 
+  new_blob = new_blob.replace("{{{", "{{")
+  filly.write(new_blob)
 
 
-filly = open("are/you/sure/miopengemm/src/deepbench.cachetxt", 'w')
-filly.write(nct)
+filly.write("// clang-format on \n\n")
+
+
 filly.close()
 

@@ -26,6 +26,9 @@
 #include <miopengemm/stringutilbase.hpp>
 #include <miopengemm/timer.hpp>
 
+// TODO : checks on constraints to check for cleary non-derivables
+// TODO : checks on workspace size
+
 namespace MIOpenGEMM
 {
 void   FindTracker::start() { timer.start(); }
@@ -105,8 +108,6 @@ Jinx::Jinx(cl_command_queue command_queue_,
     tk_kernels[i] = Kernel(command_queue, KType::M.name[i]);
   }
 }
-
-double Jinx::get_gflops(double timems) { return (2. * gg.m * gg.n * gg.k) / (timems * 10e5); }
 
 void Jinx::address_check_valid()
 {
@@ -200,7 +201,7 @@ void Jinx::setup_tinykernels(const kerngen::Bundle& bundle)
 {
 
   oclutil::Result oclr;
- 
+
   // TODO setting v_wait_indices here not clear code
   v_wait_indices = bundle.v_wait_indices;
 
@@ -272,7 +273,7 @@ oclutil::Result Jinx::true_core(std::function<void(double, std::string)> acton, 
   timer.start();
 
   std::vector<double> all_times;
-  
+
   while (!hl.halt(runi, timer.get_elapsed()))
   {
     // see `overheat' comment at bottom
@@ -343,10 +344,12 @@ oclutil::Result Jinx::true_core(std::function<void(double, std::string)> acton, 
     ++runi;
     all_times.push_back(extime);
   }
-  
-  auto best_time = *std::min_element(all_times.begin(), all_times.end());
-  double gflops = get_gflops(best_time);
-  mowri.bw[OutPart::BEN] << gg.get_tabbed_string() << "  time[ms]:"  << stringutil::get_char_padded(best_time, 10) << "  gflops:" << gflops << Endl;
+
+  auto   best_time = *std::min_element(all_times.begin(), all_times.end());
+  double gflops    = gg.get_gflops(best_time);
+  mowri.bw[OutPart::BEN] << gg.get_tabbed_string()
+                         << "  time[ms]:" << stringutil::get_char_padded(best_time, 10)
+                         << "  gflops:" << gflops << Endl;
 
   return {};
 }
@@ -395,8 +398,15 @@ Solution Jinx::find(const Constraints& constraints, const FindParams& fparms)
           << fparms.hl_outer.get_status(ftrack.get_descents(), ftrack.get_elapsed()) << '\n';
 
     double allotted_sd = std::max(0.1, fparms.hl_outer.max_time - ftrack.get_elapsed());
-    auto   soln        = single_descent_find(
-      allotted_sd, constraints, fparms.hl_core, ftrack, fparms);  // fparms here hacked on
+
+    auto soln = single_descent_find(
+      // TODO fparms is not needed, only need if MAX/MEAN/MEDIAN.
+      allotted_sd,
+      constraints,
+      fparms.hl_core,
+      ftrack,
+      fparms.sumstat,
+      ftrack.get_descents() == 0);
     v_solns.emplace_back(soln);
     ftrack.incr_descents();
   }
@@ -407,7 +417,7 @@ Solution Jinx::find(const Constraints& constraints, const FindParams& fparms)
   for (size_t si = 0; si < v_solns.size(); ++si)
   {
 
-    double gflops = v_solns[si].statistics.gflops;
+    double gflops = gg.get_gflops(v_solns[si].extime);
     soln_gflops.push_back(gflops);
     if (gflops > best_gflops)
     {
@@ -416,8 +426,10 @@ Solution Jinx::find(const Constraints& constraints, const FindParams& fparms)
     }
   }
 
-  mowri << ftrack.get_string() << '\n'
-        << stringutil::get_star_wrapped("The gflops found by single descents:") << '\n';
+  mowri << '\n'
+        << "Search summary  :  " << ftrack.get_string() << '\n'
+        << stringutil::get_star_wrapped("The gflops found by single descents:") << '\n'
+        << '\n';
 
   std::sort(soln_gflops.begin(), soln_gflops.end());
   for (auto& x : soln_gflops)
@@ -426,7 +438,6 @@ Solution Jinx::find(const Constraints& constraints, const FindParams& fparms)
   }
   mowri << "\n\n";
 
-  
   mowri.bw[OutPart::CCH] << "\n\n\n -- snip -- -- -- snip --\n\n" << Endl;
   mowri.bw[OutPart::CCH] << v_solns[best_soln_index].get_cache_entry_string();
   mowri.bw[OutPart::CCH] << "\n -- snip -- -- -- snip --\n\n\n" << Endl;
@@ -434,12 +445,12 @@ Solution Jinx::find(const Constraints& constraints, const FindParams& fparms)
   return v_solns[best_soln_index];
 }
 
-Solution
-Jinx::single_descent_find(double             allotted_time,
-                          const Constraints& constraints,
-                          const Halt&        core_halt,
-                          FindTracker&       ftrack,
-                          const FindParams& fps)
+Solution Jinx::single_descent_find(double             allotted_time,
+                                   const Constraints& constraints,
+                                   const Halt&        core_halt,
+                                   FindTracker&       ftrack,
+                                   SummStat::E        sumstat,
+                                   bool               warmstart)
 {
 
   Timer timer;
@@ -462,6 +473,7 @@ Jinx::single_descent_find(double             allotted_time,
 
   // Keep track of the `records' as they get broken
   std::vector<Solution> best_solns_path;
+  std::vector<double>   disco_times;
 
   // used for tracker messages
   std::string old_track_msg;
@@ -469,12 +481,50 @@ Jinx::single_descent_find(double             allotted_time,
 
   std::vector<double> v_t_total;
   double              k_seconds;
-  double              k_gflops;
+  //  double              k_gflops;
 
+  // std::cout << "here1" << std::endl;
   // the hyper params to be considered on a single wave
-  // what if I put 2 or three here ? might help fast escape from bad region
-  std::vector<HyPas> hyper_front = {graph.get_random_valid_start()};
+  std::vector<HyPas> hyper_front;
 
+  HyPas warm_start_hp;
+  if (warmstart == false)
+  {
+    // what if I put 2 or three here ? might help fast escape from bad region
+    hyper_front = {graph.get_random_valid_start()};
+  }
+  else
+  {
+    CacheKey ck(devinfo.identifier, constraints, gg);
+    if (kernel_cache.nearest_derivable_is_within(ck, 0.1 * std::numeric_limits<double>::max()))
+    {
+      auto nearest_ck = kernel_cache.get_nearest_derivable(ck);
+      warm_start_hp   = kernel_cache.at(nearest_ck);
+      // is the warm start in the graph?
+      if (!graph.contains(warm_start_hp))
+      {
+        mowri << "Warmstart requested and nearest is not too far, but nearest not in graph so "
+                 "starting at random node"
+              << Endl;
+        warm_start_hp = graph.get_random_valid_start();
+      }
+      else
+      {
+        mowri << "Warmstart requested, will use nearest candidate in kernel cache:\n"
+              << nearest_ck.get_string() << Endl;
+      }
+    }
+
+    else
+    {
+      mowri << "Warmstart requested but nearest is too far to consider, starting at random node"
+            << Endl;
+      warm_start_hp = graph.get_random_valid_start();
+    }
+    hyper_front = {warm_start_hp};
+  }
+
+  // std::cout << "here2" << std::endl;
   HyPas hp_curr;
 
   bool improvement_found_on_front = true;
@@ -521,8 +571,8 @@ Jinx::single_descent_find(double             allotted_time,
 
       old_track_msg = new_track_msg;
       new_track_msg = ftrack.get_string();
-      mowri.bw[OutPart::E::TRA] << std::string(old_track_msg.size(), '\b') << new_track_msg
-                                << Flush;
+      mowri.bw[OutPart::E::TRA] << std::string(old_track_msg.size(), '\b');
+      mowri.bw[OutPart::E::TRA] << new_track_msg << Flush;
 
       v_t_total.resize(0);
       for (auto& ptr_tk_kernel : tk_kernels_active)
@@ -548,7 +598,7 @@ Jinx::single_descent_find(double             allotted_time,
       auto v_t_total_copy = v_t_total;
 
       std::sort(v_t_total_copy.begin(), v_t_total_copy.end());
-      switch (fps.sumstat)
+      switch (sumstat)
       {
       case SummStat::E::MAX: k_seconds    = v_t_total_copy[0]; break;
       case SummStat::E::MEDIAN: k_seconds = v_t_total_copy[v_t_total.size() / 2]; break;
@@ -558,7 +608,7 @@ Jinx::single_descent_find(double             allotted_time,
       default: throw miog_error("unrecgnised SummStat in find");
       }
 
-      k_gflops = get_gflops(k_seconds);
+      //      k_gflops = get_gflops(k_seconds);
 
       mowri << get_run_times_heading();
       for (size_t ir = 0; ir < summary.size(); ++ir)
@@ -566,9 +616,8 @@ Jinx::single_descent_find(double             allotted_time,
         mowri << summary[ir];
         if (v_t_total[ir] == k_seconds)
         {
-          mowri << " (" << SummStat::M.name[fps.sumstat] << ')';
-          if (best_solns_path.size() > 0 &&
-              (best_solns_path.back().statistics.seconds >= k_seconds))
+          mowri << " (" << SummStat::M.name[sumstat] << ')';
+          if (best_solns_path.size() > 0 && (best_solns_path.back().extime >= k_seconds))
           {
             mowri << " (NEW BEST) ";
           }
@@ -576,16 +625,22 @@ Jinx::single_descent_find(double             allotted_time,
         mowri << '\n';
       }
 
-      if (best_solns_path.size() == 0 || (best_solns_path.back().statistics.seconds >= k_seconds))
+      if (best_solns_path.size() == 0 || (best_solns_path.back().extime >= k_seconds))
       {
 
         improvement_found_on_front = true;
 
         std::time_t g_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-        auto        sstats =
-          SolutionStatistics(k_seconds, k_gflops, timer.get_elapsed(), std::ctime(&g_time), fps);
-        best_solns_path.emplace_back(
-          gg, sstats, bundle.v_tgks, hp_curr.get_string(), devinfo, constraints);
+        // auto        sstats =
+        // SolutionStatistics(k_seconds, k_gflops, timer.get_elapsed(), std::ctime(&g_time), fps);
+        best_solns_path.emplace_back(gg,
+                                     std::ctime(&g_time),
+                                     k_seconds,
+                                     bundle.v_tgks,
+                                     hp_curr.get_string(),
+                                     devinfo,
+                                     constraints);
+        disco_times.push_back(timer.get_elapsed());
       }
 
       ++hfi;
@@ -633,8 +688,15 @@ Jinx::single_descent_find(double             allotted_time,
           hyper_front.push_back(hp);
         }
       }
+
+      if (warmstart == true)
+      {
+        hyper_front.push_back(warm_start_hp);  // slipping the pernicious hp on the back.
+      }
     }
   }
+
+  mowri.bw[OutPart::E::TRA] << std::string(new_track_msg.size(), '\b') << Flush;
 
   if (timer.get_elapsed() >= allotted_time)
   {
@@ -673,15 +735,18 @@ Jinx::single_descent_find(double             allotted_time,
   std::string startstring = "hyper parameter string:";
   startstring.resize(leading_size, ' ');
   mowri << '\n'
-        << startstring << "\t time when found:\t " << SummStat::M.lcase_name[fps.sumstat]
+        << startstring << "\t time when found:\t " << SummStat::M.lcase_name[sumstat]
         << " gflops:" << Endl;
 
-  for (auto& x : best_solns_path)
+  for (unsigned i = 0; i < best_solns_path.size(); ++i)
   {
-    std::string solnstring = x.hypas.get_string();
+    // auto x = best_solns_path[i];
+    // auto& x : best_solns_path)
+
+    std::string solnstring = best_solns_path[i].hypas.get_string();
     solnstring.resize(leading_size, ' ');
-    mowri << std::fixed << solnstring << "\t " << x.statistics.discovery << "\t\t "
-          << x.statistics.gflops << Endl;
+    mowri << std::fixed << solnstring << "\t " << disco_times[i] << "\t\t "
+          << gg.get_gflops(best_solns_path[i].extime) << Endl;
   }
 
   return best_solns_path.back();

@@ -15,7 +15,6 @@ class PrepGenerator : public basegen::BaseGenerator
 {
 
   protected:
-  
   size_t n_work_items;
 
   Mat::E emat_x;
@@ -24,8 +23,6 @@ class PrepGenerator : public basegen::BaseGenerator
 
   virtual void set_usage() override final;
   void append_basic_what_definitions(std::stringstream& ss);
-
-
 
   size_t get_global_work_size()
   {

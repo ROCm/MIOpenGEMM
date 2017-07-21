@@ -44,8 +44,8 @@ class BaseGenerator
   std::string get_derived_string();
 
   virtual size_t get_local_work_size() = 0;
-  virtual size_t get_n_work_groups()   = 0;  
-  
+  virtual size_t get_n_work_groups()   = 0;
+
   private:
   virtual void set_type() = 0;
   void         set_kernelname() { kernelname = "miog_" + type; }

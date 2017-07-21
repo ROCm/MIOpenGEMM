@@ -4,11 +4,11 @@
 #ifndef GUARD_MIOPENGEMM_OPENCLUTIL_H
 #define GUARD_MIOPENGEMM_OPENCLUTIL_H
 
-#include <miopengemm/hint.hpp>
 #include <CL/cl.h>
-#include <tuple>
-#include <miopengemm/outputwriter.hpp>
 #include <limits>
+#include <tuple>
+#include <miopengemm/hint.hpp>
+#include <miopengemm/outputwriter.hpp>
 
 namespace MIOpenGEMM
 {
@@ -315,8 +315,7 @@ class DevInfo
   std::string get_string() const;
   DevInfo(const cl_command_queue& command_queue);
   DevInfo(const cl_device_id& device);
-  DevInfo(const CLHint & hint, owrite::Writer & mowri);
-  
+  DevInfo(const CLHint& hint, owrite::Writer& mowri);
 };
 }
 }

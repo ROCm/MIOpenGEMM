@@ -134,9 +134,5 @@ CLHint::CLHint(const std::vector<std::string>& matches)
   : pla(hintless, matches), dev(hintless, matches)
 {
 }
-CLHint::CLHint(size_t pla_id, size_t dev_id)
-  : pla(pla_id, {}), dev(dev_id, {})
-{
-}
-
+CLHint::CLHint(size_t pla_id, size_t dev_id) : pla(pla_id, {}), dev(dev_id, {}) {}
 }

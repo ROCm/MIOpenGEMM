@@ -32,7 +32,6 @@ class CopyGenerator : public bylinegen::ByLineGenerator
 
 KernBlob
 get_copy_kernelstring(Mat::E emat_x, const HyPas& hp, const Geometry& gg, const DerivedParams& dp);
-
 }
 }
 

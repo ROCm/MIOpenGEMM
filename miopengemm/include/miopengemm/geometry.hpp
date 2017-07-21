@@ -20,7 +20,6 @@ class Offsets
   std::array<size_t, Mem::E::N> tails;
 
   Offsets(size_t oa, size_t ob, size_t oc, size_t ow, size_t ta, size_t tb, size_t tc, size_t tw);
-
 };
 
 Offsets get_padding_offsets();
@@ -51,8 +50,6 @@ class Geometry
                   size_t wSpaceSize_,
                   char   floattype_);
 
-
-
   public:
   bool isColMajor;
 
@@ -72,6 +69,9 @@ class Geometry
   // 'f' : 32-bit single precision or 'd' : 64-bit double precision
   char floattype;
 
+  // (log k, log m - log n, log m + log n)
+  std::array<double, 3> metric_co;
+
   GeometryDerived derived;
 
   Geometry(bool   isColMajor,
@@ -87,11 +87,8 @@ class Geometry
            size_t wSpaceSize,
            char   floattype);
 
-
-           
   // assumes isColMajor is true, tC is false, lda, ldb, ldc are minimal.
-  Geometry(
-            size_t m,
+  Geometry(size_t m,
            size_t n,
            size_t k,
            bool   tA,
@@ -99,7 +96,7 @@ class Geometry
 
            size_t wSpaceSize,
            char   floattype);
-           
+
   Geometry() = default;
 
   Geometry(const Geometry&) = default;
@@ -129,18 +126,34 @@ class Geometry
   void check_ldx_consistent() const;
 
   size_t get_padded_area(Mat::E M) const;
+
+  // extime is execution time in seconds
+  double get_gflops(double extime) const;
+
+  double get_distance(const Geometry& g2) const;
+
+  bool same_transposes(const Geometry& g2) const;
 };
 
-
-
 template <typename TFloat>
-Geometry get_geometry_from_padding(
-bool isColMajor, bool tA, bool tB, bool tC, size_t m, size_t n, size_t k, size_t wSpaceSize, size_t pad_a, size_t pad_b, size_t pad_c){
+Geometry get_geometry_from_padding(bool   isColMajor,
+                                   bool   tA,
+                                   bool   tB,
+                                   bool   tC,
+                                   size_t m,
+                                   size_t n,
+                                   size_t k,
+                                   size_t wSpaceSize,
+                                   size_t pad_a,
+                                   size_t pad_b,
+                                   size_t pad_c)
+{
   char floattype;
-  switch (sizeof(TFloat)){
-    case 4 : floattype = 'f'; break;
-    case 8 : floattype = 'd'; break;
-    default : throw miog_error("unrecognised float size in get_geometry_from_padding");
+  switch (sizeof(TFloat))
+  {
+  case 4: floattype = 'f'; break;
+  case 8: floattype = 'd'; break;
+  default: throw miog_error("unrecognised float size in get_geometry_from_padding");
   }
   size_t lda = (tA == isColMajor ? k : m) + pad_a;
   size_t ldb = (tB == isColMajor ? n : k) + pad_b;
@@ -148,9 +161,6 @@ bool isColMajor, bool tA, bool tB, bool tC, size_t m, size_t n, size_t k, size_t
   return Geometry(isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, wSpaceSize, floattype);
 }
 
-
-           
-           
 template <typename TFloat>
 Geometry get_padded_geometry(
   bool isColMajor, bool tA, bool tB, bool tC, size_t m, size_t n, size_t k, size_t wSpaceSize)
@@ -158,18 +168,18 @@ Geometry get_padded_geometry(
   return get_geometry_from_padding<TFloat>(isColMajor, tA, tB, tC, m, n, k, wSpaceSize, 9, 10, 12);
 }
 
-// lda, ldb, ldc are minimal. 
+// lda, ldb, ldc are minimal.
 template <typename TFloat>
 Geometry get_tight_geometry(
   bool isColMajor, bool tA, bool tB, bool tC, size_t m, size_t n, size_t k, size_t wSpaceSize)
 {
-  return get_geometry_from_padding<TFloat>(isColMajor, tA, tB, tC, m, n, k, wSpaceSize, 0,0,0);
+  return get_geometry_from_padding<TFloat>(isColMajor, tA, tB, tC, m, n, k, wSpaceSize, 0, 0, 0);
 }
-
 
 size_t get_mat_size(const Geometry& gg, const Offsets& toff, Mat::E emat);
 size_t get_mat_memsize(const Geometry& gg, const Offsets& toff, Mat::E emat);
 
+size_t get_total_workspace(const Geometry& gg, const Offsets& toff);
 }
 
 #endif

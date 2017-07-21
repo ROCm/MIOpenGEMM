@@ -43,6 +43,7 @@ class Constraints
   std::string get_combo_str(const str_array&) const;
   std::string get_r_str() const;
   std::string get_sr_str() const;
+  std::string get_string() const;
 };
 
 class SuHy
@@ -77,8 +78,6 @@ class HyPas
   bool operator==(const HyPas& rhs) const;
   void checks() const;
 };
-
-
 }
 
 #endif

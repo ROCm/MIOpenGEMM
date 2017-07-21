@@ -35,7 +35,7 @@ class KernUses
 class KernBlob
 {
   public:
-  KType::E e_ktype;
+  KType::E    e_ktype;
   KernUses    kuses;
   std::string kernstr;
   std::string fname;

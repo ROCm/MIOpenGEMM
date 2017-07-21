@@ -116,7 +116,8 @@ class Jinx
                                const Constraints&,
                                const Halt&  core_hl,
                                FindTracker& ftrack,
-                               const FindParams&);
+                               SummStat::E  sumstat,
+                               bool         warmstart);
   oclutil::Result true_core(std::function<void(double, std::string)> acton, const Halt& hl);
 };
 }

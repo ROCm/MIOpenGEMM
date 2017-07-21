@@ -31,12 +31,12 @@ class Diva
        owrite::Writer& mowri_,
        const CLHint&   devhint);
 
-  Diva(Geometry        gg_,
-       Offsets         toff_,
+  Diva(Geometry gg_,
+       Offsets  toff_,
        std::array<const TFloat*, Mat::E::N>,
        owrite::Writer& mowri_,
        const CLHint&   devhint);
-       
+
   Diva(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint& devhint);
 
   void benchgemm(const std::vector<HyPas>& hps, const Halt&);

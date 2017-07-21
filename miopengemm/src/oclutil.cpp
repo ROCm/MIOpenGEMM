@@ -751,8 +751,8 @@ Result cl_auto_set_command_queue(cl_command_queue&           a_cl_command_queue,
 {
 
   cl_platform_id platform = nullptr;
-  cl_context   context;
-  cl_device_id device_id_to_use;
+  cl_context     context;
+  cl_device_id   device_id_to_use;
 
   auto oclr = oclutil::cl_set_platform_etc(platform,
                                            context,
@@ -855,7 +855,7 @@ std::string GetDeviceNameFromMap(const std::string& name)
 {
 
   static std::map<std::string, std::string> device_name_map = {
-    {"Ellesmere", fiji_string}, // TODO : is this correct?
+    {"Ellesmere", fiji_string},  // TODO : is this correct?
     {"Baffin", fiji_string},
     {"RacerX", fiji_string},
     {"Polaris10", fiji_string},
@@ -898,7 +898,10 @@ DevInfo::DevInfo(const cl_command_queue& command_queue)
   initialise();
 }
 
-DevInfo::DevInfo(const CLHint & hint, owrite::Writer & mowri):DevInfo(CommandQueueInContext(mowri, hint, "DevInfo from hint").command_queue){}
+DevInfo::DevInfo(const CLHint& hint, owrite::Writer& mowri)
+  : DevInfo(CommandQueueInContext(mowri, hint, "DevInfo from hint").command_queue)
+{
+}
 
 DevInfo::DevInfo(const cl_device_id& device_)
 {
@@ -920,17 +923,16 @@ void DevInfo::initialise()
   cl_uint  a_uint;
 
   cl_platform_id platform;
-  cl_set_device_info( 
-    device,            
-    CL_DEVICE_PLATFORM,
-    sizeof(cl_platform_id),
-    &platform,
-    NULL,
-    "getting CL_DEVICE_PLATFORM in xyz",
-    strict);
+  cl_set_device_info(device,
+                     CL_DEVICE_PLATFORM,
+                     sizeof(cl_platform_id),
+                     &platform,
+                     NULL,
+                     "getting CL_DEVICE_PLATFORM in xyz",
+                     strict);
 
   OpenCLPlatformInfo platinfo(platform);
-  
+
   oclutil::cl_set_device_info(device,
                               CL_DEVICE_NAME,
                               info_st.size(),
@@ -1075,7 +1077,6 @@ void DevInfo::initialise()
     identifier = device_name;
   }
 }
-
 
 std::string OpenCLPlatformInfo::get_string() const
 {

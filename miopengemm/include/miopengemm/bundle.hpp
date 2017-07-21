@@ -27,7 +27,6 @@ class Bundle
 
   Bundle(const HyPas& hp, const Geometry& gg, owrite::Writer& mowri);
 };
-
 }
 }
 

@@ -17,8 +17,13 @@ class Halt
 {
   public:
   size_t max_runs;
+  size_t min_runs;
   double max_time;
-  Halt(size_t max_runs_, double max_time_);
+  double min_time;
+
+  // Halt(size_t max_runs_, double max_time_);
+  Halt(std::array<size_t, Xtr::E::N> runs, std::array<double, Xtr::E::N> time);
+
   Halt() = default;
   bool halt(size_t ri, double et) const;
   std::string get_status(size_t ri, double et) const;
@@ -36,17 +41,24 @@ class FindParams
 
   SummStat::E sumstat;
 
-  FindParams(size_t      max_descents,
-             double      max_time_outer,
-             size_t      max_per_kernel,
-             double      max_time_core,
+  // FindParams(size_t      max_descents,
+  // double      max_time_outer,
+  // size_t      max_per_kernel,
+  // double      max_time_core,
+  // SummStat::E sumstat);
+
+  FindParams(std::array<size_t, Xtr::E::N> descents,
+             std::array<double, Xtr::E::N> time_outer,
+             std::array<size_t, Xtr::E::N> per_kernel,
+             std::array<double, Xtr::E::N> time_core,
              SummStat::E sumstat);
 
   FindParams() = default;
   std::string get_string() const;
 };
 
-FindParams get_quick_find_params();
+FindParams get_at_least_n_seconds(double seconds);
+FindParams get_at_least_n_restarts(size_t restarts);
 }
 
 #endif

@@ -4,9 +4,9 @@
 #ifndef GUARD_MIOPENGEMM_KERNELCACHE_HPP
 #define GUARD_MIOPENGEMM_KERNELCACHE_HPP
 
-#include <miopengemm/solution.hpp>
-#include <unordered_map>
 #include <functional>
+#include <unordered_map>
+#include <miopengemm/solution.hpp>
 
 namespace MIOpenGEMM
 {
@@ -14,92 +14,57 @@ namespace MIOpenGEMM
 class CacheKeyPresence
 {
   public:
-  bool        is_present;  
+  bool        is_present;
   std::string msg;
   CacheKeyPresence() : is_present(true), msg("") {}
   CacheKeyPresence(const std::string& msg_) : is_present(false), msg(msg_) {}
 };
 
-
 class CacheKey
 {
   public:
-  const std::string dvc;
-  const Constraints constraints;
-  const Geometry gg;  
-  const std::string concatenated;
-  
+  std::string dvc;
+  Constraints constraints;
+  Geometry    gg;
+  std::string concatenated;
 
-  //std::string get_concatenated() const{
-    //return concatenated;
-  //}
- 
-  bool operator==(const CacheKey & rhs) const{
-    return concatenated == rhs.concatenated;
-  }
-  
-  
-  CacheKey(const std::string&, const Constraints&, const Geometry&);
+  bool operator==(const CacheKey& rhs) const { return concatenated == rhs.concatenated; }
+
+  CacheKey(const std::string& device, const Constraints&, const Geometry&);
   std::string get_string() const;
+  double get_distance(const CacheKey& ck) const;
 };
 
-
-
-class CacheKeyHash{
+class CacheKeyHash
+{
   private:
   std::hash<std::string> __hash;
-  
-  public:
-  size_t operator()(const CacheKey & ck) const;
-};
 
-
-class CachedSolution
-{
   public:
-  HyPas hp;
-  SolutionStatistics stats;
-  
-  CachedSolution(const HyPas & hp_, SolutionStatistics stats_)
-    : hp(hp_), stats(stats_)
-  {
-  }
-  
-  CachedSolution() = default;
-  std::string get_string() const;
+  size_t operator()(const CacheKey& ck) const;
 };
 
 class KernelCache
 {
   private:
-  std::unordered_map<CacheKey, CachedSolution, CacheKeyHash> vals;
-  
+  std::unordered_map<CacheKey, HyPas, CacheKeyHash> vals;
+
   public:
   CacheKeyPresence check_for(const CacheKey& ck) const;
-  CachedSolution at(const CacheKey& ck) const;
-  void add(const CacheKey& ckey, const CachedSolution& tgcs);
-  
-  
-  // TODO : implement this and use it in runcache. 
-  std::vector<CacheKey> get_keys()  const;
+  HyPas at(const CacheKey& ck) const;
+  void add(const CacheKey& ckey, const HyPas& hp);
+  std::vector<CacheKey> get_keys() const;
+  bool nearest_derivable_is_within(const CacheKey& ck, double threshold) const;
+  CacheKey get_nearest_derivable(const CacheKey& ck) const;
 };
 
-
-void filter_device(std::vector<CacheKey> &, const std::vector<std::string> & device_frags);
-void filter_geometries(std::vector<CacheKey> &, const std::vector<Geometry> & geometries);
-void filter_floattype(std::vector<CacheKey> &, size_t);
-
-
-
-
-
-KernelCache get_kernel_cache();
-
-CachedSolution get_generic_cached_solution(const Constraints& constraints,
-                                           const Geometry&  gg);
+void filter_device(std::vector<CacheKey>&, const std::vector<std::string>& device_frags);
+void filter_geometries(std::vector<CacheKey>&, const std::vector<Geometry>& geometries);
+void filter_floattype(std::vector<CacheKey>&, size_t);
 
 extern const KernelCache kernel_cache;
 
+// extern const KernelCache kernel_cache_2;
 }
 
 #endif

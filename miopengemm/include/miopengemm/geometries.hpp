@@ -7,7 +7,6 @@
 #include <vector>
 #include <miopengemm/geometry.hpp>
 
-
 namespace MIOpenGEMM
 {
 std::vector<Geometry> get_deepbench(size_t wSpaceSize);

@@ -63,7 +63,7 @@ std::string Constraints::get_combo_str(const str_array& strs) const
   bool              empty = true;
   for (auto x : strs)
   {
-    if (x != "")
+    if (x.size() > 2)
     {
       if (!empty)
       {
@@ -95,6 +95,8 @@ std::string Constraints::get_sr_str() const
   }
   return get_combo_str(strs);
 }
+
+std::string Constraints::get_string() const { return get_r_str(); }
 
 void SuHy::replace_where_defined(const Constraint& constraint)
 {

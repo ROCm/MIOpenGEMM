@@ -20,6 +20,8 @@ add_example_executable(gencache gencache.cpp)
 add_example_executable(redirection redirection.cpp)
 add_example_executable(runcache runcache.cpp)
 add_example_executable(initialisationdemo initialisationdemo.cpp)
+add_example_executable(multifind multifind.cpp)
+add_example_executable(multifindbase multifindbase.cpp)
 
 #add_example_executable(deepbench deepbench.cpp)
 #add_example_executable(redirectionexample redirectionexample.cpp)
