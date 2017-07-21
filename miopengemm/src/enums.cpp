@@ -137,6 +137,21 @@ std::vector<std::string> get_name()
 const EnumMapper<std::string> M = get_enum_mapper<std::string>(get_name(), "Xtr");
 }
 
+
+std::vector<int> get_priority_confirmed(std::vector<int> X, size_t target_size){
+  if (X.size() != target_size){
+    throw miog_error("priority vector not of correct size");
+  }
+  
+  for (auto & x : X){
+    if (x == std::numeric_limits<int>::max()){
+      throw miog_error("it appears as though a priority has not been set");
+    }
+  }
+  return X;
+}
+
+
 namespace Chi
 {
 std::vector<std::string> get_name()
@@ -150,7 +165,23 @@ std::vector<std::string> get_name()
   X[E::WOS] = "WOS";
   return X;
 }
+
+std::vector<int> get_priority(){
+  std::vector<int> X(E::N, std::numeric_limits<int>::max());
+  X[E::MIC] = 0;
+  X[E::PAD] = 0;
+  X[E::PLU] = 0;
+  X[E::LIW] = 0;
+  X[E::MIW] = 0;
+  X[E::WOS] = 0;
+  return X;
+}
+
+
+
 const EnumMapper<std::string> M = get_enum_mapper<std::string>(get_name(), "Chi");
+const std::vector<int> priority = get_priority_confirmed(get_priority(), E::N);
+
 }
 
 namespace OutPart
@@ -206,7 +237,26 @@ std::vector<std::string> get_name()
   X[E::SZT] = "SZT";
   return X;
 }
+
+
+std::vector<int> get_priority(){
+  std::vector<int> X(E::N, std::numeric_limits<int>::max());
+  X[E::UNR] = 0;
+  X[E::GAL] = 0;
+  X[E::PUN] = 0;
+  X[E::ICE] = 0;
+  X[E::NAW] = 0;
+  X[E::UFO] = 0;
+  X[E::MAC] = 0;
+  X[E::SKW] = 0;
+  X[E::IWI] = 0;
+  X[E::SZT] = -1;
+  return X;
+}
+
 const EnumMapper<std::string> M = get_enum_mapper<std::string>(get_name(), "NonChi");
+const std::vector<int> priority = get_priority_confirmed(get_priority(), E::N);
+
 }
 
 namespace Mat
@@ -230,6 +280,16 @@ const EnumMapper<std::string>* mat_to_xchi(Mat::E emat)
   case Mat::E::C: return &NonChi::M;
   default: throw miog_error("unrecognised Mat::E in mat_to_xchi");
   }
+}
+
+const std::vector<int> * mat_to_priority(Mat::E emat){
+  switch (emat)
+  {
+  case Mat::E::A: return &Chi::priority;
+  case Mat::E::B: return &Chi::priority;
+  case Mat::E::C: return &NonChi::priority;
+  default: throw miog_error("unrecognised Mat::E in mat_to_priority");
+  }  
 }
 
 Mat::E mem_to_mat(Mem::E emat)

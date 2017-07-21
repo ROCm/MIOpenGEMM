@@ -127,9 +127,9 @@ class Graph
 
   bool contains(Mat::E, size_t hpi, size_t value) const;
   bool               contains(const HyPas&) const;
-  std::vector<HyPas> get_one_aways(const HyPas&) const;
-  std::vector<HyPas> get_mic_mac_transformed(const HyPas&) const;
-  std::vector<HyPas> get_p_coupled_away(const HyPas&) const;
+  std::vector<std::tuple<HyPas, int>> get_one_aways(const HyPas&) const;
+  std::vector<std::tuple<HyPas, int>> get_mic_mac_transformed(const HyPas&) const;
+  std::vector<std::tuple<HyPas, int>> get_p_coupled_away(const HyPas&) const;
   std::vector<HyPas> get_neighbors(const HyPas&) const;
   // any node in the start graph.
   HyPas get_random_start() const;

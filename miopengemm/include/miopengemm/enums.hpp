@@ -83,6 +83,9 @@ enum E
   N
 };
 extern const EnumMapper<std::string> M;
+
+// prior weight on importance in graph
+extern const std::vector<int> priority;
 }
 
 namespace NonChi
@@ -102,6 +105,8 @@ enum E
   N
 };
 extern const EnumMapper<std::string> M;
+extern const std::vector<int> priority;
+
 }
 
 namespace Mat
@@ -134,6 +139,7 @@ namespace Mat
 {
 Mat::E                         mem_to_mat(Mem::E);
 const EnumMapper<std::string>* mat_to_xchi(Mat::E);
+const std::vector<int> * mat_to_priority(Mat::E);
 }
 
 namespace Status
@@ -207,7 +213,7 @@ enum E
 extern const EnumMapper<std::string> M;
 extern const std::array<bool, E::N> fileRequired;
 extern const std::array<std::array<bool, OutPart::E::N>, E::N> toFile;
-extern const std::array<std::array<bool, OutPart::E::N>, E::N> toTerm;
+extern const std::array<std::array<bool, OutPart::E::N>, E::N> toTerm;  
 }
 
 namespace KType

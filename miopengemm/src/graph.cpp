@@ -20,25 +20,48 @@ RandomUtil radutil17;
 
 std::vector<HyPas> Graph::get_neighbors(const HyPas& hp0) const
 {
+  
+  std::vector<std::vector<std::tuple<HyPas, int>>> Z;
+  Z.push_back(get_one_aways(hp0));
+  Z.push_back(get_p_coupled_away(hp0));
+  Z.push_back(get_mic_mac_transformed(hp0));
+  for (auto & z : Z){
+    radutil17.shuffle(0, z.size(), z);  
+  }
+  
+  std::vector<int> uni_prios;
+  for (auto & z : Z){
+    for (auto & tup : z){
+      int prio = std::get<1>(tup);
+      if (std::find(uni_prios.begin(), uni_prios.end(), prio) == uni_prios.end()){
+        uni_prios.push_back(prio);
+      }
+    }
+  }
+  std::sort(uni_prios.begin(), uni_prios.end());
+  std::reverse(uni_prios.begin(), uni_prios.end());
 
-  std::vector<HyPas> neighbors(get_one_aways(hp0));
-  radutil17.shuffle(0, neighbors.size(), neighbors);
 
-  auto p_coupled_away = get_p_coupled_away(hp0);
-  radutil17.shuffle(0, p_coupled_away.size(), p_coupled_away);
-  neighbors.insert(neighbors.end(), p_coupled_away.begin(), p_coupled_away.end());
+  std::vector<HyPas> neighbors;
 
-  auto mic_mac_transformed = get_mic_mac_transformed(hp0);
-  radutil17.shuffle(0, mic_mac_transformed.size(), mic_mac_transformed);
-  neighbors.insert(neighbors.end(), mic_mac_transformed.begin(), mic_mac_transformed.end());
+
+  for (auto & x : uni_prios){
+    for (auto & z : Z){
+      for (auto & tup : z){
+        if (std::get<1>(tup) == x){
+          neighbors.push_back(std::get<0>(tup));
+        }
+      }
+    }
+  }
 
   return neighbors;
 }
 
-std::vector<HyPas> Graph::get_p_coupled_away(const HyPas& hp0) const
+std::vector<std::tuple<HyPas, int>> Graph::get_p_coupled_away(const HyPas& hp0) const
 {
 
-  std::vector<HyPas> p_coupled_away;
+  std::vector<std::tuple<HyPas, int>> p_coupled_away;
 
   // by changing two hyper-parameters
   for (auto& coup : p_coupled)
@@ -65,7 +88,7 @@ std::vector<HyPas> Graph::get_p_coupled_away(const HyPas& hp0) const
           HyPas hp1(hp0);
           hp1.sus[first_m].vs[first_p]   = new_first_val;
           hp1.sus[second_m].vs[second_p] = new_second_val;
-          p_coupled_away.push_back(hp1);
+          p_coupled_away.push_back(std::make_tuple(hp1, 0));
         }
       }
     }
@@ -75,10 +98,10 @@ std::vector<HyPas> Graph::get_p_coupled_away(const HyPas& hp0) const
 }
 
 // changing MAC and one or both MICs, so as to semi-preserve the overall shape of the macro tile
-std::vector<HyPas> Graph::get_mic_mac_transformed(const HyPas& hp0) const
+std::vector<std::tuple<HyPas, int>> Graph::get_mic_mac_transformed(const HyPas& hp0) const
 {
 
-  std::vector<HyPas> mmt;
+  std::vector<std::tuple<HyPas, int>> mmt;
 
   size_t        curr_mac = hp0.sus[Mat::E::C].vs[NonChi::E::MAC];
   macgrid::Grid curr_grid(curr_mac, hp0.sus[Mat::E::C].vs[NonChi::E::SKW]);
@@ -109,7 +132,7 @@ std::vector<HyPas> Graph::get_mic_mac_transformed(const HyPas& hp0) const
       HyPas hp1(hp0);
       hp1.sus[Mat::E::C].vs[NonChi::E::MAC] = newmac;
       hp1.sus[Mat::E::A].vs[Chi::E::MIC]    = new_mica;
-      mmt.push_back(hp1);
+      mmt.push_back(std::make_tuple(hp1, 0));
     }
 
     if (new_micb != curr_micb && contains(Mat::E::B, Chi::E::MIC, new_micb))
@@ -117,13 +140,13 @@ std::vector<HyPas> Graph::get_mic_mac_transformed(const HyPas& hp0) const
       HyPas hp1(hp0);
       hp1.sus[Mat::E::C].vs[NonChi::E::MAC] = newmac;
       hp1.sus[Mat::E::B].vs[Chi::E::MIC]    = new_micb;
-      mmt.push_back(hp1);
+      mmt.push_back(std::make_tuple(hp1, 0));
 
       if (new_mica != curr_mica && contains(Mat::E::A, Chi::E::MIC, new_mica))
       {
         HyPas hp2(hp1);
         hp2.sus[Mat::E::A].vs[Chi::E::MIC] = new_mica;
-        mmt.push_back(hp2);
+        mmt.push_back(std::make_tuple(hp2, 0));
       }
     }
   }
@@ -151,11 +174,10 @@ bool has_no_effect(const HyPas & hp0, Mat::E emat_x, size_t i){
 
 
 
-std::vector<HyPas> Graph::get_one_aways(const HyPas& hp0) const
+std::vector<std::tuple<HyPas, int>> Graph::get_one_aways(const HyPas& hp0) const
 {
 
-  std::vector<HyPas> one_aways;
-
+  std::vector<std::tuple<HyPas, int>> one_aways;
   // the true one aways
   for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C})
   {
@@ -168,7 +190,7 @@ std::vector<HyPas> Graph::get_one_aways(const HyPas& hp0) const
         if (!has_no_effect(hp0, emat, i)){
           HyPas hp1(hp0);
           hp1.sus[emat].vs[i] = x;
-          one_aways.push_back(hp1);
+          one_aways.push_back(std::make_tuple(hp1, (*Mat::mat_to_priority(emat))[i]));
         }
       }
     }
