@@ -531,6 +531,7 @@ void CSuGr::initialise_edges()
                            {14, {1, 11, 13}}};
 
   edges[NonChi::E::PUN] = {g_binary};
+  edges[NonChi::E::IWI] = {g_binary};
   edges[NonChi::E::UFO] = {g_binary};
 }
 

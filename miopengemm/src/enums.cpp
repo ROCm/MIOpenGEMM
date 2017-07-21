@@ -202,6 +202,7 @@ std::vector<std::string> get_name()
   X[E::UFO] = "UFO";
   X[E::MAC] = "MAC";
   X[E::SKW] = "SKW";
+  X[E::IWI] = "IWI";
   return X;
 }
 const EnumMapper<std::string> M = get_enum_mapper<std::string>(get_name(), "NonChi");

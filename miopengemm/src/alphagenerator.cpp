@@ -372,7 +372,9 @@ barrier(CLK_LOCAL_MEM_FENCE); )";
     char X = Mat::M.name[emat_x];
     char x = Mat::M.lcase_name[emat_x];
 
-    std::string n_jumps_string = dp.main_split_on_k == 0 ? "UNROLL" : "G_UNROLL";
+    std::string n_jumps_string = (dp.main_split_on_k == 0 || (hp.sus[Mat::E::C].vs[NonChi::E::IWI] == Binary::E::NO)) ? "UNROLL" : "G_UNROLL";
+
+    //std::string n_jumps_string = (dp.main_split_on_k == 0) ? "UNROLL" : "G_UNROLL";
 
     if (final_unroll != 0 && special_first_unroll != 0)
     {
@@ -492,12 +494,25 @@ barrier(CLK_LOCAL_MEM_FENCE); )";
     }
     else
     {
+      
       ss <<
-        R"(
-/* There is one workgroup which will process the remainder (less that UNROLL) */
-/* JN 16 Nov 2016 */
+      R"(
+/* There is one workgroup which will process the remainder (less that UNROLL) */)";
+
+      if (hp.sus[Mat::E::C].vs[NonChi::E::IWI] == Binary::E::YES){
+        ss << R"(
+/* With ICE interwoven (IWI is YES), this workgroup is the last with 1 more */
 if (group_id_z == n_work_groups_with_1_more && k_remaining > 0){
-)";
+    )";
+      }
+      else{
+        ss << R"(
+/* With ICE not-interwoven (IWI is NO), this is the last group */
+if ((group_id_z == N_WORK_ITEMS_PER_C_ELM - 1) && k_remaining > 0){
+    )";      
+      }
+    
+    
       append_relocate_load_math_string(ss, 1, 0);
       ss << "\n}\n";
     }
@@ -661,13 +676,10 @@ const TSHORT group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
 
   void append_n_unrolls_remaining_string(std::stringstream& ss)
   {
-    std::string k_effective_mod_G_UNROLL = dp.effective_k_varies_string + " % G_UNROLL";
-    std::string k_effective_div_G_UNROLL = dp.effective_k_varies_string + " / G_UNROLL";
-    std::string k_effective_div_UNROLL   = dp.effective_k_varies_string + " / UNROLL";
 
     if (dp.main_split_on_k == 0)
     {
-      ss << "\nint n_unrolls_remaining = " << k_effective_div_UNROLL << ";";
+      ss << "\nint n_unrolls_remaining = " << dp.k_effective_div_UNROLL << ";";
     }
 
     else
@@ -675,11 +687,11 @@ const TSHORT group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
       ss << "\n/* a certain number of work groups process one more unroll. "
             "Note that with UFO = 1, "
             "this depends on column */";
-      ss << "\nconst int n_work_groups_with_1_more = (" << k_effective_mod_G_UNROLL
+      ss << "\nconst int n_work_groups_with_1_more = (" << dp.k_effective_mod_G_UNROLL
          << ") / UNROLL; \n";
       ss << "\n/* branching between work groups : some wgs have 1 more unroll "
             "to process. */\n";
-      ss << "int n_unrolls_remaining = (" << k_effective_div_G_UNROLL;
+      ss << "int n_unrolls_remaining = (" << dp.k_effective_div_G_UNROLL;
       ss << ") +  (group_id_z < n_work_groups_with_1_more);";
     }
   }
@@ -809,13 +821,38 @@ TINTK k_plus_offset = __K__ + unroll_offset;
         ss << R"(/* a points to top left of region required, but this work group  */
 /* might not process the whole of a. So turn 90 and move to the start for this wg */
 )";
-      ss << x << " += UNROLL*group_id_z*STRIDE_PLL_K_" << X << ";\n";
+      if (hp.sus[Mat::E::C].vs[NonChi::E::IWI] == Binary::E::NO){
+        if (emat_x == Mat::E::A){
+          ss << "/* IWI is NO, ICE is not interwoven */\n";
+        }
+        ss << x << " += (1 + (" << dp.k_effective_div_G_UNROLL << "))*UNROLL*group_id_z*STRIDE_PLL_K_" << X << ";\n";
+        if (emat_x == Mat::E::A){
+          ss << "/*The last couple of groups (large group_id_z) will process 1 fewer unroll */\n";
+        }
+        ss << "\nif (group_id_z >  n_work_groups_with_1_more){\n";
+        ss << x << " -= UNROLL*(group_id_z - n_work_groups_with_1_more)*STRIDE_PLL_K_" << X << ";\n}\n";
+
+      }
+      else if (hp.sus[Mat::E::C].vs[NonChi::E::IWI] == Binary::E::YES){
+        if (emat_x == Mat::E::A){
+          ss << "/* IWI is YES, ICE is interwoven */\n";
+        }
+        ss << x << " += UNROLL*group_id_z*STRIDE_PLL_K_" << X << ";\n";        
+      }
+      else{
+        std::stringstream errm;
+        errm << NonChi::M.name[NonChi::E::IWI] << " should be NO (0) or YES (1), not "
+        << hp.sus[Mat::E::C].vs[NonChi::E::IWI]  << '.';
+        throw miog_error(errm.str());
+      }
     }
 
     if (hp.sus[Mat::E::C].vs[NonChi::E::UFO] != 0)
     {
-      if (emat_x == Mat::E::A)
+      if (emat_x == Mat::E::A){
         ss << "/* UFO != 0, so offsetting the unroll */\n";
+      }
+      
       ss << x << " -= unroll_offset*STRIDE_PLL_K_" << X << ";\n";
     }
 
@@ -1067,7 +1104,13 @@ TINTK k_plus_offset = __K__ + unroll_offset;
 
     append_c_offset_string(ss);
 
+
     append_id_string_nonsym(ss);
+
+
+    append_n_unrolls_remaining_string(ss);
+
+
     ss << "\n\n/* *************************** A setup "
           "************************** */";
     append_id_string_sym(ss, Mat::E::A);
@@ -1080,7 +1123,7 @@ TINTK k_plus_offset = __K__ + unroll_offset;
     ss << "/* register memory for C */\n ";
     ss << "TFLOAT rC[MICRO_TILE_LENGTH_A][MICRO_TILE_LENGTH_B] = {{0.}};\n";
 
-    append_n_unrolls_remaining_string(ss);
+
     append_first_unroll_block(ss);
 
     ss << "\n\nwhile (n_unrolls_remaining > 0){\n";

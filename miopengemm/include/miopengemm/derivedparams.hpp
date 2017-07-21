@@ -124,6 +124,12 @@ class DerivedParams
   std::string fati;
   // one of __K_NORMAL_FORM__   __K__  and  k_plus_offset
   std::string effective_k_varies_string;
+  // as their names suggest
+  std::string k_effective_mod_G_UNROLL;
+  std::string k_effective_div_G_UNROLL;
+  std::string k_effective_div_UNROLL;
+
+
   // pragma unroll string : #pragma unroll\n or ""
   std::string pragma_unroll_string;
   //* currently one of "float" and "double", set from float_size

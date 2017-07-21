@@ -7,15 +7,19 @@
 int main()
 {
   using namespace MIOpenGEMM;
-  Geometry gg("tC0_tA0_tB0_colMaj1_m1024_n8_k500000_lda1024_ldb500000_ldc1024_ws0_f32");
-  HyPas    hypas(  // hp
-    "A_MIC8_PAD1_PLU1_LIW0_MIW0_WOS0__B_MIC6_PAD2_PLU0_LIW0_MIW1_WOS0__C_UNR8_GAL1_PUN0_ICE4_NAW64_"
-    "UFO0_MAC4_SKW9");
+  Geometry gg("tC0_tA1_tB0_colMaj1_m1760_n64_k1760_lda1760_ldb1760_ldc1760_ws0_f32");
+  HyPas    hypas(
+{ // hp
+"MIC4_PAD1_PLU1_LIW0_MIW1_WOS0",
+"MIC4_PAD1_PLU0_LIW1_MIW0_WOS0",
+"UNR16_GAL3_PUN0_ICE9_IWI1_NAW64_UFO0_MAC256_SKW10"}
+  
+  );
 
   CLHint         devhint;
   Offsets        offsets = get_zero_offsets();
   owrite::Writer mowri(Ver::E::TERMINAL, "");
   dev::Boa       boa(gg, offsets, mowri, devhint);
-  boa.benchgemm({hypas}, {{0, 3}, {0., 100.}});
+  boa.benchgemm({hypas}, {{0, 10}, {0., 100.}});
   return 0;
 }

@@ -287,6 +287,7 @@ SuHy::SuHy(Mat::E e) : emat(e), vs(Mat::mat_to_xchi(emat)->N, Status::E::UNDEFIN
 SuHy::SuHy(Mat::E e, const std::string& hyperstring) : SuHy(e)
 {
   vs = get_hy_v(hyperstring, true, emat);
+  checks();
 }
 
 SuHy::SuHy(Mat::E e, std::vector<size_t>&& vs_) : emat(e), vs(vs_) {}

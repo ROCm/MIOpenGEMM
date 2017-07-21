@@ -375,6 +375,11 @@ DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_) : ptr_hp(&hp
     ptr_hp->sus[Mat::E::C].vs[NonChi::E::UFO] == 0 ? "__K__" : "k_plus_offset";
   t_float = ptr_gg->derived.float_size_bits == 32 ? "float" : "double";
 
+  k_effective_mod_G_UNROLL = effective_k_varies_string + " % G_UNROLL";
+  k_effective_div_G_UNROLL = effective_k_varies_string + " / G_UNROLL";
+  k_effective_div_UNROLL   = effective_k_varies_string + " / UNROLL";
+
+
   main_n_work_groups = ptr_hp->sus[Mat::E::C].vs[NonChi::E::ICE] *
                        ((ptr_gg->m / at(Mat::E::A).macro_tile_length) +
                         (ptr_gg->m % at(Mat::E::A).macro_tile_length != 0)) *
@@ -417,17 +422,18 @@ DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_) : ptr_hp(&hp
   tints[Mem::E::B] = get_tint(ptr_gg->get_uncoal(Mat::E::B) * (ptr_gg->ldX[Mat::E::B]));
   tints[Mem::E::C] = get_tint(ptr_gg->get_uncoal(Mat::E::C) * (ptr_gg->ldX[Mat::E::C]));
   tints[Mem::E::W] = get_tint(ptr_gg->wSpaceSize);
+
   tintk            = get_tint(
     ptr_gg->k +
-    2 * ptr_hp->sus[Mat::E::C].vs[NonChi::E::UNR]);  // TODO : make this tight and prove correct.
+    2 * ptr_hp->sus[Mat::E::C].vs[NonChi::E::ICE] * ptr_hp->sus[Mat::E::C].vs[NonChi::E::UNR]);  // TODO : make this tight and prove correct.
   tshort = "ushort";
 
-  tints[Mem::E::A] = "size_t";
-  tints[Mem::E::B] = "size_t";
-  tints[Mem::E::C] = "size_t";
-  tints[Mem::E::W] = "size_t";
-  tintk            = "size_t";
-  tshort           = "size_t";
+  //tints[Mem::E::A] = "size_t";
+  //tints[Mem::E::B] = "size_t";
+  //tints[Mem::E::C] = "size_t";
+  //tints[Mem::E::W] = "size_t";
+  //tintk            = "size_t";
+  //tshort           = "size_t";
 }
 
 /* TODO : move to hyper params */
