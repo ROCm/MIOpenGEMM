@@ -18,7 +18,7 @@ int main()
   Solution       soln = boa.find(find_params, constraints);
   std::cout << " \n\n\nThe following string can be cut and paste into kernelcache.cpp";
   std::cout << " \n\n-- snip -- -- -- snip --\n\n";
-  std::cout << soln.get_cache_entry_string();
+  std::cout <<  soln.get_cache_entry_string();
   std::cout << " -- snip -- -- -- snip --\n\n";
   return 0;
 }

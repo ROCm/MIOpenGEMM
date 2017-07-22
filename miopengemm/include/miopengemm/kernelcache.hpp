@@ -6,7 +6,7 @@
 
 #include <functional>
 #include <unordered_map>
-#include <miopengemm/solution.hpp>
+#include <miopengemm/derivedparams.hpp>
 
 namespace MIOpenGEMM
 {
@@ -73,10 +73,9 @@ void filter_geometries(std::vector<CacheKey>&, const std::vector<Geometry>& geom
 void filter_floattype(std::vector<CacheKey>&, size_t);
 
 extern const KernelCache kernel_cache;
-extern const KernelCache kernel_cache2;
-
 
 std::string get_cache_entry_string(const CacheKey & ck, const HyPas & hypas);
+std::vector<Geometry> get_geometries(const std::vector<CacheKey> & cks);
 
 }
 

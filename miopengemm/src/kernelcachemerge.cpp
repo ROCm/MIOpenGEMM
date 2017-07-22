@@ -9,7 +9,7 @@
 
 namespace MIOpenGEMM{
 
-
+// sequence for a fair penalty shoot-out. 
 std::vector<bool> get_thue_morse(size_t length){
   std::vector<bool> thue_morse {true, false};
   while (thue_morse.size() < length){
@@ -22,93 +22,97 @@ std::vector<bool> get_thue_morse(size_t length){
 }
 
 template <typename TFl>
-void populate(const std::vector<CacheKey> & cache_keys, const KernelCache & kc1, const KernelCache & kc2, KernelCache & kc){
+void populate(const std::vector<CacheKey> & cache_keys, const KernelCache & kc1, const KernelCache & kc2, KernelCache & kc, owrite::Writer& mowri){
     
   Offsets        offsets = get_zero_offsets();
-  owrite::Writer mowri(Ver::E::SILENT, "");
   CLHint         devhint;
-
-  std::vector<Geometry> final_geometries;
-  for (auto& x : cache_keys)
-  {
-    final_geometries.push_back(x.gg);
-  }
   
-  std::cout << "generating random matrices on CPU ... " << std::flush;
   // we set the CPU memory once for all geometries.
   // This is much faster than once for each geometry using Boas
-  std::array<std::vector<TFl>, Mat::E::N> a_mem;
-  std::vector<std::vector<TFl>*> v_mem{&a_mem[Mat::E::A], &a_mem[Mat::E::B], &a_mem[Mat::E::C]};
-  setabcw::set_multigeom_abc<TFl>(v_mem, final_geometries, offsets);
-  std::array<const TFl*, Mat::E::N> r_mem{
-    a_mem[Mat::E::A].data(), a_mem[Mat::E::B].data(), a_mem[Mat::E::C].data()};
-  std::cout << "done.\n" << std::endl;
-  
-  std::cout << "Will perform Thue–Morse (aka ABBA BAAB) 1-on-1." << std::endl;
+  mowri.bw[OutPart::MER] << "generating random matrices on CPU ... " << Flush;
+  setabcw::CpuMemBundle<TFl> cmb(get_geometries(cache_keys), offsets);
+  mowri.bw[OutPart::MER] << "done. Will perform Thue–Morse ABBABAAB 1-on-1." << Endl;
   for (size_t i = 0; i < cache_keys.size(); ++i)
   {
-    
-    std::cout << '\n';
-    
-    auto ck = cache_keys[i];
-    dev::Diva<TFl> diva1(ck.gg, offsets, r_mem, mowri, devhint);
-    dev::Diva<TFl> diva2(ck.gg, offsets, r_mem, mowri, devhint);
+     auto ck = cache_keys[i];
+    if (kc1.at(ck) == kc2.at(ck)){
+      kc.add(ck, kc1.at(ck));
+      mowri.bw[OutPart::MER] << "[ss]" << Flush;
+      continue;
+    }
+    mowri.bw[OutPart::MER] << '\n';    
+    mowri.bw[OutPart::MER] << ck.gg.get_string() << Endl; 
+   
+    // having two Divas means that each opposing kernel only needs be compiled once. Optional.
+    dev::Diva<TFl> diva1(ck.gg, offsets, cmb.r_mem, mowri, devhint);
+    dev::Diva<TFl> diva2(ck.gg, offsets, cmb.r_mem, mowri, devhint);
 
-    std::cout << ck.gg.get_string() << std::endl;
-    std::cout << "soln1 : " << kc1.at(ck).get_string() << std::endl;
-    std::cout << "soln2 : " << kc2.at(ck).get_string() << std::endl;
-    
-    std::string prefix = std::to_string(i) + "/" + std::to_string(cache_keys.size());
-    prefix.resize(8, ' ');
-    
+    mowri.bw[OutPart::MER] << "soln1 : " << kc1.at(ck).get_string() << Endl;
+    mowri.bw[OutPart::MER] << "soln2 : " << kc2.at(ck).get_string() << Endl;
+
     std::vector<double> times_kc1;
     std::vector<double> times_kc2;
-    
-    auto act_kcx = [&ck, &prefix](const KernelCache & kcx, std::string frag, std::vector<double> & times, dev::Diva<TFl> & diva){
-      std::cout << prefix  << frag <<  "   ";
-      times.push_back(diva.benchgemm({kcx.at(ck)}, {{0, 3}, {0, 0.5}}).back().back());
-      std::cout << stringutil::get_char_padded(ck.gg.get_gflops(times.back()),8) << std::endl;
-    };
 
     size_t kc1_wins = 0;
     size_t kc2_wins = 0;
     
-    if (kc1.at(ck) == kc2.at(ck)){
-      kc.add(ck, kc1.at(ck));
-      std::cout << "(same soln)\n";
-      continue;
-    }
+    std::string prefix = std::to_string(i) + "/" + std::to_string(cache_keys.size());
+    prefix.resize(8, ' ');
     
-    for (auto kc1_first : get_thue_morse(5)){
+    auto act_kcx = [&mowri, &ck, &prefix](const KernelCache & kcx, std::string frag, std::vector<double> & times, dev::Diva<TFl> & diva){
+      mowri.bw[OutPart::MER] << frag << Flush;
+      times.push_back(diva.benchgemm({kcx.at(ck)}, {{0, 3}, {0, 0.5}}).back().back());
+    };
+
+    
+    
+    for (auto kc1_first : get_thue_morse(8)){
       if (kc1_first){
-        act_kcx(kc1, "++kc1", times_kc1, diva1);
-        act_kcx(kc2, "--kc2", times_kc2, diva1);
+        act_kcx(kc1, "1", times_kc1, diva1);
+        act_kcx(kc2, "2", times_kc2, diva2);
       }
       else{
-        act_kcx(kc2, "--kc2", times_kc2, diva1);
-        act_kcx(kc1, "++kc1", times_kc1, diva1);
+        act_kcx(kc2, "2", times_kc2, diva2);
+        act_kcx(kc1, "1", times_kc1, diva1);
       }
+      mowri.bw[OutPart::MER] << '|' << Flush; 
       
       kc1_wins += (times_kc1.back() < times_kc2.back());
       kc2_wins += (times_kc2.back() < times_kc1.back());
-      
+    }
+    mowri.bw[OutPart::MER] << Endl;
+    for (unsigned ri = 0; ri < times_kc1.size(); ++ri){
+      auto g1 = ck.gg.get_gflops(times_kc1[ri]);
+      auto g2 = ck.gg.get_gflops(times_kc2[ri]);
+            
+      mowri.bw[OutPart::MER] << stringutil::get_char_padded(g1,8) << " \t ";
+      if (g1 > g2){
+        mowri.bw[OutPart::MER] << '>';
+      }
+      else{
+        mowri.bw[OutPart::MER] << "<=";
+      }
+      mowri.bw[OutPart::MER] << " \t "
+      << stringutil::get_char_padded(g2,8) << Endl;
     }
     
     if (kc1_wins > kc2_wins){
-      std::cout << "kc1 won, " << kc1_wins << ':' << kc2_wins << '.' << '\n';
+      mowri.bw[OutPart::MER] << "kc1 won, " << kc1_wins << ':' << kc2_wins << '.' << '\n';
       kc.add(ck, kc1.at(ck));
     }
     else{
-      std::cout << "kc2 won, " << kc2_wins << ':' << kc1_wins << '.' << '\n';
+      mowri.bw[OutPart::MER] << "kc2 won, " << kc2_wins << ':' << kc1_wins << '.' << '\n';
       kc.add(ck, kc2.at(ck));
     }
+    mowri.bw[OutPart::MER] << '\n';     
   }
+  
+  mowri.bw[OutPart::MER] << '\n'; 
 }
   
-KernelCache get_merged(const KernelCache & kc1, const KernelCache & kc2){
+KernelCache get_merged(const KernelCache & kc1, const KernelCache & kc2, owrite::Writer& mowri){
 
-  KernelCache kc;
- 
+  KernelCache kc; 
   std::map<char, std::vector<CacheKey>> in_both;
     
   size_t from_kc1 {0};
@@ -135,20 +139,17 @@ KernelCache get_merged(const KernelCache & kc1, const KernelCache & kc2){
     }
   }
   
-  std::cout << "from kc1 : " << from_kc1 << ", from kc2 : " << from_kc2 << ", to be determined : " << undetermined << std::endl;
-
-
+  mowri.bw[OutPart::MER] << "from kc1 : " << from_kc1 << ", from kc2 : " << from_kc2 << ", to be determined : " << undetermined << Endl;
+  
   for (auto & x : in_both){
     switch (std::get<0>(x)){
-      case 'f': populate<float>(in_both['f'], kc1, kc2, kc); break;
-      case 'd': populate<double>(in_both['f'], kc1, kc2, kc); break;
+      case 'f': populate<float>(in_both['f'], kc1, kc2, kc, mowri); break;
+      case 'd': populate<double>(in_both['f'], kc1, kc2, kc, mowri); break;
       default : throw miog_error("unrecognised floattype in get_merged");
     }
   }
   
   return kc;
 }
-
-  
 
 }

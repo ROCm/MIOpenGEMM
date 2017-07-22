@@ -24,6 +24,26 @@ void set_multigeom_abc(const MatData<TFloat>& v_abc,
 
 template <typename TFloat>
 void set_abcw(const MatData<TFloat>& v_abcw, const Geometry& gg, const Offsets& toff);
+
+
+
+template <typename TFl>
+class CpuMemBundle{
+  public:
+  
+  std::array<std::vector<TFl>, Mat::E::N> a_mem;
+  std::vector<std::vector<TFl>*> v_mem;
+  std::array<const TFl*, Mat::E::N> r_mem;
+  
+  CpuMemBundle(const std::vector<Geometry> & geoms, const Offsets& offsets)
+    {
+      v_mem = {&a_mem[Mat::E::A], &a_mem[Mat::E::B], &a_mem[Mat::E::C]};
+      setabcw::set_multigeom_abc<TFl>(v_mem, geoms, offsets);      
+      r_mem = {a_mem[Mat::E::A].data(), a_mem[Mat::E::B].data(), a_mem[Mat::E::C].data()};
+    }
+};
+
+
 }
 }
 

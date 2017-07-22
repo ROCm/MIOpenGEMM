@@ -190,6 +190,7 @@ enum E
   WRN,
   CCH,
   BEN,
+  MER,
   N
 };
 extern const EnumMapper<std::string> M;
@@ -208,6 +209,7 @@ enum E
   ACCURACY,      // tracker and accuracy to terminal
   TERMWITHDEPS,  // like terminal, with additionally the dependencies between kernels
   MULTIBENCH,
+  MERGE,         // when merging two kernel caches
   N
 };
 extern const EnumMapper<std::string> M;

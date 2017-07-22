@@ -196,6 +196,7 @@ std::vector<std::string> get_name()
   X[E::WRN] = "WRN";
   X[E::CCH] = "CCH";
   X[E::BEN] = "BEN";
+  X[E::MER] = "MER";
   return X;
 }
 const EnumMapper<std::string> M = get_enum_mapper<std::string>(get_name(), "OutPart");
@@ -215,6 +216,7 @@ std::vector<std::string> get_name()
   X[E::STRACK]       = "STRACK";
   X[E::ACCURACY]     = "ACCURACY";
   X[E::MULTIBENCH]   = "MULTIBENCH";
+  X[E::MERGE]        = "MERGE";
   return X;
 }
 const EnumMapper<std::string> M = get_enum_mapper<std::string>(get_name(), "Ver");
@@ -415,6 +417,8 @@ std::array<std::array<bool, OutPart::E::N>, E::N> get_toTerm()
 
   x[E::MULTIBENCH][OutPart::E::BEN] = true;
 
+  x[E::MERGE][OutPart::E::MER] = true;
+  
   return x;
 }
 const std::array<std::array<bool, OutPart::E::N>, E::N> toTerm = get_toTerm();
@@ -450,6 +454,7 @@ std::array<bool, E::N> get_fileRequired()
   X[E::STRACK]       = true;
   X[E::ACCURACY]     = false;
   X[E::MULTIBENCH]   = false;
+  X[E::MERGE]        = false;
   return X;
 }
 const std::array<bool, E::N> fileRequired = get_fileRequired();

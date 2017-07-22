@@ -9,6 +9,8 @@
 int main()
 {
 
+  srand(time(NULL));
+
   using namespace MIOpenGEMM;
   auto                     geometries = get_deepbench(0);  // zero workspace deepbench geometries
   std::vector<Constraints> constraints_s{{""}};
@@ -25,7 +27,7 @@ int main()
     {
       ++counter;
       std::cout << '(' << counter << ')' << std::endl;
-      std::string basedir = "/home/james/test15/";
+      std::string basedir = "/home/james/test20/";
       // WARNING : this call might only work on linux/mac
       std::string syscall =
         "./examples/multifindbase " + basedir + " " + gg.get_string() + " " + cons.get_string();

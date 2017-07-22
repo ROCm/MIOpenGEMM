@@ -21,7 +21,7 @@ int runcache_v2(bool only_deepbench, bool all_devices)
   auto cache_keys = kernel_cache.get_keys();
   if (!all_devices)
   {
-    owrite::Writer   silent_mowri(Ver::E::TERMINAL, "");
+    owrite::Writer silent_mowri(Ver::E::TERMINAL, "");
     oclutil::DevInfo devinfo(devhint, silent_mowri);
     filter_device(cache_keys, {devinfo.device_name});
   }
@@ -31,51 +31,27 @@ int runcache_v2(bool only_deepbench, bool all_devices)
     filter_geometries(cache_keys, get_deepbench(0));
   }
   filter_floattype(cache_keys, sizeof(TFl));
-  std::vector<Geometry> final_geometries;
-  for (auto& x : cache_keys)
-  {
-    final_geometries.push_back(x.gg);
-  }
 
   std::cout << "generating random matrices on CPU ... " << std::flush;
-  // we set the CPU memory once for all geometries.
-  // This is much faster than once for each geometry using Boas
-  std::array<std::vector<TFl>, Mat::E::N> a_mem;
-  std::vector<std::vector<TFl>*> v_mem{&a_mem[Mat::E::A], &a_mem[Mat::E::B], &a_mem[Mat::E::C]};
-  setabcw::set_multigeom_abc<TFl>(v_mem, final_geometries, offsets);
-  std::array<const TFl*, Mat::E::N> r_mem{
-    a_mem[Mat::E::A].data(), a_mem[Mat::E::B].data(), a_mem[Mat::E::C].data()};
-
+  setabcw::CpuMemBundle<TFl> cmb(get_geometries(cache_keys), offsets);
   std::cout << "done.\n" << std::endl;
+
   for (size_t i = 0; i < cache_keys.size(); ++i)
   {
     auto ck = cache_keys[i];
     if (ck.gg.floattype == 'f')
     {
-      dev::Diva<TFl> diva(ck.gg, offsets, r_mem, mowri, devhint);
-      std::string    prefix = std::to_string(i) + "/" + std::to_string(cache_keys.size());
+      dev::Diva<TFl> diva(ck.gg, offsets, cmb.r_mem, mowri, devhint);
+      std::string prefix = std::to_string(i) + "/" + std::to_string(cache_keys.size());
       prefix.resize(8, ' ');
-
+      std::cout << ck.gg.get_string() << '\n'; 
+      std::cout << kernel_cache.at(ck).get_string() << '\n';
+      std::cout << prefix << " ";
+      diva.benchgemm({kernel_cache.at(ck)}, {{0, 3}, {0, 10.}});
+      std::cout << '\n';
       
-      if (kernel_cache2.check_for(ck).is_present){
-        for (unsigned iii = 0; iii < 2; ++ iii){
-          if (iii == 0){
-            std::cout << ck.gg.get_string() << '\n'; 
-            std::cout << "O: " << kernel_cache.at(ck).get_string() << '\n';
-            std::cout << "N: " << kernel_cache2.at(ck).get_string() << '\n';
-          }
-          std::cout << prefix << "O : ";
-          diva.benchgemm({kernel_cache.at(ck)}, {{0, 3}, {0, 10.}});
-                  
-          std::cout << prefix << "N : ";
-          diva.benchgemm({kernel_cache2.at(ck)}, {{0, 3}, {0, 10.}});
-        }
-        
-        std::cout << '\n';
-      }
     }
   }
-
   return 0;
 }
 
@@ -118,22 +94,22 @@ int main(int argc, char* argv[])
   
   
 
-  auto kcn = get_merged(kernel_cache, kernel_cache2);
+  //auto kcn = get_merged(kernel_cache, kernel_cache2);
 
 
-  std::ofstream floper("/home/james/kc1.txt", std::ios::out);
+  //std::ofstream floper("/home/james/kc33.txt", std::ios::out);
     
-  //kcn.write()  
-  for (auto & ck : kcn.get_keys()){
-    std::cout << ck.get_string() << std::endl;
-    floper << '\n' << get_cache_entry_string(ck, kcn.at(ck));
-  }
+  ////kcn.write()  
+  //for (auto & ck : kcn.get_keys()){
+    //std::cout << ck.get_string() << std::endl;
+    //floper << '\n' << get_cache_entry_string(ck, kcn.at(ck));
+  //}
 
-  floper.close();
+  //floper.close();
   
   
-  return 0;
-  //return runcache_v2<float>(only_deepbench, all_devices);
+  //return 0;
+  return runcache_v2<float>(only_deepbench, all_devices);
 }
 
 

@@ -13,6 +13,16 @@ namespace MIOpenGEMM
 
 size_t CacheKeyHash::operator()(const CacheKey& ck) const { return __hash(ck.concatenated); }
 
+
+std::vector<Geometry> get_geometries(const std::vector<CacheKey> & cks){
+  std::vector<Geometry> geometries;
+  for (const auto& x : cks)
+  {
+    geometries.push_back(x.gg);
+  }
+  return geometries;  
+}
+
 CacheKeyPresence KernelCache::check_for(const CacheKey& ckey) const
 {
   if (vals.count(ckey) == 0)
@@ -62,19 +72,12 @@ std::string CacheKey::get_string() const
 KernelCache get_kernel_cache()
 {
   KernelCache kc;
-#include "deepbench.cachetxt"
+  #include "deepbench.cachetxt"
   return kc;
 }
 const KernelCache kernel_cache = get_kernel_cache();
 
 
-KernelCache get_kernel_cache2()
-{
-  KernelCache kc;
-#include "deepbench2.cachetxt"
-  return kc;
-}
-const KernelCache kernel_cache2 = get_kernel_cache2();
 
 
 HyPas KernelCache::at(const CacheKey& ckey) const

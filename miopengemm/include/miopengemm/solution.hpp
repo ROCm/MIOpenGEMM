@@ -7,6 +7,7 @@
 #include <chrono>
 #include <map>
 #include <string>
+
 #include <miopengemm/derivedparams.hpp>
 #include <miopengemm/findparams.hpp>
 #include <miopengemm/geometry.hpp>
@@ -80,7 +81,7 @@ class Solution
   //// return a string describing the hyper parameters
   // std::string get_hyper_param_string() const;
 
-  //std::string get_cache_entry_string() const;
+  std::string get_cache_entry_string() const;
 };
 }
 
