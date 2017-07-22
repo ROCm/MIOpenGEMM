@@ -250,7 +250,7 @@ std::vector<int> get_priority(){
   X[E::MAC] = 0;
   X[E::SKW] = 0;
   X[E::IWI] = 0;
-  X[E::SZT] = -1;
+  X[E::SZT] = 0;//-1;
   return X;
 }
 

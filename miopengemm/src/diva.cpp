@@ -193,12 +193,14 @@ void Diva<TFl>::opencl_memory_initialise()
 }
 
 template <typename TFl>
-void Diva<TFl>::benchgemm(const std::vector<HyPas>& hps, const Halt& hl)
+std::vector<std::vector<double>> Diva<TFl>::benchgemm(const std::vector<HyPas>& hps, const Halt& hl)
 {
+  std::vector<std::vector<double>> times_s;
   for (auto& hp : hps)
   {
-    up_jinx->benchgemm(hp, hl);
+    times_s.push_back(up_jinx->benchgemm(hp, hl));
   }
+  return times_s;
 }
 
 template <typename TFl>

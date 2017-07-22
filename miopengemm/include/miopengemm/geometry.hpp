@@ -72,6 +72,8 @@ class Geometry
   // (log k, log m - log n, log m + log n)
   std::array<double, 3> metric_co;
 
+//  Flt::E efloat;
+  
   GeometryDerived derived;
 
   Geometry(bool   isColMajor,
@@ -93,7 +95,6 @@ class Geometry
            size_t k,
            bool   tA,
            bool   tB,
-
            size_t wSpaceSize,
            char   floattype);
 

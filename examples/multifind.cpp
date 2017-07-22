@@ -25,7 +25,7 @@ int main()
     {
       ++counter;
       std::cout << '(' << counter << ')' << std::endl;
-      std::string basedir = "/home/james/test14/";
+      std::string basedir = "/home/james/test15/";
       // WARNING : this call might only work on linux/mac
       std::string syscall =
         "./examples/multifindbase " + basedir + " " + gg.get_string() + " " + cons.get_string();

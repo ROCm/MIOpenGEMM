@@ -39,13 +39,16 @@ int main(int argc, char* argv[])
   auto           fn             = dirname + "log.txt";
   std::string    fn_final       = basedir + "cacheentries.txt";
   std::string    fn_final_local = dirname + "cacheentry.txt";
+
+  std::cout << fn;
+  std::cout << '\n';
+
   owrite::Writer mowri(Ver::E::STRACK, fn);
   dev::Boa       boa(gg, offsets, mowri, devhint);
-  auto           find_params = get_at_least_n_restarts(3);
+  auto           find_params = get_at_least_n_restarts(10);
   auto           soln        = boa.find(find_params, cons);
 
-  std::cout << "  " << fn;
-  std::cout << '\n';
+
   std::cout << soln.hypas.get_string() << "   :   " << gg.get_gflops(soln.extime) << " gflops ";
   std::cout << '\n' << '\n';
   owrite::Writer mowri_final_local(Ver::E::TOFILE, fn_final_local);

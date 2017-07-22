@@ -263,7 +263,7 @@ std::string Jinx::get_run_time_string(cl_int status, double extime)
   return ss.str();
 }
 
-oclutil::Result Jinx::true_core(std::function<void(double, std::string)> acton, const Halt& hl)
+oclutil::Result Jinx::true_core(std::function<void(std::string)> acton, std::vector<double> & all_times, const Halt& hl)
 {
 
   size_t          runi{0};
@@ -272,7 +272,7 @@ oclutil::Result Jinx::true_core(std::function<void(double, std::string)> acton, 
   Timer timer;
   timer.start();
 
-  std::vector<double> all_times;
+  all_times.resize(0);
 
   while (!hl.halt(runi, timer.get_elapsed()))
   {
@@ -340,7 +340,7 @@ oclutil::Result Jinx::true_core(std::function<void(double, std::string)> acton, 
     double extime = (1e-6 * (tk_kernels_active.back()->t_end - tk_kernels_active[0]->t_start));
 
     // act on the results string.
-    acton(extime, get_run_time_string(oclr.success, extime));
+    acton(get_run_time_string(oclr.success, extime));
     ++runi;
     all_times.push_back(extime);
   }
@@ -354,7 +354,7 @@ oclutil::Result Jinx::true_core(std::function<void(double, std::string)> acton, 
   return {};
 }
 
-void Jinx::benchgemm(const HyPas& hp, const Halt& hl)
+std::vector<double> Jinx::benchgemm(const HyPas& hp, const Halt& hl)
 {
 
   address_check_valid();
@@ -379,7 +379,12 @@ void Jinx::benchgemm(const HyPas& hp, const Halt& hl)
         << "Entering the core gemm loops" << Endl;
 
   mowri << get_run_times_heading();
-  true_core([this](double a, std::string x) { (void)a, mowri << x << '\n'; }, hl);
+  
+  
+  std::vector<double> all_times;
+  true_core([this](std::string x) {mowri << x << '\n'; }, all_times, hl);
+  return all_times;
+
 }
 
 Solution Jinx::find(const Constraints& constraints, const FindParams& fparms)
@@ -439,7 +444,12 @@ Solution Jinx::find(const Constraints& constraints, const FindParams& fparms)
   mowri << "\n\n";
 
   mowri.bw[OutPart::CCH] << "\n\n\n -- snip -- -- -- snip --\n\n" << Endl;
-  mowri.bw[OutPart::CCH] << v_solns[best_soln_index].get_cache_entry_string();
+
+
+  mowri.bw[OutPart::CCH] << get_cache_entry_string({devinfo.device_name, constraints, gg}, v_solns[best_soln_index].hypas);
+//  mowri.bw[OutPart::CCH] << v_solns[best_soln_index].get_cache_entry_string();
+
+
   mowri.bw[OutPart::CCH] << "\n -- snip -- -- -- snip --\n\n\n" << Endl;
 
   return v_solns[best_soln_index];
@@ -582,10 +592,10 @@ Solution Jinx::single_descent_find(double             allotted_time,
       std::vector<std::string> summary;
 
       auto oclr = true_core(
-        [&summary, &v_t_total](double a, std::string x) {
-          v_t_total.push_back(a);
+        [&summary, &v_t_total](std::string x) {
           summary.push_back(x);
         },
+        v_t_total,
         core_halt);
 
       if (oclr.fail())

@@ -80,7 +80,7 @@ class Jinx
        cl_mem           workspace_gpu_,
        owrite::Writer&  mowri_);
 
-  void benchgemm(const HyPas& hp, const Halt& hl);
+  std::vector<double> benchgemm(const HyPas& hp, const Halt& hl);
   Solution find(const Constraints& constraint, const FindParams& find_params);
 
   ///////////////////////////////////////////////////////////////////////////////////////////
@@ -118,7 +118,8 @@ class Jinx
                                FindTracker& ftrack,
                                SummStat::E  sumstat,
                                bool         warmstart);
-  oclutil::Result true_core(std::function<void(double, std::string)> acton, const Halt& hl);
+
+  oclutil::Result true_core(std::function<void(std::string)> acton, std::vector<double> & times, const Halt& hl);
 };
 }
 

@@ -248,6 +248,7 @@ void Geometry::initialise(bool   isColMajor_,
 
   check_ldx_consistent();
 
+
   derived.reset(floattype);
 
   metric_co[0] = std::log2(static_cast<double>(k));

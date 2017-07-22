@@ -11,6 +11,7 @@
 namespace MIOpenGEMM
 {
 
+
 class CacheKeyPresence
 {
   public:
@@ -33,6 +34,12 @@ class CacheKey
   CacheKey(const std::string& device, const Constraints&, const Geometry&);
   std::string get_string() const;
   double get_distance(const CacheKey& ck) const;
+
+
+
+
+
+
 };
 
 class CacheKeyHash
@@ -56,15 +63,21 @@ class KernelCache
   std::vector<CacheKey> get_keys() const;
   bool nearest_derivable_is_within(const CacheKey& ck, double threshold) const;
   CacheKey get_nearest_derivable(const CacheKey& ck) const;
+
 };
+
+
 
 void filter_device(std::vector<CacheKey>&, const std::vector<std::string>& device_frags);
 void filter_geometries(std::vector<CacheKey>&, const std::vector<Geometry>& geometries);
 void filter_floattype(std::vector<CacheKey>&, size_t);
 
 extern const KernelCache kernel_cache;
+extern const KernelCache kernel_cache2;
 
-// extern const KernelCache kernel_cache_2;
+
+std::string get_cache_entry_string(const CacheKey & ck, const HyPas & hypas);
+
 }
 
 #endif

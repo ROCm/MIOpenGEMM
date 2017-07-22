@@ -5,8 +5,10 @@
 #include <miopengemm/devmiogemm.hpp>
 #include <miopengemm/geometries.hpp>
 #include <miopengemm/kernelcache.hpp>
+#include <miopengemm/kernelcachemerge.hpp>
 #include <miopengemm/setabcw.hpp>
 
+  
 template <typename TFl>
 int runcache_v2(bool only_deepbench, bool all_devices)
 {
@@ -54,9 +56,23 @@ int runcache_v2(bool only_deepbench, bool all_devices)
       std::string    prefix = std::to_string(i) + "/" + std::to_string(cache_keys.size());
       prefix.resize(8, ' ');
 
-      std::cout << prefix;
-      // max of 3 runs.
-      diva.benchgemm({kernel_cache.at(ck)}, {{0, 3}, {0, 10.}});
+      
+      if (kernel_cache2.check_for(ck).is_present){
+        for (unsigned iii = 0; iii < 2; ++ iii){
+          if (iii == 0){
+            std::cout << ck.gg.get_string() << '\n'; 
+            std::cout << "O: " << kernel_cache.at(ck).get_string() << '\n';
+            std::cout << "N: " << kernel_cache2.at(ck).get_string() << '\n';
+          }
+          std::cout << prefix << "O : ";
+          diva.benchgemm({kernel_cache.at(ck)}, {{0, 3}, {0, 10.}});
+                  
+          std::cout << prefix << "N : ";
+          diva.benchgemm({kernel_cache2.at(ck)}, {{0, 3}, {0, 10.}});
+        }
+        
+        std::cout << '\n';
+      }
     }
   }
 
@@ -66,6 +82,7 @@ int runcache_v2(bool only_deepbench, bool all_devices)
 int main(int argc, char* argv[])
 {
 
+  using namespace MIOpenGEMM;
   std::vector<std::string> sargs;
   for (size_t i = 1; i < argc; ++i)
   {
@@ -95,9 +112,28 @@ int main(int argc, char* argv[])
       errm << " accepted flags are\n";
       errm << "'D' (DeepBench geometries : only benchmark DeepBench geometries) and\n";
       errm << "'A' (All devices : if a cache entry is for another device, run anyway). ";
-      throw MIOpenGEMM::miog_error(errm.str());
+      throw miog_error(errm.str());
     }
   }
+  
+  
 
-  return runcache_v2<float>(only_deepbench, all_devices);
+  auto kcn = get_merged(kernel_cache, kernel_cache2);
+
+
+  std::ofstream floper("/home/james/kc1.txt", std::ios::out);
+    
+  //kcn.write()  
+  for (auto & ck : kcn.get_keys()){
+    std::cout << ck.get_string() << std::endl;
+    floper << '\n' << get_cache_entry_string(ck, kcn.at(ck));
+  }
+
+  floper.close();
+  
+  
+  return 0;
+  //return runcache_v2<float>(only_deepbench, all_devices);
 }
+
+

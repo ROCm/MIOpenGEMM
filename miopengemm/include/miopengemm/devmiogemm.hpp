@@ -54,7 +54,7 @@ class Boa
 
   Boa(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint& devhint);
 
-  void benchgemm(const std::vector<HyPas>& hps, const Halt& hl);
+  std::vector<std::vector<double>> benchgemm(const std::vector<HyPas>& hps, const Halt& hl);
 
   Solution find(const FindParams& find_params, const Constraints& constraints);
 

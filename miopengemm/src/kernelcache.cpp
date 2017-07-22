@@ -33,6 +33,23 @@ CacheKey::CacheKey(const std::string& dvc_, const Constraints& cns_, const Geome
 {
 }
 
+
+std::string get_cache_entry_string(const CacheKey & ck, const HyPas & hypas)
+{
+  std::stringstream cache_write_ss;
+  cache_write_ss << "kc.add(\n";
+  cache_write_ss << "{\"" << ck.dvc << "\",  // dev\n";
+  cache_write_ss << "{\"" << ck.constraints.get_string() << "\"},  // con\n";
+  cache_write_ss << "{\"" << ck.gg.get_string() << "\"}}, // gg\n";
+  cache_write_ss << "{{ // hp\n";
+  cache_write_ss << "\"" << hypas.sus[Mat::E::A].get_string() << "\",\n";
+  cache_write_ss << "\"" << hypas.sus[Mat::E::B].get_string() << "\",\n";
+  cache_write_ss << "\"" << hypas.sus[Mat::E::C].get_string() << "\"}});\n";
+  return cache_write_ss.str();
+}
+
+
+
 std::string CacheKey::get_string() const
 {
   std::stringstream ss;
@@ -48,8 +65,17 @@ KernelCache get_kernel_cache()
 #include "deepbench.cachetxt"
   return kc;
 }
-
 const KernelCache kernel_cache = get_kernel_cache();
+
+
+KernelCache get_kernel_cache2()
+{
+  KernelCache kc;
+#include "deepbench2.cachetxt"
+  return kc;
+}
+const KernelCache kernel_cache2 = get_kernel_cache2();
+
 
 HyPas KernelCache::at(const CacheKey& ckey) const
 {
@@ -184,4 +210,9 @@ CacheKey KernelCache::get_nearest_derivable(const CacheKey& ck) const
   }
   return nearest_derivable;
 }
+
+
+
+
+  
 }

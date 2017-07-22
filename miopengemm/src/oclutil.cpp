@@ -647,7 +647,7 @@ Result cl_set_platform_etc(cl_platform_id&    platform,
 
   DevInfo findev(device);
   mowri << "Found device " << findev.device_name << " @{[" << findev.device_max_compute_units
-        << " CUs]  [" << findev.device_max_clock_frequency << " GHz]}. "
+        << " CUs]  [" << findev.device_max_clock_frequency << " MHz]}. "
         << " Use/modify a CLHint to change.\n";
 
   return {};

@@ -39,7 +39,7 @@ class Diva
 
   Diva(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint& devhint);
 
-  void benchgemm(const std::vector<HyPas>& hps, const Halt&);
+  std::vector<std::vector<double>> benchgemm(const std::vector<HyPas>& hps, const Halt&);
 
   Solution find(const FindParams& find_params, const Constraints& constraints);
 
