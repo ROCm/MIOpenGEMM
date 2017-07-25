@@ -10,11 +10,9 @@ int main()
 {
   using namespace MIOpenGEMM;
  
-  Geometry gg("tC0_tA0_tB1_colMaj1_m129_n128_k133_lda131_ldb144_ldc157_ws10000000_f32");
+  Geometry gg("tC0_tA0_tB1_colMaj1_m64_n192_k30_lda5000_ldb5000_ldc1000_ws10000000_f32");
   HyPas    hypas(
-              {"MIC4_PAD0_PLU0_LIW0_MIW0_WOS0_VEW2",
-               "MIC4_PAD0_PLU0_LIW0_MIW0_WOS0_VEW2",
-               "UNR16_GAL1_PUN0_ICE1_NAW64_UFO0_MAC64_SKW10_IWI0_SZT0"});
+  "A_MIC8_PAD1_PLU0_LIW1_MIW1_WOS0_VEW4__B_MIC6_PAD2_PLU0_LIW0_MIW1_WOS0_VEW4__C_UNR16_GAL2_PUN1_ICE1_IWI1_SZT0_NAW16_UFO0_MAC256_SKW11");
                
   owrite::Writer  mowri(Ver::E::TERMINAL, "");
   kerngen::Bundle bundle(hypas, gg, mowri);

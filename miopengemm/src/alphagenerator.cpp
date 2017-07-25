@@ -228,11 +228,15 @@ TFLOAT previous_value; )"
 
     // a good place to break kernel to check error checking.
     // make this* 1.11101242345 for example
-    std::string alpha_scaled = "alpha*rC[row/C_INTERWEAVE_STRIDE_A][col/C_INTERWEAVE_STRIDE_B]";
 
-    ss << "\nindex = STRIDE_PLL_M_C*(write_start_a + row) + "
-          "STRIDE_PLL_N_C*(write_start_b + col);\n";
-    // beta string
+    
+    std::string row_index = hp.sus[Mat::E::A].vs[Chi::E::MIW] == 0 ? "row" : "(rowi*VEW_A)/N_MICRO_IN_MACRO_A + rowi_v" ; //
+    std::string col_index = hp.sus[Mat::E::B].vs[Chi::E::MIW] == 0 ? "col" : "(coli*VEW_B)/N_MICRO_IN_MACRO_B + coli_v" ;
+    
+    std::string alpha_scaled = "alpha*rC[" + row_index + "][" + col_index + "]";
+
+    ss << "\nindex = STRIDE_PLL_M_C*(write_start_a + row) + STRIDE_PLL_N_C*(write_start_b + col);\n";
+  //ss << "\nindex = 0;\n";
 
 
     ss << (with_beta_scaling == 0 ? "" : "c[index] *= beta;\n");
@@ -265,23 +269,36 @@ TFLOAT previous_value; )"
     ss << dp.pragma_unroll_string;
     append_loop_var_bound_incr(
       ss,
-      "row",
-      hp.sus[Mat::E::A].vs[Chi::E::MIW] == 0 ? "MICRO_TILE_LENGTH_A" : "MACRO_TILE_LENGTH_A",
-      hp.sus[Mat::E::A].vs[Chi::E::MIW] == 0 ? "++row" : "row += N_MICRO_IN_MACRO_A",
+      "rowi",
+      hp.sus[Mat::E::A].vs[Chi::E::MIW] == 0 ? "MICRO_TILE_LENGTH_A/VEW_A" : "MACRO_TILE_LENGTH_A/VEW_A",
+      hp.sus[Mat::E::A].vs[Chi::E::MIW] == 0 ? "++rowi" : "rowi += N_MICRO_IN_MACRO_A",
       Mat::E::A);
     ss << " {\n";
 
     ss << dp.pragma_unroll_string;
     append_loop_var_bound_incr(
       ss,
-      "col",
-      hp.sus[Mat::E::B].vs[Chi::E::MIW] == 0 ? "MICRO_TILE_LENGTH_B" : "MACRO_TILE_LENGTH_B",
-      hp.sus[Mat::E::B].vs[Chi::E::MIW] == 0 ? "++col" : "col += N_MICRO_IN_MACRO_B",
+      "coli",
+      hp.sus[Mat::E::B].vs[Chi::E::MIW] == 0 ? "MICRO_TILE_LENGTH_B/VEW_B" : "MACRO_TILE_LENGTH_B/VEW_B",
+      hp.sus[Mat::E::B].vs[Chi::E::MIW] == 0 ? "++coli" : "coli += N_MICRO_IN_MACRO_B",
       Mat::E::B);
     ss << " {\n";
+
+    ss << dp.pragma_unroll_string;
+    append_loop_var_bound_incr(ss, "rowi_v", "VEW_A", "++rowi_v", Mat::E::A);      
+    ss << " {\n";
+    
+
+    ss << dp.pragma_unroll_string;
+    append_loop_var_bound_incr(ss, "coli_v", "VEW_B", "++coli_v", Mat::E::B);      
+    ss << " {\n";
+    
+    ss << "TINTA row = rowi*VEW_A + rowi_v;\n";
+    ss << "TINTB col = coli*VEW_B + coli_v;\n";
+    
   }
 
-  void append_for_loops_for_c_write_close(std::stringstream& ss) { ss << "\n}\n}\n"; }
+  void append_for_loops_for_c_write_close(std::stringstream& ss) { ss << "\n}\n}\n}\n}\n"; }
 
   void append_check_wrapped_if_clause_open(std::stringstream& ss)
   {
@@ -787,7 +804,7 @@ TINTK k_plus_offset = __K__ + unroll_offset;
       ss << "}\n";
     }
     ss << "const TINT" << X << " write_start_" << x << " = write_macro_tile_start_" << x
-       << " + micro_id_" << x << "*" << get_c_work_item_next(emat_x) << ";\n";
+       << " + micro_id_" << x << "*(" << get_c_work_item_next(emat_x) << "/1);\n";
 
     ss << "\n\n\n";
 
@@ -907,7 +924,7 @@ TINTK k_plus_offset = __K__ + unroll_offset;
     }
     ss << "const TVFLOAT" << X << " * " << x << "_vec = (const TVFLOAT" << X << " * )" << x << ";\n";
 
-    ss << "float2 zero" << x << "; zero" << x << ".s0 = 1000.1f; zero" << x << ".s1  = 100.1f;\n";
+//    ss << "float2 zero" << x << "; zero" << x << ".s0 = 1000.1f; zero" << x << ".s1  = 100.1f;\n";
 
     ss << x << "_vec += "
        << "STRIDE_PERP_K_" << X << " * " << x << "_offset_perp_unroll_v;\n";

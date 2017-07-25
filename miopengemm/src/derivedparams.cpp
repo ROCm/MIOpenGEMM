@@ -335,8 +335,28 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
         ss_viz << "micro load tile perp to unroll of " << Mat::M.name[emat_x] << " ( " << at(emat_x).main_micro_tile_perp_unroll << " )  is not divisable by VEW.\n";
         is_viz = false;
       }
+      
+      if (ptr_hp->sus[emat_x].vs[Chi::E::MIC]%ptr_hp->sus[emat_x].vs[Chi::E::VEW] != 0){
+        
+        ss_viz << "micro tile dim-" << Mat::M.name[emat_x] << " ( " << ptr_hp->sus[emat_x].vs[Chi::E::MIC] << " )  is not divisable by VEW.\n";
+        is_viz = false;
+      }
+      
     }
+
+
+  //std::cout << "\n--------------" << Mat::M.name[emat_x] << " perp x pll : " << at(emat_x).main_micro_tile_perp_unroll << " x " << at(emat_x).main_micro_tile_pll_unroll << std::endl;
+  
+ 
+ //std::cout << "\n--------------" << Mat::M.name[emat_x] << " macro : " << at(emat_x).macro_tile_length << std::endl;
+  
+  
+  
+  ////std::cout << "\n--------------" << Mat::M.name[emat_x] << "\nmicro tile perp to unroll : " << at(emat_x).main_micro_tile_perp_unroll << std::endl;
+  //std::cout << "VEW : " << ptr_hp->sus[emat_x].vs[Chi::E::VEW] << std::endl;
+
   }
+
 
   std::string viza = ss_viz.str();
   
@@ -349,7 +369,6 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
   }
   
 
-  
 
   // ran the gauntlet, returning deriveable is true
   return std::make_tuple(true, "");        

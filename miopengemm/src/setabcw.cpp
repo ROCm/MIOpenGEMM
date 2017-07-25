@@ -34,7 +34,7 @@ void fill_uni(std::vector<TFloat>& v, size_t r_small, size_t r_big)
 
   for (size_t i = 0; i < r_small; ++i)
   {
-    v[i] = i;//(i < 4);//TFloat(rand() % 1000) / 1000.;
+    v[i] = TFloat(rand() % 1000) / 1000.;
   }
 
   for (size_t i = r_small; i < r_big; ++i)
