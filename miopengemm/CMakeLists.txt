@@ -24,24 +24,3 @@ target_include_directories (miopengemm PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/dev_include>
     ${OPENCL_INCLUDE_DIRS})
 
-rocm_install_targets(
-  TARGETS miopengemm
-  INCLUDE 
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-  PREFIX ${miopengemm_INSTALL_DIR}
-)
-
-rocm_export_targets(
-  TARGETS miopengemm
-  PREFIX ${miopengemm_INSTALL_DIR}
-)
-
-rocm_create_package(
-    NAME miopengemm
-    DESCRIPTION "A tool for generating OpenCL matrix multiplication (GEMM) kernels"
-    MAINTAINER "Paul Fultz II <paul.fultz@amd.com>"
-    LDCONFIG
-)
-
-rocm_install_symlink_subdir(${miopengemm_INSTALL_DIR})
-
