@@ -68,6 +68,8 @@ void BaseGenerator::append_stride_definitions(Mat::E             emat_x,
   }
 }
 
+
+
 void BaseGenerator::append_unroll_block_geometry(Mat::E             emat_x,
                                                  std::stringstream& ss,
                                                  bool               withcomments,

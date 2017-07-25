@@ -23,6 +23,7 @@ add_example_executable(initialisationdemo initialisationdemo.cpp)
 add_example_executable(multifind multifind.cpp)
 add_example_executable(multifindbase multifindbase.cpp)
 add_example_executable(mergecaches mergecaches.cpp)
+add_example_executable(floatxdemo floatxdemo.cpp)
 
 #add_example_executable(deepbench deepbench.cpp)
 #add_example_executable(redirectionexample redirectionexample.cpp)

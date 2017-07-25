@@ -2,12 +2,12 @@
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <miopengemm/kernelcachemerge.hpp>
-
+#include <miopengemm/findparams.hpp>
   
 MIOpenGEMM::KernelCache get_kernel_cache2()
 {
   MIOpenGEMM::KernelCache kc;
-//  #include "deepbench2.cachetxt"
+  #include "acache.txt"
   return kc;
 }
 
@@ -21,7 +21,9 @@ int main()
   KernelCache kernel_cache2 = get_kernel_cache2();
   
   owrite::Writer mowri(Ver::E::MERGE, "");
-  auto kcn = get_merged(kernel_cache, kernel_cache2, mowri);
+
+  Halt halt  = {{0, 4}, {0, 0.08}};
+  auto kcn = get_merged(kernel_cache, kernel_cache2, halt, mowri);
   std::ofstream floper("/home/james/kc33.txt", std::ios::out);    
   for (auto & ck : kcn.get_keys()){
     //std::cout << ck.get_string() << std::endl;

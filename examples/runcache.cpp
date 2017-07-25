@@ -44,11 +44,11 @@ int runcache_v2(bool only_deepbench, bool all_devices)
       dev::Diva<TFl> diva(ck.gg, offsets, cmb.r_mem, mowri, devhint);
       std::string prefix = std::to_string(i) + "/" + std::to_string(cache_keys.size());
       prefix.resize(8, ' ');
-      std::cout << ck.gg.get_string() << '\n'; 
-      std::cout << kernel_cache.at(ck).get_string() << '\n';
+      //std::cout << ck.gg.get_string() << '\n'; 
+      //std::cout << kernel_cache.at(ck).get_string() << '\n';
       std::cout << prefix << " ";
-      diva.benchgemm({kernel_cache.at(ck)}, {{0, 3}, {0, 10.}});
-      std::cout << '\n';
+      diva.benchgemm({kernel_cache.at(ck)}, {{0, 5}, {0, 0.1}});
+      //std::cout << '\n';
       
     }
   }

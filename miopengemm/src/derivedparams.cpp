@@ -106,6 +106,9 @@ DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_, std::string 
 std::tuple<bool, std::string> DerivedParams::set_fragile()
 {
 
+
+  
+
   set_should_be_hyperparams();
 
   macgrid::Grid grid(ptr_hp->sus[Mat::E::C].vs[NonChi::E::MAC],
@@ -125,7 +128,7 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
     at(emat_x).n_groups = ptr_gg->get_non_k_dim(emat_x) / at(emat_x).macro_tile_length +
                           (at(emat_x).preshift_final_tile != at(emat_x).macro_tile_length);
     at(emat_x).main_macro_tile_length_and_pad =
-      at(emat_x).macro_tile_length + ptr_hp->sus[emat_x].vs[Chi::E::PAD];
+      at(emat_x).macro_tile_length + ptr_hp->sus[emat_x].vs[Chi::E::VEW]*ptr_hp->sus[emat_x].vs[Chi::E::PAD];
 
     at(emat_x).main_n_elements_in_padded_unroll =
       at(emat_x).main_macro_tile_length_and_pad * ptr_hp->sus[Mat::E::C].vs[NonChi::E::UNR];
@@ -293,8 +296,63 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
     ga3_last_super_column_width = bdps.n_groups % ga3_super_column_width;
   }
 
+
+  // do the tiling
+  for (auto emat_x : {Mat::E::A, Mat::E::B})
+  {
+
+    tiling::set_tile_dimensions(at(emat_x).main_micro_tile_perp_unroll,
+                                at(emat_x).main_micro_tile_pll_unroll,
+                                at(emat_x).macro_tile_length,
+                                ptr_hp->sus[Mat::E::C].vs[NonChi::E::UNR],
+                                at(emat_x).main_n_elements_to_load_per_workitem,
+                                ptr_hp->sus[emat_x].vs[Chi::E::PLU] == 0);
+
+    if (ptr_hp->sus[emat_x].vs[Chi::E::WOS] == Scratch::E::NFORM)
+    {
+      tiling::set_tile_dimensions(at(emat_x).cw2_micro_tile_perp_unroll,
+                                  at(emat_x).cw2_micro_tile_pll_unroll,
+                                  at(emat_x).macro_tile_length,
+                                  ptr_hp->sus[Mat::E::C].vs[NonChi::E::UNR],
+                                  at(emat_x).cw2_n_elements_to_load_per_workitem,
+                                  at(emat_x).cw2_load_pll_to_unroll == 0);
+    }
+  }
+
+
+  //check vector-izability
+  std::stringstream ss_viz;
+  bool is_viz = true;
+  for (auto emat_x : {Mat::E::A, Mat::E::B})
+  {    
+    if (ptr_hp->sus[emat_x].vs[Chi::E::VEW] != 1){
+      if (get_stride(emat_x, false, false, ptr_hp->sus[emat_x].vs[Chi::E::WOS]) != 1){
+        ss_viz << "stride perp to k of " << Mat::M.name[emat_x] << " is not 1.\n";
+        is_viz = false;
+      }
+    
+      if (at(emat_x).main_micro_tile_perp_unroll%ptr_hp->sus[emat_x].vs[Chi::E::VEW] != 0){
+        ss_viz << "micro load tile perp to unroll of " << Mat::M.name[emat_x] << " ( " << at(emat_x).main_micro_tile_perp_unroll << " )  is not divisable by VEW.\n";
+        is_viz = false;
+      }
+    }
+  }
+
+  std::string viza = ss_viz.str();
+  
+  //if (ptr_hp->sus[Mat::E::A].vs[Chi::E::VEW] != 1 || ptr_hp->sus[Mat::E::B].vs[Chi::E::VEW] != 1){
+    //std::cout << "\n\n\n**********************************\n" << ptr_hp->get_string() << '\n' << viza << '\n';
+  //}
+
+  if (!is_viz){
+    return std::make_tuple(false, viza);
+  }
+  
+
+  
+
   // ran the gauntlet, returning deriveable is true
-  return std::make_tuple(true, "");
+  return std::make_tuple(true, "");        
 }
 
 std::string get_tint(size_t memsize)
@@ -335,27 +393,6 @@ DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_) : ptr_hp(&hp
                      std::get<1>(tup));
   }
 
-  // do the tiling
-  for (auto emat_x : {Mat::E::A, Mat::E::B})
-  {
-
-    tiling::set_tile_dimensions(at(emat_x).main_micro_tile_perp_unroll,
-                                at(emat_x).main_micro_tile_pll_unroll,
-                                at(emat_x).macro_tile_length,
-                                ptr_hp->sus[Mat::E::C].vs[NonChi::E::UNR],
-                                at(emat_x).main_n_elements_to_load_per_workitem,
-                                ptr_hp->sus[emat_x].vs[Chi::E::PLU] == 0);
-
-    if (ptr_hp->sus[emat_x].vs[Chi::E::WOS] == Scratch::E::NFORM)
-    {
-      tiling::set_tile_dimensions(at(emat_x).cw2_micro_tile_perp_unroll,
-                                  at(emat_x).cw2_micro_tile_pll_unroll,
-                                  at(emat_x).macro_tile_length,
-                                  ptr_hp->sus[Mat::E::C].vs[NonChi::E::UNR],
-                                  at(emat_x).cw2_n_elements_to_load_per_workitem,
-                                  at(emat_x).cw2_load_pll_to_unroll == 0);
-    }
-  }
 
   if (ptr_hp->sus[Mat::E::C].vs[NonChi::E::ICE] == 1)
   {

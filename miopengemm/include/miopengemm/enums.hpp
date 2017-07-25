@@ -15,8 +15,8 @@ namespace MIOpenGEMM
 namespace Floating
 {
 
-static const double default_alpha = 0.415693029182345929;
-static const double default_beta  = 0.273539340934809345;
+static const double default_alpha = 1;//0.415693029182345929;
+static const double default_beta  = 0;//0.273539340934809345;
 
 class MFType
 {
@@ -80,6 +80,7 @@ enum E
   LIW,
   MIW,
   WOS,
+  VEW, // vector width
   N
 };
 extern const EnumMapper<std::string> M;

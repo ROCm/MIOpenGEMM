@@ -7,13 +7,14 @@
 int main()
 {
   using namespace MIOpenGEMM;
-  Geometry gg("tC0_tA0_tB0_colMaj0_m32_n32_k155_lda512_ldb2048_ldc2048_ws5000000_f32");
+  //Geometry gg("tC0_tA0_tB1_colMaj1_m512_n512_k512_lda512_ldb512_ldc512_ws10000000_f32");
+  Geometry gg("tC0_tA0_tB1_colMaj1_m4_n4_k1_lda4_ldb4_ldc4_ws10000000_f32");
   HyPas    hypas(
-              {"MIC2_PAD1_PLU0_LIW0_MIW1_WOS0",
-               "MIC2_PAD1_PLU0_LIW0_MIW1_WOS0",
-               "UNR8_GAL1_PUN0_ICE3_NAW64_UFO0_MAC64_SKW10_IWI0"});
+              {"MIC4_PAD0_PLU0_LIW0_MIW0_WOS0_VEW2",
+               "MIC4_PAD0_PLU0_LIW0_MIW0_WOS0_VEW2",
+               "UNR2_GAL1_PUN0_ICE1_NAW64_UFO0_MAC1_SKW10_IWI0_SZT0"});
 
-  CLHint         devhint;
+  CLHint         devhint({"AMD", "gfx"});
   Offsets        offsets = get_zero_offsets();//get_padding_offsets();
   owrite::Writer mowri(Ver::E::TERMINAL, "");
   dev::Boa       boa(gg, offsets, mowri, devhint);

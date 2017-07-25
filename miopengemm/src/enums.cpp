@@ -163,6 +163,7 @@ std::vector<std::string> get_name()
   X[E::LIW] = "LIW";
   X[E::MIW] = "MIW";
   X[E::WOS] = "WOS";
+  X[E::VEW] = "VEW";
   return X;
 }
 
@@ -174,6 +175,7 @@ std::vector<int> get_priority(){
   X[E::LIW] = 0;
   X[E::MIW] = 0;
   X[E::WOS] = 0;
+  X[E::VEW] = 0;  
   return X;
 }
 

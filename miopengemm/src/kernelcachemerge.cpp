@@ -22,7 +22,7 @@ std::vector<bool> get_thue_morse(size_t length){
 }
 
 template <typename TFl>
-void populate(const std::vector<CacheKey> & cache_keys, const KernelCache & kc1, const KernelCache & kc2, KernelCache & kc, owrite::Writer& mowri){
+void populate(const std::vector<CacheKey> & cache_keys, const KernelCache & kc1, const KernelCache & kc2, KernelCache & kc, const Halt & halt, owrite::Writer& mowri){
     
   Offsets        offsets = get_zero_offsets();
   CLHint         devhint;
@@ -40,7 +40,7 @@ void populate(const std::vector<CacheKey> & cache_keys, const KernelCache & kc1,
       mowri.bw[OutPart::MER] << "[ss]" << Flush;
       continue;
     }
-    mowri.bw[OutPart::MER] << '\n';    
+    mowri.bw[OutPart::MER] << '\n' << "(" <<  i << " / " << cache_keys.size() << ")";    
     mowri.bw[OutPart::MER] << ck.gg.get_string() << Endl; 
    
     // having two Divas means that each opposing kernel only needs be compiled once. Optional.
@@ -59,9 +59,9 @@ void populate(const std::vector<CacheKey> & cache_keys, const KernelCache & kc1,
     std::string prefix = std::to_string(i) + "/" + std::to_string(cache_keys.size());
     prefix.resize(8, ' ');
     
-    auto act_kcx = [&mowri, &ck, &prefix](const KernelCache & kcx, std::string frag, std::vector<double> & times, dev::Diva<TFl> & diva){
+    auto act_kcx = [&halt, &mowri, &ck, &prefix](const KernelCache & kcx, std::string frag, std::vector<double> & times, dev::Diva<TFl> & diva){
       mowri.bw[OutPart::MER] << frag << Flush;
-      times.push_back(diva.benchgemm({kcx.at(ck)}, {{0, 3}, {0, 0.5}}).back().back());
+      times.push_back(diva.benchgemm({kcx.at(ck)}, halt).back().back());
     };
 
     
@@ -69,10 +69,10 @@ void populate(const std::vector<CacheKey> & cache_keys, const KernelCache & kc1,
     for (auto kc1_first : get_thue_morse(8)){
       if (kc1_first){
         act_kcx(kc1, "1", times_kc1, diva1);
-        act_kcx(kc2, "2", times_kc2, diva2);
+        act_kcx(kc2, "2", times_kc2, diva1);
       }
       else{
-        act_kcx(kc2, "2", times_kc2, diva2);
+        act_kcx(kc2, "2", times_kc2, diva1);
         act_kcx(kc1, "1", times_kc1, diva1);
       }
       mowri.bw[OutPart::MER] << '|' << Flush; 
@@ -110,7 +110,7 @@ void populate(const std::vector<CacheKey> & cache_keys, const KernelCache & kc1,
   mowri.bw[OutPart::MER] << '\n'; 
 }
   
-KernelCache get_merged(const KernelCache & kc1, const KernelCache & kc2, owrite::Writer& mowri){
+KernelCache get_merged(const KernelCache & kc1, const KernelCache & kc2, const Halt & halt, owrite::Writer& mowri){
 
   KernelCache kc; 
   std::map<char, std::vector<CacheKey>> in_both;
@@ -143,8 +143,8 @@ KernelCache get_merged(const KernelCache & kc1, const KernelCache & kc2, owrite:
   
   for (auto & x : in_both){
     switch (std::get<0>(x)){
-      case 'f': populate<float>(in_both['f'], kc1, kc2, kc, mowri); break;
-      case 'd': populate<double>(in_both['f'], kc1, kc2, kc, mowri); break;
+      case 'f': populate<float>(in_both['f'], kc1, kc2, kc, halt, mowri); break;
+      case 'd': populate<double>(in_both['f'], kc1, kc2, kc, halt, mowri); break;
       default : throw miog_error("unrecognised floattype in get_merged");
     }
   }

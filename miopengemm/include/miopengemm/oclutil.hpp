@@ -110,13 +110,6 @@ Result cl_enqueue_ndrange_kernel(cl_command_queue   command_queue,
                                  const std::string& hash,
                                  bool               strict);
 
-Result cl_set_buffer_from_command_queue(cl_mem&            a_cl_mem,
-                                        cl_command_queue   command_queue,
-                                        cl_mem_flags       flags,
-                                        size_t             size,
-                                        void*              host_ptr,
-                                        const std::string& hash,
-                                        bool               strict);
 
 Result cl_set_platform_ids(cl_uint            num_entries,
                            cl_platform_id*    platforms,
@@ -211,6 +204,15 @@ Result cl_set_program_info(cl_program         program,
                            size_t*            param_value_size_ret,
                            const std::string& hash,
                            bool               strict);
+
+Result cl_set_buffer_from_command_queue(cl_mem&            a_cl_mem,
+                                        cl_command_queue   command_queue,
+                                        cl_mem_flags       flags,
+                                        size_t             size,
+                                        void*              host_ptr,
+                                        const std::string& hash,
+                                        bool               strict);
+
 
 Result cl_enqueue_write_buffer(cl_command_queue   command_queue,
                                cl_mem             buffer,

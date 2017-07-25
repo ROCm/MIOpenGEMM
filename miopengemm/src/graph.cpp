@@ -490,6 +490,10 @@ void ChiSuGr::initialise_edges()
   edges[Chi::E::LIW] = {g_binary};
   edges[Chi::E::MIW] = {g_binary};
 
+  edges[Chi::E::VEW] = {{1, {2}},
+                        {2, {1,4}},
+                        {4, {2,1}}};
+
   edges[Chi::E::WOS] = {{Scratch::E::UNUSED, {Scratch::E::COPY, Scratch::E::NFORM}},
                         {Scratch::E::COPY, {Scratch::E::UNUSED, Scratch::E::NFORM}},
                         {Scratch::E::NFORM, {Scratch::E::UNUSED, Scratch::E::COPY}}};
@@ -589,6 +593,7 @@ void ChiSuGr::refine_start_range()
   start_range[Chi::E::LIW] = {Binary::E::NO};
   start_range[Chi::E::MIW] = {Binary::E::YES};
   start_range[Chi::E::WOS] = {Scratch::E::UNUSED, Scratch::E::COPY, Scratch::E::NFORM};
+  start_range[Chi::E::VEW] = {1};
 
   set_start_mic();
 }
