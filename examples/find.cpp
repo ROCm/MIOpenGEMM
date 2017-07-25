@@ -21,8 +21,11 @@ int main()
 
   // FindParams find_params = get_quick_find_params();
   auto find_params = get_at_least_n_seconds(1003.14);  //(100, 1000., 3, 1., SummStat::E::MAX);
-  Constraints constraints(
-    "A_VEW2__B_VEW2");  // A_MIC8_PAD1_PLU0_LIW0_MIW1_WOS0__B_MIC5_PAD1_PLU1_LIW0_MIW0_WOS0__C_UNR16_GAL2_PUN1_ICE1_NAW16_UFO0_MAC256_SKW10");
+  Constraints constraints("A_MIC8_PAD1_PLU0_LIW0_MIW0_WOS0_VEW1__B_MIC6_PAD1_PLU0_LIW0_MIW0_WOS0_VEW1__C_UNR16_GAL2_PUN0_ICE1_IWI0_SZT0_NAW64_UFO0_MAC64_SKW10");
+  
+  
+//  A_MIW0_VEW1__B_MIW0_VEW1");
+  
   Solution soln = boa.find(find_params, constraints);
 
   if (test_accuracy_of_soln)

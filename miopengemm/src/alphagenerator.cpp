@@ -233,6 +233,8 @@ TFLOAT previous_value; )"
     ss << "\nindex = STRIDE_PLL_M_C*(write_start_a + row) + "
           "STRIDE_PLL_N_C*(write_start_b + col);\n";
     // beta string
+
+
     ss << (with_beta_scaling == 0 ? "" : "c[index] *= beta;\n");
     if (with_alpha_increment != 0)
     {
@@ -393,32 +395,23 @@ barrier(CLK_LOCAL_MEM_FENCE); )";
     std::stringstream ss_value_to_get;
     std::stringstream ss_comment;
 
+    std::stringstream basic_to_get_ss;
+    basic_to_get_ss << x << "_vec[(mu_pll_i*STRIDE_PLL_K_" << X << " + VEW_" << X << "*mu_perp_i*STRIDE_PERP_K_" << X << ")/VEW_" << X << "]" ;
+    
     if (final_unroll == 1 || special_first_unroll == 1)
     {
       std::string condition       = final_unroll == 1 ? " < k_remaining " : " >= unroll_offset";
       std::string special_comment = final_unroll == 1 ? "(ignoring tail)" : "(ignoring prepend)";
-      
-      ss_value_to_get << "(" << x << "_offset_pll_unroll + mu_pll_i) " << condition << " ? " << x << "_vec"
-                      << "[(mu_pll_i*STRIDE_PLL_K_" << X << " + mu_perp_i*STRIDE_PERP_K_" << X
-                      << ")/VEW_" << X << "] : ";
-      if (hp.sus[emat_x].vs[Chi::E::VEW] == 1){
-        ss_value_to_get << "0;";
-      }
-      else{
-        ss_value_to_get << "zerob;";//"TVFLOATB(0,0);";
-      }
-                      
-
       ss_comment << "/* load final bit of data from " << x << " into LDS, less than a full unroll "
-                 << special_comment << " */";
+                 << special_comment << " */";      
+      ss_value_to_get << "(" << x << "_offset_pll_unroll + mu_pll_i) " << condition << " ? " << basic_to_get_ss.str() <<  " : 0;";
+
     }
 
     else
     {
-      ss_value_to_get << x << "_vec[(mu_pll_i*"
-                      << "STRIDE_PLL_K_" << X << " + VEW_" << X << "*mu_perp_i*"
-                      << "STRIDE_PERP_K_" << X << ")/VEW_" << X << "];";
       ss_comment << "/* load data from " << x << " into LDS */";
+      ss_value_to_get << basic_to_get_ss.str() << ';';
     }
 
     ss << '\n' << ss_comment.str() << '\n' << dp.pragma_unroll_string;
@@ -443,7 +436,7 @@ barrier(CLK_LOCAL_MEM_FENCE); )";
   {
 
     return (hp.sus[emat_x].vs[Chi::E::MIW] != 0)
-             ? "1"
+             ? std::string("VEW_") + Mat::M.name[emat_x]
              : (std::string("MICRO_TILE_LENGTH_") + Mat::M.name[emat_x]);
   }
 
