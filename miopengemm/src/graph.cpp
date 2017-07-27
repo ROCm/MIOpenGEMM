@@ -530,10 +530,14 @@ void CSuGr::initialise_edges()
   // very small / thin matrices
   else if (ptr_gg->m * ptr_gg->n < 32 * 32 || ptr_gg->m < 16 || ptr_gg->n < 16)
   {
-    edges[NonChi::E::MAC] = {
-      {1, {4, 16}}, {4, {1, 16, 64}}, {16, {4, 64}}, {64, {16, 256}}, {256, {64}},
-    };
+    //edges[NonChi::E::MAC] = {
+      //{1, {4, 16}}, {4, {1, 16, 64}}, {16, {4, 64}}, {64, {16, 256}}, {256, {64}},
+    //};
 
+    edges[NonChi::E::MAC] = {
+      {{64, {256}}, {256, {64}}}
+    };
+    
     edges[NonChi::E::SKW] = {
 
       {7, {8}},

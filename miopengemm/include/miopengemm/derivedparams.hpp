@@ -11,6 +11,7 @@
 #include <vector>
 #include <miopengemm/geometry.hpp>
 #include <miopengemm/hyperparams.hpp>
+#include <sstream>
 
 namespace MIOpenGEMM
 {
@@ -67,6 +68,22 @@ class ChiralDerivedParams
 
   size_t cw2_n_elements_perp_unroll          = uninitialised_size_t;
   size_t cw2_n_elements_to_load_per_workitem = uninitialised_size_t;
+  
+  std::string get_string(){
+    std::stringstream ss;
+    ss 
+    << "\nmacro_tile_length : " << macro_tile_length 
+    << "\nn_elements_in_unroll : " << n_elements_in_unroll
+    << "\nmain_n_elements_to_load_per_workitem : " << main_n_elements_to_load_per_workitem
+    << "\nmain_n_elements_in_padded_unroll : "  << main_n_elements_in_padded_unroll    
+    << "\nmain_n_micro_tiles_pll_unroll : " << main_n_micro_tiles_pll_unroll
+    << "\nmain_macro_tile_length_and_pad : " << main_macro_tile_length_and_pad
+    << "\nmain_n_micro_in_macro : " << main_n_micro_in_macro
+    << "\npreshift_final_tile : " << preshift_final_tile
+    << "\nn_groups : " << n_groups;
+ 
+    return ss.str();
+  }
 };
 
 // all derived parameters
@@ -156,6 +173,15 @@ class DerivedParams
   std::string tshort;
 
   void set_should_be_hyperparams();
+
+  std::string get_string(){
+    std::stringstream ss;
+    for (auto x : {Mat::E::A, Mat::E::B}){
+      ss << "\n" << Mat::M.name[x] << "\n" << at(x).get_string();
+    }
+    return ss.str();
+  }
+
 };
 //}
 }

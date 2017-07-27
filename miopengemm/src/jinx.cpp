@@ -452,6 +452,8 @@ Solution Jinx::find(const Constraints& constraints, const FindParams& fparms)
 
   mowri.bw[OutPart::CCH] << "\n -- snip -- -- -- snip --\n\n\n" << Endl;
 
+  std::cout << best_soln_index << std::endl;
+  std::cout << v_solns.size() << std::endl;
   return v_solns[best_soln_index];
 }
 

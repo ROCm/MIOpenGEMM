@@ -3,9 +3,11 @@
  *******************************************************************************/
 #include <functional>
 #include <unordered_map>
+#include <chrono>
 #include <miopengemm/devmiogemm.hpp>
 #include <miopengemm/setabcw.hpp>
 #include <miopengemm/kernelcachemerge.hpp>
+#include <algorithm>
 
 namespace MIOpenGEMM{
 
@@ -42,13 +44,16 @@ void populate(const std::vector<CacheKey> & cache_keys, const KernelCache & kc1,
     }
     mowri.bw[OutPart::MER] << '\n' << "(" <<  i << " / " << cache_keys.size() << ")";    
     mowri.bw[OutPart::MER] << ck.gg.get_string() << Endl; 
+
+    mowri.bw[OutPart::MER] << "soln1 : " << kc1.at(ck).get_string() << Endl;
+    mowri.bw[OutPart::MER] << "soln2 : " << kc2.at(ck).get_string() << Endl;
+
    
     // having two Divas means that each opposing kernel only needs be compiled once. Optional.
     dev::Diva<TFl> diva1(ck.gg, offsets, cmb.r_mem, mowri, devhint);
     dev::Diva<TFl> diva2(ck.gg, offsets, cmb.r_mem, mowri, devhint);
 
-    mowri.bw[OutPart::MER] << "soln1 : " << kc1.at(ck).get_string() << Endl;
-    mowri.bw[OutPart::MER] << "soln2 : " << kc2.at(ck).get_string() << Endl;
+    mowri.bw[OutPart::MER] << "Two divas generated" << Endl;
 
     std::vector<double> times_kc1;
     std::vector<double> times_kc2;
@@ -60,19 +65,30 @@ void populate(const std::vector<CacheKey> & cache_keys, const KernelCache & kc1,
     prefix.resize(8, ' ');
     
     auto act_kcx = [&halt, &mowri, &ck, &prefix](const KernelCache & kcx, std::string frag, std::vector<double> & times, dev::Diva<TFl> & diva){
-      mowri.bw[OutPart::MER] << frag << Flush;
-      times.push_back(diva.benchgemm({kcx.at(ck)}, halt).back().back());
+      mowri.bw[OutPart::MER] << '<' << frag  << Flush;
+      std::this_thread::sleep_for(std::chrono::milliseconds(80));
+      std::vector<double> ltimes = diva.benchgemm({kcx.at(ck)}, halt).back();
+      
+      double zoo = *std::min_element(ltimes.begin(), ltimes.end());//.back();
+      //std::cout << "times : ";
+      //for (auto & x : ltimes){
+        //std::cout << x << "   ";
+      //}
+      //std::cout << std::endl;
+      
+      mowri.bw[OutPart::MER] << '>' << Flush;
+      times.push_back(zoo);
     };
 
     
     
-    for (auto kc1_first : get_thue_morse(8)){
+    for (auto kc1_first : get_thue_morse(11)){
       if (kc1_first){
         act_kcx(kc1, "1", times_kc1, diva1);
-        act_kcx(kc2, "2", times_kc2, diva1);
+        act_kcx(kc2, "2", times_kc2, diva2);
       }
       else{
-        act_kcx(kc2, "2", times_kc2, diva1);
+        act_kcx(kc2, "2", times_kc2, diva2);
         act_kcx(kc1, "1", times_kc1, diva1);
       }
       mowri.bw[OutPart::MER] << '|' << Flush; 

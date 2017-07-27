@@ -344,30 +344,24 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
       
     }
 
-
-  //std::cout << "\n--------------" << Mat::M.name[emat_x] << " perp x pll : " << at(emat_x).main_micro_tile_perp_unroll << " x " << at(emat_x).main_micro_tile_pll_unroll << std::endl;
-  
- 
- //std::cout << "\n--------------" << Mat::M.name[emat_x] << " macro : " << at(emat_x).macro_tile_length << std::endl;
-  
-  
-  
-  ////std::cout << "\n--------------" << Mat::M.name[emat_x] << "\nmicro tile perp to unroll : " << at(emat_x).main_micro_tile_perp_unroll << std::endl;
-  //std::cout << "VEW : " << ptr_hp->sus[emat_x].vs[Chi::E::VEW] << std::endl;
-
   }
 
 
   std::string viza = ss_viz.str();
   
-  //if (ptr_hp->sus[Mat::E::A].vs[Chi::E::VEW] != 1 || ptr_hp->sus[Mat::E::B].vs[Chi::E::VEW] != 1){
-    //std::cout << "\n\n\n**********************************\n" << ptr_hp->get_string() << '\n' << viza << '\n';
-  //}
-
   if (!is_viz){
     return std::make_tuple(false, viza);
   }
   
+  
+  // final black-list checking:
+  if (ptr_hp->sus[Mat::E::C].vs[NonChi::E::SKW] <= 8 && ptr_hp->sus[Mat::E::C].vs[NonChi::E::MAC]%64 != 0){
+    return std::make_tuple(false, "SKW>=8 temporary patch for failure to compile case on ROCm 1.6");        
+  }
+
+  if (ptr_hp->sus[Mat::E::C].vs[NonChi::E::SKW] >= 12 && ptr_hp->sus[Mat::E::C].vs[NonChi::E::MAC]%64 != 0){
+    return std::make_tuple(false, "SKW>=12 temporary patch for failure to compile case on ROCm 1.6");        
+  }
 
 
   // ran the gauntlet, returning deriveable is true
@@ -491,6 +485,8 @@ DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_) : ptr_hp(&hp
   }
   
   tshort = "ushort";
+
+  //std::cout << get_string() << std::endl;
   
 
 }

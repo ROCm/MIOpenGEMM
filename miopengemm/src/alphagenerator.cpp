@@ -922,7 +922,7 @@ TINTK k_plus_offset = __K__ + unroll_offset;
     if (emat_x == Mat::E::A){
       ss << "/* vectorised version of a */\n";
     }
-    ss << "const TVFLOAT" << X << " * " << x << "_vec = (const TVFLOAT" << X << " * )" << x << ";\n";
+    ss << "const __global TVFLOAT" << X << " * " << x << "_vec = (const __global TVFLOAT" << X << " * )" << x << ";\n";
 
 //    ss << "float2 zero" << x << "; zero" << x << ".s0 = 1000.1f; zero" << x << ".s1  = 100.1f;\n";
 

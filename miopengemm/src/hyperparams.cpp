@@ -28,6 +28,8 @@ void SuHy::checks() const
       throw miog_error("UNDEFINED in vs of SuHy, internal logic error");
     }
   }
+  
+  // some specific checks?
 }
 
 void HyPas::checks() const

@@ -13,6 +13,14 @@ int main()
 
   using namespace MIOpenGEMM;
   auto                     geometries = get_deepbench(0);  // zero workspace deepbench geometries
+  //std::vector<Geometry> geometries;
+  
+  //for (auto & x : dbgeometries){
+    //if (x.get_string().find("m1024_n24000") != std::string::npos){
+      //geometries.push_back(x);
+    //}
+  //}
+  
   std::vector<Constraints> constraints_s{{""}};
   for (size_t i = 0; i < geometries.size(); ++i)
   {
@@ -27,7 +35,7 @@ int main()
     {
       ++counter;
       std::cout << '(' << counter << ')' << std::endl;
-      std::string basedir = "/home/james/test20/";
+      std::string basedir = "/home/james/test26/";
       // WARNING : this call might only work on linux/mac
       std::string syscall =
         "./examples/multifindbase " + basedir + " " + gg.get_string() + " " + cons.get_string();

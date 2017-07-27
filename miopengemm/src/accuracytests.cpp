@@ -29,6 +29,9 @@ void elementwise_compare(const TFloat*   c_before,
   std::vector<size_t> violating_indices = {};
   std::vector<double> violating_margins = {};
 
+
+  
+  std::cout << " nels in elementwise_compare : " << nels << std::endl;
   for (size_t i = 0; i < nels; ++i)
   {
     double absdifference = std::abs(c_cpu[i] - c_gpu[i]);
