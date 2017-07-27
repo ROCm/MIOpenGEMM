@@ -7,11 +7,11 @@
 int main()
 {
   using namespace MIOpenGEMM;
-  Geometry    gg("tC0_tA0_tB0_colMaj0_m28_n2048_k2048_lda2048_ldb2048_ldc2048_ws5000000_f32");
-  Constraints constraints("A_MIC1_PAD1_PLU0_LIW0_MIW1_WOS2__C_ICE3");
+  Geometry    gg("tC0_tA0_tB0_colMaj1_m1024_n32_k512_lda1024_ldb512_ldc1024_ws0_f32");
+  Constraints constraints("C_ICE1");
   // To search for at least n=20 seconds we use this factory function
-  FindParams     find_params = get_at_least_n_seconds(20);
-  Offsets        offsets     = get_padding_offsets();
+  FindParams     find_params = get_at_least_n_seconds(10);
+  Offsets        offsets     = get_zero_offsets();
   owrite::Writer mowri(Ver::E::TRACK, "");
   CLHint         devhint;
   dev::Boa       boa(gg, offsets, mowri, devhint);

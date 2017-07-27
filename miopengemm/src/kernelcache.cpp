@@ -73,6 +73,7 @@ KernelCache get_kernel_cache()
 {
   KernelCache kc;
   #include "deepbench.cachetxt"
+  #include "conv.cachetxt"
   //#include "cacheentries_temp.cachetxt"
   return kc;
 }
