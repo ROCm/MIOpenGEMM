@@ -70,7 +70,7 @@ GpuMms::GpuMms(cl_mem           a_gpu_,
   {
     cl_mems[Mem::E::C] =
       oclutil::get_copy(cq, c_gpu_, c_nbytes, "c_is_const is true, making copy in GpuMms");
-    c_copy.clmem = c_gpu_;  // for correct destruction
+    c_copy.clmem = cl_mems[Mem::E::C];  // for correct destruction
   }
 }
 
