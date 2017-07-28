@@ -12,14 +12,28 @@ int main()
   srand(time(NULL));
 
   using namespace MIOpenGEMM;
-  auto                     geometries = get_deepbench(0);  // zero workspace deepbench geometries
-  //std::vector<Geometry> geometries;
+  std::vector<Geometry> geometries; //get_deepbench(0);  // zero workspace deepbench geometries
   
-  //for (auto & x : dbgeometries){
-    //if (x.get_string().find("m1024_n24000") != std::string::npos){
-      //geometries.push_back(x);
-    //}
-  //}
+  
+  std::vector<size_t> dimensions;
+  for (size_t k = 5; k < 14; ++k){
+    for (size_t off = -4; off < 5; ++off){
+      dimensions.push_back(std::pow(2, k) + off);
+    }
+  }
+  
+  for (size_t k = 300; k < 7000; k+= 300){
+    dimensions.push_back(k);
+  }
+  
+  for (auto d : dimensions){
+    geometries.push_back({1, 0, 0, 0, d, d, d, d, d, d, 0, 'f'});
+    geometries.push_back({1, 0, 1, 0, d, d, d, d, d, d, 0, 'f'});
+    geometries.push_back({1, 1, 0, 0, d, d, d, d, d, d, 0, 'f'});
+  }
+  
+  std::cout << geometries.size();
+  
   
   std::vector<Constraints> constraints_s{{""}};
   for (size_t i = 0; i < geometries.size(); ++i)
@@ -35,7 +49,7 @@ int main()
     {
       ++counter;
       std::cout << '(' << counter << ')' << std::endl;
-      std::string basedir = "/home/james/test26/";
+      std::string basedir = "/home/james/test27/";
       // WARNING : this call might only work on linux/mac
       std::string syscall =
         "./examples/multifindbase " + basedir + " " + gg.get_string() + " " + cons.get_string();
