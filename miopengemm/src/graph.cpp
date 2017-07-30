@@ -20,20 +20,24 @@ RandomUtil radutil17;
 
 std::vector<HyPas> Graph::get_neighbors(const HyPas& hp0) const
 {
-  
+
   std::vector<std::vector<std::tuple<HyPas, int>>> Z;
   Z.push_back(get_one_aways(hp0));
   Z.push_back(get_p_coupled_away(hp0));
   Z.push_back(get_mic_mac_transformed(hp0));
-  for (auto & z : Z){
-    radutil17.shuffle(0, z.size(), z);  
+  for (auto& z : Z)
+  {
+    radutil17.shuffle(0, z.size(), z);
   }
-  
+
   std::vector<int> uni_prios;
-  for (auto & z : Z){
-    for (auto & tup : z){
+  for (auto& z : Z)
+  {
+    for (auto& tup : z)
+    {
       int prio = std::get<1>(tup);
-      if (std::find(uni_prios.begin(), uni_prios.end(), prio) == uni_prios.end()){
+      if (std::find(uni_prios.begin(), uni_prios.end(), prio) == uni_prios.end())
+      {
         uni_prios.push_back(prio);
       }
     }
@@ -41,14 +45,16 @@ std::vector<HyPas> Graph::get_neighbors(const HyPas& hp0) const
   std::sort(uni_prios.begin(), uni_prios.end());
   std::reverse(uni_prios.begin(), uni_prios.end());
 
-
   std::vector<HyPas> neighbors;
 
-
-  for (auto & x : uni_prios){
-    for (auto & z : Z){
-      for (auto & tup : z){
-        if (std::get<1>(tup) == x){
+  for (auto& x : uni_prios)
+  {
+    for (auto& z : Z)
+    {
+      for (auto& tup : z)
+      {
+        if (std::get<1>(tup) == x)
+        {
           neighbors.push_back(std::get<0>(tup));
         }
       }
@@ -153,26 +159,28 @@ std::vector<std::tuple<HyPas, int>> Graph::get_mic_mac_transformed(const HyPas& 
   return mmt;
 }
 
-
 // TODO : where should this function go ?
-bool has_no_effect(const HyPas & hp0, Mat::E emat_x, size_t i){
+bool has_no_effect(const HyPas& hp0, Mat::E emat_x, size_t i)
+{
   // if GAL is not SUCOL, then NAW has no effect.
-  if (hp0.sus.at(Mat::E::C).vs[NonChi::E::GAL] != GroupAllocation::E::SUCOL){
-    if (emat_x == Mat::E::C && i == NonChi::E::NAW){
+  if (hp0.sus.at(Mat::E::C).vs[NonChi::E::GAL] != GroupAllocation::E::SUCOL)
+  {
+    if (emat_x == Mat::E::C && i == NonChi::E::NAW)
+    {
       return true;
     }
   }
-  
+
   // if ICE is 1, the IWI has no effect
-  if (hp0.sus.at(Mat::E::C).vs[NonChi::E::ICE] == 1){
-    if (emat_x == Mat::E::C && i == NonChi::E::IWI){
+  if (hp0.sus.at(Mat::E::C).vs[NonChi::E::ICE] == 1)
+  {
+    if (emat_x == Mat::E::C && i == NonChi::E::IWI)
+    {
       return true;
-    }    
+    }
   }
   return false;
 }
-
-
 
 std::vector<std::tuple<HyPas, int>> Graph::get_one_aways(const HyPas& hp0) const
 {
@@ -186,8 +194,9 @@ std::vector<std::tuple<HyPas, int>> Graph::get_one_aways(const HyPas& hp0) const
       size_t v0 = hp0.sus[emat].vs.at(i);
       for (auto& x : at(emat).edges.at(i).at(v0))
       {
-        // has_no_effect : like NAW when GAL != 3. 
-        if (!has_no_effect(hp0, emat, i)){
+        // has_no_effect : like NAW when GAL != 3.
+        if (!has_no_effect(hp0, emat, i))
+        {
           HyPas hp1(hp0);
           hp1.sus[emat].vs[i] = x;
           one_aways.push_back(std::make_tuple(hp1, (*Mat::mat_to_priority(emat))[i]));
@@ -198,7 +207,6 @@ std::vector<std::tuple<HyPas, int>> Graph::get_one_aways(const HyPas& hp0) const
 
   return one_aways;
 }
-
 
 std::string get_location_string(Mat::E emat, size_t hpi)
 {
@@ -481,17 +489,13 @@ void ChiSuGr::initialise_edges()
                         {8, {4, 6, 10}},
                         {10, {8}}};
 
-  edges[Chi::E::PAD] = {{0, {1}},
-                        {1, {0, 2}},
-                        {2, {1}}};
+  edges[Chi::E::PAD] = {{0, {1}}, {1, {0, 2}}, {2, {1}}};
 
   edges[Chi::E::PLU] = {g_binary};
   edges[Chi::E::LIW] = {g_binary};
   edges[Chi::E::MIW] = {g_binary};
 
-  edges[Chi::E::VEW] = {{1, {2}},
-                        {2, {1,4}},
-                        {4, {2,1}}};
+  edges[Chi::E::VEW] = {{1, {2}}, {2, {1, 4}}, {4, {2, 1}}};
 
   edges[Chi::E::WOS] = {{Scratch::E::UNUSED, {Scratch::E::COPY, Scratch::E::NFORM}},
                         {Scratch::E::COPY, {Scratch::E::UNUSED, Scratch::E::NFORM}},
@@ -501,7 +505,14 @@ void ChiSuGr::initialise_edges()
 void CSuGr::initialise_edges()
 {
 
-  edges[NonChi::E::UNR] = {{1,{2}}, {2, {1, 4}}, {4, {2, 8}}, {8, {4, 16}}, {16, {8, 32}}, {32, {16, 64}}, {64, {16, 32, 128}}, {128, {32, 64}}};
+  edges[NonChi::E::UNR] = {{1, {2}},
+                           {2, {1, 4}},
+                           {4, {2, 8}},
+                           {8, {4, 16}},
+                           {16, {8, 32}},
+                           {32, {16, 64}},
+                           {64, {16, 32, 128}},
+                           {128, {32, 64}}};
   edges[NonChi::E::NAW] = {{64, {16}}, {16, {64}}};
   edges[NonChi::E::GAL] = {
     {GroupAllocation::E::BYROW, {GroupAllocation::E::BYCOL, GroupAllocation::E::SUCOL}},
@@ -520,7 +531,6 @@ void CSuGr::initialise_edges()
     throw miog_error(ss.str());
   }
 
-
   if (ptr_devinfo->wg_atom_size == 64)
   {
     edges[NonChi::E::MAC] = {{64, {256}}, {256, {64}}};
@@ -531,21 +541,14 @@ void CSuGr::initialise_edges()
     edges[NonChi::E::MAC] = {{32, {64, 256}}, {64, {32, 128, 256}}, {128, {64, 256}}, {256, {64}}};
   }
 
-  if (ptr_gg->m*ptr_gg->n <= 16*16){
+  if (ptr_gg->m * ptr_gg->n <= 16 * 16)
+  {
     edges[NonChi::E::MAC] = {{1, {}}};
   }
 
-
   edges[NonChi::E::SKW] = {
-    {7, {8}},
-    {8, {7, 9}},
-    {9, {8, 10}},
-    {10, {9, 11}},
-    {11, {10, 12}},
-    {12, {11, 13}},
-    {13, {12}},
+    {7, {8}}, {8, {7, 9}}, {9, {8, 10}}, {10, {9, 11}}, {11, {10, 12}}, {12, {11, 13}}, {13, {12}},
   };
-
 
   edges[NonChi::E::ICE] = {{1, {2}},
                            {2, {1, 3, 4}},
@@ -575,11 +578,12 @@ void ChiSuGr::refine_start_range()
   start_range[Chi::E::PAD] = {1, 2};
   start_range[Chi::E::LIW] = {Binary::E::NO};
   start_range[Chi::E::MIW] = {Binary::E::YES};
-  
-  if (ptr_gg->wSpaceSize == 0){
+
+  if (ptr_gg->wSpaceSize == 0)
+  {
     start_range[Chi::E::WOS] = {Scratch::E::UNUSED};
   }
-  
+
   start_range[Chi::E::VEW] = {1};
 
   set_start_mic();
@@ -612,24 +616,24 @@ void CSuGr::refine_start_range()
 void ChiSuGr::set_start_mic()
 {
 
-  size_t non_unroll_dimension = ptr_gg->get_non_k_dim(emat);
-  std::vector<size_t> basemic = {8, 6};
-  size_t area = ptr_gg->m*ptr_gg->n;
-  size_t min_dim = std::min(ptr_gg->m, ptr_gg->n);
-  
-  if (non_unroll_dimension < 256 || area < 400*400 || min_dim < 32 )
+  size_t              non_unroll_dimension = ptr_gg->get_non_k_dim(emat);
+  std::vector<size_t> basemic              = {8, 6};
+  size_t              area                 = ptr_gg->m * ptr_gg->n;
+  size_t              min_dim              = std::min(ptr_gg->m, ptr_gg->n);
+
+  if (non_unroll_dimension < 256 || area < 400 * 400 || min_dim < 32)
   {
     basemic.push_back(5);
     basemic.push_back(4);
   }
 
-  if (non_unroll_dimension < 128 || area < 200*200  || min_dim < 16)
+  if (non_unroll_dimension < 128 || area < 200 * 200 || min_dim < 16)
   {
     basemic.push_back(3);
     basemic.push_back(2);
   }
 
-  if (non_unroll_dimension < 64 || area < 100*100 || min_dim < 8)
+  if (non_unroll_dimension < 64 || area < 100 * 100 || min_dim < 8)
   {
     basemic.push_back(1);
   }
@@ -740,7 +744,6 @@ HyPas Graph::get_random_valid_start() const
       mowri.bw[OutPart::E::WRN] << "(still looking for valid start in graph @i=" << iter << ")"
                                 << Endl;
       timer.start();
-      //std::cout << ss.str() << std::endl;
     }
   }
 

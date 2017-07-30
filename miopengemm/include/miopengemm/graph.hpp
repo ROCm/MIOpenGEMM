@@ -105,17 +105,14 @@ class Graph
   public:
   Graph(const Geometry&, const oclutil::DevInfo&, const Constraints&, owrite::Writer&);
   // any node in the start graph.
-  HyPas get_random_valid_start() const;
+  HyPas              get_random_valid_start() const;
   std::vector<HyPas> get_neighbors(const HyPas&) const;
-  bool contains(const HyPas&) const;
-
-
+  bool               contains(const HyPas&) const;
 
   private:
   // the number of attempts at finding a
   // deriveable HyPas given the
   // constraint string.
-
 
   const size_t max_n_iter = static_cast<size_t>(1e6);
 
@@ -142,8 +139,6 @@ class Graph
   void  checks() const;
 
   bool contains(Mat::E, size_t hpi, size_t value) const;
-
-  
 };
 }
 

@@ -6,6 +6,7 @@
 #include <miopengemm/error.hpp>
 #include <miopengemm/normalformgenerator.hpp>
 
+// TODO : de-size_t.
 namespace MIOpenGEMM
 {
 namespace nformgen

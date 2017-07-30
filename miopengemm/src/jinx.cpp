@@ -22,10 +22,10 @@
 #include <miopengemm/kernelstring.hpp>
 #include <miopengemm/oclutil.hpp>
 #include <miopengemm/outputwriter.hpp>
+#include <miopengemm/redirection.hpp>
 #include <miopengemm/solution.hpp>
 #include <miopengemm/stringutilbase.hpp>
 #include <miopengemm/timer.hpp>
-#include <miopengemm/redirection.hpp>
 
 // TODO : checks on constraints to check for cleary non-derivables
 // TODO : checks on workspace size
@@ -203,7 +203,7 @@ void Jinx::setup_tinykernels(const kerngen::Bundle& bundle)
 
   oclutil::Result oclr;
 
-  // TODO setting v_wait_indices here not clear code
+  // TODO setting v_wait_indices here : is not clear code
   v_wait_indices = bundle.v_wait_indices;
 
   tk_kernels_active.resize(0);
@@ -264,7 +264,9 @@ std::string Jinx::get_run_time_string(cl_int status, double extime)
   return ss.str();
 }
 
-oclutil::Result Jinx::true_core(std::function<void(std::string)> acton, std::vector<double> & all_times, const Halt& hl)
+oclutil::Result Jinx::true_core(std::function<void(std::string)> acton,
+                                std::vector<double>&             all_times,
+                                const Halt&                      hl)
 {
 
   size_t          runi{0};
@@ -380,12 +382,10 @@ std::vector<double> Jinx::benchgemm(const HyPas& hp, const Halt& hl)
         << "Entering the core gemm loops" << Endl;
 
   mowri << get_run_times_heading();
-  
-  
-  std::vector<double> all_times;
-  true_core([this](std::string x) {mowri << x << '\n'; }, all_times, hl);
-  return all_times;
 
+  std::vector<double> all_times;
+  true_core([this](std::string x) { mowri << x << '\n'; }, all_times, hl);
+  return all_times;
 }
 
 Solution Jinx::find(const Constraints& constraints, const FindParams& fparms)
@@ -406,7 +406,6 @@ Solution Jinx::find(const Constraints& constraints, const FindParams& fparms)
     double allotted_sd = std::max(0.1, fparms.hl_outer.max_time - ftrack.get_elapsed());
 
     auto soln = single_descent_find(
-      // TODO fparms is not needed, only need if MAX/MEAN/MEDIAN.
       allotted_sd,
       constraints,
       fparms.hl_core,
@@ -446,12 +445,9 @@ Solution Jinx::find(const Constraints& constraints, const FindParams& fparms)
 
   mowri.bw[OutPart::CCH] << "\n\n\n -- snip -- -- -- snip --\n\n" << Endl;
 
-
   bool is_not_canonical = redirection::get_is_not_canonical(gg);
-  mowri.bw[OutPart::CCH] << get_cache_entry_string({devinfo.device_name, constraints, gg}, v_solns[best_soln_index].hypas, is_not_canonical);
-//  mowri.bw[OutPart::CCH] << v_solns[best_soln_index].get_cache_entry_string();
-
-
+  mowri.bw[OutPart::CCH] << get_cache_entry_string(
+    {devinfo.device_name, constraints, gg}, v_solns[best_soln_index].hypas, is_not_canonical);
   mowri.bw[OutPart::CCH] << "\n -- snip -- -- -- snip --\n\n\n" << Endl;
 
   return v_solns[best_soln_index];
@@ -493,7 +489,6 @@ Solution Jinx::single_descent_find(double             allotted_time,
 
   std::vector<double> v_t_total;
   double              k_seconds;
-  //  double              k_gflops;
 
   // the hyper params to be considered on a single wave
   std::vector<HyPas> hyper_front;
@@ -507,22 +502,20 @@ Solution Jinx::single_descent_find(double             allotted_time,
   else
   {
 
-
     CacheKey ck(devinfo.identifier, constraints, gg);
-    
+
     bool is_not_canonical = redirection::get_is_not_canonical(gg);
-    
+
     if (kernel_cache.nearest_derivable_is_within(ck, 0.1 * std::numeric_limits<double>::max()))
     {
-      
 
       auto nearest_ck = kernel_cache.get_nearest_derivable(ck);
       warm_start_hp   = kernel_cache.at(nearest_ck, is_not_canonical);
       // is the warm start in the graph?
       if (!graph.contains(warm_start_hp))
       {
-        mowri << "Warmstart requested and nearest is not too far, but nearest  " 
-        << warm_start_hp.get_string() << " is not in graph so starting at random node"
+        mowri << "Warmstart requested and nearest is not too far, but nearest  "
+              << warm_start_hp.get_string() << " is not in graph so starting at random node"
               << Endl;
         warm_start_hp = graph.get_random_valid_start();
       }
@@ -599,11 +592,7 @@ Solution Jinx::single_descent_find(double             allotted_time,
       std::vector<std::string> summary;
 
       auto oclr = true_core(
-        [&summary, &v_t_total](std::string x) {
-          summary.push_back(x);
-        },
-        v_t_total,
-        core_halt);
+        [&summary, &v_t_total](std::string x) { summary.push_back(x); }, v_t_total, core_halt);
 
       if (oclr.fail())
       {
@@ -624,8 +613,6 @@ Solution Jinx::single_descent_find(double             allotted_time,
         break;
       default: throw miog_error("unrecgnised SummStat in find");
       }
-
-      //      k_gflops = get_gflops(k_seconds);
 
       mowri << get_run_times_heading();
       for (size_t ir = 0; ir < summary.size(); ++ir)
@@ -648,8 +635,6 @@ Solution Jinx::single_descent_find(double             allotted_time,
         improvement_found_on_front = true;
 
         std::time_t g_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-        // auto        sstats =
-        // SolutionStatistics(k_seconds, k_gflops, timer.get_elapsed(), std::ctime(&g_time), fps);
         best_solns_path.emplace_back(gg,
                                      std::ctime(&g_time),
                                      k_seconds,
@@ -757,9 +742,6 @@ Solution Jinx::single_descent_find(double             allotted_time,
 
   for (unsigned i = 0; i < best_solns_path.size(); ++i)
   {
-    // auto x = best_solns_path[i];
-    // auto& x : best_solns_path)
-
     std::string solnstring = best_solns_path[i].hypas.get_string();
     solnstring.resize(leading_size, ' ');
     mowri << std::fixed << solnstring << "\t " << disco_times[i] << "\t\t "

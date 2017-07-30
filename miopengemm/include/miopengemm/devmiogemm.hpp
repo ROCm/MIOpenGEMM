@@ -61,10 +61,17 @@ class Boa
   template <typename TFloat>
   void accuracy_test(const HyPas& hp, const TFloat* c_true_for_test)
   {
-    if (sizeof(TFloat) == sizeof(float)){
-      f_moa-> accuracy_test(hp, c_true_for_test);
+    if (sizeof(TFloat) == sizeof(float))
+    {
+      f_moa->accuracy_test(hp, c_true_for_test);
     }
-    //get_up_moa<TFloat>->accuracy_test(hp, c_true_for_test);
+    else if (sizeof(TFloat) == sizeof(double))
+    {
+      d_moa->accuracy_test(hp, c_true_for_test);
+    }
+    else{
+      throw miog_error("unrecognised float type in devmiogemm accuracy_test");
+    }
   }
 
   void accuracy_test(const HyPas& hp);

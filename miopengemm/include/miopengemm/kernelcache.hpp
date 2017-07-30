@@ -20,14 +20,14 @@ class CacheKeyPresence
   CacheKeyPresence(const std::string& msg_) : is_present(false), msg(msg_) {}
 };
 
-
 class CacheKey
 {
   private:
   bool from_non_canonical;
+
   public:
   std::string dvc;
-  // always in original form 
+  // always in original form
   Constraints constraints;
   // always in canonical form
   Geometry    gg;
@@ -38,7 +38,6 @@ class CacheKey
   CacheKey(const std::string& device, const Constraints&, const Geometry&);
   std::string get_string() const;
   double get_distance(const CacheKey& ck) const;
-
 };
 
 class CacheKeyHash
@@ -58,16 +57,13 @@ class KernelCache
   public:
   CacheKeyPresence check_for(const CacheKey& ck) const;
   HyPas at(const CacheKey& ck, bool swap_ab) const;
-  
-  // hp must be transformed if geometry is. 
+
+  // hp must be transformed if geometry is.
   void add(const CacheKey& ckey, const HyPas& hp);
   std::vector<CacheKey> get_keys() const;
   bool nearest_derivable_is_within(const CacheKey& ck, double threshold) const;
   CacheKey get_nearest_derivable(const CacheKey& ck) const;
-
 };
-
-
 
 void filter_device(std::vector<CacheKey>&, const std::vector<std::string>& device_frags);
 void filter_geometries(std::vector<CacheKey>&, const std::vector<Geometry>& geometries);
@@ -75,9 +71,8 @@ void filter_floattype(std::vector<CacheKey>&, size_t);
 
 extern const KernelCache kernel_cache;
 
-std::string get_cache_entry_string(const CacheKey & ck, const HyPas & hypas, bool swap_ab);
-std::vector<Geometry> get_geometries(const std::vector<CacheKey> & cks);
-
+std::string get_cache_entry_string(const CacheKey& ck, const HyPas& hypas, bool swap_ab);
+std::vector<Geometry> get_geometries(const std::vector<CacheKey>& cks);
 }
 
 #endif

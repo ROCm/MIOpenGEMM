@@ -80,7 +80,7 @@ enum E
   LIW,
   MIW,
   WOS,
-  VEW, // vector width
+  VEW,  // vector width
   N
 };
 extern const EnumMapper<std::string> M;
@@ -103,13 +103,12 @@ enum E
   UFO,
   MAC,
   SKW,
-  AFI, // a loops and defs first. outerloops over a dimensions.  
-  MIA, // micro allocation
+  AFI,  // a loops and defs first. outerloops over a dimensions.
+  MIA,  // micro allocation
   N
 };
 extern const EnumMapper<std::string> M;
-extern const std::vector<int> priority;
-
+extern const std::vector<int>        priority;
 }
 
 namespace Mat
@@ -142,7 +141,7 @@ namespace Mat
 {
 Mat::E                         mem_to_mat(Mem::E);
 const EnumMapper<std::string>* mat_to_xchi(Mat::E);
-const std::vector<int> * mat_to_priority(Mat::E);
+const std::vector<int>*        mat_to_priority(Mat::E);
 }
 
 namespace Status
@@ -172,7 +171,8 @@ enum E
 };
 }
 
-namespace MicroAllocation{
+namespace MicroAllocation
+{
 enum E
 {
   BYA = 0,
@@ -222,13 +222,13 @@ enum E
   ACCURACY,      // tracker and accuracy to terminal
   TERMWITHDEPS,  // like terminal, with additionally the dependencies between kernels
   MULTIBENCH,
-  MERGE,         // when merging two kernel caches
+  MERGE,  // when merging two kernel caches
   N
 };
 extern const EnumMapper<std::string> M;
 extern const std::array<bool, E::N> fileRequired;
 extern const std::array<std::array<bool, OutPart::E::N>, E::N> toFile;
-extern const std::array<std::array<bool, OutPart::E::N>, E::N> toTerm;  
+extern const std::array<std::array<bool, OutPart::E::N>, E::N> toTerm;
 }
 
 namespace KType

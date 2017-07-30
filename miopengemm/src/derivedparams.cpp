@@ -13,6 +13,35 @@
 namespace MIOpenGEMM
 {
 
+
+std::string ChiralDerivedParams::get_string()
+{
+  std::stringstream ss;
+  ss << "\nmacro_tile_length : " << macro_tile_length
+     << "\nn_elements_in_unroll : " << n_elements_in_unroll
+     << "\nmain_n_elements_to_load_per_workitem : " << main_n_elements_to_load_per_workitem
+     << "\nmain_n_elements_in_padded_unroll : " << main_n_elements_in_padded_unroll
+     << "\nmain_n_micro_tiles_pll_unroll : " << main_n_micro_tiles_pll_unroll
+     << "\nmain_macro_tile_length_and_pad : " << main_macro_tile_length_and_pad
+     << "\nmain_n_micro_in_macro : " << main_n_micro_in_macro
+     << "\npreshift_final_tile : " << preshift_final_tile << "\nn_groups : " << n_groups;
+
+  return ss.str();
+}
+
+
+
+std::string DerivedParams::get_string()
+{
+  std::stringstream ss;
+  for (auto x : {Mat::E::A, Mat::E::B})
+  {
+    ss << "\n" << Mat::M.name[x] << "\n" << at(x).get_string();
+  }
+  return ss.str();
+}
+  
+
 size_t DerivedParams::get_target_ld(Mat::E emat_x) const { return at(emat_x).cw1_target_ldx; }
 
 size_t get_target(size_t grid_size, size_t above_distance, size_t x)
@@ -106,9 +135,6 @@ DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_, std::string 
 std::tuple<bool, std::string> DerivedParams::set_fragile()
 {
 
-
-  
-
   set_should_be_hyperparams();
 
   macgrid::Grid grid(ptr_hp->sus[Mat::E::C].vs[NonChi::E::MAC],
@@ -128,7 +154,8 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
     at(emat_x).n_groups = ptr_gg->get_non_k_dim(emat_x) / at(emat_x).macro_tile_length +
                           (at(emat_x).preshift_final_tile != at(emat_x).macro_tile_length);
     at(emat_x).main_macro_tile_length_and_pad =
-      at(emat_x).macro_tile_length + ptr_hp->sus[emat_x].vs[Chi::E::VEW]*ptr_hp->sus[emat_x].vs[Chi::E::PAD];
+      at(emat_x).macro_tile_length +
+      ptr_hp->sus[emat_x].vs[Chi::E::VEW] * ptr_hp->sus[emat_x].vs[Chi::E::PAD];
 
     at(emat_x).main_n_elements_in_padded_unroll =
       at(emat_x).main_macro_tile_length_and_pad * ptr_hp->sus[Mat::E::C].vs[NonChi::E::UNR];
@@ -296,7 +323,6 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
     ga3_last_super_column_width = bdps.n_groups % ga3_super_column_width;
   }
 
-
   // do the tiling
   for (auto emat_x : {Mat::E::A, Mat::E::B})
   {
@@ -319,53 +345,59 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
     }
   }
 
-
-  //check vector-izability
+  // check vector-izability
   std::stringstream ss_viz;
-  bool is_viz = true;
+  bool              is_viz = true;
   for (auto emat_x : {Mat::E::A, Mat::E::B})
-  {    
-    if (ptr_hp->sus[emat_x].vs[Chi::E::VEW] != 1){
-      if (get_stride(emat_x, false, false, ptr_hp->sus[emat_x].vs[Chi::E::WOS]) != 1){
+  {
+    if (ptr_hp->sus[emat_x].vs[Chi::E::VEW] != 1)
+    {
+      if (get_stride(emat_x, false, false, ptr_hp->sus[emat_x].vs[Chi::E::WOS]) != 1)
+      {
         ss_viz << "stride perp to k of " << Mat::M.name[emat_x] << " is not 1.\n";
         is_viz = false;
       }
-    
-      if (at(emat_x).main_micro_tile_perp_unroll%ptr_hp->sus[emat_x].vs[Chi::E::VEW] != 0){
-        ss_viz << "micro load tile perp to unroll of " << Mat::M.name[emat_x] << " ( " << at(emat_x).main_micro_tile_perp_unroll << " )  is not divisable by VEW.\n";
+
+      if (at(emat_x).main_micro_tile_perp_unroll % ptr_hp->sus[emat_x].vs[Chi::E::VEW] != 0)
+      {
+        ss_viz << "micro load tile perp to unroll of " << Mat::M.name[emat_x] << " ( "
+               << at(emat_x).main_micro_tile_perp_unroll << " )  is not divisable by VEW.\n";
         is_viz = false;
       }
-      
-      if (ptr_hp->sus[emat_x].vs[Chi::E::MIC]%ptr_hp->sus[emat_x].vs[Chi::E::VEW] != 0){
-        
-        ss_viz << "micro tile dim-" << Mat::M.name[emat_x] << " ( " << ptr_hp->sus[emat_x].vs[Chi::E::MIC] << " )  is not divisable by VEW.\n";
+
+      if (ptr_hp->sus[emat_x].vs[Chi::E::MIC] % ptr_hp->sus[emat_x].vs[Chi::E::VEW] != 0)
+      {
+
+        ss_viz << "micro tile dim-" << Mat::M.name[emat_x] << " ( "
+               << ptr_hp->sus[emat_x].vs[Chi::E::MIC] << " )  is not divisable by VEW.\n";
         is_viz = false;
       }
-      
     }
-
   }
-
 
   std::string viza = ss_viz.str();
-  
-  if (!is_viz){
+
+  if (!is_viz)
+  {
     return std::make_tuple(false, viza);
   }
-  
-  
+
   // final black-list checking:
-  if (ptr_hp->sus[Mat::E::C].vs[NonChi::E::SKW] <= 8 && ptr_hp->sus[Mat::E::C].vs[NonChi::E::MAC]%64 != 0){
-    return std::make_tuple(false, "SKW>=8 temporary patch for failure to compile case on ROCm 1.6");        
+  if (ptr_hp->sus[Mat::E::C].vs[NonChi::E::SKW] <= 8 &&
+      ptr_hp->sus[Mat::E::C].vs[NonChi::E::MAC] % 64 != 0)
+  {
+    return std::make_tuple(false, "SKW>=8 temporary patch for failure to compile case on ROCm 1.6");
   }
 
-  if (ptr_hp->sus[Mat::E::C].vs[NonChi::E::SKW] >= 12 && ptr_hp->sus[Mat::E::C].vs[NonChi::E::MAC]%64 != 0){
-    return std::make_tuple(false, "SKW>=12 temporary patch for failure to compile case on ROCm 1.6");        
+  if (ptr_hp->sus[Mat::E::C].vs[NonChi::E::SKW] >= 12 &&
+      ptr_hp->sus[Mat::E::C].vs[NonChi::E::MAC] % 64 != 0)
+  {
+    return std::make_tuple(false,
+                           "SKW>=12 temporary patch for failure to compile case on ROCm 1.6");
   }
-
 
   // ran the gauntlet, returning deriveable is true
-  return std::make_tuple(true, "");        
+  return std::make_tuple(true, "");
 }
 
 std::string get_tint(size_t memsize)
@@ -406,7 +438,6 @@ DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_) : ptr_hp(&hp
                      std::get<1>(tup));
   }
 
-
   if (ptr_hp->sus[Mat::E::C].vs[NonChi::E::ICE] == 1)
   {
     infa = "n_work_items_per_c_elm is 1, should not be using atomics";
@@ -428,7 +459,6 @@ DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_) : ptr_hp(&hp
   k_effective_mod_G_UNROLL = effective_k_varies_string + " % G_UNROLL";
   k_effective_div_G_UNROLL = effective_k_varies_string + " / G_UNROLL";
   k_effective_div_UNROLL   = effective_k_varies_string + " / UNROLL";
-
 
   main_n_work_groups = ptr_hp->sus[Mat::E::C].vs[NonChi::E::ICE] *
                        ((ptr_gg->m / at(Mat::E::A).macro_tile_length) +
@@ -467,23 +497,25 @@ DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_) : ptr_hp(&hp
                                    ? 1
                                    : 0;
 
-
   tints[Mem::E::A] = get_tint(ptr_gg->get_uncoal(Mat::E::A) *
-                              (ptr_gg->ldX[Mat::E::A]));  // TODO : does UFO need increase here ? 
+                              (ptr_gg->ldX[Mat::E::A]));  // TODO : does UFO need increase here ?
   tints[Mem::E::B] = get_tint(ptr_gg->get_uncoal(Mat::E::B) * (ptr_gg->ldX[Mat::E::B]));
   tints[Mem::E::C] = get_tint(ptr_gg->get_uncoal(Mat::E::C) * (ptr_gg->ldX[Mat::E::C]));
   tints[Mem::E::W] = get_tint(ptr_gg->wSpaceSize);
-  tintk            = get_tint( ptr_gg->k +
-    2 * ptr_hp->sus[Mat::E::C].vs[NonChi::E::ICE] * ptr_hp->sus[Mat::E::C].vs[NonChi::E::UNR]);  // TODO : make this tight and prove correct.
-  
-  if (ptr_hp->sus[Mat::E::C].vs[NonChi::E::SZT] == true){
+  tintk            = get_tint(
+    ptr_gg->k +
+    2 * ptr_hp->sus[Mat::E::C].vs[NonChi::E::ICE] *
+      ptr_hp->sus[Mat::E::C].vs[NonChi::E::UNR]);  // TODO : make this tight and prove correct.
+
+  if (ptr_hp->sus[Mat::E::C].vs[NonChi::E::SZT] == true)
+  {
     tints[Mem::E::A] = "size_t";
     tints[Mem::E::B] = "size_t";
     tints[Mem::E::C] = "size_t";
     tints[Mem::E::W] = "size_t";
     tintk            = "size_t";
   }
-  
+
   tshort = "ushort";
 }
 

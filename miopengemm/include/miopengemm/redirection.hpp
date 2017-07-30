@@ -33,19 +33,15 @@ void redirect(bool&        isColMajor,
               std::string& a,
               std::string& b);
 
-
 void confirm_redirection(bool isColMajor, bool tC);
 
-Geometry get_canonical(const Geometry& gg, bool & swap_ab);
+Geometry get_canonical(const Geometry& gg, bool& swap_ab);
 
 Geometry get_canonical(const Geometry& gg);
 
 bool get_is_not_canonical(const Geometry& gg);
 
-
 void confirm_redirection_mlessn(bool isColMajor, bool tA, bool tB, size_t m, size_t n);
-
-
 }
 }
 #endif

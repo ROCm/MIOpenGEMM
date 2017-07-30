@@ -12,19 +12,16 @@
 namespace MIOpenGEMM
 {
 
-
-
-
 size_t CacheKeyHash::operator()(const CacheKey& ck) const { return __hash(ck.concatenated); }
 
-
-std::vector<Geometry> get_geometries(const std::vector<CacheKey> & cks){
+std::vector<Geometry> get_geometries(const std::vector<CacheKey>& cks)
+{
   std::vector<Geometry> geometries;
   for (const auto& x : cks)
   {
     geometries.push_back(x.gg);
   }
-  return geometries;  
+  return geometries;
 }
 
 CacheKeyPresence KernelCache::check_for(const CacheKey& ckey) const
@@ -48,10 +45,9 @@ CacheKey::CacheKey(const std::string& dvc_, const Constraints& cns_, const Geome
 {
 }
 
-
-std::string get_cache_entry_string(const CacheKey & ck, const HyPas & hypas, bool swap_ab)
+std::string get_cache_entry_string(const CacheKey& ck, const HyPas& hypas, bool swap_ab)
 {
-  std::string swap_ab_str = swap_ab ? "true" : "false";
+  std::string       swap_ab_str = swap_ab ? "true" : "false";
   std::stringstream cache_write_ss;
   cache_write_ss << "kc.add(\n";
   cache_write_ss << "{\"" << ck.dvc << "\",  // dev\n";
@@ -65,8 +61,6 @@ std::string get_cache_entry_string(const CacheKey & ck, const HyPas & hypas, boo
   return cache_write_ss.str();
 }
 
-
-
 std::string CacheKey::get_string() const
 {
   std::stringstream ss;
@@ -79,15 +73,12 @@ std::string CacheKey::get_string() const
 KernelCache get_kernel_cache()
 {
   KernelCache kc;
-  #include "deepbench.cachetxt"
-  //#include "square1.cachetxt"
-  #include "tiny.cachetxt"
+#include "deepbench.cachetxt"
+//#include "square1.cachetxt"
+#include "tiny.cachetxt"
   return kc;
 }
 const KernelCache kernel_cache = get_kernel_cache();
-
-
-
 
 HyPas KernelCache::at(const CacheKey& ckey, bool swap_ab) const
 {
@@ -101,16 +92,17 @@ HyPas KernelCache::at(const CacheKey& ckey, bool swap_ab) const
 
 void KernelCache::add(const CacheKey& ckey, const HyPas& hp)
 {
-  
-  if (redirection::get_is_not_canonical(ckey.gg)){
+
+  if (redirection::get_is_not_canonical(ckey.gg))
+  {
     throw miog_error("internal logic error : CacheKey has geometry in non-canonical form (in add)");
   }
-  
+
   CacheKeyPresence ckp = check_for(ckey);
   if (ckp.is_present)
   {
-    
-    bool is_not_canonical = false;
+
+    bool              is_not_canonical = false;
     std::stringstream ss;
     ss << "Cannot add cache entry if one already exists, with. Keys: " << ckey.get_string()
        << "The existing entry is " << at(ckey, is_not_canonical).get_string()
@@ -181,8 +173,8 @@ double CacheKey::get_distance(const CacheKey& ck) const
   distance += gg.get_distance(ck.gg);
   distance += 1e-6 * (dvc != ck.dvc);
 
-  // TODO : improved distance between constraints. will be non-sym. TODO
-  distance += 1*(constraints.get_string() != ck.constraints.get_string());
+  // TODO : improved distance between constraints. will be non-sym. 
+  distance += 1 * (constraints.get_string() != ck.constraints.get_string());
 
   return distance;
 }
@@ -214,13 +206,12 @@ CacheKey KernelCache::get_nearest_derivable(const CacheKey& ck) const
   }
 
   CacheKey nearest_derivable(cache_keys.back());
-  
 
   for (auto& key : cache_keys)
   {
     if (ck.get_distance(key) < d_nearest_derivable)
     {
-      auto hp = vals.at(key); //swap_ab ? reflect(vals.at(key)) : vals.at(key);
+      auto hp = vals.at(key);  
       if (Derivabilty(hp, ck.gg).is_derivable)
       {
         d_nearest_derivable = ck.get_distance(key);
@@ -230,17 +221,12 @@ CacheKey KernelCache::get_nearest_derivable(const CacheKey& ck) const
   }
 
   // confirm derivability
-  
   Derivabilty drvble(vals.at(nearest_derivable), ck.gg);
   if (!drvble.is_derivable)
   {
-    throw miog_error("internal logic error : the nearest derivable is not derivable. msg : " + drvble.msg);
+    throw miog_error("internal logic error : the nearest derivable is not derivable. msg : " +
+                     drvble.msg);
   }
   return nearest_derivable;
 }
-
-
-
-
-  
 }

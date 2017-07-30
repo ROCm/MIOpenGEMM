@@ -129,8 +129,9 @@ void Diva<TFl>::initialise_cpu_mem_from_scratch()
   setabcw::set_abc<TFl>(
     {&__cpu_mem[Mat::E::A], &__cpu_mem[Mat::E::B], &__cpu_mem[Mat::E::C]}, gg, toff);
 
-  for (auto & x : __cpu_mem[Mat::E::B]){
-    x*= 1000;
+  for (auto& x : __cpu_mem[Mat::E::B])
+  {
+    x *= 1000;
   }
   for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C})
   {

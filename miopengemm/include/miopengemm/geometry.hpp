@@ -72,8 +72,6 @@ class Geometry
   // (log k, log m - log n, log m + log n)
   std::array<double, 3> metric_co;
 
-//  Flt::E efloat;
-  
   GeometryDerived derived;
 
   Geometry(bool   isColMajor,
@@ -90,13 +88,7 @@ class Geometry
            char   floattype);
 
   // assumes isColMajor is true, tC is false, lda, ldb, ldc are minimal.
-  Geometry(size_t m,
-           size_t n,
-           size_t k,
-           bool   tA,
-           bool   tB,
-           size_t wSpaceSize,
-           char   floattype);
+  Geometry(size_t m, size_t n, size_t k, bool tA, bool tB, size_t wSpaceSize, char floattype);
 
   Geometry() = default;
 
@@ -180,8 +172,6 @@ Geometry get_tight_geometry(
 size_t get_mat_size(const Geometry& gg, const Offsets& toff, Mat::E emat);
 size_t get_mat_memsize(const Geometry& gg, const Offsets& toff, Mat::E emat);
 size_t get_total_workspace(const Geometry& gg, const Offsets& toff);
-
-
 }
 
 #endif

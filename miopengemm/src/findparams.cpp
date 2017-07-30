@@ -117,9 +117,9 @@ std::string FindParams::get_string() const
 FindParams get_at_least_n_seconds(double seconds)
 {
   std::array<size_t, Xtr::E::N> descents{0, 100000};
-  std::array<double, Xtr::E::N> time_outer{seconds, std::min(seconds*2, seconds + 0.1)};
+  std::array<double, Xtr::E::N> time_outer{seconds, std::min(seconds * 2, seconds + 0.1)};
   std::array<size_t, Xtr::E::N> per_kernel{0, 4};
-  std::array<double, Xtr::E::N> time_core{0, .13}; //no need to run more than .13 seconds.
+  std::array<double, Xtr::E::N> time_core{0, .13};  // no need to run more than .13 seconds.
   SummStat::E sumstat = SummStat::E::MAX;
   return FindParams(descents, time_outer, per_kernel, time_core, sumstat);
 }
@@ -129,7 +129,7 @@ FindParams get_at_least_n_restarts(size_t restarts)
   std::array<size_t, Xtr::E::N> descents{restarts, restarts};
   std::array<double, Xtr::E::N> time_outer{0, 10000000.};
   std::array<size_t, Xtr::E::N> per_kernel{0, 4};
-  std::array<double, Xtr::E::N> time_core{0, .11}; //no need to run more than .1 seconds.
+  std::array<double, Xtr::E::N> time_core{0, .11};  // no need to run more than .1 seconds.
   SummStat::E sumstat = SummStat::E::MAX;
   return FindParams(descents, time_outer, per_kernel, time_core, sumstat);
 }

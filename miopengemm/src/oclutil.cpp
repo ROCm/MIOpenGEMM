@@ -716,7 +716,7 @@ Result cl_set_program_and_kernel(const cl_command_queue& command_queue,
   if (oclr.fail())
     return oclr;
 
-  // the store as binary option removed *here*
+  // the store as binary option was removed *here*
 
   oclr = cl_create_kernel(kernel,
                           program,
@@ -849,8 +849,7 @@ OpenCLPlatformInfo::OpenCLPlatformInfo(cl_platform_id platform_id)
   vendor = info_st.substr(0, info_size - 1);
 }
 
-// taken from MIOpen
-
+// function taken from MIOpen
 std::string GetDeviceNameFromMap(const std::string& name)
 {
 

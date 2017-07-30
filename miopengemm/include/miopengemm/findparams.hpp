@@ -21,7 +21,6 @@ class Halt
   double max_time;
   double min_time;
 
-  // Halt(size_t max_runs_, double max_time_);
   Halt(std::array<size_t, Xtr::E::N> runs, std::array<double, Xtr::E::N> time);
 
   Halt() = default;
@@ -40,12 +39,6 @@ class FindParams
   Halt hl_core;
 
   SummStat::E sumstat;
-
-  // FindParams(size_t      max_descents,
-  // double      max_time_outer,
-  // size_t      max_per_kernel,
-  // double      max_time_core,
-  // SummStat::E sumstat);
 
   FindParams(std::array<size_t, Xtr::E::N> descents,
              std::array<double, Xtr::E::N> time_outer,

@@ -176,10 +176,8 @@ std::vector<Geometry> get_deepbench(size_t wSpaceSize)
           {8448, 48000, 2816, false, false, wSpaceSize, 'f'}};
 }
 
-std::vector<Geometry> get_conv(){
-     return {
-       {"tC0_tA0_tB0_colMaj1_m900_n1_k27_lda900_ldb27_ldc900_ws0_f32"}
-     };
+std::vector<Geometry> get_conv()
+{
+  return {{"tC0_tA0_tB0_colMaj1_m900_n1_k27_lda900_ldb27_ldc900_ws0_f32"}};
 }
-     
 }

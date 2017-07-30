@@ -12,9 +12,7 @@ namespace MIOpenGEMM
 namespace redirection
 {
 
-
-
-// transform so that is Column Major and tC = is false. 
+// transform so that is Column Major and tC = is false.
 template <typename T>
 void redirect_base(bool& isColMajor, bool& tA, bool& tB, bool& tC, size_t& m, size_t& n, T& a, T& b)
 {
@@ -31,19 +29,19 @@ void redirect_base(bool& isColMajor, bool& tA, bool& tB, bool& tC, size_t& m, si
 
   else if (tC == true)
   {
-    tC = false;
+    tC          = false;
     auto old_tA = tA;
-    tA = tB == true ? false : true;
-    tB = old_tA == true ? false : true;
+    tA          = tB == true ? false : true;
+    tB          = old_tA == true ? false : true;
     std::swap(a, b);
     std::swap(m, n);
   }
 }
 
-
-// transform so that is Column Major, is not TT, and m > n if not NN. 
+// transform so that is Column Major, is not TT, and m > n if not NN.
 template <typename T>
-void redirect_base_mlessn(bool& isColMajor, bool& tA, bool& tB, bool& tC, size_t& m, size_t& n, T& a, T& b)
+void redirect_base_mlessn(
+  bool& isColMajor, bool& tA, bool& tB, bool& tC, size_t& m, size_t& n, T& a, T& b)
 {
   if (isColMajor == false)
   {
@@ -72,7 +70,6 @@ void redirect_base_mlessn(bool& isColMajor, bool& tA, bool& tB, bool& tC, size_t
     std::swap(m, n);
   }
 }
-
 
 template <typename TFloat>
 class MatrixBundle
@@ -172,12 +169,11 @@ void confirm_redirection_mlessn(bool isColMajor, bool tA, bool tB, size_t m, siz
     {
       if (m > n)
       {
-        throw miog_error("tA + tB = 1 with m > n : "+ errmbase);
+        throw miog_error("tA + tB = 1 with m > n : " + errmbase);
       }
     }
   }
 }
-
 
 void confirm_redirection(bool isColMajor, bool tC)
 {
@@ -192,39 +188,51 @@ void confirm_redirection(bool isColMajor, bool tC)
   }
 }
 
-
-class SimpleBundle{
+class SimpleBundle
+{
   public:
   size_t ldx;
   Mat::E emat;
-  SimpleBundle(size_t ldx_, Mat::E e_):ldx(ldx_), emat(e_) {}
+  SimpleBundle(size_t ldx_, Mat::E e_) : ldx(ldx_), emat(e_) {}
 };
 
-  
-Geometry get_canonical(const Geometry& gg, bool & swap_ab){
-  bool isColMajor = gg.isColMajor;
-  bool tA = gg.tX[Mat::E::A];
-  bool tB = gg.tX[Mat::E::B];  
-  bool tC = gg.tX[Mat::E::C];  
-  size_t m = gg.m;
-  size_t n = gg.n;
+Geometry get_canonical(const Geometry& gg, bool& swap_ab)
+{
+  bool         isColMajor = gg.isColMajor;
+  bool         tA         = gg.tX[Mat::E::A];
+  bool         tB         = gg.tX[Mat::E::B];
+  bool         tC         = gg.tX[Mat::E::C];
+  size_t       m          = gg.m;
+  size_t       n          = gg.n;
   SimpleBundle sba(gg.ldX[Mat::E::A], Mat::E::A);
   SimpleBundle sbb(gg.ldX[Mat::E::B], Mat::E::B);
   redirect_base(isColMajor, tA, tB, tC, m, n, sba, sbb);
   swap_ab = (sba.emat == Mat::E::B);
-  return {isColMajor, tA, tB, tC, sba.ldx, sbb.ldx, gg.ldX[Mat::E::C], m, n, gg.k, gg.wSpaceSize, gg.floattype};
+  return {isColMajor,
+          tA,
+          tB,
+          tC,
+          sba.ldx,
+          sbb.ldx,
+          gg.ldX[Mat::E::C],
+          m,
+          n,
+          gg.k,
+          gg.wSpaceSize,
+          gg.floattype};
 }
 
-Geometry get_canonical(const Geometry& gg){
-  bool swap_ab {};
+Geometry get_canonical(const Geometry& gg)
+{
+  bool swap_ab{};
   return get_canonical(gg, swap_ab);
 }
 
-bool get_is_not_canonical(const Geometry& gg){
+bool get_is_not_canonical(const Geometry& gg)
+{
   bool swap_ab;
   auto gg2 = get_canonical(gg, swap_ab);
   return swap_ab;
 }
-
 }
 }

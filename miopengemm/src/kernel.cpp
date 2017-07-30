@@ -33,9 +33,6 @@ oclutil::Result Kernel::update(const KernBlob& ks, owrite::Writer& mowri)
 
   oclutil::Result oclr;
 
-  // for (unsigned i = 0; i < 2000; ++i)
-  //{
-
   try_release();
   kblob = ks;
   mowri << "compiling " << KType::M.name[kblob.e_ktype] << ". " << Flush;
@@ -60,7 +57,6 @@ oclutil::Result Kernel::update(const KernBlob& ks, owrite::Writer& mowri)
           << Endl;
   }
 
-  //}
   return oclr;
 }
 
