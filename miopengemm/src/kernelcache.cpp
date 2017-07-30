@@ -7,9 +7,13 @@
 #include <string>
 #include <miopengemm/enums.hpp>
 #include <miopengemm/kernelcache.hpp>
+#include <miopengemm/redirection.hpp>
 
 namespace MIOpenGEMM
 {
+
+
+
 
 size_t CacheKeyHash::operator()(const CacheKey& ck) const { return __hash(ck.concatenated); }
 
@@ -36,25 +40,28 @@ CacheKeyPresence KernelCache::check_for(const CacheKey& ckey) const
 }
 
 CacheKey::CacheKey(const std::string& dvc_, const Constraints& cns_, const Geometry& geo_)
-  : dvc(dvc_),
-    constraints(cns_),
-    gg(geo_),
+  : from_non_canonical(redirection::get_is_not_canonical(geo_)),
+    dvc(dvc_),
+    constraints(cns_.get_reflected(from_non_canonical)),
+    gg(redirection::get_canonical(geo_)),
     concatenated(dvc_ + constraints.get_string() + gg.get_string())
 {
 }
 
 
-std::string get_cache_entry_string(const CacheKey & ck, const HyPas & hypas)
+std::string get_cache_entry_string(const CacheKey & ck, const HyPas & hypas, bool swap_ab)
 {
+  std::string swap_ab_str = swap_ab ? "true" : "false";
   std::stringstream cache_write_ss;
   cache_write_ss << "kc.add(\n";
   cache_write_ss << "{\"" << ck.dvc << "\",  // dev\n";
   cache_write_ss << "{\"" << ck.constraints.get_string() << "\"},  // con\n";
   cache_write_ss << "{\"" << ck.gg.get_string() << "\"}}, // gg\n";
   cache_write_ss << "{{ // hp\n";
-  cache_write_ss << "\"" << hypas.sus[Mat::E::A].get_string() << "\",\n";
-  cache_write_ss << "\"" << hypas.sus[Mat::E::B].get_string() << "\",\n";
-  cache_write_ss << "\"" << hypas.sus[Mat::E::C].get_string() << "\"}});\n";
+  auto hp = hypas.get_reflected(swap_ab);
+  cache_write_ss << "\"" << hp.sus[Mat::E::A].get_string() << "\",\n";
+  cache_write_ss << "\"" << hp.sus[Mat::E::B].get_string() << "\",\n";
+  cache_write_ss << "\"" << hp.sus[Mat::E::C].get_string() << "\"}});\n";
   return cache_write_ss.str();
 }
 
@@ -74,6 +81,7 @@ KernelCache get_kernel_cache()
   KernelCache kc;
   #include "deepbench.cachetxt"
   //#include "square1.cachetxt"
+  #include "tiny.cachetxt"
   return kc;
 }
 const KernelCache kernel_cache = get_kernel_cache();
@@ -81,24 +89,31 @@ const KernelCache kernel_cache = get_kernel_cache();
 
 
 
-HyPas KernelCache::at(const CacheKey& ckey) const
+HyPas KernelCache::at(const CacheKey& ckey, bool swap_ab) const
 {
   CacheKeyPresence ckp = check_for(ckey);
   if (!ckp.is_present)
   {
     throw miog_error(ckp.msg);
   }
-  return vals.at(ckey);
+  return vals.at(ckey).get_reflected(swap_ab);
 }
 
 void KernelCache::add(const CacheKey& ckey, const HyPas& hp)
 {
+  
+  if (redirection::get_is_not_canonical(ckey.gg)){
+    throw miog_error("internal logic error : CacheKey has geometry in non-canonical form (in add)");
+  }
+  
   CacheKeyPresence ckp = check_for(ckey);
   if (ckp.is_present)
   {
+    
+    bool is_not_canonical = false;
     std::stringstream ss;
     ss << "Cannot add cache entry if one already exists, with. Keys: " << ckey.get_string()
-       << "The existing entry is: " << at(ckey).get_string()
+       << "The existing entry is " << at(ckey, is_not_canonical).get_string()
        << ". Please choose between these, manually remove existing if nec. ";
     throw miog_error(ss.str());
   }
@@ -165,7 +180,9 @@ double CacheKey::get_distance(const CacheKey& ck) const
   double distance = 0;
   distance += gg.get_distance(ck.gg);
   distance += 1e-6 * (dvc != ck.dvc);
-  // constraints ? will be non-sym. TODO
+
+  // TODO : improved distance between constraints. will be non-sym. TODO
+  distance += 1*(constraints.get_string() != ck.constraints.get_string());
 
   return distance;
 }
@@ -197,20 +214,27 @@ CacheKey KernelCache::get_nearest_derivable(const CacheKey& ck) const
   }
 
   CacheKey nearest_derivable(cache_keys.back());
+  
 
   for (auto& key : cache_keys)
   {
-    if (ck.get_distance(key) < d_nearest_derivable && Derivabilty(vals.at(key), ck.gg).is_derivable)
+    if (ck.get_distance(key) < d_nearest_derivable)
     {
-      d_nearest_derivable = ck.get_distance(key);
-      nearest_derivable   = key;
+      auto hp = vals.at(key); //swap_ab ? reflect(vals.at(key)) : vals.at(key);
+      if (Derivabilty(hp, ck.gg).is_derivable)
+      {
+        d_nearest_derivable = ck.get_distance(key);
+        nearest_derivable   = key;
+      }
     }
   }
 
   // confirm derivability
-  if (!Derivabilty(vals.at(nearest_derivable), ck.gg).is_derivable)
+  
+  Derivabilty drvble(vals.at(nearest_derivable), ck.gg);
+  if (!drvble.is_derivable)
   {
-    throw miog_error("internal logic error : the nearest derivable is not derivable.");
+    throw miog_error("internal logic error : the nearest derivable is not derivable. msg : " + drvble.msg);
   }
   return nearest_derivable;
 }

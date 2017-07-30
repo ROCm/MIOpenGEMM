@@ -179,8 +179,9 @@ Geometry get_tight_geometry(
 
 size_t get_mat_size(const Geometry& gg, const Offsets& toff, Mat::E emat);
 size_t get_mat_memsize(const Geometry& gg, const Offsets& toff, Mat::E emat);
-
 size_t get_total_workspace(const Geometry& gg, const Offsets& toff);
+
+
 }
 
 #endif

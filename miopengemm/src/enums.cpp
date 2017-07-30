@@ -137,6 +137,19 @@ std::vector<std::string> get_name()
 const EnumMapper<std::string> M = get_enum_mapper<std::string>(get_name(), "Xtr");
 }
 
+namespace MicroAllocation
+{
+std::vector<std::string> get_name()
+{
+  std::vector<std::string> X(E::N, unfilled<std::string>());
+  X[E::BYA] = "BYA";
+  X[E::BYB] = "BYB";
+  return X;
+}
+const EnumMapper<std::string> M = get_enum_mapper<std::string>(get_name(), "MicroAllocation");
+}
+
+
 
 std::vector<int> get_priority_confirmed(std::vector<int> X, size_t target_size){
   if (X.size() != target_size){
@@ -178,8 +191,6 @@ std::vector<int> get_priority(){
   X[E::VEW] = 0;  
   return X;
 }
-
-
 
 const EnumMapper<std::string> M = get_enum_mapper<std::string>(get_name(), "Chi");
 const std::vector<int> priority = get_priority_confirmed(get_priority(), E::N);
@@ -239,6 +250,8 @@ std::vector<std::string> get_name()
   X[E::SKW] = "SKW";
   X[E::IWI] = "IWI";
   X[E::SZT] = "SZT";
+  X[E::AFI] = "AFI";
+  X[E::MIA] = "MIA";
   return X;
 }
 
@@ -254,7 +267,9 @@ std::vector<int> get_priority(){
   X[E::MAC] = 0;
   X[E::SKW] = 0;
   X[E::IWI] = 0;
-  X[E::SZT] = 0;//-1;
+  X[E::AFI] = -1;//-1;
+  X[E::SZT] = -1;//-1;
+  X[E::MIA] = -1;//-1;
   return X;
 }
 

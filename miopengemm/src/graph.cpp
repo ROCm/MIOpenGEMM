@@ -478,13 +478,12 @@ void ChiSuGr::initialise_edges()
                         {4, {2, 3, 5, 6}},
                         {5, {2, 4, 6}},
                         {6, {4, 5, 8}},
-                        {8, {4, 6}}};
+                        {8, {4, 6, 10}},
+                        {10, {8}}};
 
   edges[Chi::E::PAD] = {{0, {1}},
                         {1, {0, 2}},
-                        {
-                          2, {1},
-                        }};
+                        {2, {1}}};
 
   edges[Chi::E::PLU] = {g_binary};
   edges[Chi::E::LIW] = {g_binary};
@@ -502,20 +501,14 @@ void ChiSuGr::initialise_edges()
 void CSuGr::initialise_edges()
 {
 
-  edges[NonChi::E::UNR] = {{8, {16}}, {16, {8, 32}}, {32, {16, 64}}, {64, {16, 32}}};
+  edges[NonChi::E::UNR] = {{1,{2}}, {2, {1, 4}}, {4, {2, 8}}, {8, {4, 16}}, {16, {8, 32}}, {32, {16, 64}}, {64, {16, 32, 128}}, {128, {32, 64}}};
   edges[NonChi::E::NAW] = {{64, {16}}, {16, {64}}};
   edges[NonChi::E::GAL] = {
     {GroupAllocation::E::BYROW, {GroupAllocation::E::BYCOL, GroupAllocation::E::SUCOL}},
     {GroupAllocation::E::BYCOL, {GroupAllocation::E::BYROW, GroupAllocation::E::SUCOL}},
     {GroupAllocation::E::SUCOL, {GroupAllocation::E::BYROW, GroupAllocation::E::BYCOL}}};
 
-  // MAC and SKW
-
-  if (ptr_devinfo->device_name == "unknown_default_constructed")
-  {
-  }
-
-  else if (ptr_devinfo->wg_atom_size != 64 && ptr_devinfo->wg_atom_size != 32)
+  if (ptr_devinfo->wg_atom_size != 64 && ptr_devinfo->wg_atom_size != 32)
   {
     std::stringstream ss;
     ss << "(device_name : " << ptr_devinfo->device_name << ")  "
@@ -527,48 +520,32 @@ void CSuGr::initialise_edges()
     throw miog_error(ss.str());
   }
 
-  // very small / thin matrices
-  else if (ptr_gg->m * ptr_gg->n < 32 * 32 || ptr_gg->m < 16 || ptr_gg->n < 16)
-  {
-    //edges[NonChi::E::MAC] = {
-      //{1, {4, 16}}, {4, {1, 16, 64}}, {16, {4, 64}}, {64, {16, 256}}, {256, {64}},
-    //};
 
-    edges[NonChi::E::MAC] = {
-      {{64, {256}}, {256, {64}}}
-    };
-    
-    edges[NonChi::E::SKW] = {
-
-      {7, {8}},
-      {8, {7, 9}},
-      {9, {8, 10}},
-      {10, {9, 11}},
-      {11, {10, 12}},
-      {12, {11, 13}},
-      {13, {12}},
-
-    };
-  }
-
-  else if (ptr_devinfo->wg_atom_size == 64)
+  if (ptr_devinfo->wg_atom_size == 64)
   {
     edges[NonChi::E::MAC] = {{64, {256}}, {256, {64}}};
-    edges[NonChi::E::SKW] = {{9, {10}}, {10, {9, 11}}, {11, {10}}};
   }
 
   else if (ptr_devinfo->wg_atom_size == 32)
   {
     edges[NonChi::E::MAC] = {{32, {64, 256}}, {64, {32, 128, 256}}, {128, {64, 256}}, {256, {64}}};
-    edges[NonChi::E::SKW] = {{9, {10}}, {10, {9, 11}}, {11, {10, 12}}, {12, {10, 11}}};
   }
 
-  else
-  {
-    throw miog_error("wg_atom_size is neither 32 or 64, how can this be? I "
-                     "thought we'd already "
-                     "checked this. (Logic error)");
+  if (ptr_gg->m*ptr_gg->n <= 16*16){
+    edges[NonChi::E::MAC] = {{1, {}}};
   }
+
+
+  edges[NonChi::E::SKW] = {
+    {7, {8}},
+    {8, {7, 9}},
+    {9, {8, 10}},
+    {10, {9, 11}},
+    {11, {10, 12}},
+    {12, {11, 13}},
+    {13, {12}},
+  };
+
 
   edges[NonChi::E::ICE] = {{1, {2}},
                            {2, {1, 3, 4}},
@@ -588,6 +565,8 @@ void CSuGr::initialise_edges()
   edges[NonChi::E::PUN] = {g_binary};
   edges[NonChi::E::IWI] = {g_binary};
   edges[NonChi::E::UFO] = {g_binary};
+  edges[NonChi::E::AFI] = {g_binary};
+  edges[NonChi::E::MIA] = {g_binary};
   edges[NonChi::E::SZT] = {g_binary};
 }
 
@@ -596,7 +575,11 @@ void ChiSuGr::refine_start_range()
   start_range[Chi::E::PAD] = {1, 2};
   start_range[Chi::E::LIW] = {Binary::E::NO};
   start_range[Chi::E::MIW] = {Binary::E::YES};
-  start_range[Chi::E::WOS] = {Scratch::E::UNUSED, Scratch::E::COPY, Scratch::E::NFORM};
+  
+  if (ptr_gg->wSpaceSize == 0){
+    start_range[Chi::E::WOS] = {Scratch::E::UNUSED};
+  }
+  
   start_range[Chi::E::VEW] = {1};
 
   set_start_mic();
@@ -605,11 +588,11 @@ void ChiSuGr::refine_start_range()
 void CSuGr::refine_start_range()
 {
 
-  start_range[NonChi::E::UNR] = {8, 16};
   start_range[NonChi::E::ICE] = {1};
-  start_range[NonChi::E::IWI] = {Binary::E::YES};
   start_range[NonChi::E::UFO] = {Binary::E::NO};
   start_range[NonChi::E::SZT] = {Binary::E::NO};
+  start_range[NonChi::E::AFI] = {Binary::E::YES};
+  start_range[NonChi::E::MIA] = {MicroAllocation::E::BYA};
 
   if ((ptr_gg->m) > 200 && (ptr_gg->n) > 200)
   {
@@ -630,21 +613,23 @@ void ChiSuGr::set_start_mic()
 {
 
   size_t non_unroll_dimension = ptr_gg->get_non_k_dim(emat);
-
   std::vector<size_t> basemic = {8, 6};
-  if (non_unroll_dimension < 256)
+  size_t area = ptr_gg->m*ptr_gg->n;
+  size_t min_dim = std::min(ptr_gg->m, ptr_gg->n);
+  
+  if (non_unroll_dimension < 256 || area < 400*400 || min_dim < 32 )
   {
     basemic.push_back(5);
     basemic.push_back(4);
   }
 
-  if (non_unroll_dimension < 128)
+  if (non_unroll_dimension < 128 || area < 200*200  || min_dim < 16)
   {
     basemic.push_back(3);
     basemic.push_back(2);
   }
 
-  if (non_unroll_dimension < 64)
+  if (non_unroll_dimension < 64 || area < 100*100 || min_dim < 8)
   {
     basemic.push_back(1);
   }
@@ -755,6 +740,7 @@ HyPas Graph::get_random_valid_start() const
       mowri.bw[OutPart::E::WRN] << "(still looking for valid start in graph @i=" << iter << ")"
                                 << Endl;
       timer.start();
+      //std::cout << ss.str() << std::endl;
     }
   }
 

@@ -14,6 +14,76 @@
 namespace MIOpenGEMM
 {
 
+// TODO : Constraints and Hyperparams are very similar, consider inheritance
+
+void reflect_c(std::vector<size_t> & cvs){
+
+  if (cvs.size() != NonChi::E::N){
+    throw miog_error("cvs should be of size NonChi::E::N, it is " + cvs.size());
+  }
+  
+  if (cvs[NonChi::E::SKW] != Status::E::UNDEFINED && cvs[NonChi::E::MAC] != Status::E::UNDEFINED){
+    macgrid::Grid grid(cvs[NonChi::E::MAC], cvs[NonChi::E::SKW]);
+    if (grid.is_good == false){
+      throw miog_error("bad grid in reflect " + grid.error_message);
+    }
+      
+    cvs[NonChi::E::SKW] = 2*macgrid::skew0 - cvs[NonChi::E::SKW];
+    if (grid.at(Mat::E::A) != grid.at(Mat::E::B)){
+      cvs[NonChi::E::SKW] -=1;
+    }
+  }
+
+  switch (cvs[NonChi::E::GAL]){
+    case GroupAllocation::E::BYROW : cvs[NonChi::E::GAL] = GroupAllocation::E::BYCOL; break;
+    case GroupAllocation::E::BYCOL : cvs[NonChi::E::GAL] = GroupAllocation::E::BYROW; break;
+    default : break;
+  }
+
+  switch (cvs[NonChi::E::AFI]){
+    case Binary::E::YES : cvs[NonChi::E::AFI] = Binary::E::NO; break;
+    case Binary::E::NO : cvs[NonChi::E::AFI] = Binary::E::YES; break;
+    default : break;
+  }
+
+  switch (cvs[NonChi::E::MIA]){
+    case MicroAllocation::E::BYA : cvs[NonChi::E::MIA] = MicroAllocation::E::BYB; break;
+    case MicroAllocation::E::BYB : cvs[NonChi::E::MIA] = MicroAllocation::E::BYA; break;
+    default : break;
+  }
+
+}
+
+HyPas HyPas::get_reflected(bool swap_ab) const{
+  
+  if (!swap_ab){
+    return *this;
+  }
+
+  else{
+
+    auto suhyc = sus[Mat::E::C];
+    reflect_c(suhyc.vs);
+    return {{sus[Mat::E::B], sus[Mat::E::A], suhyc}};
+  }
+}
+
+Constraints Constraints::get_reflected(bool swap_ab) const{
+  
+  
+  Constraints reflected(*this);
+  
+  if (swap_ab){    
+    std::swap(reflected.sub[Mat::E::A], reflected.sub[Mat::E::B]);
+    reflect_c(reflected.sub[Mat::E::C].range);
+    reflect_c(reflected.sub[Mat::E::C].start_range);
+    return reflected;
+  }
+  
+  return reflected;
+}
+
+
 void SuHy::checks() const
 {
   if (vs.size() != Mat::mat_to_xchi(emat)->N)
@@ -157,7 +227,6 @@ Constraint::Constraint(Mat::E e, const std::string& r, const std::string& sr) : 
   start_range = get_hy_v(sr, false, emat);
 }
 
-// TODO : Constraints and Hyperparams are similar, consider inheritance
 
 Constraints::Constraints(const str_array& cr_strings)
 {

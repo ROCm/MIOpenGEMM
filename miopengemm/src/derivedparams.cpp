@@ -485,10 +485,6 @@ DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_) : ptr_hp(&hp
   }
   
   tshort = "ushort";
-
-  //std::cout << get_string() << std::endl;
-  
-
 }
 
 /* TODO : move to hyper params */

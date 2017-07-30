@@ -17,8 +17,10 @@ int main()
   
   std::vector<size_t> dimensions;
   for (size_t k = 5; k < 14; ++k){
-    for (size_t off = -4; off < 5; ++off){
+    dimensions.push_back(std::pow(2, k));
+    for (size_t off = 1; off < 5; ++off){
       dimensions.push_back(std::pow(2, k) + off);
+      dimensions.push_back(std::pow(2, k) - off);
     }
   }
   

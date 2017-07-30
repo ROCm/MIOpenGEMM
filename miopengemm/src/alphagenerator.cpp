@@ -19,9 +19,12 @@
 /* TODO : beta = 1 optimisation */
 /* TODO : mad as hyper-parameter, figure out why it slows kernels down (see
  * tensile branch) */
-/* TODO : float(2,4,8,16) ? */
 /* TODO : volatile int id (Nugteren) to prevent unrolling */
 /* TODO : play with restrict keyword */
+/* TODO : consider idea of localA, localB being contiguous (float1) 
+ * and then "localC" can be within or an extension of this. then, 
+ * when writing to C, first write to localC, then make a contiguous write to
+ * C from localC */
 
 namespace MIOpenGEMM
 {
@@ -32,6 +35,10 @@ class AlphaGenerator : public basegen::BaseGenerator
 {
 
   private:
+  
+  // TODO : move to derived maybe
+  std::vector<Mat::E> mata_matb;
+  
   virtual void set_usage() override final
   {
 
@@ -47,6 +54,13 @@ class AlphaGenerator : public basegen::BaseGenerator
   AlphaGenerator(const HyPas& hp_, const Geometry& gg_, const DerivedParams& dp_)
     : basegen::BaseGenerator(hp_, gg_, dp_)
   {
+    
+    if (hp.sus[Mat::E::C].vs[NonChi::E::AFI] == Binary::E::YES){
+      mata_matb = {Mat::E::A, Mat::E::B};
+    }
+    else{
+      mata_matb = {Mat::E::B, Mat::E::A};
+    }
   }
 
   private:
@@ -67,8 +81,8 @@ const TINTB group_id_b = group_id_xy / N_GROUPS_A;
       ss <<
         R"(
 /* GROUP_ALLOCATION = 2 :  allocation is done row-by-row */
-TINTB group_id_b = group_id_xy % N_GROUPS_B;
-TINTA group_id_a = group_id_xy / N_GROUPS_B;
+const TINTA group_id_a = group_id_xy / N_GROUPS_B;
+const TINTB group_id_b = group_id_xy % N_GROUPS_B;
 )";
     }
 
@@ -230,16 +244,14 @@ TFLOAT previous_value; )"
     // make this* 1.11101242345 for example
 
     
-    std::string row_index = hp.sus[Mat::E::A].vs[Chi::E::MIW] == 0 ? "row" : "(rowi*VEW_A)/N_MICRO_IN_MACRO_A + rowi_v" ; //
-    std::string col_index = hp.sus[Mat::E::B].vs[Chi::E::MIW] == 0 ? "col" : "(coli*VEW_B)/N_MICRO_IN_MACRO_B + coli_v" ;
+    std::string dima_index = hp.sus[Mat::E::A].vs[Chi::E::MIW] == 0 ? "dima" : "(dimai*VEW_A)/N_MICRO_IN_MACRO_A + dimai_v" ; //
+    std::string dimb_index = hp.sus[Mat::E::B].vs[Chi::E::MIW] == 0 ? "dimb" : "(dimbi*VEW_B)/N_MICRO_IN_MACRO_B + dimbi_v" ;
     
-    std::string alpha_scaled = "alpha*rC[" + row_index + "][" + col_index + "]";
-
-    ss << "\nindex = STRIDE_PLL_M_C*(write_start_a + row) + STRIDE_PLL_N_C*(write_start_b + col);\n";
-  //ss << "\nindex = 0;\n";
-
+    std::string alpha_scaled = "alpha*rC[" + dima_index + "][" + dimb_index + "]"; 
+    ss << "\nindex =  STRIDE_PLL_M_C*(write_start_a + dima) + STRIDE_PLL_N_C*(write_start_b + dimb) ;\n";
 
     ss << (with_beta_scaling == 0 ? "" : "c[index] *= beta;\n");
+
     if (with_alpha_increment != 0)
     {
       ss << '\n';
@@ -266,35 +278,45 @@ TFLOAT previous_value; )"
 
     ss << "\n/* loops for writing to c */\n";
 
-    ss << dp.pragma_unroll_string;
-    append_loop_var_bound_incr(
-      ss,
-      "rowi",
-      hp.sus[Mat::E::A].vs[Chi::E::MIW] == 0 ? "MICRO_TILE_LENGTH_A/VEW_A" : "MACRO_TILE_LENGTH_A/VEW_A",
-      hp.sus[Mat::E::A].vs[Chi::E::MIW] == 0 ? "++rowi" : "rowi += N_MICRO_IN_MACRO_A",
+
+    
+    
+    for (auto emat : mata_matb){
+      std::string X(1, Mat::M.name[emat]);
+      char x = Mat::M.lcase_name[emat];
+      std::string dimxi = "dim" + std::string(1, x) + "i";
+
+      ss << dp.pragma_unroll_string;      
+      append_loop_var_bound_incr(
+        ss, dimxi,
+      hp.sus[emat].vs[Chi::E::MIW] == 0 ? "MICRO_TILE_LENGTH_" + X  + "/VEW_" + X : "MACRO_TILE_LENGTH_" + X + "/VEW_" + X,
+      hp.sus[emat].vs[Chi::E::MIW] == 0 ? "++" + dimxi : dimxi + " += N_MICRO_IN_MACRO_" + X,
       Mat::E::A);
-    ss << " {\n";
+      ss << " {\n";
+    }
+      
 
-    ss << dp.pragma_unroll_string;
-    append_loop_var_bound_incr(
-      ss,
-      "coli",
-      hp.sus[Mat::E::B].vs[Chi::E::MIW] == 0 ? "MICRO_TILE_LENGTH_B/VEW_B" : "MACRO_TILE_LENGTH_B/VEW_B",
-      hp.sus[Mat::E::B].vs[Chi::E::MIW] == 0 ? "++coli" : "coli += N_MICRO_IN_MACRO_B",
-      Mat::E::B);
-    ss << " {\n";
+    for (auto emat : mata_matb){
+      std::string X(1, Mat::M.name[emat]);
+      char x = Mat::M.lcase_name[emat];
+      std::string dimxi = "dim" + std::string(1, x) + "i";
 
-    ss << dp.pragma_unroll_string;
-    append_loop_var_bound_incr(ss, "rowi_v", "VEW_A", "++rowi_v", Mat::E::A);      
-    ss << " {\n";
+      ss << dp.pragma_unroll_string;
+      append_loop_var_bound_incr(ss, dimxi+"_v", "VEW_"+X, "++"+dimxi+"_v", emat);      
+      ss << " {\n";
+    }
     
+    //ss << dp.pragma_unroll_string;
+    //append_loop_var_bound_incr(ss, "dimai_v", "VEW_A", "++dimai_v", Mat::E::A);      
+    //ss << " {\n";
 
-    ss << dp.pragma_unroll_string;
-    append_loop_var_bound_incr(ss, "coli_v", "VEW_B", "++coli_v", Mat::E::B);      
-    ss << " {\n";
+    //ss << dp.pragma_unroll_string;
+    //append_loop_var_bound_incr(ss, "dimbi_v", "VEW_B", "++dimbi_v", Mat::E::B);      
+    //ss << " {\n";
+
+    ss << "TINTB dimb = dimbi*VEW_B + dimbi_v;\n";
     
-    ss << "TINTA row = rowi*VEW_A + rowi_v;\n";
-    ss << "TINTB col = coli*VEW_B + coli_v;\n";
+    ss << "TINTA dima = dimai*VEW_A + dimai_v;\n";
     
   }
 
@@ -306,16 +328,22 @@ TFLOAT previous_value; )"
       R"(
 /* catching the write cases */
 if (
+
+
+
 /* B overflow, but not A edge */
-((write_start_b + col >= MACRO_TILE_LENGTH_B*(N_GROUPS_B - 1)) && group_id_a  !=  (N_GROUPS_A - 1 )) ||
+((write_start_b + dimb >= MACRO_TILE_LENGTH_B*(N_GROUPS_B - 1)) && group_id_a  !=  (N_GROUPS_A - 1 )) ||
+
 /* A overflow, but not B edge */
-((write_start_a + row >= MACRO_TILE_LENGTH_A*(N_GROUPS_A - 1)) && group_id_b  !=  (N_GROUPS_B - 1 )) ||
+((write_start_a + dima >= MACRO_TILE_LENGTH_A*(N_GROUPS_A - 1)) && group_id_b  !=  (N_GROUPS_B - 1 )) ||
+
+
 /* A edge and B edge and A overflow and B overflow */
 (
 group_id_a == (N_GROUPS_A - 1)   && 
 group_id_b == (N_GROUPS_B - 1)   && 
-write_start_b + col >= MACRO_TILE_LENGTH_B*(N_GROUPS_B - 1) && 
-write_start_a + row >= MACRO_TILE_LENGTH_A*(N_GROUPS_A - 1)
+write_start_b + dimb >= MACRO_TILE_LENGTH_B*(N_GROUPS_B - 1) && 
+write_start_a + dima >= MACRO_TILE_LENGTH_A*(N_GROUPS_A - 1)
 )){
 )";
   }
@@ -376,8 +404,11 @@ write_start_a + row >= MACRO_TILE_LENGTH_A*(N_GROUPS_A - 1)
                                       size_t             special_first_unroll)
   {
 
-    append_load_into_LDS_string(Mat::E::A, ss, final_unroll, special_first_unroll);
-    append_load_into_LDS_string(Mat::E::B, ss, final_unroll, special_first_unroll);
+    for (auto emat : mata_matb){
+      append_load_into_LDS_string(emat, ss, final_unroll, special_first_unroll);
+    }
+    
+    
 
     ss <<
       R"(
@@ -464,8 +495,12 @@ barrier(CLK_LOCAL_MEM_FENCE); )";
 
     std::string number_of_unrolls = use_k_remaining == 0 ? "UNROLL" : "k_remaining";
     ss << "\nfor (TSHORT u = 0; u < " << number_of_unrolls << "; ++u){\n";
-    append_load_to_register_string(Mat::E::A, ss);
-    append_load_to_register_string(Mat::E::B, ss);
+    
+    
+    for (Mat::E emat : mata_matb){
+      append_load_to_register_string(emat, ss);
+    }
+    
     ss << '\n';
     append_compute_string(ss);
 
@@ -488,7 +523,7 @@ barrier(CLK_LOCAL_MEM_FENCE); )";
     append_load_ab_into_LDS_string(ss, final_unroll, special_first_unroll);
 
     ss << '\n';
-    for (Mat::E emat_x : {Mat::E::A, Mat::E::B})
+    for (Mat::E emat_x : mata_matb)
     {
       char X = Mat::M.name[emat_x];
       char x = Mat::M.lcase_name[emat_x];
@@ -566,9 +601,15 @@ if ((group_id_z == N_WORK_ITEMS_PER_C_ELM - 1) && k_remaining > 0){
 
   void append_compute_string(std::stringstream& ss)
   {
-    ss << dp.pragma_unroll_string << "for (TSHORT row = 0; row < MICRO_TILE_LENGTH_A; ++row){\n"
-       << dp.pragma_unroll_string << "for (TSHORT col = 0; col < MICRO_TILE_LENGTH_B; ++col){\n"
-       << "rC[row][col] += rA[row]*rB[col];   \n}\n}\n";
+    
+    
+    for (auto emat : mata_matb){
+      char x = Mat::M.lcase_name[emat];
+      char X = Mat::M.name[emat];
+      ss << dp.pragma_unroll_string << "for (TSHORT dim" << x << " = 0; dim" << x << " < MICRO_TILE_LENGTH_" << X << "; ++dim" << x << "){\n";
+    }
+          
+    ss << "rC[dima][dimb] += rA[dima]*rB[dimb];   \n}\n}\n";
   }
 
   void append_load_to_register_string(Mat::E emat_x, std::stringstream& ss)
@@ -621,23 +662,27 @@ if ((group_id_z == N_WORK_ITEMS_PER_C_ELM - 1) && k_remaining > 0){
     else
     {
 
-      std::string cond_a("");
-      if (dp.at(Mat::E::A).preshift_final_tile != dp.at(Mat::E::A).macro_tile_length)
-      {
-        cond_a = "(group_id_a != N_GROUPS_A - 1)";
+
+      std::array<std::string, Mat::E::N> cond_ab;
+      size_t nconds = 0;
+      for (Mat::E emat : mata_matb){
+        char X = Mat::M.name[emat];
+        char x = Mat::M.lcase_name[emat];
+        cond_ab[emat] = "";
+        if (dp.at(emat).preshift_final_tile != dp.at(emat).macro_tile_length){
+          std::stringstream soo;
+          soo << "(group_id_" << x << " != N_GROUPS_" << X << " - 1)";
+          cond_ab[emat] = soo.str();
+          ++nconds;
+        }
+
       }
 
-      std::string cond_b("");
-      if (dp.at(Mat::E::B).preshift_final_tile != dp.at(Mat::E::B).macro_tile_length)
-      {
-        cond_b = "(group_id_b != N_GROUPS_B - 1)";
-      }
-
-      if (cond_a == "" && cond_b == "")
+      if (nconds == 0)
       {
         append_final_write_loops_no_check(ss);
       }
-
+      
       else
       {
 
@@ -649,20 +694,22 @@ if ((group_id_z == N_WORK_ITEMS_PER_C_ELM - 1) && k_remaining > 0){
 
         ss << "\n/* the case where this is not an edge tile : will write to "
               "all cells */ \n";
-        if (cond_a != "" && cond_b != "")
+        if (nconds == 2)//cond_a != "" && cond_b != "")
         {
-          ss << "if (" << cond_a << " && " << cond_b << "){ \n";
+          ss << "if (" << cond_ab[Mat::E::B] << " && " << cond_ab[Mat::E::A] << "){ \n";
         }
-        else if (cond_a != "")
-        {
-          ss << "if  " << cond_a << "{ \n";
+        
+        else{
+          for (auto emat : mata_matb){
+            if (cond_ab[emat] != ""){
+              ss << "if  " << cond_ab[emat] << "{ \n";
+            }
+          }
         }
-        else
-        {
-          ss << "if  " << cond_b << "{ \n";
-        }
+        
         append_final_write_loops_no_check(ss);
         ss << "\n}";
+        
         ss << "\n\nelse{";
         append_final_write_loops_with_check(ss);
         ss << "\n}";
@@ -751,11 +798,30 @@ c += c_offset;
     ss << "const TSHORT local_id = get_local_id(0);\n";
     append_group_id_defns(ss);
 
-    ss << R"(
-/* Define which part of the C macro-tile this thread will process (% / or / % ? doesn't seem to make much difference) */
+    ss << "/* Define which part of the C macro-tile this thread will process: " << MicroAllocation::M.name[hp.sus[Mat::E::C].vs[NonChi::E::MIA]] << "*/\n";
+    
+    if (hp.sus[Mat::E::C].vs[NonChi::E::MIA] == MicroAllocation::E::BYA)
+      ss << R"(
 const TSHORT micro_id_a = local_id % N_MICRO_IN_MACRO_A;
 const TSHORT micro_id_b = local_id / N_MICRO_IN_MACRO_A;
+
 )";
+
+    else if (hp.sus[Mat::E::C].vs[NonChi::E::MIA] == MicroAllocation::E::BYB){
+      ss << R"(
+const TSHORT micro_id_b = local_id % N_MICRO_IN_MACRO_B;
+const TSHORT micro_id_a = local_id / N_MICRO_IN_MACRO_B;
+
+)";
+    }
+    
+    else{
+      throw miog_error("unrecognised MicroAllocation");
+    }
+  
+
+
+
 
     append_group_allocation_string(ss);
 
@@ -922,10 +988,10 @@ TINTK k_plus_offset = __K__ + unroll_offset;
     if (emat_x == Mat::E::A){
       ss << "/* vectorised version of a */\n";
     }
-    //ss << "const __global TVFLOAT" << X << " * " << x << "_vec = (const __global TVFLOAT" << X << " * )" << x << ";\n";
-
-
-    ss << "const TVFLOAT" << X << " * " << x << "_vec = (const TVFLOAT" << X << " * )" << x << ";\n";
+    
+    
+    ss << "const __global TVFLOAT" << X << " * " << x << "_vec = (const __global TVFLOAT" << X << " * )" << x << ";\n";
+    //ss << "const TVFLOAT" << X << " * " << x << "_vec = (const TVFLOAT" << X << " * )" << x << ";\n";
 
     ss << x << "_vec += "
        << "STRIDE_PERP_K_" << X << " * " << x << "_offset_perp_unroll_v;\n";
@@ -966,7 +1032,7 @@ TINTK k_plus_offset = __K__ + unroll_offset;
 
     if (emat_x == Mat::E::A)
       ss << "/* vector float type */\n";
-    ss << "#define TVFLOAT" << x << "  float";
+    ss << "#define TVFLOAT" << x << " " << dp.t_float;
     if (hp.sus[emat_x].vs[Chi::E::VEW]  != 1) ss << hp.sus[emat_x].vs[Chi::E::VEW];
     ss << '\n';
     
@@ -1066,7 +1132,7 @@ TINTK k_plus_offset = __K__ + unroll_offset;
 
 )";
 
-    for (auto emat_x : {Mat::E::A, Mat::E::B})
+    for (auto emat_x : mata_matb)
 
     {
       ss << "\n/* ********************************** specific to " << Mat::M.name[emat_x]
@@ -1183,18 +1249,18 @@ TINTK k_plus_offset = __K__ + unroll_offset;
     append_n_unrolls_remaining_string(ss);
 
 
-    ss << "\n\n/* *************************** A setup "
-          "************************** */";
-    append_id_string_sym(ss, Mat::E::A);
-    ss << "\n\n/* *************************** B setup "
-          "************************** */";
-    append_id_string_sym(ss, Mat::E::B);
+    for (auto emat : mata_matb){
+      ss << "\n\n/* ************* " << Mat::M.name[emat] << " setup *************** */";
+      append_id_string_sym(ss, emat);
+    }
+    
 
     ss << "\n\n\n";
 
     ss << "/* register memory for C */\n ";
-    ss << "TFLOAT rC[MICRO_TILE_LENGTH_A][MICRO_TILE_LENGTH_B] = {{0.}};\n";
-
+    
+    
+    ss << "TFLOAT rC[MICRO_TILE_LENGTH_A][MICRO_TILE_LENGTH_B] = {{0.}};\n"; 
 
  
  
@@ -1215,8 +1281,10 @@ TINTK k_plus_offset = __K__ + unroll_offset;
 
     ss << "\n\n";
     ss << "TINTC index;\n";
+    
     append_split_on_k_vardecl_write_string(ss);
     append_final_write_all(ss);
+    
     ss << "\n}\n";
 
     return {get_ktype(),

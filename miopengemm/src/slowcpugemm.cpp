@@ -25,11 +25,28 @@ class NNInner
     TFloat inner = 0;
     for (size_t z = 0; z < k; ++z)
     {
-      inner += a[x + z * lda] * b[y * ldb + z];
+      inner += a[x + z*lda] * b[y*ldb + z];
     }
     return inner;
   }
 };
+
+template <typename TFloat>
+class TTInner
+{
+  public:
+  inline TFloat
+  operator()(const TFloat* a, const TFloat* b, size_t x, size_t y, size_t lda, size_t ldb, size_t k)
+  {
+    TFloat inner = 0;
+    for (size_t z = 0; z < k; ++z)
+    {
+      inner += a[x * lda + z] * b[y  + z * ldb];
+    }
+    return inner;
+  }
+};
+
 
 template <typename TFloat>
 class NTInner
@@ -73,10 +90,8 @@ void gemm_3fors_generic_cpu(const Geometry& gg,
                             TFloat          beta)
 {
   // at this point, must be column contiguous (ala fortran)
-  // this is a generic slow matrix multiplier for NN, TN, NT.
-  // NN, TN, NT will have different FInner template parameters
-  // TT should have have been redirected to NN at this point
-
+  // this is a generic slow matrix multiplier for NN, TN, NT, TT.
+  
   a += toff.offsets[Mem::E::A];
   b += toff.offsets[Mem::E::B];
   c += toff.offsets[Mem::E::C];
@@ -116,9 +131,8 @@ void gemm_3fors_cpu(const Geometry& gg,
                     TFloat          beta)
 {
 
-  if (gg.tX[Mat::E::A] == true && gg.tX[Mat::E::B] == true)
-  {
-    throw miog_error("tA and tB should have been redirected before calling gemm_3fors_cpu");
+  if (gg.tX[Mat::E::C] == true){
+    throw miog_error("tC should be false before calling gemm_3fors_cpu");    
   }
 
   else if (gg.isColMajor == false)
@@ -131,28 +145,26 @@ void gemm_3fors_cpu(const Geometry& gg,
     gemm_3fors_generic_cpu<TFloat, NNInner<TFloat>>(gg, toff, a, b, c, alpha, beta);
   }
 
+  else if (gg.tX[Mat::E::A] == false && gg.tX[Mat::E::B] == true)
+  {
+    gemm_3fors_generic_cpu<TFloat, NTInner<TFloat>>(gg, toff, a, b, c, alpha, beta);
+  }
+
+  else if (gg.tX[Mat::E::A] == true && gg.tX[Mat::E::B] == false)
+  {
+    gemm_3fors_generic_cpu<TFloat, TNInner<TFloat>>(gg, toff, a, b, c, alpha, beta);
+  }
+
+  else if (gg.tX[Mat::E::A] == true && gg.tX[Mat::E::B] == true)
+  {
+    gemm_3fors_generic_cpu<TFloat, TTInner<TFloat>>(gg, toff, a, b, c, alpha, beta);
+  }
+
   else
   {
-    if (gg.m > gg.n)
-    {
-      throw std::logic_error("m > n should have been redirected before calling gemm_3fors_cpu");
-    }
-
-    if (gg.tX[Mat::E::A] == false && gg.tX[Mat::E::B] == true)
-    {
-      gemm_3fors_generic_cpu<TFloat, NTInner<TFloat>>(gg, toff, a, b, c, alpha, beta);
-    }
-
-    else if (gg.tX[Mat::E::A] == true && gg.tX[Mat::E::B] == false)
-    {
-      gemm_3fors_generic_cpu<TFloat, TNInner<TFloat>>(gg, toff, a, b, c, alpha, beta);
-    }
-
-    else
-    {
-      throw miog_error("this will never happen");
-    }
+    throw miog_error("this will never happen");
   }
+ 
 }
 
 void check_cpu_algs(std::vector<std::string> cpu_algs)
@@ -213,7 +225,7 @@ void gemms_cpu(Geometry                 gg,
   gg.tX[Mat::E::B] = tB;
   gg.tX[Mat::E::C] = tC;
 
-  redirection::confirm_redirection(gg.isColMajor, gg.tX[Mat::E::A], gg.tX[Mat::E::B], gg.m, gg.n);
+  redirection::confirm_redirection(gg.isColMajor, gg.tX[Mat::E::C]);//, gg.tX[Mat::E::B], gg.m, gg.n);
   gg.check_ldx_consistent();
 
   for (auto& alg : algs)

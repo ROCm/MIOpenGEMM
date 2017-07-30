@@ -11,6 +11,11 @@
 
 namespace MIOpenGEMM{
 
+namespace canonical{
+  // no swaps when canonical
+  const bool noswap = false;
+}
+  
 // sequence for a fair penalty shoot-out. 
 std::vector<bool> get_thue_morse(size_t length){
   std::vector<bool> thue_morse {true, false};
@@ -26,6 +31,8 @@ std::vector<bool> get_thue_morse(size_t length){
 template <typename TFl>
 void populate(const std::vector<CacheKey> & cache_keys, const KernelCache & kc1, const KernelCache & kc2, KernelCache & kc, const Halt & halt, owrite::Writer& mowri){
     
+  
+  
   Offsets        offsets = get_zero_offsets();
   CLHint         devhint;
   
@@ -36,17 +43,17 @@ void populate(const std::vector<CacheKey> & cache_keys, const KernelCache & kc1,
   mowri.bw[OutPart::MER] << "done. Will perform Thue–Morse ABBABAAB 1-on-1." << Endl;
   for (size_t i = 0; i < cache_keys.size(); ++i)
   {
-     auto ck = cache_keys[i];
-    if (kc1.at(ck) == kc2.at(ck)){
-      kc.add(ck, kc1.at(ck));
+    auto ck = cache_keys[i];
+    if (kc1.at(ck, canonical::noswap) == kc2.at(ck, canonical::noswap)){
+      kc.add(ck, kc1.at(ck, canonical::noswap));
       mowri.bw[OutPart::MER] << "[ss]" << Flush;
       continue;
     }
     mowri.bw[OutPart::MER] << '\n' << "(" <<  i << " / " << cache_keys.size() << ")";    
     mowri.bw[OutPart::MER] << ck.gg.get_string() << Endl; 
 
-    mowri.bw[OutPart::MER] << "soln1 : " << kc1.at(ck).get_string() << Endl;
-    mowri.bw[OutPart::MER] << "soln2 : " << kc2.at(ck).get_string() << Endl;
+    mowri.bw[OutPart::MER] << "soln1 : " << kc1.at(ck, canonical::noswap).get_string() << Endl;
+    mowri.bw[OutPart::MER] << "soln2 : " << kc2.at(ck, canonical::noswap).get_string() << Endl;
 
    
     // having two Divas means that each opposing kernel only needs be compiled once. Optional.
@@ -67,14 +74,9 @@ void populate(const std::vector<CacheKey> & cache_keys, const KernelCache & kc1,
     auto act_kcx = [&halt, &mowri, &ck, &prefix](const KernelCache & kcx, std::string frag, std::vector<double> & times, dev::Diva<TFl> & diva){
       mowri.bw[OutPart::MER] << '<' << frag  << Flush;
       std::this_thread::sleep_for(std::chrono::milliseconds(80));
-      std::vector<double> ltimes = diva.benchgemm({kcx.at(ck)}, halt).back();
+      std::vector<double> ltimes = diva.benchgemm({kcx.at(ck, canonical::noswap)}, halt).back();
       
-      double zoo = *std::min_element(ltimes.begin(), ltimes.end());//.back();
-      //std::cout << "times : ";
-      //for (auto & x : ltimes){
-        //std::cout << x << "   ";
-      //}
-      //std::cout << std::endl;
+      double zoo = *std::min_element(ltimes.begin(), ltimes.end());
       
       mowri.bw[OutPart::MER] << '>' << Flush;
       times.push_back(zoo);
@@ -114,11 +116,11 @@ void populate(const std::vector<CacheKey> & cache_keys, const KernelCache & kc1,
     
     if (kc1_wins > kc2_wins){
       mowri.bw[OutPart::MER] << "kc1 won, " << kc1_wins << ':' << kc2_wins << '.' << '\n';
-      kc.add(ck, kc1.at(ck));
+      kc.add(ck, kc1.at(ck, canonical::noswap));
     }
     else{
       mowri.bw[OutPart::MER] << "kc2 won, " << kc2_wins << ':' << kc1_wins << '.' << '\n';
-      kc.add(ck, kc2.at(ck));
+      kc.add(ck, kc2.at(ck, canonical::noswap));
     }
     mowri.bw[OutPart::MER] << '\n';     
   }
@@ -136,7 +138,7 @@ KernelCache get_merged(const KernelCache & kc1, const KernelCache & kc2, const H
   size_t undetermined {0};
   for (auto & k1 : kc1.get_keys()){
     if (!kc2.check_for(k1).is_present){
-      kc.add(k1, kc1.at(k1));
+      kc.add(k1, kc1.at(k1, canonical::noswap));
       ++from_kc1;
     }
     else{
@@ -150,7 +152,7 @@ KernelCache get_merged(const KernelCache & kc1, const KernelCache & kc2, const H
   
   for (auto & k2 : kc2.get_keys()){
     if (!kc1.check_for(k2).is_present){
-      kc.add(k2, kc2.at(k2));
+      kc.add(k2, kc2.at(k2, canonical::noswap));
       ++from_kc2;
     }
   }

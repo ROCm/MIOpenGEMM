@@ -11,7 +11,6 @@
 namespace MIOpenGEMM
 {
 
-
 class CacheKeyPresence
 {
   public:
@@ -21,11 +20,16 @@ class CacheKeyPresence
   CacheKeyPresence(const std::string& msg_) : is_present(false), msg(msg_) {}
 };
 
+
 class CacheKey
 {
+  private:
+  bool from_non_canonical;
   public:
   std::string dvc;
+  // always in original form 
   Constraints constraints;
+  // always in canonical form
   Geometry    gg;
   std::string concatenated;
 
@@ -34,11 +38,6 @@ class CacheKey
   CacheKey(const std::string& device, const Constraints&, const Geometry&);
   std::string get_string() const;
   double get_distance(const CacheKey& ck) const;
-
-
-
-
-
 
 };
 
@@ -58,7 +57,9 @@ class KernelCache
 
   public:
   CacheKeyPresence check_for(const CacheKey& ck) const;
-  HyPas at(const CacheKey& ck) const;
+  HyPas at(const CacheKey& ck, bool swap_ab) const;
+  
+  // hp must be transformed if geometry is. 
   void add(const CacheKey& ckey, const HyPas& hp);
   std::vector<CacheKey> get_keys() const;
   bool nearest_derivable_is_within(const CacheKey& ck, double threshold) const;
@@ -74,7 +75,7 @@ void filter_floattype(std::vector<CacheKey>&, size_t);
 
 extern const KernelCache kernel_cache;
 
-std::string get_cache_entry_string(const CacheKey & ck, const HyPas & hypas);
+std::string get_cache_entry_string(const CacheKey & ck, const HyPas & hypas, bool swap_ab);
 std::vector<Geometry> get_geometries(const std::vector<CacheKey> & cks);
 
 }

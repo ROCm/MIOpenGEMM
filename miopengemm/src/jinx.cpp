@@ -25,6 +25,7 @@
 #include <miopengemm/solution.hpp>
 #include <miopengemm/stringutilbase.hpp>
 #include <miopengemm/timer.hpp>
+#include <miopengemm/redirection.hpp>
 
 // TODO : checks on constraints to check for cleary non-derivables
 // TODO : checks on workspace size
@@ -446,14 +447,13 @@ Solution Jinx::find(const Constraints& constraints, const FindParams& fparms)
   mowri.bw[OutPart::CCH] << "\n\n\n -- snip -- -- -- snip --\n\n" << Endl;
 
 
-  mowri.bw[OutPart::CCH] << get_cache_entry_string({devinfo.device_name, constraints, gg}, v_solns[best_soln_index].hypas);
+  bool is_not_canonical = redirection::get_is_not_canonical(gg);
+  mowri.bw[OutPart::CCH] << get_cache_entry_string({devinfo.device_name, constraints, gg}, v_solns[best_soln_index].hypas, is_not_canonical);
 //  mowri.bw[OutPart::CCH] << v_solns[best_soln_index].get_cache_entry_string();
 
 
   mowri.bw[OutPart::CCH] << "\n -- snip -- -- -- snip --\n\n\n" << Endl;
 
-  std::cout << best_soln_index << std::endl;
-  std::cout << v_solns.size() << std::endl;
   return v_solns[best_soln_index];
 }
 
@@ -495,7 +495,6 @@ Solution Jinx::single_descent_find(double             allotted_time,
   double              k_seconds;
   //  double              k_gflops;
 
-  // std::cout << "here1" << std::endl;
   // the hyper params to be considered on a single wave
   std::vector<HyPas> hyper_front;
 
@@ -507,16 +506,23 @@ Solution Jinx::single_descent_find(double             allotted_time,
   }
   else
   {
+
+
     CacheKey ck(devinfo.identifier, constraints, gg);
+    
+    bool is_not_canonical = redirection::get_is_not_canonical(gg);
+    
     if (kernel_cache.nearest_derivable_is_within(ck, 0.1 * std::numeric_limits<double>::max()))
     {
+      
+
       auto nearest_ck = kernel_cache.get_nearest_derivable(ck);
-      warm_start_hp   = kernel_cache.at(nearest_ck);
+      warm_start_hp   = kernel_cache.at(nearest_ck, is_not_canonical);
       // is the warm start in the graph?
       if (!graph.contains(warm_start_hp))
       {
-        mowri << "Warmstart requested and nearest is not too far, but nearest not in graph so "
-                 "starting at random node"
+        mowri << "Warmstart requested and nearest is not too far, but nearest  " 
+        << warm_start_hp.get_string() << " is not in graph so starting at random node"
               << Endl;
         warm_start_hp = graph.get_random_valid_start();
       }
@@ -536,7 +542,6 @@ Solution Jinx::single_descent_find(double             allotted_time,
     hyper_front = {warm_start_hp};
   }
 
-  // std::cout << "here2" << std::endl;
   HyPas hp_curr;
 
   bool improvement_found_on_front = true;

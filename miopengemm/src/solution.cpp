@@ -11,6 +11,7 @@
 #include <miopengemm/solution.hpp>
 #include <miopengemm/stringutilbase.hpp>
 #include <miopengemm/kernelcache.hpp>
+#include <miopengemm/redirection.hpp>
 
 namespace MIOpenGEMM
 {
@@ -23,7 +24,7 @@ std::string Solution::get_networkconfig_string() const
 
 std::string Solution::get_cache_entry_string() const
 {
-  return MIOpenGEMM::get_cache_entry_string({devinfo.device_name, constraints, geometry}, hypas);
+  return MIOpenGEMM::get_cache_entry_string({devinfo.device_name, constraints, redirection::get_canonical(geometry)}, hypas, redirection::get_is_not_canonical(geometry));
   
 }
 

@@ -6,19 +6,21 @@
 #include <miopengemm/geometries.hpp>
 #include <miopengemm/kernelcache.hpp>
 #include <miopengemm/kernelcachemerge.hpp>
+#include <miopengemm/redirection.hpp>
 #include <miopengemm/setabcw.hpp>
-
   
 template <typename TFl>
-int runcache_v2(bool only_deepbench, bool all_devices)
+int runcache_v2(char geom_filter, bool all_devices)
 {
 
   using namespace MIOpenGEMM;
   Offsets        offsets = get_zero_offsets();
   owrite::Writer mowri(Ver::E::MULTIBENCH, "");
-  CLHint         devhint;
-
   auto cache_keys = kernel_cache.get_keys();
+
+    CLHint devhint;
+
+  
   if (!all_devices)
   {
     owrite::Writer silent_mowri(Ver::E::TERMINAL, "");
@@ -26,12 +28,24 @@ int runcache_v2(bool only_deepbench, bool all_devices)
     filter_device(cache_keys, {devinfo.device_name});
   }
 
-  if (only_deepbench)
+  if (geom_filter == 'D')
   {
     filter_geometries(cache_keys, get_deepbench(0));
   }
+  
+  else if (geom_filter == 'S'){
+    auto all_geometries = get_geometries(cache_keys);
+    std::vector<Geometry> square_geometries;
+    for (auto & x : all_geometries){
+      if (x.m == x.n && x.m == x.k){
+        square_geometries.push_back(x);
+      }
+    }
+    filter_geometries(cache_keys, square_geometries);
+  }
+  
+  
   filter_floattype(cache_keys, sizeof(TFl));
-
   std::cout << "generating random matrices on CPU ... " << std::flush;
   setabcw::CpuMemBundle<TFl> cmb(get_geometries(cache_keys), offsets);
   std::cout << "done.\n" << std::endl;
@@ -44,12 +58,8 @@ int runcache_v2(bool only_deepbench, bool all_devices)
       dev::Diva<TFl> diva(ck.gg, offsets, cmb.r_mem, mowri, devhint);
       std::string prefix = std::to_string(i) + "/" + std::to_string(cache_keys.size());
       prefix.resize(8, ' ');
-      //std::cout << ck.gg.get_string() << '\n'; 
-      //std::cout << kernel_cache.at(ck).get_string() << '\n';
       std::cout << prefix << " ";
-      diva.benchgemm({kernel_cache.at(ck)}, {{0, 5}, {0, 0.1}});
-      //std::cout << '\n';
-      
+      diva.benchgemm({kernel_cache.at(ck, redirection::get_is_not_canonical(ck.gg))}, {{0, 5}, {0, 0.1}});      
     }
   }
   return 0;
@@ -59,57 +69,74 @@ int main(int argc, char* argv[])
 {
 
   using namespace MIOpenGEMM;
-  std::vector<std::string> sargs;
+
+  if (argc % 2 != 1){
+    throw miog_error("Odd number of args, not correct");
+  }
+
+
+  std::vector<std::vector<std::string>> keysvals (2);
+  
+
   for (size_t i = 1; i < argc; ++i)
   {
-    sargs.push_back(argv[i]);
+    keysvals[(i-1)%2].push_back(argv[i]);
   }
 
-  bool only_deepbench = false;
-  bool all_devices    = false;
 
-  for (auto& x : sargs)
-  {
-    if (x == "D")
-    {
-      only_deepbench = true;
-    }
+  char geom_filter = 'Z';
+  bool all_devices = false;
 
-    if (x == "A")
-    {
-      all_devices = true;
-    }
-
-    else
-    {
-      std::stringstream errm;
-      errm << "unrecognised flag ";
-      errm << x << '.';
-      errm << " accepted flags are\n";
-      errm << "'D' (DeepBench geometries : only benchmark DeepBench geometries) and\n";
-      errm << "'A' (All devices : if a cache entry is for another device, run anyway). ";
-      throw miog_error(errm.str());
-    }
-  }
   
-  
+  for (size_t i = 0; i < keysvals[0].size(); ++i){
+    auto key = keysvals[0][i];
+    auto val = keysvals[1][i];
 
-  //auto kcn = get_merged(kernel_cache, kernel_cache2);
-
-
-  //std::ofstream floper("/home/james/kc33.txt", std::ios::out);
+    if (key == "--device" || key == "-d"){
+      if (val == "a"){
+        all_devices = true;
+      }
+      else{
+        throw miog_error("unregnised value for flag " + key + " Should be one of [a (for all)]");         
+      }
+    }
     
-  ////kcn.write()  
-  //for (auto & ck : kcn.get_keys()){
-    //std::cout << ck.get_string() << std::endl;
-    //floper << '\n' << get_cache_entry_string(ck, kcn.at(ck));
-  //}
+    else if (key == "--geometry" || key == "-g"){
+      geom_filter = val[0];
+      if (geom_filter != 'D' && geom_filter != 'S'){
+        throw miog_error("unregnised value for flag " + key + " Should be one of [D (deepbench) and S (square)]");                 
+      }
+    }
+    
+    else{
+      throw miog_error("allowed flags are --device (-d) and --geometry (-g)"); 
+    }
+  
+  //for (auto& x : sargs)
+  //{
+    //if (x == "D" || x == "-D")
+    //{
+      //only_deepbench = true;
+    //}
 
-  //floper.close();
+    //else if (x == "A" || x == "-A")
+    //{
+      //all_devices = true;
+    //}
+
+    //else
+    //{
+      //std::stringstream errm;
+      //errm << "unrecognised flag ";
+      //errm << x << '.';
+      //errm << " accepted flags are\n";
+      //errm << "'D' (DeepBench geometries : only benchmark DeepBench geometries) and\n";
+      //errm << "'A' (All devices : if a cache entry is for another device, run anyway). ";
+      //throw miog_error(errm.str());
+    //}
+  }
   
-  
-  //return 0;
-  return runcache_v2<float>(only_deepbench, all_devices);
+  return runcache_v2<float>(geom_filter, all_devices);
 }
 
 

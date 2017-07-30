@@ -730,11 +730,11 @@ SafeClMem::SafeClMem(const std::string& hash_) : clmem(nullptr), hash(hash_) {}
 
 SafeClMem::~SafeClMem()
 {
-  //if (clmem != nullptr)
-  //{
-    //bool strict = true;
-    //auto oclr   = oclutil::cl_release_mem_object(clmem, hash, strict);
-  //}
+  if (clmem != nullptr)
+  {
+    bool strict = true;
+    auto oclr   = oclutil::cl_release_mem_object(clmem, hash, strict);
+  }
 }
 
 // properties = CL_QUEUE_PROFILING_ENABLE :

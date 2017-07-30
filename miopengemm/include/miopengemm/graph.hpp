@@ -102,10 +102,20 @@ class BSuGr : public ChiSuGr
 class Graph
 {
 
+  public:
+  Graph(const Geometry&, const oclutil::DevInfo&, const Constraints&, owrite::Writer&);
+  // any node in the start graph.
+  HyPas get_random_valid_start() const;
+  std::vector<HyPas> get_neighbors(const HyPas&) const;
+  bool contains(const HyPas&) const;
+
+
+
   private:
   // the number of attempts at finding a
   // deriveable HyPas given the
   // constraint string.
+
 
   const size_t max_n_iter = static_cast<size_t>(1e6);
 
@@ -122,20 +132,18 @@ class Graph
   Constraints      constraints;
   owrite::Writer&  mowri;  // this makes Graphs difficult to copy etc.
 
-  public:
-  Graph(const Geometry&, const oclutil::DevInfo&, const Constraints&, owrite::Writer&);
-
-  bool contains(Mat::E, size_t hpi, size_t value) const;
-  bool               contains(const HyPas&) const;
   std::vector<std::tuple<HyPas, int>> get_one_aways(const HyPas&) const;
+
   std::vector<std::tuple<HyPas, int>> get_mic_mac_transformed(const HyPas&) const;
   std::vector<std::tuple<HyPas, int>> get_p_coupled_away(const HyPas&) const;
-  std::vector<HyPas> get_neighbors(const HyPas&) const;
+
   // any node in the start graph.
   HyPas get_random_start() const;
-  // any node in the start graph.
-  HyPas get_random_valid_start() const;
   void  checks() const;
+
+  bool contains(Mat::E, size_t hpi, size_t value) const;
+
+  
 };
 }
 

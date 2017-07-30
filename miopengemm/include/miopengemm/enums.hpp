@@ -103,6 +103,8 @@ enum E
   UFO,
   MAC,
   SKW,
+  AFI, // a loops and defs first. outerloops over a dimensions.  
+  MIA, // micro allocation
   N
 };
 extern const EnumMapper<std::string> M;
@@ -168,6 +170,16 @@ enum E
   BYCOL = 2,
   SUCOL = 3
 };
+}
+
+namespace MicroAllocation{
+enum E
+{
+  BYA = 0,
+  BYB = 1,
+  N
+};
+extern const EnumMapper<std::string> M;
 }
 
 namespace Scratch
