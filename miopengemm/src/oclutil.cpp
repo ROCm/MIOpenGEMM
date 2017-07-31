@@ -469,7 +469,7 @@ Result cl_build_program(cl_program          program,
         return ret;  
     }); 
 
-    double timeout_seconds = 12.0;
+    double timeout_seconds = 60.0;
  
     auto t_start_build = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> fp_ms;    

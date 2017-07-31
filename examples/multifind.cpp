@@ -14,9 +14,6 @@ int main()
   using namespace MIOpenGEMM;
   std::vector<Geometry> geometries = take_fives(0);  // zero workspace five-geoms
   
-  
-  
-  
   std::vector<Constraints> constraints_s{{""}};
   for (size_t i = 0; i < geometries.size(); ++i)
   {

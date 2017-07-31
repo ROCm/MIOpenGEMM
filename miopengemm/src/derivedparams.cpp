@@ -344,6 +344,28 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
                                   at(emat_x).cw2_load_pll_to_unroll == 0);
     }
   }
+  
+  
+
+  for (auto emat_x : {Mat::E::A, Mat::E::B})
+  {
+
+    at(emat_x).main_n_micro_in_macro =
+      at(emat_x).macro_tile_length / ptr_hp->sus[emat_x].vs[Chi::E::MIC];
+    at(emat_x).main_n_micro_tiles_pll_unroll =
+      ptr_hp->sus[Mat::E::C].vs[NonChi::E::UNR] / at(emat_x).main_micro_tile_pll_unroll;
+    at(emat_x).main_c_interweave_stride =
+      ptr_hp->sus[emat_x].vs[Chi::E::MIW] == 0 ? 1 : at(emat_x).main_n_micro_in_macro;
+
+    if (ptr_hp->sus[emat_x].vs[Chi::E::WOS] == Scratch::E::NFORM)
+    {
+      at(emat_x).cw2_n_micro_tiles_pll_unroll =
+        ptr_hp->sus[Mat::E::C].vs[NonChi::E::UNR] / at(emat_x).cw2_micro_tile_pll_unroll;
+      at(emat_x).cw2_n_micro_tiles_perp_unroll =
+        at(emat_x).macro_tile_length / at(emat_x).cw2_micro_tile_perp_unroll;
+    }
+  }
+  
 
   // check vector-izability
   std::stringstream ss_viz;
@@ -372,6 +394,21 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
                << ptr_hp->sus[emat_x].vs[Chi::E::MIC] << " )  is not divisable by VEW.\n";
         is_viz = false;
       }
+      
+      // check if load stride is divisible by vector width.
+      auto one_stride_pll_k = get_stride(emat_x, true, false, ptr_hp->sus[emat_x].vs[Chi::E::WOS]);
+      auto load_stride_pll_k = (ptr_hp->sus[emat_x].vs[Chi::E::LIW] == Binary::E::YES) ? 
+        one_stride_pll_k * at(emat_x).main_n_micro_tiles_pll_unroll  : one_stride_pll_k;
+
+                
+      if (load_stride_pll_k % ptr_hp->sus[emat_x].vs[Chi::E::VEW] != 0){
+        ss_viz << "load-stride-pll-k for dim-" << Mat::M.name[emat_x] << " ( "
+               << load_stride_pll_k << " )  is not divisable by VEW. "
+               << "main_n_micro_tiles_pll_unroll = " << at(emat_x).main_n_micro_tiles_pll_unroll
+               << "  one-stride-pll-k : " << one_stride_pll_k;
+        is_viz = false;
+        
+      }
     }
   }
 
@@ -383,16 +420,21 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
   }
 
 
+  // see rocm.cpp in tests. Note, there is a timeout in OCL if other cases exists.
   for (auto emat : {Mat::E::A, Mat::E::B}){ 
-    if ((grid.at(emat) == ptr_hp->sus[Mat::E::C].vs[NonChi::E::MAC]) &&   //grid.at(emat) == 1 || 
-    ptr_hp->sus[emat].vs[Chi::E::PLU] == Binary::E::YES && 
-    ptr_hp->sus[emat].vs[Chi::E::LIW] == Binary::E::NO){
+    if 
+    //ptr_hp->sus[emat].vs[Chi::E::PLU] == Binary::E::YES && 
+    //ptr_hp->sus[emat].vs[Chi::E::LIW] == Binary::E::NO)
+    (ptr_hp->sus[Mat::E::C].vs[NonChi::E::MAC] != 1 && grid.at(emat) == ptr_hp->sus[Mat::E::C].vs[NonChi::E::MAC])
+    {
       std::stringstream errm;
-      errm << "ROCm 1.6 compiler specific case : extreme grid strectch (1xMAX) and " 
+      errm << "ROCm 1.6 compiler specific case : extreme grid stretch (1xMAX) and " 
       << Mat::M.name[emat] << " has PLU1_LIW0.";
       return std::make_tuple(false, errm.str());
     }
   }
+  
+  
        
  
   // ran the gauntlet, returning deriveable is true
@@ -459,6 +501,7 @@ DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_) : ptr_hp(&hp
   k_effective_div_G_UNROLL = effective_k_varies_string + " / G_UNROLL";
   k_effective_div_UNROLL   = effective_k_varies_string + " / UNROLL";
 
+
   main_n_work_groups = ptr_hp->sus[Mat::E::C].vs[NonChi::E::ICE] *
                        ((ptr_gg->m / at(Mat::E::A).macro_tile_length) +
                         (ptr_gg->m % at(Mat::E::A).macro_tile_length != 0)) *
@@ -467,25 +510,8 @@ DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_) : ptr_hp(&hp
 
   main_global_work_size = main_n_work_groups * main_n_work_items_per_workgroup;
 
-  for (auto emat_x : {Mat::E::A, Mat::E::B})
-  {
-
-    at(emat_x).main_n_micro_in_macro =
-      at(emat_x).macro_tile_length / ptr_hp->sus[emat_x].vs[Chi::E::MIC];
-    at(emat_x).main_n_micro_tiles_pll_unroll =
-      ptr_hp->sus[Mat::E::C].vs[NonChi::E::UNR] / at(emat_x).main_micro_tile_pll_unroll;
-    at(emat_x).main_c_interweave_stride =
-      ptr_hp->sus[emat_x].vs[Chi::E::MIW] == 0 ? 1 : at(emat_x).main_n_micro_in_macro;
-
-    if (ptr_hp->sus[emat_x].vs[Chi::E::WOS] == Scratch::E::NFORM)
-    {
-      at(emat_x).cw2_n_micro_tiles_pll_unroll =
-        ptr_hp->sus[Mat::E::C].vs[NonChi::E::UNR] / at(emat_x).cw2_micro_tile_pll_unroll;
-      at(emat_x).cw2_n_micro_tiles_perp_unroll =
-        at(emat_x).macro_tile_length / at(emat_x).cw2_micro_tile_perp_unroll;
-    }
-  }
-
+  
+  // cut from here 
   // these are hyper params, with a check if not optional ?
   main_use_edge_trick = (ptr_gg->m % at(Mat::E::A).macro_tile_length == 0 &&
                          ptr_gg->n % at(Mat::E::B).macro_tile_length == 0)
