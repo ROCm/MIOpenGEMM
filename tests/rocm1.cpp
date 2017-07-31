@@ -38,9 +38,13 @@ int main()
   Geometry gg5("tC0_tA1_tB0_colMaj1_m363_n1_k576_lda576_ldb576_ldc363_ws0_f32");
   HyPas hp5("A_MIC3_PAD1_PLU1_LIW0_MIW1_WOS0_VEW1__B_MIC1_PAD2_PLU1_LIW0_MIW1_WOS0_VEW1__C_UNR64_GAL2_PUN1_ICE1_IWI0_SZT0_NAW64_UFO0_MAC64_SKW7");
 
+
+  Geometry gg6("tC0_tA0_tB0_colMaj1_m25_n5_k25_lda25_ldb25_ldc25_ws0_f32");
+  HyPas hypas6("A_MIC1_PAD0_PLU1_LIW1_MIW1_WOS0_VEW1__B_MIC1_PAD0_PLU1_LIW1_MIW0_WOS0_VEW1__C_UNR16_GAL2_PUN1_ICE1_IWI1_SZT0_NAW64_UFO0_MAC4_SKW11_AFI1_MIA0");
+
   
   // TODO : the rocm filter:
-  // LIW0 - MIW0 combo seems to hurt when minimal SKW. 
+  // they all have minimal SKW. 
   
   CLHint         devhint;
   Offsets        offsets = get_padding_offsets();

@@ -382,20 +382,19 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
     return std::make_tuple(false, viza);
   }
 
-  // final black-list checking:
-  if (ptr_hp->sus[Mat::E::C].vs[NonChi::E::SKW] <= 8 &&
-      ptr_hp->sus[Mat::E::C].vs[NonChi::E::MAC] % 64 != 0)
-  {
-    return std::make_tuple(false, "SKW>=8 temporary patch for failure to compile case on ROCm 1.6");
-  }
 
-  if (ptr_hp->sus[Mat::E::C].vs[NonChi::E::SKW] >= 12 &&
-      ptr_hp->sus[Mat::E::C].vs[NonChi::E::MAC] % 64 != 0)
-  {
-    return std::make_tuple(false,
-                           "SKW>=12 temporary patch for failure to compile case on ROCm 1.6");
+  for (auto emat : {Mat::E::A, Mat::E::B}){ 
+    if ((grid.at(emat) == ptr_hp->sus[Mat::E::C].vs[NonChi::E::MAC]) &&   //grid.at(emat) == 1 || 
+    ptr_hp->sus[emat].vs[Chi::E::PLU] == Binary::E::YES && 
+    ptr_hp->sus[emat].vs[Chi::E::LIW] == Binary::E::NO){
+      std::stringstream errm;
+      errm << "ROCm 1.6 compiler specific case : extreme grid strectch (1xMAX) and " 
+      << Mat::M.name[emat] << " has PLU1_LIW0.";
+      return std::make_tuple(false, errm.str());
+    }
   }
-
+       
+ 
   // ran the gauntlet, returning deriveable is true
   return std::make_tuple(true, "");
 }

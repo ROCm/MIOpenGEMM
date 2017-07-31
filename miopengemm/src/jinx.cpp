@@ -523,6 +523,9 @@ Solution Jinx::single_descent_find(double             allotted_time,
       {
         mowri << "Warmstart requested, will use nearest candidate in kernel cache:\n"
               << nearest_ck.get_string() << Endl;
+              
+        mowri << '\n' << kernel_cache.at(nearest_ck, false).get_string() << "\n";
+        mowri << '\n' << kernel_cache.at(nearest_ck, true).get_string() << "\n";
       }
     }
 
@@ -556,7 +559,11 @@ Solution Jinx::single_descent_find(double             allotted_time,
       Derivabilty dblt(hp_curr, gg);
       if (dblt.is_derivable == false)
       {
-        throw miog_error("Non-derivable in single descent find : " + dblt.msg);
+        std::stringstream errm;
+        errm << "Non-derivable in single descent find : " << dblt.msg << ".\n" ;
+        errm << "Geometry: " << gg.get_string() << '\n';
+        errm << "hp: " << hp_curr.get_string() << '\n';
+        throw miog_error(errm.str());
       }
 
       kerngen::Bundle bundle(hp_curr, gg, mowri);

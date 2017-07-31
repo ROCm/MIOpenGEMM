@@ -63,6 +63,9 @@ class KernelCache
   std::vector<CacheKey> get_keys() const;
   bool nearest_derivable_is_within(const CacheKey& ck, double threshold) const;
   CacheKey get_nearest_derivable(const CacheKey& ck) const;
+  std::string get_cache_entry_string(const CacheKey& ck) const;
+
+  
 };
 
 void filter_device(std::vector<CacheKey>&, const std::vector<std::string>& device_frags);

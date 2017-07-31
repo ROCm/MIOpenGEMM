@@ -61,6 +61,11 @@ std::string get_cache_entry_string(const CacheKey& ck, const HyPas& hypas, bool 
   return cache_write_ss.str();
 }
 
+std::string KernelCache::get_cache_entry_string(const CacheKey& ck) const{
+  return MIOpenGEMM::get_cache_entry_string(ck, at(ck, false), false);
+}
+
+
 std::string CacheKey::get_string() const
 {
   std::stringstream ss;

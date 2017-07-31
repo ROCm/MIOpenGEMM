@@ -541,9 +541,15 @@ void CSuGr::initialise_edges()
     edges[NonChi::E::MAC] = {{32, {64, 256}}, {64, {32, 128, 256}}, {128, {64, 256}}, {256, {64}}};
   }
 
-  if (ptr_gg->m * ptr_gg->n <= 16 * 16)
+  if (ptr_gg->m * ptr_gg->n <= 64 * 64)
   {
-    edges[NonChi::E::MAC] = {{1, {}}};
+    edges[NonChi::E::MAC] = {
+      {1, {4, 16,32, 64, 256}},
+      {4, {1, 16, 32, 64, 256}},
+      {16, {4, 32, 64, 256}},
+      {32, {4, 16, 64, 256}},
+      {64, {16, 32, 64, 256}},
+      {256, {32, 64}}};
   }
 
   edges[NonChi::E::SKW] = {
@@ -761,7 +767,7 @@ HyPas Graph::get_random_valid_start() const
   }
   else
   {
-    mowri << "#trials to find viable hp in graph : " << iter << Endl;
+    mowri << "#trials to find viable hp in graph : " << iter << " (" << 1000*timer.get_elapsed() << " [ms]) " << Endl;
   }
   return hp0;
 }

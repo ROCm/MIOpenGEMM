@@ -6,6 +6,9 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <future>
+#include <thread>
+#include <chrono>
 #include <miopengemm/error.hpp>
 #include <miopengemm/oclutil.hpp>
 #include <miopengemm/outputwriter.hpp>
@@ -456,13 +459,43 @@ Result cl_build_program(cl_program          program,
                         bool               strict)
 {
 
-  cl_int ret = clBuildProgram(program, num_devices, device_list, options, pfn_notify, user_data);
 
-  char   buffer[10240];
-  size_t buffer_size;
-  clGetProgramBuildInfo(
+  
+
+
+    std::future<cl_int> future = std::async(
+    std::launch::async, [&program, &num_devices, &device_list, &options, &pfn_notify, &user_data](){
+        cl_int ret = clBuildProgram(program, num_devices, device_list, options, pfn_notify, user_data);
+        return ret;  
+    }); 
+
+    double timeout_seconds = 12.0;
+ 
+    auto t_start_build = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> fp_ms;    
+    std::future_status status;
+    do {
+        status = future.wait_for(std::chrono::milliseconds(10));
+        fp_ms = std::chrono::high_resolution_clock::now() - t_start_build;
+    } while (status != std::future_status::ready && fp_ms.count() < timeout_seconds); 
+ 
+    if (status != std::future_status::ready){
+      std::stringstream ss;
+      ss << "Time-limit of " << timeout_seconds << " seconds exceeded in clBuildProgram.";
+      std::string errm = ss.str();
+      mowri << errm << Endl;
+      throw miog_error(errm);
+    }
+    
+    cl_int ret = future.get();
+
+    char   buffer[10240];
+    size_t buffer_size;
+    clGetProgramBuildInfo(
     program, device_list[0], CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer, &buffer_size);
 
+  
+  
   if (ret != CL_SUCCESS)
   {
     fprintf(stderr, "CL Compilation failed:\n%s", buffer);
@@ -673,6 +706,7 @@ Result cl_set_program_and_kernel(const cl_command_queue& command_queue,
   if (oclr.fail())
     return oclr;
 
+
   cl_device_id device_id_to_use;
   oclr = cl_set_command_queue_info(command_queue,
                                    CL_QUEUE_DEVICE,
@@ -683,6 +717,7 @@ Result cl_set_program_and_kernel(const cl_command_queue& command_queue,
                                    strict);
   if (oclr.fail())
     return oclr;
+
 
   auto kernel_cstr = kernel_string.c_str();
 
@@ -698,12 +733,24 @@ Result cl_set_program_and_kernel(const cl_command_queue& command_queue,
   if (oclr.fail())
     return oclr;
 
+
+
   // To generate isa code, you'll need to add something like
   //-save-temps= + "/some/path/"
   // to the following string
+  
+  
   std::string buildOptions_11 = "-cl-std=CL2.0  -Werror";
   auto        buildOptions    = buildOptions_11.c_str();
 
+
+
+
+
+
+
+
+   
   oclr = cl_build_program(program,
                           1,
                           &device_id_to_use,
@@ -716,6 +763,8 @@ Result cl_set_program_and_kernel(const cl_command_queue& command_queue,
   if (oclr.fail())
     return oclr;
 
+
+
   // the store as binary option was removed *here*
 
   oclr = cl_create_kernel(kernel,
@@ -723,6 +772,9 @@ Result cl_set_program_and_kernel(const cl_command_queue& command_queue,
                           kernel_function_name.c_str(),
                           "getting kernel in set_program_and_kernel",
                           strict);
+                          
+
+                          
   return oclr;
 }
 

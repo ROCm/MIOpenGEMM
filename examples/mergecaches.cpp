@@ -27,7 +27,7 @@ int main()
   std::ofstream floper("/home/james/test26/merged_cache26.txt", std::ios::out);    
   for (auto & ck : kcn.get_keys()){
     //std::cout << ck.get_string() << std::endl;
-    floper << '\n' << get_cache_entry_string(ck, kcn.at(ck));
+    floper << '\n' << kcn.get_cache_entry_string(ck);
   }
   floper.close();
   return 0;

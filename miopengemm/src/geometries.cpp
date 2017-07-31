@@ -11,6 +11,28 @@
 namespace MIOpenGEMM
 {
 
+std::vector<Geometry> take_fives(size_t wSpaceSize)
+{
+  std::vector<Geometry> geometries;
+  
+  std::vector<size_t> fives{1, 5, 25, 125, 625};
+  for (size_t m : fives)
+  {
+    for (size_t n : fives)
+    {
+      for (size_t k : fives)
+      {
+        for (bool tA : {true, false}){
+          for (bool tB : {true, false}){
+            geometries.push_back({m,n,k,tA,tB, wSpaceSize, 'f'});
+          }
+        }
+      }
+    }
+  }
+  return geometries;
+}
+
 std::vector<Geometry> get_deepbench(size_t wSpaceSize)
 {
 
@@ -176,8 +198,35 @@ std::vector<Geometry> get_deepbench(size_t wSpaceSize)
           {8448, 48000, 2816, false, false, wSpaceSize, 'f'}};
 }
 
-std::vector<Geometry> get_conv()
+std::vector<Geometry> get_squares(size_t wSpaceSize)
 {
-  return {{"tC0_tA0_tB0_colMaj1_m900_n1_k27_lda900_ldb27_ldc900_ws0_f32"}};
+
+  std::vector<Geometry> geometries;
+  std::vector<size_t> dimensions;
+  for (size_t k = 5; k < 14; ++k)
+  {
+    dimensions.push_back(std::pow(2, k));
+    for (size_t off = 1; off < 5; ++off)
+    {
+      dimensions.push_back(std::pow(2, k) + off);
+      dimensions.push_back(std::pow(2, k) - off);
+    }
+  }
+
+  for (size_t k = 317; k < 7000; k += 300)
+  {
+    dimensions.push_back(k);
+  }
+
+  for (auto d : dimensions)
+  {
+    geometries.push_back({1, 0, 0, 0, d, d, d, d, d, d, wSpaceSize, 'f'});
+    geometries.push_back({1, 0, 1, 0, d, d, d, d, d, d, wSpaceSize, 'f'});
+    geometries.push_back({1, 1, 0, 0, d, d, d, d, d, d, wSpaceSize, 'f'});
+    geometries.push_back({1, 1, 1, 0, d, d, d, d, d, d, wSpaceSize, 'f'});
+  }
+  return geometries;
 }
+
+
 }

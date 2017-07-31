@@ -33,7 +33,7 @@ void reflect_c(std::vector<size_t>& cvs)
     }
 
     cvs[NonChi::E::SKW] = 2 * macgrid::skew0 - cvs[NonChi::E::SKW];
-    if (grid.at(Mat::E::A) != grid.at(Mat::E::B))
+    if (!macgrid::mac_is_square(cvs[NonChi::E::MAC]))    
     {
       cvs[NonChi::E::SKW] -= 1;
     }

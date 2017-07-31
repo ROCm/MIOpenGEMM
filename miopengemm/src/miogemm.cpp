@@ -25,7 +25,7 @@ Solution find(float            allotted_time,
 
   std::cout << "\n\n" << tgg.get_string() << std::flush;
   e_ver         = Ver::E::TERMINAL;
-  allotted_time = 0.5;
+  allotted_time = 0.00001;
 
   std::string    constraints_string = enforce_determinism ? "C__ICE1" : "";
   Constraints    constraints(constraints_string);

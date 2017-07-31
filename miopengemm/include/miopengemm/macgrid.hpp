@@ -5,7 +5,6 @@
 #define GUARD_MIOPENGEMM_SCOTMACGRID_HPP
 
 #include <array>
-#include <array>
 #include <functional>
 #include <map>
 #include <vector>
@@ -26,6 +25,11 @@ namespace macgrid
 // at skew = skew0 + 1, (64, 256) are a:b = 1:4 and (32, 128) have a:b = 1:2
 // at skew0 = skew + 1, (64, 256) are a:b = 4:1 and (32, 128) have a:b = 8:1
 const size_t skew0 = 10;
+
+
+// return true if power of 4.
+bool mac_is_square(size_t mac);
+
 
 class Grid
 {
