@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <algorithm>
 #include <chrono>
@@ -26,55 +26,35 @@ namespace MIOpenGEMM
 namespace kerngen
 {
 
-Bundle get_bundle(const hyperparams::HyperParams& hp,
-                  const Geometry&                 gg,
-                  outputwriting::OutputWriter&    mowri,
-                  bool                            bundle_verbose)
+Bundle::Bundle(const HyPas& hp_, const Geometry& gg_, owrite::Writer& mowri)
+  : hp(hp_), gg(gg_), dp(hp, gg)
 {
 
-  derivedparams::DerivedParams dp(hp, gg);
-
-  std::vector<KernelString>          v_tgks;
-  std::vector<std::vector<unsigned>> v_wait_indices;
-
-  if (hp.at(nsHP::matA).vs[nsHP::WOS] == 0)
+  for (auto emat_x : {Mat::E::A, Mat::E::B})
   {
-    // no wsa kernel
-  }
 
-  else if (hp.at(nsHP::matA).vs[nsHP::WOS] == 1)
-  {
-    v_tgks.emplace_back(copygen::get_copya_kernelstring(hp, gg, dp));
-  }
+    if (hp.sus[emat_x].vs[Chi::E::WOS] == Scratch::E::UNUSED)
+    {
+      // no workspace kernel
+    }
 
-  else if (hp.at(nsHP::matA).vs[nsHP::WOS] == 2)
-  {
-    v_tgks.emplace_back(nformgen::get_nforma_kernelstring(hp, gg, dp));
-  }
+    else if (hp.sus[emat_x].vs[Chi::E::WOS] == Scratch::E::COPY)
+    {
+      v_tgks.emplace_back(copygen::get_copy_kernelstring(emat_x, hp, gg, dp));
+    }
 
-  else
-  {
-    throw miog_error("hp.at(nsHP::matA).vs[nsHP::WOS] should be 0, 1 or 2");
-  }
+    else if (hp.sus[emat_x].vs[Chi::E::WOS] == Scratch::E::NFORM)
+    {
+      v_tgks.emplace_back(nformgen::get_nform_kernelstring(emat_x, hp, gg, dp));
+    }
 
-  if (hp.at(nsHP::matB).vs[nsHP::WOS] == 0)
-  {
-    // no wsb kernel
-  }
-
-  else if (hp.at(nsHP::matB).vs[nsHP::WOS] == 1)
-  {
-    v_tgks.emplace_back(copygen::get_copyb_kernelstring(hp, gg, dp));
-  }
-
-  else if (hp.at(nsHP::matB).vs[nsHP::WOS] == 2)
-  {
-    v_tgks.emplace_back(nformgen::get_nformb_kernelstring(hp, gg, dp));
-  }
-
-  else
-  {
-    throw miog_error("hp.at(nsHP::matB).vs[nsHP::WOS] should be 0, 1 or 2");
+    else
+    {
+      std::stringstream errm;
+      errm << "hp.sus[emat_x].vs[Chi::E::WOS] should be 0, 1 or 2"
+           << "(Scratch::E::UNUSED , Scratch::E::COPY or Scratch::E::NFORM)";
+      throw miog_error(errm.str());
+    }
   }
 
   if (dp.main_does_beta_c_inc == 0)
@@ -87,63 +67,51 @@ Bundle get_bundle(const hyperparams::HyperParams& hp,
   // indent the kernel strings, in case someone wants to
   // print them. For (v-minorly) better
   // performance, this should not be done
-  /* TODO : can clang-format be used for this ? */
+  // Maybe clang-format could do this, but better without the dependency
   for (auto& x : v_tgks)
   {
     stringutil::indentify(x.kernstr);
   }
 
-  std::vector<KernelType> types;
-  for (unsigned i = 0; i < v_tgks.size(); ++i)
-  {
-    types.push_back(v_tgks[i].type);
-  }
-
-  for (unsigned i = 0; i < v_tgks.size(); ++i)
+  for (size_t i = 0; i < v_tgks.size(); ++i)
   {
     v_wait_indices.push_back({});
-    for (unsigned j = 0; j < v_tgks.size(); ++j)
+    for (size_t j = 0; j < v_tgks.size(); ++j)
     {
-      if (std::find(kernel_dependencies.at(types[i].basic_kernel_type).begin(),
-                    kernel_dependencies.at(types[i].basic_kernel_type).end(),
-                    types[j].basic_kernel_type) !=
-          kernel_dependencies.at(types[i].basic_kernel_type).end())
+      if (std::find(KType::dependencies.at(v_tgks[i].e_ktype).begin(),
+                    KType::dependencies.at(v_tgks[i].e_ktype).end(),
+                    v_tgks[j].e_ktype) != KType::dependencies.at(v_tgks[i].e_ktype).end())
       {
         v_wait_indices.back().push_back(j);
       }
     }
   }
 
-  if (bundle_verbose == true)
+  mowri.bw[OutPart::E::DEP] << "\nnetwork of kernel dependencies: \n";
+  for (size_t i = 0; i < v_tgks.size(); ++i)
   {
-    mowri << "\n";
-    mowri << "network of kernel dependencies: \n";
-    for (unsigned i = 0; i < v_tgks.size(); ++i)
+    std::stringstream ss1;
+    ss1 << "kernel " << i << " {" << v_tgks[i].kuses.full << "}";
+    std::string pre_waits_for = ss1.str();
+
+    if (pre_waits_for.size() < 35)
     {
-      std::stringstream pre_waits_for_ss;
-      pre_waits_for_ss << "kernel " << i << " ( " << types[i].full << " )";
-      std::string pre_waits_for = pre_waits_for_ss.str();
-      mowri << pre_waits_for;
-      int         base_space(26);
-      std::string space1(std::max(1, base_space - static_cast<int>(pre_waits_for.size())), ' ');
-      mowri << space1 << "waits for   " << Flush;
-
-      if (v_wait_indices[i].size() == 0)
-      {
-        mowri << "(nothing)";
-      }
-
-      for (unsigned j = 0; j < v_wait_indices[i].size(); ++j)
-      {
-        mowri << "(kernel " << v_wait_indices[i][j] << " ( " << types[v_wait_indices[i][j]].full
-              << " ))   " << Flush;
-      }
-      mowri << Endl;
+      pre_waits_for.resize(37, ' ');
     }
-    mowri << "\n";
-  }
+    mowri.bw[OutPart::E::DEP] << pre_waits_for << " waits for :  " << Flush;
+    if (v_wait_indices[i].size() == 0)
+    {
+      mowri.bw[OutPart::E::DEP] << "nothing";
+    }
 
-  return Bundle(std::move(v_tgks), std::move(v_wait_indices), std::move(dp));
+    for (size_t j = 0; j < v_wait_indices[i].size(); ++j)
+    {
+      mowri.bw[OutPart::E::DEP] << v_wait_indices[i][j] << '{'
+                                << v_tgks[v_wait_indices[i][j]].kuses.full << "} " << Flush;
+    }
+    mowri.bw[OutPart::E::DEP] << Endl;
+  }
+  mowri.bw[OutPart::E::DEP] << '\n';
 }
 }
 }

@@ -1,11 +1,10 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #ifndef GUARD_MIOPENGEMM_MIOGEMM_HPP
 #define GUARD_MIOPENGEMM_MIOGEMM_HPP
 
 #include <CL/cl.h>
-#include <miopengemm/error.hpp>
 #include <miopengemm/findparams.hpp>
 #include <miopengemm/geometry.hpp>
 #include <miopengemm/outputwriter.hpp>
@@ -13,9 +12,6 @@
 
 namespace MIOpenGEMM
 {
-
-static const double default_alpha = 0.415693029182345929;
-static const double default_beta  = 0.273539340934809345;
 
 /*! @brief Find a Solution, considering only kernels without workspace requirements.
  *
@@ -60,22 +56,20 @@ Solution find(float            allotted_time,
  * @param toff                The offsets of a,b,c and workspace
  * @param mowri               Controls writing to terminal and file
  * @param c_is_const          Whether matrix C may be modified
- * @param use_mowri_tracker   Controls writing to terminal of search summary
  * @return                    best Solution found during search
  */
 
-Solution find(cl_command_queue             command_queue,
-              const FindParams&            find_params,
-              cl_mem                       a,
-              cl_mem                       b,
-              cl_mem                       c,
-              cl_mem                       workspace,
-              const std::string            constraints_string,
-              const Geometry&              gg,
-              const Offsets&               toff,
-              outputwriting::OutputWriter& mowri,
-              bool                         c_is_const,
-              bool                         use_mowri_tracker);
+Solution find(cl_command_queue  command_queue,
+              const FindParams& find_params,
+              cl_mem            a,
+              cl_mem            b,
+              cl_mem            c,
+              cl_mem            workspace,
+              const std::string constraints_string,
+              const Geometry&   gg,
+              const Offsets&    toff,
+              owrite::Writer&   mowri,
+              bool              c_is_const);
 
 /*! @brief Return a default Solution from cache, without exploring. If no Solution exists, an error
  * will be thrown.
@@ -91,11 +85,11 @@ Solution find(cl_command_queue             command_queue,
  * @return                    best Solution found during search
  */
 
-Solution get_default(cl_command_queue             command_queue,
-                     std::string                  constraints_string,
-                     const Geometry&              gg,
-                     std::string                  k_comment,
-                     outputwriting::OutputWriter& mowri);
+Solution get_default(cl_command_queue command_queue,
+                     std::string      constraints_string,
+                     const Geometry&  gg,
+                     std::string      k_comment,
+                     owrite::Writer&  mowri);
 
 /*! @brief Return a default Solution, independent of device. This version of get_default does not
  * require a Solution to exist in cache.
@@ -130,17 +124,17 @@ std::tuple<bool, std::string> check_for_default(cl_command_queue command_queue,
  * @param gg                  The Geometry of the GEMM problem
  * @param toff                Offsets of a, b, c, workspace
  */
-void benchgemm(cl_command_queue             command_queue,
-               const std::string&           hyperstring,
-               unsigned                     n_runs,
-               const Geometry&              gg,
-               const Offsets&               toff,
-               cl_mem                       a,
-               cl_mem                       b,
-               cl_mem                       c,
-               cl_mem                       workspace,
-               outputwriting::OutputWriter& mowri,
-               bool                         c_is_const = false);
-
+void benchgemm(cl_command_queue   command_queue,
+               const std::string& hyperstring,
+               size_t             max_n_runs,
+               double             max_time,
+               const Geometry&    gg,
+               const Offsets&     toff,
+               cl_mem             a,
+               cl_mem             b,
+               cl_mem             c,
+               cl_mem             workspace,
+               owrite::Writer&    mowri,
+               bool               c_is_const = false);
 }
 #endif

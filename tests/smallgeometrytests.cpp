@@ -1,61 +1,37 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <string>
-#include <miopengemm/basicfind.hpp>
-#include <miopengemm/miogemm.hpp>
+#include <miopengemm/devmiogemm.hpp>
 
 template <typename TFloat>
-void geometrytest(bool isColMajor, bool tA, bool tB, bool tC, unsigned m, unsigned n, unsigned k)
+void geometrytest(const MIOpenGEMM::Geometry& gg)
 {
+  using namespace MIOpenGEMM;
 
-  unsigned lda = (tA == isColMajor ? k : m) + 1;
-  unsigned ldb = (tB == isColMajor ? n : k) + 2;
-  unsigned ldc = (tC == isColMajor ? n : m) + 4;
+  CLHint         devhint;  //{};//(0,0);
+  Offsets        offsets = get_zero_offsets();
+  owrite::Writer mowri(Ver::E::ACCURACY, "");
+  dev::Boa       boa(gg, offsets, mowri, devhint);
 
-  unsigned a_offset = 5;
-  unsigned b_offset = 7;
-  unsigned c_offset = 11;
-
-  unsigned tail_off_a = 13;
-  unsigned tail_off_b = 17;
-  unsigned tail_off_c = 19;
-
-  float                   allotted_time       = 0.001;
-  unsigned                allotted_iterations = 1;
-  unsigned                n_runs_per_kernel   = 1;
-  MIOpenGEMM::SummaryStat sumstat             = MIOpenGEMM::Median;
-
-  // set verbose to true if you want output to terminal
-  bool verbose = false;
-  bool use_mowri_tracker = false;
-  // set logfile if you want output forked to file
-  std::string logfile("");
-
-  std::string constraints_string = "A_WOS0__B_WOS0__C_ICE3";
-
-  unsigned n_postfind_runs = 1;
-  bool     do_cpu_test     = true;
-
-  unsigned             workspace_size   = 3;
-  unsigned             workspace_offset = 4;
-  char                 floattype        = sizeof(TFloat) == 4 ? 'f' : 'd';
-  MIOpenGEMM::Geometry gg(
-    isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, workspace_size, floattype);
-  MIOpenGEMM::Offsets offsets(
-    a_offset, b_offset, c_offset, workspace_offset, tail_off_a, tail_off_b, tail_off_c);
-  MIOpenGEMM::FindParams find_params(
-    allotted_time, allotted_iterations, n_runs_per_kernel, sumstat);
-  MIOpenGEMM::basicfind(
-    gg, offsets, find_params, verbose, logfile, constraints_string, n_postfind_runs, do_cpu_test, use_mowri_tracker);
+  // FindParams find_params = get_quick_find_params();
+  FindParams  find_params = get_at_least_n_seconds(.1); //(1, 1.14, 2, 200., SummStat::E::MAX);
+  std::string constraints_string = "A_WOS0__B_WOS0__C_UFO1_ICE3_IWI0";
+  Solution    soln               = boa.find(find_params, constraints_string);
+  std::cout << '\n' << soln.hypas.get_string() << '\n';
+  boa.accuracy_test(soln.hypas);
 }
 
 int main()
 {
-  unsigned m     = 55;
-  unsigned k     = 118;
-  unsigned testi = 0;
-  for (bool tC : {false, true})
+  using namespace MIOpenGEMM;
+
+  size_t m              = 45;
+  size_t k              = 39;
+  size_t testi          = 0;
+  size_t workspace_size = 1000 * 1000;
+
+  for (bool tC : {true, false})
   {
     for (bool isColMajor : {false, true})
     {
@@ -63,21 +39,25 @@ int main()
       {
         for (bool tB : {false, true})
         {
-          for (unsigned n : {m - 10, m + 10})
+          for (size_t n : {m - 10, m + 10})
           {
             testi += 1;
             k += 1;
-            std::cout << "\ntest " << testi << "/32";
-            std::cout << "\nm=" << m << " n=" << n << " k=" << k << "\ntA=" << tA << " tB=" << tB
-                      << " tC=" << tC << " isColMajor=" << isColMajor << std::endl;
-            std::cout << "<float>  ";
-            geometrytest<float>(isColMajor, tA, tB, tC, m, n, k);
-            std::cout << "<double> ";
-            geometrytest<double>(isColMajor, tA, tB, tC, m, n, k);
+            std::cout << "\n\n\ntest " << testi << "/32\n";
+            Geometry gg =
+              get_padded_geometry<float>(isColMajor, tA, tB, tC, m, n, k, workspace_size);
+            std::cout << "<float>  " << gg.get_string() << '\n';
+            geometrytest<float>(gg);
+
+            gg = get_padded_geometry<double>(isColMajor, tA, tB, tC, m, n, k, workspace_size);
+            std::cout << "\n\n<double>  " << gg.get_string() << '\n';
+            geometrytest<double>(gg);
           }
         }
       }
     }
   }
+
+  std::cout << "\n\n";
   return 0;
 }

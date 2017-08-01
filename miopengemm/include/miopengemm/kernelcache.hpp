@@ -1,52 +1,86 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #ifndef GUARD_MIOPENGEMM_KERNELCACHE_HPP
 #define GUARD_MIOPENGEMM_KERNELCACHE_HPP
 
-#include <miopengemm/solution.hpp>
+#include <functional>
+#include <unordered_map>
+#include <miopengemm/derivedparams.hpp>
 
 namespace MIOpenGEMM
 {
 
-std::string get_cache_keys_string(std::string k_dev,
-                                  std::string k_con,
-                                  std::string k_geo,
-                                  std::string k_comment);
-
-class CachedSolution
+class CacheKeyPresence
 {
   public:
-  std::string        hyperstring;
-  SolutionStatistics stats;
-  CachedSolution(std::string hyperstring_, SolutionStatistics stats_)
-    : hyperstring(hyperstring_), stats(stats_)
-  {
-  }
-  CachedSolution() = default;
-
-  std::string get_string();
+  bool        is_present;
+  std::string msg;
+  CacheKeyPresence() : is_present(true), msg("") {}
+  CacheKeyPresence(const std::string& msg_) : is_present(false), msg(msg_) {}
 };
 
-/* TODO : unordered maps are faster */
-using KernelCache =
-  std::map<std::string,
-           std::map<std::string, std::map<std::string, std::map<std::string, CachedSolution>>>>;
+class CacheKey
+{
+  private:
+  bool from_non_canonical;
 
-KernelCache get_kernel_cache();
+  public:
+  std::string dvc;
+  // always in original form
+  Constraints constraints;
+  // always in canonical form
+  Geometry    gg;
+  std::string concatenated;
 
-CachedSolution get_generic_cached_solution(const std::string& constraints_string,
-                                           const Geometry&    gg);
+  bool operator==(const CacheKey& rhs) const { return concatenated == rhs.concatenated; }
 
-// [device][constraint][geometry][further_comment] -> cached solution
+  CacheKey(const std::string& device, const Constraints&, const Geometry&);
+  std::string get_string() const;
+  double get_distance(const CacheKey& ck) const;
+};
+
+class CacheKeyHash
+{
+  private:
+  std::hash<std::string> __hash;
+
+  public:
+  size_t operator()(const CacheKey& ck) const;
+};
+
+class KernelCache
+{
+  private:
+  std::unordered_map<CacheKey, HyPas, CacheKeyHash> vals;
+
+  public:
+  CacheKeyPresence check_for(const CacheKey& ck) const;
+  HyPas at(const CacheKey& ck, bool swap_ab) const;
+  const HyPas & at(const CacheKey & ck) const;
+
+  // hp must be transformed if geometry is.
+  void add(const CacheKey& ckey, const HyPas& hp);
+  std::vector<CacheKey> get_keys() const;
+  
+  
+  
+  //bool nearest_derivable_is_within(const CacheKey& ck, double threshold) const;
+  //CacheKey get_nearest_derivable(const CacheKey& ck) const;
+  
+  std::string get_cache_entry_string(const CacheKey& ck) const;
+
+  
+};
+
+void filter_device(std::vector<CacheKey>&, const std::vector<std::string>& device_frags);
+void filter_geometries(std::vector<CacheKey>&, const std::vector<Geometry>& geometries);
+void filter_floattype(std::vector<CacheKey>&, size_t);
+
 extern const KernelCache kernel_cache;
 
-void add_entry(KernelCache&       kc,
-               const std::string& k_dev,
-               const std::string& k_con,
-               const std::string  k_geo,
-               const std::string  k_comment,
-               CachedSolution     tgcs);
+std::string get_cache_entry_string(const CacheKey& ck, const HyPas& hypas, bool swap_ab);
+std::vector<Geometry> get_geometries(const std::vector<CacheKey>& cks);
 }
 
 #endif

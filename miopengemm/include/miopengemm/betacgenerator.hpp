@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #ifndef GUARD_MIOPENGEMM_BETACGENERATOR_HPP
 #define GUARD_MIOPENGEMM_BETACGENERATOR_HPP
@@ -16,22 +16,22 @@ class BetacGenerator : public bylinegen::ByLineGenerator
 {
 
   public:
-  BetacGenerator(const hyperparams::HyperParams&     hp_,
-                 const Geometry&                     gg_,
-                 const derivedparams::DerivedParams& dp_);
+  BetacGenerator(const HyPas& hp_, const Geometry& gg_, const DerivedParams& dp_);
 
   virtual void setup_additional() override final;
+
+  virtual void set_type() override final;
 
   virtual void append_derived_definitions_additional(std::stringstream& ss) override final;
 
   size_t get_local_work_size() override final;
 
   size_t get_work_per_thread() override final;
+
+  virtual KType::E get_ktype() override final;
 };
 
-KernelString get_betac_kernelstring(const hyperparams::HyperParams&     hp,
-                                    const Geometry&                     gg,
-                                    const derivedparams::DerivedParams& dp);
+KernBlob get_betac_kernelstring(const HyPas& hp, const Geometry& gg, const DerivedParams& dp);
 }
 }
 

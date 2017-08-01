@@ -21,4 +21,5 @@ include(EnableCompilerWarnings)
 
 include_directories(./miopengemm/include)
 add_subdirectory(miopengemm)
+add_subdirectory(examples)
 add_subdirectory(tests)

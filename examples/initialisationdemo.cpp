@@ -1,7 +1,7 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
-#include <CL/cl.h>	
+#include <CL/cl.h>
 #include <chrono>
 #include <iostream>
 #include <stdexcept>
@@ -31,12 +31,12 @@ int main(int argc, char* argv[])
     throw std::runtime_error(errm);
   }
 
-  unsigned MEM_SIZE = 1024 * 1024;
+  size_t MEM_SIZE = 1024 * 1024;
 
   std::vector<float> vmem(MEM_SIZE);
   if (tau == "int")
   {
-    for (unsigned i = 0; i < MEM_SIZE; ++i)
+    for (size_t i = 0; i < MEM_SIZE; ++i)
     {
       vmem[i] = rand() % 16;
     }
@@ -44,7 +44,7 @@ int main(int argc, char* argv[])
 
   else
   {
-    for (unsigned i = 0; i < MEM_SIZE; ++i)
+    for (size_t i = 0; i < MEM_SIZE; ++i)
     {
       vmem[i] = 1. - 2. * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
     }
@@ -62,63 +62,63 @@ __global const float * restrict b,
 __global float       *          c
 )
 {
-  const unsigned local_id = get_local_id(0);
-  const unsigned group_id_xy = get_group_id(0);
-  const unsigned micro_id_a = local_id % 16;
-  const unsigned micro_id_b = local_id / 16;
-  unsigned group_id_b = group_id_xy % 8;
-  unsigned group_id_a = group_id_xy / 8;
+  const size_t local_id = get_local_id(0);
+  const size_t group_id_xy = get_group_id(0);
+  const size_t micro_id_a = local_id % 16;
+  const size_t micro_id_b = local_id / 16;
+  size_t group_id_b = group_id_xy % 8;
+  size_t group_id_a = group_id_xy / 8;
   __local float localA[2064];
   __local const float * lA;
   float rA[8];
-  unsigned write_macro_tile_start_a = group_id_a*128; 
-  const unsigned write_start_a = write_macro_tile_start_a + micro_id_a*8;
-  const unsigned pll_unroll_a_load_id = local_id % 16;
-  const unsigned perp_unroll_a_load_id = local_id / 16;
-  unsigned read_macro_tile_start_a = group_id_a*128; 
+  size_t write_macro_tile_start_a = group_id_a*128; 
+  const size_t write_start_a = write_macro_tile_start_a + micro_id_a*8;
+  const size_t pll_unroll_a_load_id = local_id % 16;
+  const size_t perp_unroll_a_load_id = local_id / 16;
+  size_t read_macro_tile_start_a = group_id_a*128; 
   a += read_macro_tile_start_a*1024;
-  const unsigned a_offset_pll_unroll = 1 * pll_unroll_a_load_id;
-  const unsigned a_offset_perp_unroll = 8 * perp_unroll_a_load_id;
+  const size_t a_offset_pll_unroll = 1 * pll_unroll_a_load_id;
+  const size_t a_offset_perp_unroll = 8 * perp_unroll_a_load_id;
   a += 1 * a_offset_pll_unroll;
   a += 1024 * a_offset_perp_unroll;
   __local float localB[2064];
   __local const float * lB;
   float rB[8];
-  unsigned write_macro_tile_start_b = group_id_b*128; 
-  const unsigned write_start_b = write_macro_tile_start_b + micro_id_b*8;
-  const unsigned pll_unroll_b_load_id = local_id % 16;
-  const unsigned perp_unroll_b_load_id = local_id / 16;
-  unsigned read_macro_tile_start_b = group_id_b*128; 
+  size_t write_macro_tile_start_b = group_id_b*128; 
+  const size_t write_start_b = write_macro_tile_start_b + micro_id_b*8;
+  const size_t pll_unroll_b_load_id = local_id % 16;
+  const size_t perp_unroll_b_load_id = local_id / 16;
+  size_t read_macro_tile_start_b = group_id_b*128; 
   b += read_macro_tile_start_b*1024;
-  const unsigned b_offset_pll_unroll = 1 * pll_unroll_b_load_id;
-  const unsigned b_offset_perp_unroll = 8 * perp_unroll_b_load_id;
+  const size_t b_offset_pll_unroll = 1 * pll_unroll_b_load_id;
+  const size_t b_offset_perp_unroll = 8 * perp_unroll_b_load_id;
   b += 1 * b_offset_pll_unroll;
   b += 1024 * b_offset_perp_unroll;
   float rC[8][8] = {{0.}};
   int n_unrolls_remaining = 1024 / 16;
   while (n_unrolls_remaining > 0){
-    for (unsigned mu_perp_i = 0; mu_perp_i < 8; ++mu_perp_i) {
+    for (size_t mu_perp_i = 0; mu_perp_i < 8; ++mu_perp_i) {
       localA[129*(a_offset_pll_unroll) + (a_offset_perp_unroll + mu_perp_i)] = a[mu_perp_i*1024];
     }
     a += 1*16;
-    for (unsigned mu_perp_i = 0; mu_perp_i < 8; ++mu_perp_i) {
+    for (size_t mu_perp_i = 0; mu_perp_i < 8; ++mu_perp_i) {
       localB[129*(b_offset_pll_unroll) + (b_offset_perp_unroll + mu_perp_i)] = b[mu_perp_i*1024];
     }
     b += 1*16;
     barrier(CLK_LOCAL_MEM_FENCE); 
     lA = localA + micro_id_a*8;
     lB = localB + micro_id_b*8;
-    for (unsigned u = 0; u < 16; ++u){
-      for (unsigned i = 0; i < 8; ++i){
+    for (size_t u = 0; u < 16; ++u){
+      for (size_t i = 0; i < 8; ++i){
         rA[i] = lA[i*1];
       }
       lA += 129;
-      for (unsigned i = 0; i < 8; ++i){
+      for (size_t i = 0; i < 8; ++i){
         rB[i] = lB[i*1];
       }
       lB += 129;
-      for (unsigned row = 0; row < 8; ++row){
-        for (unsigned col = 0; col < 8; ++col){
+      for (size_t row = 0; row < 8; ++row){
+        for (size_t col = 0; col < 8; ++col){
           rC[row][col] += rA[row]*rB[col];   
         }
       }
@@ -126,9 +126,9 @@ __global float       *          c
     barrier(CLK_LOCAL_MEM_FENCE); 
     --n_unrolls_remaining;
   }
-  unsigned index;
-  for (unsigned row = 0; row < 8; ++row) {
-    for (unsigned col = 0; col < 8; ++col) {
+  size_t index;
+  for (size_t row = 0; row < 8; ++row) {
+    for (size_t col = 0; col < 8; ++col) {
       index = (write_start_a + row) + 1024*(write_start_b + col);
       c[index] *= 0.8345345723452346235;
       c[index] += 1.3124234524523452342*rC[row][col];
@@ -228,7 +228,7 @@ __global float       *          c
   ret = clEnqueueNDRangeKernel(
     command_queue, kernel, 1, NULL, &global_work_size, &local_work_size, 0, NULL, NULL);
   checkstatus(ret, "clEnqueueNDRangeKernel");
-  for (unsigned i = 1; i < n_iterations; ++i)
+  for (size_t i = 1; i < n_iterations; ++i)
   {
     ret = clEnqueueNDRangeKernel(
       command_queue, kernel, 1, NULL, &global_work_size, &local_work_size, 0, NULL, NULL);

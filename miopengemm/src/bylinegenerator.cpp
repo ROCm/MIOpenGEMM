@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <iostream>
 #include <sstream>
@@ -16,17 +16,17 @@ namespace MIOpenGEMM
 namespace bylinegen
 {
 
-void ByLineGenerator::setup()
+void ByLineGenerator::setup_final()
 {
 
   setup_additional();
 
-  if (static_cast<unsigned>(emat_x) >= static_cast<unsigned>(nsHP::nMats))
+  if (emat_x >= Mat::E::N)
   {
     std::stringstream ss;
     ss << "in ByLineGenerator::setup, invalid emat_x : " << emat_x;
-    ss << "\nMATRIXCHAR is " << MATRIXCHAR;
-    ss << "\nmatrixchar is " << matrixchar;
+    ss << "\nMCHAR is " << MCHAR;
+    ss << "\nmchar is " << mchar;
     throw miog_error(ss.str());
   }
 
@@ -37,14 +37,13 @@ void ByLineGenerator::setup()
   n_work_items                 = n_work_items_per_line * gg.get_uncoal(emat_x);
   start_in_coal_last_work_item = get_work_per_thread() * n_full_work_items_per_line;
   work_for_last_item_in_coal   = gg.get_coal(emat_x) % get_work_per_thread();
-  set_usage_from_matrixchar();
 }
 
-ByLineGenerator::ByLineGenerator(const hyperparams::HyperParams&     hp_,
-                                 const Geometry&                     gg_,
-                                 const derivedparams::DerivedParams& dp_,
-                                 std::string                         type_)
-  : prepgen::PrepGenerator(hp_, gg_, dp_, type_)
+ByLineGenerator::ByLineGenerator(Mat::E               emat_x_,
+                                 const HyPas&         hp_,
+                                 const Geometry&      gg_,
+                                 const DerivedParams& dp_)
+  : prepgen::PrepGenerator(emat_x_, hp_, gg_, dp_)
 {
 }
 
@@ -104,19 +103,13 @@ size_t ByLineGenerator::get_n_work_groups()
 void ByLineGenerator::append_setup_coordinates(std::stringstream& ss)
 {
 
-  ss << R"(
-    
-    
-/* setting up where this thread works */
-unsigned group_id = get_group_id(0);
-unsigned local_id = get_local_id(0);
-unsigned global_id = group_id*N_WORK_ITEMS_PER_GROUP + local_id; 
-
-unsigned start_uncoal = 0;
-unsigned start_coal = 0;
-
-bool is_in_full_zone = (global_id < N_FULL_WORK_ITEMS);
-)";
+  ss << "\n\n\n/* setting up where this thread works */";
+  ss << "TINT" << MCHAR << " group_id = get_group_id(0);\n";
+  ss << "TSHORT local_id = get_local_id(0);\n";
+  ss << "TINT" << MCHAR << " global_id = group_id*N_WORK_ITEMS_PER_GROUP + local_id;\n";
+  ss << "TINT" << MCHAR << " start_uncoal = 0;\n";
+  ss << "TINT" << MCHAR << " start_coal = 0;\n";
+  ss << "bool is_in_full_zone = (global_id < N_FULL_WORK_ITEMS);\n";
 
   if (n_full_work_items != 0)
   {
@@ -144,10 +137,10 @@ start_coal = START_IN_COAL_LAST_WORK_ITEM;
 void ByLineGenerator::append_positioning_x_string(std::stringstream& ss)
 {
 
-  ss << "\n\n/* moving the " << matrixchar << " pointer to the first element to process */\n";
-  ss << matrixchar << " += " << matrixchar << "_offset;\n";
-  ss << matrixchar << " += start_uncoal * LD" << MATRIXCHAR << ";\n";
-  ss << matrixchar << " += start_coal;\n";
+  ss << "\n\n/* moving the " << mchar << " pointer to the first element to process */\n";
+  ss << mchar << " += " << mchar << "_offset;\n";
+  ss << mchar << " += start_uncoal * LD" << MCHAR << ";\n";
+  ss << mchar << " += start_coal;\n";
 }
 
 void ByLineGenerator::append_inner_work(std::stringstream& ss) { ss << inner_work_string; }
@@ -159,13 +152,13 @@ void ByLineGenerator::append_work_string(std::stringstream& ss)
     R"(
 if (is_in_full_zone){
 #pragma unroll WORK_PER_THREAD
-for (unsigned i = 0; i < WORK_PER_THREAD; ++i){  )";
+for (TSHORT i = 0; i < WORK_PER_THREAD; ++i){  )";
   append_inner_work(ss);
   ss << "\n}\n}\n";
 
   ss << R"(
 else if (global_id < N_WORK_ITEMS){
-for (unsigned i = 0; i < WORK_FOR_LAST_ITEM_IN_COAL; ++i){  )";
+for (TSHORT i = 0; i < WORK_FOR_LAST_ITEM_IN_COAL; ++i){  )";
   append_inner_work(ss);
   ss << "\n}\n}\n";
 }
@@ -183,7 +176,7 @@ w += start_coal;
 )";
 }
 
-KernelString ByLineGenerator::get_kernelstring()
+KernBlob ByLineGenerator::get_kernelstring()
 {
 
   std::stringstream ss;
@@ -200,20 +193,23 @@ KernelString ByLineGenerator::get_kernelstring()
   ss << get_derived_string() << "\n";
   append_derived_definitions(ss);
 
+  ss << "#define TINT" << MCHAR << " " << dp.tints[emat_x] << "\n";
+  ss << "#define TSHORT" << ' ' << dp.tshort << '\n';
+
   ss << "\n\n"
      << "__attribute__((reqd_work_group_size(N_WORK_ITEMS_PER_GROUP,1,1)))"
      << "\n";
   ss << "__kernel void ";
 
   ss << kernelname;
-  append_parameter_list_from_usage(ss);
+  append_fargs(ss);
 
   ss << "{";
 
   append_setup_coordinates(ss);
   append_positioning_x_string(ss);
 
-  if (matrixchar == 'a' || matrixchar == 'b')
+  if (emat_x == Mat::E::A || emat_x == Mat::E::B)
   {
     append_positioning_w_string(ss);
   }
@@ -222,7 +218,8 @@ KernelString ByLineGenerator::get_kernelstring()
 
   ss << "\n}\n\n\n";
 
-  return {{uses_a, uses_b, uses_c, uses_workspace, uses_alpha, uses_beta},
+  return {get_ktype(),
+          {u_a, u_b, u_c, u_w, u_alpha, u_beta},
           ss.str(),
           kernelname,
           get_global_work_size(),

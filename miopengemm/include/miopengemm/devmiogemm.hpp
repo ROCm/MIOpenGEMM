@@ -1,13 +1,16 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #ifndef GUARD_MIOPENGEMM_DEGEMMAPIQQ_HPP
 #define GUARD_MIOPENGEMM_DEGEMMAPIQQ_HPP
 
+#include <memory>
 #include <stdlib.h>
 #include <string>
 #include <vector>
+#include <miopengemm/diva.hpp>
 #include <miopengemm/geometry.hpp>
+#include <miopengemm/oclutil.hpp>
 #include <miopengemm/solution.hpp>
 
 namespace MIOpenGEMM
@@ -15,35 +18,76 @@ namespace MIOpenGEMM
 namespace dev
 {
 
-template <typename TFloat>
-void benchgemm(const std::vector<std::string>& hyperstrings,
-               unsigned                        n_runs,
-               const Geometry&                 gg,
-               const Offsets&                  toff,
-               const TFloat*                   a,
-               const TFloat*                   b,
-               const TFloat*                   c,
-               outputwriting::OutputWriter&    mowri);
+class Boa
+{
 
-template <typename TFloat>
-void accuracy_test(const std::string&           hyperstring,
-                   const Geometry&              gg,
-                   const Offsets&               toff,
-                   const TFloat*                a,
-                   const TFloat*                b,
-                   const TFloat*                c,
-                   const TFloat*                c_true_for_test,
-                   outputwriting::OutputWriter& mowri);
+  private:
+  std::unique_ptr<Diva<double>> d_moa{nullptr};
+  std::unique_ptr<Diva<float>>  f_moa{nullptr};
+  char                          active_type{'?'};
 
-template <typename TFloat>
-Solution find(const FindParams&            find_params,
-              const TFloat*                a,
-              const TFloat*                b,
-              const TFloat*                c,
-              std::string                  constraints_string,
-              const Geometry&              gg,
-              const Offsets&               toff,
-              outputwriting::OutputWriter& mowri);
+  template <typename TFloat>
+  std::unique_ptr<Diva<TFloat>>& get_up_moa()
+  {
+    throw miog_error("unrecognised template parameter TFloat in Boa get_up_moa");
+  }
+
+  template <typename TFloat>
+  void set_active_type()
+  {
+    throw miog_error("unrecognised template parameter TFloat in Boa set_active_type");
+  }
+
+  public:
+  template <typename TFloat>
+  Boa(Geometry        gg_,
+      Offsets         toff_,
+      const TFloat*   a_,
+      const TFloat*   b_,
+      const TFloat*   c_,
+      owrite::Writer& mowri_,
+      const CLHint&   devhint)
+  {
+    get_up_moa<TFloat>().reset(new Diva<TFloat>(gg_, toff_, a_, b_, c_, mowri_, devhint));
+    set_active_type<TFloat>();
+  }
+
+  Boa(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint& devhint);
+
+  std::vector<std::vector<double>> benchgemm(const std::vector<HyPas>& hps, const Halt& hl);
+
+  Solution find(const FindParams& find_params, const Constraints& constraints);
+
+  template <typename TFloat>
+  void accuracy_test(const HyPas& hp, const TFloat* c_true_for_test)
+  {
+    if (sizeof(TFloat) == sizeof(float))
+    {
+      f_moa->accuracy_test(hp, c_true_for_test);
+    }
+    else if (sizeof(TFloat) == sizeof(double))
+    {
+      d_moa->accuracy_test(hp, c_true_for_test);
+    }
+    else{
+      throw miog_error("unrecognised float type in devmiogemm accuracy_test");
+    }
+  }
+
+  void accuracy_test(const HyPas& hp);
+};
+
+template <>
+std::unique_ptr<Diva<float>>& Boa::get_up_moa<float>();
+
+template <>
+std::unique_ptr<Diva<double>>& Boa::get_up_moa<double>();
+
+template <>
+void Boa::set_active_type<float>();
+
+template <>
+void Boa::set_active_type<double>();
 }
 }
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <cmath>
 #include <iostream>
@@ -14,63 +14,46 @@
 namespace MIOpenGEMM
 {
 
-std::vector<char> get_matChars()
-{
-  std::vector<char> v1;
-  v1.resize(nsHP::nMats);
-  v1[nsHP::matA] = 'a';
-  v1[nsHP::matB] = 'b';
-  v1[nsHP::matC] = 'c';
-  return v1;
-}
-
-std::vector<char> matChars = get_matChars();
-
-Offsets::Offsets(unsigned oa_,
-                 unsigned ob_,
-                 unsigned oc_,
-                 unsigned oworkspace_,
-                 unsigned tail_off_a_,
-                 unsigned tail_off_b_,
-                 unsigned tail_off_c_)
-  : oa(oa_),
-    ob(ob_),
-    oc(oc_),
-    oworkspace(oworkspace_),
-    tail_off_a(tail_off_a_),
-    tail_off_b(tail_off_b_),
-    tail_off_c(tail_off_c_)
+Geometry::Geometry(
+  size_t m_, size_t n_, size_t k_, bool tA_, bool tB_, size_t wSpaceSize_, char floattype_)
+  : Geometry(
+      true, tA_, tB_, false, tA_ ? k_ : m_, tB_ ? n_ : k_, m_, m_, n_, k_, wSpaceSize_, floattype_)
 {
 }
 
-const unsigned& Offsets::operator[](char x) const
+size_t get_mat_size(const Geometry& gg, const Offsets& toff, Mat::E emat)
 {
-  if (x == 'a')
-  {
-    return oa;
-  }
-  else if (x == 'b')
-  {
-    return ob;
-  }
-  else if (x == 'c')
-  {
-    return oc;
-  }
-  else if (x == 'w')
-  {
-    return oworkspace;
-  }
-
-  else
-  {
-    throw miog_error("unrecognised char passed to operator[](char x) of Offsets. "
-                     "Should be one of a,b,c,w, not " +
-                     std::to_string(x));
-  }
+  auto emem = Mem::mat_to_mem(emat);
+  return (gg.get_padded_area(emat) + toff.offsets[emem] + toff.tails[emem]);
 }
 
-char get_floattype(unsigned nbits)
+size_t get_mat_memsize(const Geometry& gg, const Offsets& toff, Mat::E emat)
+{
+  return gg.derived.float_size_bytes * get_mat_size(gg, toff, emat);
+}
+
+Offsets::Offsets(
+  size_t oa_, size_t ob_, size_t oc_, size_t ow_, size_t ta_, size_t tb_, size_t tc_, size_t tw_)
+{
+
+  offsets[Mem::E::A] = oa_;
+  offsets[Mem::E::B] = ob_;
+  offsets[Mem::E::C] = oc_;
+  offsets[Mem::E::W] = ow_;
+
+  tails[Mem::E::A] = ta_;
+  tails[Mem::E::B] = tb_;
+  tails[Mem::E::C] = tc_;
+  tails[Mem::E::W] = tw_;
+}
+
+Offsets get_padding_offsets() { return Offsets(11, 17, 13, 22, 61, 15, 18, 7); }
+
+Offsets get_zero_offsets() { return Offsets(0, 0, 0, 0, 0, 0, 0, 0); }
+
+Geometry get_tight_geometry() { return {false, false, false, false, 1, 1, 1, 1, 1, 1, 1, 'f'}; }
+
+char get_floattype(size_t nbits)
 {
 
   char ft = 'x';
@@ -109,50 +92,49 @@ void GeometryDerived::reset(char floattype)
 }
 
 // return one of the dimensions of matrix a,b,c.
-// this has nothing to do with lda, ldb, ldc.
 // isCoal : the coalesced dimesion?
-// For example, for 'a' which is m x k,
+// For example, for A which is m x k,
 // if tA = false, isColMajor = false,
 // isCoal = true, then k is returned as k is
 // the coalesced dim.
 // (false == false) == true  evaluates to true,
 // so gate is true, so m is returned
-unsigned Geometry::get_padless_dim(nsHP::eMat emat_x, bool isCoal) const
+size_t Geometry::get_padless_dim(Mat::E M, bool isCoal) const
 {
 
-  bool gate = (tX.at(emat_x) == isColMajor) == isCoal;
+  bool gate = (tX.at(M) == isColMajor) == isCoal;
 
-  if (emat_x == nsHP::matA)
+  if (M == Mat::E::A)
   {
     return gate ? k : m;
   }
 
-  else if (emat_x == nsHP::matB)
+  else if (M == Mat::E::B)
   {
     return gate ? n : k;
   }
 
-  else if (emat_x == nsHP::matC)
+  else if (M == Mat::E::C)
   {
     return gate ? n : m;
   }
 
   else
   {
-    throw miog_error("unrecognised emat_x passed to get_coal in "
+    throw miog_error("unrecognised M passed to get_coal in "
                      "get_padless_dim of geometry");
   }
 }
 
-unsigned Geometry::get_non_k_dim(nsHP::eMat emat_x) const
+size_t Geometry::get_non_k_dim(Mat::E M) const
 {
 
-  if (emat_x == nsHP::matA)
+  if (M == Mat::E::A)
   {
     return m;
   }
 
-  else if (emat_x == nsHP::matB)
+  else if (M == Mat::E::B)
   {
     return n;
   }
@@ -169,7 +151,7 @@ void Geometry::check_ldx_consistent() const
 {
 
   bool error = false;
-  for (auto x : {nsHP::matA, nsHP::matB, nsHP::matC})
+  for (auto x : {Mat::E::A, Mat::E::B, Mat::E::C})
   {
     if (ldX[x] < get_coal(x))
     {
@@ -182,42 +164,32 @@ void Geometry::check_ldx_consistent() const
 
     std::stringstream errm_ss;
 
-    errm_ss << "Checking that lda, ldb, ldc are consistent with m,n,k. ";
-    errm_ss << "In particulary, checking that ldx is at least as large as "
-               "coalesced dimension, "
-               "coal_x (for x in {a,b,c}) given by:  ";
-    errm_ss << "coal_a = (tA == isColMajor ? k : m),  ";
-    errm_ss << "coal_b = (tB == isColMajor ? n : k),  ";
-    errm_ss << "coal_c = (tC == isColMajor ? k : m).  ";
-    errm_ss << "\n\n";
+    errm_ss << "Checking that lda, ldb, ldc are consistent with m,n,k. "
+            << "In particulary, checking that ldx is at least as large as "
+            << "coalesced dimension, "
+            << "coal_x (for x in {a,b,c}) given by:  "
+            << "coal_a = (tA == isColMajor ? k : m),  "
+            << "coal_b = (tB == isColMajor ? n : k),  "
+            << "coal_c = (tC == isColMajor ? k : m).  "
+            << "\n\n"
+            << "ldx = coal_x + pad_x, and so for consisteny it must be true "
+            << "that ldx >= coal_x (can't have negative pad_x).  "
+            << "As an example, if tA = false and isColMajor = false, then "
+            << "coal_a = k.  "
+            << "A full table of the lower bounds of ldx for x in {a,b,c} can "
+            << "be found at, "
+            << "https://software.intel.com/en-us/"
+            << "mkl-developer-reference-c-cblas-gemm.  "
+            << "\n\n"
+            << "The particular geometry received by in geometry "
+            << "check_ldx_consistent is  " << get_string() << ", and the problems detected are:  ";
 
-    errm_ss << "ldx = coal_x + pad_x, and so for consisteny it must be true "
-               "that ldx >= coal_x "
-               "(can't have negative pad_x).  ";
-    errm_ss << "As an example, if tA = false and isColMajor = false, then "
-               "coal_a = k.  ";
-    errm_ss << "A full table of the lower bounds of ldx for x in {a,b,c} can "
-               "be found at, "
-               "https://software.intel.com/en-us/"
-               "mkl-developer-reference-c-cblas-gemm.  ";
-    errm_ss << "\n\n";
-
-    errm_ss << "The particular geometry received by in geometry "
-               "check_ldx_consistent is  ";
-    errm_ss << get_string();
-    errm_ss << ", and the problems detected are:  ";
-
-    std::vector<char> m_chars(nsHP::nMats);
-    m_chars[nsHP::matA] = 'a';
-    m_chars[nsHP::matB] = 'b';
-    m_chars[nsHP::matC] = 'c';
-
-    for (auto x : {nsHP::matA, nsHP::matB, nsHP::matC})
+    for (auto x : {Mat::E::A, Mat::E::B, Mat::E::C})
     {
       if (ldX[x] < get_coal(x))
       {
-        errm_ss << "ld" << m_chars[x] << " (" << ldX[x] << ") <  coal_" << m_chars[x] << " ("
-                << get_coal(x) << ").  ";
+        errm_ss << "ld" << Mat::M.name[x] << " (" << ldX[x] << ") <  coal_" << Mat::M.name[x]
+                << " (" << get_coal(x) << ").  ";
       }
     }
 
@@ -225,48 +197,49 @@ void Geometry::check_ldx_consistent() const
   }
 }
 
-unsigned Geometry::get_uncoal(nsHP::eMat emat_x) const { return get_padless_dim(emat_x, false); }
+size_t Geometry::get_uncoal(Mat::E M) const { return get_padless_dim(M, false); }
 
-unsigned Geometry::get_coal(nsHP::eMat emat_x) const { return get_padless_dim(emat_x, true); }
+// this is lda, ldb, ldc if they are minimal.
+size_t Geometry::get_coal(Mat::E M) const { return get_padless_dim(M, true); }
 
-bool Geometry::coal_is_pll_k(nsHP::eMat emat_x) const
+bool Geometry::coal_is_pll_k(Mat::E M) const
 {
   // proof : false, false, true should give 1
-  return (static_cast<unsigned>(isColMajor) + static_cast<unsigned>(tX.at(emat_x)) +
-          static_cast<unsigned>(emat_x == nsHP::matA)) %
+  return (static_cast<size_t>(isColMajor) + static_cast<size_t>(tX.at(M)) +
+          static_cast<size_t>(M == Mat::E::A)) %
          2;
 }
 
-void Geometry::initialise(bool     isColMajor_,
-                          bool     tA_,
-                          bool     tB_,
-                          bool     tC_,
-                          unsigned lda_,
-                          unsigned ldb_,
-                          unsigned ldc_,
-                          unsigned m_,
-                          unsigned n_,
-                          unsigned k_,
-                          unsigned workspace_size_,
-                          char     floattype_)
+void Geometry::initialise(bool   isColMajor_,
+                          bool   tA_,
+                          bool   tB_,
+                          bool   tC_,
+                          size_t lda_,
+                          size_t ldb_,
+                          size_t ldc_,
+                          size_t m_,
+                          size_t n_,
+                          size_t k_,
+                          size_t wSpaceSize_,
+                          char   floattype_)
 {
 
-  isColMajor     = isColMajor_;
-  m              = m_;
-  n              = n_;
-  k              = k_;
-  workspace_size = workspace_size_;
-  floattype      = floattype_;
+  isColMajor = isColMajor_;
+  m          = m_;
+  n          = n_;
+  k          = k_;
+  wSpaceSize = wSpaceSize_;
+  floattype  = floattype_;
 
-  tX.resize(nsHP::nMats);
-  tX[nsHP::matA] = tA_;
-  tX[nsHP::matB] = tB_;
-  tX[nsHP::matC] = tC_;
+  tX.resize(Mat::E::N);
+  tX[Mat::E::A] = tA_;
+  tX[Mat::E::B] = tB_;
+  tX[Mat::E::C] = tC_;
 
-  ldX.resize(nsHP::nMats);
-  ldX[nsHP::matA] = lda_;
-  ldX[nsHP::matB] = ldb_;
-  ldX[nsHP::matC] = ldc_;
+  ldX.resize(Mat::E::N);
+  ldX[Mat::E::A] = lda_;
+  ldX[Mat::E::B] = ldb_;
+  ldX[Mat::E::C] = ldc_;
 
   if (floattype != 'd' and floattype != 'f')
   {
@@ -276,28 +249,32 @@ void Geometry::initialise(bool     isColMajor_,
   check_ldx_consistent();
 
   derived.reset(floattype);
+
+  metric_co[0] = std::log2(static_cast<double>(k));
+  metric_co[1] = std::log2(static_cast<double>(m)) - std::log2(static_cast<double>(n));
+  metric_co[2] = std::log2(static_cast<double>(m)) + std::log2(static_cast<double>(n));
 }
 
-Geometry::Geometry(bool     isColMajor_,
-                   bool     tA_,
-                   bool     tB_,
-                   bool     tC_,
-                   unsigned lda_,
-                   unsigned ldb_,
-                   unsigned ldc_,
-                   unsigned m_,
-                   unsigned n_,
-                   unsigned k_,
-                   unsigned workspace_size_,
-                   char     floattype_)
+Geometry::Geometry(bool   isColMajor_,
+                   bool   tA_,
+                   bool   tB_,
+                   bool   tC_,
+                   size_t lda_,
+                   size_t ldb_,
+                   size_t ldc_,
+                   size_t m_,
+                   size_t n_,
+                   size_t k_,
+                   size_t wSpaceSize_,
+                   char   floattype_)
 {
-  initialise(isColMajor_, tA_, tB_, tC_, lda_, ldb_, ldc_, m_, n_, k_, workspace_size_, floattype_);
+  initialise(isColMajor_, tA_, tB_, tC_, lda_, ldb_, ldc_, m_, n_, k_, wSpaceSize_, floattype_);
 }
 
-std::map<std::string, unsigned> get_key_val_map(std::string geometry_string)
+std::map<std::string, size_t> get_key_val_map(std::string geometry_string)
 {
   auto frags = stringutil::split(geometry_string, "_");
-  std::map<std::string, unsigned> key_val_map;
+  std::map<std::string, size_t> key_val_map;
   for (auto& frag : frags)
   {
     auto key_val     = stringutil::splitnumeric(frag);
@@ -308,7 +285,7 @@ std::map<std::string, unsigned> get_key_val_map(std::string geometry_string)
   return key_val_map;
 }
 
-unsigned safeat(std::map<std::string, unsigned>& map, std::string key)
+size_t safeat(std::map<std::string, size_t>& map, std::string key)
 {
   if (map.count(key) == 0)
   {
@@ -374,33 +351,64 @@ std::string Geometry::get_string() const { return get_networkconfig_string(); }
 std::string Geometry::get_networkconfig_string() const
 {
   std::stringstream geometry_stringstream;
-  geometry_stringstream << "tC" << tX[nsHP::matC] << "_tA" << tX[nsHP::matA] << "_tB"
-                        << tX[nsHP::matB] << "_colMaj" << isColMajor << "_m" << m << "_n" << n
-                        << "_k" << k << "_lda" << ldX[nsHP::matA] << "_ldb" << ldX[nsHP::matB]
-                        << "_ldc" << ldX[nsHP::matC] << "_ws" << workspace_size << "_f"
-                        << derived.float_size_bits;
+  geometry_stringstream << "tC" << tX[Mat::E::C] << "_tA" << tX[Mat::E::A] << "_tB" << tX[Mat::E::B]
+                        << "_colMaj" << isColMajor << "_m" << m << "_n" << n << "_k" << k << "_lda"
+                        << ldX[Mat::E::A] << "_ldb" << ldX[Mat::E::B] << "_ldc" << ldX[Mat::E::C]
+                        << "_ws" << wSpaceSize << "_f" << derived.float_size_bits;
   return geometry_stringstream.str();
 }
 
 std::string Geometry::get_tabbed_string() const
 {
-  
+
   std::stringstream geometry_stringstream;
-  geometry_stringstream << "tC=" << tX[nsHP::matC] 
-                        << " tA=" << tX[nsHP::matA] 
-                        << " tB=" << tX[nsHP::matB] 
-                        << " colMaj=" << isColMajor
-                        << " m=" << stringutil::get_char_padded(m, 5)
-                        << " n=" << stringutil::get_char_padded(n, 5)
-                        << " k=" << stringutil::get_char_padded(k, 5) 
-                        << " lda=" << stringutil::get_char_padded(ldX[nsHP::matA], 5) 
-                        << " ldb=" << stringutil::get_char_padded(ldX[nsHP::matB], 5)
-                        << " ldc=" << stringutil::get_char_padded(ldX[nsHP::matC], 5)
-                        << " ws=" << workspace_size
-                        << " f=" << derived.float_size_bits;
+  geometry_stringstream << "tC=" << tX[Mat::E::C] << " tA=" << tX[Mat::E::A]
+                        << " tB=" << tX[Mat::E::B] << " colMaj=" << isColMajor
+                        << " m=" << stringutil::get_char_padded(m, 6)
+                        << " n=" << stringutil::get_char_padded(n, 6)
+                        << " k=" << stringutil::get_char_padded(k, 6)
+                        << " lda=" << stringutil::get_char_padded(ldX[Mat::E::A], 6)
+                        << " ldb=" << stringutil::get_char_padded(ldX[Mat::E::B], 6)
+                        << " ldc=" << stringutil::get_char_padded(ldX[Mat::E::C], 6)
+                        << " ws=" << wSpaceSize << " f=" << derived.float_size_bits;
 
-    return geometry_stringstream.str();
-
+  return geometry_stringstream.str();
 }
-  
+
+size_t Geometry::get_padded_area(Mat::E M) const { return get_uncoal(M) * ldX[M]; }
+
+// Safer would be compare via get_string(), assuming get_string() is comprehensive.
+bool Geometry::operator==(const Geometry& rhs) const
+{
+  return (isColMajor == rhs.isColMajor && tX == rhs.tX && ldX == rhs.ldX && m == rhs.m &&
+          n == rhs.n && k == rhs.k && wSpaceSize == rhs.wSpaceSize && floattype == rhs.floattype);
+}
+
+double Geometry::get_gflops(double extime) const { return (2. * m * n * k) / (extime * 10e5); }
+
+bool Geometry::same_transposes(const Geometry& g2) const
+{
+  return ((tX == g2.tX) && (isColMajor == g2.isColMajor));
+}
+
+double Geometry::get_distance(const Geometry& g2) const
+{
+
+  if (same_transposes(g2) == false)
+  {
+    return std::numeric_limits<double>::max();
+  }
+
+  double distance = 0;
+  for (unsigned i = 0; i < 3; ++i)
+  {
+    distance += std::abs(metric_co[i] - g2.metric_co[i]);
+  }
+  return distance;
+}
+
+size_t get_total_workspace(const Geometry& gg, const Offsets& toff)
+{
+  return gg.wSpaceSize + toff.offsets[Mem::E::W] + toff.tails[Mem::E::W];
+}
 }

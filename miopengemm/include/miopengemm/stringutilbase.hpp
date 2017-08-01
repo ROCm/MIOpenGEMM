@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #ifndef GUARD_MIOPENGEMM_STRINGUTILBASE_HPP
 #define GUARD_MIOPENGEMM_STRINGUTILBASE_HPP
@@ -26,19 +26,23 @@ std::vector<std::string> split(const std::string& tosplit);
 std::string getdirfromfn(const std::string& fn);
 
 // split something like QWE111 into QWE and 111.
-std::tuple<std::string, unsigned> splitnumeric(std::string alphanum);
+std::tuple<std::string, size_t> splitnumeric(std::string alphanum);
 
-std::string get_padded(unsigned x, unsigned length = 4);
+std::string get_padded(size_t x, size_t length = 4);
 
 template <typename T>
-std::string get_char_padded(const T& t, unsigned length){
+std::string get_char_padded(const T& t, size_t length)
+{
   auto t_s = std::to_string(t);
   if (t_s.size() < length)
-  t_s.resize(length, ' ');
+    t_s.resize(length, ' ');
   return t_s;
 }
 
+std::string get_stars(size_t n_stars);
+std::string get_star_wrapped(const std::string& s);
 
+void add_v_string(std::stringstream& ss, const std::vector<size_t>& values);
 }
 }
 

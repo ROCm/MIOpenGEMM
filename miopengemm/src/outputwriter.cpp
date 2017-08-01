@@ -1,81 +1,100 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <iostream>
+#include <sstream>
 #include <string>
+#include <miopengemm/enums.hpp>
 #include <miopengemm/error.hpp>
 #include <miopengemm/outputwriter.hpp>
 
 namespace MIOpenGEMM
 {
-namespace outputwriting
+namespace owrite
 {
 
-OutputWriter::OutputWriter(bool to_terminal_, bool to_file_, std::string filename_)
-  : to_terminal(to_terminal_), to_file(to_file_), filename(filename_)
+void Writer::initialise_file()
 {
-
-  if (to_file == true)
+  if (filename.compare("") == 0)
   {
-    if (filename.compare("") == 0)
-    {
-      throw miog_error("empty filename passed to OutputWrite, with to_file "
-                       "flag true. This is not possible.");
-    }
+    std::stringstream errm;
+    errm << "empty filename passed to Writer, with to_file as true. This is not allowed";
+    throw miog_error(errm.str());
+  }
 
-    file.open(filename, std::ios::out);
+  file.open(filename, std::ios::out);
 
-    if (file.good() == false)
-    {
-      std::string errm = "bad filename in constructor of OutputWriter object. "
-                         "The filename provided is `";
-      errm += filename;
-      errm += "'. The directory of the file must exist, OutputWriters do not "
-              "create directories. "
-              "Either create all directories in the path, or change the "
-              "provided path.  ";
-      throw miog_error(errm);
-    }
+  if (file.good() == false)
+  {
+    std::stringstream errm;
+    errm << "bad filename in constructor of Writer object. "
+         << "The filename provided is `" << filename << "'."
+         << "The directory of the file must exist, Writers do not create directories. "
+         << "Either create all directories in the path, or change the provided path.  ";
+    throw miog_error(errm.str());
   }
 }
 
-OutputWriter::~OutputWriter() { file.close(); }
+Writer::Writer(Ver::E v_, std::string filename_) : v(v_), filename(filename_)
+{
+  if (Ver::fileRequired[v])
+  {
+    initialise_file();
+  }
+  else if (filename != "")
+  {
+    throw miog_error("Non-empty filename, but no file writing in Writer. Performing pedantic bail");
+  }
+  else
+  {
+    // no filename and no filename required, good to continue
+  }
+
+  std::ofstream* ptr_file;
+  for (size_t op = 0; op < OutPart::E::N; ++op)
+  {
+    ptr_file = Ver::toFile[v][op] ? &file : nullptr;
+    bw[op]   = BasicWriter(Ver::toTerm[v][op], ptr_file);
+  }
+}
+
+Writer::~Writer() { file.close(); }
 
 template <>
-OutputWriter& OutputWriter::operator<<(Flusher f)
+BasicWriter& BasicWriter::operator<<(Flusher f)
 {
-  f.increment();
+  (void)f;
 
   if (to_terminal)
   {
     std::cout << std::flush;
   }
 
-  if (to_file)
+  if (ptr_file != nullptr)
   {
-    file.flush();
+    ptr_file->flush();
   }
   return *this;
 }
 
 template <>
-OutputWriter& OutputWriter::operator<<(Endline e)
+BasicWriter& BasicWriter::operator<<(Endline e)
 {
-  e.increment();
+  (void)e;
   if (to_terminal)
   {
     std::cout << std::endl;
   }
 
-  if (to_file)
+  if (ptr_file != nullptr)
   {
-    file << "\n";
-    file.flush();
+    (*ptr_file) << '\n';
+    ptr_file->flush();
   }
   return *this;
 }
 }
 
-outputwriting::Endline Endl;
-outputwriting::Flusher Flush;
+owrite::Endline Endl;
+owrite::Flusher Flush;
 }

@@ -1,7 +1,6 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
-
 #ifndef GUARD_MIOPENGEMM_TILING_HPP
 #define GUARD_MIOPENGEMM_TILING_HPP
 
@@ -38,12 +37,11 @@ namespace tiling
 // tS = 13 .. 23 raise an error ((TH * TH) % tS != 0)
 // tS = 24 return [6, 4]
 
-void set_tile_dimensions(
-  unsigned& tH, unsigned& tW, unsigned TH, unsigned TW, unsigned tS, bool tall = true);
+void set_tile_dimensions(size_t& tH, size_t& tW, size_t TH, size_t TW, size_t tS, bool tall = true);
 
 // checks if it is tileable according to the above.
 // returns (true, "") if, otherwise (false,"reason")
-std::tuple<bool, std::string> get_tileability(unsigned TH, unsigned TW, unsigned tS);
+std::tuple<bool, std::string> get_tileability(size_t TH, size_t TW, size_t tS);
 }
 }
 
