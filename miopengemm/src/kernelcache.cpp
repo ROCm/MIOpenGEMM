@@ -80,19 +80,30 @@ KernelCache get_kernel_cache()
   KernelCache kc;
 #include "deepbench.cachetxt"
 //#include "square1.cachetxt"
-#include "tiny.cachetxt"
+#include "smallgrid.cachetxt"
   return kc;
 }
 const KernelCache kernel_cache = get_kernel_cache();
 
 HyPas KernelCache::at(const CacheKey& ckey, bool swap_ab) const
 {
+
+  
   CacheKeyPresence ckp = check_for(ckey);
   if (!ckp.is_present)
   {
-    throw miog_error(ckp.msg);
+    throw miog_error("(in HyPas KernelCache::at)  "+ ckp.msg);
   }
   return vals.at(ckey).get_reflected(swap_ab);
+}
+
+const HyPas & KernelCache::at(const CacheKey& ck) const{
+  CacheKeyPresence ckp = check_for(ck);
+  if (!ckp.is_present)
+  {
+    throw miog_error("(in const HyPas & KernelCache::at)  " + ckp.msg);
+  }
+  return vals.at(ck);
 }
 
 void KernelCache::add(const CacheKey& ckey, const HyPas& hp)
@@ -184,54 +195,5 @@ double CacheKey::get_distance(const CacheKey& ck) const
   return distance;
 }
 
-bool KernelCache::nearest_derivable_is_within(const CacheKey& ck, double threshold) const
-{
-  for (auto& key : get_keys())
-  {
-    if (key.get_distance(ck) < threshold && Derivabilty(vals.at(key), ck.gg).is_derivable)
-    {
-      return true;
-    }
-  }
-  return false;
-}
 
-CacheKey KernelCache::get_nearest_derivable(const CacheKey& ck) const
-{
-  if (!nearest_derivable_is_within(ck, std::numeric_limits<double>::max()))
-  {
-    throw miog_error("In get_nearest_derivable, with none within radius <double>::max.");
-  }
-  double d_nearest_derivable = std::numeric_limits<double>::max();
-
-  auto cache_keys = get_keys();
-  if (cache_keys.size() == 0)
-  {
-    throw miog_error("No cache keys. This is very strange.");
-  }
-
-  CacheKey nearest_derivable(cache_keys.back());
-
-  for (auto& key : cache_keys)
-  {
-    if (ck.get_distance(key) < d_nearest_derivable)
-    {
-      auto hp = vals.at(key);  
-      if (Derivabilty(hp, ck.gg).is_derivable)
-      {
-        d_nearest_derivable = ck.get_distance(key);
-        nearest_derivable   = key;
-      }
-    }
-  }
-
-  // confirm derivability
-  Derivabilty drvble(vals.at(nearest_derivable), ck.gg);
-  if (!drvble.is_derivable)
-  {
-    throw miog_error("internal logic error : the nearest derivable is not derivable. msg : " +
-                     drvble.msg);
-  }
-  return nearest_derivable;
-}
 }

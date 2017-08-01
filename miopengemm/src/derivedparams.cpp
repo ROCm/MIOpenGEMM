@@ -420,17 +420,18 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
   }
 
 
-  // see rocm.cpp in tests. Note, there is a timeout in OCL if other cases exists.
-  for (auto emat : {Mat::E::A, Mat::E::B}){ 
-    if 
-    //ptr_hp->sus[emat].vs[Chi::E::PLU] == Binary::E::YES && 
-    //ptr_hp->sus[emat].vs[Chi::E::LIW] == Binary::E::NO)
-    (ptr_hp->sus[Mat::E::C].vs[NonChi::E::MAC] != 1 && grid.at(emat) == ptr_hp->sus[Mat::E::C].vs[NonChi::E::MAC])
-    {
-      std::stringstream errm;
-      errm << "ROCm 1.6 compiler specific case : extreme grid stretch (1xMAX) and " 
-      << Mat::M.name[emat] << " has PLU1_LIW0.";
-      return std::make_tuple(false, errm.str());
+  bool run_ROCm_test = true;
+  if (run_ROCm_test == true){
+    // see rocm.cpp in tests. Note, there is a timeout in OCL if other cases exists.
+    for (auto emat : {Mat::E::A, Mat::E::B}){ 
+      if 
+      (ptr_hp->sus[Mat::E::C].vs[NonChi::E::MAC] != 1 && grid.at(emat) == ptr_hp->sus[Mat::E::C].vs[NonChi::E::MAC])
+      {
+        std::stringstream errm;
+        errm << "ROCm 1.6 compiler specific case : extreme grid stretch (1xMAX) and " 
+        << Mat::M.name[emat] << " has PLU1_LIW0.";
+        return std::make_tuple(false, errm.str());
+      }
     }
   }
   

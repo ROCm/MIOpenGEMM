@@ -26,12 +26,19 @@
 #include <miopengemm/solution.hpp>
 #include <miopengemm/stringutilbase.hpp>
 #include <miopengemm/timer.hpp>
+#include <miopengemm/nearest.hpp>
+#include <miopengemm/generic.hpp>
 
 // TODO : checks on constraints to check for cleary non-derivables
 // TODO : checks on workspace size
 
 namespace MIOpenGEMM
 {
+  
+  
+  
+  
+
 void   FindTracker::start() { timer.start(); }
 double FindTracker::get_elapsed() const { return timer.get_elapsed(); }
 
@@ -390,6 +397,12 @@ std::vector<double> Jinx::benchgemm(const HyPas& hp, const Halt& hl)
 
 Solution Jinx::find(const Constraints& constraints, const FindParams& fparms)
 {
+  
+  if (fparms.hl_outer.max_time < 0.01){
+    mowri << "Time allotted to find is less that 0.01, so returning a default immediately.\n";
+    return get_default(command_queue, gg, constraints, mowri, IfNoCache::E::GENERIC);
+  }
+
 
   address_check_valid_and_reliable();
 
@@ -501,40 +514,9 @@ Solution Jinx::single_descent_find(double             allotted_time,
   }
   else
   {
-
-    CacheKey ck(devinfo.identifier, constraints, gg);
-
-    bool is_not_canonical = redirection::get_is_not_canonical(gg);
-
-    if (kernel_cache.nearest_derivable_is_within(ck, 0.1 * std::numeric_limits<double>::max()))
-    {
-
-      auto nearest_ck = kernel_cache.get_nearest_derivable(ck);
-      warm_start_hp   = kernel_cache.at(nearest_ck, is_not_canonical);
-      // is the warm start in the graph?
-      if (!graph.contains(warm_start_hp))
-      {
-        mowri << "Warmstart requested and nearest is not too far, but nearest  "
-              << warm_start_hp.get_string() << " is not in graph so starting at random node"
-              << Endl;
-        warm_start_hp = graph.get_random_valid_start();
-      }
-      else
-      {
-        mowri << "Warmstart requested, will use nearest candidate in kernel cache:\n"
-              << nearest_ck.get_string() << Endl;
-              
-        mowri << '\n' << kernel_cache.at(nearest_ck, false).get_string() << "\n";
-        mowri << '\n' << kernel_cache.at(nearest_ck, true).get_string() << "\n";
-      }
-    }
-
-    else
-    {
-      mowri << "Warmstart requested but nearest is too far to consider, starting at random node"
-            << Endl;
-      warm_start_hp = graph.get_random_valid_start();
-    }
+    mowri << "Warmstart requested. " << Flush;
+    auto soln = get_default(command_queue, gg, constraints, mowri, IfNoCache::E::RANDOM);
+    warm_start_hp = soln.hypas;
     hyper_front = {warm_start_hp};
   }
 
@@ -641,12 +623,10 @@ Solution Jinx::single_descent_find(double             allotted_time,
 
         improvement_found_on_front = true;
 
-        std::time_t g_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
         best_solns_path.emplace_back(gg,
-                                     std::ctime(&g_time),
                                      k_seconds,
                                      bundle.v_tgks,
-                                     hp_curr.get_string(),
+                                     hp_curr,
                                      devinfo,
                                      constraints);
         disco_times.push_back(timer.get_elapsed());

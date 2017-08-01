@@ -1,9 +1,0 @@
-kc.add(
-{"gfx803",  // dev
-{"C_ICE1"},  // con
-{"tC0_tA0_tB0_colMaj1_m1200_n800_k1000_lda2000_ldb2000_ldc2000_ws0_f32"}}, // gg
-{{ // hp
-"MIC4_PAD1_PLU0_LIW0_MIW1_WOS0_VEW2",
-"MIC4_PAD1_PLU1_LIW0_MIW0_WOS0_VEW1",
-"UNR16_GAL3_PUN0_ICE1_IWI1_SZT0_NAW64_UFO0_MAC256_SKW10_AFI1_MIA0"}});
-

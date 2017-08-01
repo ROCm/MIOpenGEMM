@@ -15,7 +15,9 @@ std::vector<Geometry> take_fives(size_t wSpaceSize)
 {
   std::vector<Geometry> geometries;
   
-  std::vector<size_t> fives{1, 5, 25, 125, 625};
+  //std::vector<size_t> fives{1, 77, 363, 1002};
+  std::vector<size_t> fives{3, 10001};
+  
   for (size_t m : fives)
   {
     for (size_t n : fives)

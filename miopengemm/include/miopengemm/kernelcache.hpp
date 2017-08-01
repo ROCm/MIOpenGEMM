@@ -57,12 +57,17 @@ class KernelCache
   public:
   CacheKeyPresence check_for(const CacheKey& ck) const;
   HyPas at(const CacheKey& ck, bool swap_ab) const;
+  const HyPas & at(const CacheKey & ck) const;
 
   // hp must be transformed if geometry is.
   void add(const CacheKey& ckey, const HyPas& hp);
   std::vector<CacheKey> get_keys() const;
-  bool nearest_derivable_is_within(const CacheKey& ck, double threshold) const;
-  CacheKey get_nearest_derivable(const CacheKey& ck) const;
+  
+  
+  
+  //bool nearest_derivable_is_within(const CacheKey& ck, double threshold) const;
+  //CacheKey get_nearest_derivable(const CacheKey& ck) const;
+  
   std::string get_cache_entry_string(const CacheKey& ck) const;
 
   

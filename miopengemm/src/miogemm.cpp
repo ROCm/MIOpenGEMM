@@ -3,6 +3,7 @@
  *******************************************************************************/
 #include <miopengemm/jinx.hpp>
 #include <miopengemm/miogemm.hpp>
+#include <miopengemm/generic.hpp>
 
 namespace MIOpenGEMM
 {
@@ -25,18 +26,24 @@ Solution find(float            allotted_time,
 
   std::cout << "\n\n" << tgg.get_string() << std::flush;
   e_ver         = Ver::E::TERMINAL;
-  allotted_time = 0.00001;
 
   std::string    constraints_string = enforce_determinism ? "C__ICE1" : "";
-  Constraints    constraints(constraints_string);
+  Constraints    constraints(constraints_string);  
   auto           find_params = get_at_least_n_seconds(allotted_time);
   owrite::Writer mowri(e_ver, "");
   Offsets        offsets = get_zero_offsets();
   Jinx           jinx(command_queue, tgg, offsets, a, b, c, c_is_const, workspace_gpu, mowri);
-  auto           soln = jinx.find(constraints, find_params);
-
-  std::cout << "\n" << soln.hypas.get_string() << "\n\n" << std::flush;
-
-  return soln;
+  
+  if (allotted_time > 0.1){
+    auto    soln = jinx.find(constraints, find_params);
+    return  soln;
+  }
+  else{
+    return get_default(command_queue, tgg, constraints, mowri, IfNoCache::E::GENERIC);
+  }
 }
+
+
+
+
 }

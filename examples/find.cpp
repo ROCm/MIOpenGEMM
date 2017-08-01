@@ -3,7 +3,6 @@
  *******************************************************************************/
 #include <string>
 #include <miopengemm/devmiogemm.hpp>
-//#include <miopengemm/findparams.hpp>
 
 int main()
 {
@@ -15,14 +14,14 @@ int main()
 
 
 
-  Geometry       gg("tC0_tA1_tB0_colMaj0_m363_n45796_k1_lda363_ldb45796_ldc45796_ws0_f32");
+  Geometry       gg("tC0_tA0_tB0_colMaj0_m9_n9_k1000_lda1001_ldb1001_ldc1001_ws0_f32");
   CLHint         devhint;
   Offsets        offsets = get_zero_offsets();
   owrite::Writer mowri(Ver::E::TERMINAL, "");
   dev::Boa       boa(gg, offsets, mowri, devhint);
 
-  auto find_params = get_at_least_n_restarts(10);
-  Constraints constraints("");
+  auto find_params = get_at_least_n_restarts(2);
+  Constraints constraints("A_VEW1__B_VEW1__C_ICE1_SKW10");
     
   Solution soln = boa.find(find_params, constraints);
 

@@ -16,13 +16,14 @@ namespace MIOpenGEMM
 {
 
 Solution::Solution(const Geometry&              gg,
-                   const std::string&           date_,
                    double                       extime_,
                    const std::vector<KernBlob>& v1,
                    const HyPas&                 hp,
                    const oclutil::DevInfo&      di,
                    const Constraints&           co)
-  : geometry(gg), date(date_), extime(extime_), v_tgks(v1), hypas(hp), devinfo(di), constraints(co)
+  : geometry(gg), 
+  extime(extime_), 
+  v_tgks(v1), hypas(hp), devinfo(di), constraints(co)
 {
 }
 

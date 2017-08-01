@@ -122,6 +122,9 @@ class Jinx
   oclutil::Result
   true_core(std::function<void(std::string)> acton, std::vector<double>& times, const Halt& hl);
 };
+
+
 }
+
 
 #endif
