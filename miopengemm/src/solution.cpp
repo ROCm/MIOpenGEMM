@@ -21,9 +21,7 @@ Solution::Solution(const Geometry&              gg,
                    const HyPas&                 hp,
                    const oclutil::DevInfo&      di,
                    const Constraints&           co)
-  : geometry(gg), 
-  extime(extime_), 
-  v_tgks(v1), hypas(hp), devinfo(di), constraints(co)
+  : geometry(gg), extime(extime_), v_tgks(v1), hypas(hp), devinfo(di), constraints(co)
 {
 }
 

@@ -11,17 +11,16 @@ namespace MIOpenGEMM
 namespace macgrid
 {
 
-
-bool mac_is_square(size_t mac){
+bool mac_is_square(size_t mac)
+{
   // if not a power of 2, return false
-  if ( mac & (mac - 1) ){
+  if (mac & (mac - 1))
+  {
     return false;
   }
   // x & 10101010101010
   return mac & 0x55555555;
 }
-
-
 
 void Grid::bad_initialise(const std::string& x)
 {

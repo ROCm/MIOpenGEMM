@@ -14,19 +14,20 @@ namespace MIOpenGEMM
 std::vector<Geometry> take_fives(size_t wSpaceSize)
 {
   std::vector<Geometry> geometries;
-  
-  //std::vector<size_t> fives{1, 77, 363, 1002};
+
   std::vector<size_t> fives{3, 10001};
-  
+
   for (size_t m : fives)
   {
     for (size_t n : fives)
     {
       for (size_t k : fives)
       {
-        for (bool tA : {true, false}){
-          for (bool tB : {true, false}){
-            geometries.push_back({m,n,k,tA,tB, wSpaceSize, 'f'});
+        for (bool tA : {true, false})
+        {
+          for (bool tB : {true, false})
+          {
+            geometries.push_back({m, n, k, tA, tB, wSpaceSize, 'f'});
           }
         }
       }
@@ -204,7 +205,7 @@ std::vector<Geometry> get_squares(size_t wSpaceSize)
 {
 
   std::vector<Geometry> geometries;
-  std::vector<size_t> dimensions;
+  std::vector<size_t>   dimensions;
   for (size_t k = 5; k < 14; ++k)
   {
     dimensions.push_back(std::pow(2, k));
@@ -229,6 +230,4 @@ std::vector<Geometry> get_squares(size_t wSpaceSize)
   }
   return geometries;
 }
-
-
 }

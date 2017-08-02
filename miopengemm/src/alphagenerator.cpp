@@ -207,7 +207,7 @@ TFLOAT previous_value; )"
     char X = Mat::M.name[emat_x];
 
     std::string bound_string = hp.sus[emat_x].vs[Chi::E::LIW] == 0
-                                 ? std::string("MICRO_") + X + "_TILE_PERP_UNROLL" 
+                                 ? std::string("MICRO_") + X + "_TILE_PERP_UNROLL"
                                  : std::string("MACRO_TILE_LENGTH_") + X;
 
     bound_string += "/VEW_";
@@ -215,10 +215,9 @@ TFLOAT previous_value; )"
 
     std::stringstream incr_liw;
     incr_liw << "mu_perp_i += MACRO_TILE_LENGTH_" << X << "/MICRO_" << X << "_TILE_PERP_UNROLL";
-    std::string increment_string = hp.sus[emat_x].vs[Chi::E::LIW] == 0
-                                     ? "++mu_perp_i"
-                                     : incr_liw.str();  
-                                     
+    std::string increment_string =
+      hp.sus[emat_x].vs[Chi::E::LIW] == 0 ? "++mu_perp_i" : incr_liw.str();
+
     append_loop_var_bound_incr(ss, "mu_perp_i", bound_string, increment_string, emat_x);
   }
 
@@ -1007,7 +1006,6 @@ TINTK k_plus_offset = __K__ + unroll_offset;
 
     ss << x << "_vec += "
        << "STRIDE_PERP_K_" << X << " * " << x << "_offset_perp_unroll_v;\n";
-
 
     ss << '\n';
   }

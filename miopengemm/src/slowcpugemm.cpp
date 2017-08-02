@@ -224,8 +224,7 @@ void gemms_cpu(Geometry                 gg,
   gg.tX[Mat::E::B] = tB;
   gg.tX[Mat::E::C] = tC;
 
-  redirection::confirm_redirection(gg.isColMajor,
-                                   gg.tX[Mat::E::C]);
+  redirection::confirm_redirection(gg.isColMajor, gg.tX[Mat::E::C]);
   gg.check_ldx_consistent();
 
   for (auto& alg : algs)

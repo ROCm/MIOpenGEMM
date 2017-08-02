@@ -165,11 +165,10 @@ namespace IfNoCache
 {
 enum E
 {
-  GENERIC= 0,
-  RANDOM = 1
+  GENERIC = 0,
+  RANDOM  = 1
 };
 }
-
 
 namespace GroupAllocation
 {

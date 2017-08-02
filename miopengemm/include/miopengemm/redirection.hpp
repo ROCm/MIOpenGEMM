@@ -10,6 +10,8 @@ namespace MIOpenGEMM
 namespace redirection
 {
 
+// convert GEMM problem to equivalent "canonical" format, where isColMajor is true and tC is false
+
 template <typename TFloat>
 void redirect(bool&          isColMajor,
               bool&          tA,
@@ -40,8 +42,6 @@ Geometry get_canonical(const Geometry& gg, bool& swap_ab);
 Geometry get_canonical(const Geometry& gg);
 
 bool get_is_not_canonical(const Geometry& gg);
-
-void confirm_redirection_mlessn(bool isColMajor, bool tA, bool tB, size_t m, size_t n);
 }
 }
 #endif

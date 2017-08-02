@@ -18,23 +18,16 @@ namespace MIOpenGEMM
 
 RandomUtil radutil17;
 
-std::vector<HyPas> Graph::get_neighbors(const HyPas& hp0) const
+std::vector<HyPas> Graph::get_neighbors(const HyPas& hp0, bool prioritize) const
 {
 
-  std::vector<std::vector<std::tuple<HyPas, int>>> Z;
-  Z.push_back(get_one_aways(hp0));
-  Z.push_back(get_p_coupled_away(hp0));
-  Z.push_back(get_mic_mac_transformed(hp0));
-  for (auto& z : Z)
-  {
-    radutil17.shuffle(0, z.size(), z);
-  }
-
   std::vector<int> uni_prios;
-  for (auto& z : Z)
+  std::vector<std::tuple<HyPas, int>> Z;
+  for (auto& z : {get_one_aways(hp0), get_p_coupled_away(hp0), get_mic_mac_transformed(hp0)})
   {
     for (auto& tup : z)
     {
+      Z.push_back(tup);
       int prio = std::get<1>(tup);
       if (std::find(uni_prios.begin(), uni_prios.end(), prio) == uni_prios.end())
       {
@@ -42,22 +35,32 @@ std::vector<HyPas> Graph::get_neighbors(const HyPas& hp0) const
       }
     }
   }
+
+  radutil17.shuffle(0, Z.size(), Z);
+
   std::sort(uni_prios.begin(), uni_prios.end());
   std::reverse(uni_prios.begin(), uni_prios.end());
 
   std::vector<HyPas> neighbors;
 
-  for (auto& x : uni_prios)
+  if (prioritize == true)
   {
-    for (auto& z : Z)
+    for (auto& x : uni_prios)
     {
-      for (auto& tup : z)
+      for (auto& tup : Z)
       {
         if (std::get<1>(tup) == x)
         {
           neighbors.push_back(std::get<0>(tup));
         }
       }
+    }
+  }
+  else
+  {
+    for (auto& tup : Z)
+    {
+      neighbors.push_back(std::get<0>(tup));
     }
   }
 
@@ -487,7 +490,7 @@ void ChiSuGr::initialise_edges()
                         {5, {2, 4, 6}},
                         {6, {4, 5, 8}},
                         {8, {4, 6, 10}},
-                        {10, {8}}};
+                        {10, {8, 6, 5}}};
 
   edges[Chi::E::PAD] = {{0, {1}}, {1, {0, 2}}, {2, {1}}};
 
@@ -513,6 +516,7 @@ void CSuGr::initialise_edges()
                            {32, {16, 64}},
                            {64, {16, 32, 128}},
                            {128, {32, 64}}};
+
   edges[NonChi::E::NAW] = {{64, {16}}, {16, {64}}};
   edges[NonChi::E::GAL] = {
     {GroupAllocation::E::BYROW, {GroupAllocation::E::BYCOL, GroupAllocation::E::SUCOL}},
@@ -543,13 +547,12 @@ void CSuGr::initialise_edges()
 
   if (ptr_gg->m * ptr_gg->n <= 64 * 64)
   {
-    edges[NonChi::E::MAC] = {
-      {1, {4, 16,32, 64, 256}},
-      {4, {1, 16, 32, 64, 256}},
-      {16, {4, 32, 64, 256}},
-      {32, {4, 16, 64, 256}},
-      {64, {16, 32, 64, 256}},
-      {256, {32, 64}}};
+    edges[NonChi::E::MAC] = {{1, {4, 16, 32, 64, 256}},
+                             {4, {1, 16, 32, 64, 256}},
+                             {16, {4, 32, 64, 256}},
+                             {32, {4, 16, 64, 256}},
+                             {64, {16, 32, 64, 256}},
+                             {256, {32, 64}}};
   }
 
   edges[NonChi::E::SKW] = {
@@ -601,12 +604,9 @@ void CSuGr::refine_start_range()
   start_range[NonChi::E::ICE] = {1};
   start_range[NonChi::E::UFO] = {Binary::E::NO};
   start_range[NonChi::E::SZT] = {Binary::E::NO};
-  start_range[NonChi::E::AFI] = {Binary::E::YES};
-  start_range[NonChi::E::MIA] = {MicroAllocation::E::BYA};
 
   if ((ptr_gg->m) > 200 && (ptr_gg->n) > 200)
   {
-
     if (ptr_devinfo->wg_atom_size == 32)
     {
       start_range[NonChi::E::SKW] = {macgrid::skew0, macgrid::skew0 + 1};
@@ -767,7 +767,8 @@ HyPas Graph::get_random_valid_start() const
   }
   else
   {
-    mowri << "#trials to find viable hp in graph : " << iter << " (" << 1000*timer.get_elapsed() << " [ms]) " << Endl;
+    mowri << "#trials to find viable hp in graph : " << iter << " (" << 1000 * timer.get_elapsed()
+          << " [ms]) " << Endl;
   }
   return hp0;
 }
