@@ -24,7 +24,7 @@
 #include <miopengemm/outputwriter.hpp>
 #include <miopengemm/redirection.hpp>
 #include <miopengemm/setabcw.hpp>
-#include <miopengemm/slowcpugemm.hpp>
+#include <miopengemm/cpugemm.hpp>
 #include <miopengemm/stringutilbase.hpp>
 
 namespace MIOpenGEMM
@@ -261,14 +261,14 @@ void Diva<TFl>::accuracy_test(const HyPas& hp, const TFl* c_true_for_test)
     c_for_cpu_compute.resize(mem_size[Mem::E::C] / sizeof(TFl));
     std::memcpy(c_for_cpu_compute.data(), cpu_mem[Mat::E::C], mem_size[Mem::E::C]);
 
-    slowcpugemm::gemms_cpu<TFl>(gg,
+    cpugemm::gemm<TFl>(gg,
                                 toff,
                                 cpu_mem[Mat::E::A],
                                 cpu_mem[Mat::E::B],
                                 c_for_cpu_compute.data(),
                                 Floating::default_alpha,
                                 Floating::default_beta,
-                                {"3fors"},
+                      
                                 mowri);
 
     c_true_for_test = c_for_cpu_compute.data();

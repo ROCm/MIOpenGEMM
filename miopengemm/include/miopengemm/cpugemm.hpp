@@ -11,18 +11,17 @@
 
 namespace MIOpenGEMM
 {
-namespace slowcpugemm
+namespace cpugemm
 {
 
 template <typename TFloat>
-void gemms_cpu(Geometry                 gg,
+void  gemm(Geometry                 gg,
                Offsets                  toff,
                const TFloat*            a,
                const TFloat*            b,
                TFloat*                  c,
                TFloat                   alpha,
                TFloat                   beta,
-               std::vector<std::string> algs,
                owrite::Writer&          mowri);
 }
 }

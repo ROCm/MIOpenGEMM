@@ -23,7 +23,7 @@
 #include <miopengemm/outputwriter.hpp>
 #include <miopengemm/redirection.hpp>
 #include <miopengemm/setabcw.hpp>
-#include <miopengemm/slowcpugemm.hpp>
+#include <miopengemm/cpugemm.hpp>
 #include <miopengemm/stringutilbase.hpp>
 
 namespace MIOpenGEMM
