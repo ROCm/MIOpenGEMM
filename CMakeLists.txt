@@ -4,8 +4,24 @@
 
 cmake_minimum_required(VERSION 3.0)
 
+# Default installation path
+if(WIN32)
+    set(CMAKE_INSTALL_PREFIX "/opt/rocm/x86_64-w64-mingw32" CACHE PATH "Installation path")
+else()
+    set(CMAKE_INSTALL_PREFIX "/opt/rocm" CACHE PATH "Installation path")
+endif()
+
 project(miopengemm)
 
+find_package(ROCM REQUIRED PATHS /opt/rocm)
+
+include(ROCMInstallTargets)
+include(ROCMPackageConfigHelpers)
+include(ROCMSetupVersion)
+include(ROCMInstallSymlinks)
+include(ROCMCreatePackage)
+
+rocm_setup_version(VERSION 1.0.1)
 
 
 option(OPENBLAS "CPU GEMM accuracy tests with OpenBLAS, otherwise slow 3-for loops code" OFF)
@@ -26,7 +42,7 @@ endif()
 
 include(EnableCompilerWarnings)
 
-include_directories(./miopengemm/include)
 add_subdirectory(miopengemm)
 add_subdirectory(examples)
 add_subdirectory(tests)
+add_subdirectory(doc)
