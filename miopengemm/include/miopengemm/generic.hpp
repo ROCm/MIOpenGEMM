@@ -20,7 +20,8 @@ Solution get_default(cl_command_queue   command_queue,
                      const Geometry&    gg,
                      const Constraints& constraints,
                      owrite::Writer&    mowri,
-                     IfNoCache::E       enoc);
+                     IfNoCache::E       enoc, 
+                     size_t rank);
 }
 
 #endif

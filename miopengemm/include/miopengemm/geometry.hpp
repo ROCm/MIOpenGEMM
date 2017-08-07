@@ -69,7 +69,8 @@ class Geometry
   // 'f' : 32-bit single precision or 'd' : 64-bit double precision
   char floattype;
 
-  // (log k, log m - log n, log m + log n)
+
+  // log k ;  log m - log n ;  log m + log n  
   std::array<double, 3> metric_co;
 
   GeometryDerived derived;

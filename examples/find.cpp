@@ -14,7 +14,7 @@ int main()
 
 
 
-  Geometry       gg("tC0_tA0_tB1_colMaj1_m7680_n5481_k2560_lda7680_ldb5481_ldc7680_ws0_f32");
+  Geometry       gg("tC0_tA1_tB0_colMaj1_m5717_n5717_k5717_lda5717_ldb5717_ldc5717_ws0_f32");
   CLHint         devhint;
   Offsets        offsets = get_zero_offsets();
   owrite::Writer mowri(Ver::E::TERMINAL, "");

@@ -262,7 +262,7 @@ std::vector<int> get_priority()
   X[E::UNR] = 1;
   X[E::GAL] = 0;
   X[E::PUN] = 0;
-  X[E::ICE] = 0;
+  X[E::ICE] = 1;
   X[E::NAW] = 0;
   X[E::UFO] = 0;
   X[E::MAC] = 1;

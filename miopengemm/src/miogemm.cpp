@@ -41,7 +41,8 @@ Solution find(float            allotted_time,
   }
   else
   {
-    return get_default(command_queue, tgg, constraints, mowri, IfNoCache::E::GENERIC);
+    size_t rank = 0;
+    return get_default(command_queue, tgg, constraints, mowri, IfNoCache::E::GENERIC, rank);
   }
 }
 }

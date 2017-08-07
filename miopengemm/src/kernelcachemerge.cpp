@@ -83,7 +83,7 @@ void populate(const std::vector<CacheKey>& cache_keys,
     auto act_kcx = [&halt, &mowri, &ck, &prefix](
       const KernelCache& kcx, std::string frag, std::vector<double>& times, dev::Diva<TFl>& diva) {
       mowri.bw[OutPart::MER] << '<' << frag << Flush;
-      std::this_thread::sleep_for(std::chrono::milliseconds(120));
+      std::this_thread::sleep_for(std::chrono::milliseconds(20));
 
       auto        hp = kcx.at(ck, canonical::noswap);
       Derivabilty drvble(hp, ck.gg);
@@ -102,23 +102,28 @@ void populate(const std::vector<CacheKey>& cache_keys,
       times.push_back(zoo);
     };
 
-    for (auto kc1_first : get_thue_morse(11))
+    for (auto kc1_first : get_thue_morse(14))
     {
       if (kc1_first)
       {
         act_kcx(kc1, "1", times_kc1, diva1);
-        act_kcx(kc2, "2", times_kc2, diva2);
+        act_kcx(kc2, "2", times_kc2, diva1);
       }
       else
       {
-        act_kcx(kc2, "2", times_kc2, diva2);
+        act_kcx(kc2, "2", times_kc2, diva1);
         act_kcx(kc1, "1", times_kc1, diva1);
       }
       mowri.bw[OutPart::MER] << '|' << Flush;
 
       kc1_wins += (times_kc1.back() < times_kc2.back());
       kc2_wins += (times_kc2.back() < times_kc1.back());
+      
+      if (kc1_wins > kc2_wins + 5 || kc2_wins > kc1_wins + 5){
+        break;
+      }
     }
+    
     mowri.bw[OutPart::MER] << Endl;
     for (unsigned ri = 0; ri < times_kc1.size(); ++ri)
     {

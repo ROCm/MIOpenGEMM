@@ -396,8 +396,9 @@ Solution Jinx::find(const Constraints& constraints, const FindParams& fparms)
 
   if (fparms.hl_outer.max_time < 0.01)
   {
+    size_t rank = 0;
     mowri << "Time allotted to find is less that 0.01, so returning a default immediately.\n";
-    return get_default(command_queue, gg, constraints, mowri, IfNoCache::E::GENERIC);
+    return get_default(command_queue, gg, constraints, mowri, IfNoCache::E::GENERIC, rank);
   }
 
   address_check_valid_and_reliable();
@@ -406,18 +407,28 @@ Solution Jinx::find(const Constraints& constraints, const FindParams& fparms)
   ftrack.start();
   std::vector<Solution> v_solns;
 
+  bool warmstart = true;
+  size_t warmstart_rank = 0;
+  
+  
   while (!fparms.hl_outer.halt(ftrack.get_descents(), ftrack.get_elapsed()))
   {
-
     mowri << "\nEntering new descent. \n"
           << fparms.hl_outer.get_status(ftrack.get_descents(), ftrack.get_elapsed()) << '\n';
 
+    
+    warmstart = (ftrack.get_descents() < 2 || ftrack.get_descents() % 4 == 0) ? true : false;
+ 
     double allotted_sd = std::max(0.1, fparms.hl_outer.max_time - ftrack.get_elapsed());
 
     auto soln = single_descent_find(
-      allotted_sd, constraints, fparms.hl_core, ftrack, fparms.sumstat, ftrack.get_descents() == 0);
+      allotted_sd, constraints, fparms.hl_core, ftrack, fparms.sumstat, warmstart, warmstart_rank);
     v_solns.emplace_back(soln);
     ftrack.incr_descents();
+    
+    if (warmstart){
+      ++warmstart_rank;
+    }
   }
 
   double              best_gflops     = 0;
@@ -462,7 +473,8 @@ Solution Jinx::single_descent_find(double             allotted_time,
                                    const Halt&        core_halt,
                                    FindTracker&       ftrack,
                                    SummStat::E        sumstat,
-                                   bool               warmstart)
+                                   bool               warmstart,
+                                   size_t warmstart_rank)
 {
 
   // only considered an improvement if ratio new/old less than this
@@ -508,8 +520,8 @@ Solution Jinx::single_descent_find(double             allotted_time,
   }
   else
   {
-    mowri << "Warmstart requested. " << Flush;
-    auto soln     = get_default(command_queue, gg, constraints, mowri, IfNoCache::E::RANDOM);
+    mowri << "Warmstart requested [@ rank " << warmstart_rank << "]  " << Flush;
+    auto soln     = get_default(command_queue, gg, constraints, mowri, IfNoCache::E::RANDOM, warmstart_rank);
     warm_start_hp = soln.hypas;
     hyper_front   = {warm_start_hp};
   }

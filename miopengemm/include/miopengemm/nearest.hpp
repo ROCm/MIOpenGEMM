@@ -15,11 +15,11 @@ namespace nearest
 // for all CacheKeys, ck, in the KernelCache, which have
 // (1) at(ck) with ck_in.gg is derivable.
 // (2) at(ck) is in graph,
-// is the one closest to ck_in within radius threshold?
-bool is_within(const CacheKey& ck_in, const Graph&, const KernelCache&, double threshold);
+// is the {rank} closest to ck_in within radius threshold? rank = 0 for closest
+bool is_within(const CacheKey& ck_in, const Graph&, const KernelCache&, double threshold, size_t rank);
 
-// of all the CacheKeys in the KernelCache, return the nearest satisfying (1) and (2) above.
-CacheKey get(const CacheKey&, const Graph&, const KernelCache&);
+// of all the CacheKeys in the KernelCache, return the {rank} nearest satisfying (1) and (2) above.
+CacheKey get(const CacheKey&, const Graph&, const KernelCache&, size_t rank);
 }
 }
 

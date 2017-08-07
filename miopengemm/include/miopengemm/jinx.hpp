@@ -117,7 +117,8 @@ class Jinx
                                const Halt&  core_hl,
                                FindTracker& ftrack,
                                SummStat::E  sumstat,
-                               bool         warmstart);
+                               bool         warmstart,
+                               size_t       warmstart_rank);
 
   oclutil::Result
   true_core(std::function<void(std::string)> acton, std::vector<double>& times, const Halt& hl);
