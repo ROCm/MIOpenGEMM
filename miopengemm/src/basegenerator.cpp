@@ -131,7 +131,8 @@ std::string BaseGenerator::get_time_string()
 
   std::string time_stamp_string = ss.str();
 
-  return "// (no longer including time-stamp here to ease string comparison) ";
+  //return "// (no longer including time-stamp here to ease string comparison) ";
+  return "";
   return stringutil::get_star_wrapped(time_stamp_string.substr(0, time_stamp_string.size() - 1));
 }
 

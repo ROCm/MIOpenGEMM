@@ -226,13 +226,13 @@ int main()
   checkstatus(ret, "clSetKernelArg");
 )";
   
-  ss << "  float alpha = " << Floating::default_alpha << ";";
+  ss << "  float alpha = " << std::setprecision(20) << Floating::default_alpha << ";";
   ss << R"(
   ret = clSetKernelArg(kernel, 6, sizeof(float), &alpha);
   checkstatus(ret, "clSetKernelArg");
 )";
 
-  ss << "  float beta = " << Floating::default_beta << ";";
+  ss << "  float beta = " << std::setprecision(20) <<  Floating::default_beta << ";";
   ss << R"(
   ret = clSetKernelArg(kernel, 7, sizeof(float), &beta);
   checkstatus(ret, "clSetKernelArg");
@@ -285,15 +285,15 @@ int main()
 
 )";
 
- ss<< "  // (precomputed in standalone.cpp)\n " ;
- ss<< "  float sum_final_cpu = " << std::setprecision(25) << sum_final_cpu << ";\n";
+ ss<< "  // (precomputed in standalone.cpp using 3-for loops (not OpenBLAS))\n " ;
+ ss<< "  float sum_final_cpu = " << std::setprecision(20) << sum_final_cpu << ";\n";
  ss<< "  float error = sum_final_cpu - sum_final;\n";
  
  ss << R"(
   
-  std::cout << "sum of initial c = " << std::setprecision(25) << sum_init << std::endl;
-  std::cout << "sum of final c  gpu = " << std::setprecision(25) << sum_final << std::endl;
-  std::cout << "sum of final on cpu = " <<  )" << sum_final_cpu << R"(  << std::endl; 
+  std::cout << "sum of initial c = " << std::setprecision(20) << sum_init << std::endl;
+  std::cout << "sum of final c  gpu = " << std::setprecision(20) << sum_final << std::endl;
+  std::cout << "sum of final on cpu = " <<  )" << std::setprecision(20) << sum_final_cpu << R"(  << std::endl; 
   std::cout << "(cpu - gpu )/cpu = " <<  std::setprecision(10) <<  error << std::endl; 
 
    

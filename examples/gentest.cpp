@@ -61,20 +61,45 @@ int main()
 
 
   owrite::Writer mowri(Ver::E::TERMINAL, "");
-  
-  
-  for (size_t casi : {9}){ 
-    Geometry gg = std::get<0>(freeze[casi]);
-    HyPas hp = std::get<1>(freeze[casi]);
-    auto standalone_source = standalone::make(gg, hp, mowri);
-    auto fname = "/home/james/miopengemm/MIOpenGEMM/tests/case" + std::to_string(casi) + ".cpp";
-    mowri << "writing " << fname << " ... " << Flush;
-    std::ofstream floper(fname, std::ios::out);
-    floper << standalone_source;
-    floper.close();
-    mowri << "done." << Endl;
-  }
 
+  
+
+  // hangs :  
+  Geometry gg("tC0_tA0_tB1_colMaj1_m127_n127_k127_lda127_ldb127_ldc127_ws0_f32");
+  HyPas hp("A_MIC1_PAD2_PLU0_LIW0_MIW0_WOS0_VEW1__B_MIC4_PAD1_PLU0_LIW1_MIW0_WOS0_VEW2__C_UNR64_GAL3_PUN1_ICE1_IWI0_SZT0_NAW16_UFO0_MAC64_SKW9_AFI1_MIA0");
+  auto standalone_source = standalone::make(gg, hp, mowri);
+  auto fname = "/home/james/MIOpenGEMM/tests/hangs1.cpp";
+  mowri << "writing " << fname << " ... " << Flush;
+  std::ofstream floper(fname, std::ios::out);
+  floper << standalone_source;
+  floper.close();
+  mowri << "done." << Endl;
+
+
+  // incorrect : 
+  gg = Geometry("tC0_tA1_tB0_colMaj0_m2048_n121_k1_lda2048_ldb121_ldc121_ws0_f32");
+  hp = HyPas("A_MIC1_PAD0_PLU0_LIW0_MIW1_WOS0_VEW1__B_MIC1_PAD0_PLU1_LIW0_MIW0_WOS0_VEW1__C_UNR32_GAL2_PUN0_ICE1_IWI1_SZT0_NAW16_UFO0_MAC64_SKW10_AFI1_MIA0");
+  standalone_source = standalone::make(gg, hp, mowri);
+  fname = "/home/james/MIOpenGEMM/tests/incorrect1.cpp";
+  mowri << "writing " << fname << " ... " << Flush;
+  floper = std::ofstream(fname, std::ios::out);
+  floper << standalone_source;
+  floper.close();
+  mowri << "done." << Endl;
+
+  // incorrect : 
+  gg = Geometry("tC0_tA0_tB0_colMaj1_m256_n256_k256_lda256_ldb256_ldc256_ws0_f32");
+  hp = HyPas("A_MIC4_PAD1_PLU0_LIW0_MIW1_WOS0_VEW1__B_MIC4_PAD1_PLU1_LIW0_MIW0_WOS0_VEW1__C_UNR16_GAL1_PUN0_ICE1_IWI1_SZT0_NAW16_UFO0_MAC64_SKW10_AFI1_MIA0");
+  standalone_source = standalone::make(gg, hp, mowri);
+  fname = "/home/james/MIOpenGEMM/tests/epsilonoff1.cpp";
+  mowri << "writing " << fname << " ... " << Flush;
+  floper = std::ofstream(fname, std::ios::out);
+  floper << standalone_source;
+  floper.close();
+  mowri << "done." << Endl;
+
+
+  
 
   return 0;
 }

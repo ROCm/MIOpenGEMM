@@ -24,4 +24,6 @@ endfunction(add_test_executable)
 
 
 add_test_executable(smallgeometrytests smallgeometrytests.cpp)
-add_test_executable(case9 case9.cpp)
+add_test_executable(hangs1 hangs1.cpp)
+add_test_executable(incorrect1 incorrect1.cpp)
+add_test_executable(epsilonoff1 epsilonoff1.cpp)

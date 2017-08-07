@@ -7,7 +7,7 @@
 MIOpenGEMM::KernelCache get_kernel_cache2()
 {
   MIOpenGEMM::KernelCache kc;
-  #include "/home/james/test44/cacheentries.txt"
+  //#include "/home/james/test44/cacheentries.txt"
   return kc;
 }
 
