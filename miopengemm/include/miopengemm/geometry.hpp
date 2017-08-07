@@ -69,8 +69,7 @@ class Geometry
   // 'f' : 32-bit single precision or 'd' : 64-bit double precision
   char floattype;
 
-
-  // log k ;  log m - log n ;  log m + log n  
+  // log k ;  log m - log n ;  log m + log n
   std::array<double, 3> metric_co;
 
   GeometryDerived derived;
@@ -173,9 +172,8 @@ Geometry get_tight_geometry(
 template <typename TFloat>
 Geometry get_squareNN_geometry(size_t m)
 {
-  return get_geometry_from_padding<TFloat>(true, false, false, false, m,m,m , 0, 0, 0, 0);
+  return get_geometry_from_padding<TFloat>(true, false, false, false, m, m, m, 0, 0, 0, 0);
 }
-
 
 size_t get_mat_size(const Geometry& gg, const Offsets& toff, Mat::E emat);
 size_t get_mat_memsize(const Geometry& gg, const Offsets& toff, Mat::E emat);

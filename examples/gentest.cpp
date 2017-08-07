@@ -87,19 +87,6 @@ int main()
   floper.close();
   mowri << "done." << Endl;
 
-  // incorrect : 
-  gg = Geometry("tC0_tA0_tB0_colMaj1_m256_n256_k256_lda256_ldb256_ldc256_ws0_f32");
-  hp = HyPas("A_MIC4_PAD1_PLU0_LIW0_MIW1_WOS0_VEW1__B_MIC4_PAD1_PLU1_LIW0_MIW0_WOS0_VEW1__C_UNR16_GAL1_PUN0_ICE1_IWI1_SZT0_NAW16_UFO0_MAC64_SKW10_AFI1_MIA0");
-  standalone_source = standalone::make(gg, hp, mowri);
-  fname = "/home/james/MIOpenGEMM/tests/epsilonoff1.cpp";
-  mowri << "writing " << fname << " ... " << Flush;
-  floper = std::ofstream(fname, std::ios::out);
-  floper << standalone_source;
-  floper.close();
-  mowri << "done." << Endl;
-
-
-  
 
   return 0;
 }

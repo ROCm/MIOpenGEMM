@@ -15,14 +15,14 @@ namespace cpugemm
 {
 
 template <typename TFloat>
-void  gemm(Geometry                 gg,
-               Offsets                  toff,
-               const TFloat*            a,
-               const TFloat*            b,
-               TFloat*                  c,
-               TFloat                   alpha,
-               TFloat                   beta,
-               owrite::Writer&          mowri);
+void gemm(Geometry        gg,
+          Offsets         toff,
+          const TFloat*   a,
+          const TFloat*   b,
+          TFloat*         c,
+          TFloat          alpha,
+          TFloat          beta,
+          owrite::Writer& mowri);
 }
 }
 

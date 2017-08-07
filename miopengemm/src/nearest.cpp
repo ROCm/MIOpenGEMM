@@ -2,15 +2,16 @@
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 
-#include <miopengemm/nearest.hpp>
 #include <algorithm>
+#include <miopengemm/nearest.hpp>
 
 namespace MIOpenGEMM
 {
 namespace nearest
 {
 
-bool is_within(const CacheKey& ck, const Graph& graph, const KernelCache& kc, double threshold, size_t rank)
+bool is_within(
+  const CacheKey& ck, const Graph& graph, const KernelCache& kc, double threshold, size_t rank)
 {
   size_t count = 0;
   for (auto& key : kc.get_keys())
@@ -19,14 +20,14 @@ bool is_within(const CacheKey& ck, const Graph& graph, const KernelCache& kc, do
         Derivabilty(kc.at(key), ck.gg).is_derivable)
     {
       ++count;
-      if (count > rank){
+      if (count > rank)
+      {
         return true;
       }
     }
   }
   return false;
 }
-
 
 // rank = 0 for nearest, 1 for second nearest etc.
 CacheKey get(const CacheKey& ck, const Graph& graph, const KernelCache& kc, size_t rank)
@@ -42,45 +43,47 @@ CacheKey get(const CacheKey& ck, const Graph& graph, const KernelCache& kc, size
   {
     throw miog_error("No cache keys. Possibly not included in kernelcache.cpp, very strange");
   }
-  
+
   using dst_tup = std::tuple<double, size_t>;
   std::vector<dst_tup> v_di;
-  
+
   for (size_t keyi = 0; keyi < cache_keys.size(); ++keyi)
   {
-    auto key = cache_keys[keyi];
+    auto key      = cache_keys[keyi];
     auto distance = ck.get_distance(key);
-    //if (distance == 0){
-      //std::cout << "\n***\n";
+    // if (distance == 0){
+    // std::cout << "\n***\n";
     //}
-    //if (ck.gg == key.gg){
-      //std::cout << "\n+++\n";
-      //std::cout << ck.constraints.get_string() << std::endl;
-      //std::cout << key.constraints.get_string() << std::endl;
-      //std::cout << distance << std::endl;
+    // if (ck.gg == key.gg){
+    // std::cout << "\n+++\n";
+    // std::cout << ck.constraints.get_string() << std::endl;
+    // std::cout << key.constraints.get_string() << std::endl;
+    // std::cout << distance << std::endl;
     //}
-      
+
     auto hp = kc.at(key);
     if (graph.contains(kc.at(key)) && Derivabilty(hp, ck.gg).is_derivable)
     {
       v_di.emplace_back(std::make_tuple(distance, keyi));
     }
   }
-    
-  if (rank >= v_di.size()){
+
+  if (rank >= v_di.size())
+  {
     throw miog_error("rank too large in get, too few candidates. Use is_within to check");
   }
-  
-  
-  std::nth_element(v_di.begin(), v_di.begin() + rank, v_di.end(), [](const dst_tup & a, const dst_tup & b) { return std::get<0>(a) < std::get<0>(b); }) ;
 
+  std::nth_element(
+    v_di.begin(), v_di.begin() + rank, v_di.end(), [](const dst_tup& a, const dst_tup& b) {
+      return std::get<0>(a) < std::get<0>(b);
+    });
 
-  //std::cout << "\n\n\n" << rank << std::endl;
-  //for (auto & x : v_di){
-    //std::cout << std::get<0>(x) << "   " << std::get<1>(x) << std::endl;
+  // std::cout << "\n\n\n" << rank << std::endl;
+  // for (auto & x : v_di){
+  // std::cout << std::get<0>(x) << "   " << std::get<1>(x) << std::endl;
   //}
 
-  //throw miog_error("check sort correct in nearest");
+  // throw miog_error("check sort correct in nearest");
 
   auto nearest_derivable = cache_keys[std::get<1>(v_di[rank])];
 
@@ -90,13 +93,8 @@ CacheKey get(const CacheKey& ck, const Graph& graph, const KernelCache& kc, size
   {
     throw miog_error("internal logic error : nearest is not derivable. msg : " + drvble.msg);
   }
-  
-  
-  
-  return nearest_derivable;
-  
-  
 
+  return nearest_derivable;
 }
 }
 }

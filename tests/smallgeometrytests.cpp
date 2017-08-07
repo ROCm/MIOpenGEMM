@@ -26,8 +26,8 @@ int main()
 {
   using namespace MIOpenGEMM;
 
-  size_t m              = 45;
-  size_t k              = 39;
+  size_t m              = 83;
+  size_t k              = 157;
   size_t testi          = 0;
   size_t workspace_size = 1000 * 1000;
 
@@ -49,9 +49,12 @@ int main()
             std::cout << "<float>  " << gg.get_string() << '\n';
             geometrytest<float>(gg);
 
-            gg = get_padded_geometry<double>(isColMajor, tA, tB, tC, m, n, k, workspace_size);
-            std::cout << "\n\n<double>  " << gg.get_string() << '\n';
-            geometrytest<double>(gg);
+            bool dodoub = false;
+            if (dodoub){
+              gg = get_padded_geometry<double>(isColMajor, tA, tB, tC, m, n, k, workspace_size);
+              std::cout << "\n\n<double>  " << gg.get_string() << '\n';
+              geometrytest<double>(gg);
+            }
           }
         }
       }

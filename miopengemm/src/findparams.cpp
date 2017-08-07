@@ -133,5 +133,4 @@ FindParams get_at_least_n_restarts(size_t restarts)
   SummStat::E sumstat = SummStat::E::MAX;
   return FindParams(descents, time_outer, per_kernel, time_core, sumstat);
 }
-
 }

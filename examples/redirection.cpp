@@ -24,7 +24,7 @@ struct ExampleGeometry
   ExampleGeometry(const ExampleGeometry& eg) = default;
 };
 
-// Convert to RowMajor, not TT, m > n
+// Convert to column major, tC = false
 int main()
 {
 

@@ -1,21 +1,23 @@
 /*******************************************************************************
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
-#include <sstream>
 #include <algorithm>
-#include <miopengemm/outputwriter.hpp>
-#include <miopengemm/hyperparams.hpp>
-#include <miopengemm/derivedparams.hpp>
-#include <miopengemm/geometry.hpp>
+#include <iomanip>
+#include <sstream>
 #include <miopengemm/bundle.hpp>
 #include <miopengemm/cpugemm.hpp>
-#include <iomanip>
+#include <miopengemm/derivedparams.hpp>
+#include <miopengemm/geometry.hpp>
+#include <miopengemm/hyperparams.hpp>
+#include <miopengemm/outputwriter.hpp>
 
-namespace MIOpenGEMM{
-namespace standalone{
-  
-  
-std::string make(const Geometry & gg, const HyPas & hp, owrite::Writer & mowri){
+namespace MIOpenGEMM
+{
+namespace standalone
+{
+
+std::string make(const Geometry& gg, const HyPas& hp, owrite::Writer& mowri)
+{
 
   Offsets toff = get_zero_offsets();
 
@@ -24,44 +26,44 @@ std::string make(const Geometry & gg, const HyPas & hp, owrite::Writer & mowri){
   {
     throw miog_error("Non-derivable in standalone::make : " + dblt.msg);
   }
-  
+
   kerngen::Bundle bundle(hp, gg, mowri);
-  
-  if (bundle.v_tgks.size() != 1){
+
+  if (bundle.v_tgks.size() != 1)
+  {
     throw miog_error("Currently standalone::make only supports 1 kernel.");
   }
-  
-  
+
   std::array<size_t, Mat::E::N> n_elms;
-  for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C}){
+  for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C})
+  {
     n_elms[emat] = get_mat_size(gg, toff, emat);
   }
 
+  // we obtain the correct value
 
-  // we obtain the correct value 
-
-  srand(1011);  
+  srand(1011);
   std::array<std::vector<float>, Mat::E::N> vals;
-  for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C}){
+  for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C})
+  {
     vals[emat].resize(n_elms[emat]);
-    for (auto & x : vals[emat]){ 
+    for (auto& x : vals[emat])
+    {
       x = 1. - 2. * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
     }
   }
-  
+
   cpugemm::gemm<float>(gg,
-               toff,
-               vals[Mat::E::A].data(),
-               vals[Mat::E::B].data(),
-               vals[Mat::E::C].data(),
-               Floating::default_alpha,
-               Floating::default_beta,
-               mowri);
+                       toff,
+                       vals[Mat::E::A].data(),
+                       vals[Mat::E::B].data(),
+                       vals[Mat::E::C].data(),
+                       Floating::default_alpha,
+                       Floating::default_beta,
+                       mowri);
 
-  float sum_final_cpu  = std::accumulate(vals[Mat::E::C].begin(), vals[Mat::E::C].end(), 0.f);
+  float sum_final_cpu = std::accumulate(vals[Mat::E::C].begin(), vals[Mat::E::C].end(), 0.f);
 
-  
-  
   std::stringstream ss;
   ss << R"(/*******************************************************************************
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
@@ -72,15 +74,15 @@ std::string make(const Geometry & gg, const HyPas & hp, owrite::Writer & mowri){
 
   ss << "// geometry : " << gg.get_string() << '\n';
   ss << "// hyperparams : " << hp.get_string() << '\n';
-  
+
   ss << R"( 
 
 #include <CL/cl.h>
 #include <chrono>
-#include <iostream>
-#include <vector>
-#include <numeric>
 #include <iomanip>
+#include <iostream>
+#include <numeric>
+#include <vector>
 
 // print when not CL_SUCCESS
 void checkstatus(cl_int x, std::string where)
@@ -95,10 +97,10 @@ int main()
 { 
 )";
 
-  for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C}){
+  for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C})
+  {
     ss << "  size_t " << Mat::M.lcase_name[emat] << "_n_elms = " << n_elms[emat] << ';' << '\n';
   }
-
 
   ss << R"(
 
@@ -140,9 +142,10 @@ int main()
   
 )";
 
-
-  for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C}){
-    ss << "  size_t " << Mat::M.lcase_name[emat] << "_offset = " << toff.offsets[emat] << ';' << '\n';
+  for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C})
+  {
+    ss << "  size_t " << Mat::M.lcase_name[emat] << "_offset = " << toff.offsets[emat] << ';'
+       << '\n';
   }
 
   ss << R"(
@@ -173,14 +176,18 @@ int main()
   )";
 
   ss << "  // create and write to buffers \n";
-  for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C}){
-    ss << "  memobj_" << Mat::M.lcase_name[emat]  << " = clCreateBuffer(context, CL_MEM_READ_WRITE, " << Mat::M.lcase_name[emat] << "_n_elms  * sizeof(float), nullptr, &ret);\n";
+  for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C})
+  {
+    ss << "  memobj_" << Mat::M.lcase_name[emat] << " = clCreateBuffer(context, CL_MEM_READ_WRITE, "
+       << Mat::M.lcase_name[emat] << "_n_elms  * sizeof(float), nullptr, &ret);\n";
     ss << "  checkstatus(ret, \"clCreateBuffer\");\n";
     ss << "  ret = clEnqueueWriteBuffer(\n";
-    ss << "  command_queue, memobj_" <<  Mat::M.lcase_name[emat] << ", CL_TRUE, 0, " << Mat::M.lcase_name[emat] << "_n_elms * sizeof(float), " << Mat::M.lcase_name[emat] << "_init.data(), 0, nullptr, nullptr);\n";
+    ss << "  command_queue, memobj_" << Mat::M.lcase_name[emat] << ", CL_TRUE, 0, "
+       << Mat::M.lcase_name[emat] << "_n_elms * sizeof(float), " << Mat::M.lcase_name[emat]
+       << "_init.data(), 0, nullptr, nullptr);\n";
     ss << "  checkstatus(ret, \"clEnqueueWriteBuffer\");\n\n";
   }
-  
+
   ss << R"(
 
   /* Create Kernel program from the read in source */
@@ -225,25 +232,22 @@ int main()
   ret = clSetKernelArg(kernel, 5, sizeof(size_t), &c_offset);
   checkstatus(ret, "clSetKernelArg");
 )";
-  
+
   ss << "  float alpha = " << std::setprecision(20) << Floating::default_alpha << ";";
   ss << R"(
   ret = clSetKernelArg(kernel, 6, sizeof(float), &alpha);
   checkstatus(ret, "clSetKernelArg");
 )";
 
-  ss << "  float beta = " << std::setprecision(20) <<  Floating::default_beta << ";";
+  ss << "  float beta = " << std::setprecision(20) << Floating::default_beta << ";";
   ss << R"(
   ret = clSetKernelArg(kernel, 7, sizeof(float), &beta);
   checkstatus(ret, "clSetKernelArg");
 )";
 
-  
+  ss << "  size_t local_work_size = " << bundle.v_tgks[0].local_work_size << ";\n";
+  ss << "  size_t global_work_size = " << bundle.v_tgks[0].global_work_size << ";\n";
 
-
-  ss <<  "  size_t local_work_size = " << bundle.v_tgks[0].local_work_size << ";\n";
-  ss <<  "  size_t global_work_size = " << bundle.v_tgks[0].global_work_size << ";\n";
-  
   ss << R"(
   
   auto start = std::chrono::high_resolution_clock::now();
@@ -285,15 +289,16 @@ int main()
 
 )";
 
- ss<< "  // (precomputed in standalone.cpp using 3-for loops (not OpenBLAS))\n " ;
- ss<< "  float sum_final_cpu = " << std::setprecision(20) << sum_final_cpu << ";\n";
- ss<< "  float error = sum_final_cpu - sum_final;\n";
- 
- ss << R"(
+  ss << "  // (precomputed in standalone.cpp using 3-for loops (not OpenBLAS))\n ";
+  ss << "  float sum_final_cpu = " << std::setprecision(20) << sum_final_cpu << ";\n";
+  ss << "  float error = sum_final_cpu - sum_final;\n";
+
+  ss << R"(
   
   std::cout << "sum of initial c = " << std::setprecision(20) << sum_init << std::endl;
   std::cout << "sum of final c  gpu = " << std::setprecision(20) << sum_final << std::endl;
-  std::cout << "sum of final on cpu = " <<  )" << std::setprecision(20) << sum_final_cpu << R"(  << std::endl; 
+  std::cout << "sum of final on cpu = " <<  )"
+     << std::setprecision(20) << sum_final_cpu << R"(  << std::endl; 
   std::cout << "(cpu - gpu )/cpu = " <<  std::setprecision(10) <<  error << std::endl; 
 
    
@@ -326,7 +331,5 @@ int main()
 
   return ss.str();
 }
-
 }
 }
-

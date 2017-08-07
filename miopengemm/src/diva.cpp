@@ -14,6 +14,7 @@
 #include <time.h>
 #include <vector>
 #include <miopengemm/accuracytests.hpp>
+#include <miopengemm/cpugemm.hpp>
 #include <miopengemm/devmiogemm.hpp>
 #include <miopengemm/error.hpp>
 #include <miopengemm/floattostring.hpp>
@@ -24,7 +25,6 @@
 #include <miopengemm/outputwriter.hpp>
 #include <miopengemm/redirection.hpp>
 #include <miopengemm/setabcw.hpp>
-#include <miopengemm/cpugemm.hpp>
 #include <miopengemm/stringutilbase.hpp>
 
 namespace MIOpenGEMM
@@ -262,14 +262,14 @@ void Diva<TFl>::accuracy_test(const HyPas& hp, const TFl* c_true_for_test)
     std::memcpy(c_for_cpu_compute.data(), cpu_mem[Mat::E::C], mem_size[Mem::E::C]);
 
     cpugemm::gemm<TFl>(gg,
-                                toff,
-                                cpu_mem[Mat::E::A],
-                                cpu_mem[Mat::E::B],
-                                c_for_cpu_compute.data(),
-                                Floating::default_alpha,
-                                Floating::default_beta,
-                      
-                                mowri);
+                       toff,
+                       cpu_mem[Mat::E::A],
+                       cpu_mem[Mat::E::B],
+                       c_for_cpu_compute.data(),
+                       Floating::default_alpha,
+                       Floating::default_beta,
+
+                       mowri);
 
     c_true_for_test = c_for_cpu_compute.data();
   }

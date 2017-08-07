@@ -14,6 +14,7 @@
 #include <time.h>
 #include <vector>
 #include <miopengemm/accuracytests.hpp>
+#include <miopengemm/cpugemm.hpp>
 #include <miopengemm/devmiogemm.hpp>
 #include <miopengemm/error.hpp>
 #include <miopengemm/floattostring.hpp>
@@ -23,7 +24,6 @@
 #include <miopengemm/outputwriter.hpp>
 #include <miopengemm/redirection.hpp>
 #include <miopengemm/setabcw.hpp>
-#include <miopengemm/cpugemm.hpp>
 #include <miopengemm/stringutilbase.hpp>
 
 namespace MIOpenGEMM

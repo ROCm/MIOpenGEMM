@@ -64,8 +64,6 @@ class KernelCache
   std::vector<CacheKey> get_keys() const;
 
   std::string get_cache_entry_string(const CacheKey& ck) const;
-
-
 };
 
 void filter_device(std::vector<CacheKey>&, const std::vector<std::string>& device_frags);

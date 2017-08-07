@@ -404,16 +404,18 @@ double Geometry::get_distance(const Geometry& g2) const
   {
     distance += std::abs(metric_co[i] - g2.metric_co[i]);
   }
-  for (size_t x : {2,4}){
-    distance += 0.25* ((ldX[Mat::E::A]%x == 0) != (g2.ldX[Mat::E::A]%x == 0));
-    distance += 0.25* ((ldX[Mat::E::B]%x == 0) != (g2.ldX[Mat::E::B]%x == 0));
-    distance += 0.25* ((ldX[Mat::E::C]%x == 0) != (g2.ldX[Mat::E::C]%x == 0));
+  for (size_t x : {2, 4})
+  {
+    distance += 0.25 * ((ldX[Mat::E::A] % x == 0) != (g2.ldX[Mat::E::A] % x == 0));
+    distance += 0.25 * ((ldX[Mat::E::B] % x == 0) != (g2.ldX[Mat::E::B] % x == 0));
+    distance += 0.25 * ((ldX[Mat::E::C] % x == 0) != (g2.ldX[Mat::E::C] % x == 0));
   }
-  
-  for (size_t x : {256, 1024}){
-    distance += 0.25* ((ldX[Mat::E::A]%x < 5) != (g2.ldX[Mat::E::A]%x < 5));
-    distance += 0.25* ((ldX[Mat::E::B]%x < 5) != (g2.ldX[Mat::E::B]%x < 5));
-    distance += 0.25* ((ldX[Mat::E::C]%x < 5) != (g2.ldX[Mat::E::C]%x < 5));
+
+  for (size_t x : {256, 1024})
+  {
+    distance += 0.25 * ((ldX[Mat::E::A] % x < 5) != (g2.ldX[Mat::E::A] % x < 5));
+    distance += 0.25 * ((ldX[Mat::E::B] % x < 5) != (g2.ldX[Mat::E::B] % x < 5));
+    distance += 0.25 * ((ldX[Mat::E::C] % x < 5) != (g2.ldX[Mat::E::C] % x < 5));
   }
 
   return distance;

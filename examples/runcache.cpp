@@ -169,7 +169,6 @@ int main(int argc, char* argv[])
   std::stringstream hss;
   hss << "\n\n ";
   std::map<char, std::vector<std::string>> filters;
-  //std::set<char> keys;
   for (auto & x : args){
     hss << '-' << x.first << " : " << x.second << '\n'; 
     hss << "options : ";
@@ -178,7 +177,6 @@ int main(int argc, char* argv[])
     }
     hss << "\ndefault :  " << defaults[x.first] << "\n\n";
     filters[x.first] = {};
-    //set.insert(x);
   }
   hss << "\nexamples:\n";
   hss << "`runcache -g d -d a -w b`\n";

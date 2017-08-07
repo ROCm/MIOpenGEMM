@@ -118,12 +118,13 @@ void populate(const std::vector<CacheKey>& cache_keys,
 
       kc1_wins += (times_kc1.back() < times_kc2.back());
       kc2_wins += (times_kc2.back() < times_kc1.back());
-      
-      if (kc1_wins > kc2_wins + 5 || kc2_wins > kc1_wins + 5){
+
+      if (kc1_wins > kc2_wins + 5 || kc2_wins > kc1_wins + 5)
+      {
         break;
       }
     }
-    
+
     mowri.bw[OutPart::MER] << Endl;
     for (unsigned ri = 0; ri < times_kc1.size(); ++ri)
     {

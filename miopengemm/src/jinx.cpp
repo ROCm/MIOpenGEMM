@@ -407,26 +407,25 @@ Solution Jinx::find(const Constraints& constraints, const FindParams& fparms)
   ftrack.start();
   std::vector<Solution> v_solns;
 
-  bool warmstart = true;
+  bool   warmstart      = true;
   size_t warmstart_rank = 0;
-  
-  
+
   while (!fparms.hl_outer.halt(ftrack.get_descents(), ftrack.get_elapsed()))
   {
     mowri << "\nEntering new descent. \n"
           << fparms.hl_outer.get_status(ftrack.get_descents(), ftrack.get_elapsed()) << '\n';
 
-    
     warmstart = (ftrack.get_descents() < 2 || ftrack.get_descents() % 4 == 0) ? true : false;
- 
+
     double allotted_sd = std::max(0.1, fparms.hl_outer.max_time - ftrack.get_elapsed());
 
     auto soln = single_descent_find(
       allotted_sd, constraints, fparms.hl_core, ftrack, fparms.sumstat, warmstart, warmstart_rank);
     v_solns.emplace_back(soln);
     ftrack.incr_descents();
-    
-    if (warmstart){
+
+    if (warmstart)
+    {
       ++warmstart_rank;
     }
   }
@@ -474,7 +473,7 @@ Solution Jinx::single_descent_find(double             allotted_time,
                                    FindTracker&       ftrack,
                                    SummStat::E        sumstat,
                                    bool               warmstart,
-                                   size_t warmstart_rank)
+                                   size_t             warmstart_rank)
 {
 
   // only considered an improvement if ratio new/old less than this
@@ -521,7 +520,8 @@ Solution Jinx::single_descent_find(double             allotted_time,
   else
   {
     mowri << "Warmstart requested [@ rank " << warmstart_rank << "]  " << Flush;
-    auto soln     = get_default(command_queue, gg, constraints, mowri, IfNoCache::E::RANDOM, warmstart_rank);
+    auto soln =
+      get_default(command_queue, gg, constraints, mowri, IfNoCache::E::RANDOM, warmstart_rank);
     warm_start_hp = soln.hypas;
     hyper_front   = {warm_start_hp};
   }

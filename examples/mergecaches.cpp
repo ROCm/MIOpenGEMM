@@ -11,9 +11,6 @@ MIOpenGEMM::KernelCache get_kernel_cache2()
   return kc;
 }
 
-
-
-
 int main()
 {
   using namespace MIOpenGEMM;  
@@ -26,7 +23,6 @@ int main()
   auto kcn = get_merged(kernel_cache, kernel_cache2, halt, mowri);
   std::ofstream floper("/home/james/test44/merged_cache44.txt", std::ios::out);    
   for (auto & ck : kcn.get_keys()){
-    //std::cout << ck.get_string() << std::endl;
     floper << '\n' << kcn.get_cache_entry_string(ck);
   }
   floper.close();
