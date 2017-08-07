@@ -12,7 +12,14 @@ int main()
   srand(time(NULL));
 
   using namespace MIOpenGEMM;
-  std::vector<Geometry> geometries = take_fives(0);  // zero workspace five-geoms
+  
+//  std::vector<Geometry> geometries = take_fives(0);  // zero workspace five-geoms
+//std::vector<Geometry> get_deepbench(size_t wSpaceSize);
+//std::vector<Geometry> get_squares(size_t wSpaceSize);  
+
+
+
+  std::vector<Geometry> geometries = get_deepbench(0);
   
   std::vector<Constraints> constraints_s{{""}};
   for (size_t i = 0; i < geometries.size(); ++i)
@@ -28,7 +35,7 @@ int main()
     {
       ++counter;
       std::cout << '(' << counter << ')' << std::endl;
-      std::string basedir = "/home/james/test37/";
+      std::string basedir = "/home/james/test40/";
       // WARNING : this call might only work on linux/mac
       std::string syscall =
         "./examples/multifindbase " + basedir + " " + gg.get_string() + " " + cons.get_string();

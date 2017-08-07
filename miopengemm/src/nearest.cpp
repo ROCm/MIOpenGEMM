@@ -9,12 +9,11 @@ namespace MIOpenGEMM
 namespace nearest
 {
 
-bool is_within(const CacheKey& ck, const Graph & graph, const KernelCache & kc, double threshold)
+bool is_within(const CacheKey& ck, const Graph& graph, const KernelCache& kc, double threshold)
 {
   for (auto& key : kc.get_keys())
   {
-    if (graph.contains(kc.at(key)) &&
-        key.get_distance(ck) < threshold && 
+    if (graph.contains(kc.at(key)) && key.get_distance(ck) < threshold &&
         Derivabilty(kc.at(key), ck.gg).is_derivable)
     {
       return true;
@@ -23,7 +22,7 @@ bool is_within(const CacheKey& ck, const Graph & graph, const KernelCache & kc, 
   return false;
 }
 
-CacheKey get(const CacheKey& ck, const Graph & graph, const KernelCache & kc)
+CacheKey get(const CacheKey& ck, const Graph& graph, const KernelCache& kc)
 {
 
   if (!is_within(ck, graph, kc, std::numeric_limits<double>::max()))
@@ -31,7 +30,6 @@ CacheKey get(const CacheKey& ck, const Graph & graph, const KernelCache & kc)
     throw miog_error("In get, with none within radius <double>::max.");
   }
   double d_nearest_derivable = std::numeric_limits<double>::max();
-
 
   auto cache_keys = kc.get_keys();
   if (cache_keys.size() == 0)
@@ -43,12 +41,13 @@ CacheKey get(const CacheKey& ck, const Graph & graph, const KernelCache & kc)
 
   for (auto& key : cache_keys)
   {
-    if (ck.get_distance(key) < d_nearest_derivable)
+    auto distance = ck.get_distance(key);
+    if (distance < d_nearest_derivable)
     {
       auto hp = kc.at(key);
       if (graph.contains(kc.at(key)) && Derivabilty(hp, ck.gg).is_derivable)
       {
-        d_nearest_derivable = ck.get_distance(key);
+        d_nearest_derivable = distance;
         nearest_derivable   = key;
       }
     }
@@ -62,7 +61,5 @@ CacheKey get(const CacheKey& ck, const Graph & graph, const KernelCache & kc)
   }
   return nearest_derivable;
 }
-    
-
 }
 }

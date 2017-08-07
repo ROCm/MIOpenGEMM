@@ -184,7 +184,7 @@ std::vector<std::string> get_name()
 std::vector<int> get_priority()
 {
   std::vector<int> X(E::N, std::numeric_limits<int>::max());
-  X[E::MIC] = 0;
+  X[E::MIC] = 1;
   X[E::PAD] = 0;
   X[E::PLU] = 0;
   X[E::LIW] = 0;
@@ -259,18 +259,18 @@ std::vector<std::string> get_name()
 std::vector<int> get_priority()
 {
   std::vector<int> X(E::N, std::numeric_limits<int>::max());
-  X[E::UNR] = 0;
+  X[E::UNR] = 1;
   X[E::GAL] = 0;
   X[E::PUN] = 0;
   X[E::ICE] = 0;
   X[E::NAW] = 0;
   X[E::UFO] = 0;
-  X[E::MAC] = 0;
+  X[E::MAC] = 1;
   X[E::SKW] = 0;
   X[E::IWI] = 0;
   X[E::AFI] = -1;
-  X[E::SZT] = -1;
   X[E::MIA] = -1;
+  X[E::SZT] = -1;
   return X;
 }
 

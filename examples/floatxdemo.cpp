@@ -8,6 +8,7 @@
 #include <vector>
 #include <algorithm>
 
+// learing how to use float2 float4 
 int main(){
   
   using namespace MIOpenGEMM;

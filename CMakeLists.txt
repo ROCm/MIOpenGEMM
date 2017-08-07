@@ -7,6 +7,9 @@ cmake_minimum_required(VERSION 3.0)
 project(miopengemm)
 
 
+
+option(OPENBLAS "CPU GEMM accuracy tests with OpenBLAS, otherwise slow 3-for loops code" OFF)
+
 #Where to find FindOpenCL.cmake (etc)
 list( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
 
@@ -14,8 +17,12 @@ set( CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options ar
 ##Use FindOpenCL.cmake to find library and header file
 find_package( OpenCL REQUIRED )
 
-
 option(BUILD_SHARED_LIBS "Build shared library" ON)
+
+if(OPENBLAS)
+    find_package(OpenBLAS REQUIRED)
+    add_definitions(-DMIOPENGEMM_USE_OPENBLAS)
+endif()
 
 include(EnableCompilerWarnings)
 

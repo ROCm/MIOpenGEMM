@@ -83,12 +83,22 @@ void populate(const std::vector<CacheKey>& cache_keys,
     auto act_kcx = [&halt, &mowri, &ck, &prefix](
       const KernelCache& kcx, std::string frag, std::vector<double>& times, dev::Diva<TFl>& diva) {
       mowri.bw[OutPart::MER] << '<' << frag << Flush;
-      std::this_thread::sleep_for(std::chrono::milliseconds(80));
-      std::vector<double> ltimes = diva.benchgemm({kcx.at(ck, canonical::noswap)}, halt).back();
+      std::this_thread::sleep_for(std::chrono::milliseconds(120));
 
-      double zoo = *std::min_element(ltimes.begin(), ltimes.end());
-
+      auto        hp = kcx.at(ck, canonical::noswap);
+      Derivabilty drvble(hp, ck.gg);
+      double      zoo;
+      if (drvble.is_derivable)
+      {
+        std::vector<double> ltimes = diva.benchgemm({hp}, halt).back();
+        zoo                        = *std::min_element(ltimes.begin(), ltimes.end());
+      }
+      else
+      {
+        zoo = 1e8;
+      }
       mowri.bw[OutPart::MER] << '>' << Flush;
+
       times.push_back(zoo);
     };
 

@@ -61,10 +61,10 @@ std::string get_cache_entry_string(const CacheKey& ck, const HyPas& hypas, bool 
   return cache_write_ss.str();
 }
 
-std::string KernelCache::get_cache_entry_string(const CacheKey& ck) const{
+std::string KernelCache::get_cache_entry_string(const CacheKey& ck) const
+{
   return MIOpenGEMM::get_cache_entry_string(ck, at(ck, false), false);
 }
-
 
 std::string CacheKey::get_string() const
 {
@@ -78,9 +78,8 @@ std::string CacheKey::get_string() const
 KernelCache get_kernel_cache()
 {
   KernelCache kc;
-#include "deepbench.cachetxt"
-//#include "square1.cachetxt"
-#include "smallgrid.cachetxt"
+
+#include "cache1.cachetxt"
   return kc;
 }
 const KernelCache kernel_cache = get_kernel_cache();
@@ -88,16 +87,16 @@ const KernelCache kernel_cache = get_kernel_cache();
 HyPas KernelCache::at(const CacheKey& ckey, bool swap_ab) const
 {
 
-  
   CacheKeyPresence ckp = check_for(ckey);
   if (!ckp.is_present)
   {
-    throw miog_error("(in HyPas KernelCache::at)  "+ ckp.msg);
+    throw miog_error("(in HyPas KernelCache::at)  " + ckp.msg);
   }
   return vals.at(ckey).get_reflected(swap_ab);
 }
 
-const HyPas & KernelCache::at(const CacheKey& ck) const{
+const HyPas& KernelCache::at(const CacheKey& ck) const
+{
   CacheKeyPresence ckp = check_for(ck);
   if (!ckp.is_present)
   {
@@ -189,11 +188,9 @@ double CacheKey::get_distance(const CacheKey& ck) const
   distance += gg.get_distance(ck.gg);
   distance += 1e-6 * (dvc != ck.dvc);
 
-  // TODO : improved distance between constraints. will be non-sym. 
+  // TODO : improved distance between constraints. will be non-sym.
   distance += 1 * (constraints.get_string() != ck.constraints.get_string());
 
   return distance;
 }
-
-
 }

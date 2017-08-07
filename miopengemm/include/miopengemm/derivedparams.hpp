@@ -70,7 +70,6 @@ class ChiralDerivedParams
   size_t cw2_n_elements_to_load_per_workitem = uninitialised_size_t;
 
   std::string get_string();
-
 };
 
 // all derived parameters
@@ -162,7 +161,6 @@ class DerivedParams
 
   std::string get_string();
 };
-
 }
 
 #endif

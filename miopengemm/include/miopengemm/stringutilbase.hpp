@@ -12,6 +12,7 @@ namespace MIOpenGEMM
 namespace stringutil
 {
 
+// indent a C/C++ source string
 void indentify(std::string& source);
 
 // split the string tosplit by delim.

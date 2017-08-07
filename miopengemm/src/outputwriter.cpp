@@ -47,7 +47,7 @@ Writer::Writer(Ver::E v_, std::string filename_) : v(v_), filename(filename_)
   }
   else
   {
-    // no filename and no filename required, good to continue
+    // no filename, and no filename required, good to continue
   }
 
   std::ofstream* ptr_file;

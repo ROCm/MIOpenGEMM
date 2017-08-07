@@ -8,6 +8,8 @@
 
 namespace MIOpenGEMM
 {
+
+// for filling matrices with random float values
 namespace setabcw
 {
 

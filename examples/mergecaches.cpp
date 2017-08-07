@@ -7,7 +7,7 @@
 MIOpenGEMM::KernelCache get_kernel_cache2()
 {
   MIOpenGEMM::KernelCache kc;
-  //#include "/home/james/test26/cacheentries.txt"
+  #include "/home/james/test40/cacheentries.txt"
   return kc;
 }
 
@@ -22,9 +22,9 @@ int main()
   
   owrite::Writer mowri(Ver::E::MERGE, "");
 
-  Halt halt  = {{0, 5}, {0, 0.2}};
+  Halt halt  = {{0, 5}, {0, 0.11}};
   auto kcn = get_merged(kernel_cache, kernel_cache2, halt, mowri);
-  std::ofstream floper("/home/james/test26/merged_cache26.txt", std::ios::out);    
+  std::ofstream floper("/home/james/test40/merged_cache40.txt", std::ios::out);    
   for (auto & ck : kcn.get_keys()){
     //std::cout << ck.get_string() << std::endl;
     floper << '\n' << kcn.get_cache_entry_string(ck);

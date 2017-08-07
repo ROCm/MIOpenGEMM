@@ -106,8 +106,8 @@ class Graph
   Graph(const Geometry&, const oclutil::DevInfo&, const Constraints&, owrite::Writer&);
   // any node in the start graph.
   HyPas              get_random_valid_start() const;
-  std::vector<HyPas> get_neighbors(const HyPas&) const;
-  bool               contains(const HyPas&) const;
+  std::vector<HyPas> get_neighbors(const HyPas&, bool prioritize) const;
+  bool contains(const HyPas&) const;
 
   private:
   // the number of attempts at finding a
@@ -127,7 +127,7 @@ class Graph
   Geometry         geometry;
   oclutil::DevInfo devinfo;
   Constraints      constraints;
-  owrite::Writer&  mowri;  // this makes Graphs difficult to copy etc.
+  owrite::Writer&  mowri;  // this makes Graphs difficult to copy.
 
   std::vector<std::tuple<HyPas, int>> get_one_aways(const HyPas&) const;
 

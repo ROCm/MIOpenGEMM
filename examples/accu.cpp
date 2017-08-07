@@ -8,17 +8,16 @@ int main()
 {
   using namespace MIOpenGEMM;
 
-  Geometry gg("tC0_tA0_tB0_colMaj1_m77_n1002_k77_lda77_ldb77_ldc77_ws0_f32");  
-  HyPas    hp("A_MIC1_PAD2_PLU0_LIW1_MIW1_WOS0_VEW1__B_MIC8_PAD1_PLU1_LIW0_MIW1_WOS0_VEW1__C_UNR64_GAL3_PUN0_ICE1_IWI1_SZT0_NAW16_UFO0_MAC64_SKW10_AFI1_MIA0");  
- 
+  //Geometry gg("tC1_tA1_tB1_colMaj1_m45_n56_k64_lda64_ldb65_ldc67_ws1_f32");    
+  Geometry gg("tC1_tA1_tB1_colMaj1_m45_n56_k64_lda64_ldb64_ldc64_ws1_f32");    
+  // AFI1 : no break. AFI0 : break.  
+  HyPas    hp("A_MIC2_PAD2_PLU0_LIW0_MIW1_WOS0_VEW1__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0_VEW1__C_UNR16_GAL3_PUN1_ICE3_IWI0_SZT0_NAW16_UFO0_MAC1_SKW10_AFI0_MIA0");  
+   
   CLHint         devhint({"AMD", "gfx"});
   Offsets        offsets = get_zero_offsets();
   owrite::Writer mowri(Ver::E::TERMINAL, "");
   dev::Boa       boa(gg, offsets, mowri, devhint);
-    
-  // UNR 32 -> 16 fixes. 
-  //HyPas    hp = boa.find(get_at_least_n_seconds(0.00001), std::string("")).hypas;
-  
+      
   boa.accuracy_test(hp);
   mowri << "\ndone.\n";
   return 0;

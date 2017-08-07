@@ -15,29 +15,25 @@
 #include <miopengemm/derivedparams.hpp>
 #include <miopengemm/error.hpp>
 #include <miopengemm/findparams.hpp>
+#include <miopengemm/generic.hpp>
 #include <miopengemm/graph.hpp>
 #include <miopengemm/jinx.hpp>
 #include <miopengemm/kernel.hpp>
 #include <miopengemm/kernelcache.hpp>
 #include <miopengemm/kernelstring.hpp>
+#include <miopengemm/nearest.hpp>
 #include <miopengemm/oclutil.hpp>
 #include <miopengemm/outputwriter.hpp>
 #include <miopengemm/redirection.hpp>
 #include <miopengemm/solution.hpp>
 #include <miopengemm/stringutilbase.hpp>
 #include <miopengemm/timer.hpp>
-#include <miopengemm/nearest.hpp>
-#include <miopengemm/generic.hpp>
 
 // TODO : checks on constraints to check for cleary non-derivables
 // TODO : checks on workspace size
 
 namespace MIOpenGEMM
 {
-  
-  
-  
-  
 
 void   FindTracker::start() { timer.start(); }
 double FindTracker::get_elapsed() const { return timer.get_elapsed(); }
@@ -397,12 +393,12 @@ std::vector<double> Jinx::benchgemm(const HyPas& hp, const Halt& hl)
 
 Solution Jinx::find(const Constraints& constraints, const FindParams& fparms)
 {
-  
-  if (fparms.hl_outer.max_time < 0.01){
+
+  if (fparms.hl_outer.max_time < 0.01)
+  {
     mowri << "Time allotted to find is less that 0.01, so returning a default immediately.\n";
     return get_default(command_queue, gg, constraints, mowri, IfNoCache::E::GENERIC);
   }
-
 
   address_check_valid_and_reliable();
 
@@ -419,12 +415,7 @@ Solution Jinx::find(const Constraints& constraints, const FindParams& fparms)
     double allotted_sd = std::max(0.1, fparms.hl_outer.max_time - ftrack.get_elapsed());
 
     auto soln = single_descent_find(
-      allotted_sd,
-      constraints,
-      fparms.hl_core,
-      ftrack,
-      fparms.sumstat,
-      ftrack.get_descents() == 0);
+      allotted_sd, constraints, fparms.hl_core, ftrack, fparms.sumstat, ftrack.get_descents() == 0);
     v_solns.emplace_back(soln);
     ftrack.incr_descents();
   }
@@ -474,6 +465,9 @@ Solution Jinx::single_descent_find(double             allotted_time,
                                    bool               warmstart)
 {
 
+  // only considered an improvement if ratio new/old less than this
+  double improvement_factor_required = 0.999;
+
   Timer timer;
   timer.start();
 
@@ -515,9 +509,9 @@ Solution Jinx::single_descent_find(double             allotted_time,
   else
   {
     mowri << "Warmstart requested. " << Flush;
-    auto soln = get_default(command_queue, gg, constraints, mowri, IfNoCache::E::RANDOM);
+    auto soln     = get_default(command_queue, gg, constraints, mowri, IfNoCache::E::RANDOM);
     warm_start_hp = soln.hypas;
-    hyper_front = {warm_start_hp};
+    hyper_front   = {warm_start_hp};
   }
 
   HyPas hp_curr;
@@ -542,7 +536,7 @@ Solution Jinx::single_descent_find(double             allotted_time,
       if (dblt.is_derivable == false)
       {
         std::stringstream errm;
-        errm << "Non-derivable in single descent find : " << dblt.msg << ".\n" ;
+        errm << "Non-derivable in single descent find : " << dblt.msg << ".\n";
         errm << "Geometry: " << gg.get_string() << '\n';
         errm << "hp: " << hp_curr.get_string() << '\n';
         throw miog_error(errm.str());
@@ -610,7 +604,8 @@ Solution Jinx::single_descent_find(double             allotted_time,
         if (v_t_total[ir] == k_seconds)
         {
           mowri << " (" << SummStat::M.name[sumstat] << ')';
-          if (best_solns_path.size() > 0 && (best_solns_path.back().extime >= k_seconds))
+          if (best_solns_path.size() > 0 &&
+              (improvement_factor_required * best_solns_path.back().extime >= k_seconds))
           {
             mowri << " (NEW BEST) ";
           }
@@ -618,17 +613,13 @@ Solution Jinx::single_descent_find(double             allotted_time,
         mowri << '\n';
       }
 
-      if (best_solns_path.size() == 0 || (best_solns_path.back().extime >= k_seconds))
+      if (best_solns_path.size() == 0 ||
+          (improvement_factor_required * best_solns_path.back().extime >= k_seconds))
       {
 
         improvement_found_on_front = true;
 
-        best_solns_path.emplace_back(gg,
-                                     k_seconds,
-                                     bundle.v_tgks,
-                                     hp_curr,
-                                     devinfo,
-                                     constraints);
+        best_solns_path.emplace_back(gg, k_seconds, bundle.v_tgks, hp_curr, devinfo, constraints);
         disco_times.push_back(timer.get_elapsed());
       }
 
@@ -638,7 +629,8 @@ Solution Jinx::single_descent_find(double             allotted_time,
 
     if (improvement_found_on_front == true && allotted_time > timer.get_elapsed())
     {
-      auto neighbors = graph.get_neighbors(hp_curr);
+      bool prioritize = single_descent_counter < 20;
+      auto neighbors  = graph.get_neighbors(hp_curr, prioritize);
 
       // refreshing hyper front
       hyper_front.clear();
