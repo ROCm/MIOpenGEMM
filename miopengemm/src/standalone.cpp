@@ -2,11 +2,14 @@
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <sstream>
+#include <algorithm>
 #include <miopengemm/outputwriter.hpp>
 #include <miopengemm/hyperparams.hpp>
 #include <miopengemm/derivedparams.hpp>
 #include <miopengemm/geometry.hpp>
 #include <miopengemm/bundle.hpp>
+#include <miopengemm/cpugemm.hpp>
+#include <iomanip>
 
 namespace MIOpenGEMM{
 namespace standalone{
@@ -30,11 +33,32 @@ std::string make(const Geometry & gg, const HyPas & hp, owrite::Writer & mowri){
   
   
   std::array<size_t, Mat::E::N> n_elms;
-  //size_t max_n_elms = 0;
   for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C}){
     n_elms[emat] = get_mat_size(gg, toff, emat);
-    //max_n_elms = std::max(max_n_elms, n_elms[emat]);
   }
+
+
+  // we obtain the correct value 
+
+  srand(1011);  
+  std::array<std::vector<float>, Mat::E::N> vals;
+  for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C}){
+    vals[emat].resize(n_elms[emat]);
+    for (auto & x : vals[emat]){ 
+      x = 1. - 2. * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+    }
+  }
+  
+  cpugemm::gemm<float>(gg,
+               toff,
+               vals[Mat::E::A].data(),
+               vals[Mat::E::B].data(),
+               vals[Mat::E::C].data(),
+               Floating::default_alpha,
+               Floating::default_beta,
+               mowri);
+
+  float sum_final_cpu  = std::accumulate(vals[Mat::E::C].begin(), vals[Mat::E::C].end(), 0.f);
 
   
   
@@ -70,9 +94,6 @@ void checkstatus(cl_int x, std::string where)
 int main()
 { 
 )";
-//  ss << "  // max number of elements over A, B, C \n";
-//  ss << "  size_t max_n_elmns = " << max_n_elms << ";\n";
-//  ss << "  std::vector<float> vmem(max_n_elmns);\n";
 
   for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C}){
     ss << "  size_t " << Mat::M.lcase_name[emat] << "_n_elms = " << n_elms[emat] << ';' << '\n';
@@ -87,6 +108,7 @@ int main()
   std::vector <float> c_final(c_n_elms);
 
 
+  srand(1011);
   for (auto & x : a_init){ 
     x = 1. - 2. * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
   }
@@ -152,7 +174,6 @@ int main()
 
   ss << "  // create and write to buffers \n";
   for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C}){
-    //ss << "  size_t " << Mat::M.lcase_name[emat] << "_offset = " << toff.offsets[emat] << ';' << '\n';
     ss << "  memobj_" << Mat::M.lcase_name[emat]  << " = clCreateBuffer(context, CL_MEM_READ_WRITE, " << Mat::M.lcase_name[emat] << "_n_elms  * sizeof(float), nullptr, &ret);\n";
     ss << "  checkstatus(ret, \"clCreateBuffer\");\n";
     ss << "  ret = clEnqueueWriteBuffer(\n";
@@ -262,8 +283,19 @@ int main()
   float sum_final = std::accumulate(c_final.begin(), c_final.end(), 0.f);
   float sum_init  = std::accumulate(c_init.begin(), c_init.end(), 0.f);
 
-  std::cout << "sum of initial c = " << std::setprecision(16) << sum_init << std::endl;
-  std::cout << "sum of final c   = " << std::setprecision(16) << sum_final << std::endl;
+)";
+
+ ss<< "  // (precomputed in standalone.cpp)\n " ;
+ ss<< "  float sum_final_cpu = " << std::setprecision(25) << sum_final_cpu << ";\n";
+ ss<< "  float error = sum_final_cpu - sum_final;\n";
+ 
+ ss << R"(
+  
+  std::cout << "sum of initial c = " << std::setprecision(25) << sum_init << std::endl;
+  std::cout << "sum of final c  gpu = " << std::setprecision(25) << sum_final << std::endl;
+  std::cout << "sum of final on cpu = " <<  )" << sum_final_cpu << R"(  << std::endl; 
+  std::cout << "(cpu - gpu )/cpu = " <<  std::setprecision(10) <<  error << std::endl; 
+
    
   
 

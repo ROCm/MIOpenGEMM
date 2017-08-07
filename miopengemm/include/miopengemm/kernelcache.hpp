@@ -64,6 +64,8 @@ class KernelCache
   std::vector<CacheKey> get_keys() const;
 
   std::string get_cache_entry_string(const CacheKey& ck) const;
+
+
 };
 
 void filter_device(std::vector<CacheKey>&, const std::vector<std::string>& device_frags);
@@ -74,6 +76,7 @@ extern const KernelCache kernel_cache;
 
 std::string get_cache_entry_string(const CacheKey& ck, const HyPas& hypas, bool swap_ab);
 std::vector<Geometry> get_geometries(const std::vector<CacheKey>& cks);
+std::vector<std::string> get_devices(const std::vector<CacheKey>& cks);
 }
 
 #endif

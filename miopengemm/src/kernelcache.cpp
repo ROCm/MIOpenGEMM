@@ -36,6 +36,7 @@ CacheKeyPresence KernelCache::check_for(const CacheKey& ckey) const
   return {};
 }
 
+
 CacheKey::CacheKey(const std::string& dvc_, const Constraints& cns_, const Geometry& geo_)
   : from_non_canonical(redirection::get_is_not_canonical(geo_)),
     dvc(dvc_),
@@ -168,6 +169,21 @@ void filter_geometries(std::vector<CacheKey>& cks, const std::vector<Geometry>& 
   }
   cks = std::move(valid);
 }
+
+std::vector<std::string> get_devices(const std::vector<CacheKey>& cks)
+{
+  std::vector<std::string> devices;
+  for (auto& ck : cks)
+  {
+    
+    if (std::find(devices.begin(), devices.end(), ck.dvc) == devices.end())
+    {
+      devices.push_back(ck.dvc);
+    }
+  }
+  return devices;
+}
+
 
 void filter_floattype(std::vector<CacheKey>& cks, size_t float_size_bytes)
 {

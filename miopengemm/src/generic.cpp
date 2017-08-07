@@ -52,7 +52,8 @@ Solution get_default(cl_command_queue   command_queue,
                      const Geometry&    gg,
                      const Constraints& constraints,
                      owrite::Writer&    mowri,
-                     IfNoCache::E       enoc)
+                     IfNoCache::E       enoc, 
+                     size_t rank)
 {
   oclutil::DevInfo devinfo(command_queue);
   double           extime = 0;
@@ -64,11 +65,11 @@ Solution get_default(cl_command_queue   command_queue,
   CacheKey ck(devinfo.identifier, constraints, gg);
   Graph    graph(gg, devinfo, constraints, mowri);
 
-  // gg.k > 32 hack for ROCm compiler failure.
+  // gg.k > 32 hack for ROCm compiler failure. TODO remove when can
   if (gg.k > 32 &&
-      nearest::is_within(ck, graph, kernel_cache, 0.1 * std::numeric_limits<double>::max()))
+      nearest::is_within(ck, graph, kernel_cache, 0.1 * std::numeric_limits<double>::max(), rank))
   {
-    auto nearest_ck       = nearest::get(ck, graph, kernel_cache);
+    auto nearest_ck       = nearest::get(ck, graph, kernel_cache, rank);
     bool is_not_canonical = redirection::get_is_not_canonical(gg);
     hp                    = kernel_cache.at(nearest_ck, is_not_canonical);
 
@@ -89,7 +90,7 @@ Solution get_default(cl_command_queue   command_queue,
     }
   }
 
-  mowri << "Time in get_default : " << timer.get_elapsed() << Endl;
+  mowri << "Time in get_default : " << timer.get_elapsed() << " [s]" << Endl;
 
   kerngen::Bundle bundle(hp, gg, mowri);
   return {gg, extime, bundle.v_tgks, hp, devinfo, constraints};
