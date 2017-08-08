@@ -162,7 +162,7 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
     ptr_hp->sus[Mat::E::B].vs[Chi::E::MIC] * ptr_hp->sus[Mat::E::A].vs[Chi::E::MIC];
   main_n_work_items_per_workgroup = main_macro_tile_area / main_micro_tile_area;
 
-  size_t required_workspace = 0;
+  required_workspace = 0;
 
   std::stringstream set_status_ss;
 

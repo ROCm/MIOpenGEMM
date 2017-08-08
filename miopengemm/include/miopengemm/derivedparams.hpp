@@ -141,6 +141,9 @@ class DerivedParams
   size_t ga3_super_column_width      = uninitialised_size_t;
   size_t ga3_last_super_column_width = uninitialised_size_t;
 
+  // Total required workspace
+  size_t required_workspace = uninitialised_size_t;
+
   size_t get_target_ld(Mat::E emat_x) const;
 
   size_t get_n_elements_in_x_unroll(char x);

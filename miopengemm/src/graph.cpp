@@ -592,6 +592,9 @@ void ChiSuGr::refine_start_range()
   {
     start_range[Chi::E::WOS] = {Scratch::E::UNUSED};
   }
+  else{
+    start_range[Chi::E::WOS] = {Scratch::E::UNUSED, Scratch::E::COPY, Scratch::E::NFORM};
+  }
 
   start_range[Chi::E::VEW] = {1};
 

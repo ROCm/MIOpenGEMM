@@ -253,6 +253,21 @@ void Geometry::initialise(bool   isColMajor_,
   metric_co[0] = std::log2(static_cast<double>(k));
   metric_co[1] = std::log2(static_cast<double>(m)) - std::log2(static_cast<double>(n));
   metric_co[2] = std::log2(static_cast<double>(m)) + std::log2(static_cast<double>(n));
+
+  // memory required for copying (an estimate)    
+  std::array<size_t, Mat::E::N> forPadCopy;
+  for (auto emat : {Mat::E::A, Mat::E::B}){
+    forPadCopy[emat] = get_uncoal(emat) * (get_coal(emat) + 16);
+  }
+  
+  wSpaceSufficient[0] = forPadCopy[Mat::E::A] < wSpaceSize;
+  wSpaceSufficient[1] = forPadCopy[Mat::E::B] < wSpaceSize;
+  wSpaceSufficient[2] = 1*(forPadCopy[Mat::E::A] + forPadCopy[Mat::E::B]) < wSpaceSize;
+  wSpaceSufficient[3] = 2*(forPadCopy[Mat::E::A] + forPadCopy[Mat::E::B]) < wSpaceSize;    
+  wSpaceSufficient[4] = 4*(forPadCopy[Mat::E::A] + forPadCopy[Mat::E::B]) < wSpaceSize;
+
+
+
 }
 
 Geometry::Geometry(bool   isColMajor_,
@@ -394,29 +409,38 @@ bool Geometry::same_transposes(const Geometry& g2) const
 double Geometry::get_distance(const Geometry& g2) const
 {
 
+  double distance = 0;
   if (same_transposes(g2) == false)
   {
-    return std::numeric_limits<double>::max();
+    distance = std::numeric_limits<double>::max();
   }
 
-  double distance = 0;
-  for (unsigned i = 0; i < 3; ++i)
-  {
-    distance += std::abs(metric_co[i] - g2.metric_co[i]);
-  }
-  for (size_t x : {2, 4})
-  {
-    distance += 0.25 * ((ldX[Mat::E::A] % x == 0) != (g2.ldX[Mat::E::A] % x == 0));
-    distance += 0.25 * ((ldX[Mat::E::B] % x == 0) != (g2.ldX[Mat::E::B] % x == 0));
-    distance += 0.25 * ((ldX[Mat::E::C] % x == 0) != (g2.ldX[Mat::E::C] % x == 0));
-  }
+  else{
+    for (unsigned i = 0; i < 3; ++i)
+    {
+      distance += std::abs(metric_co[i] - g2.metric_co[i]);
+    }
+    for (size_t x : {2, 4})
+    {
+      distance += 0.25 * ((ldX[Mat::E::A] % x == 0) != (g2.ldX[Mat::E::A] % x == 0));
+      distance += 0.25 * ((ldX[Mat::E::B] % x == 0) != (g2.ldX[Mat::E::B] % x == 0));
+      distance += 0.25 * ((ldX[Mat::E::C] % x == 0) != (g2.ldX[Mat::E::C] % x == 0));
+    }
+  
+    for (size_t x : {256, 1024})
+    {
+      distance += 0.25 * ((ldX[Mat::E::A] % x < 5) != (g2.ldX[Mat::E::A] % x < 5));
+      distance += 0.25 * ((ldX[Mat::E::B] % x < 5) != (g2.ldX[Mat::E::B] % x < 5));
+      distance += 0.25 * ((ldX[Mat::E::C] % x < 5) != (g2.ldX[Mat::E::C] % x < 5));
+    }
 
-  for (size_t x : {256, 1024})
-  {
-    distance += 0.25 * ((ldX[Mat::E::A] % x < 5) != (g2.ldX[Mat::E::A] % x < 5));
-    distance += 0.25 * ((ldX[Mat::E::B] % x < 5) != (g2.ldX[Mat::E::B] % x < 5));
-    distance += 0.25 * ((ldX[Mat::E::C] % x < 5) != (g2.ldX[Mat::E::C] % x < 5));
+       
+    for (size_t i = 0; i < wSpaceSufficient.size(); ++i){
+      distance += 0.25*(wSpaceSufficient[i] == g2.wSpaceSufficient[i]);
+    }
   }
+    
+//  std::cout << distance << std::endl;
 
   return distance;
 }

@@ -211,4 +211,20 @@ get_merged(const KernelCache& kc1, const KernelCache& kc2, const Halt& halt, owr
 
   return kc;
 }
+
+KernelCache
+get_wSpaceReduced(const KernelCache& kc){
+  KernelCache kc_new;
+  for (auto & ck : kc.get_keys()){
+    auto soln = kc.at(ck);
+    DerivedParams dps(soln, ck.gg);
+    std::cout << ck.gg.wSpaceSize << "  -->  " << dps.required_workspace << std::endl;
+    auto gg_new = ck.gg;
+    gg_new.wSpaceSize = dps.required_workspace; 
+    CacheKey ck_new(ck.dvc, ck.constraints, gg_new);
+    kc_new.add(ck_new, soln);
+  }
+  return kc_new;
+}
+
 }

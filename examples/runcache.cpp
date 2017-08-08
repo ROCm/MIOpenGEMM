@@ -46,13 +46,12 @@ int runcache_v2(std::map<char, std::vector<std::string>> & filters)
 
   if (std::count(filters['g'].begin(), filters['g'].end(), "a") == 0){
 
-    
     std::vector<std::string> geometries_to_filter;
+    
     bool filter_db = false;
     std::vector<Geometry> dbgs;
 
     if (std::count(filters['g'].begin(), filters['g'].end(), "d") != 0){
-    
       {
         dbgs = get_deepbench(0);
         filter_db = true;
@@ -73,16 +72,42 @@ int runcache_v2(std::map<char, std::vector<std::string>> & filters)
     std::cout << "}\n"; 
 
   
-
+    
+    if (filters['m'].size() != 1){
+      throw miog_error("m flag should be ONE of 0,+,a.");
+    }
+    
+    auto ws = filters['m'][0];
+    
     auto all_geometries = get_geometries(cache_keys);
     std::vector<Geometry> filtered_geometries;
     for (auto & x : all_geometries){
+      
+      auto x2 = x;
+      x2.wSpaceSize = 0;
+      auto same_geom = [&x2](const Geometry & gg){
+        return gg == x2;
+      };
+      
       if (filter_square && x.m == x.n && x.m == x.k){
         filtered_geometries.push_back(x);
       }
-      else if (filter_db && std::find(dbgs.begin(), dbgs.end(), x) != dbgs.end()){
-        filtered_geometries.push_back(x);        
-      }      
+      else {
+        if (ws == "0" && filter_db && std::find(dbgs.begin(), dbgs.end(), x) != dbgs.end()){
+          filtered_geometries.push_back(x);        
+        }
+        else if ((ws == "+" || ws == "a") && std::find_if(dbgs.begin(), dbgs.end(), same_geom) != dbgs.end()){
+          if (ws == "+" && x.wSpaceSize > 0){
+            filtered_geometries.push_back(x);
+          }
+          if (ws == "a"){
+            filtered_geometries.push_back(x);
+          }
+        }
+        else if (ws != "0" && ws != "a" && ws != "+"){
+          throw miog_error("unrecognised m flag, it should be one of 0,+,a.");
+        }        
+      }    
     }
     filter_geometries(cache_keys, filtered_geometries);
   }
@@ -148,20 +173,23 @@ int main(int argc, char* argv[])
   std::map<char, std::string> args = {
     {'g', "geometries to look for in cache"},
     {'d', "devices to look for in cache"},
-    {'w', "what to do"}
+    {'w', "what to do"},
+    {'m', "workspace memories to consider"},
   };
   
   std::map<char, std::vector<std::string>> options = {
     {'g', {"a (all)", "d (deepbench)", "s (m=n=k)"}},
     {'d', {"a (all)","d (default)", "any other string"}},
-    {'w', {"b (benchmark)", "a (accuracy)"}}
+    {'w', {"b (benchmark)", "a (accuracy)"}},
+    {'m', {"a (all)", "0 (only zero ws)", "+ (only positive ws"}}
   };
   
   
   std::map<char, std::string> defaults = {
     {'g', "d"},
     {'d', "d"},
-    {'w', "b"}    
+    {'w', "b"},
+    {'m', "0"}    
   };
   
   // TODO: confirm that above have same keys.
@@ -180,10 +208,10 @@ int main(int argc, char* argv[])
   }
   hss << "\nexamples:\n";
   hss << "`runcache -g d -d a -w b`\n";
-  hss << " benchmarks all cache entries with a deepbench geometry \n";
+  hss << " benchmarks all cache entries with a deepbench geometry with zero ms \n";
   hss << "`runcache -g a -d gfx803`\n";
-  hss << " benchmarks of all cache entries which match device gfx803 \n";
-  hss << "`runcache -w b a`\n";
+  hss << " benchmarks of all cache entries which match device gfx803 and have zero ms \n";
+  hss << "`runcache -w b a -m a`\n";
   hss << " benchmarks and accuracy test of all cache entries \n";
 
   std::string help = hss.str();

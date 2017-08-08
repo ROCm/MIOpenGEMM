@@ -44,8 +44,9 @@ class NormalFormGenerator : public prepgen::PrepGenerator
     std::stringstream ss;
 
     ss << "#define TFLOAT " << dp.t_float << '\n'
-       << "#define "
-       << "N_WORK_ITEMS_PER_GROUP " << dp.at(emat_x).cw2_local_work_size << '\n'
+       << "#define TINT" << Mem::M.name[emat_x] << " " << dp.tints[emat_x] << '\n'
+       //<< "#define "
+       << "#define N_WORK_ITEMS_PER_GROUP " << dp.at(emat_x).cw2_local_work_size << '\n'
        << "#define UNROLL " << hp.sus[Mat::E::C].vs[NonChi::E::UNR] << '\n'
        << "#define __K__ " << gg.k << '\n';
 
@@ -84,18 +85,13 @@ class NormalFormGenerator : public prepgen::PrepGenerator
 
     ss << "{"
        << "\n/* setting up where this thread works */\n"
-       << "size_t group_id = get_group_id(0);\n"
-       << "size_t micro_id = get_local_id(0);\n";
-
-    ss << R"(
-
-size_t macro_id_pll_unroll = group_id % N_MACRO_TILES_PLL_UNROLL;
-size_t macro_id_perp_unroll = group_id / N_MACRO_TILES_PLL_UNROLL;
-
-size_t micro_id_pll_unroll = micro_id / N_MICRO_TILES_PERP_UNROLL;
-size_t micro_id_perp_unroll = micro_id % N_MICRO_TILES_PERP_UNROLL;
-
-)";
+       << "TINT" << Mem::M.name[emat_x] << " group_id = get_group_id(0);\n"
+       << "TINT" << Mem::M.name[emat_x] << " micro_id = get_local_id(0);\n"
+       << "\n"
+       << "TINT" << Mem::M.name[emat_x] << " macro_id_pll_unroll = group_id % N_MACRO_TILES_PLL_UNROLL;\n"
+       << "TINT" << Mem::M.name[emat_x] << " macro_id_perp_unroll = group_id / N_MACRO_TILES_PLL_UNROLL;\n"
+       << "TINT" << Mem::M.name[emat_x] << " micro_id_pll_unroll = micro_id / N_MICRO_TILES_PERP_UNROLL;\n"
+       << "TINT" << Mem::M.name[emat_x] << " micro_id_perp_unroll = micro_id % N_MICRO_TILES_PERP_UNROLL;\n";
 
     ss << mchar << " += macro_id_pll_unroll*READ_MACRO_STRIDE_PLL_K*UNROLL;\n"
        << mchar << " += "
@@ -123,8 +119,8 @@ size_t micro_id_perp_unroll = micro_id % N_MICRO_TILES_PERP_UNROLL;
     ss << R"(
 if (macro_id_pll_unroll == N_MACRO_TILES_PLL_UNROLL - 1){
 #pragma unroll
-for (size_t mu_pll_i = 0; mu_pll_i < MICRO_TILE_PLL_UNROLL; ++mu_pll_i) {
-for (size_t mu_perp_i = 0; mu_perp_i < MICRO_TILE_PERP_UNROLL; ++mu_perp_i) {
+for (ushort mu_pll_i = 0; mu_pll_i < MICRO_TILE_PLL_UNROLL; ++mu_pll_i) {
+for (ushort mu_perp_i = 0; mu_perp_i < MICRO_TILE_PERP_UNROLL; ++mu_perp_i) {
 if (micro_id_pll_unroll * MICRO_TILE_PLL_UNROLL + mu_pll_i < FINAL_UNROLL_DEPTH) { 
 )";
     append_copy_string(ss);
@@ -137,8 +133,8 @@ if (micro_id_pll_unroll * MICRO_TILE_PLL_UNROLL + mu_pll_i < FINAL_UNROLL_DEPTH)
 
 else{
 #pragma unroll
-for (size_t mu_pll_i = 0; mu_pll_i < MICRO_TILE_PLL_UNROLL; ++mu_pll_i) {
-for (size_t mu_perp_i = 0; mu_perp_i < MICRO_TILE_PERP_UNROLL; ++mu_perp_i) { 
+for (ushort mu_pll_i = 0; mu_pll_i < MICRO_TILE_PLL_UNROLL; ++mu_pll_i) {
+for (ushort mu_perp_i = 0; mu_perp_i < MICRO_TILE_PERP_UNROLL; ++mu_perp_i) { 
 )";
     append_copy_string(ss);
     ss << R"(
