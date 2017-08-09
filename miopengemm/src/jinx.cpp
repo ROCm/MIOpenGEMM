@@ -415,7 +415,7 @@ Solution Jinx::find(const Constraints& constraints, const FindParams& fparms)
     mowri << "\nEntering new descent. \n"
           << fparms.hl_outer.get_status(ftrack.get_descents(), ftrack.get_elapsed()) << '\n';
 
-    warmstart = (ftrack.get_descents() < 2 || ftrack.get_descents() % 4 == 0) ? true : false;
+    warmstart = (ftrack.get_descents() < 2 || ftrack.get_descents() % 5 == 0) ? true : false;
 
     double allotted_sd = std::max(0.1, fparms.hl_outer.max_time - ftrack.get_elapsed());
 

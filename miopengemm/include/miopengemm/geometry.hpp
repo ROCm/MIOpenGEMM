@@ -90,6 +90,20 @@ class Geometry
            size_t wSpaceSize,
            char   floattype);
 
+ //// temporary for MIOpen  
+  //Geometry(bool   isColMajor,
+           //bool   tA,
+           //bool   tB,
+           //bool   tC,
+           //unsigned lda,
+           //unsigned ldb,
+           //unsigned ldc,
+           //unsigned m,
+           //unsigned n,
+           //unsigned k,
+           //unsigned wSpaceSize,
+           //char   floattype);
+           
   // assumes isColMajor is true, tC is false, lda, ldb, ldc are minimal.
   Geometry(size_t m, size_t n, size_t k, bool tA, bool tB, size_t wSpaceSize, char floattype);
 

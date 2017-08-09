@@ -286,6 +286,22 @@ Geometry::Geometry(bool   isColMajor_,
   initialise(isColMajor_, tA_, tB_, tC_, lda_, ldb_, ldc_, m_, n_, k_, wSpaceSize_, floattype_);
 }
 
+//// temporary for MIOpen
+  //Geometry(bool   isColMajor,
+           //bool   tA,
+           //bool   tB,
+           //bool   tC,
+           //unsigned lda,
+           //unsigned ldb,
+           //unsigned ldc,
+           //unsigned m,
+           //unsigned n,
+           //unsigned k,
+           //unsigned wSpaceSize,
+           //char   floattype){
+             //initialise(isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, wSpaceSize, floattype);
+           //}
+
 std::map<std::string, size_t> get_key_val_map(std::string geometry_string)
 {
   auto frags = stringutil::split(geometry_string, "_");
@@ -439,8 +455,9 @@ double Geometry::get_distance(const Geometry& g2) const
       distance += 0.25*(wSpaceSufficient[i] == g2.wSpaceSufficient[i]);
     }
   }
+  
+  distance += 1e-5*(std::log(wSpaceSize + 1.1) - std::log(g2.wSpaceSize + 1.1));
     
-//  std::cout << distance << std::endl;
 
   return distance;
 }

@@ -25,6 +25,7 @@
  * and then "localC" can be within or an extension of this. then,
  * when writing to C, first write to localC, then make a contiguous write to
  * C from localC */
+/* TODO : size_t should be ulong (basegenerator.cpp) */
 
 namespace MIOpenGEMM
 {

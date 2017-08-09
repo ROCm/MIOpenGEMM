@@ -2,6 +2,8 @@
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <string>
+#include <chrono>
+#include <thread>
 #include <miopengemm/devmiogemm.hpp>
 #include <miopengemm/geometries.hpp>
 #include <miopengemm/kernelcache.hpp>
@@ -76,8 +78,13 @@ int runcache_v2(std::map<char, std::vector<std::string>> & filters)
     if (filters['m'].size() != 1){
       throw miog_error("m flag should be ONE of 0,+,a.");
     }
-    
+        
     auto ws = filters['m'][0];
+
+    std::cout << "Will filter geometry memories:  {";
+    std::cout << "  " << ws << "  ";
+    std::cout << "}\n"; 
+
     
     auto all_geometries = get_geometries(cache_keys);
     std::vector<Geometry> filtered_geometries;
@@ -112,8 +119,45 @@ int runcache_v2(std::map<char, std::vector<std::string>> & filters)
     filter_geometries(cache_keys, filtered_geometries);
   }
   else{
-    std::cout << "Will consider all geometries in cache\n";
+    std::cout << "Will consider all geometry families in cache\n";
   }
+  
+  // filtering transpose types
+  if (std::count(filters['t'].begin(), filters['t'].end(), "a") == 0){
+    std::stringstream ss;
+    ss << "will filter transpose cases : { ";
+    std::vector<std::array<bool, 2>> v_tt;
+    for (auto & x : filters['t']){
+      if (x.size() == 2 && (x[0] == 'N' || x[0] == 'T') && (x[1] == 'N' || x[1] == 'T')){        
+        bool aT = x[0] == 'N' ? false : true;
+        bool bT = x[1] == 'N' ? false : true;
+        v_tt.push_back({aT, bT});
+      }
+      ss << ' ' << x << ' ';
+    }
+    ss << " }\n";
+    std::cout << ss.str();
+    
+    
+    auto all_geometries = get_geometries(cache_keys);
+    std::vector<Geometry> transpose_correct;
+    for (auto & gg : all_geometries){
+      for (auto & x : v_tt){
+        if (gg.tX[Mat::E::A] == x[0] && gg.tX[Mat::E::B] == x[1]){
+          transpose_correct.push_back(gg);
+          break;
+        }
+      }
+    }
+    filter_geometries(cache_keys, transpose_correct);    
+  }
+  
+  else{
+    std::cout << "Will not filter transposes in cache\n";
+  }
+  
+  
+  
   
   if (cache_keys.size() == 0){
     std::cout << "No cache keys remain after filtering. \n";
@@ -159,7 +203,12 @@ int runcache_v2(std::map<char, std::vector<std::string>> & filters)
         std::string prefix = std::to_string(i) + "/" + std::to_string(cache_keys.size());
         prefix.resize(8, ' ');
         std::cout << prefix << " ";
-        diva.benchgemm({kernel_cache.at(ck, redirection::get_is_not_canonical(ck.gg))}, {{0, 5}, {0, 0.15}});      
+        Timer timer;
+        timer.start();
+        diva.benchgemm({kernel_cache.at(ck, redirection::get_is_not_canonical(ck.gg))}, {{0, 5}, {0, 0.08}});
+        auto x = timer.get_elapsed();
+        std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<size_t>(1200.*x)));
+              
       }
     }
   }
@@ -175,13 +224,15 @@ int main(int argc, char* argv[])
     {'d', "devices to look for in cache"},
     {'w', "what to do"},
     {'m', "workspace memories to consider"},
+    {'t', "transpose cases (tA, tB) to consider"},
   };
   
   std::map<char, std::vector<std::string>> options = {
     {'g', {"a (all)", "d (deepbench)", "s (m=n=k)"}},
     {'d', {"a (all)","d (default)", "any other string"}},
     {'w', {"b (benchmark)", "a (accuracy)"}},
-    {'m', {"a (all)", "0 (only zero ws)", "+ (only positive ws"}}
+    {'m', {"a (all)", "0 (only zero ws)", "+ (only positive ws"}},
+    {'t', {"a (all)", "NN", "NT", "TN", "TT"}},
   };
   
   
@@ -189,7 +240,8 @@ int main(int argc, char* argv[])
     {'g', "d"},
     {'d', "d"},
     {'w', "b"},
-    {'m', "0"}    
+    {'m', "0"},
+    {'t', "a"}    
   };
   
   // TODO: confirm that above have same keys.

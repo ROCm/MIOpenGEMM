@@ -55,6 +55,7 @@ Solution get_default(cl_command_queue   command_queue,
                      IfNoCache::E       enoc,
                      size_t             rank)
 {
+  
   oclutil::DevInfo devinfo(command_queue);
   double           extime = 0;
   HyPas            hp;
