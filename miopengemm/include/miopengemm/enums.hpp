@@ -93,19 +93,19 @@ namespace NonChi
 {
 enum E
 {
-  UNR = 0,
-  GAL,
-  PUN,
-  ICE,
-  IWI,
-  SZT,
-  MAD,
-  NAW,
-  UFO,
-  MAC,
-  SKW,
-  AFI,  // a loops and defs first. outerloops over a dimensions.
-  MIA,  // micro allocation
+  UNR = 0, // tile to load, dimension in k (unroll) 
+  GAL,     // group allocation
+  PUN,     // use pragma unroll indiscriminately
+  ICE,     // split work group in the k-dimension as well  
+  IWI,     // (if ICE != 1) inter-weave the work in the k-dimension 
+  SZT,     // use size_t (ulong) in the kernels instead of unsigned/short
+  MAD,     // use mad instead of c += a*b;
+  NAW,     // (if GAL == 3) number of work-groups per meta-tile
+  UFO,     // start work at some work-group dependent starting back offset
+  MAC,     // work items per work group
+  SKW,     // skewness of work-item grid of work group
+  AFI,     // do A loops and defs first. outerloops over a dimensions.
+  MIA,     // work item allocation within workgroup : % or / 
   N
 };
 extern const EnumMapper<std::string> M;
