@@ -99,6 +99,7 @@ enum E
   ICE,
   IWI,
   SZT,
+  MAD,
   NAW,
   UFO,
   MAC,
