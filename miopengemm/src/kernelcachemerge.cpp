@@ -5,7 +5,7 @@
 #include <chrono>
 #include <functional>
 #include <unordered_map>
-#include <miopengemm/devmiogemm.hpp>
+#include <miopengemm/tinytwo.hpp>
 #include <miopengemm/kernelcachemerge.hpp>
 #include <miopengemm/setabcw.hpp>
 
@@ -46,7 +46,7 @@ void populate(const std::vector<CacheKey>& cache_keys,
   CLHint  devhint;
 
   // we set the CPU memory once for all geometries.
-  // This is much faster than once for each geometry using Boas
+  // This is much faster than once for each geometry using TinyTwos
   mowri.bw[OutPart::MER] << "generating random matrices on CPU ... " << Flush;
   setabcw::CpuMemBundle<TFl> cmb(get_geometries(cache_keys), offsets);
   mowri.bw[OutPart::MER] << "done. Will perform Thue–Morse ABBABAAB 1-on-1." << Endl;
@@ -65,9 +65,9 @@ void populate(const std::vector<CacheKey>& cache_keys,
     mowri.bw[OutPart::MER] << "soln1 : " << kc1.at(ck, canonical::noswap).get_string() << Endl;
     mowri.bw[OutPart::MER] << "soln2 : " << kc2.at(ck, canonical::noswap).get_string() << Endl;
 
-    // having two Divas means that each opposing kernel only needs be compiled once. Optional.
-    dev::Diva<TFl> diva1(ck.gg, offsets, cmb.r_mem, mowri, devhint);
-    dev::Diva<TFl> diva2(ck.gg, offsets, cmb.r_mem, mowri, devhint);
+    // having two TinyOnes means that each opposing kernel only needs be compiled once. Optional.
+    dev::TinyOne<TFl> diva1(ck.gg, offsets, cmb.r_mem, mowri, devhint);
+    dev::TinyOne<TFl> diva2(ck.gg, offsets, cmb.r_mem, mowri, devhint);
 
     mowri.bw[OutPart::MER] << "Two divas generated" << Endl;
 
@@ -81,7 +81,7 @@ void populate(const std::vector<CacheKey>& cache_keys,
     prefix.resize(8, ' ');
 
     auto act_kcx = [&halt, &mowri, &ck, &prefix](
-      const KernelCache& kcx, std::string frag, std::vector<double>& times, dev::Diva<TFl>& diva) {
+      const KernelCache& kcx, std::string frag, std::vector<double>& times, dev::TinyOne<TFl>& diva) {
       mowri.bw[OutPart::MER] << '<' << frag << Flush;
       std::this_thread::sleep_for(std::chrono::milliseconds(20));
 

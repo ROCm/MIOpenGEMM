@@ -15,12 +15,12 @@
 #include <vector>
 #include <miopengemm/accuracytests.hpp>
 #include <miopengemm/cpugemm.hpp>
-#include <miopengemm/devmiogemm.hpp>
+#include <miopengemm/tinytwo.hpp>
 #include <miopengemm/error.hpp>
 #include <miopengemm/floattostring.hpp>
 #include <miopengemm/geometry.hpp>
 #include <miopengemm/hyperparams.hpp>
-#include <miopengemm/jinx.hpp>
+#include <miopengemm/tinyzero.hpp>
 #include <miopengemm/oclutil.hpp>
 #include <miopengemm/outputwriter.hpp>
 #include <miopengemm/redirection.hpp>
@@ -33,7 +33,7 @@ namespace dev
 {
 
 template <typename TFl>
-void Diva<TFl>::initialise_cpu_mem(const TFl* a_, const TFl* b_, const TFl* c_)
+void TinyOne<TFl>::initialise_cpu_mem(const TFl* a_, const TFl* b_, const TFl* c_)
 {
   cpu_mem[Mat::E::A] = a_;
   cpu_mem[Mat::E::B] = b_;
@@ -41,7 +41,7 @@ void Diva<TFl>::initialise_cpu_mem(const TFl* a_, const TFl* b_, const TFl* c_)
 }
 
 template <typename TFl>
-void Diva<TFl>::initialise_common()
+void TinyOne<TFl>::initialise_common()
 {
 
   rw_perms[Mem::E::A] = CL_MEM_READ_ONLY;
@@ -63,7 +63,7 @@ void Diva<TFl>::initialise_common()
 
   opencl_memory_initialise();
 
-  up_jinx.reset(new Jinx(tgcq.command_queue,
+  up_jinx.reset(new TinyZero(tgcq.command_queue,
                          gg,
                          toff,
                          gpu_safemem[Mem::E::A].clmem,
@@ -75,13 +75,13 @@ void Diva<TFl>::initialise_common()
 }
 
 template <typename TFl>
-Diva<TFl>::Diva(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint& devhint, long)
+TinyOne<TFl>::TinyOne(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint& devhint, long)
   : gg(gg_),
     toff(toff_),
     cpu_mem(Mat::E::N),
     mowri(mowri_),
-    tgcq(mowri, devhint, "command queue of Diva"),
-    gpu_safemem(Mem::E::N, std::string("gpu_safemem vector of Diva")),
+    tgcq(mowri, devhint, "command queue of TinyOne"),
+    gpu_safemem(Mem::E::N, std::string("gpu_safemem vector of TinyOne")),
     mem_size(Mem::E::N),
     rw_perms(Mem::E::N)
 {
@@ -89,7 +89,7 @@ Diva<TFl>::Diva(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHin
   if (gg.derived.float_size_bytes != sizeof(TFl))
   {
     std::stringstream errm;
-    errm << "float sizes don't agree in Diva. ";
+    errm << "float sizes don't agree in TinyOne. ";
     errm << "the size from geometry is " << gg.derived.float_size_bytes << ". ";
     errm << "the size from the template parameter is " << sizeof(TFl) << ".";
     throw miog_error(errm.str());
@@ -97,14 +97,14 @@ Diva<TFl>::Diva(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHin
 }
 
 template <typename TFl>
-Diva<TFl>::Diva(Geometry        gg_,
+TinyOne<TFl>::TinyOne(Geometry        gg_,
                 Offsets         toff_,
                 const TFl*      a_,
                 const TFl*      b_,
                 const TFl*      c_,
                 owrite::Writer& mowri_,
                 const CLHint&   devhint)
-  : Diva(gg_, toff_, mowri_, devhint, 42)
+  : TinyOne(gg_, toff_, mowri_, devhint, 42)
 
 {
 
@@ -113,17 +113,17 @@ Diva<TFl>::Diva(Geometry        gg_,
 }
 
 template <typename TFl>
-Diva<TFl>::Diva(Geometry gg_,
+TinyOne<TFl>::TinyOne(Geometry gg_,
                 Offsets  toff_,
                 std::array<const TFl*, Mat::E::N> abc_,
                 owrite::Writer& mowri_,
                 const CLHint&   devhint)
-  : Diva(gg_, toff_, abc_[Mat::E::A], abc_[Mat::E::B], abc_[Mat::E::C], mowri_, devhint)
+  : TinyOne(gg_, toff_, abc_[Mat::E::A], abc_[Mat::E::B], abc_[Mat::E::C], mowri_, devhint)
 {
 }
 
 template <typename TFl>
-void Diva<TFl>::initialise_cpu_mem_from_scratch()
+void TinyOne<TFl>::initialise_cpu_mem_from_scratch()
 {
 
   setabcw::set_abc<TFl>(
@@ -140,8 +140,8 @@ void Diva<TFl>::initialise_cpu_mem_from_scratch()
 }
 
 template <typename TFl>
-Diva<TFl>::Diva(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint& devhint)
-  : Diva(gg_, toff_, mowri_, devhint, 42)
+TinyOne<TFl>::TinyOne(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint& devhint)
+  : TinyOne(gg_, toff_, mowri_, devhint, 42)
 
 {
 
@@ -150,13 +150,13 @@ Diva<TFl>::Diva(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHin
 }
 
 template <typename TFl>
-size_t Diva<TFl>::get_workspace_memsize()
+size_t TinyOne<TFl>::get_workspace_memsize()
 {
   return get_total_workspace(gg, toff) * sizeof(TFl);
 }
 
 template <typename TFl>
-void Diva<TFl>::opencl_memory_initialise()
+void TinyOne<TFl>::opencl_memory_initialise()
 {
 
   // allocate memory for a,b,c on device, send it over
@@ -164,7 +164,7 @@ void Diva<TFl>::opencl_memory_initialise()
   {
     std::stringstream hash;
 
-    hash << "GPU Mem " << Mem::M.name[emem] << " (Diva) "
+    hash << "GPU Mem " << Mem::M.name[emem] << " (TinyOne) "
          << "with memory size " << mem_size[emem] << ".";
 
     if (mem_size[emem] > 0)
@@ -197,7 +197,7 @@ void Diva<TFl>::opencl_memory_initialise()
 }
 
 template <typename TFl>
-std::vector<std::vector<double>> Diva<TFl>::benchgemm(const std::vector<HyPas>& hps, const Halt& hl)
+std::vector<std::vector<double>> TinyOne<TFl>::benchgemm(const std::vector<HyPas>& hps, const Halt& hl)
 {
   std::vector<std::vector<double>> times_s;
   for (auto& hp : hps)
@@ -208,14 +208,14 @@ std::vector<std::vector<double>> Diva<TFl>::benchgemm(const std::vector<HyPas>& 
 }
 
 template <typename TFl>
-Solution Diva<TFl>::find(const FindParams& find_params, const Constraints& constraints)
+Solution TinyOne<TFl>::find(const FindParams& find_params, const Constraints& constraints)
 {
   Solution tgs = up_jinx->find(constraints, find_params);
   return tgs;
 }
 
 template <typename TFl>
-void Diva<TFl>::accuracy_test(const HyPas& hp, const TFl* c_true_for_test)
+void TinyOne<TFl>::accuracy_test(const HyPas& hp, const TFl* c_true_for_test)
 {
 
   // copy the const cpu matrix to the gpu
@@ -286,7 +286,7 @@ void Diva<TFl>::accuracy_test(const HyPas& hp, const TFl* c_true_for_test)
                                      mowri);
 }
 
-template class Diva<float>;
-template class Diva<double>;
+template class TinyOne<float>;
+template class TinyOne<double>;
 }
 }

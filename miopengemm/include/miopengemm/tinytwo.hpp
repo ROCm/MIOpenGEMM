@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string>
 #include <vector>
-#include <miopengemm/diva.hpp>
+#include <miopengemm/tinyone.hpp>
 #include <miopengemm/geometry.hpp>
 #include <miopengemm/oclutil.hpp>
 #include <miopengemm/solution.hpp>
@@ -18,29 +18,29 @@ namespace MIOpenGEMM
 namespace dev
 {
 
-class Boa
+class TinyTwo
 {
 
   private:
-  std::unique_ptr<Diva<double>> d_moa{nullptr};
-  std::unique_ptr<Diva<float>>  f_moa{nullptr};
+  std::unique_ptr<TinyOne<double>> d_moa{nullptr};
+  std::unique_ptr<TinyOne<float>>  f_moa{nullptr};
   char                          active_type{'?'};
 
   template <typename TFloat>
-  std::unique_ptr<Diva<TFloat>>& get_up_moa()
+  std::unique_ptr<TinyOne<TFloat>>& get_up_moa()
   {
-    throw miog_error("unrecognised template parameter TFloat in Boa get_up_moa");
+    throw miog_error("unrecognised template parameter TFloat in TinyTwo get_up_moa");
   }
 
   template <typename TFloat>
   void set_active_type()
   {
-    throw miog_error("unrecognised template parameter TFloat in Boa set_active_type");
+    throw miog_error("unrecognised template parameter TFloat in TinyTwo set_active_type");
   }
 
   public:
   template <typename TFloat>
-  Boa(Geometry        gg_,
+  TinyTwo(Geometry        gg_,
       Offsets         toff_,
       const TFloat*   a_,
       const TFloat*   b_,
@@ -48,11 +48,11 @@ class Boa
       owrite::Writer& mowri_,
       const CLHint&   devhint)
   {
-    get_up_moa<TFloat>().reset(new Diva<TFloat>(gg_, toff_, a_, b_, c_, mowri_, devhint));
+    get_up_moa<TFloat>().reset(new TinyOne<TFloat>(gg_, toff_, a_, b_, c_, mowri_, devhint));
     set_active_type<TFloat>();
   }
 
-  Boa(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint& devhint);
+  TinyTwo(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint& devhint);
 
   std::vector<std::vector<double>> benchgemm(const std::vector<HyPas>& hps, const Halt& hl);
 
@@ -68,16 +68,16 @@ class Boa
 };
 
 template <>
-std::unique_ptr<Diva<float>>& Boa::get_up_moa<float>();
+std::unique_ptr<TinyOne<float>>& TinyTwo::get_up_moa<float>();
 
 template <>
-std::unique_ptr<Diva<double>>& Boa::get_up_moa<double>();
+std::unique_ptr<TinyOne<double>>& TinyTwo::get_up_moa<double>();
 
 template <>
-void Boa::set_active_type<float>();
+void TinyTwo::set_active_type<float>();
 
 template <>
-void Boa::set_active_type<double>();
+void TinyTwo::set_active_type<double>();
 }
 }
 

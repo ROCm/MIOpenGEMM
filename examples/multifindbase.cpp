@@ -3,7 +3,7 @@
  *******************************************************************************/
 #include <iostream>
 #include <string>
-#include <miopengemm/devmiogemm.hpp>
+#include <miopengemm/tinytwo.hpp>
 #include <miopengemm/geometries.hpp>
 
 int main(int argc, char* argv[])
@@ -44,7 +44,7 @@ int main(int argc, char* argv[])
   std::cout << '\n';
 
   owrite::Writer mowri(Ver::E::STRACK, fn);
-  dev::Boa       boa(gg, offsets, mowri, devhint);
+  dev::TinyTwo       boa(gg, offsets, mowri, devhint);
   auto           find_params = get_at_least_n_restarts(9);
   find_params.sumstat = SummStat::E::MEDIAN;
   auto           soln        = boa.find(find_params, cons);

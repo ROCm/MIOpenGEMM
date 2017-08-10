@@ -2,7 +2,7 @@
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <string>
-#include <miopengemm/devmiogemm.hpp>
+#include <miopengemm/tinytwo.hpp>
 
 int main()
 {
@@ -15,7 +15,7 @@ int main()
   CLHint         devhint({"AMD", "gfx"});
   Offsets        offsets = get_zero_offsets();
   owrite::Writer mowri(Ver::E::TERMINAL, "");
-  dev::Boa       boa(gg, offsets, mowri, devhint);
+  dev::TinyTwo       boa(gg, offsets, mowri, devhint);
       
   boa.accuracy_test(hp);
   mowri << "\ndone.\n";

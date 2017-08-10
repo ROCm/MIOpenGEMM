@@ -4,7 +4,7 @@
 #include <string>
 #include <chrono>
 #include <thread>
-#include <miopengemm/devmiogemm.hpp>
+#include <miopengemm/tinytwo.hpp>
 #include <miopengemm/geometries.hpp>
 #include <miopengemm/kernelcache.hpp>
 #include <miopengemm/kernelcachemerge.hpp>
@@ -183,7 +183,7 @@ int runcache_v2(std::map<char, std::vector<std::string>> & filters)
       auto ck = cache_keys[i];
       if (ck.gg.floattype == 'f')
       {
-        dev::Diva<TFl> diva(ck.gg, offsets, cmb.r_mem, mowri, devhint);
+        dev::TinyOne<TFl> diva(ck.gg, offsets, cmb.r_mem, mowri, devhint);
         diva.accuracy_test(kernel_cache.at(ck, redirection::get_is_not_canonical(ck.gg)), nullptr);     
         mowri << "\n\n";
       }
@@ -199,7 +199,7 @@ int runcache_v2(std::map<char, std::vector<std::string>> & filters)
       auto ck = cache_keys[i];
       if (ck.gg.floattype == 'f')
       {
-        dev::Diva<TFl> diva(ck.gg, offsets, cmb.r_mem, mowri, devhint);
+        dev::TinyOne<TFl> diva(ck.gg, offsets, cmb.r_mem, mowri, devhint);
         std::string prefix = std::to_string(i) + "/" + std::to_string(cache_keys.size());
         prefix.resize(8, ' ');
         std::cout << prefix << " ";

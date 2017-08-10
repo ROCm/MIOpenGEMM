@@ -2,7 +2,7 @@
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <string>
-#include <miopengemm/devmiogemm.hpp>
+#include <miopengemm/tinytwo.hpp>
 #include <miopengemm/redirection.hpp>
 
 // TODO : nform is still using size_t. change this back.

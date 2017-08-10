@@ -2,7 +2,7 @@
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <string>
-#include <miopengemm/devmiogemm.hpp>
+#include <miopengemm/tinytwo.hpp>
 
 int main()
 {
@@ -16,7 +16,7 @@ int main()
   CLHint         devhint;
   Offsets        offsets = get_zero_offsets();
   owrite::Writer mowri(Ver::E::TERMINAL, "");
-  dev::Boa       boa(gg, offsets, mowri, devhint);
+  dev::TinyTwo       boa(gg, offsets, mowri, devhint);
 
   auto find_params = get_at_least_n_restarts(1);
   Constraints constraints("A_WOS0__B_WOS0__C_ICE1");

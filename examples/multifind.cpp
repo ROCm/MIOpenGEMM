@@ -3,7 +3,7 @@
  *******************************************************************************/
 #include <iostream>
 #include <string>
-#include <miopengemm/devmiogemm.hpp>
+#include <miopengemm/tinytwo.hpp>
 #include <miopengemm/geometries.hpp>
 
 int main()

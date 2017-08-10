@@ -2,7 +2,7 @@
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <string>
-#include <miopengemm/devmiogemm.hpp>
+#include <miopengemm/tinytwo.hpp>
 
 int main()
 {
@@ -14,7 +14,7 @@ int main()
   Offsets        offsets     = get_zero_offsets();
   owrite::Writer mowri(Ver::E::TERMINAL, ""); //TRACK
   CLHint         devhint;
-  dev::Boa       boa(gg, offsets, mowri, devhint);
+  dev::TinyTwo       boa(gg, offsets, mowri, devhint);
   Solution       soln = boa.find(find_params, constraints);
   std::cout << " \n\n\nThe following string can be cut and paste into kernelcache.cpp";
   std::cout << " \n\n-- snip -- -- -- snip --\n\n";

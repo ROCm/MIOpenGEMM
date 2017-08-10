@@ -65,12 +65,12 @@ class GpuMms
   cl_mem& operator[](Mem::E x);
 };
 
-class Jinx
+class TinyZero
 {
 
   // TODO : (in miogemm.hpp) miogemm class with interface to public jinx.
   public:
-  Jinx(cl_command_queue command_queue_,
+  TinyZero(cl_command_queue command_queue_,
        const Geometry   gg_,
        const Offsets    toff_,
        cl_mem           a_gpu_,

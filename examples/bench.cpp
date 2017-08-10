@@ -2,7 +2,7 @@
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <string>
-#include <miopengemm/devmiogemm.hpp>
+#include <miopengemm/tinytwo.hpp>
 #include <miopengemm/redirection.hpp>
 
 
@@ -19,7 +19,7 @@ int main()
   CLHint         devhint;
   Offsets        offsets = get_zero_offsets();
   owrite::Writer mowri(Ver::E::TERMINAL, "");
-  dev::Boa       boa(gg, offsets, mowri, devhint);
+  dev::TinyTwo       boa(gg, offsets, mowri, devhint);
   for  (unsigned i = 0 ; i < 1; ++i){
     //std::cout << "\n\n\n";
     boa.benchgemm({hp}, {{0, 5}, {0., 100.}});

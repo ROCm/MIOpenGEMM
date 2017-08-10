@@ -17,7 +17,7 @@
 #include <miopengemm/findparams.hpp>
 #include <miopengemm/generic.hpp>
 #include <miopengemm/graph.hpp>
-#include <miopengemm/jinx.hpp>
+#include <miopengemm/tinyzero.hpp>
 #include <miopengemm/kernel.hpp>
 #include <miopengemm/kernelcache.hpp>
 #include <miopengemm/kernelstring.hpp>
@@ -80,7 +80,7 @@ GpuMms::GpuMms(cl_mem           a_gpu_,
 
 cl_mem& GpuMms::operator[](Mem::E x) { return cl_mems[x]; }
 
-Jinx::Jinx(cl_command_queue command_queue_,
+TinyZero::TinyZero(cl_command_queue command_queue_,
            const Geometry   gg_,
            const Offsets    toff_,
            cl_mem           a_gpu_,
@@ -113,7 +113,7 @@ Jinx::Jinx(cl_command_queue command_queue_,
   }
 }
 
-void Jinx::address_check_valid()
+void TinyZero::address_check_valid()
 {
   for (auto x : {Mem::E::A, Mem::E::B})
   {
@@ -161,7 +161,7 @@ void Jinx::address_check_valid()
   }
 }
 
-void Jinx::address_check_valid_and_reliable()
+void TinyZero::address_check_valid_and_reliable()
 {
   address_check_valid();
   if (gpum[Mem::E::A] == gpum[Mem::E::B])
@@ -173,7 +173,7 @@ void Jinx::address_check_valid_and_reliable()
   }
 }
 
-void Jinx::set_kern_args(const KernBlob& kblob)
+void TinyZero::set_kern_args(const KernBlob& kblob)
 {
 
   // parameter order rule: {a, oa, b, ob, c, oc, ws, ows}, alpha, beta
@@ -201,7 +201,7 @@ void Jinx::set_kern_args(const KernBlob& kblob)
   tk_kernels.at(kblob.e_ktype).set_kernel_args(arg_sizes_values);
 }
 
-void Jinx::setup_tinykernels(const kerngen::Bundle& bundle)
+void TinyZero::setup_tinykernels(const kerngen::Bundle& bundle)
 {
 
   oclutil::Result oclr;
@@ -235,7 +235,7 @@ void Jinx::setup_tinykernels(const kerngen::Bundle& bundle)
   }
 }
 
-std::string Jinx::get_run_times_heading()
+std::string TinyZero::get_run_times_heading()
 {
   std::stringstream ss;
   ss << "tt: \t";
@@ -247,7 +247,7 @@ std::string Jinx::get_run_times_heading()
   return ss.str();
 }
 
-std::string Jinx::get_run_time_string(cl_int status, double extime)
+std::string TinyZero::get_run_time_string(cl_int status, double extime)
 {
   std::stringstream ss;
   if (status == CL_SUCCESS)
@@ -267,7 +267,7 @@ std::string Jinx::get_run_time_string(cl_int status, double extime)
   return ss.str();
 }
 
-oclutil::Result Jinx::true_core(std::function<void(std::string)> acton,
+oclutil::Result TinyZero::true_core(std::function<void(std::string)> acton,
                                 std::vector<double>&             all_times,
                                 const Halt&                      hl)
 {
@@ -360,7 +360,7 @@ oclutil::Result Jinx::true_core(std::function<void(std::string)> acton,
   return {};
 }
 
-std::vector<double> Jinx::benchgemm(const HyPas& hp, const Halt& hl)
+std::vector<double> TinyZero::benchgemm(const HyPas& hp, const Halt& hl)
 {
 
   address_check_valid();
@@ -391,7 +391,7 @@ std::vector<double> Jinx::benchgemm(const HyPas& hp, const Halt& hl)
   return all_times;
 }
 
-Solution Jinx::find(const Constraints& constraints, const FindParams& fparms)
+Solution TinyZero::find(const Constraints& constraints, const FindParams& fparms)
 {
 
   if (fparms.hl_outer.max_time < 0.01)
@@ -467,7 +467,7 @@ Solution Jinx::find(const Constraints& constraints, const FindParams& fparms)
   return v_solns[best_soln_index];
 }
 
-Solution Jinx::single_descent_find(double             allotted_time,
+Solution TinyZero::single_descent_find(double             allotted_time,
                                    const Constraints& constraints,
                                    const Halt&        core_halt,
                                    FindTracker&       ftrack,
