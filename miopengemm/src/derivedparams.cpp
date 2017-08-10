@@ -522,11 +522,12 @@ DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_) : ptr_hp(&hp
 
   if (ptr_hp->sus[Mat::E::C].vs[NonChi::E::SZT] == true)
   {
-    tints[Mem::E::A] = "size_t";
-    tints[Mem::E::B] = "size_t";
-    tints[Mem::E::C] = "size_t";
-    tints[Mem::E::W] = "size_t";
-    tintk            = "size_t";
+    std::string ui64 = "ulong";
+    tints[Mem::E::A] = ui64;
+    tints[Mem::E::B] = ui64;
+    tints[Mem::E::C] = ui64;
+    tints[Mem::E::W] = ui64;
+    tintk            = ui64;
   }
 
   tshort = "ushort";

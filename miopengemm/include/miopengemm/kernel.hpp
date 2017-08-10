@@ -15,6 +15,8 @@
 namespace MIOpenGEMM
 {
 
+// TODO RAII cl_*
+
 class Kernel
 {
 

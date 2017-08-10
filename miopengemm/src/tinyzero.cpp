@@ -105,7 +105,8 @@ TinyZero::TinyZero(cl_command_queue command_queue_,
     devinfo(command_queue_),
     mowri(mowri_)
 {
-
+  
+  
   tk_kernels.resize(KType::E::N);
   for (size_t i = 0; i < KType::E::N; ++i)
   {
@@ -243,6 +244,9 @@ std::string TinyZero::get_run_times_heading()
   {
     ss << " k" << k_ind << ":\t";
   }
+  
+  ss << "sum: \t";
+  
   ss << " Gflops/s:\n";
   return ss.str();
 }
@@ -253,10 +257,16 @@ std::string TinyZero::get_run_time_string(cl_int status, double extime)
   if (status == CL_SUCCESS)
   {
     ss << std::fixed << std::setprecision(3) << extime << '\t';
+
+    double sumtimes = 0;
+    
     for (size_t k_ind = 0; k_ind < tk_kernels_active.size(); ++k_ind)
     {
-      ss << " " << tk_kernels_active[k_ind]->v_times.back() << "\t";
+      auto tk = tk_kernels_active[k_ind]->v_times.back();
+      sumtimes += tk;
+      ss << " " << tk << "\t";
     }
+    ss << std::fixed << std::setprecision(3) << sumtimes << '\t';
     ss << " " << 2.0 * gg.m * gg.n * gg.k / (extime * 1e6) << std::setprecision(6);
   }
 
@@ -296,7 +306,7 @@ oclutil::Result TinyZero::true_core(std::function<void(std::string)> acton,
       // but it is still possible that it does not run. We catch that here.
       // if anything is caught here, consider testing for it in architests.
 
-      std::vector<cl_event> clevent_waits;
+      std::vector<cl_event> clevent_waits;  
 
       for (auto& evi : v_wait_indices[k_ind])
       {
@@ -338,13 +348,19 @@ oclutil::Result TinyZero::true_core(std::function<void(std::string)> acton,
     // Wait for kernels to complete
     oclutil::cl_wait_for_events(1, &(tk_kernels_active.back()->clevent), "core gemm loops", true);
 
+
+    size_t maxend = 0;
+    size_t minstart = std::numeric_limits<size_t>::max();
     for (auto& ptr_tk_kernel : tk_kernels_active)
     {
-      ptr_tk_kernel->update_times();
+      ptr_tk_kernel->update_times();      
+      maxend = std::max<size_t>(maxend, ptr_tk_kernel->t_end);
+      minstart = std::min<size_t>(minstart, ptr_tk_kernel->t_start);
     }
 
-    double extime = (1e-6 * (tk_kernels_active.back()->t_end - tk_kernels_active[0]->t_start));
-
+    double extime = (1e-6 * (maxend - minstart));
+    
+    
     // act on the results string.
     acton(get_run_time_string(oclr.success, extime));
     ++runi;
@@ -377,6 +393,8 @@ std::vector<double> TinyZero::benchgemm(const HyPas& hp, const Halt& hl)
   {
     throw miog_error(atr.msg);
   }
+
+
 
   setup_tinykernels(bundle);
 

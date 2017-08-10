@@ -36,10 +36,13 @@ TinyTwo::TinyTwo(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHi
 
   switch (gg_.floattype)
   {
+
   case 'f': f_moa.reset(new TinyOne<float>(gg_, toff_, mowri_, devhint)); break;
   case 'd': d_moa.reset(new TinyOne<double>(gg_, toff_, mowri_, devhint)); break;
   default: throw miog_error("unrecognised floattype char in TinyTwo constructor");
   }
+  
+
   active_type = gg_.floattype;
 }
 

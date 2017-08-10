@@ -231,8 +231,8 @@ enum E
   STRACK,        // tracker output to terminal, main output to file
   ACCURACY,      // tracker and accuracy to terminal
   TERMWITHDEPS,  // like terminal, with additionally the dependencies between kernels
+  MERGE,         // when merging two kernel caches
   MULTIBENCH,
-  MERGE,  // when merging two kernel caches
   N
 };
 extern const EnumMapper<std::string> M;
@@ -253,7 +253,7 @@ enum E
 };
 extern const EnumMapper<std::string> M;
 
-// maps the depencices of kernels, order of exection
+// maps the dependencices of kernels, order of execution
 // For example deps[MAIN] = {WSA, WSB, BETAC},
 // as all of these must first complete
 // before MAIN can execute

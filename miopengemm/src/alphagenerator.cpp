@@ -17,15 +17,12 @@
  * to contiguous). With normal form matrices, it should work in all situations  */
 /* TODO : remove final barrier, not nec */
 /* TODO : beta = 1 optimisation */
-/* TODO : mad as hyper-parameter, figure out why it slows kernels down (see
- * tensile branch) */
 /* TODO : volatile int id (Nugteren) to prevent unrolling */
 /* TODO : play with restrict keyword */
 /* TODO : consider idea of localA, localB being contiguous (float1)
  * and then "localC" can be within or an extension of this. then,
  * when writing to C, first write to localC, then make a contiguous write to
  * C from localC */
-/* TODO : size_t should be ulong (basegenerator.cpp) */
 
 namespace MIOpenGEMM
 {

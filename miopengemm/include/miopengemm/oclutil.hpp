@@ -20,14 +20,11 @@ cl_mem get_copy(cl_command_queue cq, cl_mem c, size_t c_nbytes, const std::strin
 
 class Result
 {
-
   public:
   cl_int      success;
   std::string message;
   Result() : success(CL_SUCCESS), message("") {}
-
   Result(cl_int success_, std::string message_) : success(success_), message(message_) {}
-
   bool fail() { return success != CL_SUCCESS; }
 };
 
@@ -41,11 +38,13 @@ Result cl_set_command_queue(cl_command_queue&           a_cl_command_queue,
                             const std::string&          hash,
                             bool                        strict);
 
+Result cl_release_event(cl_event event, const std::string& hash, bool strict);
+
 Result cl_release_kernel(cl_kernel kernel, const std::string& hash, bool strict);
 
 Result cl_release_context(cl_context context, const std::string& hash, bool strict);
 
-Result
+Result 
 cl_release_command_queue(cl_command_queue command_queue, const std::string& hash, bool strict);
 
 Result cl_release_program(cl_program program, const std::string& hash, bool strict);
@@ -268,6 +267,19 @@ class SafeClMem
   SafeClMem(const std::string& hash);
 
   ~SafeClMem();
+};
+
+
+// TODO rename to SafeClEvent
+class SafeEvent
+{
+  public:
+  cl_event    clevent;
+  std::string hash;
+  SafeEvent(const std::string& hash);
+
+  ~SafeEvent();
+  
 };
 
 class CommandQueueInContext

@@ -11,13 +11,13 @@ namespace MIOpenGEMM
 {
 
 Kernel::Kernel(cl_command_queue command_queue_, const std::string& hash_)
-  : command_queue(command_queue_), clprog(nullptr), clkern(nullptr), hash(hash_)
+  : command_queue(command_queue_), clevent(nullptr), clprog(nullptr), clkern(nullptr), hash(hash_) //safe_event("Kernel constructor" + hash)
 {
+ 
 }
 
 void Kernel::try_release()
 {
-
   if (clprog != nullptr)
   {
     oclutil::cl_release_program(clprog, "Kernel Destructor", true);
@@ -25,6 +25,10 @@ void Kernel::try_release()
   if (clkern != nullptr)
   {
     oclutil::cl_release_kernel(clkern, "Kernel Destructor", true);
+  }
+  
+  if (clevent != nullptr){    
+    oclutil::cl_release_event(clevent, "Kernel Destructor", true);
   }
 }
 

@@ -84,7 +84,13 @@ Result cl_set_command_queue(cl_command_queue&           a_cl_command_queue,
                             bool                        strict)
 {
   cl_int errcode_ret;
+  
+  #ifdef MIOPENGEMM_USE_OCL2
+  // TODO : use clCreateCommandQueueWithProperties.
+  #else 
   a_cl_command_queue = clCreateCommandQueue(context, device, properties, &errcode_ret);
+  #endif
+  
   return confirm_cl_status(errcode_ret, hash, "cl_create_command_queue", strict);
 }
 
@@ -92,6 +98,12 @@ Result cl_release_kernel(cl_kernel kernel, const std::string& hash, bool strict)
 {
   cl_int ret = clReleaseKernel(kernel);
   return confirm_cl_status(ret, hash, "cl_release_kernel", strict);
+}
+
+Result cl_release_event(cl_event event, const std::string& hash, bool strict)
+{
+  cl_int ret = clReleaseEvent(event);
+  return confirm_cl_status(ret, hash, "cl_release_event", strict);
 }
 
 Result cl_release_context(cl_context context, const std::string& hash, bool strict)
@@ -759,7 +771,9 @@ Result cl_set_program_and_kernel(const cl_command_queue& command_queue,
   return oclr;
 }
 
-SafeClMem::SafeClMem(const std::string& hash_) : clmem(nullptr), hash(hash_) {}
+SafeClMem::SafeClMem(const std::string& hash_) : clmem(nullptr), hash(hash_) {
+  
+}
 
 SafeClMem::~SafeClMem()
 {
@@ -767,6 +781,22 @@ SafeClMem::~SafeClMem()
   {
     bool strict = true;
     auto oclr   = oclutil::cl_release_mem_object(clmem, hash, strict);
+  }
+}
+
+
+SafeEvent::SafeEvent(const std::string& hash_) : hash(hash_) {
+
+
+  
+}
+
+SafeEvent::~SafeEvent()
+{
+  if (clevent != nullptr)
+  {
+    bool strict = true;
+    auto oclr   = cl_release_event(clevent, "SafeEvent destructor: " + hash, strict);
   }
 }
 
@@ -813,7 +843,7 @@ CommandQueueInContext::CommandQueueInContext(owrite::Writer&    mowri,
   bool strict = true;
   cl_auto_set_command_queue(command_queue,
                             mowri,
-                            CL_QUEUE_PROFILING_ENABLE,
+                            CL_QUEUE_PROFILING_ENABLE, // | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE,
                             devhint,
                             "CommandQueueInContext constructor",
                             strict);
@@ -825,6 +855,7 @@ CommandQueueInContext::~CommandQueueInContext()
   if (command_queue != nullptr)
   {
     cl_context context;
+    
     cl_set_command_queue_info(command_queue,
                               CL_QUEUE_CONTEXT,
                               sizeof(cl_context),

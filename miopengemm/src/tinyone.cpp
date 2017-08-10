@@ -63,6 +63,8 @@ void TinyOne<TFl>::initialise_common()
 
   opencl_memory_initialise();
 
+
+
   up_jinx.reset(new TinyZero(tgcq.command_queue,
                          gg,
                          toff,
@@ -85,6 +87,7 @@ TinyOne<TFl>::TinyOne(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const
     mem_size(Mem::E::N),
     rw_perms(Mem::E::N)
 {
+  
 
   if (gg.derived.float_size_bytes != sizeof(TFl))
   {
@@ -109,7 +112,12 @@ TinyOne<TFl>::TinyOne(Geometry        gg_,
 {
 
   initialise_cpu_mem(a_, b_, c_);
+
+
   initialise_common();
+
+
+
 }
 
 template <typename TFl>
@@ -198,6 +206,7 @@ void TinyOne<TFl>::opencl_memory_initialise()
 
 template <typename TFl>
 std::vector<std::vector<double>> TinyOne<TFl>::benchgemm(const std::vector<HyPas>& hps, const Halt& hl)
+
 {
   std::vector<std::vector<double>> times_s;
   for (auto& hp : hps)
@@ -219,7 +228,8 @@ void TinyOne<TFl>::accuracy_test(const HyPas& hp, const TFl* c_true_for_test)
 {
 
   // copy the const cpu matrix to the gpu
-  cl_event event_write_c_to_gpu;
+  //cl_event event_write_c_to_gpu;
+  oclutil::SafeEvent event_write_c_to_gpu("accuracy test write");
   // cl_uint n_events = 1;
   oclutil::cl_enqueue_write_buffer(tgcq.command_queue,
                                    gpu_safemem[Mem::E::C].clmem,
@@ -229,19 +239,20 @@ void TinyOne<TFl>::accuracy_test(const HyPas& hp, const TFl* c_true_for_test)
                                    cpu_mem[Mat::E::C],
                                    0,
                                    nullptr,
-                                   &event_write_c_to_gpu,
+                                   &event_write_c_to_gpu.clevent,
                                    "write of correct c in accuracy",
                                    true);
 
   // make sure the copy to gpu is complete
   oclutil::cl_wait_for_events(
-    1, &event_write_c_to_gpu, "in accuracy test, waiting GEMM gpu ", true);
+    1, &event_write_c_to_gpu.clevent, "in accuracy test, waiting GEMM gpu ", true);
 
   // run gemm once on the gpu
   benchgemm({hp}, {{0, 1}, {0, 1e12}});
 
   // read the result to c_copy on the cpu
-  cl_event event_read_c_back;
+  //cl_event event_read_c_back;
+  oclutil::SafeEvent event_read_c_back("accuracy test read");
   oclutil::cl_enqueue_read_buffer(tgcq.command_queue,
                                   gpu_safemem[Mat::E::C].clmem,
                                   CL_TRUE,
@@ -250,7 +261,7 @@ void TinyOne<TFl>::accuracy_test(const HyPas& hp, const TFl* c_true_for_test)
                                   c_copy.data(),
                                   0,
                                   NULL,
-                                  &event_read_c_back,
+                                  &event_read_c_back.clevent,
                                   "enqueue read to c, in base_basegemm_with_accuracy_test",
                                   true);
 
@@ -275,7 +286,7 @@ void TinyOne<TFl>::accuracy_test(const HyPas& hp, const TFl* c_true_for_test)
   }
 
   // make sure the read back is complete complete
-  oclutil::cl_wait_for_events(1, &event_read_c_back, "in accuracy test, waiting GEMM gpu ", true);
+  oclutil::cl_wait_for_events(1, &event_read_c_back.clevent, "in accuracy test, waiting GEMM gpu ", true);
 
   // compare cpu and gpu results
   accuracytests::elementwise_compare(cpu_mem[Mat::E::C],

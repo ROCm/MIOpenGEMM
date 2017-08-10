@@ -377,6 +377,7 @@ std::array<std::vector<size_t>, E::N> get_dependencies()
   kdps[E::WSB]   = {};
   kdps[E::BETAC] = {};
   kdps[E::MAIN]  = {E::BETAC, E::WSA, E::WSB};
+  
   for (auto& x : kdps)
   {
     if (x == uninitialised_vector)
