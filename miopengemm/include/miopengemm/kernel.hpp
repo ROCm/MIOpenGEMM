@@ -4,7 +4,11 @@
 #ifndef GUARD_MIOPENGEMM_KERNEL_HPP
 #define GUARD_MIOPENGEMM_KERNEL_HPP
 
+#if __APPLE__
+#include <opencl.h>
+#else
 #include <CL/cl.h>
+#endif
 #include <algorithm>
 #include <vector>
 #include <miopengemm/kernelstring.hpp>
