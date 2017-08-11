@@ -4,7 +4,11 @@
 #ifndef GUARD_MIOPENGEMM_OPENCLUTIL_H
 #define GUARD_MIOPENGEMM_OPENCLUTIL_H
 
+#if __APPLE__
+#include <opencl.h>
+#else
 #include <CL/cl.h>
+#endif
 #include <tuple>
 #include <miopengemm/outputwriter.hpp>
 
