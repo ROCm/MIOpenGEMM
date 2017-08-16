@@ -4,11 +4,7 @@
 #ifndef GUARD_MIOPENGEMM_ARCHITESTS_HPP
 #define GUARD_MIOPENGEMM_ARCHITESTS_HPP
 
-#if __APPLE__
-#include <opencl.h>
-#else
 #include <CL/cl.h>
-#endif
 #include <miopengemm/derivedparams.hpp>
 #include <miopengemm/hyperparams.hpp>
 
