@@ -22,7 +22,6 @@ target_link_libraries(miopengemm ${OPENCL_LIBRARIES})
 
 target_include_directories (miopengemm PUBLIC 
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/dev_include>
-    ${OPENCL_INCLUDE_DIRS}/Headers
     ${OPENCL_INCLUDE_DIRS})
 
 rocm_install_targets(

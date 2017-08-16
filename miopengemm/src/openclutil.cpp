@@ -1,11 +1,7 @@
 /*******************************************************************************
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
  *******************************************************************************/
-#if __APPLE__
-#include <opencl.h>
-#else
 #include <CL/cl.h>
-#endif
 #include <map>
 #include <sstream>
 #include <string>
