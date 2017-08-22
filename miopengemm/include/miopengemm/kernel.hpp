@@ -68,6 +68,9 @@ class Kernel
 
   void reset_times();
 };
+
+oclutil::Result run_kernels(std::vector<Kernel*> ptr_kernels, std::vector<std::vector<size_t>> v_wait_indices);
+
 }
 
 #endif

@@ -270,24 +270,24 @@ void Geometry::initialise(bool   isColMajor_,
 
 }
 
-Geometry::Geometry(bool   isColMajor_,
-                   bool   tA_,
-                   bool   tB_,
-                   bool   tC_,
-                   size_t lda_,
-                   size_t ldb_,
-                   size_t ldc_,
-                   size_t m_,
-                   size_t n_,
-                   size_t k_,
-                   size_t wSpaceSize_,
-                   char   floattype_)
-{
-  initialise(isColMajor_, tA_, tB_, tC_, lda_, ldb_, ldc_, m_, n_, k_, wSpaceSize_, floattype_);
-}
+//Geometry::Geometry(bool   isColMajor_,
+                   //bool   tA_,
+                   //bool   tB_,
+                   //bool   tC_,
+                   //size_t lda_,
+                   //size_t ldb_,
+                   //size_t ldc_,
+                   //size_t m_,
+                   //size_t n_,
+                   //size_t k_,
+                   //size_t wSpaceSize_,
+                   //char   floattype_)
+//{
+  //initialise(isColMajor_, tA_, tB_, tC_, lda_, ldb_, ldc_, m_, n_, k_, wSpaceSize_, floattype_);
+//}
 
 //// temporary for MIOpen
-  //Geometry(bool   isColMajor,
+  //Geometry::Geometry(bool   isColMajor,
            //bool   tA,
            //bool   tB,
            //bool   tC,

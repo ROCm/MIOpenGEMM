@@ -6,6 +6,7 @@
 #include <miopengemm/error.hpp>
 #include <miopengemm/kernel.hpp>
 #include <miopengemm/oclutil.hpp>
+#include <sstream>
 
 namespace MIOpenGEMM
 {
@@ -120,4 +121,41 @@ void Kernel::reset_times()
   t_end   = 0;
   v_times.resize(0);
 }
+
+oclutil::Result run_kernels(std::vector<Kernel*> ptr_kernels, std::vector<std::vector<size_t>> v_wait_indices){
+
+  for (size_t k_ind = 0; k_ind < ptr_kernels.size(); ++k_ind)
+  {
+    // At this point, the kernel has been succesfully compiled,
+    // but it is still possible that it does not run. We catch that here.
+    // if anything is caught here, consider testing for it in architests.
+
+    std::vector<cl_event> clevent_waits;  
+
+    for (auto& evi : v_wait_indices[k_ind])
+    {
+      // see `cl-events' comment at bottom
+      clevent_waits.emplace_back(ptr_kernels[evi]->clevent);
+    }
+
+    const cl_event* event_wait_list = clevent_waits.size() == 0 ? nullptr : clevent_waits.data();
+    auto oclr = ptr_kernels[k_ind]->enqueue(clevent_waits.size(), event_wait_list);
+
+    // see `in-series' comment at bottom
+
+    if (oclr.success == CL_SUCCESS)
+    {
+      // good
+    }
+    
+    else{
+      oclr.message += "(run_kernels, kernel " + std::to_string(k_ind) + ")";
+      return oclr;
+    }
+  }
+  return {};
+
+}
+
+
 }

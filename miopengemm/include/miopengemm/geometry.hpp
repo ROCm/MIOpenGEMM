@@ -77,18 +77,35 @@ class Geometry
 
   GeometryDerived derived;
 
-  Geometry(bool   isColMajor,
-           bool   tA,
-           bool   tB,
-           bool   tC,
-           size_t lda,
-           size_t ldb,
-           size_t ldc,
-           size_t m,
-           size_t n,
-           size_t k,
-           size_t wSpaceSize,
-           char   floattype);
+  //Geometry(bool   isColMajor,
+           //bool   tA,
+           //bool   tB,
+           //bool   tC,
+           //size_t lda,
+           //size_t ldb,
+           //size_t ldc,
+           //size_t m,
+           //size_t n,
+           //size_t k,
+           //size_t wSpaceSize,
+           //char   floattype);
+
+  template <typename T>
+  Geometry(bool   isColMajor_,
+           bool   tA_,
+           bool   tB_,
+           bool   tC_,
+           T lda_,
+           T ldb_,
+           T ldc_,
+           T m_,
+           T n_,
+           T k_,
+           size_t wSpaceSize_,
+           char   floattype_){
+             initialise(isColMajor_, tA_, tB_, tC_, lda_, ldb_, ldc_, m_, n_, k_, wSpaceSize_, floattype_);
+           }
+           
 
  //// temporary for MIOpen  
   //Geometry(bool   isColMajor,

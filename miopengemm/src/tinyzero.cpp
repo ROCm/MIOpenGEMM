@@ -35,6 +35,9 @@
 namespace MIOpenGEMM
 {
 
+
+
+
 void   FindTracker::start() { timer.start(); }
 double FindTracker::get_elapsed() const { return timer.get_elapsed(); }
 
@@ -208,6 +211,7 @@ void TinyZero::setup_tinykernels(const kerngen::Bundle& bundle)
   oclutil::Result oclr;
 
   // TODO setting v_wait_indices here : is not clear code
+  // TODO : make part of kernel
   v_wait_indices = bundle.v_wait_indices;
 
   tk_kernels_active.resize(0);
@@ -233,6 +237,7 @@ void TinyZero::setup_tinykernels(const kerngen::Bundle& bundle)
       }
     }
     tk_kernels_active.push_back(&tk_kernels[bundle.v_tgks[ksi].e_ktype]);
+    //tk_kernels[bundle.v_tgks[ksi].v_wait_indices = bundle.v_wait_indices[
   }
 }
 
@@ -300,48 +305,30 @@ oclutil::Result TinyZero::true_core(std::function<void(std::string)> acton,
       throw miog_error("zero kernels active : internal logic error");
     }
 
-    for (size_t k_ind = 0; k_ind < tk_kernels_active.size(); ++k_ind)
-    {
-      // At this point, the kernel has been succesfully compiled,
-      // but it is still possible that it does not run. We catch that here.
-      // if anything is caught here, consider testing for it in architests.
+    oclr = run_kernels(tk_kernels_active, v_wait_indices);
 
-      std::vector<cl_event> clevent_waits;  
-
-      for (auto& evi : v_wait_indices[k_ind])
-      {
-        // see `cl-events' comment at bottom
-        clevent_waits.emplace_back(tk_kernels_active[evi]->clevent);
-      }
-
-      const cl_event* event_wait_list = clevent_waits.size() == 0 ? nullptr : clevent_waits.data();
-      oclr = tk_kernels_active[k_ind]->enqueue(clevent_waits.size(), event_wait_list);
-
-      // see `in-series' comment at bottom
-
-      if (oclr.success == CL_SUCCESS)
-      {
-        // good
-      }
-
-      else if (oclr.success == CL_OUT_OF_RESOURCES)
-      {
-        oclutil::cl_flush(command_queue, "cl flushing in core gemm loop", true);
-        oclr.message += " (CL_OUT_OF_RESOURCES in true_core) ";
-        return oclr;
-      }
-
-      else
-      {
-        std::stringstream ss;
-        ss << "OpenCL error status : " << oclr.success << ". "
-           << "Neither CL_SUCCESS nor CL_OUT_OF_RESOURCES.  "
-           << "Maybe there are no kernels? Internal logic error. "
-           << "could catch with CL_OUT_OF_RESOURCES (ie throw oclr) "
-           << "The error from opencl was " << oclr.message;
-        throw miog_error(ss.str());
-      }
+    if (oclr.success == CL_SUCCESS){
+      // good
     }
+
+    else if (oclr.success == CL_OUT_OF_RESOURCES)
+    {
+      oclutil::cl_flush(command_queue, "cl flushing in core gemm loop", true);
+      oclr.message += " (CL_OUT_OF_RESOURCES in true_core) ";
+      return oclr;
+    }
+
+    else
+    {
+      std::stringstream ss;
+      ss << "OpenCL error status : " << oclr.success << ". "
+         << "Neither CL_SUCCESS nor CL_OUT_OF_RESOURCES.  "
+         << "Maybe there are no kernels? Internal logic error. "
+         << "could catch with CL_OUT_OF_RESOURCES (ie throw oclr) "
+         << "The error from opencl was " << oclr.message;
+      throw miog_error(ss.str());
+    }
+
 
     oclutil::cl_flush(command_queue, "cl flush in core gemm loop", true);
 
