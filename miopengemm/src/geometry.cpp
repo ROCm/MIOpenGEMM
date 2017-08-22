@@ -188,7 +188,7 @@ void Geometry::check_ldx_consistent() const
                "coal_x (for x in {a,b,c}) given by:  ";
     errm_ss << "coal_a = (tA == isColMajor ? k : m),  ";
     errm_ss << "coal_b = (tB == isColMajor ? n : k),  ";
-    errm_ss << "coal_c = (tC == isColMajor ? k : m).  ";
+    errm_ss << "coal_c = (tC == isColMajor ? n : m).  ";
     errm_ss << "\n\n";
 
     errm_ss << "ldx = coal_x + pad_x, and so for consisteny it must be true "
