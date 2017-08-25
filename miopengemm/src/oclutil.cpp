@@ -12,7 +12,7 @@
 #include <miopengemm/error.hpp>
 #include <miopengemm/oclutil.hpp>
 #include <miopengemm/outputwriter.hpp>
-
+#include <miopengemm/timer.hpp>
 #include <miopengemm/hint.hpp>
 
 namespace MIOpenGEMM
@@ -257,6 +257,11 @@ Result cl_enqueue_ndrange_kernel(cl_command_queue   command_queue,
                                  const std::string& hash,
                                  bool               strict)
 {
+  
+  
+  //Timer timer;
+  //timer.start();  
+  
   cl_int ret = clEnqueueNDRangeKernel(command_queue,
                                       kernel,
                                       work_dim,
@@ -266,6 +271,14 @@ Result cl_enqueue_ndrange_kernel(cl_command_queue   command_queue,
                                       num_events_in_wait_list,
                                       event_wait_list,
                                       event);
+                                      
+
+  //clWaitForEvents(1, event);
+  //std::cout << timer.get_elapsed() << std::endl;
+  //auto gflops = (2.*155*155*155 + 0.)/(1e9*timer.get_elapsed());
+  //std::cout << "\n-------->  " << gflops << std::endl;
+
+                                      
   return confirm_cl_status(ret, hash, "cl_enqueue_ndrange_kernel", strict);
 }
 

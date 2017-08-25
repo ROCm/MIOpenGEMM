@@ -8,6 +8,7 @@
 #include <miopengemm/geometry.hpp>
 #include <miopengemm/kernel.hpp>
 #include <miopengemm/programcache.hpp>
+#include <miopengemm/timer.hpp>
 namespace MIOpenGEMM
 {
 
@@ -125,6 +126,8 @@ GemmResult xgemm(bool              isColMajor,
   squad.ptr_kernels.back()->ptr_event = ptr_event_user;
 
   auto oclr = run_kernels(*ptr_queue, squad.ptr_kernels, squad.v_wait_indices, num_events_in_wait_list, event_wait_list);
+
+
   return {};
 }
 
