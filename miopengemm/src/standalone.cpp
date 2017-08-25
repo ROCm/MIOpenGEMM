@@ -27,7 +27,7 @@ std::string make(const Geometry& gg, const HyPas& hp, owrite::Writer& mowri)
     throw miog_error("Non-derivable in standalone::make : " + dblt.msg);
   }
 
-  kerngen::Bundle bundle(hp, gg, mowri);
+  kerngen::Bundle bundle(hp, gg);  //, mowri);
 
   if (bundle.v_tgks.size() != 1)
   {

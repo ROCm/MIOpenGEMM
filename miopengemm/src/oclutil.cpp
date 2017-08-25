@@ -84,13 +84,13 @@ Result cl_set_command_queue(cl_command_queue&           a_cl_command_queue,
                             bool                        strict)
 {
   cl_int errcode_ret;
-  
-  #ifdef MIOPENGEMM_USE_OCL2
-  // TODO : use clCreateCommandQueueWithProperties.
-  #else 
+
+#ifdef MIOPENGEMM_USE_OCL2
+// TODO : use clCreateCommandQueueWithProperties.
+#else
   a_cl_command_queue = clCreateCommandQueue(context, device, properties, &errcode_ret);
-  #endif
-  
+#endif
+
   return confirm_cl_status(errcode_ret, hash, "cl_create_command_queue", strict);
 }
 
@@ -137,30 +137,32 @@ Result cl_set_kernel_arg(cl_kernel&         kernel,
   {
     std::stringstream errm;
     errm << "In cl_set_kernel_arg."
-         << "Attempt to set kernel argument of uninitialised kernel."
+         << "Attempt to set kernel argument of uninitialised kernel (kernel == nullptr). "
          << "hash : `" << hash << "'";
-
     throw miog_error(errm.str());
   }
 
+  
   cl_int ret = clSetKernelArg(kernel, arg_index, arg_size, arg_value);
 
   return confirm_cl_status(ret, hash, "cl_set_kernel_arg", strict);
 }
 
 Result cl_set_kernel_args(cl_kernel& kernel,
-                          std::vector<std::pair<size_t, const void*>> arg_sizes_values,
+                          const  std::vector<std::pair<size_t, const void*>> & arg_sizes_values,
                           const std::string& hash,
                           bool               strict)
 {
 
   for (cl_uint arg_index = 0; arg_index < arg_sizes_values.size(); ++arg_index)
   {
+
     std::stringstream hashss;
     hashss << "cl_set_kernel_args with hash : `" << hash << "'. Attempting to set arg at index "
            << arg_index << ".";
     size_t      arg_size  = arg_sizes_values[arg_index].first;
     const void* arg_value = arg_sizes_values[arg_index].second;
+
     auto oclr = cl_set_kernel_arg(kernel, arg_index, arg_size, arg_value, hashss.str(), strict);
 
     if (oclr.fail())
@@ -696,17 +698,19 @@ Result cl_set_platform_etc(cl_platform_id&    platform,
   return {};
 }
 
-Result cl_set_program_and_kernel(const cl_command_queue& command_queue,
-                                 const std::string&      kernel_string,
-                                 const std::string&      kernel_function_name,
-                                 cl_program&             program,
-                                 cl_kernel&              kernel,
-                                 owrite::Writer&         mowri,
-                                 bool                    strict)
-{
+Result cl_set_context_and_device_from_command_queue(const cl_command_queue& command_queue,
+                                                    cl_context&             context,
+                                                    cl_device_id&           device_id,
+                                                    owrite::Writer&         mowri,
+                                                    bool                    strict
 
-  cl_context context;
-  auto       oclr = cl_set_command_queue_info(command_queue,
+                                                    )
+{
+  
+  (void)mowri;
+
+  // cl_context context;
+  auto oclr = cl_set_command_queue_info(command_queue,
                                         CL_QUEUE_CONTEXT,
                                         sizeof(cl_context),
                                         &context,
@@ -716,28 +720,65 @@ Result cl_set_program_and_kernel(const cl_command_queue& command_queue,
   if (oclr.fail())
     return oclr;
 
-  cl_device_id device_id_to_use;
+  // cl_device_id device_id_to_use;
   oclr = cl_set_command_queue_info(command_queue,
                                    CL_QUEUE_DEVICE,
                                    sizeof(cl_device_id),
-                                   &device_id_to_use,
+                                   &device_id,
                                    NULL,
                                    "getting device id from queue in set_program_and_kernel",
                                    strict);
-  if (oclr.fail())
-    return oclr;
+  //if (oclr.fail())
+  return oclr;
+    
+  
+}
+
+Result cl_set_program_and_kernel(
+  // const cl_command_queue& command_queue,
+  cl_context         context,
+  cl_device_id       device_id_to_use,
+  const std::string& kernel_string,
+  const std::string& kernel_function_name,
+  cl_program&        program,
+  cl_kernel&         kernel,
+  owrite::Writer&    mowri,
+  bool               strict)
+{
+
+  // cl_context context;
+  // auto       oclr = cl_set_command_queue_info(command_queue,
+  // CL_QUEUE_CONTEXT,
+  // sizeof(cl_context),
+  //&context,
+  // NULL,
+  //"getting context from queue in set_program_and_kernel",
+  // strict);
+  // if (oclr.fail())
+  // return oclr;
+
+  // cl_device_id device_id_to_use;
+  // oclr = cl_set_command_queue_info(command_queue,
+  // CL_QUEUE_DEVICE,
+  // sizeof(cl_device_id),
+  //&device_id_to_use,
+  // NULL,
+  //"getting device id from queue in set_program_and_kernel",
+  // strict);
+  // if (oclr.fail())
+  // return oclr;
 
   auto kernel_cstr = kernel_string.c_str();
 
   auto kernel_string_size = kernel_string.size();
 
-  oclr = cl_create_program_with_source(program,
-                                       context,
-                                       1,
-                                       &kernel_cstr,
-                                       &kernel_string_size,
-                                       "creating program in set_program_and_kernel",
-                                       strict);
+  auto oclr = cl_create_program_with_source(program,
+                                            context,
+                                            1,
+                                            &kernel_cstr,
+                                            &kernel_string_size,
+                                            "creating program in set_program_and_kernel",
+                                            strict);
   if (oclr.fail())
     return oclr;
 
@@ -771,9 +812,7 @@ Result cl_set_program_and_kernel(const cl_command_queue& command_queue,
   return oclr;
 }
 
-SafeClMem::SafeClMem(const std::string& hash_) : clmem(nullptr), hash(hash_) {
-  
-}
+SafeClMem::SafeClMem(const std::string& hash_) : clmem(nullptr), hash(hash_) {}
 
 SafeClMem::~SafeClMem()
 {
@@ -784,12 +823,7 @@ SafeClMem::~SafeClMem()
   }
 }
 
-
-SafeEvent::SafeEvent(const std::string& hash_) : hash(hash_) {
-
-
-  
-}
+SafeEvent::SafeEvent(const std::string& hash_) : hash(hash_) {}
 
 SafeEvent::~SafeEvent()
 {
@@ -836,6 +870,7 @@ Result cl_auto_set_command_queue(cl_command_queue&           a_cl_command_queue,
 }
 
 CommandQueueInContext::CommandQueueInContext(owrite::Writer&    mowri,
+                                             cl_command_queue_properties properties,
                                              const CLHint&      devhint,
                                              const std::string& hash_)
   : hash(hash_)
@@ -843,7 +878,7 @@ CommandQueueInContext::CommandQueueInContext(owrite::Writer&    mowri,
   bool strict = true;
   cl_auto_set_command_queue(command_queue,
                             mowri,
-                            CL_QUEUE_PROFILING_ENABLE, // | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE,
+                            properties, 
                             devhint,
                             "CommandQueueInContext constructor",
                             strict);
@@ -855,7 +890,7 @@ CommandQueueInContext::~CommandQueueInContext()
   if (command_queue != nullptr)
   {
     cl_context context;
-    
+
     cl_set_command_queue_info(command_queue,
                               CL_QUEUE_CONTEXT,
                               sizeof(cl_context),
@@ -962,7 +997,7 @@ DevInfo::DevInfo(const cl_command_queue& command_queue)
 }
 
 DevInfo::DevInfo(const CLHint& hint, owrite::Writer& mowri)
-  : DevInfo(CommandQueueInContext(mowri, hint, "DevInfo from hint").command_queue)
+  : DevInfo(CommandQueueInContext(mowri, 0, hint, "DevInfo from hint").command_queue)
 {
 }
 

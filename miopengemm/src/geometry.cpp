@@ -14,6 +14,17 @@
 namespace MIOpenGEMM
 {
 
+template <>
+char get_floattype_char<float>(){
+  return 'f';
+}
+
+template <>
+char get_floattype_char<double>(){
+  return 'd';
+}
+
+
 Geometry::Geometry(
   size_t m_, size_t n_, size_t k_, bool tA_, bool tB_, size_t wSpaceSize_, char floattype_)
   : Geometry(
@@ -254,53 +265,51 @@ void Geometry::initialise(bool   isColMajor_,
   metric_co[1] = std::log2(static_cast<double>(m)) - std::log2(static_cast<double>(n));
   metric_co[2] = std::log2(static_cast<double>(m)) + std::log2(static_cast<double>(n));
 
-  // memory required for copying (an estimate)    
+  // memory required for copying (an estimate)
   std::array<size_t, Mat::E::N> forPadCopy;
-  for (auto emat : {Mat::E::A, Mat::E::B}){
+  for (auto emat : {Mat::E::A, Mat::E::B})
+  {
     forPadCopy[emat] = get_uncoal(emat) * (get_coal(emat) + 16);
   }
-  
+
   wSpaceSufficient[0] = forPadCopy[Mat::E::A] < wSpaceSize;
   wSpaceSufficient[1] = forPadCopy[Mat::E::B] < wSpaceSize;
-  wSpaceSufficient[2] = 1*(forPadCopy[Mat::E::A] + forPadCopy[Mat::E::B]) < wSpaceSize;
-  wSpaceSufficient[3] = 2*(forPadCopy[Mat::E::A] + forPadCopy[Mat::E::B]) < wSpaceSize;    
-  wSpaceSufficient[4] = 4*(forPadCopy[Mat::E::A] + forPadCopy[Mat::E::B]) < wSpaceSize;
-
-
-
+  wSpaceSufficient[2] = 1 * (forPadCopy[Mat::E::A] + forPadCopy[Mat::E::B]) < wSpaceSize;
+  wSpaceSufficient[3] = 2 * (forPadCopy[Mat::E::A] + forPadCopy[Mat::E::B]) < wSpaceSize;
+  wSpaceSufficient[4] = 4 * (forPadCopy[Mat::E::A] + forPadCopy[Mat::E::B]) < wSpaceSize;
 }
 
-//Geometry::Geometry(bool   isColMajor_,
-                   //bool   tA_,
-                   //bool   tB_,
-                   //bool   tC_,
-                   //size_t lda_,
-                   //size_t ldb_,
-                   //size_t ldc_,
-                   //size_t m_,
-                   //size_t n_,
-                   //size_t k_,
-                   //size_t wSpaceSize_,
-                   //char   floattype_)
+// Geometry::Geometry(bool   isColMajor_,
+// bool   tA_,
+// bool   tB_,
+// bool   tC_,
+// size_t lda_,
+// size_t ldb_,
+// size_t ldc_,
+// size_t m_,
+// size_t n_,
+// size_t k_,
+// size_t wSpaceSize_,
+// char   floattype_)
 //{
-  //initialise(isColMajor_, tA_, tB_, tC_, lda_, ldb_, ldc_, m_, n_, k_, wSpaceSize_, floattype_);
+// initialise(isColMajor_, tA_, tB_, tC_, lda_, ldb_, ldc_, m_, n_, k_, wSpaceSize_, floattype_);
 //}
 
 //// temporary for MIOpen
-  //Geometry::Geometry(bool   isColMajor,
-           //bool   tA,
-           //bool   tB,
-           //bool   tC,
-           //unsigned lda,
-           //unsigned ldb,
-           //unsigned ldc,
-           //unsigned m,
-           //unsigned n,
-           //unsigned k,
-           //unsigned wSpaceSize,
-           //char   floattype){
-             //initialise(isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, wSpaceSize, floattype);
-           //}
+// Geometry::Geometry(bool   isColMajor,
+// bool   tA,
+// bool   tB,
+// bool   tC,
+// unsigned lda,
+// unsigned ldb,
+// unsigned ldc,
+// unsigned m,
+// unsigned n,
+// unsigned k,
+// unsigned wSpaceSize,
+// char   floattype){
+// initialise(isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, wSpaceSize, floattype);
+//}
 
 std::map<std::string, size_t> get_key_val_map(std::string geometry_string)
 {
@@ -415,7 +424,7 @@ bool Geometry::operator==(const Geometry& rhs) const
           n == rhs.n && k == rhs.k && wSpaceSize == rhs.wSpaceSize && floattype == rhs.floattype);
 }
 
-double Geometry::get_gflops(double extime) const { return (2. * m * n * k) / (extime * 10e5); }
+double Geometry::get_gflops(double extime) const { return (2. * m * n * k) / (1e9*extime); }
 
 bool Geometry::same_transposes(const Geometry& g2) const
 {
@@ -431,7 +440,8 @@ double Geometry::get_distance(const Geometry& g2) const
     distance = std::numeric_limits<double>::max();
   }
 
-  else{
+  else
+  {
     for (unsigned i = 0; i < 3; ++i)
     {
       distance += std::abs(metric_co[i] - g2.metric_co[i]);
@@ -442,7 +452,7 @@ double Geometry::get_distance(const Geometry& g2) const
       distance += 0.25 * ((ldX[Mat::E::B] % x == 0) != (g2.ldX[Mat::E::B] % x == 0));
       distance += 0.25 * ((ldX[Mat::E::C] % x == 0) != (g2.ldX[Mat::E::C] % x == 0));
     }
-  
+
     for (size_t x : {256, 1024})
     {
       distance += 0.25 * ((ldX[Mat::E::A] % x < 5) != (g2.ldX[Mat::E::A] % x < 5));
@@ -450,14 +460,13 @@ double Geometry::get_distance(const Geometry& g2) const
       distance += 0.25 * ((ldX[Mat::E::C] % x < 5) != (g2.ldX[Mat::E::C] % x < 5));
     }
 
-       
-    for (size_t i = 0; i < wSpaceSufficient.size(); ++i){
-      distance += 0.25*(wSpaceSufficient[i] == g2.wSpaceSufficient[i]);
+    for (size_t i = 0; i < wSpaceSufficient.size(); ++i)
+    {
+      distance += 0.25 * (wSpaceSufficient[i] == g2.wSpaceSufficient[i]);
     }
   }
-  
-  distance += 1e-5*(std::log(wSpaceSize + 1.1) - std::log(g2.wSpaceSize + 1.1));
-    
+
+  distance += 1e-5 * (std::log(wSpaceSize + 1.1) - std::log(g2.wSpaceSize + 1.1));
 
   return distance;
 }

@@ -1,8 +1,8 @@
 /*******************************************************************************
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
-#ifndef GUARD_MIOPENGEMM_JINX_HPP
-#define GUARD_MIOPENGEMM_JINX_HPP
+#ifndef GUARD_MIOPENGEMM_TINYZEROJINX_HPP
+#define GUARD_MIOPENGEMM_TINYZEROJINX_HPP
 
 #include <algorithm>
 #include <chrono>
@@ -31,6 +31,7 @@
 namespace MIOpenGEMM
 {
 
+// For tracking the amount of work done (time, restarts, #kernels) during search for solution
 class FindTracker
 {
 
@@ -48,10 +49,13 @@ class FindTracker
   std::string get_string() const;
 };
 
+// For bundling the 4 GPU memories (a, b, c, w), and managing the copy of c if it is needed
 class GpuMms
 {
-  private:
+  public:
   std::array<cl_mem, Mem::E::N> cl_mems;
+
+  private:
   oclutil::SafeClMem c_copy{"initialised when c_is_const"};
 
   public:
@@ -65,53 +69,57 @@ class GpuMms
   cl_mem& operator[](Mem::E x);
 };
 
+// Lowest level (most basic) of MIOpenGEMM kernel search and benchmark functionality
 class TinyZero
 {
 
   // TODO : (in miogemm.hpp) miogemm class with interface to public jinx.
   public:
+  
   TinyZero(cl_command_queue command_queue_,
-       const Geometry   gg_,
-       const Offsets    toff_,
-       cl_mem           a_gpu_,
-       cl_mem           b_gpu_,
-       cl_mem           c_gpu_,
-       bool             c_is_const,
-       cl_mem           workspace_gpu_,
-       owrite::Writer&  mowri_);
+           const Geometry   gg_,
+           const Offsets    toff_,
+           cl_mem           a_gpu_,
+           cl_mem           b_gpu_,
+           cl_mem           c_gpu_,
+           bool             c_is_const,
+           cl_mem           workspace_gpu_,
+           owrite::Writer&  mowri_);
 
   std::vector<double> benchgemm(const HyPas& hp, const Halt& hl);
   Solution find(const Constraints& constraint, const FindParams& find_params);
 
-  ///////////////////////////////////////////////////////////////////////////////////////////
 
+  
   private:
+  
   cl_command_queue       command_queue;
   const Geometry         gg;
   const Offsets          toff;
   GpuMms                 gpum;
   const oclutil::DevInfo devinfo;
   owrite::Writer&        mowri;
-
-  // (for single_descent_find) while generating, compiling and
-  // benchmarking kernels, we will keep track of the
-  // fastest found thus far
-  std::vector<Kernel>              tk_kernels;
+  
+  
+  // for each of the possible kernels (copy a, copy b, etc) 
+  std::array<Kernel, KType::E::N> tk_kernels;
+  
+  std::array<cl_event, KType::E::N> tk_events;
+  
+  // pointers to the kernels required for a given HyPas (fewer than or as many as KType::E::N)  
   std::vector<Kernel*>             tk_kernels_active;
+  
+  // dependency graph of active kernels
   std::vector<std::vector<size_t>> v_wait_indices;
 
   double get_gflops(double timems);
-
   std::string get_run_times_heading();
-  std::string get_run_time_string(cl_int status);
-
+  std::string get_run_time_string(cl_int status, double extime);
   void address_check_valid();
   void address_check_valid_and_reliable();
   void set_kern_args(const KernBlob& kblob);
-
-  std::string get_run_time_string(cl_int status, double extime);
-
   void setup_tinykernels(const kerngen::Bundle& bundle);
+  
   Solution single_descent_find(double allotted_time,
                                const Constraints&,
                                const Halt&  core_hl,

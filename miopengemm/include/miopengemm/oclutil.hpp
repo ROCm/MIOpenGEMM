@@ -1,8 +1,8 @@
 /*******************************************************************************
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
-#ifndef GUARD_MIOPENGEMM_OPENCLUTIL_H
-#define GUARD_MIOPENGEMM_OPENCLUTIL_H
+#ifndef GUARD_MIOPENGEMM_OPENCLUTIL_HPP
+#define GUARD_MIOPENGEMM_OPENCLUTIL_HPP
 
 #include <CL/cl.h>
 #include <limits>
@@ -44,7 +44,7 @@ Result cl_release_kernel(cl_kernel kernel, const std::string& hash, bool strict)
 
 Result cl_release_context(cl_context context, const std::string& hash, bool strict);
 
-Result 
+Result
 cl_release_command_queue(cl_command_queue command_queue, const std::string& hash, bool strict);
 
 Result cl_release_program(cl_program program, const std::string& hash, bool strict);
@@ -57,7 +57,7 @@ Result cl_set_kernel_arg(cl_kernel&         kernel,
                          bool               strict);
 
 Result cl_set_kernel_args(cl_kernel& kernel,
-                          std::vector<std::pair<size_t, const void*>> arg_sizes_values,
+                          const std::vector<std::pair<size_t, const void*>> & arg_sizes_values,
                           const std::string& hash,
                           bool               strict);
 
@@ -244,13 +244,21 @@ Result cl_set_platform_etc(cl_platform_id&    platform,
                            const std::string& hash,
                            bool               strict);
 
-Result cl_set_program_and_kernel(const cl_command_queue& command_queue,
-                                 const std::string&      kernel_string,
-                                 const std::string&      kernel_function_name,
-                                 cl_program&             program,
-                                 cl_kernel&              kernel,
-                                 owrite::Writer&         mowri,
-                                 bool                    strict);
+// TODO make first 2 const by ref.
+Result cl_set_program_and_kernel(cl_context         context,
+                                 cl_device_id       device_id_to_use,
+                                 const std::string& kernel_string,
+                                 const std::string& kernel_function_name,
+                                 cl_program&        program,
+                                 cl_kernel&         kernel,
+                                 owrite::Writer&    mowri,
+                                 bool               strict);
+
+Result cl_set_context_and_device_from_command_queue(const cl_command_queue& command_queue,
+                                                    cl_context&             context,
+                                                    cl_device_id&           device_id,
+                                                    owrite::Writer&         mowri,
+                                                    bool                    strict);
 
 Result cl_auto_set_command_queue(cl_command_queue&           a_cl_command_queue,
                                  owrite::Writer&             mowri,
@@ -269,7 +277,6 @@ class SafeClMem
   ~SafeClMem();
 };
 
-
 // TODO rename to SafeClEvent
 class SafeEvent
 {
@@ -277,9 +284,9 @@ class SafeEvent
   cl_event    clevent;
   std::string hash;
   SafeEvent(const std::string& hash);
-
-  ~SafeEvent();
+  SafeEvent():SafeEvent("safe event"){}
   
+  ~SafeEvent();
 };
 
 class CommandQueueInContext
@@ -287,7 +294,7 @@ class CommandQueueInContext
   public:
   cl_command_queue command_queue;
   std::string      hash;
-  CommandQueueInContext(owrite::Writer& mowri, const CLHint& devhint, const std::string& hash);
+  CommandQueueInContext(owrite::Writer& mowri, cl_command_queue_properties properties, const CLHint& devhint, const std::string& hash);
   ~CommandQueueInContext();
 };
 

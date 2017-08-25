@@ -3,18 +3,28 @@
  *******************************************************************************/
 #include <chrono>
 #include <iomanip>
+#include <sstream>
 #include <miopengemm/error.hpp>
 #include <miopengemm/kernel.hpp>
 #include <miopengemm/oclutil.hpp>
-#include <sstream>
 
 namespace MIOpenGEMM
 {
 
-Kernel::Kernel(cl_command_queue command_queue_, const std::string& hash_)
-  : command_queue(command_queue_), clevent(nullptr), clprog(nullptr), clkern(nullptr), hash(hash_) //safe_event("Kernel constructor" + hash)
+Kernel::Kernel(
+  cl_device_id       device_id_,
+  cl_context         context_,
+  cl_event *         ptr_event_,
+  const std::string& hash_)
+
+  :  // command_queue(command_queue_),
+    device_id(device_id_),
+    context(context_),
+    ptr_event(ptr_event_),
+    clprog(nullptr),
+    clkern(nullptr),
+    hash(hash_)  // safe_event("Kernel constructor" + hash)
 {
- 
 }
 
 void Kernel::try_release()
@@ -27,10 +37,11 @@ void Kernel::try_release()
   {
     oclutil::cl_release_kernel(clkern, "Kernel Destructor", true);
   }
-  
-  if (clevent != nullptr){    
-    oclutil::cl_release_event(clevent, "Kernel Destructor", true);
-  }
+
+  //if (clevent != nullptr)
+  //{
+    //oclutil::cl_release_event(clevent, "Kernel Destructor", true);
+  //}
 }
 
 oclutil::Result Kernel::update(const KernBlob& ks, owrite::Writer& mowri)
@@ -45,7 +56,16 @@ oclutil::Result Kernel::update(const KernBlob& ks, owrite::Writer& mowri)
   auto start = std::chrono::high_resolution_clock::now();
 
   oclr = oclutil::cl_set_program_and_kernel(
-    command_queue, kblob.kernstr, kblob.fname, clprog, clkern, mowri, false);
+
+    // command_queue,
+    context,
+    device_id,
+    kblob.kernstr,
+    kblob.fname,
+    clprog,
+    clkern,
+    mowri,
+    false);
 
   auto                         end             = std::chrono::high_resolution_clock::now();
   std::chrono::duration<float> fp_ms           = end - start;
@@ -80,12 +100,14 @@ bool Kernel::update_needed(const KernBlob& kb_new)
   return change;
 }
 
-void Kernel::set_kernel_args(std::vector<std::pair<size_t, const void*>> arg_sizes_values)
+void Kernel::set_kernel_args(const std::vector<std::pair<size_t, const void*>> & arg_sizes_values)
 {
   oclutil::cl_set_kernel_args(clkern, arg_sizes_values, "Kernel::set_kernel_args", true);
 }
 
-oclutil::Result Kernel::enqueue(cl_uint num_events_in_wait_list, const cl_event* event_wait_list)
+oclutil::Result Kernel::enqueue(cl_command_queue command_queue,
+                                cl_uint          num_events_in_wait_list,
+                                const cl_event*  event_wait_list)
 {
 
   return oclutil::cl_enqueue_ndrange_kernel(command_queue,
@@ -96,21 +118,24 @@ oclutil::Result Kernel::enqueue(cl_uint num_events_in_wait_list, const cl_event*
                                             &kblob.local_work_size,
                                             num_events_in_wait_list,
                                             event_wait_list,
-                                            &clevent,
+                                            ptr_event,
                                             "Kernel::enqueue",
                                             false);
 }
 
-oclutil::Result Kernel::enqueue() { return enqueue(0, nullptr); }
+oclutil::Result Kernel::enqueue(cl_command_queue command_queue)
+{
+  return enqueue(command_queue, 0, nullptr);
+}
 
 void Kernel::update_times()
 {
 
   oclutil::cl_set_event_profiling_info(
-    clevent, CL_PROFILING_COMMAND_START, sizeof(size_t), &t_start, nullptr, "u_times", true);
+    *ptr_event, CL_PROFILING_COMMAND_START, sizeof(size_t), &t_start, nullptr, "u_times", true);
 
   oclutil::cl_set_event_profiling_info(
-    clevent, CL_PROFILING_COMMAND_END, sizeof(size_t), &t_end, nullptr, "in update_times", true);
+    *ptr_event, CL_PROFILING_COMMAND_END, sizeof(size_t), &t_end, nullptr, "in update_times", true);
 
   v_times.push_back(1e-6 * (t_end - t_start));
 }
@@ -122,24 +147,41 @@ void Kernel::reset_times()
   v_times.resize(0);
 }
 
-oclutil::Result run_kernels(std::vector<Kernel*> ptr_kernels, std::vector<std::vector<size_t>> v_wait_indices){
+    
+
+oclutil::Result run_kernels(cl_command_queue                 command_queue,
+                            std::vector<Kernel*>             ptr_kernels,
+                            std::vector<std::vector<size_t>> v_wait_indices,
+                            cl_uint                          n_user_wait_list,
+                            const cl_event*                  user_wait_list){
+
+                     
 
   for (size_t k_ind = 0; k_ind < ptr_kernels.size(); ++k_ind)
   {
+
+    // TODO : relocate this message. 
     // At this point, the kernel has been succesfully compiled,
     // but it is still possible that it does not run. We catch that here.
     // if anything is caught here, consider testing for it in architests.
 
-    std::vector<cl_event> clevent_waits;  
+    std::vector<cl_event> clevent_waits;
+    std::cout << "\n------> " << ptr_kernels[k_ind]->kblob.fname << std::endl;
+
+
+    for (cl_uint i = 0; i < n_user_wait_list; ++i){
+      clevent_waits.emplace_back(user_wait_list[i]);
+    }
+
 
     for (auto& evi : v_wait_indices[k_ind])
     {
       // see `cl-events' comment at bottom
-      clevent_waits.emplace_back(ptr_kernels[evi]->clevent);
+      clevent_waits.emplace_back(*(ptr_kernels[evi]->ptr_event));
     }
 
     const cl_event* event_wait_list = clevent_waits.size() == 0 ? nullptr : clevent_waits.data();
-    auto oclr = ptr_kernels[k_ind]->enqueue(clevent_waits.size(), event_wait_list);
+    auto oclr = ptr_kernels[k_ind]->enqueue(command_queue, clevent_waits.size(), event_wait_list);
 
     // see `in-series' comment at bottom
 
@@ -147,15 +189,14 @@ oclutil::Result run_kernels(std::vector<Kernel*> ptr_kernels, std::vector<std::v
     {
       // good
     }
-    
-    else{
+
+    else
+    {
       oclr.message += "(run_kernels, kernel " + std::to_string(k_ind) + ")";
       return oclr;
     }
   }
-  return {};
-
-}
-
+ return {};
+} 
 
 }

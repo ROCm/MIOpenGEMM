@@ -10,8 +10,8 @@
 #include <string>
 #include <vector>
 #include <miopengemm/geometry.hpp>
-#include <miopengemm/tinyzero.hpp>
 #include <miopengemm/solution.hpp>
+#include <miopengemm/tinyzero.hpp>
 
 namespace MIOpenGEMM
 {
@@ -24,18 +24,18 @@ class TinyOne
 
   public:
   TinyOne(Geometry        gg_,
-       Offsets         toff_,
-       const TFloat*   a_,
-       const TFloat*   b_,
-       const TFloat*   c_,
-       owrite::Writer& mowri_,
-       const CLHint&   devhint);
+          Offsets         toff_,
+          const TFloat*   a_,
+          const TFloat*   b_,
+          const TFloat*   c_,
+          owrite::Writer& mowri_,
+          const CLHint&   devhint);
 
   TinyOne(Geometry gg_,
-       Offsets  toff_,
-       std::array<const TFloat*, Mat::E::N>,
-       owrite::Writer& mowri_,
-       const CLHint&   devhint);
+          Offsets  toff_,
+          std::array<const TFloat*, Mat::E::N>,
+          owrite::Writer& mowri_,
+          const CLHint&   devhint);
 
   TinyOne(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint& devhint);
 

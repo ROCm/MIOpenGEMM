@@ -8,10 +8,10 @@
 #include <stdlib.h>
 #include <string>
 #include <vector>
-#include <miopengemm/tinyone.hpp>
 #include <miopengemm/geometry.hpp>
 #include <miopengemm/oclutil.hpp>
 #include <miopengemm/solution.hpp>
+#include <miopengemm/tinyone.hpp>
 
 namespace MIOpenGEMM
 {
@@ -24,7 +24,7 @@ class TinyTwo
   private:
   std::unique_ptr<TinyOne<double>> d_moa{nullptr};
   std::unique_ptr<TinyOne<float>>  f_moa{nullptr};
-  char                          active_type{'?'};
+  char                             active_type{'?'};
 
   template <typename TFloat>
   std::unique_ptr<TinyOne<TFloat>>& get_up_moa()
@@ -41,12 +41,12 @@ class TinyTwo
   public:
   template <typename TFloat>
   TinyTwo(Geometry        gg_,
-      Offsets         toff_,
-      const TFloat*   a_,
-      const TFloat*   b_,
-      const TFloat*   c_,
-      owrite::Writer& mowri_,
-      const CLHint&   devhint)
+          Offsets         toff_,
+          const TFloat*   a_,
+          const TFloat*   b_,
+          const TFloat*   c_,
+          owrite::Writer& mowri_,
+          const CLHint&   devhint)
   {
     get_up_moa<TFloat>().reset(new TinyOne<TFloat>(gg_, toff_, a_, b_, c_, mowri_, devhint));
     set_active_type<TFloat>();

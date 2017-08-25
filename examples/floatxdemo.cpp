@@ -96,9 +96,17 @@ __global float * restrict b
   std::string fname = "fadd";
   
 
+  cl_context context;
+  cl_device_id device_id;
+  oclutil::cl_set_context_and_device_from_command_queue(
+                                scq.command_queue,
+                                context,
+                                device_id,
+                                mowri,
+                                true);
 
   oclutil::cl_set_program_and_kernel(
-    scq.command_queue, kernstr, fname, clprog, clkern, mowri, true);
+    context, device_id, kernstr, fname, clprog, clkern, mowri, true);
 
 
   for (size_t i = 0; i < 2; ++i){

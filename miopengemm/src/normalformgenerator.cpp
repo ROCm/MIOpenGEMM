@@ -88,10 +88,14 @@ class NormalFormGenerator : public prepgen::PrepGenerator
        << "TINT" << Mem::M.name[emat_x] << " group_id = get_group_id(0);\n"
        << "TINT" << Mem::M.name[emat_x] << " micro_id = get_local_id(0);\n"
        << "\n"
-       << "TINT" << Mem::M.name[emat_x] << " macro_id_pll_unroll = group_id % N_MACRO_TILES_PLL_UNROLL;\n"
-       << "TINT" << Mem::M.name[emat_x] << " macro_id_perp_unroll = group_id / N_MACRO_TILES_PLL_UNROLL;\n"
-       << "TINT" << Mem::M.name[emat_x] << " micro_id_pll_unroll = micro_id / N_MICRO_TILES_PERP_UNROLL;\n"
-       << "TINT" << Mem::M.name[emat_x] << " micro_id_perp_unroll = micro_id % N_MICRO_TILES_PERP_UNROLL;\n";
+       << "TINT" << Mem::M.name[emat_x]
+       << " macro_id_pll_unroll = group_id % N_MACRO_TILES_PLL_UNROLL;\n"
+       << "TINT" << Mem::M.name[emat_x]
+       << " macro_id_perp_unroll = group_id / N_MACRO_TILES_PLL_UNROLL;\n"
+       << "TINT" << Mem::M.name[emat_x]
+       << " micro_id_pll_unroll = micro_id / N_MICRO_TILES_PERP_UNROLL;\n"
+       << "TINT" << Mem::M.name[emat_x]
+       << " micro_id_perp_unroll = micro_id % N_MICRO_TILES_PERP_UNROLL;\n";
 
     ss << mchar << " += macro_id_pll_unroll*READ_MACRO_STRIDE_PLL_K*UNROLL;\n"
        << mchar << " += "

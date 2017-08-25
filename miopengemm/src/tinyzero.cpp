@@ -17,7 +17,6 @@
 #include <miopengemm/findparams.hpp>
 #include <miopengemm/generic.hpp>
 #include <miopengemm/graph.hpp>
-#include <miopengemm/tinyzero.hpp>
 #include <miopengemm/kernel.hpp>
 #include <miopengemm/kernelcache.hpp>
 #include <miopengemm/kernelstring.hpp>
@@ -28,15 +27,13 @@
 #include <miopengemm/solution.hpp>
 #include <miopengemm/stringutilbase.hpp>
 #include <miopengemm/timer.hpp>
+#include <miopengemm/tinyzero.hpp>
 
 // TODO : checks on constraints to check for cleary non-derivables
 // TODO : checks on workspace size
 
 namespace MIOpenGEMM
 {
-
-
-
 
 void   FindTracker::start() { timer.start(); }
 double FindTracker::get_elapsed() const { return timer.get_elapsed(); }
@@ -84,20 +81,17 @@ GpuMms::GpuMms(cl_mem           a_gpu_,
 cl_mem& GpuMms::operator[](Mem::E x) { return cl_mems[x]; }
 
 TinyZero::TinyZero(cl_command_queue command_queue_,
-           const Geometry   gg_,
-           const Offsets    toff_,
-           cl_mem           a_gpu_,
-           cl_mem           b_gpu_,
-           cl_mem           c_gpu_,
-           bool             c_is_const,
-           cl_mem           workspace_gpu_,
-           owrite::Writer&  mowri_)
-  :
-
-    command_queue(command_queue_),
+                   const Geometry   gg_,
+                   const Offsets    toff_,
+                   cl_mem           a_gpu_,
+                   cl_mem           b_gpu_,
+                   cl_mem           c_gpu_,
+                   bool             c_is_const,
+                   cl_mem           workspace_gpu_,
+                   owrite::Writer&  mowri_)
+  : command_queue(command_queue_),
     gg(gg_),
     toff(toff_),
-
     gpum(a_gpu_,
          b_gpu_,
          c_gpu_,
@@ -108,12 +102,14 @@ TinyZero::TinyZero(cl_command_queue command_queue_,
     devinfo(command_queue_),
     mowri(mowri_)
 {
-  
-  
-  tk_kernels.resize(KType::E::N);
+  cl_context   context;
+  cl_device_id device_id;
+  oclutil::cl_set_context_and_device_from_command_queue(
+    command_queue, context, device_id, mowri, true);
+
   for (size_t i = 0; i < KType::E::N; ++i)
   {
-    tk_kernels[i] = Kernel(command_queue, KType::M.name[i]);
+    tk_kernels[i] = Kernel(device_id, context, &tk_events[i], KType::M.name[i]);
   }
 }
 
@@ -141,18 +137,15 @@ void TinyZero::address_check_valid()
   if (gpum[Mem::E::W] == nullptr && gg.wSpaceSize != 0)
   {
     throw miog_error("in address_check_valid, pointer to workspace memory is "
-                     "the nullptr, but "
-                     "wSpaceSize is not zero");
+                     "the nullptr, but wSpaceSize is not zero");
   }
 
   if (gpum[Mem::E::W] != nullptr && gg.wSpaceSize == 0)
   {
     throw miog_error("in address_check_valid, pointer to workspace memory is not the "
-                     "nullptr, "
-                     "but wSpaceSize is zero. if wSpaceSize is zero please set "
+                     "nullptr, but wSpaceSize is zero. if wSpaceSize is zero please set "
                      "workspace_gpu to the nullptr to make super clear that there will be "
-                     "no "
-                     "workspace used. The workspace offset should be zero too in this case ");
+                     "no workspace used. The workspace offset should be zero too in this case ");
   }
 
   if (gpum[Mem::E::W] != nullptr &&
@@ -160,8 +153,7 @@ void TinyZero::address_check_valid()
        gpum[Mem::E::W] == gpum[Mem::E::C]))
   {
     throw miog_error("in address_check_valid, pointer to workspace memory is "
-                     "not the nullptr, "
-                     "and it is the same as one of the a,b,c pointers ");
+                     "not the nullptr, and it is the same as one of the a,b,c pointers ");
   }
 }
 
@@ -170,37 +162,19 @@ void TinyZero::address_check_valid_and_reliable()
   address_check_valid();
   if (gpum[Mem::E::A] == gpum[Mem::E::B])
   {
-    throw miog_error("in address_check_valid_and_reliable, a and b are the "
-                     "same. this will "
-                     "effect kernel run time, not sure if this should be "
-                     "allowed, so throwing");
+    throw miog_error("in address_check_valid_and_reliable, a and b are the same. this will "
+                     "effect kernel run time, not sure if this should be allowed, so throwing");
   }
 }
 
 void TinyZero::set_kern_args(const KernBlob& kblob)
 {
-
-  // parameter order rule: {a, oa, b, ob, c, oc, ws, ows}, alpha, beta
-  std::vector<std::pair<size_t, const void*>> arg_sizes_values;
-
-  for (auto x : {Mem::E::A, Mem::E::B, Mem::E::C, Mem::E::W})
-  {
-    if (kblob.kuses.at(x) == true)
-    {
-      arg_sizes_values.emplace_back(sizeof(cl_mem), (void*)&(gpum[x]));
-      arg_sizes_values.emplace_back(sizeof(size_t), &(toff.offsets[x]));
-    }
-  }
-
-  if (kblob.kuses.u_alpha)
-  {
-    arg_sizes_values.emplace_back(gg.derived.float_size_bytes, Floating::m_alpha[gg.floattype]);
-  }
-
-  if (kblob.kuses.u_beta)
-  {
-    arg_sizes_values.emplace_back(gg.derived.float_size_bytes, Floating::m_beta[gg.floattype]);
-  }
+  auto arg_sizes_values = kerngen::get_arg_sizes_values(kblob,
+                                                        gpum.cl_mems,
+                                                        toff.offsets,
+                                                        gg.derived.float_size_bytes,
+                                                        Floating::m_alpha[gg.floattype],
+                                                        Floating::m_beta[gg.floattype]);
 
   tk_kernels.at(kblob.e_ktype).set_kernel_args(arg_sizes_values);
 }
@@ -211,8 +185,7 @@ void TinyZero::setup_tinykernels(const kerngen::Bundle& bundle)
   oclutil::Result oclr;
 
   // TODO setting v_wait_indices here : is not clear code
-  // TODO : make part of kernel
-  v_wait_indices = bundle.v_wait_indices;
+  v_wait_indices = kerngen::get_v_wait_indices(bundle.v_tgks, mowri);
 
   tk_kernels_active.resize(0);
 
@@ -237,7 +210,6 @@ void TinyZero::setup_tinykernels(const kerngen::Bundle& bundle)
       }
     }
     tk_kernels_active.push_back(&tk_kernels[bundle.v_tgks[ksi].e_ktype]);
-    //tk_kernels[bundle.v_tgks[ksi].v_wait_indices = bundle.v_wait_indices[
   }
 }
 
@@ -249,10 +221,7 @@ std::string TinyZero::get_run_times_heading()
   {
     ss << " k" << k_ind << ":\t";
   }
-  
-  ss << "sum: \t";
-  
-  ss << " Gflops/s:\n";
+  ss << "sum: \t Gflops/s:\n";
   return ss.str();
 }
 
@@ -264,7 +233,7 @@ std::string TinyZero::get_run_time_string(cl_int status, double extime)
     ss << std::fixed << std::setprecision(3) << extime << '\t';
 
     double sumtimes = 0;
-    
+
     for (size_t k_ind = 0; k_ind < tk_kernels_active.size(); ++k_ind)
     {
       auto tk = tk_kernels_active[k_ind]->v_times.back();
@@ -283,8 +252,8 @@ std::string TinyZero::get_run_time_string(cl_int status, double extime)
 }
 
 oclutil::Result TinyZero::true_core(std::function<void(std::string)> acton,
-                                std::vector<double>&             all_times,
-                                const Halt&                      hl)
+                                    std::vector<double>&             all_times,
+                                    const Halt&                      hl)
 {
 
   size_t          runi{0};
@@ -305,9 +274,10 @@ oclutil::Result TinyZero::true_core(std::function<void(std::string)> acton,
       throw miog_error("zero kernels active : internal logic error");
     }
 
-    oclr = run_kernels(tk_kernels_active, v_wait_indices);
+    oclr = run_kernels(command_queue, tk_kernels_active, v_wait_indices, 0, nullptr);//, false, nullptr);
 
-    if (oclr.success == CL_SUCCESS){
+    if (oclr.success == CL_SUCCESS)
+    {
       // good
     }
 
@@ -329,25 +299,22 @@ oclutil::Result TinyZero::true_core(std::function<void(std::string)> acton,
       throw miog_error(ss.str());
     }
 
-
     oclutil::cl_flush(command_queue, "cl flush in core gemm loop", true);
 
     // Wait for kernels to complete
-    oclutil::cl_wait_for_events(1, &(tk_kernels_active.back()->clevent), "core gemm loops", true);
+    oclutil::cl_wait_for_events(1, tk_kernels_active.back()->ptr_event, "core gemm loops", true);
 
-
-    size_t maxend = 0;
+    size_t maxend   = 0;
     size_t minstart = std::numeric_limits<size_t>::max();
     for (auto& ptr_tk_kernel : tk_kernels_active)
     {
-      ptr_tk_kernel->update_times();      
-      maxend = std::max<size_t>(maxend, ptr_tk_kernel->t_end);
+      ptr_tk_kernel->update_times();
+      maxend   = std::max<size_t>(maxend, ptr_tk_kernel->t_end);
       minstart = std::min<size_t>(minstart, ptr_tk_kernel->t_start);
     }
 
     double extime = (1e-6 * (maxend - minstart));
-    
-    
+
     // act on the results string.
     acton(get_run_time_string(oclr.success, extime));
     ++runi;
@@ -373,15 +340,13 @@ std::vector<double> TinyZero::benchgemm(const HyPas& hp, const Halt& hl)
     throw miog_error("Non-derivable in benchgemm : " + dblt.msg);
   }
 
-  kerngen::Bundle bundle(hp, gg, mowri);
+  kerngen::Bundle bundle(hp, gg);
 
   architests::Stat atr(command_queue, bundle.dp, gg, hp);
   if (!atr.is_good)
   {
     throw miog_error(atr.msg);
   }
-
-
 
   setup_tinykernels(bundle);
 
@@ -473,12 +438,12 @@ Solution TinyZero::find(const Constraints& constraints, const FindParams& fparms
 }
 
 Solution TinyZero::single_descent_find(double             allotted_time,
-                                   const Constraints& constraints,
-                                   const Halt&        core_halt,
-                                   FindTracker&       ftrack,
-                                   SummStat::E        sumstat,
-                                   bool               warmstart,
-                                   size_t             warmstart_rank)
+                                       const Constraints& constraints,
+                                       const Halt&        core_halt,
+                                       FindTracker&       ftrack,
+                                       SummStat::E        sumstat,
+                                       bool               warmstart,
+                                       size_t             warmstart_rank)
 {
 
   // only considered an improvement if ratio new/old less than this
@@ -559,7 +524,7 @@ Solution TinyZero::single_descent_find(double             allotted_time,
         throw miog_error(errm.str());
       }
 
-      kerngen::Bundle bundle(hp_curr, gg, mowri);
+      kerngen::Bundle bundle(hp_curr, gg); 
       // the OpenCL string was succesfully generated,
       // we can now attempt to compile and benchmark it
       ++single_descent_counter;
@@ -713,18 +678,12 @@ Solution TinyZero::single_descent_find(double             allotted_time,
 
   if (best_solns_path.size() == 0)
   {
-    throw miog_error("\nThere were no solutions found. This suggests that "
-                     "the initial kernel did "
-                     "not work (could not derive hyper parameters, required "
-                     "too much memory, or "
-                     "did not compile. Maybe there is some preceding warning "
-                     "printed which sheds "
-                     "light on this? Probably with a modification to the "
-                     "FindStartType or the "
-                     "constraints, this should be resolved. For "
-                     "example, the unroll UNR "
-                     "can be reduced if the problem is memory. jn should "
-                     "catch certain problems "
+    throw miog_error("\nThere were no solutions found. This suggests that the initial kernel did "
+                     "not work (could not derive hyper parameters, required too much memory, or "
+                     "did not compile. Maybe there is some preceding warning printed which sheds "
+                     "light on this? Probably with a modification to the FindStartType or the "
+                     "constraints, this should be resolved. For example, the unroll UNR "
+                     "can be reduced if the problem is memory. jn should catch certain problems "
                      "in architests ");
   }
 

@@ -580,7 +580,7 @@ void CSuGr::initialise_edges()
   edges[NonChi::E::AFI] = {g_binary};
   edges[NonChi::E::MIA] = {g_binary};
   edges[NonChi::E::SZT] = {g_binary};
-  edges[NonChi::E::MAD] = {g_binary};  
+  edges[NonChi::E::MAD] = {g_binary};
 }
 
 void ChiSuGr::refine_start_range()
@@ -593,7 +593,8 @@ void ChiSuGr::refine_start_range()
   {
     start_range[Chi::E::WOS] = {Scratch::E::UNUSED};
   }
-  else{
+  else
+  {
     start_range[Chi::E::WOS] = {Scratch::E::UNUSED, Scratch::E::COPY, Scratch::E::NFORM};
   }
 

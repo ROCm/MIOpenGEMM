@@ -15,17 +15,17 @@
 #include <vector>
 #include <miopengemm/accuracytests.hpp>
 #include <miopengemm/cpugemm.hpp>
-#include <miopengemm/tinytwo.hpp>
 #include <miopengemm/error.hpp>
 #include <miopengemm/floattostring.hpp>
 #include <miopengemm/geometry.hpp>
 #include <miopengemm/hyperparams.hpp>
-#include <miopengemm/tinyzero.hpp>
 #include <miopengemm/oclutil.hpp>
 #include <miopengemm/outputwriter.hpp>
 #include <miopengemm/redirection.hpp>
 #include <miopengemm/setabcw.hpp>
 #include <miopengemm/stringutilbase.hpp>
+#include <miopengemm/tinytwo.hpp>
+#include <miopengemm/tinyzero.hpp>
 
 namespace MIOpenGEMM
 {
@@ -63,31 +63,29 @@ void TinyOne<TFl>::initialise_common()
 
   opencl_memory_initialise();
 
-
-
   up_jinx.reset(new TinyZero(tgcq.command_queue,
-                         gg,
-                         toff,
-                         gpu_safemem[Mem::E::A].clmem,
-                         gpu_safemem[Mem::E::B].clmem,
-                         gpu_safemem[Mem::E::C].clmem,
-                         false,  // is not const
-                         gpu_safemem[Mem::E::W].clmem,
-                         mowri));
+                             gg,
+                             toff,
+                             gpu_safemem[Mem::E::A].clmem,
+                             gpu_safemem[Mem::E::B].clmem,
+                             gpu_safemem[Mem::E::C].clmem,
+                             false,  // is not const
+                             gpu_safemem[Mem::E::W].clmem,
+                             mowri));
 }
 
 template <typename TFl>
-TinyOne<TFl>::TinyOne(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint& devhint, long)
+TinyOne<TFl>::TinyOne(
+  Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint& devhint, long)
   : gg(gg_),
     toff(toff_),
     cpu_mem(Mat::E::N),
     mowri(mowri_),
-    tgcq(mowri, devhint, "command queue of TinyOne"),
+    tgcq(mowri, CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, devhint, "command queue of TinyOne"),
     gpu_safemem(Mem::E::N, std::string("gpu_safemem vector of TinyOne")),
     mem_size(Mem::E::N),
     rw_perms(Mem::E::N)
 {
-  
 
   if (gg.derived.float_size_bytes != sizeof(TFl))
   {
@@ -101,31 +99,27 @@ TinyOne<TFl>::TinyOne(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const
 
 template <typename TFl>
 TinyOne<TFl>::TinyOne(Geometry        gg_,
-                Offsets         toff_,
-                const TFl*      a_,
-                const TFl*      b_,
-                const TFl*      c_,
-                owrite::Writer& mowri_,
-                const CLHint&   devhint)
+                      Offsets         toff_,
+                      const TFl*      a_,
+                      const TFl*      b_,
+                      const TFl*      c_,
+                      owrite::Writer& mowri_,
+                      const CLHint&   devhint)
   : TinyOne(gg_, toff_, mowri_, devhint, 42)
 
 {
 
   initialise_cpu_mem(a_, b_, c_);
 
-
   initialise_common();
-
-
-
 }
 
 template <typename TFl>
 TinyOne<TFl>::TinyOne(Geometry gg_,
-                Offsets  toff_,
-                std::array<const TFl*, Mat::E::N> abc_,
-                owrite::Writer& mowri_,
-                const CLHint&   devhint)
+                      Offsets  toff_,
+                      std::array<const TFl*, Mat::E::N> abc_,
+                      owrite::Writer& mowri_,
+                      const CLHint&   devhint)
   : TinyOne(gg_, toff_, abc_[Mat::E::A], abc_[Mat::E::B], abc_[Mat::E::C], mowri_, devhint)
 {
 }
@@ -205,7 +199,8 @@ void TinyOne<TFl>::opencl_memory_initialise()
 }
 
 template <typename TFl>
-std::vector<std::vector<double>> TinyOne<TFl>::benchgemm(const std::vector<HyPas>& hps, const Halt& hl)
+std::vector<std::vector<double>> TinyOne<TFl>::benchgemm(const std::vector<HyPas>& hps,
+                                                         const Halt&               hl)
 
 {
   std::vector<std::vector<double>> times_s;
@@ -228,7 +223,7 @@ void TinyOne<TFl>::accuracy_test(const HyPas& hp, const TFl* c_true_for_test)
 {
 
   // copy the const cpu matrix to the gpu
-  //cl_event event_write_c_to_gpu;
+  // cl_event event_write_c_to_gpu;
   oclutil::SafeEvent event_write_c_to_gpu("accuracy test write");
   // cl_uint n_events = 1;
   oclutil::cl_enqueue_write_buffer(tgcq.command_queue,
@@ -251,7 +246,7 @@ void TinyOne<TFl>::accuracy_test(const HyPas& hp, const TFl* c_true_for_test)
   benchgemm({hp}, {{0, 1}, {0, 1e12}});
 
   // read the result to c_copy on the cpu
-  //cl_event event_read_c_back;
+  // cl_event event_read_c_back;
   oclutil::SafeEvent event_read_c_back("accuracy test read");
   oclutil::cl_enqueue_read_buffer(tgcq.command_queue,
                                   gpu_safemem[Mat::E::C].clmem,
@@ -286,7 +281,8 @@ void TinyOne<TFl>::accuracy_test(const HyPas& hp, const TFl* c_true_for_test)
   }
 
   // make sure the read back is complete complete
-  oclutil::cl_wait_for_events(1, &event_read_c_back.clevent, "in accuracy test, waiting GEMM gpu ", true);
+  oclutil::cl_wait_for_events(
+    1, &event_read_c_back.clevent, "in accuracy test, waiting GEMM gpu ", true);
 
   // compare cpu and gpu results
   accuracytests::elementwise_compare(cpu_mem[Mat::E::C],

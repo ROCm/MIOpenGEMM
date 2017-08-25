@@ -26,8 +26,92 @@ namespace MIOpenGEMM
 namespace kerngen
 {
 
-Bundle::Bundle(const HyPas& hp_, const Geometry& gg_, owrite::Writer& mowri)
-  : hp(hp_), gg(gg_), dp(hp, gg)
+// parameter order rule: {a, oa, b, ob, c, oc, ws, ows}, alpha, beta
+std::vector<std::pair<size_t, const void*>>
+get_arg_sizes_values(const KernBlob& kblob,
+                     const std::array<cl_mem, Mem::E::N>& cl_mems,
+                     const std::array<size_t, Mem::E::N>& offsets,
+                     size_t      float_size_bytes,
+                     const void* alpha,
+                     const void* beta)
+{
+
+  std::vector<std::pair<size_t, const void*>> arg_sizes_values;
+  for (auto x : {Mem::E::A, Mem::E::B, Mem::E::C, Mem::E::W})
+  {
+    if (kblob.kuses.at(x) == true)
+    {
+      arg_sizes_values.emplace_back(sizeof(cl_mem), (void*)&(cl_mems[x]));
+      arg_sizes_values.emplace_back(sizeof(size_t), &(offsets[x]));
+    }
+  }
+
+  if (kblob.kuses.u_alpha)
+  {
+    arg_sizes_values.emplace_back(float_size_bytes, alpha);
+  }
+
+  if (kblob.kuses.u_beta)
+  {
+    arg_sizes_values.emplace_back(float_size_bytes, beta);
+  }
+  return arg_sizes_values;
+}
+
+std::vector<std::vector<size_t>> get_v_wait_indices(const std::vector<KernBlob>& v_kblobs,
+                                                    owrite::Writer&              mowri)
+{
+
+  std::vector<std::vector<size_t>> v_wait_indices;
+
+  for (size_t i = 0; i < v_kblobs.size(); ++i)
+  {
+    v_wait_indices.push_back({});
+    for (size_t j = 0; j < v_kblobs.size(); ++j)
+    {
+      if (std::find(KType::dependencies.at(v_kblobs[i].e_ktype).begin(),
+                    KType::dependencies.at(v_kblobs[i].e_ktype).end(),
+                    v_kblobs[j].e_ktype) != KType::dependencies.at(v_kblobs[i].e_ktype).end())
+      {
+        v_wait_indices.back().push_back(j);
+      }
+    }
+  }
+
+  // printing them
+  mowri.bw[OutPart::E::DEP] << "\nnetwork of kernel dependencies: \n";
+  for (size_t i = 0; i < v_kblobs.size(); ++i)
+  {
+    std::stringstream ss1;
+    ss1 << "kernel " << i << " {" << v_kblobs[i].kuses.full << "}";
+    std::string pre_waits_for = ss1.str();
+
+    if (pre_waits_for.size() < 35)
+    {
+      pre_waits_for.resize(37, ' ');
+    }
+    mowri.bw[OutPart::E::DEP] << pre_waits_for << " waits for :  " << Flush;
+    if (v_wait_indices[i].size() == 0)
+    {
+      mowri.bw[OutPart::E::DEP] << "nothing";
+    }
+
+    for (size_t j = 0; j < v_wait_indices[i].size(); ++j)
+    {
+      mowri.bw[OutPart::E::DEP] << v_wait_indices[i][j] << '{'
+                                << v_kblobs[v_wait_indices[i][j]].kuses.full << "} " << Flush;
+    }
+    mowri.bw[OutPart::E::DEP] << Endl;
+  }
+  mowri.bw[OutPart::E::DEP] << '\n';
+
+  return v_wait_indices;
+}
+
+Bundle::Bundle(const HyPas& hp_, const Geometry& gg_)  //, owrite::Writer& mowri)
+  : hp(hp_),
+    gg(gg_),
+    dp(hp, gg)
 {
 
   for (auto emat_x : {Mat::E::A, Mat::E::B})
@@ -73,45 +157,7 @@ Bundle::Bundle(const HyPas& hp_, const Geometry& gg_, owrite::Writer& mowri)
     stringutil::indentify(x.kernstr);
   }
 
-  for (size_t i = 0; i < v_tgks.size(); ++i)
-  {
-    v_wait_indices.push_back({});
-    for (size_t j = 0; j < v_tgks.size(); ++j)
-    {
-      if (std::find(KType::dependencies.at(v_tgks[i].e_ktype).begin(),
-                    KType::dependencies.at(v_tgks[i].e_ktype).end(),
-                    v_tgks[j].e_ktype) != KType::dependencies.at(v_tgks[i].e_ktype).end())
-      {
-        v_wait_indices.back().push_back(j);
-      }
-    }
-  }
-
-  mowri.bw[OutPart::E::DEP] << "\nnetwork of kernel dependencies: \n";
-  for (size_t i = 0; i < v_tgks.size(); ++i)
-  {
-    std::stringstream ss1;
-    ss1 << "kernel " << i << " {" << v_tgks[i].kuses.full << "}";
-    std::string pre_waits_for = ss1.str();
-
-    if (pre_waits_for.size() < 35)
-    {
-      pre_waits_for.resize(37, ' ');
-    }
-    mowri.bw[OutPart::E::DEP] << pre_waits_for << " waits for :  " << Flush;
-    if (v_wait_indices[i].size() == 0)
-    {
-      mowri.bw[OutPart::E::DEP] << "nothing";
-    }
-
-    for (size_t j = 0; j < v_wait_indices[i].size(); ++j)
-    {
-      mowri.bw[OutPart::E::DEP] << v_wait_indices[i][j] << '{'
-                                << v_tgks[v_wait_indices[i][j]].kuses.full << "} " << Flush;
-    }
-    mowri.bw[OutPart::E::DEP] << Endl;
-  }
-  mowri.bw[OutPart::E::DEP] << '\n';
+  // v_wait_indices = get_v_wait_indices(v_tgks, mowri);
 }
 }
 }

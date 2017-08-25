@@ -51,15 +51,6 @@ CacheKey get(const CacheKey& ck, const Graph& graph, const KernelCache& kc, size
   {
     auto key      = cache_keys[keyi];
     auto distance = ck.get_distance(key);
-    // if (distance == 0){
-    // std::cout << "\n***\n";
-    //}
-    // if (ck.gg == key.gg){
-    // std::cout << "\n+++\n";
-    // std::cout << ck.constraints.get_string() << std::endl;
-    // std::cout << key.constraints.get_string() << std::endl;
-    // std::cout << distance << std::endl;
-    //}
 
     auto hp = kc.at(key);
     if (graph.contains(kc.at(key)) && Derivabilty(hp, ck.gg).is_derivable)
@@ -77,13 +68,6 @@ CacheKey get(const CacheKey& ck, const Graph& graph, const KernelCache& kc, size
     v_di.begin(), v_di.begin() + rank, v_di.end(), [](const dst_tup& a, const dst_tup& b) {
       return std::get<0>(a) < std::get<0>(b);
     });
-
-  // std::cout << "\n\n\n" << rank << std::endl;
-  // for (auto & x : v_di){
-  // std::cout << std::get<0>(x) << "   " << std::get<1>(x) << std::endl;
-  //}
-
-  // throw miog_error("check sort correct in nearest");
 
   auto nearest_derivable = cache_keys[std::get<1>(v_di[rank])];
 

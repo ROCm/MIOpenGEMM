@@ -55,7 +55,7 @@ Solution get_default(cl_command_queue   command_queue,
                      IfNoCache::E       enoc,
                      size_t             rank)
 {
-  
+
   oclutil::DevInfo devinfo(command_queue);
   double           extime = 0;
   HyPas            hp;
@@ -93,7 +93,7 @@ Solution get_default(cl_command_queue   command_queue,
 
   mowri << "Time in get_default : " << timer.get_elapsed() << " [s]" << Endl;
 
-  kerngen::Bundle bundle(hp, gg, mowri);
+  kerngen::Bundle bundle(hp, gg);  //, mowri);
   return {gg, extime, bundle.v_tgks, hp, devinfo, constraints};
 }
 }

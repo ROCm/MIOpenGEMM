@@ -2,8 +2,8 @@
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <miopengemm/generic.hpp>
-#include <miopengemm/tinyzero.hpp>
 #include <miopengemm/miogemm.hpp>
+#include <miopengemm/tinyzero.hpp>
 
 namespace MIOpenGEMM
 {
@@ -32,7 +32,7 @@ Solution find(float            allotted_time,
   auto           find_params = get_at_least_n_seconds(allotted_time);
   owrite::Writer mowri(e_ver, "");
   Offsets        offsets = get_zero_offsets();
-  TinyZero           jinx(command_queue, tgg, offsets, a, b, c, c_is_const, workspace_gpu, mowri);
+  TinyZero       jinx(command_queue, tgg, offsets, a, b, c, c_is_const, workspace_gpu, mowri);
 
   if (allotted_time > 0.1)
   {

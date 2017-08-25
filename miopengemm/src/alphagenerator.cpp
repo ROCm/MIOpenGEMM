@@ -604,10 +604,12 @@ if ((group_id_z == N_WORK_ITEMS_PER_C_ELM - 1) && k_remaining > 0){
          << " < MICRO_TILE_LENGTH_" << X << "; ++dim" << x << "){\n";
     }
 
-    if (hp.sus[Mat::E::C].vs[NonChi::E::MAD] == Binary::E::NO){
+    if (hp.sus[Mat::E::C].vs[NonChi::E::MAD] == Binary::E::NO)
+    {
       ss << "rC[dima][dimb] += rA[dima]*rB[dimb];   \n}\n}\n";
     }
-    else{
+    else
+    {
       ss << "rC[dima][dimb] = mad(rA[dima], rB[dimb], rC[dima][dimb]);    \n}\n}\n";
     }
   }

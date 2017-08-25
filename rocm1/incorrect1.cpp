@@ -556,7 +556,7 @@ const TFLOAT beta)
   checkstatus(ret, "clBuildProgram");
 
   /* Create OpenCL Kernel */ 
-    kernel = clCreateKernel(program, "miog_betac_alphaab", &ret);
+  kernel = clCreateKernel(program, "miog_betac_alphaab", &ret);
   checkstatus(ret, "clCreateKernel");
 
 

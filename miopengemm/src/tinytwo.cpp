@@ -15,16 +15,16 @@
 #include <vector>
 #include <miopengemm/accuracytests.hpp>
 #include <miopengemm/cpugemm.hpp>
-#include <miopengemm/tinytwo.hpp>
 #include <miopengemm/error.hpp>
 #include <miopengemm/floattostring.hpp>
 #include <miopengemm/geometry.hpp>
-#include <miopengemm/tinyzero.hpp>
 #include <miopengemm/oclutil.hpp>
 #include <miopengemm/outputwriter.hpp>
 #include <miopengemm/redirection.hpp>
 #include <miopengemm/setabcw.hpp>
 #include <miopengemm/stringutilbase.hpp>
+#include <miopengemm/tinytwo.hpp>
+#include <miopengemm/tinyzero.hpp>
 
 namespace MIOpenGEMM
 {
@@ -41,7 +41,6 @@ TinyTwo::TinyTwo(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHi
   case 'd': d_moa.reset(new TinyOne<double>(gg_, toff_, mowri_, devhint)); break;
   default: throw miog_error("unrecognised floattype char in TinyTwo constructor");
   }
-  
 
   active_type = gg_.floattype;
 }

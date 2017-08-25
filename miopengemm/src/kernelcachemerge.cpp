@@ -5,9 +5,9 @@
 #include <chrono>
 #include <functional>
 #include <unordered_map>
-#include <miopengemm/tinytwo.hpp>
 #include <miopengemm/kernelcachemerge.hpp>
 #include <miopengemm/setabcw.hpp>
+#include <miopengemm/tinytwo.hpp>
 
 namespace MIOpenGEMM
 {
@@ -80,8 +80,10 @@ void populate(const std::vector<CacheKey>& cache_keys,
     std::string prefix = std::to_string(i) + "/" + std::to_string(cache_keys.size());
     prefix.resize(8, ' ');
 
-    auto act_kcx = [&halt, &mowri, &ck, &prefix](
-      const KernelCache& kcx, std::string frag, std::vector<double>& times, dev::TinyOne<TFl>& diva) {
+    auto act_kcx = [&halt, &mowri, &ck, &prefix](const KernelCache& kcx,
+                                                 std::string          frag,
+                                                 std::vector<double>& times,
+                                                 dev::TinyOne<TFl>&   diva) {
       mowri.bw[OutPart::MER] << '<' << frag << Flush;
       std::this_thread::sleep_for(std::chrono::milliseconds(20));
 
@@ -212,19 +214,19 @@ get_merged(const KernelCache& kc1, const KernelCache& kc2, const Halt& halt, owr
   return kc;
 }
 
-KernelCache
-get_wSpaceReduced(const KernelCache& kc){
+KernelCache get_wSpaceReduced(const KernelCache& kc)
+{
   KernelCache kc_new;
-  for (auto & ck : kc.get_keys()){
-    auto soln = kc.at(ck);
+  for (auto& ck : kc.get_keys())
+  {
+    auto          soln = kc.at(ck);
     DerivedParams dps(soln, ck.gg);
     std::cout << ck.gg.wSpaceSize << "  -->  " << dps.required_workspace << std::endl;
-    auto gg_new = ck.gg;
-    gg_new.wSpaceSize = dps.required_workspace; 
+    auto gg_new       = ck.gg;
+    gg_new.wSpaceSize = dps.required_workspace;
     CacheKey ck_new(ck.dvc, ck.constraints, gg_new);
     kc_new.add(ck_new, soln);
   }
   return kc_new;
 }
-
 }

@@ -12,9 +12,7 @@ namespace MIOpenGEMM
 KernelCache
 get_merged(const KernelCache& kc1, const KernelCache& kc2, const Halt& halt, owrite::Writer& mowri);
 
-
-KernelCache
-get_wSpaceReduced(const KernelCache& kc);
+KernelCache get_wSpaceReduced(const KernelCache& kc);
 }
 
 #endif
