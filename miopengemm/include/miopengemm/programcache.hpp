@@ -49,7 +49,8 @@ class GemmKernelSquad
   void set_args(const std::array<cl_mem, Mem::E::N>& gpu_mems,
                 std::array<size_t, Mem::E::N>&       offsets,
                 const void* vp_alpha,
-                const void* vp_beta);
+                const void* vp_beta, 
+                size_t floatsize_bytes);
 };
 
 

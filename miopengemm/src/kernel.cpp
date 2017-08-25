@@ -166,7 +166,6 @@ oclutil::Result run_kernels(cl_command_queue                 command_queue,
     // if anything is caught here, consider testing for it in architests.
 
     std::vector<cl_event> clevent_waits;
-    std::cout << "\n------> " << ptr_kernels[k_ind]->kblob.fname << std::endl;
 
 
     for (cl_uint i = 0; i < n_user_wait_list; ++i){
