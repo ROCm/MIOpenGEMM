@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <string>
 #include <miopengemm/floattostring.hpp>
@@ -11,25 +11,26 @@ namespace floattostring
 
 std::string float_string_type(double x)
 {
-  (void)x; /* Keeping -Wunused-parameter warning quiet */
+  // Keeping -Wunused-parameter warning quiet
+  (void)x;
   return "double";
 }
 
 std::string float_string_type(float x)
 {
-  (void)x; /* Keeping -Wunused-parameter warning quiet */
+  (void)x;
   return "float";
 }
 
 char float_char_type(double x)
 {
-  (void)x; /* Keeping -Wunused-parameter warning quiet */
+  (void)x;
   return 'd';
 }
 
 char float_char_type(float x)
 {
-  (void)x; /* Keeping -Wunused-parameter warning quiet */
+  (void)x;
   return 'f';
 }
 

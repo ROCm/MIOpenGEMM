@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #ifndef GUARD_MIOPENGEMM_FORALLGENERATOR_HPP
 #define GUARD_MIOPENGEMM_FORALLGENERATOR_HPP
@@ -15,11 +15,11 @@ class ByLineGenerator : public prepgen::PrepGenerator
 {
 
   private:
-  unsigned n_full_work_items_per_line;
-  unsigned n_work_items_per_line;
-  unsigned n_full_work_items;
-  unsigned start_in_coal_last_work_item;
-  unsigned work_for_last_item_in_coal;
+  size_t n_full_work_items_per_line;
+  size_t n_work_items_per_line;
+  size_t n_full_work_items;
+  size_t start_in_coal_last_work_item;
+  size_t work_for_last_item_in_coal;
 
   protected:
   std::string description_string;
@@ -30,13 +30,10 @@ class ByLineGenerator : public prepgen::PrepGenerator
   size_t get_n_work_groups() override final;
 
   public:
-  ByLineGenerator(const hyperparams::HyperParams&     hp_,
-                  const Geometry&                     gg_,
-                  const derivedparams::DerivedParams& dp_,
-                  std::string                         type_);
+  ByLineGenerator(Mat::E emat_x, const HyPas& hp_, const Geometry& gg_, const DerivedParams& dp_);
 
-  KernelString get_kernelstring() final override;
-  void         setup() final override;
+  virtual KernBlob get_kernelstring() final override;
+  virtual void     setup_final() final override;
 
   private:
   void append_description_string(std::stringstream& ss);

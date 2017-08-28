@@ -1,8 +1,9 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <cmath>
 #include <iostream>
+#include <sstream>
 #include <tuple>
 #include <miopengemm/error.hpp>
 #include <miopengemm/stringutilbase.hpp>
@@ -20,10 +21,12 @@ void indentify(std::string& source)
 
   if (std::string::npos == last_lend)
   {
-    throw miog_error("the kernel up for indentification seems suspicious, it "
-                     "seems like it has no "
-                     "new lines in it :\n" +
-                     source);
+    std::stringstream errm;
+
+    errm << "the kernel up for indentification seems suspicious: "
+         << "it seems like it has no new lines in it :\n"
+         << source;
+    throw miog_error(errm.str());
   }
 
   std::string::size_type next_lend  = source.find("\n", last_lend + 1);
@@ -65,8 +68,8 @@ void indentify(std::string& source)
 
 // split the string tosplit by delim.
 // With x appearances of delim in tosplit,
-// the returned vector
-// will have length x + 1 (even if appearances at the start, end, contiguous.
+// the returned vector will have length x + 1
+// (even if appearances at the start, end, contiguous)
 std::vector<std::string> split(const std::string& tosplit, const std::string& delim)
 {
 
@@ -92,7 +95,7 @@ std::vector<std::string> split(const std::string& tosplit, const std::string& de
 
   splitposends.push_back(tosplit.length());
 
-  for (unsigned i = 0; i < splitposends.size(); ++i)
+  for (size_t i = 0; i < splitposends.size(); ++i)
   {
     spv.push_back(tosplit.substr(splitposstarts[i], splitposends[i] - splitposstarts[i]));
   }
@@ -100,7 +103,7 @@ std::vector<std::string> split(const std::string& tosplit, const std::string& de
   return spv;
 }
 
-std::tuple<std::string, unsigned> splitnumeric(std::string alphanum)
+std::tuple<std::string, size_t> splitnumeric(std::string alphanum)
 {
   size_t split_point = alphanum.find_first_of("0123456789");
 
@@ -111,7 +114,7 @@ std::tuple<std::string, unsigned> splitnumeric(std::string alphanum)
                      "It seems like the input string `" +
                      alphanum + "' has no digits in it.");
   }
-  return std::make_tuple<std::string, unsigned>(
+  return std::make_tuple<std::string, size_t>(
     alphanum.substr(0, split_point), std::stoi(alphanum.substr(split_point, alphanum.size())));
 }
 
@@ -122,7 +125,7 @@ std::vector<std::string> split(const std::string& tosplit)
 
   std::vector<std::string> spv2;
 
-  unsigned it{0};
+  size_t it{0};
 
   while (it != tosplit.size())
   {
@@ -130,13 +133,13 @@ std::vector<std::string> split(const std::string& tosplit)
     {
       ++it;
     }
-    unsigned start = it;
+    size_t start = it;
 
     while (!isws(tosplit[it]) and it != tosplit.size())
     {
       ++it;
     }
-    unsigned end = it;
+    size_t end = it;
 
     if (!isws(tosplit[end - 1]))
     {
@@ -159,7 +162,7 @@ std::string getdirfromfn(const std::string& fn)
 
   std::string dir = "/";
 
-  for (unsigned i = 1; i < morcels.size() - 1; ++i)
+  for (size_t i = 1; i < morcels.size() - 1; ++i)
   {
     dir = dir + morcels[i] + "/";
   }
@@ -167,9 +170,9 @@ std::string getdirfromfn(const std::string& fn)
   return dir;
 }
 
-std::string get_padded(unsigned x, unsigned length)
+std::string get_padded(size_t x, size_t length)
 {
-  unsigned x_length = 0;
+  size_t x_length = 0;
   if (x < 10)
   {
     x_length = 1;
@@ -188,7 +191,7 @@ std::string get_padded(unsigned x, unsigned length)
   }
   else
   {
-    x_length = unsigned(std::log10(x + 1));
+    x_length = size_t(std::log10(x + 1));
   }
 
   auto        n_pads = length + 1 - x_length;
@@ -200,7 +203,24 @@ std::string get_padded(unsigned x, unsigned length)
   return padded;
 }
 
+std::string get_stars(size_t n_stars) { return std::string(n_stars, '*'); }
 
+std::string get_star_wrapped(const std::string& s)
+{
+  auto              n_stars = s.size() + 1;
+  std::stringstream ss;
+  ss << "/* " << get_stars(n_stars) << "\n* " << s << " *\n" << get_stars(n_stars) << "  */";
+  return ss.str();
+}
 
+void add_v_string(std::stringstream& ss, const std::vector<size_t>& values)
+{
+  ss << " { ";
+  for (auto& x : values)
+  {
+    ss << x << ' ';
+  }
+  ss << "}\n";
+}
 }
 }

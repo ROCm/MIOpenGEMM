@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <iostream>
 #include <sstream>
@@ -10,21 +10,22 @@ namespace MIOpenGEMM
 namespace betacgen
 {
 
-BetacGenerator::BetacGenerator(const hyperparams::HyperParams&     hp_,
-                               const Geometry&                     gg_,
-                               const derivedparams::DerivedParams& dp_)
-  : bylinegen::ByLineGenerator(hp_, gg_, dp_, "betac")
+BetacGenerator::BetacGenerator(const HyPas& hp_, const Geometry& gg_, const DerivedParams& dp_)
+
+  : bylinegen::ByLineGenerator(Mat::E::C, hp_, gg_, dp_)
 {
 }
+
+void BetacGenerator::set_type() { type = "betac"; }
 
 size_t BetacGenerator::get_local_work_size() { return dp.betac_local_work_size; }
 
 size_t BetacGenerator::get_work_per_thread() { return dp.betac_work_per_thread; }
 
+KType::E BetacGenerator::get_ktype() { return KType::E::BETAC; }
+
 void BetacGenerator::setup_additional()
 {
-  initialise_matrixtype('c');
-
   description_string = R"(
 /* ****************************************************
 * It is used to perform the beta*C step in GEMM, 
@@ -37,9 +38,7 @@ void BetacGenerator::setup_additional()
 
 void BetacGenerator::append_derived_definitions_additional(std::stringstream& ss) { ss << " "; }
 
-KernelString get_betac_kernelstring(const hyperparams::HyperParams&     hp,
-                                    const Geometry&                     gg,
-                                    const derivedparams::DerivedParams& dp)
+KernBlob get_betac_kernelstring(const HyPas& hp, const Geometry& gg, const DerivedParams& dp)
 {
   BetacGenerator bcg(hp, gg, dp);
   bcg.setup();

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #ifndef GUARD_MIOPENGEMM_NORMALFORMGENERATOR_HPP
 #define GUARD_MIOPENGEMM_NORMALFORMGENERATOR_HPP
@@ -14,13 +14,8 @@ namespace MIOpenGEMM
 namespace nformgen
 {
 
-KernelString get_nforma_kernelstring(const hyperparams::HyperParams&     hp,
-                                     const Geometry&                     gg,
-                                     const derivedparams::DerivedParams& dp);
-
-KernelString get_nformb_kernelstring(const hyperparams::HyperParams&     hp,
-                                     const Geometry&                     gg,
-                                     const derivedparams::DerivedParams& dp);
+KernBlob
+get_nform_kernelstring(Mat::E emat_x, const HyPas& hp, const Geometry& gg, const DerivedParams& dp);
 }
 }
 

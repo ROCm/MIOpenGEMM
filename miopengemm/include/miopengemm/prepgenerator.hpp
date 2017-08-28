@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #ifndef GUARD_MIOPENGEMM_PREPGENERATOR_HPP
 #define GUARD_MIOPENGEMM_PREPGENERATOR_HPP
@@ -15,18 +15,14 @@ class PrepGenerator : public basegen::BaseGenerator
 {
 
   protected:
-  unsigned n_work_items;
-  unsigned n_work_groups;
+  size_t n_work_items;
 
-  char       matrixchar;
-  char       MATRIXCHAR;
-  nsHP::eMat emat_x;
+  Mat::E emat_x;
+  char   MCHAR;
+  char   mchar;
 
-  void set_usage_from_matrixchar();
+  virtual void set_usage() override final;
   void append_basic_what_definitions(std::stringstream& ss);
-
-  virtual size_t get_local_work_size() = 0;
-  virtual size_t get_n_work_groups()   = 0;
 
   size_t get_global_work_size()
   {
@@ -34,41 +30,8 @@ class PrepGenerator : public basegen::BaseGenerator
     return forall_global_work_size;
   }
 
-  void initialise_matrixtype(char matrixchar_in)
-  {
-    if (matrixchar_in == 'a')
-    {
-      matrixchar = 'a';
-      MATRIXCHAR = 'A';
-      emat_x     = nsHP::matA;
-    }
-
-    else if (matrixchar_in == 'b')
-    {
-      matrixchar = 'b';
-      MATRIXCHAR = 'B';
-      emat_x     = nsHP::matB;
-    }
-
-    else if (matrixchar_in == 'c')
-    {
-      matrixchar = 'c';
-      MATRIXCHAR = 'C';
-      emat_x     = nsHP::matC;
-    }
-
-    else
-    {
-      throw miog_error("in PrepGenerator : unrecognised matrixtype " +
-                       std::to_string(matrixchar_in));
-    }
-  }
-
   public:
-  PrepGenerator(const hyperparams::HyperParams&     hp_,
-                const Geometry&                     gg_,
-                const derivedparams::DerivedParams& dp_,
-                std::string                         type_);
+  PrepGenerator(Mat::E emat_x, const HyPas& hp_, const Geometry& gg_, const DerivedParams& dp_);
 };
 }
 }

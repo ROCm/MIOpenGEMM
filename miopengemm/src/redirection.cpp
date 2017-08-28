@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <CL/cl.h>
 #include <algorithm>
@@ -12,9 +12,9 @@ namespace MIOpenGEMM
 namespace redirection
 {
 
+// transform so that is Column Major and tC = is false.
 template <typename T>
-void redirect_base(
-  bool& isColMajor, bool& tA, bool& tB, bool& tC, unsigned& m, unsigned& n, T& a, T& b)
+void redirect_base(bool& isColMajor, bool& tA, bool& tB, bool& tC, size_t& m, size_t& n, T& a, T& b)
 {
   if (isColMajor == false)
   {
@@ -23,8 +23,35 @@ void redirect_base(
     std::swap(a, b);
     std::swap(m, n);
     isColMajor = true;
-    // it might still be TT or m < n && tA + tB == 1, redirect again
+    // it might still be tC == 1, redirect again
     redirect_base<T>(isColMajor, tA, tB, tC, m, n, a, b);
+  }
+
+  else if (tC == true)
+  {
+    tC          = false;
+    auto old_tA = tA;
+    tA          = tB == true ? false : true;
+    tB          = old_tA == true ? false : true;
+    std::swap(a, b);
+    std::swap(m, n);
+  }
+}
+
+// transform so that is Column Major, is not TT, and m > n if not NN.
+template <typename T>
+void redirect_base_mlessn(
+  bool& isColMajor, bool& tA, bool& tB, bool& tC, size_t& m, size_t& n, T& a, T& b)
+{
+  if (isColMajor == false)
+  {
+    // perform minimal changes to get into row major
+    std::swap(tA, tB);
+    std::swap(a, b);
+    std::swap(m, n);
+    isColMajor = true;
+    // it might still be TT or m < n && tA + tB == 1, redirect again
+    redirect_base_mlessn<T>(isColMajor, tA, tB, tC, m, n, a, b);
   }
 
   else if (tA == true && tB == true)
@@ -49,9 +76,9 @@ class MatrixBundle
 {
   public:
   const TFloat* x;
-  unsigned      ldx;
-  unsigned      x_offset;
-  MatrixBundle(const TFloat* x_, unsigned ldx_, unsigned x_offset_)
+  size_t        ldx;
+  size_t        x_offset;
+  MatrixBundle(const TFloat* x_, size_t ldx_, size_t x_offset_)
     : x(x_), ldx(ldx_), x_offset(x_offset_)
   {
   }
@@ -62,12 +89,12 @@ void redirect(bool&          isColMajor,
               bool&          tA,
               bool&          tB,
               bool&          tC,
-              unsigned&      m,
-              unsigned&      n,
-              unsigned&      lda,
-              unsigned&      ldb,
-              unsigned&      a_offset,
-              unsigned&      b_offset,
+              size_t&        m,
+              size_t&        n,
+              size_t&        lda,
+              size_t&        ldb,
+              size_t&        a_offset,
+              size_t&        b_offset,
               const TFloat*& a,
               const TFloat*& b)
 {
@@ -89,12 +116,12 @@ template void redirect(bool&          isColMajor,
                        bool&          tA,
                        bool&          tB,
                        bool&          tC,
-                       unsigned&      m,
-                       unsigned&      n,
-                       unsigned&      lda,
-                       unsigned&      ldb,
-                       unsigned&      a_offset,
-                       unsigned&      b_offset,
+                       size_t&        m,
+                       size_t&        n,
+                       size_t&        lda,
+                       size_t&        ldb,
+                       size_t&        a_offset,
+                       size_t&        b_offset,
                        const double*& a,
                        const double*& b);
 
@@ -102,12 +129,12 @@ template void redirect(bool&         isColMajor,
                        bool&         tA,
                        bool&         tB,
                        bool&         tC,
-                       unsigned&     m,
-                       unsigned&     n,
-                       unsigned&     lda,
-                       unsigned&     ldb,
-                       unsigned&     a_offset,
-                       unsigned&     b_offset,
+                       size_t&       m,
+                       size_t&       n,
+                       size_t&       lda,
+                       size_t&       ldb,
+                       size_t&       a_offset,
+                       size_t&       b_offset,
                        const float*& a,
                        const float*& b);
 
@@ -115,39 +142,97 @@ void redirect(bool&        isColMajor,
               bool&        tA,
               bool&        tB,
               bool&        tC,
-              unsigned&    m,
-              unsigned&    n,
+              size_t&      m,
+              size_t&      n,
               std::string& a,
               std::string& b)
 {
   redirect_base<std::string>(isColMajor, tA, tB, tC, m, n, a, b);
 }
 
-void confirm_redirection(bool isColMajor, bool tA, bool tB, unsigned m, unsigned n)
+void confirm_redirection_mlessn(bool isColMajor, bool tA, bool tB, size_t m, size_t n)
 {
+  std::string errmbase = "redirection_mlessn failed or not performed";
   if (isColMajor == false)
   {
-    throw miog_error("isColMajor == false : see symmetry_red document for "
-                     "redirection and implement");
+    throw miog_error("isColMajor == false : " + errmbase);
   }
 
   else
   {
     if (tA == true && tB == true)
     {
-      throw miog_error("both matrices transposed : see symmetry_red document "
-                       "for redirection and implement");
+      throw miog_error("both matrices transposed : " + errmbase);
     }
 
     else if ((tA == true && tB == false) || (tA == false && tB == true))
     {
       if (m > n)
       {
-        throw miog_error("tA + tB = 1 with m > n : see symmetry_red document "
-                         "for redirection to m <= n");
+        throw miog_error("tA + tB = 1 with m > n : " + errmbase);
       }
     }
   }
+}
+
+void confirm_redirection(bool isColMajor, bool tC)
+{
+  if (isColMajor == false)
+  {
+    throw miog_error("isColMajor == false : redirection failed or not performed");
+  }
+
+  else if (tC == true)
+  {
+    throw miog_error("tC == true : redirection failed or not performed ");
+  }
+}
+
+class SimpleBundle
+{
+  public:
+  size_t ldx;
+  Mat::E emat;
+  SimpleBundle(size_t ldx_, Mat::E e_) : ldx(ldx_), emat(e_) {}
+};
+
+Geometry get_canonical(const Geometry& gg, bool& swap_ab)
+{
+  bool         isColMajor = gg.isColMajor;
+  bool         tA         = gg.tX[Mat::E::A];
+  bool         tB         = gg.tX[Mat::E::B];
+  bool         tC         = gg.tX[Mat::E::C];
+  size_t       m          = gg.m;
+  size_t       n          = gg.n;
+  SimpleBundle sba(gg.ldX[Mat::E::A], Mat::E::A);
+  SimpleBundle sbb(gg.ldX[Mat::E::B], Mat::E::B);
+  redirect_base(isColMajor, tA, tB, tC, m, n, sba, sbb);
+  swap_ab = (sba.emat == Mat::E::B);
+  return {isColMajor,
+          tA,
+          tB,
+          tC,
+          sba.ldx,
+          sbb.ldx,
+          gg.ldX[Mat::E::C],
+          m,
+          n,
+          gg.k,
+          gg.wSpaceSize,
+          gg.floattype};
+}
+
+Geometry get_canonical(const Geometry& gg)
+{
+  bool swap_ab{};
+  return get_canonical(gg, swap_ab);
+}
+
+bool get_is_not_canonical(const Geometry& gg)
+{
+  bool swap_ab;
+  auto gg2 = get_canonical(gg, swap_ab);
+  return swap_ab;
 }
 }
 }

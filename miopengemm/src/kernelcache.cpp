@@ -1,192 +1,210 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
+#include <algorithm>
 #include <map>
 #include <sstream>
 #include <string>
+#include <miopengemm/enums.hpp>
 #include <miopengemm/kernelcache.hpp>
+#include <miopengemm/redirection.hpp>
 
 namespace MIOpenGEMM
 {
 
-const KernelCache kernel_cache = get_kernel_cache();
+size_t CacheKeyHash::operator()(const CacheKey& ck) const { return __hash(ck.concatenated); }
+
+std::vector<Geometry> get_geometries(const std::vector<CacheKey>& cks)
+{
+  std::vector<Geometry> geometries;
+  for (const auto& x : cks)
+  {
+    geometries.push_back(x.gg);
+  }
+  return geometries;
+}
+
+CacheKeyPresence KernelCache::check_for(const CacheKey& ckey) const
+{
+  if (vals.count(ckey) == 0)
+  {
+    std::string open  = "No cache entry from keys: " + ckey.get_string();
+    std::string close = " (see gencache.cpp for example generating cache entry)";
+    // TODO : how about the individual keys? Add this print functionality.
+    return open + close;
+  }
+  return {};
+}
+
+CacheKey::CacheKey(const std::string& dvc_, const Constraints& cns_, const Geometry& geo_)
+  : from_non_canonical(redirection::get_is_not_canonical(geo_)),
+    dvc(dvc_),
+    constraints(cns_.get_reflected(from_non_canonical)),
+    gg(redirection::get_canonical(geo_)),
+    concatenated(dvc_ + constraints.get_string() + gg.get_string())
+{
+}
+
+std::string get_cache_entry_string(const CacheKey& ck, const HyPas& hypas, bool swap_ab)
+{
+  std::string       swap_ab_str = swap_ab ? "true" : "false";
+  std::stringstream cache_write_ss;
+  cache_write_ss << "kc.add(\n";
+  cache_write_ss << "{\"" << ck.dvc << "\",  // dev\n";
+  cache_write_ss << "{\"" << ck.constraints.get_string() << "\"},  // con\n";
+  cache_write_ss << "{\"" << ck.gg.get_string() << "\"}}, // gg\n";
+  cache_write_ss << "{{ // hp\n";
+  auto hp = hypas.get_reflected(swap_ab);
+  cache_write_ss << "\"" << hp.sus[Mat::E::A].get_string() << "\",\n";
+  cache_write_ss << "\"" << hp.sus[Mat::E::B].get_string() << "\",\n";
+  cache_write_ss << "\"" << hp.sus[Mat::E::C].get_string() << "\"}});\n";
+  return cache_write_ss.str();
+}
+
+std::string KernelCache::get_cache_entry_string(const CacheKey& ck) const
+{
+  return MIOpenGEMM::get_cache_entry_string(ck, at(ck, false), false);
+}
+
+std::string CacheKey::get_string() const
+{
+  std::stringstream ss;
+  ss << "device       :   `" << dvc << "'\n";
+  ss << "constraints  :   `" << constraints.get_string() << "'\n";
+  ss << "geometry     :   `" << gg.get_string() << "'\n";
+  return ss.str();
+}
 
 KernelCache get_kernel_cache()
 {
   KernelCache kc;
 
-  // There are two ways to add cache snip snippets, the first is
-  // to paste them here like this
-  add_entry(kc,
-            "some_device_key",
-            "some_constraint_string",
-            "tC0_tA0_tB0_colMaj1_m5000_n5000_k5000_lda5000_ldb5000_ldc5000_ws1_f32",
-            "",
-            {"A_MIC8_PAD2_PLU0_LIW0_MIW0_WOS0__B_MIC6_PAD1_PLU0_LIW0_MIW0_WOS0__"
-             "C_UNR8_GAL2_PUN0_ICE1_NAW64_UFO0_MAC256_SKW10",
-             {59.2006, 4222.93, 3.32959, "Sun May 14 12:29:44 2017", {3, 2, 1, Max}}});
-
-// and the second is to drop them into a txt file like like this
-#include "cacheexample.cachetxt"
-#include "deepbench.cachetxt"
-
+#include "cache1.cachetxt"
   return kc;
 }
+const KernelCache kernel_cache = get_kernel_cache();
 
-void add_entry(KernelCache&       kc,
-               const std::string& k_dev,
-               const std::string& k_con,
-               const std::string  k_geo,
-               const std::string  k_comment,
-               CachedSolution     tgcs)
+HyPas KernelCache::at(const CacheKey& ckey, bool swap_ab) const
 {
 
-  if (kc.count(k_dev) == 0)
+  CacheKeyPresence ckp = check_for(ckey);
+  if (!ckp.is_present)
   {
-    kc[k_dev] = {};
+    throw miog_error("(in HyPas KernelCache::at)  " + ckp.msg);
+  }
+  return vals.at(ckey).get_reflected(swap_ab);
+}
+
+const HyPas& KernelCache::at(const CacheKey& ck) const
+{
+  CacheKeyPresence ckp = check_for(ck);
+  if (!ckp.is_present)
+  {
+    throw miog_error("(in const HyPas & KernelCache::at)  " + ckp.msg);
+  }
+  return vals.at(ck);
+}
+
+void KernelCache::add(const CacheKey& ckey, const HyPas& hp)
+{
+
+  if (redirection::get_is_not_canonical(ckey.gg))
+  {
+    throw miog_error("internal logic error : CacheKey has geometry in non-canonical form (in add)");
   }
 
-  if (kc.at(k_dev).count(k_con) == 0)
+  CacheKeyPresence ckp = check_for(ckey);
+  if (ckp.is_present)
   {
-    kc[k_dev][k_con] = {};
-  }
 
-  if (kc.at(k_dev).at(k_con).count(k_geo) == 0)
-  {
-    kc[k_dev][k_con][k_geo] = {};
-  }
-
-  if (kc.at(k_dev).at(k_con).at(k_geo).count(k_comment) == 0)
-  {
-    kc[k_dev][k_con][k_geo][k_comment] = tgcs;
-  }
-
-  else
-  {
+    bool              is_not_canonical = false;
     std::stringstream ss;
-    ss << "An attempt to add a cache entry where one already exists, with "
-       << "keys:\n"
-       << get_cache_keys_string(k_dev, k_con, k_geo, k_comment) << "\n\n"
-       << "The existing entry is, " << kc[k_dev][k_con][k_geo][k_comment].get_string() << "\n\n"
-       << "The proposed entry is, " << tgcs.get_string() << "\n\n"
-       << "Please choose between these, and remove one.";
-
+    ss << "Cannot add cache entry if one already exists, with. Keys: " << ckey.get_string()
+       << "The existing entry is " << at(ckey, is_not_canonical).get_string()
+       << ". Please choose between these, manually remove existing if nec. ";
     throw miog_error(ss.str());
   }
+
+  vals[ckey] = hp;
 }
 
-void enforce_constraints(std::string&       hps_to_update,
-                         const std::string& constraints_string,
-                         const Geometry&    gg)
+std::vector<CacheKey> KernelCache::get_keys() const
 {
-
-  openclutil::OpenCLDeviceInfo devinfo;
-  hyperparams::Graph           graph(gg, devinfo, hps_to_update, true);
-  hyperparams::HyperParams     hp(graph);
-
-  auto all_constraints = hyperparams::get_all_constraints(constraints_string);
-  hp.replace_where_source_defined(all_constraints);
-  hps_to_update = hp.get_string();
+  std::vector<CacheKey> keys;
+  for (auto& x : vals)
+  {
+    auto ck = std::get<0>(x);
+    keys.push_back(ck);
+  }
+  return keys;
 }
 
-/* TODO : certain of these kernels are slow,
- * so as to cover the case (ROCm) of
- * problems in compilation
- * with small k. Fix this */
-CachedSolution get_generic_cached_solution(const std::string& constraints_string,
-                                           const Geometry&    gg)
+void filter_device(std::vector<CacheKey>& cks, const std::vector<std::string>& device_frags)
 {
-
-  // the case where there is no cached solution
-  CachedSolution cached_soln;
-
-  if (gg.m * gg.n > 2000 * 2000 && gg.m >= 256 && gg.n >= 256)
+  std::vector<CacheKey> valid;
+  for (auto& ck : cks)
   {
-    cached_soln = {"A_MIC8_PAD1_PLU0_LIW0_MIW0_WOS0__B_MIC6_PAD2_PLU0_LIW0_"
-                   "MIW0_WOS0__C_UNR8_GAL2_"
-                   "PUN0_ICE1_NAW16_UFO0_MAC256_SKW10",
-                   {0, 0, 0, "None", {200, 10, 3, Max}}};
+    for (const auto& frag : device_frags)
+    {
+      if (ck.dvc.find(frag) != std::string::npos)
+      {
+        valid.push_back(ck);
+        break;
+      }
+    }
   }
-
-  else if (gg.m * gg.n > 800 * 800 && gg.m >= 256. && gg.n >= 128)
-  {
-    cached_soln = {"A_MIC8_PAD1_PLU0_LIW0_MIW0_WOS0__B_MIC4_PAD0_PLU0_LIW0_"
-                   "MIW0_WOS0__C_UNR16_GAL1_"
-                   "PUN1_ICE1_NAW64_UFO0_MAC256_SKW10",
-                   {0, 0, 0, "None", {200, 10, 3, Max}}};
-  }
-
-  else if (gg.m * gg.n > 300 * 300 && gg.m >= 64 && gg.n >= 64)
-  {
-    cached_soln = {"A_MIC2_PAD1_PLU0_LIW0_MIW0_WOS0__B_MIC2_PAD2_PLU0_LIW0_"
-                   "MIW0_WOS0__C_UNR16_GAL3_"
-                   "PUN0_ICE1_NAW64_UFO0_MAC256_SKW10",
-                   {0, 0, 0, "None", {200, 10, 3, Max}}};
-  }
-
-  else if (gg.m * gg.n > 128 * 128 && gg.m >= 16 && gg.n >= 16)
-  {
-    cached_soln = {"A_MIC1_PAD1_PLU0_LIW0_MIW0_WOS0__B_MIC2_PAD2_PLU0_LIW0_"
-                   "MIW0_WOS0__C_UNR32_GAL2_"
-                   "PUN1_ICE1_NAW64_UFO0_MAC64_SKW10",
-                   {0, 0, 0, "None", {200, 10, 3, Max}}};
-  }
-
-  else if (gg.m >= 16 && gg.n >= 16)
-  {
-    cached_soln = {"A_MIC1_PAD0_PLU0_LIW0_MIW0_WOS0__B_MIC1_PAD0_PLU0_LIW0_"
-                   "MIW0_WOS0__C_UNR16_GAL2_"
-                   "PUN1_ICE1_NAW64_UFO0_MAC256_SKW10",
-                   {0, 0, 0, "None", {200, 10, 3, Max}}};
-  }
-
-  else if (gg.m >= 8 && gg.n >= 8)
-  {
-    cached_soln = {"A_MIC1_PAD0_PLU0_LIW0_MIW0_WOS0__B_MIC2_PAD1_PLU0_LIW0_"
-                   "MIW0_WOS0__C_UNR16_GAL3_"
-                   "PUN1_ICE1_NAW64_UFO0_MAC16_SKW10",
-                   {0, 0, 0, "None", {200, 10, 3, Max}}};
-  }
-
-  else if (gg.m >= 4 && gg.n >= 4)
-  {
-    cached_soln = {"A_MIC1_PAD2_PLU0_LIW0_MIW0_WOS0__B_MIC1_PAD1_PLU0_LIW0_"
-                   "MIW0_WOS0__C_UNR16_GAL2_"
-                   "PUN0_ICE1_NAW64_UFO0_MAC16_SKW10",
-                   {0, 0, 0, "None", {200, 10, 3, Max}}};
-  }
-
-  else
-  {
-    cached_soln = {"A_MIC1_PAD0_PLU0_LIW0_MIW0_WOS0__B_MIC1_PAD0_PLU0_LIW0_"
-                   "MIW0_WOS0__C_UNR8_GAL1_"
-                   "PUN0_ICE1_NAW16_UFO0_MAC1_SKW10",
-                   {0, 0, 0, "None", {200, 10, 3, Max}}};
-  }
-
-  enforce_constraints(cached_soln.hyperstring, constraints_string, gg);
-
-  return cached_soln;
+  cks = std::move(valid);
 }
 
-std::string CachedSolution::get_string()
+void filter_geometries(std::vector<CacheKey>& cks, const std::vector<Geometry>& geometries)
 {
-  std::stringstream ss;
-  ss << "(hyperstring) " << hyperstring << "\n";
-  ss << "(stats) " << stats.get_string();
-  return ss.str();
+  std::vector<CacheKey> valid;
+  for (auto& ck : cks)
+  {
+    if (std::find(geometries.begin(), geometries.end(), ck.gg) != geometries.end())
+    {
+      valid.push_back(ck);
+    }
+  }
+  cks = std::move(valid);
 }
 
-std::string get_cache_keys_string(std::string k_dev,
-                                  std::string k_con,
-                                  std::string k_geo,
-                                  std::string k_comment)
+std::vector<std::string> get_devices(const std::vector<CacheKey>& cks)
 {
-  std::stringstream ss;
-  ss << "device key         :   `" << k_dev << "'\n";
-  ss << "constraints_string :   `" << k_con << "'\n";
-  ss << "geometry key       :   `" << k_geo << "'\n";
-  ss << "comment key        :   `" << k_comment << "'\n";
-  return ss.str();
+  std::vector<std::string> devices;
+  for (auto& ck : cks)
+  {
+
+    if (std::find(devices.begin(), devices.end(), ck.dvc) == devices.end())
+    {
+      devices.push_back(ck.dvc);
+    }
+  }
+  return devices;
+}
+
+void filter_floattype(std::vector<CacheKey>& cks, size_t float_size_bytes)
+{
+  std::vector<CacheKey> valid;
+  for (auto& ck : cks)
+  {
+    if (ck.gg.derived.float_size_bytes == float_size_bytes)
+    {
+      valid.push_back(ck);
+    }
+  }
+  cks = std::move(valid);
+}
+
+double CacheKey::get_distance(const CacheKey& ck) const
+{
+  double distance = 0;
+  distance += gg.get_distance(ck.gg);
+  distance += 1e-6 * (dvc != ck.dvc);
+
+  // TODO : improved distance between constraints. will be non-sym.
+  distance += 1 * (constraints.get_string() != ck.constraints.get_string());
+
+  return distance;
 }
 }

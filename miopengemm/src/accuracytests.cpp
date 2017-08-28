@@ -1,10 +1,10 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <cmath>
+#include <vector>
 #include <miopengemm/accuracytests.hpp>
 #include <miopengemm/outputwriter.hpp>
-#include <vector>
 
 namespace MIOpenGEMM
 {
@@ -16,20 +16,20 @@ namespace accuracytests
  * Provide better diagnostics when not correct.
  * Output full matrices to files for visualisation. etc etc etc. */
 template <typename TFloat>
-void elementwise_compare(const TFloat*                c_before,
-                         double                       beta,
-                         const TFloat*                c_cpu,
-                         const TFloat*                c_gpu,
-                         unsigned                     nels,
-                         outputwriting::OutputWriter& mowri)
+void elementwise_compare(const TFloat*   c_before,
+                         double          beta,
+                         const TFloat*   c_cpu,
+                         const TFloat*   c_gpu,
+                         size_t          nels,
+                         owrite::Writer& mowri)
 {
-  double                threshold         = 0.01;
-  double                max_relerr        = 0.;
-  unsigned              i_max             = 0;
-  std::vector<unsigned> violating_indices = {};
-  std::vector<double>   violating_margins = {};
+  double              threshold         = 0.01;
+  double              max_relerr        = 0.;
+  size_t              i_max             = 0;
+  std::vector<size_t> violating_indices = {};
+  std::vector<double> violating_margins = {};
 
-  for (unsigned i = 0; i < nels; ++i)
+  for (size_t i = 0; i < nels; ++i)
   {
     double absdifference = std::abs(c_cpu[i] - c_gpu[i]);
     double sumabs =
@@ -58,13 +58,13 @@ void elementwise_compare(const TFloat*                c_before,
        << ". \nValue after call from gpu : " << c_gpu[i_max] << "  \nrelerr : " << max_relerr
        << "\nthe first violating indices (above the threshold of " << threshold << ") were: \n";
 
-    for (unsigned bl = 0; bl < std::min<size_t>(10, violating_indices.size()); ++bl)
+    for (size_t bl = 0; bl < std::min<size_t>(10, violating_indices.size()); ++bl)
     {
       ss << " " << violating_indices[bl] << " (" << violating_margins[bl] << ") ";
     }
 
     ss << "\n{c before}  (cpu)  [gpu]\n";
-    for (unsigned i = 0; i < std::min<unsigned>(nels, 16); ++i)
+    for (size_t i = 0; i < std::min<size_t>(nels, 16); ++i)
     {
       ss << "{" << c_before[i] << "}  (" << c_cpu[i] << ")  [" << c_gpu[i] << "]"
          << "\n";
@@ -73,21 +73,21 @@ void elementwise_compare(const TFloat*                c_before,
     throw miog_error(ss.str());
   }
 
-  mowri << "max_relerr=" << max_relerr << Endl;
+  mowri.bw[OutPart::E::ACC] << "max_relerr=" << max_relerr << Flush;
 }
 
-template void elementwise_compare(const float*                 c_before,
-                                  double                       beta,
-                                  const float*                 c_cpu,
-                                  const float*                 c_gpu,
-                                  unsigned                     nels,
-                                  outputwriting::OutputWriter& mowri);
+template void elementwise_compare(const float*    c_before,
+                                  double          beta,
+                                  const float*    c_cpu,
+                                  const float*    c_gpu,
+                                  size_t          nels,
+                                  owrite::Writer& mowri);
 
-template void elementwise_compare(const double*                c_before,
-                                  double                       beta,
-                                  const double*                c_cpu,
-                                  const double*                c_gpu,
-                                  unsigned                     nels,
-                                  outputwriting::OutputWriter& mowri);
+template void elementwise_compare(const double*   c_before,
+                                  double          beta,
+                                  const double*   c_cpu,
+                                  const double*   c_gpu,
+                                  size_t          nels,
+                                  owrite::Writer& mowri);
 }
 }

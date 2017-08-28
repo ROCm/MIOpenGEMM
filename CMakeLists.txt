@@ -21,7 +21,12 @@ include(ROCMSetupVersion)
 include(ROCMInstallSymlinks)
 include(ROCMCreatePackage)
 
+
+
 rocm_setup_version(VERSION 1.0.1)
+
+
+option(OPENBLAS "CPU GEMM accuracy tests with OpenBLAS, otherwise slow 3-for loops code" OFF)
 
 #Where to find FindOpenCL.cmake (etc)
 list( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
@@ -30,12 +35,16 @@ set( CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options ar
 ##Use FindOpenCL.cmake to find library and header file
 find_package( OpenCL REQUIRED )
 
-find_package(PythonInterp REQUIRED)
-
 option(BUILD_SHARED_LIBS "Build shared library" ON)
+
+if(OPENBLAS)
+    find_package(OpenBLAS REQUIRED)
+    add_definitions(-DMIOPENGEMM_USE_OPENBLAS)
+endif()
 
 include(EnableCompilerWarnings)
 
 add_subdirectory(miopengemm)
+add_subdirectory(examples)
 add_subdirectory(tests)
 add_subdirectory(doc)

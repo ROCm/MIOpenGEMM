@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved. 
+ * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #ifndef GUARD_MIOPENGEMM_ERROR_HPP
 #define GUARD_MIOPENGEMM_ERROR_HPP
