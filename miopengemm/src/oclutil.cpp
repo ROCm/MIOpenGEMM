@@ -274,9 +274,9 @@ Result cl_enqueue_ndrange_kernel(cl_command_queue   command_queue,
                                       
 
   //clWaitForEvents(1, event);
-  //std::cout << timer.get_elapsed() << std::endl;
+  //std::c o ut << timer.get_elapsed() << std::endl;
   //auto gflops = (2.*155*155*155 + 0.)/(1e9*timer.get_elapsed());
-  //std::cout << "\n-------->  " << gflops << std::endl;
+  //std::c o ut << "\n-------->  " << gflops << std::endl;
 
                                       
   return confirm_cl_status(ret, hash, "cl_enqueue_ndrange_kernel", strict);

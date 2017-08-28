@@ -60,7 +60,7 @@ GemmResult xgemm(bool              isColMajor,
                cl_event *        ptr_event_user)
 {
   
-  owrite::Writer silent_mowri(Ver::E::TERMINAL, "");
+  owrite::Writer silent_mowri(Ver::E::SILENT, "");
   
   cl_context   context;
   bool     tC{false};

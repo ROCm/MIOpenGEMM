@@ -12,13 +12,13 @@ int main()
   bool test_accuracy_of_soln = false;
   bool bench_the_soln        = true;
 
-  Geometry       gg("tC0_tA0_tB0_colMaj0_m1024_n1024_k1024_lda1024_ldb1024_ldc1024_ws0_f64");
+  Geometry       gg("tC0_tA0_tB0_colMaj1_m5100_n5100_k5100_lda5100_ldb5100_ldc5100_ws0_f32");
   CLHint         devhint;
   Offsets        offsets = get_zero_offsets();
   owrite::Writer mowri(Ver::E::TERMINAL, "");
   dev::TinyTwo       boa(gg, offsets, mowri, devhint);
 
-  auto find_params = get_at_least_n_restarts(1);
+  auto find_params = get_at_least_n_restarts(2);
   Constraints constraints("");//A_WOS0__B_WOS0__C_ICE1");
     
   Solution soln = boa.find(find_params, constraints);

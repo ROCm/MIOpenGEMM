@@ -269,10 +269,10 @@ std::vector<int> get_priority()
   X[E::MAC] = 1;
   X[E::SKW] = 0;
   X[E::IWI] = 0;
+  X[E::MAD] = -1;
   X[E::AFI] = -1;
   X[E::MIA] = -1;
   X[E::SZT] = -1;
-  X[E::MAD] = -1;
   return X;
 }
 
