@@ -181,7 +181,7 @@ void Geometry::check_ldx_consistent() const
             << "coal_x (for x in {a,b,c}) given by:  "
             << "coal_a = (tA == isColMajor ? k : m),  "
             << "coal_b = (tB == isColMajor ? n : k),  "
-            << "coal_c = (tC == isColMajor ? k : m).  "
+            << "coal_c = (tC == isColMajor ? n : m).  "
             << "\n\n"
             << "ldx = coal_x + pad_x, and so for consisteny it must be true "
             << "that ldx >= coal_x (can't have negative pad_x).  "
