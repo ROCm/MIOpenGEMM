@@ -39,102 +39,40 @@ Solution find(float            allotted_time,
               const Geometry&  tgg,
               bool             verbose,
               bool             with_warnings);
+              
 
-/*! @brief Find a Solution, considering kernels with and without workspace requirements. This
- * function is experimental.
- *
- * @param command_queue       OpenCL command queue
- * @param find_params         Parameters define duration and structure of search
- * @param a                   Matrix A
- * @param b                   Matrix B
- * @param c                   Matric C
- * @param workspace           Workspace memory
- * @param constraints_string  String describing the constraints on the kernels considered. It is a
- *                            substring of a hyperstring, defining with hyper-parameters have fixed
- *                            values
- * @param gg                  GEMM problem Geometry as in geometry.hpp
- * @param toff                The offsets of a,b,c and workspace
- * @param mowri               Controls writing to terminal and file
- * @param c_is_const          Whether matrix C may be modified
- * @return                    best Solution found during search
- */
+// document this function
+class GemmResult
+{
+};
 
-Solution find(cl_command_queue  command_queue,
-              const FindParams& find_params,
-              cl_mem            a,
-              cl_mem            b,
-              cl_mem            c,
-              cl_mem            workspace,
-              const std::string constraints_string,
-              const Geometry&   gg,
-              const Offsets&    toff,
-              owrite::Writer&   mowri,
-              bool              c_is_const);
+template <typename T>
+GemmResult xgemm(
+               bool              isColMajor,
+               bool              tA,
+               bool              tB,
+               size_t            m,
+               size_t            n,
+               size_t            k,
+               T                 alpha,
+               cl_mem            a,
+               size_t            a_offset,
+               size_t            lda,
+               cl_mem            b,
+               size_t            b_offset,
+               size_t            ldb,
+               T                 beta,
+               cl_mem            c,
+               size_t            c_offset,
+               size_t            ldc,
+               cl_mem            w,
+               size_t            w_offset,
+               size_t            w_size,
+               cl_command_queue* ptr_queue,
+               cl_uint           num_events_in_wait_list,
+               const cl_event*   event_wait_list,
+               cl_event*         ptr_event);
+}              
 
-/*! @brief Return a default Solution from cache, without exploring. If no Solution exists, an error
- * will be thrown.
- *
- * @param command_queue       OpenCL command queue, used to extract device name
- * @param constraints_string  String describing the constraints on the kernels considered. It is a
- *                            substring of a hyperstring, defining with hyper-parameters have fixed
- *                            values
- * @param gg                  GEMM problem Geometry
- * @param k_comment           If a Solution from a custom cache is to be returned, this can be a
- *                            non-empty string
- * @param mowri               Controls writing to terminal and file
- * @return                    best Solution found during search
- */
 
-Solution get_default(cl_command_queue command_queue,
-                     std::string      constraints_string,
-                     const Geometry&  gg,
-                     std::string      k_comment,
-                     owrite::Writer&  mowri);
-
-/*! @brief Return a default Solution, independent of device. This version of get_default does not
- * require a Solution to exist in cache.
- *
- * @param gg                  GEMM problem Geometry
- * @return                    generic Solution
- */
-
-Solution get_default(const Geometry& gg);
-
-/*! @brief check if a Solution exists in cache.
- *
- * @param command_queue       OpenCL command queue, used to extract device name
- * @param constraints_string  String describing the constraints on the kernels considered. It is a
- *                            substring of a hyperstring, defining with hyper-parameters have fixed
- *                            values
- * @param gg                  GEMM problem Geometry
- * @param k_comment           If a a custom cache is to be checked, this can be a non-empty string
- * @return                    A tuple, first argument is true if a Solution exists is cache. The
- *                            second argument is a string describing, if a Solution does not exist,
- *                            possible reasons.
- */
-std::tuple<bool, std::string> check_for_default(cl_command_queue command_queue,
-                                                std::string     constraints_string,
-                                                const Geometry& gg,
-                                                std::string     k_comment);
-
-/*! @brief Benchmark the performance of MIOpenGEMM kernel(s).
- *
- * @param command_queue       OpenCL command queue
- * @param hyperstring         String describing the GEMM kernel(s) to be benchmarked
- * @param gg                  The Geometry of the GEMM problem
- * @param toff                Offsets of a, b, c, workspace
- */
-void benchgemm(cl_command_queue   command_queue,
-               const std::string& hyperstring,
-               size_t             max_n_runs,
-               double             max_time,
-               const Geometry&    gg,
-               const Offsets&     toff,
-               cl_mem             a,
-               cl_mem             b,
-               cl_mem             c,
-               cl_mem             workspace,
-               owrite::Writer&    mowri,
-               bool               c_is_const = false);
-}
 #endif
