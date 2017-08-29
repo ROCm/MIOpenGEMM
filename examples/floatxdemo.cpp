@@ -14,8 +14,10 @@ int main(){
   using namespace MIOpenGEMM;
   owrite::Writer mowri(Ver::E::TERMINAL, "");
   CLHint devhint;
-  oclutil::CommandQueueInContext scq(mowri, devhint, "floatxdemo");
-  
+  oclutil::CommandQueueInContext scq(mowri, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE, devhint, "floatxdemo");
+
+
+      
   
   size_t ndata (1024);
   std::vector<float> v_data1(ndata);

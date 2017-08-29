@@ -2,7 +2,8 @@
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <string>
-#include <miopengemm/devmiogemm.hpp>
+#include <miopengemm/tinytwo.hpp>
+//#include <miopengemm/devmiogemm.hpp>
 
 template <typename TFloat>
 void geometrytest(const MIOpenGEMM::Geometry& gg)
@@ -12,7 +13,7 @@ void geometrytest(const MIOpenGEMM::Geometry& gg)
   CLHint         devhint;  //{};//(0,0);
   Offsets        offsets = get_zero_offsets();
   owrite::Writer mowri(Ver::E::ACCURACY, "");
-  dev::Boa       boa(gg, offsets, mowri, devhint);
+  dev::TinyTwo       boa(gg, offsets, mowri, devhint);
 
   // FindParams find_params = get_quick_find_params();
   FindParams  find_params = get_at_least_n_seconds(.1); //(1, 1.14, 2, 200., SummStat::E::MAX);

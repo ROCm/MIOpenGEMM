@@ -66,12 +66,12 @@ void TinyTwo::accuracy_test(const HyPas& hp)
   }
 }
 
-Solution TinyTwo::find(const FindParams& find_params, const Constraints& constraints)
+Solution TinyTwo::find2(const FindParams& find_params, const Constraints& constraints)
 {
   switch (active_type)
   {
-  case 'f': return f_moa->find(find_params, constraints);
-  case 'd': return d_moa->find(find_params, constraints);
+  case 'f': return f_moa->find1(find_params, constraints);
+  case 'd': return d_moa->find1(find_params, constraints);
   default: throw miog_error("unrecognised floattype char in TinyTwo find");
   }
 }

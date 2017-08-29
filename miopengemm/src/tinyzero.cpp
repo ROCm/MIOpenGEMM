@@ -361,7 +361,7 @@ std::vector<double> TinyZero::benchgemm(const HyPas& hp, const Halt& hl)
   return all_times;
 }
 
-Solution TinyZero::find(const Constraints& constraints, const FindParams& fparms)
+Solution TinyZero::find0(const Constraints& constraints, const FindParams& fparms)
 {
 
   if (fparms.hl_outer.max_time < 0.01)

@@ -8,3 +8,4 @@ API Reference
     :caption: Contents:
 
     miogemm
+    gemm

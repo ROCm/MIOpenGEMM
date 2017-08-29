@@ -56,7 +56,7 @@ class TinyTwo
 
   std::vector<std::vector<double>> benchgemm(const std::vector<HyPas>& hps, const Halt& hl);
 
-  Solution find(const FindParams& find_params, const Constraints& constraints);
+  Solution find2(const FindParams& find_params, const Constraints& constraints);
 
   template <typename TFloat>
   void accuracy_test(const HyPas& hp, const TFloat* c_true_for_test)

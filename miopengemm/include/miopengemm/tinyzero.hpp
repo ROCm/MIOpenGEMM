@@ -87,7 +87,7 @@ class TinyZero
            owrite::Writer&  mowri_);
 
   std::vector<double> benchgemm(const HyPas& hp, const Halt& hl);
-  Solution find(const Constraints& constraint, const FindParams& find_params);
+  Solution find0(const Constraints& constraint, const FindParams& find_params);
 
 
   

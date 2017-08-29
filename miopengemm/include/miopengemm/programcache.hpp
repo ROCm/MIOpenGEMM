@@ -54,28 +54,7 @@ class GemmKernelSquad
 };
 
 
-//// user's responsibility not to run on same thread. 
-//class GemmProgramCache
-//{
-  //private:
-  //std::string info_st;
-  //size_t info_size;
-  //bool strict;
-
-  //std::unordered_map<std::string, GemmKernelSquad> cache;
-
-  //std::string get_key(const Geometry& gg, const cl_device_id& device_id);
-
-  
-  //public:
-  //GemmProgramCache(); 
-  //bool contains(const std::string & key);
-  //GemmKernelSquad & at(const std::string & key);  
-  //void emplace(const std::string & key, GemmKernelSquad &&);
-    
-//};
-
-
+// user's responsibility not to run on same thread. 
 
 
 }

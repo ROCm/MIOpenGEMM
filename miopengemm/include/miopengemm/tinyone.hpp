@@ -41,7 +41,7 @@ class TinyOne
 
   std::vector<std::vector<double>> benchgemm(const std::vector<HyPas>& hps, const Halt&);
 
-  Solution find(const FindParams& find_params, const Constraints& constraints);
+  Solution find1(const FindParams& find_params, const Constraints& constraints);
 
   void accuracy_test(const HyPas& hp, const TFloat* c_true_for_test);
 

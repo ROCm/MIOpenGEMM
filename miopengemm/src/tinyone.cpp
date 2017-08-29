@@ -212,9 +212,9 @@ std::vector<std::vector<double>> TinyOne<TFl>::benchgemm(const std::vector<HyPas
 }
 
 template <typename TFl>
-Solution TinyOne<TFl>::find(const FindParams& find_params, const Constraints& constraints)
+Solution TinyOne<TFl>::find1(const FindParams& find_params, const Constraints& constraints)
 {
-  Solution tgs = up_jinx->find(constraints, find_params);
+  Solution tgs = up_jinx->find0(constraints, find_params);
   return tgs;
 }
 

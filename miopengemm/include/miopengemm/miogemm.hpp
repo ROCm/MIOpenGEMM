@@ -13,22 +13,41 @@
 namespace MIOpenGEMM
 {
 
-/*! @brief Find a Solution, considering only kernels without workspace requirements.
+/*! @brief
+ * Find a Solution, considering only Solutions which do not use workspace. 
+ * This function is deprecated, it is only used by MIOpen (as of 28 August 2017).
  *
- * @param allotted_time       An upper bound in seconds on the time spent searching. When this time
- * @param command_queue       An OpenCL command queue
- *                            has expired, the best Solution found thus far is returned.
- * @param a                   Matrix A, memory will be unchanged
- * @param b                   Matrix B, memory will be unchanged
- * @param c                   Matric C, memory will be unchanged
- * @param enforce_determinism If true, only kernels which are bitwise consistent are considered.
- *                            For small GEMM problems enforce_determinism = False finds faster
- *                            Solutions.
- * @param tgg                 GEMM problem Geometry as in geometry.hpp
- * @param verbose             Print the search summary to std::cout
- * @param with_warnings       Print warnings to std::cerr. Warnings are provided when the
- *                            allotted_time is insufficient to find good Solutions.
- * @return                    The best Solution found during search
+ * @param allotted_time       
+ * Time in seconds spent searching for a good Solution. 
+ * When this time is surpassed, no further Solutions are benchmarked, 
+ * and the best found is returned. 
+ * 
+ * @param command_queue       
+ * An OpenCL command queue
+ * 
+ * @param a                   
+ * Matrix A, memory will be unchanged
+ * 
+ * @param b                   
+ * Matrix B, memory will be unchanged
+ * @param c
+ * Matric C, memory will be unchanged
+ * 
+ * @param enforce_determinism 
+ * If true, only kernels which are bitwise consistent are considered. Specifically, ICE=1. 
+ * For small m*n, enforce_determinism = false will find faster Solutions.
+ * 
+ * @param tgg                
+ * The Geometry to find a Solution for
+ * 
+ * @param verbose             
+ * Print the search summary to std::cout
+ * 
+ * @param with_warnings       
+ * no longer relevant, to be removed in future versions. 
+ * 
+ * @return 
+ * The best Solution found during search
  */
 Solution find(float            allotted_time,
               cl_command_queue command_queue,
@@ -41,38 +60,9 @@ Solution find(float            allotted_time,
               bool             with_warnings);
               
 
-// document this function
-class GemmResult
-{
-};
 
-template <typename T>
-GemmResult xgemm(
-               bool              isColMajor,
-               bool              tA,
-               bool              tB,
-               size_t            m,
-               size_t            n,
-               size_t            k,
-               T                 alpha,
-               cl_mem            a,
-               size_t            a_offset,
-               size_t            lda,
-               cl_mem            b,
-               size_t            b_offset,
-               size_t            ldb,
-               T                 beta,
-               cl_mem            c,
-               size_t            c_offset,
-               size_t            ldc,
-               cl_mem            w,
-               size_t            w_offset,
-               size_t            w_size,
-               cl_command_queue* ptr_queue,
-               cl_uint           num_events_in_wait_list,
-               const cl_event*   event_wait_list,
-               cl_event*         ptr_event);
 }              
+
 
 
 #endif
