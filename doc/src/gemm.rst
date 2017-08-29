@@ -1,0 +1,4 @@
+GemmResult xgemm
+-------------------------------
+
+.. doxygenfunction::  xgemm
