@@ -18,6 +18,8 @@ namespace oclutil
 
 cl_mem get_copy(cl_command_queue cq, cl_mem c, size_t c_nbytes, const std::string& hash);
 
+std::string get_device_name(const cl_device_id& device_id, const std::string& hash, bool strict);
+
 class Result
 {
   public:
@@ -57,7 +59,7 @@ Result cl_set_kernel_arg(cl_kernel&         kernel,
                          bool               strict);
 
 Result cl_set_kernel_args(cl_kernel& kernel,
-                          const std::vector<std::pair<size_t, const void*>> & arg_sizes_values,
+                          const std::vector<std::pair<size_t, const void*>>& arg_sizes_values,
                           const std::string& hash,
                           bool               strict);
 
@@ -284,8 +286,8 @@ class SafeEvent
   cl_event    clevent;
   std::string hash;
   SafeEvent(const std::string& hash);
-  SafeEvent():SafeEvent("safe event"){}
-  
+  SafeEvent() : SafeEvent("safe event") {}
+
   ~SafeEvent();
 };
 
@@ -294,7 +296,10 @@ class CommandQueueInContext
   public:
   cl_command_queue command_queue;
   std::string      hash;
-  CommandQueueInContext(owrite::Writer& mowri, cl_command_queue_properties properties, const CLHint& devhint, const std::string& hash);
+  CommandQueueInContext(owrite::Writer&             mowri,
+                        cl_command_queue_properties properties,
+                        const CLHint&               devhint,
+                        const std::string&          hash);
   ~CommandQueueInContext();
 };
 

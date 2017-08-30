@@ -11,11 +11,10 @@
 namespace MIOpenGEMM
 {
 
-Kernel::Kernel(
-  cl_device_id       device_id_,
-  cl_context         context_,
-  cl_event *         ptr_event_,
-  const std::string& hash_)
+Kernel::Kernel(cl_device_id       device_id_,
+               cl_context         context_,
+               cl_event*          ptr_event_,
+               const std::string& hash_)
 
   :  // command_queue(command_queue_),
     device_id(device_id_),
@@ -38,9 +37,9 @@ void Kernel::try_release()
     oclutil::cl_release_kernel(clkern, "Kernel Destructor", true);
   }
 
-  //if (clevent != nullptr)
+  // if (clevent != nullptr)
   //{
-    //oclutil::cl_release_event(clevent, "Kernel Destructor", true);
+  // oclutil::cl_release_event(clevent, "Kernel Destructor", true);
   //}
 }
 
@@ -100,7 +99,7 @@ bool Kernel::update_needed(const KernBlob& kb_new)
   return change;
 }
 
-void Kernel::set_kernel_args(const std::vector<std::pair<size_t, const void*>> & arg_sizes_values)
+void Kernel::set_kernel_args(const std::vector<std::pair<size_t, const void*>>& arg_sizes_values)
 {
   oclutil::cl_set_kernel_args(clkern, arg_sizes_values, "Kernel::set_kernel_args", true);
 }
@@ -147,31 +146,27 @@ void Kernel::reset_times()
   v_times.resize(0);
 }
 
-    
-
 oclutil::Result run_kernels(cl_command_queue                 command_queue,
                             std::vector<Kernel*>             ptr_kernels,
                             std::vector<std::vector<size_t>> v_wait_indices,
                             cl_uint                          n_user_wait_list,
-                            const cl_event*                  user_wait_list){
-
-                     
+                            const cl_event*                  user_wait_list)
+{
 
   for (size_t k_ind = 0; k_ind < ptr_kernels.size(); ++k_ind)
   {
 
-    // TODO : relocate this message. 
+    // TODO : relocate this message.
     // At this point, the kernel has been succesfully compiled,
     // but it is still possible that it does not run. We catch that here.
     // if anything is caught here, consider testing for it in architests.
 
     std::vector<cl_event> clevent_waits;
 
-
-    for (cl_uint i = 0; i < n_user_wait_list; ++i){
+    for (cl_uint i = 0; i < n_user_wait_list; ++i)
+    {
       clevent_waits.emplace_back(user_wait_list[i]);
     }
-
 
     for (auto& evi : v_wait_indices[k_ind])
     {
@@ -195,7 +190,6 @@ oclutil::Result run_kernels(cl_command_queue                 command_queue,
       return oclr;
     }
   }
- return {};
-} 
-
+  return {};
+}
 }

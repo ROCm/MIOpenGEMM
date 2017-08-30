@@ -18,10 +18,10 @@ int main()
   owrite::Writer mowri(Ver::E::TERMINAL, "");
   dev::TinyTwo       boa(gg, offsets, mowri, devhint);
 
-  auto find_params = get_at_least_n_restarts(2);
+  auto find_params = get_at_least_n_restarts(6);
   Constraints constraints("");//A_WOS0__B_WOS0__C_ICE1");
     
-  Solution soln = boa.find(find_params, constraints);
+  Solution soln = boa.find2(find_params, constraints);
 
   if (test_accuracy_of_soln)
   {

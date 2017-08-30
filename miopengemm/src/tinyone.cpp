@@ -81,7 +81,10 @@ TinyOne<TFl>::TinyOne(
     toff(toff_),
     cpu_mem(Mat::E::N),
     mowri(mowri_),
-    tgcq(mowri, CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, devhint, "command queue of TinyOne"),
+    tgcq(mowri,
+         CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE,
+         devhint,
+         "command queue of TinyOne"),
     gpu_safemem(Mem::E::N, std::string("gpu_safemem vector of TinyOne")),
     mem_size(Mem::E::N),
     rw_perms(Mem::E::N)

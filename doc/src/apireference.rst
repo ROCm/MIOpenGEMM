@@ -9,3 +9,5 @@ API Reference
 
     miogemm
     gemm
+    programcache
+    geometry

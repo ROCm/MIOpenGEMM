@@ -47,7 +47,7 @@ int main(int argc, char* argv[])
   dev::TinyTwo       boa(gg, offsets, mowri, devhint);
   auto           find_params = get_at_least_n_restarts(9);
   find_params.sumstat = SummStat::E::MEDIAN;
-  auto           soln        = boa.find(find_params, cons);
+  auto           soln        = boa.find2(find_params, cons);
 
 
   std::cout << soln.hypas.get_string() << "   :   " << gg.get_gflops(soln.extime) << " gflops ";

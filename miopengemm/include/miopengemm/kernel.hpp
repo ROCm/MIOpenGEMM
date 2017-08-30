@@ -14,7 +14,6 @@
 
 namespace MIOpenGEMM
 {
-  
 
 // TODO RAII cl_*
 
@@ -31,7 +30,7 @@ class Kernel
   KernBlob kblob;
 
   // used for getting performance of kernel
-  cl_event * ptr_event;
+  cl_event* ptr_event;
 
   // stores (the most recent of max_n_runs or fewer) execution time
   size_t             t_start;
@@ -53,9 +52,9 @@ class Kernel
 
   public:
   Kernel(  // cl_command_queue command_queue_,
-    cl_device_id device_id_,
-    cl_context   context_,
-    cl_event *         ptr_event_,
+    cl_device_id       device_id_,
+    cl_context         context_,
+    cl_event*          ptr_event_,
     const std::string& hash_);
 
   Kernel() : Kernel(nullptr, nullptr, nullptr, "default constructed Kernel") {}
@@ -69,7 +68,7 @@ class Kernel
   Kernel& operator=(Kernel&&) = default;
 
   bool is_set();
-  void set_kernel_args(const std::vector<std::pair<size_t, const void*>> & arg_sizes_values);
+  void set_kernel_args(const std::vector<std::pair<size_t, const void*>>& arg_sizes_values);
 
   oclutil::Result
   enqueue(cl_command_queue, cl_uint num_events_in_wait_list, const cl_event* event_wait_list);
@@ -84,8 +83,8 @@ oclutil::Result run_kernels(cl_command_queue                 command_queue,
                             std::vector<std::vector<size_t>> v_wait_indices,
                             cl_uint                          n_user_wait_list,
                             const cl_event*                  user_wait_list);
-                            //bool use_event,
-                            //cl_event * ptr_event);
+// bool use_event,
+// cl_event * ptr_event);
 }
 
 #endif

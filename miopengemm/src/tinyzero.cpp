@@ -274,7 +274,8 @@ oclutil::Result TinyZero::true_core(std::function<void(std::string)> acton,
       throw miog_error("zero kernels active : internal logic error");
     }
 
-    oclr = run_kernels(command_queue, tk_kernels_active, v_wait_indices, 0, nullptr);//, false, nullptr);
+    oclr = run_kernels(
+      command_queue, tk_kernels_active, v_wait_indices, 0, nullptr);  //, false, nullptr);
 
     if (oclr.success == CL_SUCCESS)
     {
@@ -385,6 +386,7 @@ Solution TinyZero::find0(const Constraints& constraints, const FindParams& fparm
     mowri << "\nEntering new descent. \n"
           << fparms.hl_outer.get_status(ftrack.get_descents(), ftrack.get_elapsed()) << '\n';
 
+    // 0, 1, 5, 10, 15, etc
     warmstart = (ftrack.get_descents() < 2 || ftrack.get_descents() % 5 == 0) ? true : false;
 
     double allotted_sd = std::max(0.1, fparms.hl_outer.max_time - ftrack.get_elapsed());
@@ -524,7 +526,7 @@ Solution TinyZero::single_descent_find(double             allotted_time,
         throw miog_error(errm.str());
       }
 
-      kerngen::Bundle bundle(hp_curr, gg); 
+      kerngen::Bundle bundle(hp_curr, gg);
       // the OpenCL string was succesfully generated,
       // we can now attempt to compile and benchmark it
       ++single_descent_counter;
@@ -700,7 +702,7 @@ Solution TinyZero::single_descent_find(double             allotted_time,
     std::string solnstring = best_solns_path[i].hypas.get_string();
     solnstring.resize(leading_size, ' ');
     mowri << std::fixed << solnstring << "\t " << disco_times[i] << "\t\t "
-          << gg.get_gflops(best_solns_path[i].extime) << Endl;
+          << gg.get_gflops(best_solns_path[i].extime/1000.) << Endl;
   }
 
   return best_solns_path.back();

@@ -10,15 +10,28 @@
 #include <thread>
 #include <vector>
 #include <miopengemm/error.hpp>
+#include <miopengemm/hint.hpp>
 #include <miopengemm/oclutil.hpp>
 #include <miopengemm/outputwriter.hpp>
 #include <miopengemm/timer.hpp>
-#include <miopengemm/hint.hpp>
 
 namespace MIOpenGEMM
 {
 namespace oclutil
 {
+
+std::string get_device_name(const cl_device_id& device_id, const std::string& hash, bool strict)
+{
+
+  // (1000 -> 10000 does not slow performace, no need to optimise here.)
+  std::string info_st(1000, ' ');
+  size_t      info_size(0);
+
+  oclutil::cl_set_device_info(
+    device_id, CL_DEVICE_NAME, info_st.size(), &info_st[0], &info_size, hash, strict);
+
+  return info_st.substr(0, info_size - 1);
+}
 
 cl_mem get_copy(cl_command_queue command_queue, cl_mem c, size_t c_nbytes, const std::string& hash)
 {
@@ -142,14 +155,13 @@ Result cl_set_kernel_arg(cl_kernel&         kernel,
     throw miog_error(errm.str());
   }
 
-  
   cl_int ret = clSetKernelArg(kernel, arg_index, arg_size, arg_value);
 
   return confirm_cl_status(ret, hash, "cl_set_kernel_arg", strict);
 }
 
 Result cl_set_kernel_args(cl_kernel& kernel,
-                          const  std::vector<std::pair<size_t, const void*>> & arg_sizes_values,
+                          const std::vector<std::pair<size_t, const void*>>& arg_sizes_values,
                           const std::string& hash,
                           bool               strict)
 {
@@ -257,11 +269,10 @@ Result cl_enqueue_ndrange_kernel(cl_command_queue   command_queue,
                                  const std::string& hash,
                                  bool               strict)
 {
-  
-  
-  //Timer timer;
-  //timer.start();  
-  
+
+  // Timer timer;
+  // timer.start();
+
   cl_int ret = clEnqueueNDRangeKernel(command_queue,
                                       kernel,
                                       work_dim,
@@ -271,14 +282,12 @@ Result cl_enqueue_ndrange_kernel(cl_command_queue   command_queue,
                                       num_events_in_wait_list,
                                       event_wait_list,
                                       event);
-                                      
 
-  //clWaitForEvents(1, event);
-  //std::c o ut << timer.get_elapsed() << std::endl;
-  //auto gflops = (2.*155*155*155 + 0.)/(1e9*timer.get_elapsed());
-  //std::c o ut << "\n-------->  " << gflops << std::endl;
+  // clWaitForEvents(1, event);
+  // std::c o ut << timer.get_elapsed() << std::endl;
+  // auto gflops = (2.*155*155*155 + 0.)/(1e9*timer.get_elapsed());
+  // std::c o ut << "\n-------->  " << gflops << std::endl;
 
-                                      
   return confirm_cl_status(ret, hash, "cl_enqueue_ndrange_kernel", strict);
 }
 
@@ -719,7 +728,7 @@ Result cl_set_context_and_device_from_command_queue(const cl_command_queue& comm
 
                                                     )
 {
-  
+
   (void)mowri;
 
   // cl_context context;
@@ -741,10 +750,8 @@ Result cl_set_context_and_device_from_command_queue(const cl_command_queue& comm
                                    NULL,
                                    "getting device id from queue in set_program_and_kernel",
                                    strict);
-  //if (oclr.fail())
+  // if (oclr.fail())
   return oclr;
-    
-  
 }
 
 Result cl_set_program_and_kernel(
@@ -882,19 +889,15 @@ Result cl_auto_set_command_queue(cl_command_queue&           a_cl_command_queue,
                               strict);
 }
 
-CommandQueueInContext::CommandQueueInContext(owrite::Writer&    mowri,
+CommandQueueInContext::CommandQueueInContext(owrite::Writer&             mowri,
                                              cl_command_queue_properties properties,
-                                             const CLHint&      devhint,
-                                             const std::string& hash_)
+                                             const CLHint&               devhint,
+                                             const std::string&          hash_)
   : hash(hash_)
 {
   bool strict = true;
-  cl_auto_set_command_queue(command_queue,
-                            mowri,
-                            properties, 
-                            devhint,
-                            "CommandQueueInContext constructor",
-                            strict);
+  cl_auto_set_command_queue(
+    command_queue, mowri, properties, devhint, "CommandQueueInContext constructor", strict);
 }
 
 CommandQueueInContext::~CommandQueueInContext()

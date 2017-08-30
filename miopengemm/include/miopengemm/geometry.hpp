@@ -8,21 +8,32 @@
 #include <vector>
 #include <miopengemm/enums.hpp>
 
-/* TODO : namespace should be lower-case. */
+// TODO : namespace should be lower-case
 namespace MIOpenGEMM
 {
 
-// offsets and tails
+/*! @brief
+ *  encapsulate buffering of memories, before and after  */
 class Offsets
 {
   public:
+  /*! buffering before: number of values before the first value which may be accessed */
   std::array<size_t, Mem::E::N> offsets;
+  /*! buffering after: number of values after the last value which may be accessed.
+   * This tail buffering is only used for debugging purposes */
   std::array<size_t, Mem::E::N> tails;
 
+  /*! @brief
+   * constructor, first the 4 offsets (before memory) and then the 4 after (tail) */
   Offsets(size_t oa, size_t ob, size_t oc, size_t ow, size_t ta, size_t tb, size_t tc, size_t tw);
 };
 
+/*! @brief
+ * factory function to retun Offsets of all non-zeros */
 Offsets get_padding_offsets();
+
+/*! @brief
+ * factory function to retun Offsets of all zeros */
 Offsets get_zero_offsets();
 
 class GeometryDerived
@@ -50,44 +61,37 @@ class Geometry
                   size_t wSpaceSize_,
                   char   floattype_);
 
+  private:
+  // log k ;  log m - log n ;  log m + log n
+  std::array<double, 3> metric_co;
+  std::array<bool, 5>   wSpaceSufficient;
+
   public:
   bool isColMajor;
 
-  // indexed by eMat  (for A, B and C)
+  /*! transpose cases, index by Mat::E::A, Mat::E::B, Mat::E::C.
+   *  the option of allowing transpose C is not in the standard GEMM API and
+   *  is not necessary, but can simplify GEMM geometry remapping */
   std::vector<bool> tX;
 
-  // indexed by eMat (for A, B and C)
+  /*! leading dimensions, index by Mat::E::A, Mat::E::B, Mat::E::C. */
   std::vector<size_t> ldX;
 
   size_t m;
   size_t n;
   size_t k;
 
-  // the usable amount of workspace
+  /*! usable amount of workspace, in number of values (i.e. not in bytes). */
   size_t wSpaceSize;
 
-  // 'f' : 32-bit single precision or 'd' : 64-bit double precision
+  // TODO : investigate optional half-precision 'h'
+  // TODO : rename from floattype to numerictype, and consider integer matrix multiplication
+  /*! float type of values, currently either 'f' (32-bit single precision)
+   *  or 'd' (64-bit double precision). */
   char floattype;
 
-  // log k ;  log m - log n ;  log m + log n
-  std::array<double, 3> metric_co;
-
-  std::array<bool, 5> wSpaceSufficient;
-
+  public:
   GeometryDerived derived;
-
-  // Geometry(bool   isColMajor,
-  // bool   tA,
-  // bool   tB,
-  // bool   tC,
-  // size_t lda,
-  // size_t ldb,
-  // size_t ldc,
-  // size_t m,
-  // size_t n,
-  // size_t k,
-  // size_t wSpaceSize,
-  // char   floattype);
 
   template <typename T>
   Geometry(bool   isColMajor_,
@@ -106,21 +110,8 @@ class Geometry
     initialise(isColMajor_, tA_, tB_, tC_, lda_, ldb_, ldc_, m_, n_, k_, wSpaceSize_, floattype_);
   }
 
-  //// temporary for MIOpen
-  // Geometry(bool   isColMajor,
-  // bool   tA,
-  // bool   tB,
-  // bool   tC,
-  // unsigned lda,
-  // unsigned ldb,
-  // unsigned ldc,
-  // unsigned m,
-  // unsigned n,
-  // unsigned k,
-  // unsigned wSpaceSize,
-  // char   floattype);
-
-  // assumes isColMajor is true, tC is false, lda, ldb, ldc are minimal.
+  /*! @brief
+   * Constructor which assumes isColMajor is true, tC is false, lda, ldb, ldc are minimal */
   Geometry(size_t m, size_t n, size_t k, bool tA, bool tB, size_t wSpaceSize, char floattype);
 
   Geometry() = default;
@@ -161,9 +152,9 @@ class Geometry
   bool same_transposes(const Geometry& g2) const;
 };
 
-
-template <typename TFloat> 
-char get_floattype_char(){
+template <typename TFloat>
+char get_floattype_char()
+{
   throw miog_error("unrecognised float type");
 }
 
@@ -172,8 +163,6 @@ char get_floattype_char<float>();
 
 template <>
 char get_floattype_char<double>();
-
-
 
 template <typename TFloat>
 Geometry get_geometry_from_padding(bool   isColMajor,
@@ -188,16 +177,9 @@ Geometry get_geometry_from_padding(bool   isColMajor,
                                    size_t pad_b,
                                    size_t pad_c)
 {
-  
+
   char floattype = get_floattype_char<TFloat>();
 
-  //switch (sizeof(TFloat))
-  //{
-  //case 4: floattype = 'f'; break;
-  //case 8: floattype = 'd'; break;
-  //default: throw miog_error("unrecognised float size in get_geometry_from_padding");
-  //}
-  
   size_t lda = (tA == isColMajor ? k : m) + pad_a;
   size_t ldb = (tB == isColMajor ? n : k) + pad_b;
   size_t ldc = (tC == isColMajor ? n : m) + pad_c;

@@ -75,7 +75,6 @@ class TinyZero
 
   // TODO : (in miogemm.hpp) miogemm class with interface to public jinx.
   public:
-  
   TinyZero(cl_command_queue command_queue_,
            const Geometry   gg_,
            const Offsets    toff_,
@@ -89,26 +88,22 @@ class TinyZero
   std::vector<double> benchgemm(const HyPas& hp, const Halt& hl);
   Solution find0(const Constraints& constraint, const FindParams& find_params);
 
-
-  
   private:
-  
   cl_command_queue       command_queue;
   const Geometry         gg;
   const Offsets          toff;
   GpuMms                 gpum;
   const oclutil::DevInfo devinfo;
   owrite::Writer&        mowri;
-  
-  
-  // for each of the possible kernels (copy a, copy b, etc) 
+
+  // for each of the possible kernels (copy a, copy b, etc)
   std::array<Kernel, KType::E::N> tk_kernels;
-  
+
   std::array<cl_event, KType::E::N> tk_events;
-  
-  // pointers to the kernels required for a given HyPas (fewer than or as many as KType::E::N)  
-  std::vector<Kernel*>             tk_kernels_active;
-  
+
+  // pointers to the kernels required for a given HyPas (fewer than or as many as KType::E::N)
+  std::vector<Kernel*> tk_kernels_active;
+
   // dependency graph of active kernels
   std::vector<std::vector<size_t>> v_wait_indices;
 
@@ -119,7 +114,7 @@ class TinyZero
   void address_check_valid_and_reliable();
   void set_kern_args(const KernBlob& kblob);
   void setup_tinykernels(const kerngen::Bundle& bundle);
-  
+
   Solution single_descent_find(double allotted_time,
                                const Constraints&,
                                const Halt&  core_hl,

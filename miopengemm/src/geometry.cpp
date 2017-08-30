@@ -15,15 +15,16 @@ namespace MIOpenGEMM
 {
 
 template <>
-char get_floattype_char<float>(){
+char get_floattype_char<float>()
+{
   return 'f';
 }
 
 template <>
-char get_floattype_char<double>(){
+char get_floattype_char<double>()
+{
   return 'd';
 }
-
 
 Geometry::Geometry(
   size_t m_, size_t n_, size_t k_, bool tA_, bool tB_, size_t wSpaceSize_, char floattype_)
@@ -424,7 +425,7 @@ bool Geometry::operator==(const Geometry& rhs) const
           n == rhs.n && k == rhs.k && wSpaceSize == rhs.wSpaceSize && floattype == rhs.floattype);
 }
 
-double Geometry::get_gflops(double extime) const { return (2. * m * n * k) / (1e9*extime); }
+double Geometry::get_gflops(double extime) const { return (2. * m * n * k) / (1e9 * extime); }
 
 bool Geometry::same_transposes(const Geometry& g2) const
 {

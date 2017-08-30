@@ -15,7 +15,7 @@ int main()
   owrite::Writer mowri(Ver::E::TERMINAL, ""); //TRACK
   CLHint         devhint;
   dev::TinyTwo       boa(gg, offsets, mowri, devhint);
-  Solution       soln = boa.find(find_params, constraints);
+  Solution       soln = boa.find2(find_params, constraints);
   std::cout << " \n\n\nThe following string can be cut and paste into kernelcache.cpp";
   std::cout << " \n\n-- snip -- -- -- snip --\n\n";
   std::cout <<  soln.get_cache_entry_string();
