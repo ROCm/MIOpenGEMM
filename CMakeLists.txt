@@ -21,30 +21,41 @@ include(ROCMSetupVersion)
 include(ROCMInstallSymlinks)
 include(ROCMCreatePackage)
 
-
-
 rocm_setup_version(VERSION 1.0.1)
-
-
-option(OPENBLAS "CPU GEMM accuracy tests with OpenBLAS, otherwise slow 3-for loops code" OFF)
 
 #Where to find FindOpenCL.cmake (etc)
 list( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
 
-set( CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." )
-##Use FindOpenCL.cmake to find library and header file
-find_package( OpenCL REQUIRED )
-
 option(BUILD_SHARED_LIBS "Build shared library" ON)
+option(OPENBLAS "CPU GEMM accuracy tests with OpenBLAS, otherwise slow 3-for loops code" OFF)
+option(API_BENCH_MIOGEMM "Build benchmarking of MIOpenGEMM" OFF)
+option(API_BENCH_CLBLAST "Build benchmarking of CLBlast" OFF)
+option(API_BENCH_ISAAC "Build benchmarking of Isaac" OFF)
 
 if(OPENBLAS)
     find_package(OpenBLAS REQUIRED)
     add_definitions(-DMIOPENGEMM_USE_OPENBLAS)
 endif()
 
-include(EnableCompilerWarnings)
 
+set( CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." )
+find_package( OpenCL REQUIRED )
+
+include(EnableCompilerWarnings)
 add_subdirectory(miopengemm)
 add_subdirectory(examples)
 add_subdirectory(tests)
 add_subdirectory(doc)
+
+if (API_BENCH_CLBLAST)
+    find_package(CLBlast REQUIRED)
+    add_definitions(-DMIOPENGEMM_BENCH_CLBLAST)
+endif()
+
+if (API_BENCH_ISAAC)
+    find_package(Isaac REQUIRED)
+    add_definitions(-DMIOPENGEMM_BENCH_ISAAC)
+endif()
+
+
+add_subdirectory(apibench)
