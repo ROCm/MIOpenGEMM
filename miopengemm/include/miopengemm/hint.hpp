@@ -59,7 +59,6 @@ class CLHint
   CLHint(size_t pla_id, size_t dev_id);
   // No hint : hope that there's only one device and one platform.
   CLHint() = default;
-  // TODO : A hint which finds the GPU with the most compute units.
 };
 }
 

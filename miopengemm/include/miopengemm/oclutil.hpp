@@ -242,13 +242,13 @@ Result cl_set_platform_etc(cl_platform_id&    platform,
                            cl_context&        context,
                            cl_device_id&      device_id_to_use,
                            owrite::Writer&    mowri,
-                           const CLHint&      devhint,
+                           const CLHint&      xhint,
                            const std::string& hash,
                            bool               strict);
 
-// TODO make first 2 const by ref.
-Result cl_set_program_and_kernel(cl_context         context,
-                                 cl_device_id       device_id_to_use,
+
+Result cl_set_program_and_kernel(const cl_context & context,
+                                 const cl_device_id & device_id_to_use,
                                  const std::string& kernel_string,
                                  const std::string& kernel_function_name,
                                  cl_program&        program,
@@ -265,7 +265,7 @@ Result cl_set_context_and_device_from_command_queue(const cl_command_queue& comm
 Result cl_auto_set_command_queue(cl_command_queue&           a_cl_command_queue,
                                  owrite::Writer&             mowri,
                                  cl_command_queue_properties properties,
-                                 const CLHint&               devhint,
+                                 const CLHint&               xhint,
                                  const std::string&          hash,
                                  bool                        strict);
 
@@ -279,16 +279,16 @@ class SafeClMem
   ~SafeClMem();
 };
 
-// TODO rename to SafeClEvent
-class SafeEvent
+
+class SafeClEvent
 {
   public:
   cl_event    clevent;
   std::string hash;
-  SafeEvent(const std::string& hash);
-  SafeEvent() : SafeEvent("safe event") {}
+  SafeClEvent(const std::string& hash);
+  SafeClEvent() : SafeClEvent("safe event") {}
 
-  ~SafeEvent();
+  ~SafeClEvent();
 };
 
 class CommandQueueInContext
@@ -298,7 +298,7 @@ class CommandQueueInContext
   std::string      hash;
   CommandQueueInContext(owrite::Writer&             mowri,
                         cl_command_queue_properties properties,
-                        const CLHint&               devhint,
+                        const CLHint&               xhint,
                         const std::string&          hash);
   ~CommandQueueInContext();
 };

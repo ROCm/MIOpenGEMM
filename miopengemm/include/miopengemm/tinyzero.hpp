@@ -73,7 +73,6 @@ class GpuMms
 class TinyZero
 {
 
-  // TODO : (in miogemm.hpp) miogemm class with interface to public jinx.
   public:
   TinyZero(cl_command_queue command_queue_,
            const Geometry   gg_,

@@ -156,11 +156,6 @@ oclutil::Result run_kernels(cl_command_queue                 command_queue,
   for (size_t k_ind = 0; k_ind < ptr_kernels.size(); ++k_ind)
   {
 
-    // TODO : relocate this message.
-    // At this point, the kernel has been succesfully compiled,
-    // but it is still possible that it does not run. We catch that here.
-    // if anything is caught here, consider testing for it in architests.
-
     std::vector<cl_event> clevent_waits;
 
     for (cl_uint i = 0; i < n_user_wait_list; ++i)

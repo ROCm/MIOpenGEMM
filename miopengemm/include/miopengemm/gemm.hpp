@@ -9,8 +9,6 @@
 namespace MIOpenGEMM
 {
 
-// TODO : how to get classes showing in documentation.
-
 
 /*! @brief 
  *  The return type from xgemm  */
@@ -72,11 +70,15 @@ class GemmStatus
  * as long as ther same (device, geometry) is not being run simultaneously on a different thread. 
  * If it is being run simultaneously on a different thread, ID < 0 should be passed, 
  * to obtain a new ID from the returned GemmStatus. See (TODO) for clarification
+ * 
  *  
  * @return
  * A GemmStatus.
  */
  
+// Mulitple threads information at 
+// https://forums.khronos.org/showthread.php/5810-calling-the-same-kernel-object-multiple-times
+
 template <typename T>
 GemmStatus xgemm(bool              isColMajor,
                  bool              tA,

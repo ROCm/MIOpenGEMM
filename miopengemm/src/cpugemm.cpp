@@ -11,7 +11,6 @@
 #ifdef MIOPENGEMM_USE_OPENBLAS
 #include <cblas.h>
 #endif
-/* TODO : add option to use OpenBLAS instead of this slow gemm code */
 
 namespace MIOpenGEMM
 {
@@ -21,15 +20,6 @@ namespace cpugemm
 #ifdef MIOPENGEMM_USE_OPENBLAS
 namespace openblas
 {
-
-// template <typename TFloat>
-// void gemm_openblas_base(CBLAS_LAYOUT layout, CBLAS_TRANSPOSE TransA,
-// CBLAS_TRANSPOSE TransB, const int M, const int N,
-// const int K, const TFloat alpha, const TFloat *A,
-// const int lda, const TFloat *B, const int ldb,
-// const TFloat beta, TFloat *C, const int ldc){
-// throw miog_error("unrecognised float type in openblas gemm");
-//}
 
 using blasint = size_t;
 

@@ -67,7 +67,6 @@ std::string Halt::get_string() const
   return ss.str();
 }
 
-// TODO : why is this not in enums?
 std::vector<std::string> get_sumstatkey()
 {
   std::vector<std::string> ssv(SummStat::E::N, "unset");

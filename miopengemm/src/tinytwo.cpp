@@ -31,14 +31,14 @@ namespace MIOpenGEMM
 namespace dev
 {
 
-TinyTwo::TinyTwo(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint& devhint)
+TinyTwo::TinyTwo(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint& xhint)
 {
 
   switch (gg_.floattype)
   {
 
-  case 'f': f_moa.reset(new TinyOne<float>(gg_, toff_, mowri_, devhint)); break;
-  case 'd': d_moa.reset(new TinyOne<double>(gg_, toff_, mowri_, devhint)); break;
+  case 'f': f_moa.reset(new TinyOne<float>(gg_, toff_, mowri_, xhint)); break;
+  case 'd': d_moa.reset(new TinyOne<double>(gg_, toff_, mowri_, xhint)); break;
   default: throw miog_error("unrecognised floattype char in TinyTwo constructor");
   }
 

@@ -76,14 +76,14 @@ void TinyOne<TFl>::initialise_common()
 
 template <typename TFl>
 TinyOne<TFl>::TinyOne(
-  Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint& devhint, long)
+  Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint& xhint, long)
   : gg(gg_),
     toff(toff_),
     cpu_mem(Mat::E::N),
     mowri(mowri_),
     tgcq(mowri,
          CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE,
-         devhint,
+         xhint,
          "command queue of TinyOne"),
     gpu_safemem(Mem::E::N, std::string("gpu_safemem vector of TinyOne")),
     mem_size(Mem::E::N),
@@ -107,8 +107,8 @@ TinyOne<TFl>::TinyOne(Geometry        gg_,
                       const TFl*      b_,
                       const TFl*      c_,
                       owrite::Writer& mowri_,
-                      const CLHint&   devhint)
-  : TinyOne(gg_, toff_, mowri_, devhint, 42)
+                      const CLHint&   xhint)
+  : TinyOne(gg_, toff_, mowri_, xhint, 42)
 
 {
 
@@ -122,8 +122,8 @@ TinyOne<TFl>::TinyOne(Geometry gg_,
                       Offsets  toff_,
                       std::array<const TFl*, Mat::E::N> abc_,
                       owrite::Writer& mowri_,
-                      const CLHint&   devhint)
-  : TinyOne(gg_, toff_, abc_[Mat::E::A], abc_[Mat::E::B], abc_[Mat::E::C], mowri_, devhint)
+                      const CLHint&   xhint)
+  : TinyOne(gg_, toff_, abc_[Mat::E::A], abc_[Mat::E::B], abc_[Mat::E::C], mowri_, xhint)
 {
 }
 
@@ -145,8 +145,8 @@ void TinyOne<TFl>::initialise_cpu_mem_from_scratch()
 }
 
 template <typename TFl>
-TinyOne<TFl>::TinyOne(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint& devhint)
-  : TinyOne(gg_, toff_, mowri_, devhint, 42)
+TinyOne<TFl>::TinyOne(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint& xhint)
+  : TinyOne(gg_, toff_, mowri_, xhint, 42)
 
 {
 
@@ -227,7 +227,7 @@ void TinyOne<TFl>::accuracy_test(const HyPas& hp, const TFl* c_true_for_test)
 
   // copy the const cpu matrix to the gpu
   // cl_event event_write_c_to_gpu;
-  oclutil::SafeEvent event_write_c_to_gpu("accuracy test write");
+  oclutil::SafeClEvent event_write_c_to_gpu("accuracy test write");
   // cl_uint n_events = 1;
   oclutil::cl_enqueue_write_buffer(tgcq.command_queue,
                                    gpu_safemem[Mem::E::C].clmem,
@@ -250,7 +250,7 @@ void TinyOne<TFl>::accuracy_test(const HyPas& hp, const TFl* c_true_for_test)
 
   // read the result to c_copy on the cpu
   // cl_event event_read_c_back;
-  oclutil::SafeEvent event_read_c_back("accuracy test read");
+  oclutil::SafeClEvent event_read_c_back("accuracy test read");
   oclutil::cl_enqueue_read_buffer(tgcq.command_queue,
                                   gpu_safemem[Mat::E::C].clmem,
                                   CL_TRUE,

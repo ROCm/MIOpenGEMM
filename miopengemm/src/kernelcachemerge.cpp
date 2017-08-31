@@ -43,7 +43,7 @@ void populate(const std::vector<CacheKey>& cache_keys,
 {
 
   Offsets offsets = get_zero_offsets();
-  CLHint  devhint;
+  CLHint  xhint;
 
   // we set the CPU memory once for all geometries.
   // This is much faster than once for each geometry using TinyTwos
@@ -66,8 +66,8 @@ void populate(const std::vector<CacheKey>& cache_keys,
     mowri.bw[OutPart::MER] << "soln2 : " << kc2.at(ck, canonical::noswap).get_string() << Endl;
 
     // having two TinyOnes means that each opposing kernel only needs be compiled once. Optional.
-    dev::TinyOne<TFl> diva1(ck.gg, offsets, cmb.r_mem, mowri, devhint);
-    dev::TinyOne<TFl> diva2(ck.gg, offsets, cmb.r_mem, mowri, devhint);
+    dev::TinyOne<TFl> diva1(ck.gg, offsets, cmb.r_mem, mowri, xhint);
+    dev::TinyOne<TFl> diva2(ck.gg, offsets, cmb.r_mem, mowri, xhint);
 
     mowri.bw[OutPart::MER] << "Two divas generated" << Endl;
 

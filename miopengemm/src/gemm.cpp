@@ -91,7 +91,7 @@ GemmStatus xgemm(bool              isColMajor,
   offsets[Mem::E::W] = w_offset;
 
   squad.set_args(gpu_mems, offsets, &alpha, &beta, sizeof(T));
-  std::vector<oclutil::SafeEvent> safe_events;
+  std::vector<oclutil::SafeClEvent> safe_events;
 
   for (size_t i = 0; i < squad.ptr_kernels.size() - 1; ++i)
   {

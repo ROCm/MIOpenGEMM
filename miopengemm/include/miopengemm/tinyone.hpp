@@ -29,15 +29,15 @@ class TinyOne
           const TFloat*   b_,
           const TFloat*   c_,
           owrite::Writer& mowri_,
-          const CLHint&   devhint);
+          const CLHint&   xhint);
 
   TinyOne(Geometry gg_,
           Offsets  toff_,
           std::array<const TFloat*, Mat::E::N>,
           owrite::Writer& mowri_,
-          const CLHint&   devhint);
+          const CLHint&   xhint);
 
-  TinyOne(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint& devhint);
+  TinyOne(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint& xhint);
 
   std::vector<std::vector<double>> benchgemm(const std::vector<HyPas>& hps, const Halt&);
 
@@ -88,7 +88,7 @@ class TinyOne
   void initialise_common();
 
   // delegator constructor.
-  TinyOne(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint& devhint, long);
+  TinyOne(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint& xhint, long);
 };
 }
 }

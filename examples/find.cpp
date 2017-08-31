@@ -13,7 +13,7 @@ int main()
   bool bench_the_soln        = true;
 
   Geometry       gg("tC0_tA0_tB0_colMaj1_m5100_n5100_k5100_lda5100_ldb5100_ldc5100_ws0_f32");
-  CLHint         devhint;
+  CLHint         devhint({"Advanced Micro Devices", "gfx803"});
   Offsets        offsets = get_zero_offsets();
   owrite::Writer mowri(Ver::E::TERMINAL, "");
   dev::TinyTwo       boa(gg, offsets, mowri, devhint);

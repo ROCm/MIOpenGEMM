@@ -46,13 +46,13 @@ class TinyTwo
           const TFloat*   b_,
           const TFloat*   c_,
           owrite::Writer& mowri_,
-          const CLHint&   devhint)
+          const CLHint&   xhint)
   {
-    get_up_moa<TFloat>().reset(new TinyOne<TFloat>(gg_, toff_, a_, b_, c_, mowri_, devhint));
+    get_up_moa<TFloat>().reset(new TinyOne<TFloat>(gg_, toff_, a_, b_, c_, mowri_, xhint));
     set_active_type<TFloat>();
   }
 
-  TinyTwo(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint& devhint);
+  TinyTwo(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint& xhint);
 
   std::vector<std::vector<double>> benchgemm(const std::vector<HyPas>& hps, const Halt& hl);
 
