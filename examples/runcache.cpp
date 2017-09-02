@@ -244,7 +244,7 @@ int main(int argc, char* argv[])
     {'t', "a"}    
   };
   
-  // TODO: confirm that above have same keys.
+  // TODO: check here that above maps have same keys.
   
   std::stringstream hss;
   hss << "\n\n ";

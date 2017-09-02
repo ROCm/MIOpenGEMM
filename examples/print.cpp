@@ -5,8 +5,6 @@
 #include <miopengemm/tinytwo.hpp>
 #include <miopengemm/redirection.hpp>
 
-// TODO : nform is still using size_t. change this back.
-
 
 int main()
 {

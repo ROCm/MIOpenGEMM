@@ -128,6 +128,7 @@ Solution find(float            allotted_time,
   (void)with_warnings;
   bool           c_is_const         = true;
   cl_mem         workspace_gpu      = nullptr;
+  //verbose = true;
   Ver::E         e_ver              = verbose ? Ver::E::TERMINAL : Ver::E::SILENT;
   std::string    constraints_string = enforce_determinism ? "C__ICE1" : "";
   Constraints    constraints(constraints_string);
