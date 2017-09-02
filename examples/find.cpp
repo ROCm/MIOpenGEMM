@@ -12,7 +12,9 @@ int main()
   bool test_accuracy_of_soln = false;
   bool bench_the_soln        = true;
 
-  Geometry       gg("tC0_tA0_tB0_colMaj1_m5100_n5100_k5100_lda5100_ldb5100_ldc5100_ws0_f32");
+
+
+  Geometry       gg("tC0_tA1_tB0_colMaj0_m4864_n32768_k19_lda4864_ldb32768_ldc32768_ws0_f32");
   CLHint         devhint({"Advanced Micro Devices", "gfx803"});
   Offsets        offsets = get_zero_offsets();
   owrite::Writer mowri(Ver::E::TERMINAL, "");
@@ -34,6 +36,12 @@ int main()
     mowri << "\n\n\nBenchmark\n";
     boa.benchgemm({soln.hypas}, {{0, 11}, {0, 1000.}});
   }
+
+
+  std::cout << " \n\n-- snip -- -- -- snip --\n\n";
+  std::cout <<  soln.get_cache_entry_string();
+  std::cout << " -- snip -- -- -- snip --\n\n";
+
 
   return 0;
 }

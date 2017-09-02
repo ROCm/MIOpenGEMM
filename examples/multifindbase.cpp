@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
 
   owrite::Writer mowri(Ver::E::STRACK, fn);
   dev::TinyTwo       boa(gg, offsets, mowri, devhint);
-  auto           find_params = get_at_least_n_restarts(9);
+  auto           find_params = get_at_least_n_restarts(4);
   find_params.sumstat = SummStat::E::MEDIAN;
   auto           soln        = boa.find2(find_params, cons);
 

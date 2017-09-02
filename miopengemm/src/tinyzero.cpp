@@ -15,7 +15,7 @@
 #include <miopengemm/derivedparams.hpp>
 #include <miopengemm/error.hpp>
 #include <miopengemm/findparams.hpp>
-#include <miopengemm/generic.hpp>
+#include <miopengemm/miogemm.hpp>
 #include <miopengemm/graph.hpp>
 #include <miopengemm/kernel.hpp>
 #include <miopengemm/kernelcache.hpp>
@@ -323,7 +323,7 @@ oclutil::Result TinyZero::true_core(std::function<void(std::string)> acton,
   }
 
   auto   best_time = *std::min_element(all_times.begin(), all_times.end());
-  double gflops    = gg.get_gflops(best_time);
+  double gflops    = gg.get_gflops(best_time/1000.);
   mowri.bw[OutPart::BEN] << gg.get_tabbed_string()
                          << "  time[ms]:" << stringutil::get_char_padded(best_time, 10)
                          << "  gflops:" << gflops << Endl;
@@ -369,7 +369,10 @@ Solution TinyZero::find0(const Constraints& constraints, const FindParams& fparm
   {
     size_t rank = 0;
     mowri << "Time allotted to find is less that 0.01, so returning a default immediately.\n";
-    return get_default(command_queue, gg, constraints, mowri, IfNoCache::E::GENERIC, rank);
+    
+    
+    //oclutil::DevInfo devinfo(command_queue);
+    return get_default_soln(devinfo, gg, constraints, mowri, IfNoCache::E::GENERIC, rank);
   }
 
   address_check_valid_and_reliable();
@@ -492,8 +495,10 @@ Solution TinyZero::single_descent_find(double             allotted_time,
   else
   {
     mowri << "Warmstart requested [@ rank " << warmstart_rank << "]  " << Flush;
+    
+//    oclutil::DevInfo devinfo(command_queue);
     auto soln =
-      get_default(command_queue, gg, constraints, mowri, IfNoCache::E::RANDOM, warmstart_rank);
+      get_default_soln(devinfo, gg, constraints, mowri, IfNoCache::E::RANDOM, warmstart_rank);
     warm_start_hp = soln.hypas;
     hyper_front   = {warm_start_hp};
   }

@@ -528,10 +528,8 @@ void CSuGr::initialise_edges()
     std::stringstream ss;
     ss << "(device_name : " << ptr_devinfo->device_name << ")  "
        << "Setting up the edge search graph in set_preconstraint_edges, and it "
-          "seems like the "
-          "atomic wg size is neither 32 or 64. Is this correct ?? If so, "
-          "consider changing here or "
-          "raise an issue";
+          "seems like the atomic wg size is neither 32 or 64. Is this correct ?? If so, "
+          "consider changing here or raise an issue";
     throw miog_error(ss.str());
   }
 

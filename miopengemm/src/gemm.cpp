@@ -4,8 +4,7 @@
 
 #include <miopengemm/bundle.hpp>
 #include <miopengemm/gemm.hpp>
-#include <miopengemm/generic.hpp>
-#include <miopengemm/generic.hpp>
+#include <miopengemm/miogemm.hpp>
 #include <miopengemm/geometry.hpp>
 #include <miopengemm/kernel.hpp>
 #include <miopengemm/programcache.hpp>
@@ -70,7 +69,10 @@ GemmStatus xgemm(bool              isColMajor,
     size_t      rank = 0;
     Constraints constraints("");
     Geometry gg(isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, w_size, get_floattype_char<T>());
-    auto soln = get_default(*ptr_queue, gg, constraints, silent_mowri, IfNoCache::E::GENERIC, rank);
+    
+    oclutil::DevInfo devinfo(*ptr_queue);
+    
+    auto soln = get_default_soln(devinfo, gg, constraints, silent_mowri, IfNoCache::E::GENERIC, rank);
     program_cache.emplace_back(GemmKernelSquad(soln.v_tgks, silent_mowri, context, device_id));
     ID = program_cache.size() - 1;
   }

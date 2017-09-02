@@ -316,31 +316,39 @@ class OpenCLPlatformInfo
   std::string get_string() const;
 };
 
+// TODO : track down device_name and replace with identifier. 
 class DevInfo
 {
 
   private:
   void         initialise();
+  
   cl_device_id device;
 
   public:
-  std::string device_name;
-  std::string device_version;
-  std::string driver_version;
-  std::string identifier;
-  bool        device_available;
-  size_t      device_global_mem_size;
-  size_t      device_local_mem_size;
-  size_t      device_max_clock_frequency;
-  size_t      device_max_compute_units;
-  size_t      device_max_work_group_size;
-  size_t      wg_atom_size;
+  std::string device_name = "unknown";
+  std::string device_version = "unknown";
+  std::string driver_version = "unknown";
+  std::string identifier = "unknown";
+
+  bool        device_available = false;
+  size_t      device_global_mem_size {0};
+  size_t      device_local_mem_size {0};
+  size_t      device_max_clock_frequency {0};
+  size_t      device_max_compute_units {0};
+  size_t      device_max_work_group_size {0};
+  size_t      wg_atom_size {0};
 
   std::string get_string() const;
   DevInfo(const cl_command_queue& command_queue);
   DevInfo(const cl_device_id& device);
   DevInfo(const CLHint& hint, owrite::Writer& mowri);
+  // hack needed temporarily for get_fiji_device. 
+  DevInfo(const std::string & identifier, size_t wg_atom_size); 
 };
+
+DevInfo get_fiji_devinfo();
+
 }
 }
 

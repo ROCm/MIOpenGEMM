@@ -40,4 +40,4 @@ function(add_apibench_executable EX_NAME)
 #add_dependencies(examples ${EX_NAME})
 endfunction(add_apibench_executable)
 
-add_apibench_executable(gemm1 gemm1.cpp)
+add_apibench_executable(gemmbench gemmbench.cpp)

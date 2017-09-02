@@ -129,7 +129,7 @@ FindParams get_at_least_n_restarts(size_t restarts)
   std::array<double, Xtr::E::N> time_outer{0, 10000000.};
   std::array<size_t, Xtr::E::N> per_kernel{0, 5};
   std::array<double, Xtr::E::N> time_core{0, .1};  // no need to run more than .1 seconds.
-  SummStat::E sumstat = SummStat::E::MAX;
+  SummStat::E sumstat = SummStat::E::MEDIAN;
   return FindParams(descents, time_outer, per_kernel, time_core, sumstat);
 }
 }

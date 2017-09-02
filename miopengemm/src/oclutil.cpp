@@ -766,28 +766,6 @@ Result cl_set_program_and_kernel(
   bool               strict)
 {
 
-  // cl_context context;
-  // auto       oclr = cl_set_command_queue_info(command_queue,
-  // CL_QUEUE_CONTEXT,
-  // sizeof(cl_context),
-  //&context,
-  // NULL,
-  //"getting context from queue in set_program_and_kernel",
-  // strict);
-  // if (oclr.fail())
-  // return oclr;
-
-  // cl_device_id device_id_to_use;
-  // oclr = cl_set_command_queue_info(command_queue,
-  // CL_QUEUE_DEVICE,
-  // sizeof(cl_device_id),
-  //&device_id_to_use,
-  // NULL,
-  //"getting device id from queue in set_program_and_kernel",
-  // strict);
-  // if (oclr.fail())
-  // return oclr;
-
   auto kernel_cstr = kernel_string.c_str();
 
   auto kernel_string_size = kernel_string.size();
@@ -1021,6 +999,16 @@ DevInfo::DevInfo(const cl_device_id& device_)
 {
   device = device_;
   initialise();
+}
+
+DevInfo get_fiji_devinfo(){
+  return DevInfo("gfx803", 64);
+  
+}
+
+DevInfo::DevInfo(const std::string & identifier_, size_t was_){
+  identifier = identifier_;
+  wg_atom_size = was_;
 }
 
 void DevInfo::initialise()

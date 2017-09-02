@@ -43,6 +43,8 @@ void Kernel::try_release()
   //}
 }
 
+
+// TODO : add build_options flag.
 oclutil::Result Kernel::update(const KernBlob& ks, owrite::Writer& mowri)
 {
 

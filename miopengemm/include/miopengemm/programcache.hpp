@@ -5,7 +5,7 @@
 #define GUARD_MIOPENGEMM_PROGRAMCACHE_HPP
 
 #include <miopengemm/bundle.hpp>
-#include <miopengemm/generic.hpp>
+//#include <miopengemm/generic.hpp>
 #include <miopengemm/geometry.hpp>
 #include <miopengemm/kernel.hpp>
 

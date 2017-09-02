@@ -15,28 +15,27 @@ int main()
   
   std::vector<Constraints> constraints_s{{""}};//A_WOS1__B_WOS1"}};
  
+
+  //std::vector<Geometry> geometries;
+
  
-  std::vector<Geometry> geometries0 = get_deepbench(0);
-  std::vector<Geometry> geometries;
-  for (auto & gg : geometries0)
-  {
-    if (gg.m*gg.n*gg.k > 1000*1000*1000 && gg.m*gg.n*gg.k < 8000L*1000L*1000L){
-      geometries.push_back(gg);
-    }
-  }
+  //std::vector<Geometry> geometries0 = get_deepbench(0);
+  //for (auto & gg : geometries0)
+  //{
+    //if (gg.m*gg.n*gg.k > 1000*1000*1000 && gg.m*gg.n*gg.k < 8000L*1000L*1000L){
+      //geometries.push_back(gg);
+    //}
+  //}
   
-  for (unsigned i = 0; i < geometries.size(); ++i){
-    std::swap(geometries[i], geometries[i + rand() % (geometries.size() - i)]);
-  }
     //auto m = geometries[i].m;
     //auto n = geometries[i].n;
     //auto k = geometries[i].k;
     //geometries[i].wSpaceSize = (m + 16)*(k + 16) + (n + 16)*(k + 16);
   //}
   
-  //std::vector<Geometry> geometries;
-  //auto keys = kernel_cache.get_keys();
-  //for (auto & key : keys){
+  std::vector<Geometry> geometries;
+  auto keys = kernel_cache.get_keys();
+  for (auto & key : keys){
     //if (key.gg.wSpaceSize > 0){
       //auto gg = key.gg;
       //auto m = gg.m;
@@ -45,7 +44,16 @@ int main()
       //auto wSpaceSize = (m + 16)*(k + 16) + (n + 16)*(k + 16);
       //geometries.push_back({m,n,k, gg.tX[Mat::E::A], gg.tX[Mat::E::B], wSpaceSize, 'f'});
     //}
-  //}
+    
+    if (key.gg.wSpaceSize == 0 && key.gg.m*key.gg.n > 250*250){
+      geometries.push_back(key.gg);
+    }
+  }
+
+  for (unsigned i = 0; i < geometries.size(); ++i){
+    std::swap(geometries[i], geometries[i + rand() % (geometries.size() - i)]);
+  }
+
 
   std::cout << "n geometries : " << geometries.size() << std::endl;  
   size_t                counter = 0;
@@ -56,7 +64,7 @@ int main()
     {
       ++counter;
       std::cout << '(' << counter << ')' << std::endl;
-      std::string basedir = "/home/james/test47/";
+      std::string basedir = "/home/james/test48/";
       // WARNING : this call might only work on linux/mac
       std::string syscall =
         "./examples/multifindbase " + basedir + " " + gg.get_string() + " " + cons.get_string();
