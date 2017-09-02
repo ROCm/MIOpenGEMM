@@ -19,3 +19,5 @@
 *.a
 *.lib
 *kernels_found_deepbench*
+doc/pdf
+doc/html
