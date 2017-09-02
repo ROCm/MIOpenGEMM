@@ -124,7 +124,6 @@ Solution find(float            allotted_time,
               bool             with_warnings)
 {
 
-  std::cout << "\n(jn print from MIOpenGEMM)\n" << tgg.get_string() << "\n";
 
   (void)with_warnings;
   bool           c_is_const         = true;
@@ -137,21 +136,14 @@ Solution find(float            allotted_time,
   Offsets        offsets = get_zero_offsets();
   TinyZero       jinx(command_queue, tgg, offsets, a, b, c, c_is_const, workspace_gpu, mowri);
 
-
-
   size_t rank = 0;
   oclutil::DevInfo devinfo(command_queue);
   Solution soln = get_default_soln(devinfo, tgg, constraints, mowri, IfNoCache::E::GENERIC, rank);
   if (allotted_time > 0.1)
   {
     soln = jinx.find0(constraints, find_params);
-    //return soln;
   }
   
-
-    std::cout << "(jn print from MIOpenGEMM)\n returning kernel " << soln.hypas.get_string() << std::endl;
-
-
   return soln;
 }
 
