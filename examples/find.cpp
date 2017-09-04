@@ -13,13 +13,8 @@ int main()
   bool bench_the_soln        = true;
 
 
-  Geometry gg("tC0_tA0_tB0_colMaj1_m130305_n1_k1600_lda130305_ldb1600_ldc130305_ws0_f32");
-
-
-//(jn) newly found soln hypas "MIC1_PAD0_PLU1_LIW0_MIW1_WOS0_VEW1", "MIC1_PAD0_PLU0_LIW1_MIW1_WOS0_VEW1", "UNR64_GAL3_PUN1_ICE1_IWI0_SZT1_MAD1_NAW16_UFO1_MAC64_SKW7_AFI1_MIA0"
-//this is for network config : tC0_tA0_tB0_colMaj1_m130305_n1_k1600_lda130305_ldb1600_ldc130305_ws0_f32
-//about to run with network config : tC0_tA0_tB0_colMaj1_m130305_n1_k1600_lda130305_ldb1600_ldc130305_ws0_f32 (jn GEMM) 3.79201  
-
+  //Geometry gg("tC0_tA0_tB1_colMaj1_m3275_n4860_k64_lda3275_ldb4864_ldc3275_ws0_f32");
+  Geometry gg("tC0_tA0_tB1_colMaj1_m3275_n4860_k64_lda3275_ldb4864_ldc3275_ws0_f32");
 
   CLHint         devhint({"Advanced Micro Devices", "gfx803"});
   Offsets        offsets = get_zero_offsets();
@@ -27,7 +22,7 @@ int main()
   dev::TinyTwo   boa(gg, offsets, mowri, devhint);
 
   auto        find_params = get_at_least_n_restarts(10);
-  Constraints constraints("C_MAC64");
+  Constraints constraints("");
 
   Solution soln = boa.find2(find_params, constraints);
 

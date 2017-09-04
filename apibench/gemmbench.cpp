@@ -385,7 +385,7 @@ runem(std::vector<MIOpenGEMM::Geometry>& geometries,         // GEMM geometries 
   return results;
 }
 
-// Along the lines of DeepBench
+// print along the lines of DeepBench
 void neat_print(const std::map<std::string, RunStats>& results)
 {
   std::cout << "\n";
@@ -405,7 +405,6 @@ int main()
 {
   
   enum class GeomSet {DEEPBENCH, MANUAL};
-  
   
   auto geom_to_run = GeomSet::MANUAL;
 
@@ -439,12 +438,19 @@ int main()
     throw MIOpenGEMM::miog_error("CLBlast cannot be run, as the current build did not include CLBlast");
 #endif
   }
+  
+  std::cout << "will run with options:\n"
+  << "run_accuracy_test = " << run_accuracy_test << '\n'
+  << "run_event_timer = " << run_event_timer << '\n'
+  << "run_miopengemm = " << run_miopengemm << '\n'
+  << "run_isaac = " << run_isaac << '\n'
+  << "run_clblast = " << run_clblast << '\n'
+  << "print_summary_at_end = " << print_summary_at_end << '\n';
+  
 
 
 
-  // TODO : make runtime option as well 
   for (auto impl : impls_to_run){
-
 
   // setup the geometries to run
   std::vector<MIOpenGEMM::Geometry> geometries;
@@ -504,12 +510,12 @@ int main()
       //for (auto x : {699, 700, 701, 702, 703, 704}){
         //geometries.push_back(MIOpenGEMM::get_squareNN_geometry<float>(x));
       //}
-      geometries = {{"tC0_tA0_tB1_colMaj1_m32768_n4864_k16_lda32768_ldb4864_ldc32768_ws0_f32"}};
+      geometries = {{"tC0_tA1_tB1_colMaj1_m3275_n4860_k33_lda3275_ldb6865_ldc3275_ws0_f32"}};
     }
     
     
     
-
+    
     auto stats = runem<float>(geometries, impl, run_accuracy_test, run_event_timer);
     
     if (print_summary_at_end == true){

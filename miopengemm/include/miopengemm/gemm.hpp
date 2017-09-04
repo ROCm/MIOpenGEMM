@@ -73,7 +73,7 @@ class GemmStatus
  * A GemmStatus.
  */
 
-// Mulitple threads information at
+// Multiple threads, same program, information at
 // https://forums.khronos.org/showthread.php/5810-calling-the-same-kernel-object-multiple-times
 
 template <typename T>
