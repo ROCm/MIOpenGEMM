@@ -13,7 +13,7 @@ int main()
 
   using namespace MIOpenGEMM;
 
-  std::vector<Constraints> constraints_s{{""}};  // A_WOS1__B_WOS1"}};
+  std::vector<Constraints> constraints_s{{""}};
 
   // std::vector<Geometry> geometries;
 
@@ -69,7 +69,7 @@ int main()
       std::string syscall =
         "./examples/multifindbase " + basedir + " " + gg.get_string() + " " + cons.get_string();
       // The reason we use a system call here is that if all done directly in loop,
-      // compilation gets much slower. No idea why this is the case.
+      // compilation gets much slower. I don't know why.
       std::system(syscall.c_str());
     }
   }

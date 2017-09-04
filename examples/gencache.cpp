@@ -12,7 +12,7 @@ int main()
   // To search for at least n=20 seconds we use this factory function
   FindParams     find_params = get_at_least_n_seconds(3);
   Offsets        offsets     = get_zero_offsets();
-  owrite::Writer mowri(Ver::E::TERMINAL, "");  // TRACK
+  owrite::Writer mowri(Ver::E::TRACK, "");  // TERMINAL
   CLHint         devhint;
   dev::TinyTwo   boa(gg, offsets, mowri, devhint);
   Solution       soln = boa.find2(find_params, constraints);

@@ -3,18 +3,16 @@
  *******************************************************************************/
 #include <string>
 #include <miopengemm/tinytwo.hpp>
-//#include <miopengemm/devmiogemm.hpp>
 
 template <typename TFloat>
 void geometrytest(const MIOpenGEMM::Geometry& gg)
 {
   using namespace MIOpenGEMM;
 
-  CLHint         devhint;  //{};//(0,0);
+  CLHint         devhint;
   Offsets        offsets = get_zero_offsets();
   owrite::Writer mowri(Ver::E::ACCURACY, "");
-  //owrite::Writer mowri(Ver::E::TERMINAL, "");
-  dev::TinyTwo       boa(gg, offsets, mowri, devhint);
+  dev::TinyTwo   boa(gg, offsets, mowri, devhint);
 
   // FindParams find_params = get_quick_find_params();
   FindParams  find_params = get_at_least_n_seconds(.1); //(1, 1.14, 2, 200., SummStat::E::MAX);

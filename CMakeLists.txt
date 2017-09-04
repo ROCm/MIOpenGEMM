@@ -57,5 +57,4 @@ if (API_BENCH_ISAAC)
     add_definitions(-DMIOPENGEMM_BENCH_ISAAC)
 endif()
 
-
 add_subdirectory(apibench)
