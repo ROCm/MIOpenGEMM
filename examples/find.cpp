@@ -12,18 +12,22 @@ int main()
   bool test_accuracy_of_soln = false;
   bool bench_the_soln        = true;
 
-  // this is because of ROCm 1.6 testing. TODO: raise issue.
-  // Also : mention that there might be an error when k is small.
 
-  Geometry gg("tC0_tA0_tB0_colMaj1_m32004_n1_k1728_lda32004_ldb1728_ldc32004_ws0_f32");
+  Geometry gg("tC0_tA0_tB0_colMaj1_m130305_n1_k1600_lda130305_ldb1600_ldc130305_ws0_f32");
+
+
+//(jn) newly found soln hypas "MIC1_PAD0_PLU1_LIW0_MIW1_WOS0_VEW1", "MIC1_PAD0_PLU0_LIW1_MIW1_WOS0_VEW1", "UNR64_GAL3_PUN1_ICE1_IWI0_SZT1_MAD1_NAW16_UFO1_MAC64_SKW7_AFI1_MIA0"
+//this is for network config : tC0_tA0_tB0_colMaj1_m130305_n1_k1600_lda130305_ldb1600_ldc130305_ws0_f32
+//about to run with network config : tC0_tA0_tB0_colMaj1_m130305_n1_k1600_lda130305_ldb1600_ldc130305_ws0_f32 (jn GEMM) 3.79201  
+
 
   CLHint         devhint({"Advanced Micro Devices", "gfx803"});
   Offsets        offsets = get_zero_offsets();
   owrite::Writer mowri(Ver::E::TERMINAL, "");
   dev::TinyTwo   boa(gg, offsets, mowri, devhint);
 
-  auto        find_params = get_at_least_n_restarts(1);
-  Constraints constraints("");
+  auto        find_params = get_at_least_n_restarts(10);
+  Constraints constraints("C_MAC64");
 
   Solution soln = boa.find2(find_params, constraints);
 
