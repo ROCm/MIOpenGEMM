@@ -1,3 +1,9 @@
+################################################################################
+# Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
+################################################################################
+
+# (jn) from https://github.com/BVLC/caffe/blob/master/cmake/Modules/FindOpenBLAS.cmake
+
 SET(Open_BLAS_INCLUDE_SEARCH_PATHS
   $ENV{OpenBLAS_HOME}
   $ENV{OpenBLAS_HOME}/include

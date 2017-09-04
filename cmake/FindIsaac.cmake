@@ -1,33 +1,24 @@
-SET(ISAAC_INCLUDE_SEARCH_PATHS
-  #$ENV{ISAAC_HOME}
-  #$ENV{ISAAC_HOME}/include
-  #/usr/include/openblas
-  #/usr/include
-  #/usr/include/openblas-base
-  #/usr/local/include
-  #/usr/local/include/openblas
-  #/usr/local/include/openblas-base
-  #/opt/ISAAC/include
+################################################################################
+# Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
+################################################################################
 
+SET(ISAAC_INCLUDE_SEARCH_PATHS
+  /usr/include/isaac
+  /usr/include
+  /usr/local/include
+  /usr/local/include/isaac
+  /opt/isaac/include
   /usr/local/include
 )
 
 SET(ISAAC_LIB_SEARCH_PATHS
-        #/opt/ISAAC/lib
-        #$ENV{ISAAC}cd
-        #$ENV{ISAAC}/lib
-        #$ENV{ISAAC_HOME}
-        #$ENV{ISAAC_HOME}/lib
-        #/lib/
-        #/lib/openblas-base
-        #/lib64/
-        #/usr/lib
-        #/usr/lib/openblas-base
-        #/usr/lib64
-        #/usr/local/lib
-        #/usr/local/lib64
-
+        /lib/
+        /lib64/
+        /usr/lib
+        /usr/lib/isaac
+        /usr/lib64
         /usr/local/lib
+        /usr/local/lib64
  )
 
 

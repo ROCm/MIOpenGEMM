@@ -23,7 +23,7 @@ include(ROCMCreatePackage)
 
 rocm_setup_version(VERSION 1.0.1)
 
-#Where to find FindOpenCL.cmake (etc)
+#Where to find FindOpenCL.cmake and other files which help locate external files and libraries
 list( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
 
 option(BUILD_SHARED_LIBS "Build shared library" ON)
