@@ -13,11 +13,12 @@ void geometrytest(const MIOpenGEMM::Geometry& gg)
   CLHint         devhint;  //{};//(0,0);
   Offsets        offsets = get_zero_offsets();
   owrite::Writer mowri(Ver::E::ACCURACY, "");
+  //owrite::Writer mowri(Ver::E::TERMINAL, "");
   dev::TinyTwo       boa(gg, offsets, mowri, devhint);
 
   // FindParams find_params = get_quick_find_params();
   FindParams  find_params = get_at_least_n_seconds(.1); //(1, 1.14, 2, 200., SummStat::E::MAX);
-  std::string constraints_string = "A_WOS0__B_WOS0__C_UFO1_ICE1_IWI0";
+  std::string constraints_string = "";//A_WOS0__B_WOS0__C_UFO1_ICE1_IWI0";
   Solution    soln               = boa.find2(find_params, constraints_string);
   std::cout << '\n' << soln.hypas.get_string() << '\n';
   boa.accuracy_test(soln.hypas);
@@ -27,8 +28,8 @@ int main()
 {
   using namespace MIOpenGEMM;
 
-  size_t m              = 83;
-  size_t k              = 157;
+  size_t m              = 81;
+  size_t k              = 57;
   size_t testi          = 0;
   size_t workspace_size = 1000 * 1000;
 

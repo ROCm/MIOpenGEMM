@@ -83,17 +83,16 @@ Solution get_default_soln(const oclutil::DevInfo& devinfo,
   bool   catch_ROCm_small_k = false;
   size_t ROCm_small_k       = 1;
 
-  // TODO : check this.
-  if (catch_ROCm_small_k == false || gg.k > ROCm_small_k)
-  {
-    if (nearest::is_within(ck, graph, kernel_cache, 0.1 * std::numeric_limits<double>::max(), rank))
-    {
-      auto nearest_ck       = nearest::get(ck, graph, kernel_cache, rank);
-      bool is_not_canonical = redirection::get_is_not_canonical(gg);
-      hp                    = kernel_cache.at(nearest_ck, is_not_canonical);
 
-      mowri << "Nearest match in kernel cache:\n" << nearest_ck.get_string() << Flush;
-    }
+  // TODO : check this.
+  if ((catch_ROCm_small_k == false || gg.k > ROCm_small_k) && 
+    (nearest::is_within(ck, graph, kernel_cache, 0.1 * std::numeric_limits<double>::max(), rank)))
+  {
+    auto nearest_ck       = nearest::get(ck, graph, kernel_cache, rank);
+    bool is_not_canonical = redirection::get_is_not_canonical(gg);
+    hp                    = kernel_cache.at(nearest_ck, is_not_canonical);
+
+    mowri << "Nearest match in kernel cache:\n" << nearest_ck.get_string() << Flush;
   }
 
   else
@@ -110,9 +109,12 @@ Solution get_default_soln(const oclutil::DevInfo& devinfo,
     }
   }
 
-  mowri << "Time in get_default : " << timer.get_elapsed() << " [s]" << Endl;
 
+  mowri << "Time in get_default : " << timer.get_elapsed() << " [s]" << Endl;
+  
   kerngen::Bundle bundle(hp, gg);  //, mowri);
+
+  
   return {gg, extime, bundle.v_tgks, hp, devinfo, constraints};
 }
 

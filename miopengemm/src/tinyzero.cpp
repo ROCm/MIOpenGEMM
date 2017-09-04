@@ -451,6 +451,7 @@ Solution TinyZero::single_descent_find(double             allotted_time,
                                        size_t             warmstart_rank)
 {
 
+
   // only considered an improvement if ratio new/old less than this
   double improvement_factor_required = 0.999;
 
@@ -502,6 +503,7 @@ Solution TinyZero::single_descent_find(double             allotted_time,
     warm_start_hp = soln.hypas;
     hyper_front   = {warm_start_hp};
   }
+
 
   HyPas hp_curr;
 
