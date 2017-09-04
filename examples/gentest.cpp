@@ -11,7 +11,7 @@ int main()
   std::vector<std::pair<Geometry, HyPas>> incorrect = {
     // 0
     {{"tC1_tA1_tB1_colMaj1_m45_n56_k64_lda64_ldb64_ldc64_ws1_f32"},
-     {{"MIC2_PAD2_PLU0_LIW0_MIW1_WOS0_VEW1",  // TODO : make all of this format.
+     {{"MIC2_PAD2_PLU0_LIW0_MIW1_WOS0_VEW1",
        "MIC6_PAD1_PLU0_LIW0_MIW1_WOS0_VEW1",
        "UNR16_GAL3_PUN1_ICE2_IWI0_SZT0_NAW16_UFO0_MAC1_SKW10_AFI1_MIA0"}}},
     // 1
