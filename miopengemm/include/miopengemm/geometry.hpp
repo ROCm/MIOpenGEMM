@@ -62,8 +62,8 @@ class Geometry
                   char   floattype_);
 
   private:
-  // log k ;  log m - log n ;  log m + log n
-  std::array<double, 3> metric_co;
+  // log k ;  log m - log n ;  log m + log n, 0.2*(log ldx's)
+  std::array<double, 6> metric_co;
   std::array<bool, 5>   wSpaceSufficient;
 
   public:

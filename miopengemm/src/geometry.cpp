@@ -266,6 +266,10 @@ void Geometry::initialise(bool   isColMajor_,
   metric_co[1] = std::log2(static_cast<double>(m)) - std::log2(static_cast<double>(n));
   metric_co[2] = std::log2(static_cast<double>(m)) + std::log2(static_cast<double>(n));
 
+  metric_co[3] = 0.2*std::log2(static_cast<double>(ldX[Mat::E::A]));
+  metric_co[4] = 0.2*std::log2(static_cast<double>(ldX[Mat::E::B]));
+  metric_co[5] = 0.2*std::log2(static_cast<double>(ldX[Mat::E::C]));
+
   // memory required for copying (an estimate)
   std::array<size_t, Mat::E::N> forPadCopy;
   for (auto emat : {Mat::E::A, Mat::E::B})
@@ -411,27 +415,31 @@ double Geometry::get_distance(const Geometry& g2) const
 
   else
   {
-    for (unsigned i = 0; i < 3; ++i)
+    
+    
+    for (unsigned i = 0; i < 6; ++i)
     {
       distance += std::abs(metric_co[i] - g2.metric_co[i]);
     }
-    for (size_t x : {2, 4})
+    for (size_t x : {2, 4, 8})
     {
-      distance += 0.25 * ((ldX[Mat::E::A] % x == 0) != (g2.ldX[Mat::E::A] % x == 0));
-      distance += 0.25 * ((ldX[Mat::E::B] % x == 0) != (g2.ldX[Mat::E::B] % x == 0));
-      distance += 0.25 * ((ldX[Mat::E::C] % x == 0) != (g2.ldX[Mat::E::C] % x == 0));
+      for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C}){
+        distance += 0.2 * ((ldX[emat] % x == 0) != (g2.ldX[emat] % x == 0));
+      }
     }
 
-    for (size_t x : {256, 1024})
+    for (size_t x : {256, 512, 1024})
     {
-      distance += 0.25 * ((ldX[Mat::E::A] % x < 5) != (g2.ldX[Mat::E::A] % x < 5));
-      distance += 0.25 * ((ldX[Mat::E::B] % x < 5) != (g2.ldX[Mat::E::B] % x < 5));
-      distance += 0.25 * ((ldX[Mat::E::C] % x < 5) != (g2.ldX[Mat::E::C] % x < 5));
+      for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C}){
+        distance += 0.2 * 
+        (std::min<size_t>(ldX[emat]%x, x - ldX[emat]%x) % 4 == 
+         std::min<size_t>(g2.ldX[emat]%x, x - g2.ldX[emat]%x) %4);
+      }
     }
 
     for (size_t i = 0; i < wSpaceSufficient.size(); ++i)
     {
-      distance += 0.25 * (wSpaceSufficient[i] == g2.wSpaceSufficient[i]);
+      distance += 0.2 * (wSpaceSufficient[i] == g2.wSpaceSufficient[i]);
     }
   }
 
