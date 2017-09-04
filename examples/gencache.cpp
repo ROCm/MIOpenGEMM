@@ -12,13 +12,13 @@ int main()
   // To search for at least n=20 seconds we use this factory function
   FindParams     find_params = get_at_least_n_seconds(3);
   Offsets        offsets     = get_zero_offsets();
-  owrite::Writer mowri(Ver::E::TERMINAL, ""); //TRACK
+  owrite::Writer mowri(Ver::E::TERMINAL, "");  // TRACK
   CLHint         devhint;
-  dev::TinyTwo       boa(gg, offsets, mowri, devhint);
+  dev::TinyTwo   boa(gg, offsets, mowri, devhint);
   Solution       soln = boa.find2(find_params, constraints);
   std::cout << " \n\n\nThe following string can be cut and paste into kernelcache.cpp";
   std::cout << " \n\n-- snip -- -- -- snip --\n\n";
-  std::cout <<  soln.get_cache_entry_string();
+  std::cout << soln.get_cache_entry_string();
   std::cout << " -- snip -- -- -- snip --\n\n";
   return 0;
 }

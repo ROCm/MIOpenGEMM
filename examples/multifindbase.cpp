@@ -3,8 +3,8 @@
  *******************************************************************************/
 #include <iostream>
 #include <string>
-#include <miopengemm/tinytwo.hpp>
 #include <miopengemm/geometries.hpp>
+#include <miopengemm/tinytwo.hpp>
 
 int main(int argc, char* argv[])
 {
@@ -36,19 +36,18 @@ int main(int argc, char* argv[])
   // WARNING : mkdir only works on linux/mac
   std::string syscall = "mkdir -p " + dirname;
   std::system(syscall.c_str());
-  auto           fn             = dirname + "log.txt";
-  std::string    fn_final       = basedir + "cacheentries.txt";
-  std::string    fn_final_local = dirname + "cacheentry.txt";
+  auto        fn             = dirname + "log.txt";
+  std::string fn_final       = basedir + "cacheentries.txt";
+  std::string fn_final_local = dirname + "cacheentry.txt";
 
   std::cout << fn;
   std::cout << '\n';
 
   owrite::Writer mowri(Ver::E::STRACK, fn);
-  dev::TinyTwo       boa(gg, offsets, mowri, devhint);
+  dev::TinyTwo   boa(gg, offsets, mowri, devhint);
   auto           find_params = get_at_least_n_restarts(4);
-  find_params.sumstat = SummStat::E::MEDIAN;
-  auto           soln        = boa.find2(find_params, cons);
-
+  find_params.sumstat        = SummStat::E::MEDIAN;
+  auto soln                  = boa.find2(find_params, cons);
 
   std::cout << soln.hypas.get_string() << "   :   " << gg.get_gflops(soln.extime) << " gflops ";
   std::cout << '\n' << '\n';

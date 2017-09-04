@@ -1,69 +1,70 @@
 /*******************************************************************************
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
+#include <miopengemm/enums.hpp>
 #include <miopengemm/oclutil.hpp>
 #include <miopengemm/outputwriter.hpp>
-#include <miopengemm/enums.hpp>
 
-#include <vector>
 #include <algorithm>
+#include <vector>
 
-// learing how to use float2 float4 
-int main(){
-  
+// learing how to use float2 float4
+int main()
+{
+
   using namespace MIOpenGEMM;
-  owrite::Writer mowri(Ver::E::TERMINAL, "");
-  CLHint devhint;
-  oclutil::CommandQueueInContext scq(mowri, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE, devhint, "floatxdemo");
+  owrite::Writer                 mowri(Ver::E::TERMINAL, "");
+  CLHint                         devhint;
+  oclutil::CommandQueueInContext scq(mowri,
+                                     CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE |
+                                       CL_QUEUE_PROFILING_ENABLE,
+                                     devhint,
+                                     "floatxdemo");
 
-
-      
-  
-  size_t ndata (1024);
+  size_t             ndata(1024);
   std::vector<float> v_data1(ndata);
   std::iota(v_data1.begin(), v_data1.end(), 0);
-  
-  std::vector<float> v_data2(v_data1);
-  for (size_t i = 0; i < ndata; ++ i){
-    v_data2[i] *= (1 - 2*(i%2 == 0));
-  }
-  
-  std::vector<float> a_copy(ndata);
-  
-  std::array<float*, 2> cpu_mem {v_data1.data(), v_data2.data()};
-  std::vector<oclutil::SafeClMem> gpu_safemem(2, std::string("safemem"));
- 
 
-  for (size_t i = 0; i < 2; ++i) {
-    
+  std::vector<float> v_data2(v_data1);
+  for (size_t i = 0; i < ndata; ++i)
+  {
+    v_data2[i] *= (1 - 2 * (i % 2 == 0));
+  }
+
+  std::vector<float> a_copy(ndata);
+
+  std::array<float*, 2> cpu_mem{v_data1.data(), v_data2.data()};
+  std::vector<oclutil::SafeClMem> gpu_safemem(2, std::string("safemem"));
+
+  for (size_t i = 0; i < 2; ++i)
+  {
+
     oclutil::cl_set_buffer_from_command_queue(gpu_safemem[i].clmem,
-                                                scq.command_queue,
-                                                CL_MEM_READ_WRITE,
-                                                sizeof(float)*ndata,
-                                                NULL,
-                                                "set buffer floatxdemo",
-                                                true);
-    
+                                              scq.command_queue,
+                                              CL_MEM_READ_WRITE,
+                                              sizeof(float) * ndata,
+                                              NULL,
+                                              "set buffer floatxdemo",
+                                              true);
+
     oclutil::cl_enqueue_write_buffer(scq.command_queue,
                                      gpu_safemem[i].clmem,
                                      CL_TRUE,
                                      0,
-                                     sizeof(float)*ndata,
+                                     sizeof(float) * ndata,
                                      cpu_mem[i],
                                      0,
                                      NULL,
                                      NULL,
                                      "enqueueing  writebuff ",
                                      true);
-  } 
+  }
 
-
-  size_t gws{ndata/4};
+  size_t gws{ndata / 4};
   size_t lws{64};
-  
-  
+
   cl_program clprog;
-  cl_kernel clkern;
+  cl_kernel  clkern;
 
   std::string kernstr = R"(
   
@@ -94,54 +95,39 @@ __global float * restrict b
   
   
 )";
-  
-  std::string fname = "fadd";
-  
 
-  cl_context context;
+  std::string fname = "fadd";
+
+  cl_context   context;
   cl_device_id device_id;
   oclutil::cl_set_context_and_device_from_command_queue(
-                                scq.command_queue,
-                                context,
-                                device_id,
-                                mowri,
-                                true);
+    scq.command_queue, context, device_id, mowri, true);
 
   oclutil::cl_set_program_and_kernel(
-    context, device_id, kernstr, fname, clprog, clkern, mowri, true);
+    context, device_id, kernstr, fname, clprog, clkern, "-cl-std=CL2.0 -Werror", mowri, true);
 
-
-  for (size_t i = 0; i < 2; ++i){
+  for (size_t i = 0; i < 2; ++i)
+  {
     oclutil::cl_set_kernel_arg(clkern,
-                         i,
-                         sizeof(cl_mem),
-                         &gpu_safemem[i].clmem,
-                         std::string("arg ") + std::to_string(i),
-                         true);
-                       }
+                               i,
+                               sizeof(cl_mem),
+                               &gpu_safemem[i].clmem,
+                               std::string("arg ") + std::to_string(i),
+                               true);
+  }
 
   oclutil::cl_flush(scq.command_queue, "flush", true);
 
+  oclutil::cl_enqueue_ndrange_kernel(
+    scq.command_queue, clkern, 1, NULL, &gws, &lws, 0, nullptr, nullptr, "enqueue", true);
 
-  oclutil::cl_enqueue_ndrange_kernel(scq.command_queue,
-                                            clkern,
-                                            1,
-                                            NULL,
-                                            &gws,
-                                            &lws,
-                                            0,
-                                            nullptr,
-                                            nullptr,
-                                            "enqueue",
-                                            true);
-                                            
   oclutil::cl_flush(scq.command_queue, "flush", true);
 
   oclutil::cl_enqueue_read_buffer(scq.command_queue,
                                   gpu_safemem[0].clmem,
                                   CL_TRUE,
                                   0,
-                                  ndata*sizeof(float),
+                                  ndata * sizeof(float),
                                   a_copy.data(),
                                   0,
                                   NULL,
@@ -151,8 +137,8 @@ __global float * restrict b
 
   oclutil::cl_flush(scq.command_queue, "flush", true);
 
-  for (size_t i = 0; i < 20; ++i){
+  for (size_t i = 0; i < 20; ++i)
+  {
     std::cout << v_data1[i] << " : " << a_copy[i] << std::endl;
   }
 }
-  
