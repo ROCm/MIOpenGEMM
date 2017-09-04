@@ -1,32 +1,27 @@
+################################################################################
+# Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
+################################################################################
+
 SET(CLBLAST_INCLUDE_SEARCH_PATHS
-  #$ENV{CLBLAST_HOME}
-  #$ENV{CLBLAST_HOME}/include
-  #/usr/include/openblas
-  #/usr/include
-  #/usr/include/openblas-base
-  #/usr/local/include
-  #/usr/local/include/openblas
-  #/usr/local/include/openblas-base
-  #/opt/CLBLAST/include
+  /usr/include/isaac
+  /usr/include
+  /usr/local/include
+  /usr/local/include/clblast
+  /opt/isaac/include
+  /usr/local/include  
   /home/james/nugteren/clblast/install/include
 )
 
 SET(CLBLAST_LIB_SEARCH_PATHS
-        #/opt/CLBLAST/lib
-        #$ENV{CLBLAST}cd
-        #$ENV{CLBLAST}/lib
-        #$ENV{CLBLAST_HOME}
-        #$ENV{CLBLAST_HOME}/lib
-        #/lib/
-        #/lib/openblas-base
-        #/lib64/
-        #/usr/lib
-        #/usr/lib/openblas-base
-        #/usr/lib64
-        #/usr/local/lib
-        #/usr/local/lib64
+        /lib/
+        /lib64/
+        /usr/lib
+        /usr/lib/clblast
+        /usr/lib64
+        /usr/local/lib
+        /usr/local/lib64
         /home/james/nugteren/clblast/install/lib
- )
+)
 
 FIND_PATH(CLBLAST_INCLUDE_DIR NAMES clblast.h PATHS ${CLBLAST_INCLUDE_SEARCH_PATHS})
 FIND_LIBRARY(CLBLAST_LIB NAMES clblast PATHS ${CLBLAST_LIB_SEARCH_PATHS})
