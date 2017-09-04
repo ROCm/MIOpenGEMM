@@ -433,7 +433,7 @@ int main()
 
 // having issues with CLBlast, will return to it. 
   if (run_clblast){
-#ifdef MIOPENGEMM_BENCH_ISAAC
+#ifdef MIOPENGEMM_BENCH_CLBLAST
     impls_to_run.push_back(Impl::CLB);
 #else 
     throw MIOpenGEMM::miog_error("CLBlast cannot be run, as the current build did not include CLBlast");
@@ -501,10 +501,14 @@ int main()
     // custom geometries. 
     else{
       //std::vector<MIOpenGEMM::Geometry> geometries;
-      for (auto x : {699, 700, 701, 702, 703, 704}){
-        geometries.push_back(MIOpenGEMM::get_squareNN_geometry<float>(x));
-      }
+      //for (auto x : {699, 700, 701, 702, 703, 704}){
+        //geometries.push_back(MIOpenGEMM::get_squareNN_geometry<float>(x));
+      //}
+      geometries = {{"tC0_tA0_tB1_colMaj1_m32768_n4864_k16_lda32768_ldb4864_ldc32768_ws0_f32"}};
     }
+    
+    
+    
 
     auto stats = runem<float>(geometries, impl, run_accuracy_test, run_event_timer);
     

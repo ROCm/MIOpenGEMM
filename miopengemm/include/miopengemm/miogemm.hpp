@@ -30,7 +30,7 @@ namespace MIOpenGEMM
  *
  * @param b
  * Matrix B, memory will be unchanged
- * 
+ *
  * @param c
  * Matric C, memory will be unchanged
  *
@@ -60,40 +60,36 @@ Solution find(float            allotted_time,
               bool             verbose,
               bool             with_warnings);
 
-
 /*! @brief
- * Return 1 of 3 possible HyPas's, 
- * this is a fallback function when better Solutions cannot be found 
+ * Return 1 of 3 possible HyPas's,
+ * this is a fallback function when better Solutions cannot be found
  */
 HyPas get_generic(const Geometry& gg, const Constraints& constraints);
 
-
 /*! @brief
- * Find and return a Solution which matches well the device and Geometry, 
+ * Find and return a Solution which matches well the device and Geometry,
  * without performing any compiling-benchmarking.
- * 
+ *
  * @param devinfo
  * contains device information, in particulat the device's name
- * 
+ *
  * @param gg
  * GEMM Geometry
- * 
- * @param mowri 
+ *
+ * @param mowri
  * Object which prints information about the Solution found and returned
- * 
+ *
  * @param enoc
  * If there is no good cached match, a Solution will be returned depending on this parameter.
  * The options are to randomly select a viable Solution, or to use get_generic.
  */
 // try and get a solution from cache, if all else fails get_generic.
-Solution get_default_soln(const oclutil::DevInfo & devinfo, 
-                     const Geometry&    gg,
-                     const Constraints& constraints,
-                     owrite::Writer&    mowri,
-                     IfNoCache::E       enoc,
-                     size_t             rank);
-
-
+Solution get_default_soln(const oclutil::DevInfo& devinfo,
+                          const Geometry&         gg,
+                          const Constraints&      constraints,
+                          owrite::Writer&         mowri,
+                          IfNoCache::E            enoc,
+                          size_t                  rank);
 
 /*! This function is being phased-out, it is only used by MIOpen (as of 28 August 2017)
  * [ the HIP branch of MIOpen currently calls this function ]
@@ -103,10 +99,6 @@ Solution get_default_soln(const oclutil::DevInfo & devinfo,
  */
 
 Solution get_default(const Geometry& gg);
-
-
 }
-
-
 
 #endif

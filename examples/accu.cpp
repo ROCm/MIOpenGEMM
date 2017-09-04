@@ -8,12 +8,13 @@ int main()
 {
   using namespace MIOpenGEMM;
 
-  //Geometry gg("tC1_tA1_tB1_colMaj1_m45_n56_k64_lda64_ldb64_ldc64_ws1_f32");    
-  Geometry gg = get_squareNN_geometry<float>(513);
-
-  HyPas    hp("A_MIC4_PAD2_PLU0_LIW0_MIW1_WOS0_VEW1__B_MIC6_PAD1_PLU0_LIW0_MIW1_WOS0_VEW1__C_UNR8_GAL3_PUN1_ICE1_IWI0_SZT0_NAW16_UFO0_MAC64_SKW10_AFI1_MIA0");     
+  Geometry gg("tC0_tA0_tB0_colMaj1_m130305_n1_k1600_lda130305_ldb1600_ldc130305_ws1_f32");    
+  HyPas    hp("A_MIC1_PAD1_PLU1_LIW0_MIW1_WOS0_VEW1__B_MIC1_PAD2_PLU1_LIW0_MIW1_WOS0_VEW1__C_UNR64_GAL2_PUN1_ICE2_IWI0_SZT0_MAD0_NAW16_UFO1_MAC64_SKW7_AFI0_MIA0");     
+  
+  
+  
   CLHint         devhint({"AMD", "gfx"});
-  Offsets        offsets = get_zero_offsets();
+  Offsets        offsets = get_padding_offsets();
   owrite::Writer mowri(Ver::E::TERMINAL, "");
   dev::TinyTwo       boa(gg, offsets, mowri, devhint);
       

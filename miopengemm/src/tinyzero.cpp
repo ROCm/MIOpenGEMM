@@ -15,11 +15,11 @@
 #include <miopengemm/derivedparams.hpp>
 #include <miopengemm/error.hpp>
 #include <miopengemm/findparams.hpp>
-#include <miopengemm/miogemm.hpp>
 #include <miopengemm/graph.hpp>
 #include <miopengemm/kernel.hpp>
 #include <miopengemm/kernelcache.hpp>
 #include <miopengemm/kernelstring.hpp>
+#include <miopengemm/miogemm.hpp>
 #include <miopengemm/nearest.hpp>
 #include <miopengemm/oclutil.hpp>
 #include <miopengemm/outputwriter.hpp>
@@ -194,7 +194,8 @@ void TinyZero::setup_tinykernels(const kerngen::Bundle& bundle)
     const KernBlob& kblob = bundle.v_tgks[ksi];
     if (tk_kernels.at(kblob.e_ktype).update_needed(kblob))
     {
-      oclr = tk_kernels.at(kblob.e_ktype).update(kblob, mowri);
+      std::string build_options("-cl-std=CL2.0  -Werror");
+      oclr = tk_kernels.at(kblob.e_ktype).update(kblob, mowri, build_options);
       if (oclr.fail() == false)
       {
         set_kern_args(kblob);
@@ -323,7 +324,7 @@ oclutil::Result TinyZero::true_core(std::function<void(std::string)> acton,
   }
 
   auto   best_time = *std::min_element(all_times.begin(), all_times.end());
-  double gflops    = gg.get_gflops(best_time/1000.);
+  double gflops    = gg.get_gflops(best_time / 1000.);
   mowri.bw[OutPart::BEN] << gg.get_tabbed_string()
                          << "  time[ms]:" << stringutil::get_char_padded(best_time, 10)
                          << "  gflops:" << gflops << Endl;
@@ -369,9 +370,8 @@ Solution TinyZero::find0(const Constraints& constraints, const FindParams& fparm
   {
     size_t rank = 0;
     mowri << "Time allotted to find is less that 0.01, so returning a default immediately.\n";
-    
-    
-    //oclutil::DevInfo devinfo(command_queue);
+
+    // oclutil::DevInfo devinfo(command_queue);
     return get_default_soln(devinfo, gg, constraints, mowri, IfNoCache::E::GENERIC, rank);
   }
 
@@ -495,8 +495,8 @@ Solution TinyZero::single_descent_find(double             allotted_time,
   else
   {
     mowri << "Warmstart requested [@ rank " << warmstart_rank << "]  " << Flush;
-    
-//    oclutil::DevInfo devinfo(command_queue);
+
+    //    oclutil::DevInfo devinfo(command_queue);
     auto soln =
       get_default_soln(devinfo, gg, constraints, mowri, IfNoCache::E::RANDOM, warmstart_rank);
     warm_start_hp = soln.hypas;
@@ -707,7 +707,7 @@ Solution TinyZero::single_descent_find(double             allotted_time,
     std::string solnstring = best_solns_path[i].hypas.get_string();
     solnstring.resize(leading_size, ' ');
     mowri << std::fixed << solnstring << "\t " << disco_times[i] << "\t\t "
-          << gg.get_gflops(best_solns_path[i].extime/1000.) << Endl;
+          << gg.get_gflops(best_solns_path[i].extime / 1000.) << Endl;
   }
 
   return best_solns_path.back();

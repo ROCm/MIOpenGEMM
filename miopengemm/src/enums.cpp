@@ -480,7 +480,4 @@ std::array<bool, E::N> get_fileRequired()
 }
 const std::array<bool, E::N> fileRequired = get_fileRequired();
 }
-
-
-
 }

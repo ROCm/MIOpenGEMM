@@ -12,7 +12,7 @@
 namespace MIOpenGEMM
 {
 
-/*! @brief 
+/*! @brief
  *  Encapsulation of all objects required to run GEMM for a particular geometry  */
 class GemmKernelSquad
 {
@@ -22,7 +22,7 @@ class GemmKernelSquad
   std::vector<Kernel>              kernels;
   std::vector<Kernel*>             ptr_kernels;
   std::vector<std::vector<size_t>> v_wait_indices;
-    
+
   GemmKernelSquad() = default;
 
   GemmKernelSquad(const std::vector<KernBlob>& v_kblobs_,
@@ -35,11 +35,9 @@ class GemmKernelSquad
                 const void* vp_alpha,
                 const void* vp_beta,
                 size_t      floatsize_bytes);
- 
-  
+
   /*! clear all member vectors, effectively destroying object */
   void clear_vectors();
-  
 };
 
 template <typename T>

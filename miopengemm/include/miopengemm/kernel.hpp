@@ -60,7 +60,7 @@ class Kernel
   Kernel() : Kernel(nullptr, nullptr, nullptr, "default constructed Kernel") {}
 
   bool            update_needed(const KernBlob&);
-  oclutil::Result update(const KernBlob&, owrite::Writer&);
+  oclutil::Result update(const KernBlob&, owrite::Writer&, const std::string& build_options);
 
   ~Kernel();
 

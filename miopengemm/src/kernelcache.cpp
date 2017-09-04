@@ -30,7 +30,6 @@ CacheKeyPresence KernelCache::check_for(const CacheKey& ckey) const
   {
     std::string open  = "No cache entry from keys: " + ckey.get_string();
     std::string close = " (see gencache.cpp for example generating cache entry)";
-    // TODO : how about the individual keys? Add this print functionality.
     return open + close;
   }
   return {};
@@ -80,6 +79,7 @@ KernelCache get_kernel_cache()
   KernelCache kc;
 
 #include "cache1.cachetxt"
+#include "cache2.cachetxt"
   return kc;
 }
 const KernelCache kernel_cache = get_kernel_cache();

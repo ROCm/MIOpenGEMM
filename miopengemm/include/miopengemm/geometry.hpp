@@ -144,7 +144,8 @@ class Geometry
 
   size_t get_padded_area(Mat::E M) const;
 
-  // extime is execution time in seconds
+  /*! @brief
+   * extime is execution time in seconds */
   double get_gflops(double extime) const;
 
   double get_distance(const Geometry& g2) const;

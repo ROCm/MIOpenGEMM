@@ -33,7 +33,7 @@ std::string Solution::get_networkconfig_string() const
 std::string Solution::get_cache_entry_string() const
 {
   return MIOpenGEMM::get_cache_entry_string(
-    {devinfo.device_name, constraints, redirection::get_canonical(geometry)},
+    {devinfo.identifier, constraints, redirection::get_canonical(geometry)},
     hypas,
     redirection::get_is_not_canonical(geometry));
 }

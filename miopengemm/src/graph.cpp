@@ -584,8 +584,8 @@ void CSuGr::initialise_edges()
 void ChiSuGr::refine_start_range()
 {
   start_range[Chi::E::PAD] = {1, 2};
-  start_range[Chi::E::LIW] = {Binary::E::NO};
-  start_range[Chi::E::MIW] = {Binary::E::YES};
+  // start_range[Chi::E::LIW] = {Binary::E::NO};
+  // start_range[Chi::E::MIW] = {Binary::E::YES};
 
   if (ptr_gg->wSpaceSize == 0)
   {

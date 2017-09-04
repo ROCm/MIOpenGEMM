@@ -45,8 +45,5 @@ miog_error::miog_error(const std::string& what_arg)
 {
 }
 
-void miog_warning(const std::string& warning)
-{
-  std::cerr << tgformat(warning, "MIOpenGEMM", "WARNING") << std::flush;
-}
+
 }

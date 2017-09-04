@@ -412,7 +412,7 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
     return std::make_tuple(false, viza);
   }
 
-  bool run_ROCm_test = true;
+  bool run_ROCm_test = false;
   if (run_ROCm_test == true)
   {
     // see rocm.cpp in tests. Note, there is a timeout in OCL if other cases exists.

@@ -503,7 +503,7 @@ Result cl_build_program(cl_program          program,
                  return ret;
                });
 
-  double timeout_seconds = 60.0;
+  double timeout_seconds = 50.0;
 
   auto                          t_start_build = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> fp_ms;
@@ -756,14 +756,15 @@ Result cl_set_context_and_device_from_command_queue(const cl_command_queue& comm
 
 Result cl_set_program_and_kernel(
   // const cl_command_queue& command_queue,
-  const cl_context &          context,
-  const cl_device_id &       device_id_to_use,
-  const std::string& kernel_string,
-  const std::string& kernel_function_name,
-  cl_program&        program,
-  cl_kernel&         kernel,
-  owrite::Writer&    mowri,
-  bool               strict)
+  const cl_context&   context,
+  const cl_device_id& device_id_to_use,
+  const std::string&  kernel_string,
+  const std::string&  kernel_function_name,
+  cl_program&         program,
+  cl_kernel&          kernel,
+  const std::string&  build_options,
+  owrite::Writer&     mowri,
+  bool                strict)
 {
 
   auto kernel_cstr = kernel_string.c_str();
@@ -784,8 +785,8 @@ Result cl_set_program_and_kernel(
   //-save-temps= + "/some/path/"
   // to the following string
 
-  std::string buildOptions_11 = "-cl-std=CL2.0  -Werror";
-  auto        buildOptions    = buildOptions_11.c_str();
+  // std::string buildOptions_11 = "-cl-std=CL2.0  -Werror";
+  auto buildOptions = build_options.c_str();  // buildOptions_11.c_str();
 
   oclr = cl_build_program(program,
                           1,
@@ -1001,13 +1002,11 @@ DevInfo::DevInfo(const cl_device_id& device_)
   initialise();
 }
 
-DevInfo get_fiji_devinfo(){
-  return DevInfo("gfx803", 64);
-  
-}
+DevInfo get_fiji_devinfo() { return DevInfo("gfx803", 64); }
 
-DevInfo::DevInfo(const std::string & identifier_, size_t was_){
-  identifier = identifier_;
+DevInfo::DevInfo(const std::string& identifier_, size_t was_)
+{
+  identifier   = identifier_;
   wg_atom_size = was_;
 }
 

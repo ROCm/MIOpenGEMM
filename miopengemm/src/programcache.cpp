@@ -7,7 +7,8 @@
 namespace MIOpenGEMM
 {
 
-void GemmKernelSquad::clear_vectors(){
+void GemmKernelSquad::clear_vectors()
+{
   v_kblobs.clear();
   kernels.clear();
   ptr_kernels.clear();
@@ -26,7 +27,8 @@ GemmKernelSquad::GemmKernelSquad(const std::vector<KernBlob>& v_kblobs_,
   for (auto ksi = 0; ksi < n_kernels; ++ksi)
   {
     kernels[ksi] = Kernel(device_id, context, nullptr, KType::M.name[v_kblobs[ksi].e_ktype]);
-    kernels[ksi].update(v_kblobs[ksi], mowri);
+    std::string build_options("-cl-std=CL2.0  -Werror");
+    kernels[ksi].update(v_kblobs[ksi], mowri, build_options);
     ptr_kernels[ksi] = &kernels[ksi];
   }
   v_wait_indices = kerngen::get_v_wait_indices(v_kblobs, mowri);

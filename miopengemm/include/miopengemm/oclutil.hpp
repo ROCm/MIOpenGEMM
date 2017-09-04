@@ -246,15 +246,15 @@ Result cl_set_platform_etc(cl_platform_id&    platform,
                            const std::string& hash,
                            bool               strict);
 
-
-Result cl_set_program_and_kernel(const cl_context & context,
-                                 const cl_device_id & device_id_to_use,
-                                 const std::string& kernel_string,
-                                 const std::string& kernel_function_name,
-                                 cl_program&        program,
-                                 cl_kernel&         kernel,
-                                 owrite::Writer&    mowri,
-                                 bool               strict);
+Result cl_set_program_and_kernel(const cl_context&   context,
+                                 const cl_device_id& device_id_to_use,
+                                 const std::string&  kernel_string,
+                                 const std::string&  kernel_function_name,
+                                 cl_program&         program,
+                                 cl_kernel&          kernel,
+                                 const std::string&  build_options,
+                                 owrite::Writer&     mowri,
+                                 bool                strict);
 
 Result cl_set_context_and_device_from_command_queue(const cl_command_queue& command_queue,
                                                     cl_context&             context,
@@ -278,7 +278,6 @@ class SafeClMem
 
   ~SafeClMem();
 };
-
 
 class SafeClEvent
 {
@@ -316,39 +315,37 @@ class OpenCLPlatformInfo
   std::string get_string() const;
 };
 
-// TODO : track down device_name and replace with identifier. 
 class DevInfo
 {
 
   private:
-  void         initialise();
-  
+  void initialise();
+
   cl_device_id device;
 
   public:
-  std::string device_name = "unknown";
+  std::string device_name    = "unknown";
   std::string device_version = "unknown";
   std::string driver_version = "unknown";
-  std::string identifier = "unknown";
+  std::string identifier     = "unknown";
 
-  bool        device_available = false;
-  size_t      device_global_mem_size {0};
-  size_t      device_local_mem_size {0};
-  size_t      device_max_clock_frequency {0};
-  size_t      device_max_compute_units {0};
-  size_t      device_max_work_group_size {0};
-  size_t      wg_atom_size {0};
+  bool   device_available = false;
+  size_t device_global_mem_size{0};
+  size_t device_local_mem_size{0};
+  size_t device_max_clock_frequency{0};
+  size_t device_max_compute_units{0};
+  size_t device_max_work_group_size{0};
+  size_t wg_atom_size{0};
 
   std::string get_string() const;
   DevInfo(const cl_command_queue& command_queue);
   DevInfo(const cl_device_id& device);
   DevInfo(const CLHint& hint, owrite::Writer& mowri);
-  // hack needed temporarily for get_fiji_device. 
-  DevInfo(const std::string & identifier, size_t wg_atom_size); 
+  // hack needed temporarily for get_fiji_device.
+  DevInfo(const std::string& identifier, size_t wg_atom_size);
 };
 
 DevInfo get_fiji_devinfo();
-
 }
 }
 

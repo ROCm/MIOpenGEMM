@@ -6,7 +6,6 @@
 #include <miopengemm/error.hpp>
 #include <miopengemm/normalformgenerator.hpp>
 
-
 namespace MIOpenGEMM
 {
 namespace nformgen

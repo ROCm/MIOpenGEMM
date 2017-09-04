@@ -4,9 +4,9 @@
 
 #include <miopengemm/bundle.hpp>
 #include <miopengemm/gemm.hpp>
-#include <miopengemm/miogemm.hpp>
 #include <miopengemm/geometry.hpp>
 #include <miopengemm/kernel.hpp>
+#include <miopengemm/miogemm.hpp>
 #include <miopengemm/programcache.hpp>
 #include <miopengemm/timer.hpp>
 #include <miopengemm/tinyzero.hpp>
@@ -16,8 +16,10 @@ namespace MIOpenGEMM
 
 std::vector<GemmKernelSquad> program_cache;
 
-void free(size_t ID){
-  if (ID >= program_cache.size()){
+void free(size_t ID)
+{
+  if (ID >= program_cache.size())
+  {
     std::stringstream errm;
     errm << "Attempt to free non-existing ID (max ID is " << ID << ").";
     throw miog_error(errm.str());
@@ -68,11 +70,12 @@ GemmStatus xgemm(bool              isColMajor,
 
     size_t      rank = 0;
     Constraints constraints("");
-    Geometry gg(isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, w_size, get_floattype_char<T>());
-    
+    Geometry    gg(isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, w_size, get_floattype_char<T>());
+
     oclutil::DevInfo devinfo(*ptr_queue);
-    
-    auto soln = get_default_soln(devinfo, gg, constraints, silent_mowri, IfNoCache::E::GENERIC, rank);
+
+    auto soln =
+      get_default_soln(devinfo, gg, constraints, silent_mowri, IfNoCache::E::GENERIC, rank);
     program_cache.emplace_back(GemmKernelSquad(soln.v_tgks, silent_mowri, context, device_id));
     ID = program_cache.size() - 1;
   }

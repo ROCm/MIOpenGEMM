@@ -259,8 +259,6 @@ extern const EnumMapper<std::string> M;
 // before MAIN can execute
 extern std::array<std::vector<size_t>, E::N> dependencies;
 }
-
-
 }
 
 #endif

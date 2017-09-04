@@ -14,14 +14,23 @@ int main()
 
 
 
-  Geometry       gg("tC0_tA1_tB0_colMaj0_m4864_n32768_k19_lda4864_ldb32768_ldc32768_ws0_f32");
+// in the queue:
+// tC0_tA0_tB0_colMaj1_m131072_n1_k576_lda131072_ldb576_ldc131072_ws0_f32
+
+// this is because of ROCm 1.6 testing. TODO: Make a scene.
+// Also : mention that there might be an error when k is small. 
+
+  Geometry       gg("tC0_tA0_tB0_colMaj1_m32004_n1_k1728_lda32004_ldb1728_ldc32004_ws0_f32");
+
+
   CLHint         devhint({"Advanced Micro Devices", "gfx803"});
   Offsets        offsets = get_zero_offsets();
   owrite::Writer mowri(Ver::E::TERMINAL, "");
   dev::TinyTwo       boa(gg, offsets, mowri, devhint);
 
-  auto find_params = get_at_least_n_restarts(6);
-  Constraints constraints("");//A_WOS0__B_WOS0__C_ICE1");
+  auto find_params = get_at_least_n_restarts(1);
+  Constraints constraints(""); 
+  
     
   Solution soln = boa.find2(find_params, constraints);
 

@@ -17,7 +17,7 @@
  * to contiguous). With normal form matrices, it should work in all situations  */
 /* TODO : remove final barrier, not nec */
 /* TODO : beta = 1 optimisation */
-/* TODO : volatile int id (Nugteren) to prevent unrolling */
+/* TODO : volatile int id to prevent unrolling (idea from website of Nugteren) */
 /* TODO : play with restrict keyword */
 /* TODO : consider idea of localA, localB being contiguous (float1)
  * and then "localC" can be within or an extension of this. then,
@@ -25,7 +25,7 @@
  * C from localC */
 // TODO : experiment with this https://community.amd.com/thread/192119
 // (to see when CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE works).
-// TODO : Tillet describes ICE at minute 12 of his talk... put in doc.
+// TODO : Tillet describes ICE at minute 12 of his talk, reference him in report.
 
 namespace MIOpenGEMM
 {

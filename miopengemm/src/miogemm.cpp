@@ -2,19 +2,18 @@
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <miopengemm/bundle.hpp>
-#include <miopengemm/geometry.hpp>
-#include <miopengemm/kernel.hpp>
-#include <miopengemm/miogemm.hpp>
-#include <miopengemm/programcache.hpp>
-#include <miopengemm/timer.hpp>
-#include <miopengemm/tinyzero.hpp>
 #include <miopengemm/bundle.hpp>
 #include <miopengemm/derivedparams.hpp>
+#include <miopengemm/geometry.hpp>
+#include <miopengemm/kernel.hpp>
 #include <miopengemm/kernelcache.hpp>
+#include <miopengemm/miogemm.hpp>
 #include <miopengemm/nearest.hpp>
+#include <miopengemm/programcache.hpp>
 #include <miopengemm/redirection.hpp>
 #include <miopengemm/timer.hpp>
-
+#include <miopengemm/timer.hpp>
+#include <miopengemm/tinyzero.hpp>
 
 namespace MIOpenGEMM
 {
@@ -58,22 +57,22 @@ HyPas get_generic(const Geometry& gg, const Constraints& constraints)
   return hp;
 }
 
-Solution get_default_soln(const oclutil::DevInfo & devinfo,
-                     //const std::string & device_identifier, 
-                     //cl_command_queue   command_queue,
-                     const Geometry&    gg,
-                     const Constraints& constraints,
-                     owrite::Writer&    mowri,
-                     IfNoCache::E       enoc,
-                     size_t             rank)
+Solution get_default_soln(const oclutil::DevInfo& devinfo,
+                          // const std::string & device_identifier,
+                          // cl_command_queue   command_queue,
+                          const Geometry&    gg,
+                          const Constraints& constraints,
+                          owrite::Writer&    mowri,
+                          IfNoCache::E       enoc,
+                          size_t             rank)
 {
 
-  //const std::string & device_identifier, // 
-  //oclutil::DevInfo devinfo(command_queue);
-  //CacheKey ck(devinfo.identifier, constraints, gg);
-  
-  double           extime = 0;
-  HyPas            hp;
+  // const std::string & device_identifier, //
+  // oclutil::DevInfo devinfo(command_queue);
+  // CacheKey ck(devinfo.identifier, constraints, gg);
+
+  double extime = 0;
+  HyPas  hp;
 
   Timer timer;
   timer.start();
@@ -81,16 +80,20 @@ Solution get_default_soln(const oclutil::DevInfo & devinfo,
   CacheKey ck(devinfo.identifier, constraints, gg);
   Graph    graph(gg, devinfo, constraints, mowri);
 
-  // 16 or 32 ??
-  // gg.k > 16 hack for ROCm compiler failure. TODO remove when can
-  if (gg.k > 16 &&
-      nearest::is_within(ck, graph, kernel_cache, 0.1 * std::numeric_limits<double>::max(), rank))
-  {
-    auto nearest_ck       = nearest::get(ck, graph, kernel_cache, rank);
-    bool is_not_canonical = redirection::get_is_not_canonical(gg);
-    hp                    = kernel_cache.at(nearest_ck, is_not_canonical);
+  bool   catch_ROCm_small_k = false;
+  size_t ROCm_small_k       = 1;
 
-    mowri << "Nearest match in kernel cache:\n" << nearest_ck.get_string() << Flush;
+  // TODO : check this.
+  if (catch_ROCm_small_k == false || gg.k > ROCm_small_k)
+  {
+    if (nearest::is_within(ck, graph, kernel_cache, 0.1 * std::numeric_limits<double>::max(), rank))
+    {
+      auto nearest_ck       = nearest::get(ck, graph, kernel_cache, rank);
+      bool is_not_canonical = redirection::get_is_not_canonical(gg);
+      hp                    = kernel_cache.at(nearest_ck, is_not_canonical);
+
+      mowri << "Nearest match in kernel cache:\n" << nearest_ck.get_string() << Flush;
+    }
   }
 
   else
@@ -124,11 +127,10 @@ Solution find(float            allotted_time,
               bool             with_warnings)
 {
 
-
   (void)with_warnings;
-  bool           c_is_const         = true;
-  cl_mem         workspace_gpu      = nullptr;
-  //verbose = true;
+  bool   c_is_const    = true;
+  cl_mem workspace_gpu = nullptr;
+  // verbose = true;
   Ver::E         e_ver              = verbose ? Ver::E::TERMINAL : Ver::E::SILENT;
   std::string    constraints_string = enforce_determinism ? "C__ICE1" : "";
   Constraints    constraints(constraints_string);
@@ -137,26 +139,24 @@ Solution find(float            allotted_time,
   Offsets        offsets = get_zero_offsets();
   TinyZero       jinx(command_queue, tgg, offsets, a, b, c, c_is_const, workspace_gpu, mowri);
 
-  size_t rank = 0;
+  size_t           rank = 0;
   oclutil::DevInfo devinfo(command_queue);
   Solution soln = get_default_soln(devinfo, tgg, constraints, mowri, IfNoCache::E::GENERIC, rank);
   if (allotted_time > 0.1)
   {
     soln = jinx.find0(constraints, find_params);
   }
-  
+
   return soln;
 }
 
-Solution get_default(const Geometry& gg){
-  
-  Constraints constraints {""};
-  auto fiji_devinfo = oclutil::get_fiji_devinfo();
+Solution get_default(const Geometry& gg)
+{
+
+  Constraints    constraints{""};
+  auto           fiji_devinfo = oclutil::get_fiji_devinfo();
   owrite::Writer mowri(Ver::E::SILENT, "");
-  size_t rank = 0;
+  size_t         rank = 0;
   return get_default_soln(fiji_devinfo, gg, constraints, mowri, IfNoCache::GENERIC, rank);
-
 }
-
-
 }
