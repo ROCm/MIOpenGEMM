@@ -66,7 +66,8 @@ class GemmStatus
  * Thereafter, the ID of the GemmStatus returned can be used for this (device, geometry),
  * as long as ther same (device, geometry) is not being run simultaneously on a different thread.
  * If it is being run simultaneously on a different thread, ID < 0 should be passed,
- * to obtain a new ID from the returned GemmStatus. See (TODO) for clarification
+ * to obtain a new ID from the returned GemmStatus which can then be used safely in parallel. 
+ * See (TODO) for clarification
  *
  *
  * @return
