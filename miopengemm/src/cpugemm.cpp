@@ -301,7 +301,6 @@ void gemm(Geometry        gg,
 // dispatch depending on x
 #ifdef MIOPENGEMM_USE_OPENBLAS
   mowri << "launching OpenBLAS CPU GEMM algorithm. " << Endl;
-  //  std::cout << "OpenBLAS for the win." << std::endl;
   openblas::gemm_openblas<TFloat>(gg, toff, a, b, c, alpha, beta);
 #else
   mowri << "launching slow 3-fors CPU GEMM algorithm. " << Endl;

@@ -42,7 +42,7 @@ namespace MIOpenGEMM
  * The Geometry to find a Solution for
  *
  * @param verbose
- * Print the search summary to std::cout
+ * Print the search summary to std :: cout
  *
  * @param with_warnings
  * no longer relevant, to be removed in future versions.
