@@ -13,7 +13,9 @@ int main(int argc, char* argv[])
 
   std::string message("U : for  uniform real:  [-1, 1].\n"
                       "P : for positive real:  [ 0, 1].\n"
-                      "C : for constant real:  1.");
+                      "C : for constant real:  1.\n"
+                      "example : `apiexample P'"
+                      );
 
   if (argc != 2)
   {
