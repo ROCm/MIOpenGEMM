@@ -50,7 +50,6 @@ class RunStats
   }
 };
 
-
 template <typename TFloat>
 
 // returns map from strings desribing the GEMM geometry, to benchmark statistics
@@ -60,10 +59,10 @@ runem(std::vector<MIOpenGEMM::Geometry>& geometries,         // GEMM geometries 
       Impl                               impl,               // GEMM implementer
       bool                               run_accuracy_test,  // confirm correctness
       bool                               run_event_timer)    // get exact times on device
-      
+
 {
   std::map<std::string, RunStats> results;
-  
+
   namespace Mat     = MIOpenGEMM::Mat;
   namespace Mem     = MIOpenGEMM::Mem;
   namespace oclutil = MIOpenGEMM::oclutil;
@@ -71,9 +70,9 @@ runem(std::vector<MIOpenGEMM::Geometry>& geometries,         // GEMM geometries 
   const TFloat alpha = 0.72435898234;
   const TFloat beta  = 0.9241223982;
 
-  auto toff = MIOpenGEMM::get_zero_offsets();
+  auto                       toff = MIOpenGEMM::get_zero_offsets();
   MIOpenGEMM::owrite::Writer mowri(MIOpenGEMM::Ver::E::SILENT, "");
-  MIOpenGEMM::CLHint devhint;
+  MIOpenGEMM::CLHint         devhint;
 
   cl_command_queue_properties cqps = 0;  // CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
   if (run_event_timer == true)
@@ -86,19 +85,18 @@ runem(std::vector<MIOpenGEMM::Geometry>& geometries,         // GEMM geometries 
   std::cout << "\n******   ";
   switch (impl)
   {
-    case Impl::MIO: std::cout << "with MIOpenGEMM"; break;
-    case Impl::CLB: std::cout << "with CLBlast"; break;
-    case Impl::ISAAC: std::cout << "with Isaac"; break;
+  case Impl::MIO: std::cout << "with MIOpenGEMM"; break;
+  case Impl::CLB: std::cout << "with CLBlast"; break;
+  case Impl::ISAAC: std::cout << "with Isaac"; break;
   }
   std::cout << "  ******\n";
 
-
   srand(1011);
-  std::cout << "generating random data on CPU..." << std::flush; 
+  std::cout << "generating random data on CPU..." << std::flush;
   MIOpenGEMM::setabcw::CpuMemBundle<TFloat> cmb(geometries, toff);
   std::cout << "done.\n";
   std::vector<TFloat> c_from_device(cmb.v_mem[Mat::E::C]->size());
-  
+
   for (size_t geomi = 0; geomi < geometries.size(); ++geomi)
   {
 
@@ -158,28 +156,28 @@ runem(std::vector<MIOpenGEMM::Geometry>& geometries,         // GEMM geometries 
 
     // number of runs before starting timer
     size_t n_warmup = 1;
-    
+
     // number of runs with timer (based on DeepBench timing method).
-    size_t n_to_time = 
-      std::min<size_t>(1000, std::max<size_t>(std::ceil(1e11 / (2 * gg.m * gg.k * gg.n)), 2));
-    
+    size_t n_to_time = 10;  // std::min<size_t>(1000, std::max<size_t>(std::ceil(1e11 / (2 * gg.m *
+                            // gg.k * gg.n)), 2));
+
     size_t n_total = n_warmup + n_to_time;
 
     MIOpenGEMM::Timer timer;
-    
-    int  miog_gemm_ID = -1;
-    
+
+    int miog_gemm_ID = -1;
+
     for (size_t run_i = 0; run_i < n_total; ++run_i)
     {
-      
+
       if (run_i == n_warmup)
       {
         timer.start();
       }
 
       cl_event  base_gemmevent = nullptr;
-      auto      use_cl_event  = (run_i < n_warmup || run_event_timer || run_i == n_total - 1);
-      cl_event* ptr_gemmevent = (use_cl_event) ? &base_gemmevent : nullptr;
+      auto      use_cl_event   = (run_i < n_warmup || run_event_timer || run_i == n_total - 1);
+      cl_event* ptr_gemmevent  = (use_cl_event) ? &base_gemmevent : nullptr;
 
       // MIOpenGEMM GEMM
       if (impl == Impl::MIO)
@@ -215,8 +213,7 @@ runem(std::vector<MIOpenGEMM::Geometry>& geometries,         // GEMM geometries 
         (void)mi_status;
       }
 
-      
-#ifdef MIOPENGEMM_BENCH_CLBLAST      
+#ifdef MIOPENGEMM_BENCH_CLBLAST
       else if (impl == Impl::CLB)
       {
         CLBlastStatusCode status = CLBlastSgemm(clblast_layout,
@@ -241,7 +238,6 @@ runem(std::vector<MIOpenGEMM::Geometry>& geometries,         // GEMM geometries 
         (void)status;
       }
 #endif
-
 
 #ifdef MIOPENGEMM_BENCH_ISAAC
       else if (impl == Impl::ISAAC)
@@ -357,7 +353,7 @@ runem(std::vector<MIOpenGEMM::Geometry>& geometries,         // GEMM geometries 
         oclutil::cl_release_event(*ptr_gemmevent, "from VeriGEMM", true);
       }
     }
-    
+
     // overall timer
     auto   t_total   = 1000 * timer.get_elapsed();
     double mean_time = t_total / n_to_time;
@@ -403,92 +399,97 @@ void neat_print(const std::map<std::string, RunStats>& results)
 
 int main()
 {
-  
-  enum class GeomSet {DEEPBENCH, MANUAL};
-  
+
+  enum class GeomSet
+  {
+    DEEPBENCH,
+    MANUAL
+  };
+
   auto geom_to_run = GeomSet::MANUAL;
 
-  bool run_accuracy_test = false;
-  bool run_event_timer   = false;
-  bool run_miopengemm = true;
-  bool run_isaac = true;
-  bool run_clblast = false;
+  bool run_accuracy_test    = false;
+  bool run_event_timer      = false;
+  bool run_miopengemm       = true;
+  bool run_isaac            = false;
+  bool run_clblast          = false;
   bool print_summary_at_end = false;
 
   std::vector<Impl> impls_to_run;
-  
-  if (run_miopengemm){
+
+  if (run_miopengemm)
+  {
     impls_to_run.push_back(Impl::MIO);
   }
-  
-  
-  if (run_isaac){
+
+  if (run_isaac)
+  {
 #ifdef MIOPENGEMM_BENCH_ISAAC
     impls_to_run.push_back(Impl::ISAAC);
-#else 
+#else
     throw MIOpenGEMM::miog_error("Isaac cannot be run, as the current build did not include Isaac");
 #endif
   }
 
-// having issues with CLBlast, will return to it. 
-  if (run_clblast){
+  // having issues with CLBlast, will return to it.
+  if (run_clblast)
+  {
 #ifdef MIOPENGEMM_BENCH_CLBLAST
     impls_to_run.push_back(Impl::CLB);
-#else 
-    throw MIOpenGEMM::miog_error("CLBlast cannot be run, as the current build did not include CLBlast");
+#else
+    throw MIOpenGEMM::miog_error(
+      "CLBlast cannot be run, as the current build did not include CLBlast");
 #endif
   }
-  
+
   std::cout << "will run with options:\n"
-  << "run_accuracy_test = " << run_accuracy_test << '\n'
-  << "run_event_timer = " << run_event_timer << '\n'
-  << "run_miopengemm = " << run_miopengemm << '\n'
-  << "run_isaac = " << run_isaac << '\n'
-  << "run_clblast = " << run_clblast << '\n'
-  << "print_summary_at_end = " << print_summary_at_end << '\n';
-  
+            << "run_accuracy_test = " << run_accuracy_test << '\n'
+            << "run_event_timer = " << run_event_timer << '\n'
+            << "run_miopengemm = " << run_miopengemm << '\n'
+            << "run_isaac = " << run_isaac << '\n'
+            << "run_clblast = " << run_clblast << '\n'
+            << "print_summary_at_end = " << print_summary_at_end << '\n';
 
+  for (auto impl : impls_to_run)
+  {
 
+    // setup the geometries to run
+    std::vector<MIOpenGEMM::Geometry> geometries;
 
-  for (auto impl : impls_to_run){
+    if (geom_to_run == GeomSet::DEEPBENCH)
+    {
 
-  // setup the geometries to run
-  std::vector<MIOpenGEMM::Geometry> geometries;
+      std::vector<MIOpenGEMM::Geometry> deepbench_geometries = MIOpenGEMM::get_deepbench(0);
 
-  if (geom_to_run == GeomSet::DEEPBENCH){
-    
-    std::vector<MIOpenGEMM::Geometry> deepbench_geometries = MIOpenGEMM::get_deepbench(0);
-    
-    // Tracking issues observed with DeepBench problems.
-    std::array<std::vector<MIOpenGEMM::Geometry>, 10> problems;
-    
-    // Problem geometries in Isaac. 
-    // https://github.com/ptillet/isaac/issues/26
-    // DeepBench memory issues (on ROCm 1.6)
-    problems[static_cast<int>(Impl::ISAAC)] = {
-      {"tC0_tA0_tB0_colMaj1_m35_n8457_k4096_lda35_ldb4096_ldc35_ws0_f32"},
-      {"tC0_tA0_tB0_colMaj1_m35_n8457_k2048_lda35_ldb2048_ldc35_ws0_f32"},
-      {"tC0_tA0_tB1_colMaj1_m2048_n7133_k2048_lda2048_ldb7133_ldc2048_ws0_f32"},
-      {"tC0_tA0_tB1_colMaj1_m3072_n7435_k1024_lda3072_ldb7435_ldc3072_ws0_f32"},
-      {"tC0_tA0_tB1_colMaj1_m4096_n7133_k4096_lda4096_ldb7133_ldc4096_ws0_f32"}};
-  
-  
-    // Problem geometries in CLBlast. Either,
-    // https://github.com/CNugteren/CLBlast/issues/185
-    // (1) Excessive memory (on ROCm 1.6) or 
-    // (2) Memory out of bounds (on ROCm 1.6).   
-    problems[static_cast<int>(Impl::CLB)] = {
-      {"tC0_tA1_tB0_colMaj1_m512_n8_k500000_lda500000_ldb500000_ldc512_ws0_f32"},
-      {"tC0_tA1_tB0_colMaj1_m1024_n8_k500000_lda500000_ldb500000_ldc1024_ws0_f32"},
-      {"tC0_tA1_tB0_colMaj1_m512_n16_k500000_lda500000_ldb500000_ldc512_ws0_f32"},
-      {"tC0_tA1_tB0_colMaj1_m1024_n16_k500000_lda500000_ldb500000_ldc1024_ws0_f32"},
-      {"tC0_tA1_tB0_colMaj1_m4096_n16_k4096_lda4096_ldb4096_ldc4096_ws0_f32"},
-      {"tC0_tA1_tB0_colMaj1_m2048_n32_k2048_lda2048_ldb2048_ldc2048_ws0_f32"},
-      {"tC0_tA1_tB0_colMaj1_m6144_n16_k2048_lda2048_ldb2048_ldc6144_ws0_f32"},
-      {"tC0_tA1_tB0_colMaj1_m8448_n16_k2816_lda2816_ldb2816_ldc8448_ws0_f32"},
-      {"tC0_tA1_tB0_colMaj1_m7680_n16_k2560_lda2560_ldb2560_ldc7680_ws0_f32"},
-      {"tC0_tA0_tB0_colMaj1_m35_n8457_k2048_lda35_ldb2048_ldc35_ws0_f32"},
-      {"tC0_tA1_tB0_colMaj1_m35_n8457_k2048_lda2048_ldb2048_ldc35_ws0_f32"}};
+      // Tracking issues observed with DeepBench problems.
+      std::array<std::vector<MIOpenGEMM::Geometry>, 10> problems;
+
+      // Problem geometries in Isaac.
+      // https://github.com/ptillet/isaac/issues/26
+      // DeepBench memory issues (on ROCm 1.6)
+      problems[static_cast<int>(Impl::ISAAC)] = {
+        {"tC0_tA0_tB0_colMaj1_m35_n8457_k4096_lda35_ldb4096_ldc35_ws0_f32"},
+        {"tC0_tA0_tB0_colMaj1_m35_n8457_k2048_lda35_ldb2048_ldc35_ws0_f32"},
+        {"tC0_tA0_tB1_colMaj1_m2048_n7133_k2048_lda2048_ldb7133_ldc2048_ws0_f32"},
+        {"tC0_tA0_tB1_colMaj1_m3072_n7435_k1024_lda3072_ldb7435_ldc3072_ws0_f32"},
+        {"tC0_tA0_tB1_colMaj1_m4096_n7133_k4096_lda4096_ldb7133_ldc4096_ws0_f32"}};
+
+      // Problem geometries in CLBlast. Either,
+      // https://github.com/CNugteren/CLBlast/issues/185
+      // (1) Excessive memory (on ROCm 1.6) or
+      // (2) Memory out of bounds (on ROCm 1.6).
+      problems[static_cast<int>(Impl::CLB)] = {
+        {"tC0_tA1_tB0_colMaj1_m512_n8_k500000_lda500000_ldb500000_ldc512_ws0_f32"},
+        {"tC0_tA1_tB0_colMaj1_m1024_n8_k500000_lda500000_ldb500000_ldc1024_ws0_f32"},
+        {"tC0_tA1_tB0_colMaj1_m512_n16_k500000_lda500000_ldb500000_ldc512_ws0_f32"},
+        {"tC0_tA1_tB0_colMaj1_m1024_n16_k500000_lda500000_ldb500000_ldc1024_ws0_f32"},
+        {"tC0_tA1_tB0_colMaj1_m4096_n16_k4096_lda4096_ldb4096_ldc4096_ws0_f32"},
+        {"tC0_tA1_tB0_colMaj1_m2048_n32_k2048_lda2048_ldb2048_ldc2048_ws0_f32"},
+        {"tC0_tA1_tB0_colMaj1_m6144_n16_k2048_lda2048_ldb2048_ldc6144_ws0_f32"},
+        {"tC0_tA1_tB0_colMaj1_m8448_n16_k2816_lda2816_ldb2816_ldc8448_ws0_f32"},
+        {"tC0_tA1_tB0_colMaj1_m7680_n16_k2560_lda2560_ldb2560_ldc7680_ws0_f32"},
+        {"tC0_tA0_tB0_colMaj1_m35_n8457_k2048_lda35_ldb2048_ldc35_ws0_f32"},
+        {"tC0_tA1_tB0_colMaj1_m35_n8457_k2048_lda2048_ldb2048_ldc35_ws0_f32"}};
 
       problems[static_cast<int>(Impl::MIO)] = {};
 
@@ -504,21 +505,21 @@ int main()
       }
     }
 
-    // custom geometries. 
-    else{
-      //std::vector<MIOpenGEMM::Geometry> geometries;
-      //for (auto x : {699, 700, 701, 702, 703, 704}){
-        //geometries.push_back(MIOpenGEMM::get_squareNN_geometry<float>(x));
+    // custom geometries.
+    else
+    {
+      // std::vector<MIOpenGEMM::Geometry> geometries;
+      // for (auto x : {699, 700, 701, 702, 703, 704}){
+      // geometries.push_back(MIOpenGEMM::get_squareNN_geometry<float>(x));
       //}
-      geometries = {{"tC0_tA1_tB1_colMaj1_m3275_n4860_k33_lda3275_ldb6865_ldc3275_ws0_f32"}};
+      // geometries = {{"tC0_tA1_tB1_colMaj1_m3275_n4860_k33_lda3275_ldb6865_ldc3275_ws0_f32"}};
+      geometries = {MIOpenGEMM::get_squareNN_geometry<float>(5100)};
     }
-    
-    
-    
-    
+
     auto stats = runem<float>(geometries, impl, run_accuracy_test, run_event_timer);
-    
-    if (print_summary_at_end == true){
+
+    if (print_summary_at_end == true)
+    {
       neat_print(stats);
     }
   }
