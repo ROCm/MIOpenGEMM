@@ -158,8 +158,8 @@ runem(std::vector<MIOpenGEMM::Geometry>& geometries,         // GEMM geometries 
     size_t n_warmup = 1;
 
     // number of runs with timer (based on DeepBench timing method).
-    size_t n_to_time = 10;  // std::min<size_t>(1000, std::max<size_t>(std::ceil(1e11 / (2 * gg.m *
-                            // gg.k * gg.n)), 2));
+    size_t n_to_time =    std::min<size_t>(1500, std::max<size_t>(std::ceil(1e11 / (2 * gg.m *
+                             gg.k * gg.n)), 2));
 
     size_t n_total = n_warmup + n_to_time;
 
@@ -411,7 +411,7 @@ int main()
   bool run_accuracy_test    = false;
   bool run_event_timer      = false;
   bool run_miopengemm       = true;
-  bool run_isaac            = false;
+  bool run_isaac            = true;
   bool run_clblast          = false;
   bool print_summary_at_end = false;
 
@@ -513,7 +513,7 @@ int main()
       // geometries.push_back(MIOpenGEMM::get_squareNN_geometry<float>(x));
       //}
       // geometries = {{"tC0_tA1_tB1_colMaj1_m3275_n4860_k33_lda3275_ldb6865_ldc3275_ws0_f32"}};
-      geometries = {MIOpenGEMM::get_squareNN_geometry<float>(5100)};
+      geometries = {MIOpenGEMM::get_squareNN_geometry<float>(1)};
     }
 
     auto stats = runem<float>(geometries, impl, run_accuracy_test, run_event_timer);

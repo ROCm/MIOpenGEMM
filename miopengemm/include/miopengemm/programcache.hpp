@@ -38,6 +38,8 @@ class GemmKernelSquad
 
   /*! clear all member vectors, effectively destroying object */
   void clear_vectors();
+  
+  void refresh_kernels();
 };
 
 template <typename T>

@@ -7,6 +7,21 @@
 namespace MIOpenGEMM
 {
 
+void GemmKernelSquad::refresh_kernels(){
+  cl_int ret;
+  for (auto ksi = 0; ksi < kernels.size(); ++ksi){
+    kernels[ksi].clkern = clCreateKernel(kernels[ksi].clprog, kernels[ksi].kblob.fname.c_str(), &ret);
+  }
+}
+
+    
+    //a_kernel = program, kernel_name, &errcode_ret);
+      
+  //}
+  
+
+
+
 void GemmKernelSquad::clear_vectors()
 {
   v_kblobs.clear();

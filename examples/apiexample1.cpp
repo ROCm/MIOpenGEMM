@@ -12,7 +12,7 @@ int main(int argc, char* argv[])
 {
 
   std::string message("U : for  uniform real:  [-1, 1].\n"
-                      "P : for positive real:  [ 0, 1].\n"
+                      "P : for positive real:  [ 0, 1] (like DeepBench, see tensor.h 07/09/2017).\n"
                       "C : for constant real:  1.\n"
                       "example : `apiexample P'"
                       );

@@ -802,6 +802,7 @@ Result cl_set_program_and_kernel(
 
   // the store as binary option was removed *here*
 
+  
   oclr = cl_create_kernel(kernel,
                           program,
                           kernel_function_name.c_str(),

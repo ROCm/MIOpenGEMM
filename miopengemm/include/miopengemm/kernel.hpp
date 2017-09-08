@@ -20,7 +20,6 @@ namespace MIOpenGEMM
 class Kernel
 {
 
-  private:
   public:
   // cl_command_queue command_queue;
 
@@ -37,7 +36,7 @@ class Kernel
   size_t             t_end;
   std::vector<float> v_times;
 
-  private:
+  public: //private:
   cl_program clprog;
 
   public:

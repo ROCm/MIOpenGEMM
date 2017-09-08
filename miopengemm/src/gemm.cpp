@@ -58,8 +58,9 @@ GemmStatus xgemm(bool              isColMajor,
   owrite::Writer silent_mowri(Ver::E::SILENT, "");
   if (ID < 0)
   {
-    cl_context   context;
-    bool         tC{false};
+    // in slow mode, chill out. 
+    cl_context context;
+
     cl_device_id device_id;
 
     oclutil::cl_set_command_queue_info(
@@ -68,6 +69,8 @@ GemmStatus xgemm(bool              isColMajor,
     oclutil::cl_set_command_queue_info(
       *ptr_queue, CL_QUEUE_CONTEXT, sizeof(cl_context), &context, nullptr, "GEMM", true);
 
+    bool         tC{false};
+    
     size_t      rank = 0;
     Constraints constraints("");
     Geometry    gg(isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, w_size, get_floattype_char<T>());
@@ -81,6 +84,9 @@ GemmStatus xgemm(bool              isColMajor,
   }
 
   GemmKernelSquad& squad = program_cache[ID];
+
+  // key function.
+  // squad.refresh_kernels();
 
   std::array<cl_mem, Mem::E::N> gpu_mems;
   std::array<size_t, Mem::E::N> offsets;
