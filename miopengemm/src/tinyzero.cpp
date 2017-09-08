@@ -195,9 +195,11 @@ void TinyZero::setup_tinykernels(const kerngen::Bundle& bundle)
     if (tk_kernels.at(kblob.e_ktype).update_needed(kblob))
     {
       std::string build_options("-cl-std=CL2.0  -Werror");
-      oclr = tk_kernels.at(kblob.e_ktype).update(kblob, mowri, build_options);
+      oclr = tk_kernels.at(kblob.e_ktype).update_program(kblob, mowri, build_options);
+      
       if (oclr.fail() == false)
       {
+        tk_kernels.at(kblob.e_ktype).update_kernel();
         set_kern_args(kblob);
       }
       else
@@ -275,8 +277,7 @@ oclutil::Result TinyZero::true_core(std::function<void(std::string)> acton,
       throw miog_error("zero kernels active : internal logic error");
     }
 
-    oclr = run_kernels(
-      command_queue, tk_kernels_active, v_wait_indices, 0, nullptr);  //, false, nullptr);
+    oclr = run_kernels(command_queue, tk_kernels_active, v_wait_indices, 0, nullptr);
 
     if (oclr.success == CL_SUCCESS)
     {

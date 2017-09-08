@@ -16,13 +16,13 @@ Kernel::Kernel(cl_device_id       device_id_,
                cl_event*          ptr_event_,
                const std::string& hash_)
 
-  :  // command_queue(command_queue_),
+  :
     device_id(device_id_),
     context(context_),
     ptr_event(ptr_event_),
     clprog(nullptr),
     clkern(nullptr),
-    hash(hash_)  // safe_event("Kernel constructor" + hash)
+    hash(hash_)
 {
 }
 
@@ -36,16 +36,22 @@ void Kernel::try_release()
   {
     oclutil::cl_release_kernel(clkern, "Kernel Destructor", true);
   }
+}
 
-  // if (clevent != nullptr)
-  //{
-  // oclutil::cl_release_event(clevent, "Kernel Destructor", true);
-  //}
+
+void Kernel::update_kernel(){
+
+  oclutil::cl_create_kernel(clkern,
+                          clprog,
+                          kblob.fname.c_str(),
+                          "setting kernel in oclutil::Result",
+                          true);
+  
 }
 
 // TODO : add build_options flag.
 oclutil::Result
-Kernel::update(const KernBlob& ks, owrite::Writer& mowri, const std::string& build_options)
+Kernel::update_program(const KernBlob& ks, owrite::Writer& mowri, const std::string& build_options)
 {
 
   oclutil::Result oclr;
@@ -55,20 +61,15 @@ Kernel::update(const KernBlob& ks, owrite::Writer& mowri, const std::string& bui
   mowri << "compiling " << KType::M.name[kblob.e_ktype] << ". " << Flush;
 
   auto start = std::chrono::high_resolution_clock::now();
-
-  oclr = oclutil::cl_set_program_and_kernel(
-
-    // command_queue,
+  oclr = oclutil::cl_set_program(
     context,
     device_id,
     kblob.kernstr,
-    kblob.fname,
     clprog,
-    clkern,
     build_options,
     mowri,
     false);
-
+  
   auto                         end             = std::chrono::high_resolution_clock::now();
   std::chrono::duration<float> fp_ms           = end - start;
   float                        elapsed_seconds = fp_ms.count();
@@ -107,28 +108,6 @@ void Kernel::set_kernel_args(const std::vector<std::pair<size_t, const void*>>& 
   oclutil::cl_set_kernel_args(clkern, arg_sizes_values, "Kernel::set_kernel_args", true);
 }
 
-oclutil::Result Kernel::enqueue(cl_command_queue command_queue,
-                                cl_uint          num_events_in_wait_list,
-                                const cl_event*  event_wait_list)
-{
-
-  return oclutil::cl_enqueue_ndrange_kernel(command_queue,
-                                            clkern,
-                                            1,
-                                            NULL,
-                                            &kblob.global_work_size,
-                                            &kblob.local_work_size,
-                                            num_events_in_wait_list,
-                                            event_wait_list,
-                                            ptr_event,
-                                            "Kernel::enqueue",
-                                            false);
-}
-
-oclutil::Result Kernel::enqueue(cl_command_queue command_queue)
-{
-  return enqueue(command_queue, 0, nullptr);
-}
 
 void Kernel::update_times()
 {
@@ -173,8 +152,19 @@ oclutil::Result run_kernels(cl_command_queue                 command_queue,
     }
 
     const cl_event* event_wait_list = clevent_waits.size() == 0 ? nullptr : clevent_waits.data();
-    auto oclr = ptr_kernels[k_ind]->enqueue(command_queue, clevent_waits.size(), event_wait_list);
 
+    auto oclr = oclutil::cl_enqueue_ndrange_kernel(command_queue,
+                                            ptr_kernels[k_ind]->clkern,
+                                            1,
+                                            NULL,
+                                            &ptr_kernels[k_ind]->kblob.global_work_size,
+                                            &ptr_kernels[k_ind]->kblob.local_work_size,
+                                            clevent_waits.size(), //num_events_in_wait_list,
+                                            event_wait_list,
+                                            ptr_kernels[k_ind]->ptr_event,
+                                            "Kernel::enqueue",
+                                            false);
+                                            
     // see `in-series' comment at bottom
 
     if (oclr.success == CL_SUCCESS)

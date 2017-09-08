@@ -246,12 +246,12 @@ Result cl_set_platform_etc(cl_platform_id&    platform,
                            const std::string& hash,
                            bool               strict);
 
-Result cl_set_program_and_kernel(const cl_context&   context,
+Result cl_set_program(const cl_context&   context,
                                  const cl_device_id& device_id_to_use,
                                  const std::string&  kernel_string,
-                                 const std::string&  kernel_function_name,
+                                 //const std::string&  kernel_function_name,
                                  cl_program&         program,
-                                 cl_kernel&          kernel,
+                                 //cl_kernel&          kernel,
                                  const std::string&  build_options,
                                  owrite::Writer&     mowri,
                                  bool                strict);

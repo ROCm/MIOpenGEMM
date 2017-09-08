@@ -112,6 +112,25 @@ GemmStatus xgemm(bool              isColMajor,
   squad.ptr_kernels.back()->ptr_event = ptr_event_user;
   auto oclr                           = run_kernels(
     *ptr_queue, squad.ptr_kernels, squad.v_wait_indices, num_events_in_wait_list, event_wait_list);
+
+
+  
+
+
+  //// this takes ~0 time : 
+  //for (size_t abo = 0; abo < 100; ++abo){
+    //for (size_t i = 0; i < squad.ptr_kernels.size(); ++i)
+    //{
+      //cl_int errcode_ret;
+      //cl_kernel a_kernel = clCreateKernel(squad.ptr_kernels[i]->clprog, squad.ptr_kernels[i]->kblob.fname.c_str(), &errcode_ret);
+      //clReleaseKernel(a_kernel);
+    //}
+  //}
+  
+  
+  
+  
+  
   return {true, ID};
 }
 

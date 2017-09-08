@@ -14,13 +14,6 @@ void GemmKernelSquad::refresh_kernels(){
   }
 }
 
-    
-    //a_kernel = program, kernel_name, &errcode_ret);
-      
-  //}
-  
-
-
 
 void GemmKernelSquad::clear_vectors()
 {
@@ -43,7 +36,8 @@ GemmKernelSquad::GemmKernelSquad(const std::vector<KernBlob>& v_kblobs_,
   {
     kernels[ksi] = Kernel(device_id, context, nullptr, KType::M.name[v_kblobs[ksi].e_ktype]);
     std::string build_options("-cl-std=CL2.0  -Werror");
-    kernels[ksi].update(v_kblobs[ksi], mowri, build_options);
+    kernels[ksi].update_program(v_kblobs[ksi], mowri, build_options);
+    kernels[ksi].update_kernel();
     ptr_kernels[ksi] = &kernels[ksi];
   }
   v_wait_indices = kerngen::get_v_wait_indices(v_kblobs, mowri);

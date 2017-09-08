@@ -42,6 +42,8 @@ class GemmKernelSquad
   void refresh_kernels();
 };
 
+
+
 template <typename T>
 std::string adder(std::stringstream& ss, T t)
 {

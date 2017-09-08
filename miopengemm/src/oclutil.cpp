@@ -754,14 +754,14 @@ Result cl_set_context_and_device_from_command_queue(const cl_command_queue& comm
   return oclr;
 }
 
-Result cl_set_program_and_kernel(
+Result cl_set_program(//_and_kernel(
   // const cl_command_queue& command_queue,
   const cl_context&   context,
   const cl_device_id& device_id_to_use,
   const std::string&  kernel_string,
-  const std::string&  kernel_function_name,
+  //const std::string&  kernel_function_name,
   cl_program&         program,
-  cl_kernel&          kernel,
+  //cl_kernel&          kernel,
   const std::string&  build_options,
   owrite::Writer&     mowri,
   bool                strict)
@@ -803,11 +803,11 @@ Result cl_set_program_and_kernel(
   // the store as binary option was removed *here*
 
   
-  oclr = cl_create_kernel(kernel,
-                          program,
-                          kernel_function_name.c_str(),
-                          "getting kernel in set_program_and_kernel",
-                          strict);
+  //oclr = cl_create_kernel(kernel,
+                          //program,
+                          //kernel_function_name.c_str(),
+                          //"getting kernel in set_program_and_kernel",
+                          //strict);
 
   return oclr;
 }
