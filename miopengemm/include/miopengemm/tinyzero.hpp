@@ -27,6 +27,7 @@
 #include <miopengemm/solution.hpp>
 #include <miopengemm/stringutilbase.hpp>
 #include <miopengemm/timer.hpp>
+#include <miopengemm/programs.hpp>
 
 namespace MIOpenGEMM
 {
@@ -95,16 +96,18 @@ class TinyZero
   const oclutil::DevInfo devinfo;
   owrite::Writer&        mowri;
 
+
+  //VerbosePrograms programs;
+  
   // for each of the possible kernels (copy a, copy b, etc)
   std::array<Kernel, KType::E::N> tk_kernels;
-
   std::array<cl_event, KType::E::N> tk_events;
-
   // pointers to the kernels required for a given HyPas (fewer than or as many as KType::E::N)
   std::vector<Kernel*> tk_kernels_active;
-
   // dependency graph of active kernels
   std::vector<std::vector<size_t>> v_wait_indices;
+
+
 
   double get_gflops(double timems);
   std::string get_run_times_heading();

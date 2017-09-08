@@ -24,10 +24,8 @@ class Kernel
   cl_device_id device_id;
   cl_context   context;
   KernBlob     kblob;
-
   cl_program   clprog;
 
-  
   cl_event*    ptr_event;
   cl_kernel    clkern;
 
@@ -41,7 +39,7 @@ class Kernel
 
   private:
   void try_release();
-  void set_kernel_arg(cl_uint arg_index, size_t arg_size, const void* arg_value);
+
 
   public:
   Kernel(
@@ -63,11 +61,6 @@ class Kernel
 
   bool is_set();
   void set_kernel_args(const std::vector<std::pair<size_t, const void*>>& arg_sizes_values);
-
-  //oclutil::Result
-  //enqueue(cl_command_queue, cl_uint num_events_in_wait_list, const cl_event* event_wait_list);
-  
-  //oclutil::Result enqueue(cl_command_queue);
 
   void update_times();
   void reset_times();

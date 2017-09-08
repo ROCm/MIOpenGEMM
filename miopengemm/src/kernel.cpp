@@ -128,12 +128,19 @@ void Kernel::reset_times()
   v_times.resize(0);
 }
 
-oclutil::Result run_kernels(cl_command_queue                 command_queue,
-                            std::vector<Kernel*>             ptr_kernels,
-                            std::vector<std::vector<size_t>> v_wait_indices,
-                            cl_uint                          n_user_wait_list,
-                            const cl_event*                  user_wait_list)
+oclutil::Result run_kernels(cl_command_queue                                    command_queue,
+                            std::vector<Kernel*>                                ptr_kernels,
+                            //const std::vector<std::pair<size_t, const void*>> & kern_args,
+                            std::vector<std::vector<size_t>>                    v_wait_indices,
+                            cl_uint                                             n_user_wait_list,
+                            const cl_event*                                     user_wait_list)
 {
+  
+  // TODO make safe version of kernels. RAII
+  //std::vector<cl_kernel> clkerns (ptr_kernels.size());
+  //std::vector<cl_event> clevents (ptr_kernels.size());
+  
+  //set kernels here! need kernel args...
 
   for (size_t k_ind = 0; k_ind < ptr_kernels.size(); ++k_ind)
   {
@@ -162,7 +169,7 @@ oclutil::Result run_kernels(cl_command_queue                 command_queue,
                                             clevent_waits.size(), //num_events_in_wait_list,
                                             event_wait_list,
                                             ptr_kernels[k_ind]->ptr_event,
-                                            "Kernel::enqueue",
+                                            "run_kernels",
                                             false);
                                             
     // see `in-series' comment at bottom

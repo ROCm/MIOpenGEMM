@@ -17,7 +17,7 @@ int main()
   //Geometry gg("tC0_tA1_tB0_colMaj1_m3072_n48000_k1024_lda1024_ldb1024_ldc3072_ws52594944_f32");
 
 
-  Geometry gg("tC0_tA1_tB0_colMaj1_m3072_n48000_k1024_lda1024_ldb1024_ldc3072_ws0_f32");
+  Geometry gg("tC0_tA1_tB0_colMaj1_m307_n4800_k1024_lda1024_ldb1024_ldc3072_ws0_f32");
   
   
   //6249.987
@@ -30,7 +30,7 @@ int main()
   owrite::Writer mowri(Ver::E::TERMINAL, "");
   dev::TinyTwo   boa(gg, offsets, mowri, devhint);
 
-  auto        find_params = get_at_least_n_restarts(10);
+  auto        find_params = get_at_least_n_restarts(2);
   Constraints constraints("");
 
   Solution soln = boa.find2(find_params, constraints);

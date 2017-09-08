@@ -101,12 +101,15 @@ TinyZero::TinyZero(cl_command_queue command_queue_,
          command_queue_),
     devinfo(command_queue_),
     mowri(mowri_)
+    //programs(nullptr, nullptr, mowri)
 {
   cl_context   context;
   cl_device_id device_id;
   oclutil::cl_set_context_and_device_from_command_queue(
     command_queue, context, device_id, mowri, true);
 
+  //programs = VerbosePrograms(device_id, context, mowri);
+  
   for (size_t i = 0; i < KType::E::N; ++i)
   {
     tk_kernels[i] = Kernel(device_id, context, &tk_events[i], KType::M.name[i]);
@@ -197,7 +200,9 @@ void TinyZero::setup_tinykernels(const kerngen::Bundle& bundle)
       std::string build_options("-cl-std=CL2.0  -Werror");
       oclr = tk_kernels.at(kblob.e_ktype).update_program(kblob, mowri, build_options);
       
-      if (oclr.fail() == false)
+      
+      // TODO : Is throwing an error correct behaviour ? ?
+      if (!oclr.fail())
       {
         tk_kernels.at(kblob.e_ktype).update_kernel();
         set_kern_args(kblob);
