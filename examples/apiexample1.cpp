@@ -160,6 +160,7 @@ int main(int argc, char* argv[])
   std::cout << "done. \n"
             << n_runs << " calls with this geometry, blocking on the final one ... " << std::flush;
   
+  // TODO : remove ID.
   //enqueue n_runs - 1 calls without any cl_event. 
   for (int i = 0; i < n_runs - 1; ++i)
   {
