@@ -9,7 +9,7 @@ void geometrytest(const MIOpenGEMM::Geometry& gg)
 {
   using namespace MIOpenGEMM;
 
-  CLHint         devhint;
+  CLHint         devhint(0, 0); //(first platform, first device)
   Offsets        offsets = get_zero_offsets();
   owrite::Writer mowri(Ver::E::ACCURACY, "");
   dev::TinyTwo   boa(gg, offsets, mowri, devhint);
