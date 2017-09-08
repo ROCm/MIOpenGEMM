@@ -97,15 +97,15 @@ class TinyZero
   owrite::Writer&        mowri;
 
 
-  //VerbosePrograms programs;
+  VerbosePrograms programs;
   
-  // for each of the possible kernels (copy a, copy b, etc)
-  std::array<Kernel, KType::E::N> tk_kernels;
-  std::array<cl_event, KType::E::N> tk_events;
-  // pointers to the kernels required for a given HyPas (fewer than or as many as KType::E::N)
-  std::vector<Kernel*> tk_kernels_active;
-  // dependency graph of active kernels
-  std::vector<std::vector<size_t>> v_wait_indices;
+  //// for each of the possible kernels (copy a, copy b, etc)
+  //std::array<Kernel, KType::E::N> tk_kernels;
+  //std::array<cl_event, KType::E::N> tk_events;
+  //// pointers to the kernels required for a given HyPas (fewer than or as many as KType::E::N)
+  //std::vector<Kernel*> tk_kernels_active;
+  //// dependency graph of active kernels
+  //std::vector<std::vector<size_t>> v_wait_indices;
 
 
 
@@ -114,7 +114,7 @@ class TinyZero
   std::string get_run_time_string(cl_int status, double extime);
   void address_check_valid();
   void address_check_valid_and_reliable();
-  void set_kern_args(const KernBlob& kblob);
+  //void set_kern_args(const KernBlob& kblob);
   void setup_tinykernels(const kerngen::Bundle& bundle);
 
   Solution single_descent_find(double allotted_time,

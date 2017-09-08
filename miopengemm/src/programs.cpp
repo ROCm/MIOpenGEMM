@@ -75,7 +75,7 @@ void Program::reset_times()
 }
 
 BasePrograms::BasePrograms(const cl_device_id& id, const cl_context& ctxt, owrite::Writer& mowri_)
-  : active_program_indices(0), v_wait_indices(0), ptr_mowri(&mowri_)
+  : act_inds(0), v_wait_indices(0), ptr_mowri(&mowri_)
 {
   for (size_t pi = 0; pi < KType::E::N; ++pi)
   {
@@ -90,13 +90,13 @@ void BasePrograms::update(const std::vector<KernBlob>& kbs)
 
   // v_wait_indices.
   v_wait_indices = kerngen::get_v_wait_indices(kbs, *ptr_mowri);
-  // set active_program_indices.
-  active_program_indices.resize(0);
+  // set act_inds.
+  act_inds.resize(0);
   for (size_t kbi = 0; kbi < kbs.size(); ++kbi)
   {
     // set programs.
     programs.at(kbs[kbi].e_ktype).update(kbs[kbi], *ptr_mowri, build_options);
-    active_program_indices.push_back(kbs[kbi].e_ktype);
+    act_inds.push_back(kbs[kbi].e_ktype);
   }
 }
 
@@ -108,7 +108,7 @@ oclutil::Result VerbosePrograms::run(const cl_command_queue& queue,
                                      cl_event*               ptr_user_event)
 {
   // TODO RAII these.
-  auto n_active = active_program_indices.size();
+  auto n_active = act_inds.size();
 
   std::vector<cl_event> clevents(n_active);
   if (ptr_user_event != nullptr)
@@ -119,7 +119,7 @@ oclutil::Result VerbosePrograms::run(const cl_command_queue& queue,
   std::vector<cl_kernel> clkerns(n_active);
   for (int k_ind = 0; k_ind < n_active; ++k_ind)
   {
-    Program& prog = programs[active_program_indices[k_ind]];
+    Program& prog = programs[act_inds[k_ind]];
     oclutil::cl_create_kernel(
       clkerns[k_ind], prog.clprog, prog.kblob.fname.c_str(), "setting kernel in ::run", true);
   }
@@ -127,7 +127,7 @@ oclutil::Result VerbosePrograms::run(const cl_command_queue& queue,
   for (int k_ind = 0; k_ind < n_active; ++k_ind)
   {
 
-    Program& prog = programs[active_program_indices[k_ind]];
+    Program& prog = programs[act_inds[k_ind]];
 
     std::vector<cl_event> wait_list;
 
@@ -157,20 +157,46 @@ oclutil::Result VerbosePrograms::run(const cl_command_queue& queue,
                                                    "run_kernels",
                                                    false);
   }
+  
+  if (update_times){
+    
+    size_t maxend   = 0;
+    size_t minstart = std::numeric_limits<size_t>::max();
+
+    oclutil::cl_wait_for_events(1, clevents.back(), "run", true);
+    for (int k_ind = 0; k_ind < n_active; ++k_ind){
+      Program & prog = programs[act_inds[k_ind]];
+      prog.update_times(clevents[k_ind]);
+      maxend   = std::max<size_t>(maxend, prog.t_end);
+      minstart = std::min<size_t>(minstart, prog.t_start);
+    }
+    extime = (1e-6 * (maxend - minstart));
+  }
+
+
+    //for (auto& ptr_tk_kernel : tk_kernels_active)
+    //{
+      //ptr_tk_kernel->update_times();
+    //}
+
+    //double extime = (1e-6 * (maxend - minstart));
+      
+
+
 
   for (int k_ind = 0; k_ind < n_active; ++k_ind)
   {
-    oclutil::cl_release_kernel(clkerns[k_ind], "release kernel " + std::to_string(k_ind), true);
+    oclutil::cl_release_kernel(clkerns[k_ind], "run" + std::to_string(k_ind), true);
   }
 
   for (int k_ind = 0; k_ind < n_active - 1; ++k_ind)
   {
-    oclutil::cl_release_event(clevents[k_ind], "release cl_event " + std::to_string(k_ind), true);
+    oclutil::cl_release_event(clevents[k_ind], "run" + std::to_string(k_ind), true);
   }
 
   if (ptr_user_event != nullptr)
   {
-    oclutil::cl_release_event(clevents[n_active - 1], "release final cl_event", true);
+    oclutil::cl_release_event(clevents.back(), "run", true);
   }
 }
 }

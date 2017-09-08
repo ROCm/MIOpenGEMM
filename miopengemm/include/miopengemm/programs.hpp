@@ -49,10 +49,12 @@ class BasePrograms
 {
 
   public:
+  double extime;
+  
   using AllKernArgs = const std::vector<std::vector<std::pair<size_t, const void*>>>;
 
   std::array<Program, KType::E::N> programs;
-  std::vector<bool>                active_program_indices;
+  std::vector<size_t>                active_program_indices;
   std::vector<std::vector<size_t>> v_wait_indices;
 
   owrite::Writer * ptr_mowri;

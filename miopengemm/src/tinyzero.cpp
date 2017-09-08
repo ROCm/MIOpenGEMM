@@ -101,19 +101,13 @@ TinyZero::TinyZero(cl_command_queue command_queue_,
          command_queue_),
     devinfo(command_queue_),
     mowri(mowri_)
-    //programs(nullptr, nullptr, mowri)
 {
   cl_context   context;
   cl_device_id device_id;
   oclutil::cl_set_context_and_device_from_command_queue(
     command_queue, context, device_id, mowri, true);
 
-  //programs = VerbosePrograms(device_id, context, mowri);
-  
-  for (size_t i = 0; i < KType::E::N; ++i)
-  {
-    tk_kernels[i] = Kernel(device_id, context, &tk_events[i], KType::M.name[i]);
-  }
+  programs = VerbosePrograms(device_id, context, mowri);
 }
 
 void TinyZero::address_check_valid()
@@ -170,62 +164,12 @@ void TinyZero::address_check_valid_and_reliable()
   }
 }
 
-void TinyZero::set_kern_args(const KernBlob& kblob)
-{
-  auto arg_sizes_values = kerngen::get_arg_sizes_values(kblob,
-                                                        gpum.cl_mems,
-                                                        toff.offsets,
-                                                        gg.derived.float_size_bytes,
-                                                        Floating::m_alpha[gg.floattype],
-                                                        Floating::m_beta[gg.floattype]);
-
-  tk_kernels.at(kblob.e_ktype).set_kernel_args(arg_sizes_values);
-}
-
-void TinyZero::setup_tinykernels(const kerngen::Bundle& bundle)
-{
-
-  oclutil::Result oclr;
-
-  // TODO setting v_wait_indices here : is not clear code
-  v_wait_indices = kerngen::get_v_wait_indices(bundle.v_tgks, mowri);
-
-  tk_kernels_active.resize(0);
-
-  for (size_t ksi = 0; ksi < bundle.v_tgks.size(); ++ksi)
-  {
-    const KernBlob& kblob = bundle.v_tgks[ksi];
-    if (tk_kernels.at(kblob.e_ktype).update_needed(kblob))
-    {
-      std::string build_options("-cl-std=CL2.0  -Werror");
-      oclr = tk_kernels.at(kblob.e_ktype).update_program(kblob, mowri, build_options);
-      
-      
-      // TODO : Is throwing an error correct behaviour ? ?
-      if (!oclr.fail())
-      {
-        tk_kernels.at(kblob.e_ktype).update_kernel();
-        set_kern_args(kblob);
-      }
-      else
-      {
-        std::stringstream ss;
-        // Maybe related : https://github.com/BVLC/caffe/issues/5610  (?)
-        ss << "Failed in setup tinykernels. " << bundle.hp.get_string()
-           << " Message: " << oclr.message << "Error status : " << oclr.success
-           << " Bailing, please report if possible. ";
-        throw miog_error(ss.str());
-      }
-    }
-    tk_kernels_active.push_back(&tk_kernels[bundle.v_tgks[ksi].e_ktype]);
-  }
-}
-
 std::string TinyZero::get_run_times_heading()
 {
   std::stringstream ss;
   ss << "tt: \t";
-  for (size_t k_ind = 0; k_ind < tk_kernels_active.size(); ++k_ind)
+
+  for (size_t k_ind = 0; programs.get_n_active(); ++k_ind)
   {
     ss << " k" << k_ind << ":\t";
   }
@@ -242,9 +186,9 @@ std::string TinyZero::get_run_time_string(cl_int status, double extime)
 
     double sumtimes = 0;
 
-    for (size_t k_ind = 0; k_ind < tk_kernels_active.size(); ++k_ind)
+    for (size_t k_ind = 0; k_ind < programs.get_n_active(); ++k_ind)
     {
-      auto tk = tk_kernels_active[k_ind]->v_times.back();
+      auto tk = programs.programs[active_program_indices[k_ind]]->v_times.back();
       sumtimes += tk;
       ss << " " << tk << "\t";
     }
@@ -276,14 +220,18 @@ oclutil::Result TinyZero::true_core(std::function<void(std::string)> acton,
   {
     // see `overheat' comment at bottom
 
-    if (tk_kernels_active.size() == 0)
+    if (programs.get_n_active() == 0)
     {
 
       throw miog_error("zero kernels active : internal logic error");
     }
+    
+    //TODO RAII this
+    cl_event last_event;
 
-    oclr = run_kernels(command_queue, tk_kernels_active, v_wait_indices, 0, nullptr);
+    oclr = programs.run(command_queue, all_kern_args, 0, nullptr, true, last_event);
 
+                              
     if (oclr.success == CL_SUCCESS)
     {
       // good
@@ -309,24 +257,14 @@ oclutil::Result TinyZero::true_core(std::function<void(std::string)> acton,
 
     oclutil::cl_flush(command_queue, "cl flush in core gemm loop", true);
 
-    // Wait for kernels to complete
-    oclutil::cl_wait_for_events(1, tk_kernels_active.back()->ptr_event, "core gemm loops", true);
-
-    size_t maxend   = 0;
-    size_t minstart = std::numeric_limits<size_t>::max();
-    for (auto& ptr_tk_kernel : tk_kernels_active)
-    {
-      ptr_tk_kernel->update_times();
-      maxend   = std::max<size_t>(maxend, ptr_tk_kernel->t_end);
-      minstart = std::min<size_t>(minstart, ptr_tk_kernel->t_start);
-    }
-
-    double extime = (1e-6 * (maxend - minstart));
+    
+    // wait for last event in update_times.
+    programs.update_times();
 
     // act on the results string.
-    acton(get_run_time_string(oclr.success, extime));
+    acton(get_run_time_string(oclr.success, programs.extime));
     ++runi;
-    all_times.push_back(extime);
+    all_times.push_back(programs.extime);
   }
 
   auto   best_time = *std::min_element(all_times.begin(), all_times.end());
@@ -356,7 +294,7 @@ std::vector<double> TinyZero::benchgemm(const HyPas& hp, const Halt& hl)
     throw miog_error(atr.msg);
   }
 
-  setup_tinykernels(bundle);
+  //setup_tinykernels(bundle);
 
   mowri << "hyper-p   :" << hp.get_string() << '\n'
         << "geometry  :" << gg.get_string() << '\n'
