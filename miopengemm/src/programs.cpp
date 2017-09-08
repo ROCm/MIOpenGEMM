@@ -44,6 +44,10 @@ Program::update(const KernBlob& ks, owrite::Writer& mowri, const std::string& bu
     auto start = std::chrono::high_resolution_clock::now();
     oclr =
       oclutil::cl_set_program(context, device_id, kblob.kernstr, clprog, build_opts, mowri, false);
+
+    
+    
+
     auto                         end   = std::chrono::high_resolution_clock::now();
     std::chrono::duration<float> fp_ms = end - start;
     float                        secs  = fp_ms.count();
@@ -64,7 +68,8 @@ void Program::update_times(const cl_event& event)
   oclutil::cl_set_event_profiling_info(
     event, CL_PROFILING_COMMAND_END, sizeof(size_t), &t_end, nullptr, "in update_times", true);
 
-  v_times.push_back(1e-6 * (t_end - t_start));
+  auto new_time = 1e-6 * (t_end - t_start);
+  v_times.push_back(new_time);
 }
 
 void Program::reset_times()
@@ -73,6 +78,14 @@ void Program::reset_times()
   t_end   = 0;
   v_times.resize(0);
 }
+
+void BasePrograms::reset_times(){
+  for (size_t pi = 0; pi < KType::E::N; ++pi)
+  {
+    programs[pi].reset_times();
+  }
+}
+  
 
 BasePrograms::BasePrograms(const cl_device_id& id, const cl_context& ctxt, owrite::Writer& mowri_)
   : act_inds(0), v_wait_indices(0), ptr_mowri(&mowri_)
@@ -97,11 +110,12 @@ void BasePrograms::update(const std::vector<KernBlob>& kbs)
     // set programs.
     programs.at(kbs[kbi].e_ktype).update(kbs[kbi], *ptr_mowri, build_options);
     act_inds.push_back(kbs[kbi].e_ktype);
+
   }
 }
 
 oclutil::Result VerbosePrograms::run(const cl_command_queue& queue,
-                                     AllKernArgs&            all_args,
+                                     const AllKernArgs&            all_args,
                                      cl_uint                 n_user_wait_list,
                                      const cl_event*         user_wait_list,
                                      bool                    update_times,
@@ -152,7 +166,7 @@ oclutil::Result VerbosePrograms::run(const cl_command_queue& queue,
                                                    &prog.kblob.global_work_size,
                                                    &prog.kblob.local_work_size,
                                                    wait_list.size(),
-                                                   wait_list.data(),
+                                                   ptr_wait_list,
                                                    &clevents[k_ind],
                                                    "run_kernels",
                                                    false);
@@ -163,7 +177,8 @@ oclutil::Result VerbosePrograms::run(const cl_command_queue& queue,
     size_t maxend   = 0;
     size_t minstart = std::numeric_limits<size_t>::max();
 
-    oclutil::cl_wait_for_events(1, clevents.back(), "run", true);
+    oclutil::cl_wait_for_events(1, &clevents.back(), "run", true);
+    
     for (int k_ind = 0; k_ind < n_active; ++k_ind){
       Program & prog = programs[act_inds[k_ind]];
       prog.update_times(clevents[k_ind]);
@@ -198,5 +213,7 @@ oclutil::Result VerbosePrograms::run(const cl_command_queue& queue,
   {
     oclutil::cl_release_event(clevents.back(), "run", true);
   }
+  
+  return {};
 }
 }

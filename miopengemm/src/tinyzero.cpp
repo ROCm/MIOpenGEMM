@@ -23,6 +23,7 @@
 #include <miopengemm/nearest.hpp>
 #include <miopengemm/oclutil.hpp>
 #include <miopengemm/outputwriter.hpp>
+#include <miopengemm/programs.hpp>
 #include <miopengemm/redirection.hpp>
 #include <miopengemm/solution.hpp>
 #include <miopengemm/stringutilbase.hpp>
@@ -169,7 +170,7 @@ std::string TinyZero::get_run_times_heading()
   std::stringstream ss;
   ss << "tt: \t";
 
-  for (size_t k_ind = 0; programs.get_n_active(); ++k_ind)
+  for (size_t k_ind = 0; k_ind < programs.get_n_active(); ++k_ind)
   {
     ss << " k" << k_ind << ":\t";
   }
@@ -177,23 +178,22 @@ std::string TinyZero::get_run_times_heading()
   return ss.str();
 }
 
-std::string TinyZero::get_run_time_string(cl_int status, double extime)
+std::string TinyZero::get_run_time_string(cl_int status)
 {
   std::stringstream ss;
   if (status == CL_SUCCESS)
   {
-    ss << std::fixed << std::setprecision(3) << extime << '\t';
+    ss << std::fixed << std::setprecision(3) << programs.extime << '\t';
 
     double sumtimes = 0;
-
     for (size_t k_ind = 0; k_ind < programs.get_n_active(); ++k_ind)
     {
-      auto tk = programs.programs[active_program_indices[k_ind]]->v_times.back();
+      auto tk = programs.programs[programs.act_inds[k_ind]].v_times.back();
       sumtimes += tk;
       ss << " " << tk << "\t";
     }
     ss << std::fixed << std::setprecision(3) << sumtimes << '\t';
-    ss << " " << 2.0 * gg.m * gg.n * gg.k / (extime * 1e6) << std::setprecision(6);
+    ss << " " << 2.0 * gg.m * gg.n * gg.k / (programs.extime * 1e6) << std::setprecision(6);
   }
 
   else
@@ -205,33 +205,33 @@ std::string TinyZero::get_run_time_string(cl_int status, double extime)
 
 oclutil::Result TinyZero::true_core(std::function<void(std::string)> acton,
                                     std::vector<double>&             all_times,
-                                    const Halt&                      hl)
+                                    const Halt&                      hl,
+                                    const AllKernArgs&               all_kern_args)
 {
+  
+  std::cout << "just entered true core " << std::endl;
 
   size_t          runi{0};
   oclutil::Result oclr;
-
-  Timer timer;
+  Timer           timer;
   timer.start();
-
   all_times.resize(0);
 
   while (!hl.halt(runi, timer.get_elapsed()))
   {
+
     // see `overheat' comment at bottom
 
     if (programs.get_n_active() == 0)
     {
-
       throw miog_error("zero kernels active : internal logic error");
     }
-    
-    //TODO RAII this
+
+    // TODO RAII this
     cl_event last_event;
 
-    oclr = programs.run(command_queue, all_kern_args, 0, nullptr, true, last_event);
+    oclr = programs.run(command_queue, all_kern_args, 0, nullptr, true, &last_event);
 
-                              
     if (oclr.success == CL_SUCCESS)
     {
       // good
@@ -257,12 +257,12 @@ oclutil::Result TinyZero::true_core(std::function<void(std::string)> acton,
 
     oclutil::cl_flush(command_queue, "cl flush in core gemm loop", true);
 
-    
     // wait for last event in update_times.
-    programs.update_times();
+    //programs.update_times();
 
     // act on the results string.
-    acton(get_run_time_string(oclr.success, programs.extime));
+    acton(get_run_time_string(oclr.success));
+
     ++runi;
     all_times.push_back(programs.extime);
   }
@@ -273,6 +273,7 @@ oclutil::Result TinyZero::true_core(std::function<void(std::string)> acton,
                          << "  time[ms]:" << stringutil::get_char_padded(best_time, 10)
                          << "  gflops:" << gflops << Endl;
 
+  
   return {};
 }
 
@@ -294,7 +295,8 @@ std::vector<double> TinyZero::benchgemm(const HyPas& hp, const Halt& hl)
     throw miog_error(atr.msg);
   }
 
-  //setup_tinykernels(bundle);
+  programs.update(bundle.v_tgks);
+  auto all_kern_args = get_all_kern_args(bundle.v_tgks);
 
   mowri << "hyper-p   :" << hp.get_string() << '\n'
         << "geometry  :" << gg.get_string() << '\n'
@@ -303,8 +305,27 @@ std::vector<double> TinyZero::benchgemm(const HyPas& hp, const Halt& hl)
   mowri << get_run_times_heading();
 
   std::vector<double> all_times;
-  true_core([this](std::string x) { mowri << x << '\n'; }, all_times, hl);
+  true_core([this](std::string x) { mowri << x << '\n'; }, all_times, hl, all_kern_args);
   return all_times;
+}
+
+TinyZero::AllKernArgs TinyZero::get_all_kern_args(const std::vector<KernBlob>& kblobs) const 
+{
+
+    TinyZero::AllKernArgs all_kern_args(0);
+
+  for (auto& kblob : kblobs)
+  {
+
+    all_kern_args.emplace_back(kerngen::get_arg_sizes_values(kblob,
+                                                             gpum.cl_mems,
+                                                             toff.offsets,
+                                                             gg.derived.float_size_bytes,
+                                                             Floating::m_alpha[gg.floattype],
+                                                             Floating::m_beta[gg.floattype]));
+  }
+  
+  return all_kern_args;
 }
 
 Solution TinyZero::find0(const Constraints& constraints, const FindParams& fparms)
@@ -395,9 +416,8 @@ Solution TinyZero::single_descent_find(double             allotted_time,
                                        size_t             warmstart_rank)
 {
 
-
   // only considered an improvement if ratio new/old less than this
-  double improvement_factor_required = 0.999;
+  double improvement_factor_required = 0.998;
 
   Timer timer;
   timer.start();
@@ -448,7 +468,6 @@ Solution TinyZero::single_descent_find(double             allotted_time,
     hyper_front   = {warm_start_hp};
   }
 
-
   HyPas hp_curr;
 
   bool improvement_found_on_front = true;
@@ -495,7 +514,8 @@ Solution TinyZero::single_descent_find(double             allotted_time,
       }
 
       // kernel compilation
-      setup_tinykernels(bundle);
+      programs.update(bundle.v_tgks);
+      auto all_kern_args = get_all_kern_args(bundle.v_tgks);
 
       old_track_msg = new_track_msg;
       new_track_msg = ftrack.get_string();
@@ -503,14 +523,19 @@ Solution TinyZero::single_descent_find(double             allotted_time,
       mowri.bw[OutPart::E::TRA] << new_track_msg << Flush;
 
       v_t_total.resize(0);
-      for (auto& ptr_tk_kernel : tk_kernels_active)
-      {
-        ptr_tk_kernel->reset_times();
-      }
+      programs.reset_times();
+      
+      //for (auto& p : programs.programs)
+      //{
+        //p.reset_times();
+      //}
+      
       std::vector<std::string> summary;
 
-      auto oclr = true_core(
-        [&summary, &v_t_total](std::string x) { summary.push_back(x); }, v_t_total, core_halt);
+      auto oclr = true_core([&summary, &v_t_total](std::string x) { summary.push_back(x); },
+                            v_t_total,
+                            core_halt,
+                            all_kern_args);
 
       if (oclr.fail())
       {
@@ -532,7 +557,7 @@ Solution TinyZero::single_descent_find(double             allotted_time,
       default: throw miog_error("unrecgnised SummStat in find");
       }
 
-      mowri << get_run_times_heading();
+      mowri << get_run_times_heading() << Flush;
       for (size_t ir = 0; ir < summary.size(); ++ir)
       {
         mowri << summary[ir];

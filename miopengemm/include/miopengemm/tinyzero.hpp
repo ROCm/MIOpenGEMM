@@ -73,8 +73,16 @@ class GpuMms
 // Lowest level (most basic) of MIOpenGEMM kernel search and benchmark functionality
 class TinyZero
 {
+  
 
   public:
+
+  // TODO : put this somewhere else. 
+  using AllKernArgs = std::vector<std::vector<std::pair<size_t, const void*>>>;
+
+
+
+
   TinyZero(cl_command_queue command_queue_,
            const Geometry   gg_,
            const Offsets    toff_,
@@ -96,26 +104,15 @@ class TinyZero
   const oclutil::DevInfo devinfo;
   owrite::Writer&        mowri;
 
-
   VerbosePrograms programs;
-  
-  //// for each of the possible kernels (copy a, copy b, etc)
-  //std::array<Kernel, KType::E::N> tk_kernels;
-  //std::array<cl_event, KType::E::N> tk_events;
-  //// pointers to the kernels required for a given HyPas (fewer than or as many as KType::E::N)
-  //std::vector<Kernel*> tk_kernels_active;
-  //// dependency graph of active kernels
-  //std::vector<std::vector<size_t>> v_wait_indices;
-
-
 
   double get_gflops(double timems);
   std::string get_run_times_heading();
-  std::string get_run_time_string(cl_int status, double extime);
+  std::string get_run_time_string(cl_int status);
   void address_check_valid();
   void address_check_valid_and_reliable();
   //void set_kern_args(const KernBlob& kblob);
-  void setup_tinykernels(const kerngen::Bundle& bundle);
+  //void setup_tinykernels(const kerngen::Bundle& bundle);
 
   Solution single_descent_find(double allotted_time,
                                const Constraints&,
@@ -126,7 +123,9 @@ class TinyZero
                                size_t       warmstart_rank);
 
   oclutil::Result
-  true_core(std::function<void(std::string)> acton, std::vector<double>& times, const Halt& hl);
+  true_core(std::function<void(std::string)> acton, std::vector<double>& times, const Halt&, const AllKernArgs&);
+  
+  AllKernArgs get_all_kern_args(const std::vector<KernBlob> & kernblobs) const;
 };
 }
 
