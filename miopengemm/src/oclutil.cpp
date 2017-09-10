@@ -214,6 +214,26 @@ Result cl_set_command_queue_info(cl_command_queue      command_queue,
   return confirm_cl_status(ret, hash, "cl_set_command_queue_info", strict);
 }
 
+
+Result  cl_set_program_build_info(
+	cl_program  program,
+ 	cl_device_id  device,
+ 	cl_program_build_info  param_name,
+ 	size_t  param_value_size,
+ 	void  *param_value,
+ 	size_t  *param_value_size_ret, 
+  const std::string&    hash,
+  bool                  strict){
+    
+    cl_int ret = clGetProgramBuildInfo(
+    program, device, param_name, param_value_size, param_value, param_value_size_ret);
+    return confirm_cl_status(ret, hash, "cl_set_program_build_info", strict);
+    
+  }
+  
+  
+
+
 Result cl_set_buffer(cl_mem&            a_cl_mem,
                      cl_context         context,
                      cl_mem_flags       flags,
@@ -525,14 +545,22 @@ Result cl_build_program(cl_program          program,
 
   cl_int ret = future.get();
 
-  char   buffer[10240];
+//-Wunused-variable  char   buffer[10240];
   size_t buffer_size;
-  clGetProgramBuildInfo(
-    program, device_list[0], CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer, &buffer_size);
+
+  std::string buffer(20000, ' ');
+  //char * c_buffer = buffer.c_str();
+  
+  std::cout << "ret = " << ret << std::endl;
+  
+  cl_set_program_build_info(
+    program, device_list[0], CL_PROGRAM_BUILD_LOG, buffer.size(), &buffer[0], &buffer_size, "x", true);
 
   if (ret != CL_SUCCESS)
   {
-    fprintf(stderr, "CL Compilation failed:\n%s", buffer);
+    std::cout << buffer_size << std::endl;
+    std::cout << buffer.substr(buffer_size) << std::endl; 
+    //fprintf(stderr, "CL Compilation failed:\n%s", buffer);
     return confirm_cl_status(ret, hash, "cl_build_program", strict);
   }
 
@@ -785,8 +813,7 @@ Result cl_set_program(  //_and_kernel(
   //-save-temps= + "/some/path/"
   // to the following string
 
-  // std::string buildOptions_11 = "-cl-std=CL2.0  -Werror";
-  auto buildOptions = build_options.c_str();  // buildOptions_11.c_str();
+  auto buildOptions = build_options.c_str();
 
   oclr = cl_build_program(program,
                           1,

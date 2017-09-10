@@ -77,6 +77,18 @@ Result cl_set_command_queue_info(cl_command_queue      command_queue,
                                  const std::string&    hash,
                                  bool                  strict);
 
+
+Result  cl_set_program_build_info(
+	cl_program  program,
+ 	cl_device_id  device,
+ 	cl_program_build_info  param_name,
+ 	size_t  param_value_size,
+ 	void  *param_value,
+ 	size_t  *param_value_size_ret, 
+  const std::string&    hash,
+  bool                  strict);
+  
+
 Result cl_set_buffer(cl_mem&            a_cl_mem,
                      cl_context         context,
                      cl_mem_flags       flags,
