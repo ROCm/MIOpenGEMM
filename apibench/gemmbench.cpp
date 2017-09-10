@@ -158,8 +158,7 @@ runem(std::vector<MIOpenGEMM::Geometry>& geometries,         // GEMM geometries 
     size_t n_warmup = 1;
 
     // number of runs with timer (based on DeepBench timing method).
-    size_t n_to_time =    std::min<size_t>(1500, std::max<size_t>(std::ceil(1e11 / (2 * gg.m *
-                             gg.k * gg.n)), 2));
+    size_t n_to_time =   std::min<size_t>(1500, std::max<size_t>(std::ceil(1e11 / (2 * gg.m * gg.k * gg.n)), 2));
 
     size_t n_total = n_warmup + n_to_time;
 
@@ -417,11 +416,6 @@ int main()
 
   std::vector<Impl> impls_to_run;
 
-  if (run_miopengemm)
-  {
-    impls_to_run.push_back(Impl::MIO);
-  }
-
   if (run_isaac)
   {
 #ifdef MIOPENGEMM_BENCH_ISAAC
@@ -430,6 +424,13 @@ int main()
     throw MIOpenGEMM::miog_error("Isaac cannot be run, as the current build did not include Isaac");
 #endif
   }
+
+
+  if (run_miopengemm)
+  {
+    impls_to_run.push_back(Impl::MIO);
+  }
+
 
   // having issues with CLBlast, will return to it.
   if (run_clblast)
@@ -513,7 +514,7 @@ int main()
       // geometries.push_back(MIOpenGEMM::get_squareNN_geometry<float>(x));
       //}
       // geometries = {{"tC0_tA1_tB1_colMaj1_m3275_n4860_k33_lda3275_ldb6865_ldc3275_ws0_f32"}};
-      geometries = {MIOpenGEMM::get_squareNN_geometry<float>(1)};
+      geometries = {MIOpenGEMM::get_squareNN_geometry<float>(70)};
     }
 
     auto stats = runem<float>(geometries, impl, run_accuracy_test, run_event_timer);

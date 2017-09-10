@@ -152,7 +152,10 @@ int main(int argc, char* argv[])
                                          -1);
 
   // wait for warm-up call to finish.
-  clWaitForEvents(1, &event);
+  auto errstat = clWaitForEvents(1, &event);
+  if (errstat != CL_SUCCESS){
+    std::cout << "Failed to wait in warm-up, error code : " << errstat  << std::endl;
+  }
 
 
   auto t0 = std::chrono::high_resolution_clock::now();
@@ -218,7 +221,10 @@ int main(int argc, char* argv[])
                                     &event,
                                     status.ID);
 
-  clWaitForEvents(1, &event);
+  auto x = clWaitForEvents(1, &event);
+  if (x != CL_SUCCESS){
+    std::cout << "Failed to wait for final, error code : " << x << std::endl;
+  }
 
   std::chrono::duration<double> fp_ms   = std::chrono::high_resolution_clock::now() - t0;
   auto                          seconds = fp_ms.count();

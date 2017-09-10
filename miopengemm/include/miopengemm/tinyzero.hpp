@@ -19,15 +19,14 @@
 #include <miopengemm/error.hpp>
 #include <miopengemm/findparams.hpp>
 #include <miopengemm/hyperparams.hpp>
-#include <miopengemm/kernel.hpp>
 #include <miopengemm/kernelcache.hpp>
 #include <miopengemm/kernelstring.hpp>
 #include <miopengemm/oclutil.hpp>
 #include <miopengemm/outputwriter.hpp>
+#include <miopengemm/programs.hpp>
 #include <miopengemm/solution.hpp>
 #include <miopengemm/stringutilbase.hpp>
 #include <miopengemm/timer.hpp>
-#include <miopengemm/programs.hpp>
 
 namespace MIOpenGEMM
 {
@@ -73,16 +72,8 @@ class GpuMms
 // Lowest level (most basic) of MIOpenGEMM kernel search and benchmark functionality
 class TinyZero
 {
-  
 
   public:
-
-  // TODO : put this somewhere else. 
-  using AllKernArgs = std::vector<std::vector<std::pair<size_t, const void*>>>;
-
-
-
-
   TinyZero(cl_command_queue command_queue_,
            const Geometry   gg_,
            const Offsets    toff_,
@@ -104,15 +95,14 @@ class TinyZero
   const oclutil::DevInfo devinfo;
   owrite::Writer&        mowri;
 
-  VerbosePrograms programs;
+  Programs    programs;
+  KernelTimes kernel_times;
 
   double get_gflops(double timems);
   std::string get_run_times_heading();
   std::string get_run_time_string(cl_int status);
   void address_check_valid();
   void address_check_valid_and_reliable();
-  //void set_kern_args(const KernBlob& kblob);
-  //void setup_tinykernels(const kerngen::Bundle& bundle);
 
   Solution single_descent_find(double allotted_time,
                                const Constraints&,
@@ -122,10 +112,12 @@ class TinyZero
                                bool         warmstart,
                                size_t       warmstart_rank);
 
-  oclutil::Result
-  true_core(std::function<void(std::string)> acton, std::vector<double>& times, const Halt&, const AllKernArgs&);
-  
-  AllKernArgs get_all_kern_args(const std::vector<KernBlob> & kernblobs) const;
+  oclutil::Result true_core(std::function<void(std::string)> acton,
+                            std::vector<double>&             times,
+                            const Halt&,
+                            const AllKernArgs&);
+
+  AllKernArgs get_all_kern_args(const std::vector<KernBlob>& kernblobs) const;
 };
 }
 

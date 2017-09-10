@@ -2,16 +2,12 @@
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <miopengemm/bundle.hpp>
-#include <miopengemm/bundle.hpp>
 #include <miopengemm/derivedparams.hpp>
 #include <miopengemm/geometry.hpp>
-#include <miopengemm/kernel.hpp>
 #include <miopengemm/kernelcache.hpp>
 #include <miopengemm/miogemm.hpp>
 #include <miopengemm/nearest.hpp>
-#include <miopengemm/programcache.hpp>
 #include <miopengemm/redirection.hpp>
-#include <miopengemm/timer.hpp>
 #include <miopengemm/timer.hpp>
 #include <miopengemm/tinyzero.hpp>
 
@@ -83,10 +79,9 @@ Solution get_default_soln(const oclutil::DevInfo& devinfo,
   bool   catch_ROCm_small_k = false;
   size_t ROCm_small_k       = 1;
 
-
   // TODO : check this.
-  if ((catch_ROCm_small_k == false || gg.k > ROCm_small_k) && 
-    (nearest::is_within(ck, graph, kernel_cache, 0.1 * std::numeric_limits<double>::max(), rank)))
+  if ((catch_ROCm_small_k == false || gg.k > ROCm_small_k) &&
+      (nearest::is_within(ck, graph, kernel_cache, 0.1 * std::numeric_limits<double>::max(), rank)))
   {
     auto nearest_ck       = nearest::get(ck, graph, kernel_cache, rank);
     bool is_not_canonical = redirection::get_is_not_canonical(gg);
@@ -109,12 +104,10 @@ Solution get_default_soln(const oclutil::DevInfo& devinfo,
     }
   }
 
-
   mowri << "Time in get_default : " << timer.get_elapsed() << " [s]" << Endl;
-  
+
   kerngen::Bundle bundle(hp, gg);  //, mowri);
 
-  
   return {gg, extime, bundle.v_tgks, hp, devinfo, constraints};
 }
 

@@ -16,7 +16,7 @@
 #include <miopengemm/error.hpp>
 #include <miopengemm/findparams.hpp>
 #include <miopengemm/graph.hpp>
-#include <miopengemm/kernel.hpp>
+//#include <miopengemm/kernel.hpp>
 #include <miopengemm/kernelcache.hpp>
 #include <miopengemm/kernelstring.hpp>
 #include <miopengemm/miogemm.hpp>
@@ -108,7 +108,7 @@ TinyZero::TinyZero(cl_command_queue command_queue_,
   oclutil::cl_set_context_and_device_from_command_queue(
     command_queue, context, device_id, mowri, true);
 
-  programs = VerbosePrograms(device_id, context, mowri);
+  programs = Programs(device_id, context, mowri);
 }
 
 void TinyZero::address_check_valid()
@@ -183,17 +183,17 @@ std::string TinyZero::get_run_time_string(cl_int status)
   std::stringstream ss;
   if (status == CL_SUCCESS)
   {
-    ss << std::fixed << std::setprecision(3) << programs.extime << '\t';
+    ss << std::fixed << std::setprecision(3) << kernel_times.extime << '\t';
 
     double sumtimes = 0;
     for (size_t k_ind = 0; k_ind < programs.get_n_active(); ++k_ind)
     {
-      auto tk = programs.programs[programs.act_inds[k_ind]].v_times.back();
+      auto tk = kernel_times.ktimes[programs.act_inds[k_ind]].v_times.back();
       sumtimes += tk;
       ss << " " << tk << "\t";
     }
     ss << std::fixed << std::setprecision(3) << sumtimes << '\t';
-    ss << " " << 2.0 * gg.m * gg.n * gg.k / (programs.extime * 1e6) << std::setprecision(6);
+    ss << " " << 2.0 * gg.m * gg.n * gg.k / (kernel_times.extime * 1e6) << std::setprecision(6);
   }
 
   else
@@ -208,8 +208,6 @@ oclutil::Result TinyZero::true_core(std::function<void(std::string)> acton,
                                     const Halt&                      hl,
                                     const AllKernArgs&               all_kern_args)
 {
-  
-  std::cout << "just entered true core " << std::endl;
 
   size_t          runi{0};
   oclutil::Result oclr;
@@ -227,10 +225,19 @@ oclutil::Result TinyZero::true_core(std::function<void(std::string)> acton,
       throw miog_error("zero kernels active : internal logic error");
     }
 
-    // TODO RAII this
-    cl_event last_event;
+    oclutil::SafeClEvent safe_last_event("Event to block on (final kernel) in find");
+    safe_last_event.clevent = cl_event{};
 
-    oclr = programs.run(command_queue, all_kern_args, 0, nullptr, true, &last_event);
+    bool update_times = false;
+    bool debug_mode   = false;
+
+    oclr = programs.run(command_queue,
+                        all_kern_args,
+                        update_times,
+                        nullptr,
+                        &kernel_times,
+                        &safe_last_event.clevent,
+                        debug_mode);
 
     if (oclr.success == CL_SUCCESS)
     {
@@ -258,13 +265,13 @@ oclutil::Result TinyZero::true_core(std::function<void(std::string)> acton,
     oclutil::cl_flush(command_queue, "cl flush in core gemm loop", true);
 
     // wait for last event in update_times.
-    //programs.update_times();
+    // programs.update_times();
 
     // act on the results string.
     acton(get_run_time_string(oclr.success));
 
     ++runi;
-    all_times.push_back(programs.extime);
+    all_times.push_back(kernel_times.extime);
   }
 
   auto   best_time = *std::min_element(all_times.begin(), all_times.end());
@@ -273,7 +280,6 @@ oclutil::Result TinyZero::true_core(std::function<void(std::string)> acton,
                          << "  time[ms]:" << stringutil::get_char_padded(best_time, 10)
                          << "  gflops:" << gflops << Endl;
 
-  
   return {};
 }
 
@@ -309,10 +315,10 @@ std::vector<double> TinyZero::benchgemm(const HyPas& hp, const Halt& hl)
   return all_times;
 }
 
-TinyZero::AllKernArgs TinyZero::get_all_kern_args(const std::vector<KernBlob>& kblobs) const 
+AllKernArgs TinyZero::get_all_kern_args(const std::vector<KernBlob>& kblobs) const
 {
 
-    TinyZero::AllKernArgs all_kern_args(0);
+  AllKernArgs all_kern_args(0);
 
   for (auto& kblob : kblobs)
   {
@@ -324,7 +330,7 @@ TinyZero::AllKernArgs TinyZero::get_all_kern_args(const std::vector<KernBlob>& k
                                                              Floating::m_alpha[gg.floattype],
                                                              Floating::m_beta[gg.floattype]));
   }
-  
+
   return all_kern_args;
 }
 
@@ -523,13 +529,13 @@ Solution TinyZero::single_descent_find(double             allotted_time,
       mowri.bw[OutPart::E::TRA] << new_track_msg << Flush;
 
       v_t_total.resize(0);
-      programs.reset_times();
-      
-      //for (auto& p : programs.programs)
+      kernel_times.reset_times();
+
+      // for (auto& p : programs.programs)
       //{
-        //p.reset_times();
+      // p.reset_times();
       //}
-      
+
       std::vector<std::string> summary;
 
       auto oclr = true_core([&summary, &v_t_total](std::string x) { summary.push_back(x); },
