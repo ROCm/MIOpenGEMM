@@ -99,7 +99,7 @@ Programs::Programs(const cl_device_id& id, const cl_context& ctxt, owrite::Write
 void Programs::update(const std::vector<KernBlob>& kbs)
 {
 
-  std::string build_options("-Werror -Wunused-variable"); //-cl-std=CL2.0  
+  std::string build_options("-Werror  -cl-std=CL2.0"); //-Wunused-variable"); // "); //  
   v_wait_indices = kerngen::get_v_wait_indices(kbs, *ptr_mowri);
   act_inds.resize(0);
   for (size_t kbi = 0; kbi < kbs.size(); ++kbi)

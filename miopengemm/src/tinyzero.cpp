@@ -407,7 +407,7 @@ Solution TinyZero::find0(const Constraints& constraints, const FindParams& fparm
 
   bool is_not_canonical = redirection::get_is_not_canonical(gg);
   mowri.bw[OutPart::CCH] << get_cache_entry_string(
-    {devinfo.device_name, constraints, gg}, v_solns[best_soln_index].hypas, is_not_canonical);
+    {devinfo.identifier, constraints, gg}, v_solns[best_soln_index].hypas, is_not_canonical);
   mowri.bw[OutPart::CCH] << "\n -- snip -- -- -- snip --\n\n\n" << Endl;
 
   return v_solns[best_soln_index];
