@@ -44,6 +44,4 @@ miog_error::miog_error(const std::string& what_arg)
   : std::runtime_error(tgformat(what_arg, "MIOpenGEMM", "ERROR"))
 {
 }
-
-
 }
