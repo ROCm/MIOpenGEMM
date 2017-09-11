@@ -17,9 +17,9 @@ int main()
   //Geometry gg("tC0_tA1_tB0_colMaj1_m3072_n48000_k1024_lda1024_ldb1024_ldc3072_ws52594944_f32");
 
 
-  //Geometry gg("tC0_tA1_tB0_colMaj1_m307_n4800_k1024_lda1024_ldb1024_ldc3072_ws0_f32");
+  //Geometry gg("tC0_tA0_tB0_colMaj0_m13_n13_k13_lda13_ldb13_ldc13_ws0_f32");
   
-  Geometry gg = MIOpenGEMM::get_squareNN_geometry<float>(512);
+  Geometry gg = MIOpenGEMM::get_squareNN_geometry<float>(13);
   
   //6249.987
   

@@ -35,7 +35,7 @@ void reflect_c(std::vector<size_t>& cvs)
     cvs[NonChi::E::SKW] = 2 * macgrid::skew0 - cvs[NonChi::E::SKW];
     if (!macgrid::mac_is_square(cvs[NonChi::E::MAC]))
     {
-      cvs[NonChi::E::SKW] -= 1;
+      cvs[NonChi::E::SKW] +=1;//-= 1; // JN bug fix 11 Septemeber 2017 
     }
   }
 

@@ -12,7 +12,7 @@
 #include <miopengemm/timer.hpp>
 
 // TODO : run an example, and print the examples which failed to be viable in the
-// search for a viable start. It might help in improving the initial graph.
+// search for a viable start. It might help in pruning the initial graph.
 namespace MIOpenGEMM
 {
 
@@ -162,7 +162,7 @@ std::vector<std::tuple<HyPas, int>> Graph::get_mic_mac_transformed(const HyPas& 
   return mmt;
 }
 
-// TODO : where should this function go ?
+
 bool has_no_effect(const HyPas& hp0, Mat::E emat_x, size_t i)
 {
   // if GAL is not SUCOL, then NAW has no effect.

@@ -89,6 +89,7 @@ confirm_cl_status(cl_int ret, const std::string& hash, const std::string& functi
   }
 }
 
+// TODO : cl_command_queue_properties should be a vector props like 2.0.
 Result cl_set_command_queue(cl_command_queue&           a_cl_command_queue,
                             cl_context                  context,
                             cl_device_id                device,
@@ -98,10 +99,18 @@ Result cl_set_command_queue(cl_command_queue&           a_cl_command_queue,
 {
   cl_int errcode_ret;
 
+
+
 // CL_VERSION_2_0 is defined on line 198 /opt/rocm/opencl/include/CL/cl.h.
 #if (CL_VERSION_2_0==1)
-  a_cl_command_queue = clCreateCommandQueueWithProperties(context, device, &properties, &errcode_ret);
+
+
+  std::vector<cl_queue_properties> props = {
+    CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE,0};
+    
+  a_cl_command_queue = clCreateCommandQueueWithProperties(context, device, props.data(), &errcode_ret);
 #else
+
   a_cl_command_queue = clCreateCommandQueue(context, device, properties, &errcode_ret);
 #endif
 
@@ -552,7 +561,7 @@ Result cl_build_program(cl_program          program,
   std::string buffer(20000, ' ');
   //char * c_buffer = buffer.c_str();
   
-  std::cout << "ret = " << ret << std::endl;
+  //std::cout << "ret = " << ret << std::endl;
   
   cl_set_program_build_info(
     program, device_list[0], CL_PROGRAM_BUILD_LOG, buffer.size(), &buffer[0], &buffer_size, "x", true);
