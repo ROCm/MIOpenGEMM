@@ -32,9 +32,6 @@ bool is_within(
 // rank = 0 for nearest, 1 for second nearest etc.
 CacheKey get(const CacheKey& ck, const Graph& graph, const KernelCache& kc, size_t rank)
 {
-  
-  //std::cout << "\n --  --  in get " << ck.gg.get_string() << std::endl;
-
   if (!is_within(ck, graph, kc, std::numeric_limits<double>::max(), rank))
   {
     throw miog_error("In get, with none within radius <double>::max.");
@@ -53,25 +50,9 @@ CacheKey get(const CacheKey& ck, const Graph& graph, const KernelCache& kc, size
   {
     auto key      = cache_keys[keyi];
     auto distance = ck.get_distance(key);
-
-    //if (key.gg.get_string() == "tC0_tA0_tB0_colMaj1_m30_n30_k30_lda30_ldb30_ldc30_ws0_f32"){
-      //std::cout << "ooooooooooooooooooooooooooooooooooooo x x x x \n asd " << std::endl;
-    //}
-
     auto hp = kc.at(key);
-    
-    //if (key.gg.get_string() == "tC0_tA0_tB0_colMaj1_m30_n30_k30_lda30_ldb30_ldc30_ws0_f32"){
-      //std::cout << "  00 " << Derivabilty(hp, ck.gg).is_derivable << std::endl;
-      //std::cout << ck.gg.get_string() << std::endl;
-      //std::cout << hp.get_string() << std::endl;
-    //}    
-
     if (graph.contains(kc.at(key)) && Derivabilty(hp, ck.gg).is_derivable)
     {
-      //if (key.gg.get_string() == "tC0_tA0_tB0_colMaj1_m30_n30_k30_lda30_ldb30_ldc30_ws0_f32"){
-        //std::cout << "\n\n what ? \n\n" << std::endl;
-      //}
-   
       v_di.emplace_back(std::make_tuple(distance, keyi));
     }
   }
@@ -95,9 +76,6 @@ CacheKey get(const CacheKey& ck, const Graph& graph, const KernelCache& kc, size
     throw miog_error("internal logic error : nearest is not derivable. msg : " + drvble.msg);
   }
 
-  std::cout << "\nfinally 1) " << kc.at(nearest_derivable).get_string() << std::endl;
-  std::cout << "\nfinally 2) " << kc.at(nearest_derivable).get_reflected(true).get_string() << std::endl;
-  
   return nearest_derivable;
 }
 }

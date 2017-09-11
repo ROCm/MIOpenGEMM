@@ -35,23 +35,25 @@ int main()
   auto                  keys = kernel_cache.get_keys();
   for (auto& key : keys)
   {
-     //if (key.gg.wSpaceSize > 0){
-     //auto gg = key.gg;
-     //auto m = gg.m;
-     //auto n = gg.n;
-     //auto k = gg.k;
-     //auto wSpaceSize = (m + 16)*(k + 16) + (n + 16)*(k + 16);
-     //geometries.push_back({m,n,k, gg.tX[Mat::E::A], gg.tX[Mat::E::B], wSpaceSize, 'f'});
+    // if (key.gg.wSpaceSize > 0){
+    // auto gg = key.gg;
+    // auto m = gg.m;
+    // auto n = gg.n;
+    // auto k = gg.k;
+    // auto wSpaceSize = (m + 16)*(k + 16) + (n + 16)*(k + 16);
+    // geometries.push_back({m,n,k, gg.tX[Mat::E::A], gg.tX[Mat::E::B], wSpaceSize, 'f'});
     //}
-    
-    if (kernel_cache.at(key).sus[Mat::E::C].vs[NonChi::MAC] == 1 && key.gg.m * key.gg.n * key.gg.k > 100*100*100){
+
+    if (kernel_cache.at(key).sus[Mat::E::C].vs[NonChi::MAC] == 1 &&
+        key.gg.m * key.gg.n * key.gg.k > 100 * 100 * 100)
+    {
       geometries.push_back(key.gg);
       std::cout << key.gg.get_string() << std::endl;
     }
 
-    //if (key.gg.wSpaceSize == 0 && key.gg.m * key.gg.n * key.gg.k > 1) //250 * 250 * 250)
+    // if (key.gg.wSpaceSize == 0 && key.gg.m * key.gg.n * key.gg.k > 1) //250 * 250 * 250)
     //{
-      //geometries.push_back(key.gg);
+    // geometries.push_back(key.gg);
     //}
   }
 

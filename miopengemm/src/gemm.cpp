@@ -56,21 +56,18 @@ class ProgramCacher
     cl_device_id device_id;
     clGetCommandQueueInfo(*ptr_queue, CL_QUEUE_DEVICE, sizeof(cl_device_id), &device_id, nullptr);
 
-
     // Getting device name.
     size_t      info_size(0);
     std::string info_st(400, ' ');
     clGetDeviceInfo(device_id, CL_DEVICE_NAME, info_st.size(), &info_st[0], &info_size);
     std::string device_name = info_st.substr(0, info_size - 1);
-    
+
     ss << isColMajor << tA << tB << tC << '.' << m << '.' << n << '.' << k << '.' << lda << '.'
        << ldb << '.' << ldc << '.' << w_size << '.' << floattype << '.' << device_name;
 
-       
-    auto key = ss.str();
+    auto                         key = ss.str();
     std::unique_lock<std::mutex> lock(mutt);
-    
-    
+
     if (IDs.count(key) != 0)
     {
       ID = IDs[key];

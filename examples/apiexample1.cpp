@@ -91,7 +91,6 @@ int main()
                            &event,
                            -1);
 
-
   std::cout << "`done'. \nRead back to host..." << std::flush;
   clEnqueueReadBuffer(queue,
                       dev_c,
@@ -99,8 +98,8 @@ int main()
                       0,                  // offset
                       4 * sizeof(float),  // cb
                       C_result.data(),    // read results to C_results
-                      1,       // wait for 1 event to complete :
-                      &event,  // waiting for xgemm to complete before reading,
+                      1,                  // wait for 1 event to complete :
+                      &event,             // waiting for xgemm to complete before reading,
                       nullptr);
 
   std::cout << "done. \nPrint summary.\n" << std::flush;

@@ -61,16 +61,16 @@ class GemmStatus
  * The event associated with the (final) GEMM kernel. When this event completes, GEMM is complete
  *
  * @param ID
- * In summary : You can just use ID = -1 all the time unless you care about ~15% performace on 
- * small (example m = n = k = 100) problems. Passing an ID can save time looking-up cached programs, 
- * but it requires a bit of work on the user's part to keep track of the correct ID to use. 
- * Read on for more info. Define a GEMM geometry to be any 
- * (isColMajor, tA, tB, m, n, k lda, ldb, ldc, w_size, T) tuple. 
+ * In summary : You can just use ID = -1 all the time unless you care about ~15% performace on
+ * small (example m = n = k = 100) problems. Passing an ID can save time looking-up cached programs,
+ * but it requires a bit of work on the user's part to keep track of the correct ID to use.
+ * Read on for more info. Define a GEMM geometry to be any
+ * (isColMajor, tA, tB, m, n, k lda, ldb, ldc, w_size, T) tuple.
  * The first time GEMM is run for a particular (device, geometry) pair, ID must be negative.
- * Thereafter, the ID of the GemmStatus returned *can* be used for this (device, geometry). 
- * Passing ID < 0 for all calls is valid, however it is marginally faster for small problems to 
- * pass the correct ID. Note that passing an incorrect ID has undefined behaviour. 
- * 
+ * Thereafter, the ID of the GemmStatus returned *can* be used for this (device, geometry).
+ * Passing ID < 0 for all calls is valid, however it is marginally faster for small problems to
+ * pass the correct ID. Note that passing an incorrect ID has undefined behaviour.
+ *
 
  *
  * @return
@@ -79,7 +79,6 @@ class GemmStatus
 
 // Multiple threads, same program, information at
 // https://forums.khronos.org/showthread.php/5810-calling-the-same-kernel-object-multiple-times
-
 
 template <typename T>
 GemmStatus xgemm(bool              isColMajor,

@@ -18,9 +18,9 @@ namespace macgrid
 {
 
 // macro tile shape
-// at skew = skew0, 
+// at skew = skew0,
 // MAC in (64, 256, ...)
-// have a:b = 1:1 
+// have a:b = 1:1
 // and MAC in (32, 128,...)
 // have a:b = 2:1
 // at skew = skew0, (64, 256) are a:b = 1:1 and (32, 128) have a:b = 2:1

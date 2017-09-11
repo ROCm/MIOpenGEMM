@@ -162,7 +162,6 @@ std::vector<std::tuple<HyPas, int>> Graph::get_mic_mac_transformed(const HyPas& 
   return mmt;
 }
 
-
 bool has_no_effect(const HyPas& hp0, Mat::E emat_x, size_t i)
 {
   // if GAL is not SUCOL, then NAW has no effect.

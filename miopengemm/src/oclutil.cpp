@@ -89,7 +89,6 @@ confirm_cl_status(cl_int ret, const std::string& hash, const std::string& functi
   }
 }
 
-// TODO : cl_command_queue_properties should be a vector props like 2.0.
 Result cl_set_command_queue(cl_command_queue&           a_cl_command_queue,
                             cl_context                  context,
                             cl_device_id                device,
@@ -99,16 +98,11 @@ Result cl_set_command_queue(cl_command_queue&           a_cl_command_queue,
 {
   cl_int errcode_ret;
 
-
-
 // CL_VERSION_2_0 is defined on line 198 /opt/rocm/opencl/include/CL/cl.h.
-#if (CL_VERSION_2_0==1)
-
-
-  std::vector<cl_queue_properties> props = {
-    CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE,0};
-    
-  a_cl_command_queue = clCreateCommandQueueWithProperties(context, device, props.data(), &errcode_ret);
+#if (CL_VERSION_2_0 == 1)
+  std::vector<cl_queue_properties> props = {CL_QUEUE_PROPERTIES, properties, 0};
+  a_cl_command_queue =
+    clCreateCommandQueueWithProperties(context, device, props.data(), &errcode_ret);
 #else
 
   a_cl_command_queue = clCreateCommandQueue(context, device, properties, &errcode_ret);
@@ -224,25 +218,20 @@ Result cl_set_command_queue_info(cl_command_queue      command_queue,
   return confirm_cl_status(ret, hash, "cl_set_command_queue_info", strict);
 }
 
+Result cl_set_program_build_info(cl_program            program,
+                                 cl_device_id          device,
+                                 cl_program_build_info param_name,
+                                 size_t                param_value_size,
+                                 void*                 param_value,
+                                 size_t*               param_value_size_ret,
+                                 const std::string&    hash,
+                                 bool                  strict)
+{
 
-Result  cl_set_program_build_info(
-	cl_program  program,
- 	cl_device_id  device,
- 	cl_program_build_info  param_name,
- 	size_t  param_value_size,
- 	void  *param_value,
- 	size_t  *param_value_size_ret, 
-  const std::string&    hash,
-  bool                  strict){
-    
-    cl_int ret = clGetProgramBuildInfo(
+  cl_int ret = clGetProgramBuildInfo(
     program, device, param_name, param_value_size, param_value, param_value_size_ret);
-    return confirm_cl_status(ret, hash, "cl_set_program_build_info", strict);
-    
-  }
-  
-  
-
+  return confirm_cl_status(ret, hash, "cl_set_program_build_info", strict);
+}
 
 Result cl_set_buffer(cl_mem&            a_cl_mem,
                      cl_context         context,
@@ -555,23 +544,24 @@ Result cl_build_program(cl_program          program,
 
   cl_int ret = future.get();
 
-//-Wunused-variable  char   buffer[10240];
   size_t buffer_size;
-
   std::string buffer(20000, ' ');
-  //char * c_buffer = buffer.c_str();
-  
-  //std::cout << "ret = " << ret << std::endl;
-  
-  cl_set_program_build_info(
-    program, device_list[0], CL_PROGRAM_BUILD_LOG, buffer.size(), &buffer[0], &buffer_size, "x", true);
+
+  // TODO : incorporate -Wunused-parameters. 
+  cl_set_program_build_info(program,
+                            device_list[0],
+                            CL_PROGRAM_BUILD_LOG,
+                            buffer.size(),
+                            &buffer[0],
+                            &buffer_size,
+                            "x",
+                            true);
 
   if (ret != CL_SUCCESS)
   {
-    std::cout << buffer_size << std::endl;
-    std::cout << buffer.substr(buffer_size) << std::endl; 
-    //fprintf(stderr, "CL Compilation failed:\n%s", buffer);
-    return confirm_cl_status(ret, hash, "cl_build_program", strict);
+    std::stringstream ss;
+    ss << "CL Compilation failed:\n" << buffer_size << buffer.substr(buffer_size) << std::endl;
+    return confirm_cl_status(ret, hash, ss.str() + " + (cl_build_program)", strict);
   }
 
   else

@@ -8,11 +8,12 @@
 int main()
 {
   using namespace MIOpenGEMM;
+  // Geometry gg("tC0_tA0_tB0_colMaj1_m4096_n7000_k4096_lda4096_ldb4096_ldc4096_ws0_f32");
+  Geometry gg = MIOpenGEMM::get_squareNN_geometry<float>(5100);
 
-
-  Geometry gg("tC0_tA0_tB0_colMaj1_m4096_n7000_k4096_lda4096_ldb4096_ldc4096_ws0_f32");
-  HyPas    hp("A_MIC8_PAD2_PLU0_LIW0_MIW1_WOS0_VEW1__B_MIC8_PAD2_PLU1_LIW0_MIW1_WOS0_VEW1__C_UNR16_"
-           "GAL1_PUN0_ICE1_IWI0_SZT0_MAD1_NAW64_UFO0_MAC256_SKW10_AFI1_MIA1");
+  HyPas hp({"MIC8_PAD1_PLU0_LIW0_MIW1_WOS0_VEW2",
+            "MIC5_PAD2_PLU0_LIW0_MIW1_WOS0_VEW1",
+            "UNR16_GAL3_PUN0_ICE1_IWI1_SZT0_MAD0_NAW16_UFO0_MAC256_SKW10_AFI1_MIA0"});
 
   CLHint         devhint;
   Offsets        offsets = get_zero_offsets();
