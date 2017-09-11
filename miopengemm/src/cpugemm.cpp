@@ -7,6 +7,7 @@
 #include <miopengemm/geometry.hpp>
 #include <miopengemm/outputwriter.hpp>
 #include <miopengemm/redirection.hpp>
+#include <miopengemm/par_for.hpp>
 
 #ifdef MIOPENGEMM_USE_OPENBLAS
 #include <cblas.h>
@@ -193,6 +194,27 @@ void gemm_3fors_generic(const Geometry& gg,
 
   FInner finner;
 
+#if 1
+
+  par_for(gg.m * gg.n, [&](std::size_t i) 
+  {
+    size_t x = i % gg.m;
+    size_t y = i / gg.m;
+    // Set the index of the element in C we're setting,
+    size_t target_index;
+    if (gg.tX[Mat::E::C] == false)
+    {
+      target_index = x + y * gg.ldX[Mat::E::C];
+    }
+    else
+    {
+      target_index = y + x * gg.ldX[Mat::E::C];
+    }
+    // and set it
+    c[target_index] *= beta;
+    c[target_index] += alpha * finner(a, b, x, y, gg.ldX[Mat::E::A], gg.ldX[Mat::E::B], gg.k);
+  });
+#else
   // For rows of C
   for (size_t x = 0; x < gg.m; ++x)
   {
@@ -214,6 +236,7 @@ void gemm_3fors_generic(const Geometry& gg,
       c[target_index] += alpha * finner(a, b, x, y, gg.ldX[Mat::E::A], gg.ldX[Mat::E::B], gg.k);
     }
   }
+#endif
 }
 
 template <typename TFloat>
