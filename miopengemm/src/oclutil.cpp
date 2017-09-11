@@ -98,8 +98,9 @@ Result cl_set_command_queue(cl_command_queue&           a_cl_command_queue,
 {
   cl_int errcode_ret;
 
-#ifdef MIOPENGEMM_USE_OCL2
-// TODO : use clCreateCommandQueueWithProperties.
+// CL_VERSION_2_0 is defined on line 198 /opt/rocm/opencl/include/CL/cl.h.
+#if (CL_VERSION_2_0==1)
+  a_cl_command_queue = clCreateCommandQueueWithProperties(context, device, &properties, &errcode_ret);
 #else
   a_cl_command_queue = clCreateCommandQueue(context, device, properties, &errcode_ret);
 #endif
