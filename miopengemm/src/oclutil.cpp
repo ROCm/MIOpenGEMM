@@ -1,11 +1,6 @@
 /*******************************************************************************
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
-#ifdef __APPLE__
-#include <opencl.h>
-#else
-#include <CL/cl.h>
-#endif
 #include <chrono>
 #include <future>
 #include <map>
@@ -13,6 +8,7 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <miopengemm/platform.hpp>
 #include <miopengemm/error.hpp>
 #include <miopengemm/hint.hpp>
 #include <miopengemm/oclutil.hpp>

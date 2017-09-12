@@ -1,10 +1,8 @@
 /*******************************************************************************
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
-#ifdef __APPLE__
-#include <numeric>
-#endif
 #include <algorithm>
+#include <numeric>
 #include <chrono>
 #include <iomanip>
 #include <limits>

@@ -2,15 +2,11 @@
  * Copyright (C) 2017 Advanced Micro devices, Inc. All rights reserved.
  *******************************************************************************/
 
-#ifdef __APPLE__
-#include <opencl.h>
-#else
-#include <CL/cl.h>
-#endif
 #include <map>
 #include <sstream>
 #include <string>
 #include <vector>
+#include <miopengemm/platform.hpp>
 #include <miopengemm/error.hpp>
 #include <miopengemm/hint.hpp>
 #include <miopengemm/outputwriter.hpp>

@@ -4,11 +4,7 @@
 #ifndef GUARD_MIOPENGEMM_OPENCLUTIL_HPP
 #define GUARD_MIOPENGEMM_OPENCLUTIL_HPP
 
-#ifdef __APPLE__
-#include <opencl.h>
-#else
-#include <CL/cl.h>
-#endif
+#include <miopengemm/platform.hpp>
 #include <limits>
 #include <tuple>
 #include <miopengemm/hint.hpp>

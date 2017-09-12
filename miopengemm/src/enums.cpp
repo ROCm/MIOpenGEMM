@@ -3,12 +3,10 @@
  *******************************************************************************/
 
 #include <algorithm>
+#include <numeric>
 #include <array>
 #include <iostream>
 #include <miopengemm/enums.hpp>
-#ifdef __APPLE__
-#include <numeric>
-#endif
 
 namespace MIOpenGEMM
 {

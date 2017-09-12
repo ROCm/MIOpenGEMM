@@ -5,13 +5,9 @@
 #ifndef GUARD_MIOPENGEMM_PROGRAMSES_HPP
 #define GUARD_MIOPENGEMM_PROGRAMSES_HPP
 
-#ifdef __APPLE__
-#include <opencl.h>
-#else
-#include <CL/cl.h>
-#endif
 #include <algorithm>
 #include <vector>
+#include <miopengemm/platform.hpp>
 #include <miopengemm/hyperparams.hpp>
 #include <miopengemm/kernelstring.hpp>
 #include <miopengemm/oclutil.hpp>

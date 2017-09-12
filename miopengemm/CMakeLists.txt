@@ -26,8 +26,11 @@ endif()
 
 target_include_directories (miopengemm PUBLIC 
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/dev_include>
-    ${OPENCL_INCLUDE_DIRS}/Headers
     ${OPENCL_INCLUDE_DIRS})
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    target_include_directories (miopengemm PUBLIC ${OPENCL_INCLUDE_DIRS}/Headers)
+endif()
 
 rocm_install_targets(
   TARGETS miopengemm
