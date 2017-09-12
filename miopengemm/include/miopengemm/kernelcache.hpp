@@ -70,7 +70,7 @@ void filter_device(std::vector<CacheKey>&, const std::vector<std::string>& devic
 void filter_geometries(std::vector<CacheKey>&, const std::vector<Geometry>& geometries);
 void filter_floattype(std::vector<CacheKey>&, size_t);
 
-extern const KernelCache kernel_cache;
+const KernelCache& get_kernel_cache();
 
 std::string get_cache_entry_string(const CacheKey& ck, const HyPas& hypas, bool swap_ab);
 std::vector<Geometry> get_geometries(const std::vector<CacheKey>& cks);

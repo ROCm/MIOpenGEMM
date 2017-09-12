@@ -12,7 +12,7 @@ void geometrytest(const MIOpenGEMM::Geometry& gg)
   //CLHint         devhint;  
   CLHint         devhint(0, 0); //(first platform, first device)
   Offsets        offsets = get_zero_offsets();
-  owrite::Writer mowri(Ver::E::ACCURACY, "");
+  owrite::Writer mowri(Ver::E::TERMINAL, "");
   dev::TinyTwo   boa(gg, offsets, mowri, devhint);
 
   // FindParams find_params = get_quick_find_params();

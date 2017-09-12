@@ -425,6 +425,8 @@ Solution TinyZero::single_descent_find(double             allotted_time,
   // only considered an improvement if ratio new/old less than this
   double improvement_factor_required = 0.998;
 
+  get_kernel_cache(); // Make sure the cache is initialized before starting timer
+
   Timer timer;
   timer.start();
 

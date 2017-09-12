@@ -74,7 +74,7 @@ std::string CacheKey::get_string() const
   return ss.str();
 }
 
-KernelCache get_kernel_cache()
+KernelCache init_kernel_cache()
 {
   KernelCache kc;
 
@@ -82,7 +82,12 @@ KernelCache get_kernel_cache()
 #include "cache2.cachetxt"
   return kc;
 }
-const KernelCache kernel_cache = get_kernel_cache();
+
+const KernelCache& get_kernel_cache()
+{
+  static const KernelCache kc = init_kernel_cache();
+  return kc;
+}
 
 HyPas KernelCache::at(const CacheKey& ckey, bool swap_ab) const
 {

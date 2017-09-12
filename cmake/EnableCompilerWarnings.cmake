@@ -43,6 +43,7 @@ else()
                 -Wno-float-conversion
                 -Wno-gnu-anonymous-struct
                 -Wno-gnu-zero-variadic-macro-arguments
+                -Wno-missing-braces
                 -Wno-missing-prototypes
                 -Wno-nested-anon-types
                 -Wno-padded

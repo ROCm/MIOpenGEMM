@@ -70,6 +70,8 @@ Solution get_default_soln(const oclutil::DevInfo& devinfo,
   double extime = 0;
   HyPas  hp;
 
+  auto&& kernel_cache = get_kernel_cache();
+
   Timer timer;
   timer.start();
 
