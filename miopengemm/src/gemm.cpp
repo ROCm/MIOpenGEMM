@@ -14,6 +14,17 @@
 namespace MIOpenGEMM
 {
 
+enum BetaType {IsOne, IsOther};
+
+template<typename T>
+BetaType get_beta_type(T beta){
+  
+  return beta == T(1) ? BetaType::IsOne : BetaType::IsOther;
+
+  
+  //(std::abs<T>(beta - T(1)) < std::numeric_limits<T>::epsilon
+}
+
 class ProgramCacher
 {
 
@@ -46,6 +57,7 @@ class ProgramCacher
              size_t            ldb,
              size_t            ldc,
              size_t            w_size,
+             BetaType          beta_type,
              char              floattype,
              cl_command_queue* ptr_queue)
   {
@@ -63,7 +75,7 @@ class ProgramCacher
     std::string device_name = info_st.substr(0, info_size - 1);
 
     ss << isColMajor << tA << tB << tC << '.' << m << '.' << n << '.' << k << '.' << lda << '.'
-       << ldb << '.' << ldc << '.' << w_size << '.' << floattype << '.' << device_name;
+       << ldb << '.' << ldc << '.' << w_size << '.' << beta_type << '.' << floattype << '.' << device_name;
 
     auto                         key = ss.str();
     std::unique_lock<std::mutex> lock(mutt);
@@ -75,6 +87,7 @@ class ProgramCacher
 
     else
     {
+      
       owrite::Writer silent_mowri(Ver::E::SILENT, "");
       cl_context     context;
       oclutil::cl_set_command_queue_info(
@@ -87,12 +100,34 @@ class ProgramCacher
       auto             soln =
         get_default_soln(devinfo, gg, constraints, silent_mowri, IfNoCache::E::GENERIC, rank);
 
+      
+      std::vector<KernBlob> v_blobs;
+      
+      
+      for (auto & x : soln.v_tgks){
+        if (beta_type == BetaType::IsOne && x.e_ktype == KType::E::BETAC){
+          // don't run the beta kernel. 
+          std::cout << "skipping beta c kernel " << std::endl;
+                    //v_blobs.push_back(x);
+                    
+                    
+        }
+        else{
+          v_blobs.push_back(x);
+        }
+        
+        
+      }
+      
+
       program_cache.emplace_back(device_id, context, silent_mowri);
       ID = program_cache.size() - 1;
 
       IDs[key] = ID;
+      
+      
       lock.unlock();
-      program_cache.back().update(soln.v_tgks);
+      program_cache.back().update(v_blobs); //soln.v_tgks);
     }
 
     return ID;
@@ -100,6 +135,9 @@ class ProgramCacher
 };
 
 ProgramCacher cacher;
+
+
+
 
 // TODO : beta = 1 optimisation. alpha = 0 optimisation. beta = 0 optimisation.
 template <typename T>
@@ -132,7 +170,9 @@ GemmStatus xgemm(bool              isColMajor,
 
   if (ID < 0)
   {
-
+    
+    BetaType beta_type = get_beta_type(beta);
+    
     ID = cacher.get_ID(isColMajor,
                        tA,
                        tB,
@@ -144,6 +184,7 @@ GemmStatus xgemm(bool              isColMajor,
                        ldb,
                        ldc,
                        w_size,
+                       beta_type,
                        get_floattype_char<T>(),
                        ptr_queue);
   }
@@ -235,4 +276,76 @@ template GemmStatus xgemm<double>(bool,
                                   const cl_event*,
                                   cl_event*,
                                   int ID);
+
+// TODO : beta = 1 optimisation. alpha = 0 optimisation. beta = 0 optimisation.
+template <typename T>
+GemmStatus gemm0(bool              isColMajor,
+                 bool              tA,
+                 bool              tB,
+                 size_t            m,
+                 size_t            n,
+                 size_t            k,
+                 T                 alpha,
+                 cl_mem            a,
+                 size_t            a_offset,
+                 size_t            lda,
+                 cl_mem            b,
+                 size_t            b_offset,
+                 size_t            ldb,
+                 T                 beta,
+                 cl_mem            c,
+                 size_t            c_offset,
+                 size_t            ldc,
+                 cl_command_queue* ptr_queue,
+                 cl_uint           num_events_in_wait_list,
+                 const cl_event*   event_wait_list,
+                 cl_event*         ptr_event_user)
+{
+  return xgemm<T>(isColMajor, tA, tB, m, n, k, alpha, a, a_offset, lda, b, b_offset, ldb, beta, c, c_offset, ldc, nullptr, 0, 0, ptr_queue, num_events_in_wait_list, event_wait_list, ptr_event_user, -1);
+}
+                                  
+template GemmStatus gemm0<float>(bool,
+                                 bool,
+                                 bool,
+                                 size_t,
+                                 size_t,
+                                 size_t,
+                                 float,
+                                 cl_mem,
+                                 size_t,
+                                 size_t,
+                                 cl_mem,
+                                 size_t,
+                                 size_t,
+                                 float,
+                                 cl_mem,
+                                 size_t,
+                                 size_t,
+                                 cl_command_queue*,
+                                 cl_uint,
+                                 const cl_event*,
+                                 cl_event*);
+
+template GemmStatus gemm0<double>(bool,
+                                  bool,
+                                  bool,
+                                  size_t,
+                                  size_t,
+                                  size_t,
+                                  double,
+                                  cl_mem,
+                                  size_t,
+                                  size_t,
+                                  cl_mem,
+                                  size_t,
+                                  size_t,
+                                  double,
+                                  cl_mem,
+                                  size_t,
+                                  size_t,
+                                  cl_command_queue*,
+                                  cl_uint,
+                                  const cl_event*,
+                                  cl_event*);
+                                                                    
 }
