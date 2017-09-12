@@ -200,6 +200,8 @@ double CacheKey::get_distance(const CacheKey& ck) const
 {
   double distance = 0;
   distance += gg.get_distance(ck.gg);
+  
+  //TODO : distance between devices, how should this work?
   distance += 1e-6 * (dvc != ck.dvc);
 
   // TODO : improved distance between constraints. will be non-sym.
