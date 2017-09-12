@@ -1,6 +1,6 @@
 # MIOpenGEMM
 
-A tool for generating OpenCL matrix multiplication (GEMM) kernels. More information is available at (link coming soon). 
+An OpenCL general matrix multiplication (GEMM) API and kernel generator. More information is available on the [wiki](https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/wiki). 
 
 ## Prerequisites
 * OpenCL - OpenCL libraries and header files
@@ -17,7 +17,6 @@ Next configure cmake; if OpenCL is installed in one of the standard locations,
 ```
 cmake ..
 ```
-
 
 otherwise manually set OpenCL cmake variables, either in ` CMakeCache.txt ` or
 
@@ -51,7 +50,7 @@ make install
 MIOpenGEMM provides an OpenCL GEMM API in ` gemm.hpp `, which should be included in your C++ source file 
 
 ```c++
-#include <miopengemm/miopengemm.hpp>
+#include <miopengemm/gemm.hpp>
 ```  
 
 The key function is 
@@ -61,7 +60,7 @@ MIOpenGEMM::GemmStatus xgemm(...)
 ```
 which provides the same functionality as clBLAS' `clblasSgemm` and `clblasDgemm`. Currently only `T=float` and `T=double` are supported. More information on `xgemm` can be found on the wiki [here](https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/wiki).
 
-To obtain just OpenCL kernel strings without executing GEMM, one can use ` miogemm.hpp ` , this is what [MIOpen](https://github.com/ROCmSoftwarePlatform/MIOpen) uses.  
+To obtain just OpenCL kernel strings without executing GEMM, one can use ` miogemm.hpp ` , as done by [MIOpen](https://github.com/ROCmSoftwarePlatform/MIOpen).  
 
 ## Run the test
 
@@ -87,7 +86,7 @@ or individually by name, for example
 make find
 ```
 
-The 12 examples are described on the the wiki [here](https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/wiki).
+The examples are described on the the wiki [here](https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/wiki).
 
 
 ## Build the documentation
