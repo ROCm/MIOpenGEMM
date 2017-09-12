@@ -6,7 +6,6 @@
 
 #ifdef __APPLE__
 #include <opencl.h>
-#include <numeric>
 #else
 #include <CL/cl.h>
 #endif
