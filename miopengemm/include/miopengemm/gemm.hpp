@@ -4,7 +4,11 @@
 #ifndef GUARD_MIOPENGEMM_GEMMAPI_HPP
 #define GUARD_MIOPENGEMM_GEMMAPI_HPP
 
+#ifdef __APPLE__
+#include <opencl.h>
+#else
 #include <CL/cl.h>
+#endif
 
 namespace MIOpenGEMM
 {

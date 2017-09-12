@@ -4,7 +4,11 @@
 #ifndef GUARD_MIOPENGEMM_MIOGEMM_HPP
 #define GUARD_MIOPENGEMM_MIOGEMM_HPP
 
+#ifdef __APPLE__
+#include <opencl.h>
+#else
 #include <CL/cl.h>
+#endif
 #include <miopengemm/findparams.hpp>
 #include <miopengemm/geometry.hpp>
 #include <miopengemm/outputwriter.hpp>
