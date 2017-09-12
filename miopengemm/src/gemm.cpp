@@ -61,6 +61,8 @@ class ProgramCacher
              char              floattype,
              cl_command_queue* ptr_queue)
   {
+    
+
     int               ID = -1;
     std::stringstream ss;
 
@@ -92,6 +94,8 @@ class ProgramCacher
       cl_context     context;
       oclutil::cl_set_command_queue_info(
         *ptr_queue, CL_QUEUE_CONTEXT, sizeof(cl_context), &context, nullptr, "GEMM", true);
+
+
       size_t      rank = 0;
       Constraints constraints("");
       Geometry    gg(isColMajor, tA, tB, tC, lda, ldb, ldc, m, n, k, w_size, floattype);
@@ -107,10 +111,6 @@ class ProgramCacher
       for (auto & x : soln.v_tgks){
         if (beta_type == BetaType::IsOne && x.e_ktype == KType::E::BETAC){
           // don't run the beta kernel. 
-          std::cout << "skipping beta c kernel " << std::endl;
-                    //v_blobs.push_back(x);
-                    
-                    
         }
         else{
           v_blobs.push_back(x);
@@ -121,14 +121,21 @@ class ProgramCacher
       
 
       program_cache.emplace_back(device_id, context, silent_mowri);
+
+
       ID = program_cache.size() - 1;
+
 
       IDs[key] = ID;
       
+
       
       lock.unlock();
       program_cache.back().update(v_blobs); //soln.v_tgks);
+      
+
     }
+
 
     return ID;
   }

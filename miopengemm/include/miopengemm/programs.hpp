@@ -8,6 +8,7 @@
 #include <CL/cl.h>
 #include <algorithm>
 #include <vector>
+#include <memory>
 #include <miopengemm/hyperparams.hpp>
 #include <miopengemm/kernelstring.hpp>
 #include <miopengemm/oclutil.hpp>
@@ -17,6 +18,18 @@ namespace MIOpenGEMM
 {
 
 using AllKernArgs = std::vector<std::vector<std::pair<size_t, const void*>>>;
+
+class SafeCLProgram{
+  public:
+  cl_program clprog = nullptr;
+  
+  ~SafeCLProgram(){
+  if (clprog)
+    {
+       oclutil::cl_release_program(clprog, "~Program", true);
+    }
+  }
+};
 
 class KernelTime
 {
@@ -44,12 +57,22 @@ class Program
   cl_context   context;
   KernBlob     kblob;
   // a resource to manage carefully:
-  cl_program clprog;
+  //cl_program   clprog;
+  
+  std::shared_ptr<SafeCLProgram> sclp;
 
+  //std::unique_ptr<int> bla;
+  
   Program(cl_device_id, cl_context);
   Program() : Program(nullptr, nullptr) {}
   oclutil::Result update(const KernBlob&, owrite::Writer&, const std::string& build_options);
-  ~Program();
+  //~Program();
+  
+  //Program & operator=(const Program &) = delete;
+  //Program (const Program &)  = delete;
+  //Program (Program &&)  = default;
+  //Program& operator=(Program &&)  = default;
+
 };
 
 class Programs
@@ -87,6 +110,12 @@ class Programs
   Programs(const cl_device_id&, const cl_context&, owrite::Writer& mowri_);
 
   Programs() = default;
+
+  //Programs & operator=(const Programs &) = delete;
+  //Programs (const Programs &)  = delete;
+  //Programs (Programs &&)  = default;
+  //Programs& operator=(Programs &&)  = default;
+
 };
 }
 #endif

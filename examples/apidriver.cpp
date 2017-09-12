@@ -17,8 +17,8 @@ int driver(bool   isColMajor,
            size_t m,
            size_t n,
            size_t k,
-           float alpha, 
-           float beta,
+           float  alpha,
+           float  beta,
            bool   fast_ID,
            char   init,
            size_t n_runs)
@@ -91,16 +91,16 @@ int driver(bool   isColMajor,
   std::cout << "done. \nInitialise OpenCL context ... " << std::flush;
   cl_context context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, nullptr);
 
+  cl_queue_properties properties =
+    CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
 
-  cl_queue_properties properties = CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
-
-  #if (CL_VERSION_2_0 == 1)
+#if (CL_VERSION_2_0 == 1)
   std::vector<cl_queue_properties> props = {CL_QUEUE_PROPERTIES, properties, 0};
-  cl_command_queue queue = clCreateCommandQueueWithProperties(context, device, props.data(), nullptr);
-  #else
-  cl_command_queue queue = clCreateCommandQueue(
-    context, device, properties, nullptr);
-  #endif
+  cl_command_queue                 queue =
+    clCreateCommandQueueWithProperties(context, device, props.data(), nullptr);
+#else
+  cl_command_queue queue = clCreateCommandQueue(context, device, properties, nullptr);
+#endif
 
   cl_event event = nullptr;
 
@@ -253,10 +253,10 @@ int main(int argc, char* argv[])
   values["tA"]         = 0;
   values["tB"]         = 0;
   values["id"]         = 1;
-  int  n_runs          = -1;  // number of times to run GEMM, excluding the first run.
-  char init            = 'U';
-  float alpha = 1.0f;
-  float beta =  1.0f;
+  int   n_runs         = -1;  // number of times to run GEMM, excluding the first run.
+  char  init           = 'U';
+  float alpha          = 1.0f;
+  float beta           = 1.0f;
 
   std::stringstream helpss;
   helpss << "----------------------\nOptions:\n----------------------\n";
@@ -276,7 +276,7 @@ int main(int argc, char* argv[])
 
   helpss << "-alpha [default = 1.0]: \n";
   helpss << "-beta  [default = 1.0]: \n";
-  
+
   std::string help = helpss.str();
 
   std::vector<std::string> frags;
@@ -310,16 +310,17 @@ int main(int argc, char* argv[])
       {
         init = frags[i + 1][0];
       }
-      
-      else if (frags[i] == "-beta"){
+
+      else if (frags[i] == "-beta")
+      {
         beta = std::stod(frags[i + 1]);
       }
-      
 
-      else if (frags[i] == "-alpha"){
+      else if (frags[i] == "-alpha")
+      {
         alpha = std::stod(frags[i + 1]);
-      }      
-      
+      }
+
       else
       {
         auto key = frags[i].substr(1);

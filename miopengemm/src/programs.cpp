@@ -13,15 +13,8 @@
 namespace MIOpenGEMM
 {
 
-Program::~Program()
-{
-  if (clprog)
-  {
-    oclutil::cl_release_program(clprog, "~Program", true);
-  }
-}
 
-Program::Program(cl_device_id id, cl_context ctxt) : device_id(id), context(ctxt), clprog(nullptr)
+Program::Program(cl_device_id id, cl_context ctxt) : device_id(id), context(ctxt), sclp(new SafeCLProgram)//, sclp->clprog(nullptr)
 {
 }
 
@@ -32,23 +25,23 @@ Program::update(const KernBlob& ks, owrite::Writer& mowri, const std::string& bu
   oclutil::Result oclr;
 
   // no update needed
-  if ((clprog != nullptr) && (ks.kernstr == kblob.kernstr))
+  if ((sclp->clprog != nullptr) && (ks.kernstr == kblob.kernstr))
   {
     oclr = {};
   }
 
   else
   {
-    if (clprog != nullptr)
+    if (sclp->clprog != nullptr)
     {
-      oclutil::cl_release_program(clprog, "update", true);
+      oclutil::cl_release_program(sclp->clprog, "update", true);
     }
 
     kblob = ks;
     mowri << "compiling " << KType::M.name[kblob.e_ktype] << ". " << Flush;
     auto start = std::chrono::high_resolution_clock::now();
     oclr =
-      oclutil::cl_set_program(context, device_id, kblob.kernstr, clprog, build_opts, mowri, false);
+      oclutil::cl_set_program(context, device_id, kblob.kernstr, sclp->clprog, build_opts, mowri, false);
 
     auto                         end   = std::chrono::high_resolution_clock::now();
     std::chrono::duration<float> fp_ms = end - start;
@@ -130,13 +123,13 @@ oclutil::Result Programs::run(const cl_command_queue& queue,
     if (debug_mode)
     {
       oclutil::cl_create_kernel(
-        clkerns[k_ind], prog.clprog, prog.kblob.fname.c_str(), "programs run", true);
+        clkerns[k_ind], prog.sclp->clprog, prog.kblob.fname.c_str(), "programs run", true);
       oclutil::cl_set_kernel_args(clkerns[k_ind], all_args[k_ind], "programs run", true);
     }
     else
     {
       cl_int errcode;
-      clkerns[k_ind] = clCreateKernel(prog.clprog, prog.kblob.fname.c_str(), &errcode);
+      clkerns[k_ind] = clCreateKernel(prog.sclp->clprog, prog.kblob.fname.c_str(), &errcode);
       for (cl_uint arg_index = 0; arg_index < all_args[k_ind].size(); ++arg_index)
       {
         size_t      arg_size  = all_args[k_ind][arg_index].first;

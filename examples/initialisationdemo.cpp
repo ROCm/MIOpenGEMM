@@ -166,19 +166,18 @@ __global float       *          c
   checkstatus(ret, "clCreateContext");
 
   /* Create Command Queue */
-  
-  //command_queue = clCreateCommandQueue(context, device_id, 0, &ret);
-  
-  cl_queue_properties properties = CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
-  #if (CL_VERSION_2_0 == 1)
+
+  // command_queue = clCreateCommandQueue(context, device_id, 0, &ret);
+
+  cl_queue_properties properties =
+    CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
+#if (CL_VERSION_2_0 == 1)
   std::vector<cl_queue_properties> props = {CL_QUEUE_PROPERTIES, properties, 0};
   command_queue = clCreateCommandQueueWithProperties(context, device_id, props.data(), nullptr);
-  #else
+#else
   command_queue = clCreateCommandQueue(context, device_id, properties, nullptr);
-  #endif
+#endif
 
-
-  
   checkstatus(ret, "clCreateCommandQueue");
 
   /* Create memory buffers */

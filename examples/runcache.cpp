@@ -319,26 +319,25 @@ int main(int argc, char* argv[])
 
   using namespace MIOpenGEMM;
 
-
   std::vector<std::string> parsed;
   for (int i = 1; i < argc; ++i)
   {
     parsed.push_back(argv[i]);
   }
-  
-  for (auto & x : parsed){
-    if (x == "-h" || x == "--help" || x == "-help"){
+
+  for (auto& x : parsed)
+  {
+    if (x == "-h" || x == "--help" || x == "-help")
+    {
       std::cout << help << std::endl;
       return 0;
     }
   }
 
-
   if (argc % 2 != 1)
   {
     throw miog_error("Odd number of keys+vals is incorrect.\n" + help);
   }
-
 
   char key = '?';
   for (auto& x : parsed)

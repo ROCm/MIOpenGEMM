@@ -519,7 +519,9 @@ int main()
       //}
       // geometries = {{"tC0_tA0_tB0_colMaj0_m13_n13_k13_lda13_ldb13_ldc13_ws0_f32"}};
       // geometries = {MIOpenGEMM::get_squareNN_geometry<float>(28)};
-      geometries = {{512, 16, 512, false, false, 0, 'f'}};
+      geometries = {{512, 16, 512, false, false, 0, 'f'}
+                  , {512, 17, 512, false, false, 0, 'f'}
+                  , {512, 18, 512, false, false, 0, 'f'}};
     }
 
     auto stats = runem<float>(geometries, impl, run_accuracy_test, run_event_timer);
