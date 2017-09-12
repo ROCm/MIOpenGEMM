@@ -1,3 +1,5 @@
+// Bencharking MIOpenGEMM on the DeepBench problem suite. 
+
 #include <chrono>
 #include <cmath>
 #include <iomanip>
@@ -14,171 +16,169 @@
 
 #include <miopengemm/gemm.hpp>
 
-// 12/09/2017
-// DeepBench problems, copied from DeepBench/code/kernels/gemm_problems.h
+// DeepBench problems, copied (12/09/2017) from DeepBench/code/kernels/gemm_problems.h
 // Vector saves m, n, k, a_t, b_t
 std::vector<std::tuple<int, int, int, bool, bool>> training_set = {
   std::make_tuple(1760, 16, 1760, false, false),
   std::make_tuple(1760, 32, 1760, false, false),
   std::make_tuple(1760, 64, 1760, false, false),
   std::make_tuple(1760, 128, 1760, false, false),
-   std::make_tuple(1760, 7000, 1760, false, false),
+  std::make_tuple(1760, 7000, 1760, false, false),
   std::make_tuple(2048, 16, 2048, false, false),
   std::make_tuple(2048, 32, 2048, false, false),
   std::make_tuple(2048, 64, 2048, false, false),
-   std::make_tuple(2048, 128, 2048, false, false),
-   std::make_tuple(2048, 7000, 2048, false, false),
+  std::make_tuple(2048, 128, 2048, false, false),
+  std::make_tuple(2048, 7000, 2048, false, false),
   std::make_tuple(2560, 16, 2560, false, false),
   std::make_tuple(2560, 32, 2560, false, false),
   std::make_tuple(2560, 64, 2560, false, false),
-   std::make_tuple(2560, 128, 2560, false, false),
-   std::make_tuple(2560, 7000, 2560, false, false),
-   std::make_tuple(4096, 16, 4096, false, false),
-   std::make_tuple(4096, 32, 4096, false, false),
-   std::make_tuple(4096, 64, 4096, false, false),
-   std::make_tuple(4096, 128, 4096, false, false),
-   std::make_tuple(4096, 7000, 4096, false, false),
-   std::make_tuple(1760, 16, 1760, true, false),
-   std::make_tuple(1760, 32, 1760, true, false),
-   std::make_tuple(1760, 64, 1760, true, false),
-   std::make_tuple(1760, 128, 1760, true, false),
-   std::make_tuple(1760, 7000, 1760, true, false),
-   std::make_tuple(2048, 16, 2048, true, false),
-   std::make_tuple(2048, 32, 2048, true, false),
-   std::make_tuple(2048, 64, 2048, true, false),
-   std::make_tuple(2048, 128, 2048, true, false),
-   std::make_tuple(2048, 7000, 2048, true, false),
-   std::make_tuple(2560, 16, 2560, true, false),
-   std::make_tuple(2560, 32, 2560, true, false),
-   std::make_tuple(2560, 64, 2560, true, false),
-   std::make_tuple(2560, 128, 2560, true, false),
-   std::make_tuple(2560, 7000, 2560, true, false),
-   std::make_tuple(4096, 16, 4096, true, false),
-   std::make_tuple(4096, 32, 4096, true, false),
-   std::make_tuple(4096, 64, 4096, true, false),
-   std::make_tuple(4096, 128, 4096, true, false),
-   std::make_tuple(4096, 7000, 4096, true, false),
-   std::make_tuple(1760, 7133, 1760, false, true),
-   std::make_tuple(2048, 7133, 2048, false, true),
-   std::make_tuple(2560, 7133, 2560, false, true),
-   std::make_tuple(4096, 7133, 4096, false, true),
-   std::make_tuple(5124, 9124, 1760, false, false),
-   std::make_tuple(35, 8457, 1760, false, false),
-   std::make_tuple(5124, 9124, 2048, false, false),
-   std::make_tuple(35, 8457, 2048, false, false),
-   std::make_tuple(5124, 9124, 2560, false, false),
-   std::make_tuple(35, 8457, 2560, false, false),
-   std::make_tuple(5124, 9124, 4096, false, false),
-   std::make_tuple(35, 8457, 4096, false, false),
-   std::make_tuple(5124, 9124, 1760, true, false),
-   std::make_tuple(35, 8457, 1760, true, false),
-   std::make_tuple(5124, 9124, 2048, true, false),
-   std::make_tuple(35, 8457, 2048, true, false),
-   std::make_tuple(5124, 9124, 2560, true, false),
-   std::make_tuple(35, 8457, 2560, true, false),
-   std::make_tuple(5124, 9124, 4096, true, false),
-   std::make_tuple(35, 8457, 4096, true, false),
-   std::make_tuple(7680, 16, 2560, false, false),
-   std::make_tuple(7680, 32, 2560, false, false),
-   std::make_tuple(7680, 64, 2560, false, false),
-   std::make_tuple(7680, 128, 2560, false, false),
-   std::make_tuple(7680, 16, 2560, true, false),
-   std::make_tuple(7680, 32, 2560, true, false),
-   std::make_tuple(7680, 64, 2560, true, false),
-   std::make_tuple(7680, 128, 2560, true, false),
-   std::make_tuple(3072, 16, 1024, false, false),
-   std::make_tuple(3072, 32, 1024, false, false),
-   std::make_tuple(3072, 64, 1024, false, false),
-   std::make_tuple(3072, 128, 1024, false, false),
-   std::make_tuple(3072, 16, 1024, true, false),
-   std::make_tuple(3072, 32, 1024, true, false),
-   std::make_tuple(3072, 64, 1024, true, false),
-   std::make_tuple(3072, 128, 1024, true, false),
-   std::make_tuple(3072, 7435, 1024, false, true),
-   std::make_tuple(7680, 5481, 2560, false, true),
-   std::make_tuple(512, 8, 500000, false, false),
-   std::make_tuple(1024, 8, 500000, false, false),
-   std::make_tuple(512, 16, 500000, false, false),
-   std::make_tuple(1024, 16, 500000, false, false),
-   std::make_tuple(512, 8, 500000, true, false),
-   std::make_tuple(1024, 8, 500000, true, false),
-   std::make_tuple(512, 16, 500000, true, false),
-   std::make_tuple(1024, 16, 500000, true, false),
-   std::make_tuple(1024, 700, 512, false, false),
-   std::make_tuple(1024, 700, 512, true, false),
-   std::make_tuple(7680, 24000, 2560, false, false),
-   std::make_tuple(6144, 24000, 2560, false, false),
-   std::make_tuple(4608, 24000, 1536, false, false),
-   std::make_tuple(8448, 24000, 2816, false, false),
-   std::make_tuple(3072, 24000, 1024, false, false),
-   std::make_tuple(7680, 48000, 2560, false, false),
-   std::make_tuple(6144, 48000, 2560, false, false),
-   std::make_tuple(4608, 48000, 1536, false, false),
-   std::make_tuple(8448, 48000, 2816, false, false),
-   std::make_tuple(3072, 48000, 1024, false, false),
-   std::make_tuple(7680, 24000, 2560, true, false),
-   std::make_tuple(6144, 24000, 2560, true, false),
-   std::make_tuple(4608, 24000, 1536, true, false),
-   std::make_tuple(8448, 24000, 2816, true, false),
-   std::make_tuple(3072, 24000, 1024, true, false),
-   std::make_tuple(7680, 48000, 2560, true, false),
-   std::make_tuple(6144, 48000, 2560, true, false),
-   std::make_tuple(4608, 48000, 1536, true, false),
-   std::make_tuple(8448, 48000, 2816, true, false),
-   std::make_tuple(3072, 48000, 1024, true, false),
-   std::make_tuple(6144, 16, 2560, false, false),
-   std::make_tuple(4608, 16, 1536, false, false),
-   std::make_tuple(8448, 16, 2816, false, false),
-   std::make_tuple(6144, 32, 2560, false, false),
-   std::make_tuple(4608, 32, 1536, false, false),
-   std::make_tuple(8448, 32, 2816, false, false),
-   std::make_tuple(6144, 16, 2560, true, false),
-   std::make_tuple(4608, 16, 1536, true, false),
-   std::make_tuple(8448, 16, 2816, true, false),
-   std::make_tuple(6144, 32, 2560, true, false),
-   std::make_tuple(4608, 32, 1536, true, false),
-   std::make_tuple(8448, 32, 2816, true, false),
-   std::make_tuple(512, 24000, 2816, false, false),
-   std::make_tuple(512, 24000, 2048, false, false),
-   std::make_tuple(512, 24000, 2560, false, false),
-   std::make_tuple(512, 24000, 1536, false, false),
-   std::make_tuple(1024, 24000, 2816, false, false),
-   std::make_tuple(1024, 24000, 2048, false, false),
-   std::make_tuple(1024, 24000, 2560, false, false),
-   std::make_tuple(1024, 24000, 1536, false, false),
-   std::make_tuple(512, 16, 512, false, false),
-   std::make_tuple(1024, 16, 512, false, false),
-   std::make_tuple(512, 24000, 2816, true, false),
-   std::make_tuple(512, 24000, 2048, true, false),
-   std::make_tuple(512, 24000, 2560, true, false),
-   std::make_tuple(512, 24000, 1536, true, false),
+  std::make_tuple(2560, 128, 2560, false, false),
+  std::make_tuple(2560, 7000, 2560, false, false),
+  std::make_tuple(4096, 16, 4096, false, false),
+  std::make_tuple(4096, 32, 4096, false, false),
+  std::make_tuple(4096, 64, 4096, false, false),
+  std::make_tuple(4096, 128, 4096, false, false),
+  std::make_tuple(4096, 7000, 4096, false, false),
+  std::make_tuple(1760, 16, 1760, true, false),
+  std::make_tuple(1760, 32, 1760, true, false),
+  std::make_tuple(1760, 64, 1760, true, false),
+  std::make_tuple(1760, 128, 1760, true, false),
+  std::make_tuple(1760, 7000, 1760, true, false),
+  std::make_tuple(2048, 16, 2048, true, false),
+  std::make_tuple(2048, 32, 2048, true, false),
+  std::make_tuple(2048, 64, 2048, true, false),
+  std::make_tuple(2048, 128, 2048, true, false),
+  std::make_tuple(2048, 7000, 2048, true, false),
+  std::make_tuple(2560, 16, 2560, true, false),
+  std::make_tuple(2560, 32, 2560, true, false),
+  std::make_tuple(2560, 64, 2560, true, false),
+  std::make_tuple(2560, 128, 2560, true, false),
+  std::make_tuple(2560, 7000, 2560, true, false),
+  std::make_tuple(4096, 16, 4096, true, false),
+  std::make_tuple(4096, 32, 4096, true, false),
+  std::make_tuple(4096, 64, 4096, true, false),
+  std::make_tuple(4096, 128, 4096, true, false),
+  std::make_tuple(4096, 7000, 4096, true, false),
+  std::make_tuple(1760, 7133, 1760, false, true),
+  std::make_tuple(2048, 7133, 2048, false, true),
+  std::make_tuple(2560, 7133, 2560, false, true),
+  std::make_tuple(4096, 7133, 4096, false, true),
+  std::make_tuple(5124, 9124, 1760, false, false),
+  std::make_tuple(35, 8457, 1760, false, false),
+  std::make_tuple(5124, 9124, 2048, false, false),
+  std::make_tuple(35, 8457, 2048, false, false),
+  std::make_tuple(5124, 9124, 2560, false, false),
+  std::make_tuple(35, 8457, 2560, false, false),
+  std::make_tuple(5124, 9124, 4096, false, false),
+  std::make_tuple(35, 8457, 4096, false, false),
+  std::make_tuple(5124, 9124, 1760, true, false),
+  std::make_tuple(35, 8457, 1760, true, false),
+  std::make_tuple(5124, 9124, 2048, true, false),
+  std::make_tuple(35, 8457, 2048, true, false),
+  std::make_tuple(5124, 9124, 2560, true, false),
+  std::make_tuple(35, 8457, 2560, true, false),
+  std::make_tuple(5124, 9124, 4096, true, false),
+  std::make_tuple(35, 8457, 4096, true, false),
+  std::make_tuple(7680, 16, 2560, false, false),
+  std::make_tuple(7680, 32, 2560, false, false),
+  std::make_tuple(7680, 64, 2560, false, false),
+  std::make_tuple(7680, 128, 2560, false, false),
+  std::make_tuple(7680, 16, 2560, true, false),
+  std::make_tuple(7680, 32, 2560, true, false),
+  std::make_tuple(7680, 64, 2560, true, false),
+  std::make_tuple(7680, 128, 2560, true, false),
+  std::make_tuple(3072, 16, 1024, false, false),
+  std::make_tuple(3072, 32, 1024, false, false),
+  std::make_tuple(3072, 64, 1024, false, false),
+  std::make_tuple(3072, 128, 1024, false, false),
+  std::make_tuple(3072, 16, 1024, true, false),
+  std::make_tuple(3072, 32, 1024, true, false),
+  std::make_tuple(3072, 64, 1024, true, false),
+  std::make_tuple(3072, 128, 1024, true, false),
+  std::make_tuple(3072, 7435, 1024, false, true),
+  std::make_tuple(7680, 5481, 2560, false, true),
+  std::make_tuple(512, 8, 500000, false, false),
+  std::make_tuple(1024, 8, 500000, false, false),
+  std::make_tuple(512, 16, 500000, false, false),
+  std::make_tuple(1024, 16, 500000, false, false),
+  std::make_tuple(512, 8, 500000, true, false),
+  std::make_tuple(1024, 8, 500000, true, false),
+  std::make_tuple(512, 16, 500000, true, false),
+  std::make_tuple(1024, 16, 500000, true, false),
+  std::make_tuple(1024, 700, 512, false, false),
+  std::make_tuple(1024, 700, 512, true, false),
+  std::make_tuple(7680, 24000, 2560, false, false),
+  std::make_tuple(6144, 24000, 2560, false, false),
+  std::make_tuple(4608, 24000, 1536, false, false),
+  std::make_tuple(8448, 24000, 2816, false, false),
+  std::make_tuple(3072, 24000, 1024, false, false),
+  std::make_tuple(7680, 48000, 2560, false, false),
+  std::make_tuple(6144, 48000, 2560, false, false),
+  std::make_tuple(4608, 48000, 1536, false, false),
+  std::make_tuple(8448, 48000, 2816, false, false),
+  std::make_tuple(3072, 48000, 1024, false, false),
+  std::make_tuple(7680, 24000, 2560, true, false),
+  std::make_tuple(6144, 24000, 2560, true, false),
+  std::make_tuple(4608, 24000, 1536, true, false),
+  std::make_tuple(8448, 24000, 2816, true, false),
+  std::make_tuple(3072, 24000, 1024, true, false),
+  std::make_tuple(7680, 48000, 2560, true, false),
+  std::make_tuple(6144, 48000, 2560, true, false),
+  std::make_tuple(4608, 48000, 1536, true, false),
+  std::make_tuple(8448, 48000, 2816, true, false),
+  std::make_tuple(3072, 48000, 1024, true, false),
+  std::make_tuple(6144, 16, 2560, false, false),
+  std::make_tuple(4608, 16, 1536, false, false),
+  std::make_tuple(8448, 16, 2816, false, false),
+  std::make_tuple(6144, 32, 2560, false, false),
+  std::make_tuple(4608, 32, 1536, false, false),
+  std::make_tuple(8448, 32, 2816, false, false),
+  std::make_tuple(6144, 16, 2560, true, false),
+  std::make_tuple(4608, 16, 1536, true, false),
+  std::make_tuple(8448, 16, 2816, true, false),
+  std::make_tuple(6144, 32, 2560, true, false),
+  std::make_tuple(4608, 32, 1536, true, false),
+  std::make_tuple(8448, 32, 2816, true, false),
+  std::make_tuple(512, 24000, 2816, false, false),
+  std::make_tuple(512, 24000, 2048, false, false),
+  std::make_tuple(512, 24000, 2560, false, false),
+  std::make_tuple(512, 24000, 1536, false, false),
+  std::make_tuple(1024, 24000, 2816, false, false),
+  std::make_tuple(1024, 24000, 2048, false, false),
+  std::make_tuple(1024, 24000, 2560, false, false),
+  std::make_tuple(1024, 24000, 1536, false, false),
+  std::make_tuple(512, 16, 512, false, false),
+  std::make_tuple(1024, 16, 512, false, false),
+  std::make_tuple(512, 24000, 2816, true, false),
+  std::make_tuple(512, 24000, 2048, true, false),
+  std::make_tuple(512, 24000, 2560, true, false),
+  std::make_tuple(512, 24000, 1536, true, false),
   std::make_tuple(1024, 24000, 2816, true, false),
-   std::make_tuple(1024, 24000, 2048, true, false),
-   std::make_tuple(1024, 24000, 2560, true, false),
-   std::make_tuple(1024, 24000, 1536, true, false),
-   std::make_tuple(512, 16, 512, false, true),
-   std::make_tuple(1024, 16, 512, false, true),
-   std::make_tuple(512, 48000, 2816, false, false),
-   std::make_tuple(512, 48000, 2048, false, false),
-   std::make_tuple(512, 48000, 2560, false, false),
-   std::make_tuple(512, 48000, 1536, false, false),
-   std::make_tuple(1024, 48000, 2816, false, false),
-   std::make_tuple(1024, 48000, 2048, false, false),
-   std::make_tuple(1024, 48000, 2560, false, false),
-   std::make_tuple(1024, 48000, 1536, false, false),
-   std::make_tuple(512, 32, 512, false, false),
-   std::make_tuple(1024, 32, 512, false, false),
-   std::make_tuple(512, 48000, 2816, true, false),
-   std::make_tuple(512, 48000, 2048, true, false),
-   std::make_tuple(512, 48000, 2560, true, false),
-   std::make_tuple(512, 48000, 1536, true, false),
-   std::make_tuple(1024, 48000, 2816, true, false),
-   std::make_tuple(1024, 48000, 2048, true, false),
-   std::make_tuple(1024, 48000, 2560, true, false),
-   std::make_tuple(1024, 48000, 1536, true, false),
-   std::make_tuple(512, 32, 512, false, true),
-   std::make_tuple(1024, 32, 512, false, true)
-};
+  std::make_tuple(1024, 24000, 2048, true, false),
+  std::make_tuple(1024, 24000, 2560, true, false),
+  std::make_tuple(1024, 24000, 1536, true, false),
+  std::make_tuple(512, 16, 512, false, true),
+  std::make_tuple(1024, 16, 512, false, true),
+  std::make_tuple(512, 48000, 2816, false, false),
+  std::make_tuple(512, 48000, 2048, false, false),
+  std::make_tuple(512, 48000, 2560, false, false),
+  std::make_tuple(512, 48000, 1536, false, false),
+  std::make_tuple(1024, 48000, 2816, false, false),
+  std::make_tuple(1024, 48000, 2048, false, false),
+  std::make_tuple(1024, 48000, 2560, false, false),
+  std::make_tuple(1024, 48000, 1536, false, false),
+  std::make_tuple(512, 32, 512, false, false),
+  std::make_tuple(1024, 32, 512, false, false),
+  std::make_tuple(512, 48000, 2816, true, false),
+  std::make_tuple(512, 48000, 2048, true, false),
+  std::make_tuple(512, 48000, 2560, true, false),
+  std::make_tuple(512, 48000, 1536, true, false),
+  std::make_tuple(1024, 48000, 2816, true, false),
+  std::make_tuple(1024, 48000, 2048, true, false),
+  std::make_tuple(1024, 48000, 2560, true, false),
+  std::make_tuple(1024, 48000, 1536, true, false),
+  std::make_tuple(512, 32, 512, false, true),
+  std::make_tuple(1024, 32, 512, false, true)};
 
 int main()
 {
@@ -196,7 +196,7 @@ int main()
   const float alpha = 1.f;
   const float beta  = 1.f;
 
-  // allocate hA, hB, hC to be as large as the largest A, B and C in DeepBench.
+  // allocate host memories hA, hB, hC to be as large as the largest A, B and C in DeepBench.
   int sA = 0;
   int sB = 0;
   int sC = 0;
@@ -232,7 +232,7 @@ int main()
   confirm(clstat);
   cl_platform_id platform = platforms[platform_id];
 
-  size_t  device_id = 0;
+  size_t device_id = 0;
   std::cout << "done. \nInitialise OpenCL device #" << device_id << " ... " << std::flush;
   cl_uint num_devices;
   clstat = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, nullptr, &num_devices);
@@ -266,10 +266,12 @@ int main()
   std::cout << std::setfill('-') << std::setw(95) << "-" << std::endl;
   std::cout << std::setfill(' ');
   int n_problems = training_set.size();
-  std::cout << "    m       n      k      a_t     b_t   precision   time (usec)  tflops   numRepeats  (of " << n_problems << ")\n";
+  std::cout
+    << "    m       n      k      a_t     b_t   precision   time (usec)  tflops   numRepeats  (of "
+    << n_problems << ")\n";
 
   bool cmaj = true;
-  int GID = 1;
+  int  GID  = 1;
   for (auto& x : training_set)
   {
     size_t m   = std::get<0>(x);
@@ -311,13 +313,10 @@ int main()
     int  numRepeats = std::max(std::ceil(1e11 / (m * k * n)), 10.);
     auto start      = std::chrono::steady_clock::now();
 
-    std::cout << std::setw(7) << m;
-    std::cout << std::setw(7) << n;
-    std::cout << std::setw(7) << k;
-    std::cout << std::setw(7) << (tA ? 't' : 'n');
-    std::cout << std::setw(7) << (tB ? 't' : 'n');
-    std::cout << std::setw(10) << "f32" << std::flush;
-    
+    std::cout << std::setw(7) << m << std::setw(7) << n << std::setw(7) << k << std::setw(7)
+              << (tA ? 't' : 'n') << std::setw(7) << (tB ? 't' : 'n') << std::setw(10) << "f32"
+              << std::flush;
+
     for (int r = 0; r < numRepeats; ++r)
     {
       MIOpenGEMM::gemm0<float>(cmaj,
@@ -348,12 +347,10 @@ int main()
     auto end = std::chrono::steady_clock::now();
     auto elapsed =
       static_cast<int>(std::chrono::duration<double, std::micro>(end - start).count() / numRepeats);
-    double tflops = (2.*m*n*k)/(1e6*elapsed); 
+    double tflops = (2. * m * n * k) / (1e6 * elapsed);
 
-
-    std::cout << std::setw(14) << std::setprecision(4) << elapsed;
-    std::cout << std::setw(12) << tflops;
-    std::cout << std::setw(10) << numRepeats  << std::setw(9) << GID << std::endl;
+    std::cout << std::setw(14) << std::setprecision(4) << elapsed << std::setw(12) << tflops
+              << std::setw(10) << numRepeats << std::setw(9) << GID << std::endl;
     ++GID;
   }
   clReleaseMemObject(dA);
