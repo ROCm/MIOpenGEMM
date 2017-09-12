@@ -17,6 +17,8 @@ int driver(bool   isColMajor,
            size_t m,
            size_t n,
            size_t k,
+           float alpha, 
+           float beta,
            bool   fast_ID,
            char   init,
            size_t n_runs)
@@ -29,9 +31,6 @@ int driver(bool   isColMajor,
   size_t otha = isColMajor != tA ? k : m;
   size_t othb = isColMajor != tB ? n : k;
   size_t othc = isColMajor != false ? n : m;
-
-  float alpha = 0.5236;
-  float beta  = 1.2342;
 
   std::vector<float> host_a(lda * otha);
   std::vector<float> host_b(ldb * othb);
@@ -256,6 +255,8 @@ int main(int argc, char* argv[])
   values["id"]         = 1;
   int  n_runs          = -1;  // number of times to run GEMM, excluding the first run.
   char init            = 'U';
+  float alpha = 1.0f;
+  float beta =  1.0f;
 
   std::stringstream helpss;
   helpss << "----------------------\nOptions:\n----------------------\n";
@@ -273,6 +274,9 @@ int main(int argc, char* argv[])
          << "   P : for positive real:  [ 0, 1] (like DeepBench, see tensor.h 07/09/2017).\n"
          << "   C : for constant real in all matrices:  1.]\n";
 
+  helpss << "-alpha [default = 1.0]: \n";
+  helpss << "-beta  [default = 1.0]: \n";
+  
   std::string help = helpss.str();
 
   std::vector<std::string> frags;
@@ -306,6 +310,16 @@ int main(int argc, char* argv[])
       {
         init = frags[i + 1][0];
       }
+      
+      else if (frags[i] == "-beta"){
+        beta = std::stod(frags[i + 1]);
+      }
+      
+
+      else if (frags[i] == "-alpha"){
+        alpha = std::stod(frags[i + 1]);
+      }      
+      
       else
       {
         auto key = frags[i].substr(1);
@@ -338,6 +352,6 @@ int main(int argc, char* argv[])
   std::cout << "   n_runs = " << n_runs << '\n';
   std::cout << "   init = " << init << '\n' << '\n';
 
-  int X = driver(isColMajor, tA, tB, m, n, k, fast_ID, init, n_runs);
+  int X = driver(isColMajor, tA, tB, m, n, k, alpha, beta, fast_ID, init, n_runs);
   return X;
 }

@@ -213,7 +213,7 @@ runem(std::vector<MIOpenGEMM::Geometry>& geometries,         // GEMM geometries 
                                                                      nullptr,
                                                                      ptr_gemmevent,
                                                                      miog_gemm_ID);
-
+                                                                     
         miog_gemm_ID = mi_status.ID;
         (void)mi_status;
       }
@@ -518,7 +518,8 @@ int main()
       // geometries.push_back(MIOpenGEMM::get_squareNN_geometry<float>(x));
       //}
       // geometries = {{"tC0_tA0_tB0_colMaj0_m13_n13_k13_lda13_ldb13_ldc13_ws0_f32"}};
-      geometries = {MIOpenGEMM::get_squareNN_geometry<float>(5100)};
+      // geometries = {MIOpenGEMM::get_squareNN_geometry<float>(28)};
+      geometries = {{512, 16, 512, false, false, 0, 'f'}};
     }
 
     auto stats = runem<float>(geometries, impl, run_accuracy_test, run_event_timer);
