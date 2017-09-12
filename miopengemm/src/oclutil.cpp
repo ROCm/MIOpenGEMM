@@ -1191,10 +1191,12 @@ void DevInfo::initialise()
   else
   {
     wg_atom_size = 32;
+#ifndef __APPLE__
     throw miog_error(" has not been tested on any platform from vendor " + platinfo.vendor +
                      " yet. Are you sure you want to try "
                      "this ? If so, remove error message "
                      "here ");
+#endif
   }
 
   // setting identifier
