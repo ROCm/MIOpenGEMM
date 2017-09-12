@@ -24,9 +24,8 @@ else()
   target_link_libraries(miopengemm ${OPENCL_LIBRARIES})
 endif()
 
-target_include_directories (miopengemm PUBLIC 
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/dev_include>
-    ${OPENCL_INCLUDE_DIRS})
+target_include_directories (miopengemm PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/dev_include>)
+target_include_directories (miopengemm SYSTEM PUBLIC ${OPENCL_INCLUDE_DIRS})
 
 rocm_install_targets(
   TARGETS miopengemm
