@@ -98,9 +98,13 @@ Result cl_set_command_queue(cl_command_queue&           a_cl_command_queue,
 {
   cl_int errcode_ret;
 
-#ifdef MIOPENGEMM_USE_OCL2
-// TODO : use clCreateCommandQueueWithProperties.
+// CL_VERSION_2_0 is defined on line 198 /opt/rocm/opencl/include/CL/cl.h.
+#if (CL_VERSION_2_0 == 1)
+  std::vector<cl_queue_properties> props = {CL_QUEUE_PROPERTIES, properties, 0};
+  a_cl_command_queue =
+    clCreateCommandQueueWithProperties(context, device, props.data(), &errcode_ret);
 #else
+
   a_cl_command_queue = clCreateCommandQueue(context, device, properties, &errcode_ret);
 #endif
 
@@ -212,6 +216,21 @@ Result cl_set_command_queue_info(cl_command_queue      command_queue,
   cl_int ret = clGetCommandQueueInfo(
     command_queue, param_name, param_value_size, param_value, param_value_size_ret);
   return confirm_cl_status(ret, hash, "cl_set_command_queue_info", strict);
+}
+
+Result cl_set_program_build_info(cl_program            program,
+                                 cl_device_id          device,
+                                 cl_program_build_info param_name,
+                                 size_t                param_value_size,
+                                 void*                 param_value,
+                                 size_t*               param_value_size_ret,
+                                 const std::string&    hash,
+                                 bool                  strict)
+{
+
+  cl_int ret = clGetProgramBuildInfo(
+    program, device, param_name, param_value_size, param_value, param_value_size_ret);
+  return confirm_cl_status(ret, hash, "cl_set_program_build_info", strict);
 }
 
 Result cl_set_buffer(cl_mem&            a_cl_mem,
@@ -525,15 +544,24 @@ Result cl_build_program(cl_program          program,
 
   cl_int ret = future.get();
 
-  char   buffer[10240];
   size_t buffer_size;
-  clGetProgramBuildInfo(
-    program, device_list[0], CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer, &buffer_size);
+  std::string buffer(20000, ' ');
+
+  // TODO : incorporate -Wunused-parameters. 
+  cl_set_program_build_info(program,
+                            device_list[0],
+                            CL_PROGRAM_BUILD_LOG,
+                            buffer.size(),
+                            &buffer[0],
+                            &buffer_size,
+                            "x",
+                            true);
 
   if (ret != CL_SUCCESS)
   {
-    fprintf(stderr, "CL Compilation failed:\n%s", buffer);
-    return confirm_cl_status(ret, hash, "cl_build_program", strict);
+    std::stringstream ss;
+    ss << "CL Compilation failed:\n" << buffer_size << buffer.substr(buffer_size) << std::endl;
+    return confirm_cl_status(ret, hash, ss.str() + " + (cl_build_program)", strict);
   }
 
   else
@@ -754,17 +782,17 @@ Result cl_set_context_and_device_from_command_queue(const cl_command_queue& comm
   return oclr;
 }
 
-Result cl_set_program_and_kernel(
+Result cl_set_program(  //_and_kernel(
   // const cl_command_queue& command_queue,
   const cl_context&   context,
   const cl_device_id& device_id_to_use,
   const std::string&  kernel_string,
-  const std::string&  kernel_function_name,
-  cl_program&         program,
-  cl_kernel&          kernel,
-  const std::string&  build_options,
-  owrite::Writer&     mowri,
-  bool                strict)
+  // const std::string&  kernel_function_name,
+  cl_program& program,
+  // cl_kernel&          kernel,
+  const std::string& build_options,
+  owrite::Writer&    mowri,
+  bool               strict)
 {
 
   auto kernel_cstr = kernel_string.c_str();
@@ -785,8 +813,7 @@ Result cl_set_program_and_kernel(
   //-save-temps= + "/some/path/"
   // to the following string
 
-  // std::string buildOptions_11 = "-cl-std=CL2.0  -Werror";
-  auto buildOptions = build_options.c_str();  // buildOptions_11.c_str();
+  auto buildOptions = build_options.c_str();
 
   oclr = cl_build_program(program,
                           1,
@@ -802,11 +829,11 @@ Result cl_set_program_and_kernel(
 
   // the store as binary option was removed *here*
 
-  oclr = cl_create_kernel(kernel,
-                          program,
-                          kernel_function_name.c_str(),
-                          "getting kernel in set_program_and_kernel",
-                          strict);
+  // oclr = cl_create_kernel(kernel,
+  // program,
+  // kernel_function_name.c_str(),
+  //"getting kernel in set_program_and_kernel",
+  // strict);
 
   return oclr;
 }
@@ -824,6 +851,8 @@ SafeClMem::~SafeClMem()
 
 SafeClEvent::SafeClEvent(const std::string& hash_) : hash(hash_) {}
 
+// SafeClProgram::SafeClProgram(const std::string& hash_) : hash(hash_) {}
+
 SafeClEvent::~SafeClEvent()
 {
   if (clevent != nullptr)
@@ -832,6 +861,23 @@ SafeClEvent::~SafeClEvent()
     auto oclr   = cl_release_event(clevent, "SafeClEvent destructor: " + hash, strict);
   }
 }
+
+// void SafeClProgram::release(){
+// if (clprog != nullptr)
+//{
+// bool strict = true;
+// auto oclr   = cl_release_program(clprog, "SafeClProgram::release " + hash, strict);
+//}
+//}
+
+// SafeClProgram::~SafeClProgram()
+//{
+// if (clprog != nullptr)
+//{
+// bool strict = true;
+// auto oclr   = cl_release_program(clprog, "SafeClProgram destructor: " + hash, strict);
+//}
+//}
 
 // properties = CL_QUEUE_PROFILING_ENABLE :
 // create an inorder command queue with

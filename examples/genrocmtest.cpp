@@ -8,7 +8,7 @@ int main()
 {
   using namespace MIOpenGEMM;
 
-  // Note : incorrect cases seem to depend on BOTH hp and gg (increase k and results are correct). 
+  // Note : incorrect cases seem to depend on BOTH hp and gg (increase k and results are correct).
   std::vector<std::pair<Geometry, HyPas>> incorrect = {
     // 0
     {{"tC0_tA1_tB0_colMaj0_m2048_n121_k1_lda2048_ldb121_ldc121_ws0_f32"},

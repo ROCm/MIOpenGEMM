@@ -171,13 +171,26 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
     // check - 3 : the macro tile is too tall
     if (ptr_gg->m < at(Mat::E::A).macro_tile_length)
     {
-      set_status_ss << "m < aps.macro_tile_length, not considering this kernel. ";
+
+      set_status_ss << "ptr_hp->sus[Mat::E::C].vs[NonChi::E::MAC] = "
+                    << ptr_hp->sus[Mat::E::C].vs[NonChi::E::MAC]
+                    << "  ptr_hp->sus[Mat::E::C].vs[NonChi::E::SKW]  = "
+                    << ptr_hp->sus[Mat::E::C].vs[NonChi::E::SKW]
+                    << "  grid.at(Mat::E::A) = " << grid.at(Mat::E::A)
+                    << "  grid.at(Mat::E::B) = " << grid.at(Mat::E::B) << '\n';
+      // macgrid::Grid grid(ptr_hp->sus[Mat::E::C].vs[NonChi::E::MAC],
+      // ptr_hp->sus[Mat::E::C].vs[NonChi::E::SKW]);
+
+      set_status_ss << "ptr_gg->m = " << ptr_gg->m
+                    << " and at(Mat::E::A).macro_tile_length = " << at(Mat::E::A).macro_tile_length
+                    << " . ";
+      set_status_ss << "m < at(Mat::E::A).macro_tile_length, not considering this kernel. ";
     }
 
     // check - 4 : the macro tile is too wide
     else if (ptr_gg->n < at(Mat::E::B).macro_tile_length)
     {
-      set_status_ss << "m < bps.macro_tile_length, not considering this kernel. ";
+      set_status_ss << "n < at(Mat::E::B).macro_tile_length, not considering this kernel. ";
     }
 
     at(emat_x).n_elements_in_unroll =

@@ -32,7 +32,6 @@ bool is_within(
 // rank = 0 for nearest, 1 for second nearest etc.
 CacheKey get(const CacheKey& ck, const Graph& graph, const KernelCache& kc, size_t rank)
 {
-
   if (!is_within(ck, graph, kc, std::numeric_limits<double>::max(), rank))
   {
     throw miog_error("In get, with none within radius <double>::max.");
@@ -51,7 +50,6 @@ CacheKey get(const CacheKey& ck, const Graph& graph, const KernelCache& kc, size
   {
     auto key      = cache_keys[keyi];
     auto distance = ck.get_distance(key);
-
     auto hp = kc.at(key);
     if (graph.contains(kc.at(key)) && Derivabilty(hp, ck.gg).is_derivable)
     {

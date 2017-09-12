@@ -35,7 +35,7 @@ void reflect_c(std::vector<size_t>& cvs)
     cvs[NonChi::E::SKW] = 2 * macgrid::skew0 - cvs[NonChi::E::SKW];
     if (!macgrid::mac_is_square(cvs[NonChi::E::MAC]))
     {
-      cvs[NonChi::E::SKW] -= 1;
+      cvs[NonChi::E::SKW] += 1;  // sum to 2*skew0 + 1
     }
   }
 
@@ -135,7 +135,7 @@ std::string HyPas::get_string() const
       // ss << "__";
       ss << "\", ";
     }
-    //ss << Mat::M.name[emat] << '_' << sus[emat].get_string();
+    // ss << Mat::M.name[emat] << '_' << sus[emat].get_string();
     ss << "\"" << sus[emat].get_string();
   }
   ss << "\"";

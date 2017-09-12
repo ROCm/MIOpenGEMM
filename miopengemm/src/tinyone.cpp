@@ -111,9 +111,7 @@ TinyOne<TFl>::TinyOne(Geometry        gg_,
   : TinyOne(gg_, toff_, mowri_, xhint, 42)
 
 {
-
   initialise_cpu_mem(a_, b_, c_);
-
   initialise_common();
 }
 
@@ -149,7 +147,6 @@ TinyOne<TFl>::TinyOne(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const
   : TinyOne(gg_, toff_, mowri_, xhint, 42)
 
 {
-
   initialise_cpu_mem_from_scratch();
   initialise_common();
 }

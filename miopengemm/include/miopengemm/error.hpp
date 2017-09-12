@@ -14,7 +14,6 @@ class miog_error : public std::runtime_error
   public:
   miog_error(const std::string& what_arg);
 };
-
 }
 
 #endif

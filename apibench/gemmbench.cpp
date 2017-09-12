@@ -67,8 +67,8 @@ runem(std::vector<MIOpenGEMM::Geometry>& geometries,         // GEMM geometries 
   namespace Mem     = MIOpenGEMM::Mem;
   namespace oclutil = MIOpenGEMM::oclutil;
 
-  const TFloat alpha = 0.72435898234;
-  const TFloat beta  = 0.9241223982;
+  const TFloat alpha = 1.72435898234;
+  const TFloat beta  = -0.9241223982;
 
   auto                       toff = MIOpenGEMM::get_zero_offsets();
   MIOpenGEMM::owrite::Writer mowri(MIOpenGEMM::Ver::E::SILENT, "");
@@ -129,10 +129,14 @@ runem(std::vector<MIOpenGEMM::Geometry>& geometries,         // GEMM geometries 
     };
     std::array<cl_mem, Mat::E::N> dev_mem;
     cl_mem dev_w = nullptr;
+
     for (auto x : {Mat::E::A, Mat::E::B, Mat::E::C})
     {
+
+      auto mem_type_x = x == Mat::E::C ? CL_MEM_READ_WRITE : CL_MEM_READ_ONLY;
+
       oclutil::cl_set_buffer_from_command_queue(
-        dev_mem[x], cqic.command_queue, CL_MEM_READ_WRITE, memsize(x), NULL, "(runem)", true);
+        dev_mem[x], cqic.command_queue, mem_type_x, memsize(x), NULL, "(runem)", true);
 
       oclutil::cl_enqueue_write_buffer(cqic.command_queue,
                                        dev_mem[x],
@@ -146,6 +150,7 @@ runem(std::vector<MIOpenGEMM::Geometry>& geometries,         // GEMM geometries 
                                        "(runem)",
                                        true);
     }
+
     auto w_mem_size = MIOpenGEMM::get_total_workspace(gg, toff) * gg.derived.float_size_bytes;
     if (w_mem_size > 0)
     {
@@ -158,8 +163,8 @@ runem(std::vector<MIOpenGEMM::Geometry>& geometries,         // GEMM geometries 
     size_t n_warmup = 1;
 
     // number of runs with timer (based on DeepBench timing method).
-    size_t n_to_time = 10;  // std::min<size_t>(1000, std::max<size_t>(std::ceil(1e11 / (2 * gg.m *
-                            // gg.k * gg.n)), 2));
+    size_t n_to_time =
+      std::min<size_t>(1500, std::max<size_t>(std::ceil(1e11 / (2 * gg.m * gg.k * gg.n)), 2));
 
     size_t n_total = n_warmup + n_to_time;
 
@@ -208,7 +213,7 @@ runem(std::vector<MIOpenGEMM::Geometry>& geometries,         // GEMM geometries 
                                                                      nullptr,
                                                                      ptr_gemmevent,
                                                                      miog_gemm_ID);
-
+                                                                     
         miog_gemm_ID = mi_status.ID;
         (void)mi_status;
       }
@@ -417,11 +422,6 @@ int main()
 
   std::vector<Impl> impls_to_run;
 
-  if (run_miopengemm)
-  {
-    impls_to_run.push_back(Impl::MIO);
-  }
-
   if (run_isaac)
   {
 #ifdef MIOPENGEMM_BENCH_ISAAC
@@ -429,6 +429,11 @@ int main()
 #else
     throw MIOpenGEMM::miog_error("Isaac cannot be run, as the current build did not include Isaac");
 #endif
+  }
+
+  if (run_miopengemm)
+  {
+    impls_to_run.push_back(Impl::MIO);
   }
 
   // having issues with CLBlast, will return to it.
@@ -512,8 +517,11 @@ int main()
       // for (auto x : {699, 700, 701, 702, 703, 704}){
       // geometries.push_back(MIOpenGEMM::get_squareNN_geometry<float>(x));
       //}
-      // geometries = {{"tC0_tA1_tB1_colMaj1_m3275_n4860_k33_lda3275_ldb6865_ldc3275_ws0_f32"}};
-      geometries = {MIOpenGEMM::get_squareNN_geometry<float>(5100)};
+      // geometries = {{"tC0_tA0_tB0_colMaj0_m13_n13_k13_lda13_ldb13_ldc13_ws0_f32"}};
+      // geometries = {MIOpenGEMM::get_squareNN_geometry<float>(28)};
+      geometries = {{512, 16, 512, false, false, 0, 'f'}
+                  , {512, 17, 512, false, false, 0, 'f'}
+                  , {512, 18, 512, false, false, 0, 'f'}};
     }
 
     auto stats = runem<float>(geometries, impl, run_accuracy_test, run_event_timer);

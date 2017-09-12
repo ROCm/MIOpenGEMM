@@ -2,97 +2,43 @@
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 
-#include <chrono>
 #include <iostream>
-#include <stdexcept>
 #include <vector>
 #include <miopengemm/gemm.hpp>
 
-int main(int argc, char* argv[])
+int main()
 {
 
-  std::string message("U : for  uniform real:  [-1, 1].\n"
-                      "P : for positive real:  [ 0, 1].\n"
-                      "C : for constant real:  1.\n"
-                      "example : `apiexample P'"
-                      );
-
-  if (argc != 2)
-  {
-    throw std::runtime_error("ERROR : 1 argument required.\n" + message);
-  }
-
-  //set the GEMM geometry.  
   bool isColMajor = false;
   bool tA         = false;
   bool tB         = false;
 
-  size_t m = 5100;
-  size_t n = 5100;
-  size_t k = 5100;
+  size_t m = 2;
+  size_t n = 2;
+  size_t k = 3;
 
-  size_t lda = isColMajor == tA ? k : m;
-  size_t ldb = isColMajor == tB ? n : k;
-  size_t ldc = isColMajor == false ? n : m;
+  size_t lda = 3;
+  size_t ldb = 2;
+  size_t ldc = 2;
 
-  size_t otha = isColMajor != tA ? k : m;
-  size_t othb = isColMajor != tB ? n : k;
-  size_t othc = isColMajor != false ? n : m;
+  float alpha = 1.0;
+  float beta  = 1.0;
 
-  float alpha = 0.5236;
-  float beta  = 1.2342;
-
-  std::vector<float> host_a(lda * otha);
-  std::vector<float> host_b(ldb * othb);
-  std::vector<float> host_c(ldc * othc);
-
-  //set be coeffient of random number based on user's option.  
-  float X2 = 0;
-  switch (argv[1][0])
-  {
-  case 'U':
-    std::cout << "will populate matrices with uniform random [-1,1]\n";
-    X2 = 2;
-    break;
-
-  case 'P':
-    std::cout << "will populate matrices with uniform random [0,1]\n";
-    X2 = 1;
-    break;
-
-  case 'C':
-    std::cout << "will populate matrices with 1\n";
-    X2 = 0;
-    break;
-
-  default: throw std::runtime_error("ERROR : unrecognised argument.\n" + message);
-  }
-
-  std::cout << "Initialise host memories ... " << std::flush;
-  for (size_t i = 0; i < m * k; ++i)
-  {
-    host_a[i] = 1. - X2 * ((rand() % 1000) / 1000.);
-  }
-  for (size_t i = 0; i < n * k; ++i)
-  {
-    host_b[i] = 1. - X2 * ((rand() % 1000) / 1000.);
-  }
-  for (size_t i = 0; i < m * n; ++i)
-  {
-    host_c[i] = 1. - X2 * ((rand() % 1000) / 1000.);
-  }
+  std::vector<float> A = {1, 1, 1, 2, 2, 2};
+  std::vector<float> B = {2, 3, 2, 3, 2, 3};
+  std::vector<float> C = {0, 1, 2, 3};
+  std::vector<float> C_result(4);
 
   size_t platform_id = 0;
   size_t device_id   = 0;
 
-  std::cout << "done. \nInitialise OpenCL platform ... " << std::flush;
   cl_uint num_platforms;
   clGetPlatformIDs(0, nullptr, &num_platforms);
   std::vector<cl_platform_id> platforms(num_platforms);
   clGetPlatformIDs(num_platforms, platforms.data(), nullptr);
   cl_platform_id platform = platforms[platform_id];
 
-  std::cout << "done. \nInitialise OpenCL device ... " << std::flush;
+  std::cout << "\nInitialise OpenCL device ... " << std::flush;
   cl_uint num_devices;
   clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, nullptr, &num_devices);
   std::vector<cl_device_id> devices(num_devices);
@@ -100,131 +46,77 @@ int main(int argc, char* argv[])
   cl_device_id device = devices[device_id];
 
   std::cout << "done. \nInitialise OpenCL context ... " << std::flush;
-  cl_context       context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, nullptr);
-  cl_command_queue queue   = clCreateCommandQueue(context, device, 0, nullptr);
-  cl_event         event   = nullptr;
+  cl_context context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, nullptr);
+
+#if (CL_VERSION_2_0 == 1)
+  cl_command_queue queue = clCreateCommandQueueWithProperties(context, device, nullptr, nullptr);
+#else
+  cl_command_queue queue = clCreateCommandQueue(context, device, 0, nullptr);
+#endif
+
+  cl_event event = nullptr;
 
   std::cout << "done. \nInitialise device memories ... " << std::flush;
-  cl_mem dev_a =
-    clCreateBuffer(context, CL_MEM_READ_WRITE, m * k * sizeof(float), nullptr, nullptr);
-  cl_mem dev_b =
-    clCreateBuffer(context, CL_MEM_READ_WRITE, n * k * sizeof(float), nullptr, nullptr);
-  cl_mem dev_c =
-    clCreateBuffer(context, CL_MEM_READ_WRITE, m * n * sizeof(float), nullptr, nullptr);
-  clEnqueueWriteBuffer(
-    queue, dev_a, CL_TRUE, 0, m * k * sizeof(float), host_a.data(), 0, nullptr, nullptr);
-  clEnqueueWriteBuffer(
-    queue, dev_b, CL_TRUE, 0, n * k * sizeof(float), host_b.data(), 0, nullptr, nullptr);
-  clEnqueueWriteBuffer(
-    queue, dev_c, CL_TRUE, 0, m * n * sizeof(float), host_c.data(), 0, nullptr, nullptr);
+  cl_mem dev_a = clCreateBuffer(context, CL_MEM_READ_WRITE, 6 * sizeof(float), nullptr, nullptr);
+  cl_mem dev_b = clCreateBuffer(context, CL_MEM_READ_WRITE, 6 * sizeof(float), nullptr, nullptr);
+  cl_mem dev_c = clCreateBuffer(context, CL_MEM_READ_WRITE, 4 * sizeof(float), nullptr, nullptr);
+  clEnqueueWriteBuffer(queue, dev_a, CL_TRUE, 0, 6 * sizeof(float), A.data(), 0, nullptr, nullptr);
+  clEnqueueWriteBuffer(queue, dev_b, CL_TRUE, 0, 6 * sizeof(float), B.data(), 0, nullptr, nullptr);
+  clEnqueueWriteBuffer(queue, dev_c, CL_TRUE, 0, 4 * sizeof(float), C.data(), 0, nullptr, nullptr);
 
-  // number of times to run GEMM for, excluding the 1 warm-up run.
-  int n_runs = 10;
+  std::cout << "done. \nRun xgemm..." << std::flush;
+  MIOpenGEMM::xgemm<float>(isColMajor,
+                           tA,
+                           tB,
+                           m,
+                           n,
+                           k,
+                           alpha,
+                           dev_a,
+                           0,
+                           lda,
+                           dev_b,
+                           0,
+                           ldb,
+                           beta,
+                           dev_c,
+                           0,
+                           ldc,
+                           nullptr,
+                           0,
+                           0,
+                           &queue,
+                           0,
+                           nullptr,
+                           &event,
+                           -1);
 
-  std::cout
-    << "done. \nFirst call with this GEMM geometry (generating OpenCL string, compiling, etc) ... "
-    << std::flush;
-  // the first, warm-up, call to xgemm. notice that ID is -1.   
-  auto status = MIOpenGEMM::xgemm<float>(isColMajor,
-                                         tA,
-                                         tB,
-                                         m,
-                                         n,
-                                         k,
-                                         alpha,
-                                         dev_a,
-                                         0,
-                                         lda,
-                                         dev_b,
-                                         0,
-                                         ldb,
-                                         beta,
-                                         dev_c,
-                                         0,
-                                         ldc,
-                                         nullptr,
-                                         0,
-                                         0,
-                                         &queue,
-                                         0,
-                                         nullptr,
-                                         &event,
-                                         -1);
+  std::cout << "`done'. \nRead back to host..." << std::flush;
+  clEnqueueReadBuffer(queue,
+                      dev_c,
+                      true,               // blocking read
+                      0,                  // offset
+                      4 * sizeof(float),  // cb
+                      C_result.data(),    // read results to C_results
+                      1,                  // wait for 1 event to complete :
+                      &event,             // waiting for xgemm to complete before reading,
+                      nullptr);
 
-  // wait for warm-up call to finish.
-  clWaitForEvents(1, &event);
+  std::cout << "done. \nPrint summary.\n" << std::flush;
+  std::cout << "\n---> A \n"
+            << A[0] << ' ' << A[1] << ' ' << A[2] << '\n'
+            << A[3] << ' ' << A[4] << ' ' << A[5] << std::endl;
 
+  std::cout << "\n---> B \n"
+            << B[0] << ' ' << B[1] << '\n'
+            << B[2] << ' ' << B[3] << '\n'
+            << B[4] << ' ' << B[5] << std::endl;
 
-  auto t0 = std::chrono::high_resolution_clock::now();
-  
-  std::cout << "done. \n"
-            << n_runs << " calls with this geometry, blocking on the final one ... " << std::flush;
-  
-  //enqueue n_runs - 1 calls without any cl_event. 
-  for (int i = 0; i < n_runs - 1; ++i)
-  {
-    status = MIOpenGEMM::xgemm<float>(isColMajor,
-                                      tA,
-                                      tB,
-                                      m,
-                                      n,
-                                      k,
-                                      alpha,
-                                      dev_a,
-                                      0,
-                                      lda,
-                                      dev_b,
-                                      0,
-                                      ldb,
-                                      beta,
-                                      dev_c,
-                                      0,
-                                      ldc,
-                                      nullptr,
-                                      0,
-                                      0,
-                                      &queue,
-                                      0,
-                                      nullptr,
-                                      nullptr,
-                                      // notice that ID is now positive, cached kernel will be used. 
-                                      status.ID); 
-  }
+  std::cout << "\n---> C \n" << C[0] << ' ' << C[1] << '\n' << C[2] << ' ' << C[3] << std::endl;
 
-  // The final call, and a wait for the event associated to it.
-  status = MIOpenGEMM::xgemm<float>(isColMajor,
-                                    tA,
-                                    tB,
-                                    m,
-                                    n,
-                                    k,
-                                    alpha,
-                                    dev_a,
-                                    0,
-                                    lda,
-                                    dev_b,
-                                    0,
-                                    ldb,
-                                    beta,
-                                    dev_c,
-                                    0,
-                                    ldc,
-                                    nullptr,
-                                    0,
-                                    0,
-                                    &queue,
-                                    0,
-                                    nullptr,
-                                    &event,
-                                    status.ID);
-
-  clWaitForEvents(1, &event);
-
-  std::chrono::duration<double> fp_ms   = std::chrono::high_resolution_clock::now() - t0;
-  auto                          seconds = fp_ms.count();
-  auto                          gflops  = n_runs * (m * n * k * 2.) / (1e9 * seconds);
-
-  std::cout << "done in " << seconds << " seconds [" << gflops << " gflops]" << std::endl;
+  std::cout << "\n---> alpha A B + beta C \n"
+            << C_result[0] << "  " << C_result[1] << '\n'
+            << C_result[2] << ' ' << C_result[3] << std::endl;
 
   clReleaseEvent(event);
   clReleaseMemObject(dev_a);

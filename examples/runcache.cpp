@@ -20,7 +20,35 @@ int runcache_v2(std::map<char, std::vector<std::string>>& filters)
   Offsets offsets    = get_zero_offsets();
   auto    cache_keys = kernel_cache.get_keys();
 
+  // Set device and plaform
   CLHint devhint;
+  if (filters['P'].size() != 1 || filters['D'].size() != 1)
+  {
+    throw miog_error("P and D (platform and device) should be one each (or neither)");
+  }
+
+  if (filters['P'][0] == "-1" and filters['D'][0] != "-1")
+  {
+    throw miog_error("D appears to be set, but P not. Set P (probably to 0)");
+  }
+
+  if (filters['P'][0] != "-1" and filters['D'][0] == "-1")
+  {
+    throw miog_error("P appears to be set, but D not. Set D (maybe to 0)");
+  }
+
+  if (filters['P'][0] != "-1" and filters['D'][0] != "-1")
+  {
+    size_t p_id = std::stoi(filters['P'][0]);
+    size_t d_id = std::stoi(filters['D'][0]);
+    std::cout << "Selected platform : " << p_id << " and selected device : " << d_id << std::endl;
+    devhint = CLHint(p_id, d_id);
+  }
+  else
+  {
+    std::cout << "-P and -D not passed, will try to guess platform and device" << std::endl;
+  }
+
   if (std::count(filters['d'].begin(), filters['d'].end(), "a") == 0)
   {
     std::vector<std::string> dev_filters;
@@ -239,10 +267,13 @@ int main(int argc, char* argv[])
 {
   std::map<char, std::string> args = {
     {'g', "geometries to look for in cache"},
-    {'d', "devices to look for in cache"},
+    {'d', "devices to look for in cache (not necessarily this device)"},
     {'w', "what to do"},
     {'m', "workspace memories to consider"},
     {'t', "transpose cases (tA, tB) to consider"},
+    {'D', "ID of the device to run on"},
+    {'P', "ID of the platform to run on"},
+
   };
 
   std::map<char, std::vector<std::string>> options = {
@@ -251,10 +282,12 @@ int main(int argc, char* argv[])
     {'w', {"b (benchmark)", "a (accuracy)"}},
     {'m', {"a (all)", "0 (only zero ws)", "+ (only positive ws"}},
     {'t', {"a (all)", "NN", "NT", "TN", "TT"}},
+    {'D', {"a non-negative integer"}},
+    {'P', {"a non-negative integer"}},
   };
 
   std::map<char, std::string> defaults = {
-    {'g', "d"}, {'d', "d"}, {'w', "b"}, {'m', "0"}, {'t', "a"}};
+    {'g', "d"}, {'d', "d"}, {'w', "b"}, {'m', "0"}, {'t', "a"}, {'D', "-1"}, {'P', "-1"}};
 
   // TODO: check here that above maps have same keys.
 
@@ -276,6 +309,8 @@ int main(int argc, char* argv[])
   hss << "`runcache -g d -d a -w b`\n";
   hss << " benchmarks all cache entries with a deepbench geometry with zero ms \n";
   hss << "`runcache -g a -d gfx803`\n";
+  hss << "`runcache -g a -d gfx803 -P 0 -D 0`\n";
+  hss << " as above, on device 0 of platform 0 \n";
   hss << " benchmarks of all cache entries which match device gfx803 and have zero ms \n";
   hss << "`runcache -w b a -m a`\n";
   hss << " benchmarks and accuracy test of all cache entries \n";
@@ -284,15 +319,24 @@ int main(int argc, char* argv[])
 
   using namespace MIOpenGEMM;
 
-  if (argc % 2 != 1)
-  {
-    throw miog_error("Odd number of keys+vals is incorrect.\n" + help);
-  }
-
   std::vector<std::string> parsed;
   for (int i = 1; i < argc; ++i)
   {
     parsed.push_back(argv[i]);
+  }
+
+  for (auto& x : parsed)
+  {
+    if (x == "-h" || x == "--help" || x == "-help")
+    {
+      std::cout << help << std::endl;
+      return 0;
+    }
+  }
+
+  if (argc % 2 != 1)
+  {
+    throw miog_error("Odd number of keys+vals is incorrect.\n" + help);
   }
 
   char key = '?';

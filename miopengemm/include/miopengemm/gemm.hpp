@@ -27,6 +27,14 @@ class GemmStatus
 };
 
 /*! @brief
+ * Free memory of GEMM ID. Calling this function is not required,
+ * but it can be used to reclaim memory early if needed.
+ * After free(ID) is called, ID is no longer valid for xgemm.
+ */
+void free(size_t ID);
+
+
+/*! @brief
  * GEneral Matric Multiplication.
  * - \f$ C \leftarrow \alpha op(A) op(B) + \beta C \f$
  * To get started with understanding GEMM parameters
@@ -61,21 +69,26 @@ class GemmStatus
  * The event associated with the (final) GEMM kernel. When this event completes, GEMM is complete
  *
  * @param ID
- * Define a GEMM geometry to be any (isColMajor, tA, tB, m, n, k lda, ldb, ldc, w_size) tuple.
+ * Summary : One can use ID = -1 all the time unless a ~15% performace difference on
+ * small (example m = n = k = 50) problems is important. 
+ * Passing an ID can save time looking-up cached programs,
+ * but it requires a bit of work on the user's part to keep track of the correct ID to use.
+ * Read on for more info. Define a GEMM geometry to be any
+ * (isColMajor, tA, tB, m, n, k lda, ldb, ldc, w_size, T) tuple.
  * The first time GEMM is run for a particular (device, geometry) pair, ID must be negative.
- * Thereafter, the ID of the GemmStatus returned can be used for this (device, geometry),
- * as long as ther same (device, geometry) is not being run simultaneously on a different thread.
- * If it is being run simultaneously on a different thread, ID < 0 should be passed,
- * to obtain a new ID from the returned GemmStatus which can then be used safely in parallel. 
- * See (TODO) for clarification
+ * Thereafter, the ID of the GemmStatus returned *can* be used for this (device, geometry).
+ * Passing ID < 0 for all calls is valid, however it is marginally faster for small problems to
+ * pass the correct ID. Note that passing an incorrect ID has undefined behaviour.
  *
+
  *
  * @return
  * A GemmStatus.
  */
 
-// Multiple threads, same program, information at
-// https://forums.khronos.org/showthread.php/5810-calling-the-same-kernel-object-multiple-times
+
+
+
 
 template <typename T>
 GemmStatus xgemm(bool              isColMajor,
@@ -104,12 +117,40 @@ GemmStatus xgemm(bool              isColMajor,
                  cl_event*         ptr_event,
                  int               ID);
 
-/*! @brief
- * Free memory of GEMM ID. Calling this function is not required,
- * but it can be used to reclaim memory early if needed.
- * After free(ID) is called, ID is no longer valid for xgemm.
- */
-void free(size_t ID);
-}
 
+/*! @brief
+ * GEneral Matric Multiplication.
+ * - \f$ C \leftarrow \alpha op(A) op(B) + \beta C \f$
+ * this is xgemm with : (1) zero workspace, and (2) ID = -1.
+ */
+
+template <typename T>
+GemmStatus gemm0(bool              isColMajor,
+                 bool              tA,
+                 bool              tB,
+                 size_t            m,
+                 size_t            n,
+                 size_t            k,
+                 T                 alpha,
+                 cl_mem            a,
+                 size_t            a_offset,
+                 size_t            lda,
+                 cl_mem            b,
+                 size_t            b_offset,
+                 size_t            ldb,
+                 T                 beta,
+                 cl_mem            c,
+                 size_t            c_offset,
+                 size_t            ldc,
+                 cl_command_queue* ptr_queue,
+                 cl_uint           num_events_in_wait_list,
+                 const cl_event*   event_wait_list,
+                 cl_event*         ptr_event);
+                 
+}
+                 
 #endif
+
+// Unrelated to this but interesting read : Multiple threads, same program, information at
+// https://forums.khronos.org/showthread.php/5810-calling-the-same-kernel-object-multiple-times
+

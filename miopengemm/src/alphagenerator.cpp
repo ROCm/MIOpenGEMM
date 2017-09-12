@@ -25,7 +25,6 @@
  * C from localC */
 // TODO : experiment with this https://community.amd.com/thread/192119
 // (to see when CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE works).
-// TODO : Tillet describes ICE at minute 12 of his talk, reference him in report.
 
 namespace MIOpenGEMM
 {

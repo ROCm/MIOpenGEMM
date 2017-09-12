@@ -36,14 +36,14 @@ void Grid::good_initialise(size_t gA, size_t gB)
   error_message = "";
 }
 
-Grid::Grid(size_t mac, size_t skew)
+Grid::Grid(size_t mac, size_t skew)  // 32, 9
 {
 
-  double dbl_lg2_mac = std::log2(static_cast<double>(mac));
-  size_t lg2_mac     = static_cast<size_t>(dbl_lg2_mac);
+  double dbl_lg2_mac = std::log2(static_cast<double>(mac));  // 5
+  size_t lg2_mac     = static_cast<size_t>(dbl_lg2_mac);     // 5
 
-  double na = std::exp2(lg2_mac / 2 + lg2_mac % 2);
-  double nb = static_cast<double>(mac) / na;
+  double na = std::exp2(lg2_mac / 2 + lg2_mac % 2);  // 8
+  double nb = static_cast<double>(mac) / na;         // 4
   for (size_t i = skew0; i < skew; ++i)
   {
     na /= 2.;
