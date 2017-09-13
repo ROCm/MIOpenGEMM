@@ -7,6 +7,7 @@
 #include <iostream>
 #include <numeric>
 #include <miopengemm/enums.hpp>
+#include <miopengemm/outputwriter.hpp>
 
 namespace MIOpenGEMM
 {
