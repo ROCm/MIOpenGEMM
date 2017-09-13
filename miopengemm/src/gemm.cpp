@@ -46,9 +46,9 @@ class ProgramCacher
     }
     program_cache[ID].programs = {};
 
+    std::string geom_key("");
     for (auto& n : IDs)
     {
-      std::string geom_key("");
       if (std::get<1>(n) == ID)
       {
         geom_key = std::get<0>(n);
@@ -59,7 +59,7 @@ class ProgramCacher
     {
       std::stringstream ss;
       ss << "ID in free does not correspond to any cached geometry.";
-      ss << " Being pedantic and throwing an error (although could continue(??))";
+      ss << " Being pedantic and throwing an error (although could continue (..))";
       throw miog_error(ss.str());
     }
     else
