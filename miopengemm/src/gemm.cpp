@@ -17,11 +17,8 @@ namespace MIOpenGEMM
 enum BetaType {IsOne, IsOther};
 
 template<typename T>
-BetaType get_beta_type(T beta){
-  
+BetaType get_beta_type(T beta){  
   return beta == T(1) ? BetaType::IsOne : BetaType::IsOther;
-
-  
   //(std::abs<T>(beta - T(1)) < std::numeric_limits<T>::epsilon
 }
 
@@ -36,7 +33,6 @@ class ProgramCacher
   void free(size_t ID)
   {
     std::lock_guard<std::mutex> lock(mutt);
-
     if (ID >= program_cache.size())
     {
       std::stringstream errm;
@@ -44,6 +40,23 @@ class ProgramCacher
       throw miog_error(errm.str());
     }
     program_cache[ID].programs = {};
+    
+    for( auto& n : IDs ){
+      std::string geom_key ("");
+      if (std::get<1>(n) == ID){
+        geom_key = std::get<0>(n);
+        break;
+      }
+    }
+    if (geom_key == ""){
+      std::stringstream ss;
+      ss << "ID in free does not correspond to any cached geometry.";
+      ss << " Being pedantic and throwing an error (although could continue(??))";
+      throw miog_error(ss.str());
+    }
+    else{
+      IDs.erase(geom_key);        
+    }
   }
 
   int get_ID(bool              isColMajor,
@@ -61,8 +74,6 @@ class ProgramCacher
              char              floattype,
              cl_command_queue* ptr_queue)
   {
-    
-
     int               ID = -1;
     std::stringstream ss;
 
@@ -115,38 +126,26 @@ class ProgramCacher
         else{
           v_blobs.push_back(x);
         }
-        
-        
       }
-      
-
       program_cache.emplace_back(device_id, context, silent_mowri);
-
-
       ID = program_cache.size() - 1;
-
-
       IDs[key] = ID;
-      
-
-      
       lock.unlock();
-      program_cache.back().update(v_blobs); //soln.v_tgks);
-      
-
+      program_cache.back().update(v_blobs);
     }
-
-
+   
     return ID;
   }
 };
 
-ProgramCacher cacher;
 
 
+inline ProgramCacher & get_cacher() {
+  static ProgramCacher cacher;
+  return cacher;
+}
 
-
-// TODO : beta = 1 optimisation. alpha = 0 optimisation. beta = 0 optimisation.
+// TODO : alpha = 0 optimisation. beta = 0 optimisation.
 template <typename T>
 GemmStatus xgemm(bool              isColMajor,
                  bool              tA,
@@ -180,7 +179,7 @@ GemmStatus xgemm(bool              isColMajor,
     
     BetaType beta_type = get_beta_type(beta);
     
-    ID = cacher.get_ID(isColMajor,
+    ID = get_cacher().get_ID(isColMajor,
                        tA,
                        tB,
                        false,  // tC not passed to xgemm.
@@ -196,7 +195,7 @@ GemmStatus xgemm(bool              isColMajor,
                        ptr_queue);
   }
 
-  const Programs& programs = cacher.program_cache[ID];
+  const Programs& programs = get_cacher().program_cache[ID];
 
   std::array<cl_mem, Mem::E::N> gpu_mems;
   std::array<size_t, Mem::E::N> offsets;
