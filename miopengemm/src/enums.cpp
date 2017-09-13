@@ -11,6 +11,10 @@
 namespace MIOpenGEMM
 {
 
+// as declared in outputwriter.hpp:  
+owrite::Endline Endl;
+owrite::Flusher Flush;
+
 namespace Floating
 {
 MFType::MFType(double v) : v_d(v), v_f(static_cast<float>(v)) {}

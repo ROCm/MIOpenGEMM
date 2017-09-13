@@ -95,6 +95,6 @@ BasicWriter& BasicWriter::operator<<(Endline e)
 }
 }
 
-owrite::Endline Endl;
-owrite::Flusher Flush;
+// owrite::Endline Endl and owrite::Endline Flush are initialised in enums.cpp 
+// so as to keep all global variables in a single translation unit.
 }
