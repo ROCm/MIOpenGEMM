@@ -4,7 +4,7 @@
 #ifndef GUARD_MIOPENGEMM_GEMMAPI_HPP
 #define GUARD_MIOPENGEMM_GEMMAPI_HPP
 
-#include <CL/cl.h>
+#include <miopengemm/platform.hpp>
 
 namespace MIOpenGEMM
 {

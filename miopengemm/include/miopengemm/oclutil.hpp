@@ -4,7 +4,7 @@
 #ifndef GUARD_MIOPENGEMM_OPENCLUTIL_HPP
 #define GUARD_MIOPENGEMM_OPENCLUTIL_HPP
 
-#include <CL/cl.h>
+#include <miopengemm/platform.hpp>
 #include <limits>
 #include <tuple>
 #include <miopengemm/hint.hpp>

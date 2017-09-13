@@ -4,9 +4,9 @@
 #ifndef GUARD_MIOPENGEMM_HINT_H
 #define GUARD_MIOPENGEMM_HINT_H
 
-#include <CL/cl.h>
 #include <limits>
 #include <tuple>
+#include <miopengemm/platform.hpp>
 #include <miopengemm/outputwriter.hpp>
 
 namespace MIOpenGEMM

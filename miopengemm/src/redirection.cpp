@@ -1,9 +1,9 @@
 /*******************************************************************************
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
-#include <CL/cl.h>
 #include <algorithm>
 #include <iostream>
+#include <miopengemm/platform.hpp>
 #include <miopengemm/error.hpp>
 #include <miopengemm/redirection.hpp>
 

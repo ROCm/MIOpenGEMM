@@ -1,7 +1,6 @@
 /*******************************************************************************
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
-#include <CL/cl.h>
 #include <chrono>
 #include <future>
 #include <map>
@@ -9,6 +8,7 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <miopengemm/platform.hpp>
 #include <miopengemm/error.hpp>
 #include <miopengemm/hint.hpp>
 #include <miopengemm/oclutil.hpp>
@@ -1187,10 +1187,12 @@ void DevInfo::initialise()
   else
   {
     wg_atom_size = 32;
+#ifndef __APPLE__
     throw miog_error(" has not been tested on any platform from vendor " + platinfo.vendor +
                      " yet. Are you sure you want to try "
                      "this ? If so, remove error message "
                      "here ");
+#endif
   }
 
   // setting identifier

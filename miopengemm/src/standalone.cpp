@@ -2,6 +2,7 @@
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <algorithm>
+#include <numeric>
 #include <iomanip>
 #include <sstream>
 #include <miopengemm/bundle.hpp>

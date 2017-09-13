@@ -3,6 +3,7 @@
  *******************************************************************************/
 
 #include <algorithm>
+#include <numeric>
 #include <array>
 #include <iostream>
 #include <miopengemm/enums.hpp>

@@ -5,10 +5,10 @@
 #ifndef GUARD_MIOPENGEMM_PROGRAMSES_HPP
 #define GUARD_MIOPENGEMM_PROGRAMSES_HPP
 
-#include <CL/cl.h>
 #include <algorithm>
 #include <vector>
 #include <memory>
+#include <miopengemm/platform.hpp>
 #include <miopengemm/hyperparams.hpp>
 #include <miopengemm/kernelstring.hpp>
 #include <miopengemm/oclutil.hpp>

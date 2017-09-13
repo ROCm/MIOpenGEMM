@@ -4,7 +4,7 @@
 #ifndef GUARD_MIOPENGEMM_MIOGEMM_HPP
 #define GUARD_MIOPENGEMM_MIOGEMM_HPP
 
-#include <CL/cl.h>
+#include <miopengemm/platform.hpp>
 #include <miopengemm/findparams.hpp>
 #include <miopengemm/geometry.hpp>
 #include <miopengemm/outputwriter.hpp>
