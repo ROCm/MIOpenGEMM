@@ -4,11 +4,11 @@
 #ifndef GUARD_MIOPENGEMM_OPENCLUTIL_HPP
 #define GUARD_MIOPENGEMM_OPENCLUTIL_HPP
 
-#include <CL/cl.h>
 #include <limits>
 #include <tuple>
 #include <miopengemm/hint.hpp>
 #include <miopengemm/outputwriter.hpp>
+#include <miopengemm/platform.hpp>
 
 namespace MIOpenGEMM
 {
@@ -300,20 +300,6 @@ class SafeClEvent
   ~SafeClEvent();
 };
 
-// class SafeClProgram
-//{
-// public:
-// cl_program clprog;
-// std::string hash;
-// SafeClProgram(const std::string& hash);
-// void release();
-
-// SafeClProgram(const SafeClProgram&) = delete;
-// SafeClProgram& operator=(const SafeClProgram&) = delete;
-
-// SafeClProgram() : SafeClProgram("safe program") {}
-//~SafeClProgram();
-//};
 
 class CommandQueueInContext
 {

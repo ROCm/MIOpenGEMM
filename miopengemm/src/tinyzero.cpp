@@ -6,6 +6,7 @@
 #include <iomanip>
 #include <limits>
 #include <map>
+#include <numeric>
 #include <sstream>
 #include <thread>
 #include <tuple>
@@ -16,7 +17,6 @@
 #include <miopengemm/error.hpp>
 #include <miopengemm/findparams.hpp>
 #include <miopengemm/graph.hpp>
-//#include <miopengemm/kernel.hpp>
 #include <miopengemm/kernelcache.hpp>
 #include <miopengemm/kernelstring.hpp>
 #include <miopengemm/miogemm.hpp>
@@ -264,9 +264,6 @@ oclutil::Result TinyZero::true_core(std::function<void(std::string)> acton,
 
     oclutil::cl_flush(command_queue, "cl flush in core gemm loop", true);
 
-    // wait for last event in update_times.
-    // programs.update_times();
-
     // act on the results string.
     acton(get_run_time_string(oclr.success));
 
@@ -306,9 +303,7 @@ std::vector<double> TinyZero::benchgemm(const HyPas& hp, const Halt& hl)
 
   mowri << "hyper-p   :" << hp.get_string() << '\n'
         << "geometry  :" << gg.get_string() << '\n'
-        << "Entering the core gemm loops" << Endl;
-
-  mowri << get_run_times_heading();
+        << "Entering the core gemm loops" << Endl << get_run_times_heading();
 
   std::vector<double> all_times;
   true_core([this](std::string x) { mowri << x << '\n'; }, all_times, hl, all_kern_args);
@@ -341,8 +336,6 @@ Solution TinyZero::find0(const Constraints& constraints, const FindParams& fparm
   {
     size_t rank = 0;
     mowri << "Time allotted to find is less that 0.01, so returning a default immediately.\n";
-
-    // oclutil::DevInfo devinfo(command_queue);
     return get_default_soln(devinfo, gg, constraints, mowri, IfNoCache::E::GENERIC, rank);
   }
 
@@ -425,7 +418,7 @@ Solution TinyZero::single_descent_find(double             allotted_time,
   // only considered an improvement if ratio new/old less than this
   double improvement_factor_required = 0.998;
 
-  get_kernel_cache(); // Make sure the cache is initialized before starting timer
+  get_kernel_cache();  // Make sure the cache is initialized before starting timer
 
   Timer timer;
   timer.start();
@@ -469,7 +462,6 @@ Solution TinyZero::single_descent_find(double             allotted_time,
   {
     mowri << "Warmstart requested [@ rank " << warmstart_rank << "]  " << Flush;
 
-    //    oclutil::DevInfo devinfo(command_queue);
     auto soln =
       get_default_soln(devinfo, gg, constraints, mowri, IfNoCache::E::RANDOM, warmstart_rank);
     warm_start_hp = soln.hypas;
@@ -532,12 +524,6 @@ Solution TinyZero::single_descent_find(double             allotted_time,
 
       v_t_total.resize(0);
       kernel_times.reset_times();
-
-      // for (auto& p : programs.programs)
-      //{
-      // p.reset_times();
-      //}
-
       std::vector<std::string> summary;
 
       auto oclr = true_core([&summary, &v_t_total](std::string x) { summary.push_back(x); },

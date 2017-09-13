@@ -7,9 +7,14 @@
 #include <iostream>
 #include <numeric>
 #include <miopengemm/enums.hpp>
+#include <miopengemm/outputwriter.hpp>
 
 namespace MIOpenGEMM
 {
+
+// as declared in outputwriter.hpp:
+owrite::Endline Endl;
+owrite::Flusher Flush;
 
 namespace Floating
 {

@@ -223,9 +223,8 @@ void TinyOne<TFl>::accuracy_test(const HyPas& hp, const TFl* c_true_for_test)
 {
 
   // copy the const cpu matrix to the gpu
-  // cl_event event_write_c_to_gpu;
   oclutil::SafeClEvent event_write_c_to_gpu("accuracy test write");
-  // cl_uint n_events = 1;
+
   oclutil::cl_enqueue_write_buffer(tgcq.command_queue,
                                    gpu_safemem[Mem::E::C].clmem,
                                    CL_TRUE,
@@ -246,7 +245,6 @@ void TinyOne<TFl>::accuracy_test(const HyPas& hp, const TFl* c_true_for_test)
   benchgemm({hp}, {{0, 1}, {0, 1e12}});
 
   // read the result to c_copy on the cpu
-  // cl_event event_read_c_back;
   oclutil::SafeClEvent event_read_c_back("accuracy test read");
   oclutil::cl_enqueue_read_buffer(tgcq.command_queue,
                                   gpu_safemem[Mat::E::C].clmem,

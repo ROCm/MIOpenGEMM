@@ -50,7 +50,7 @@ CacheKey get(const CacheKey& ck, const Graph& graph, const KernelCache& kc, size
   {
     auto key      = cache_keys[keyi];
     auto distance = ck.get_distance(key);
-    auto hp = kc.at(key);
+    auto hp       = kc.at(key);
     if (graph.contains(kc.at(key)) && Derivabilty(hp, ck.gg).is_derivable)
     {
       v_di.emplace_back(std::make_tuple(distance, keyi));

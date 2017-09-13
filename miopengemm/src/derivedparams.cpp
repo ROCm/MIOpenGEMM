@@ -178,8 +178,6 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
                     << ptr_hp->sus[Mat::E::C].vs[NonChi::E::SKW]
                     << "  grid.at(Mat::E::A) = " << grid.at(Mat::E::A)
                     << "  grid.at(Mat::E::B) = " << grid.at(Mat::E::B) << '\n';
-      // macgrid::Grid grid(ptr_hp->sus[Mat::E::C].vs[NonChi::E::MAC],
-      // ptr_hp->sus[Mat::E::C].vs[NonChi::E::SKW]);
 
       set_status_ss << "ptr_gg->m = " << ptr_gg->m
                     << " and at(Mat::E::A).macro_tile_length = " << at(Mat::E::A).macro_tile_length

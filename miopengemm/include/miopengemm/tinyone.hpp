@@ -45,11 +45,6 @@ class TinyOne
 
   void accuracy_test(const HyPas& hp, const TFloat* c_true_for_test);
 
-  // cl_mem mem_at(Mem::E);
-  // size_t mem_size_at(Mem::E);
-  // cl_command_queue * get_ptr_queue();
-  ///////////////////////////////////
-
   private:
   Geometry gg;
   Offsets  toff;

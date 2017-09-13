@@ -4,7 +4,7 @@
 #ifndef GUARD_MIOPENGEMM_GEMMAPI_HPP
 #define GUARD_MIOPENGEMM_GEMMAPI_HPP
 
-#include <CL/cl.h>
+#include <miopengemm/platform.hpp>
 
 namespace MIOpenGEMM
 {
@@ -32,7 +32,6 @@ class GemmStatus
  * After free(ID) is called, ID is no longer valid for xgemm.
  */
 void free(size_t ID);
-
 
 /*! @brief
  * GEneral Matric Multiplication.
@@ -70,7 +69,7 @@ void free(size_t ID);
  *
  * @param ID
  * Summary : One can use ID = -1 all the time unless a ~15% performace difference on
- * small (example m = n = k = 50) problems is important. 
+ * small (example m = n = k = 50) problems is important.
  * Passing an ID can save time looking-up cached programs,
  * but it requires a bit of work on the user's part to keep track of the correct ID to use.
  * Read on for more info. Define a GEMM geometry to be any
@@ -85,10 +84,6 @@ void free(size_t ID);
  * @return
  * A GemmStatus.
  */
-
-
-
-
 
 template <typename T>
 GemmStatus xgemm(bool              isColMajor,
@@ -116,7 +111,6 @@ GemmStatus xgemm(bool              isColMajor,
                  const cl_event*   event_wait_list,
                  cl_event*         ptr_event,
                  int               ID);
-
 
 /*! @brief
  * GEneral Matric Multiplication.
@@ -146,11 +140,9 @@ GemmStatus gemm0(bool              isColMajor,
                  cl_uint           num_events_in_wait_list,
                  const cl_event*   event_wait_list,
                  cl_event*         ptr_event);
-                 
 }
-                 
+
 #endif
 
 // Unrelated to this but interesting read : Multiple threads, same program, information at
 // https://forums.khronos.org/showthread.php/5810-calling-the-same-kernel-object-multiple-times
-

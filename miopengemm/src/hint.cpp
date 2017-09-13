@@ -2,7 +2,6 @@
  * Copyright (C) 2017 Advanced Micro devices, Inc. All rights reserved.
  *******************************************************************************/
 
-#include <CL/cl.h>
 #include <map>
 #include <sstream>
 #include <string>
@@ -10,6 +9,7 @@
 #include <miopengemm/error.hpp>
 #include <miopengemm/hint.hpp>
 #include <miopengemm/outputwriter.hpp>
+#include <miopengemm/platform.hpp>
 
 namespace MIOpenGEMM
 {

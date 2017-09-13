@@ -54,18 +54,12 @@ HyPas get_generic(const Geometry& gg, const Constraints& constraints)
 }
 
 Solution get_default_soln(const oclutil::DevInfo& devinfo,
-                          // const std::string & device_identifier,
-                          // cl_command_queue   command_queue,
-                          const Geometry&    gg,
-                          const Constraints& constraints,
-                          owrite::Writer&    mowri,
-                          IfNoCache::E       enoc,
-                          size_t             rank)
+                          const Geometry&         gg,
+                          const Constraints&      constraints,
+                          owrite::Writer&         mowri,
+                          IfNoCache::E            enoc,
+                          size_t                  rank)
 {
-
-  // const std::string & device_identifier, //
-  // oclutil::DevInfo devinfo(command_queue);
-  // CacheKey ck(devinfo.identifier, constraints, gg);
 
   double extime = 0;
   HyPas  hp;

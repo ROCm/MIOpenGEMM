@@ -113,7 +113,6 @@ class Graph
   // the number of attempts at finding a
   // deriveable HyPas given the
   // constraint string.
-
   const size_t max_n_iter = static_cast<size_t>(1e6);
 
   std::vector<std::pair<std::pair<size_t, size_t>, std::pair<size_t, size_t>>> p_coupled;

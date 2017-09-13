@@ -35,9 +35,8 @@ class Bundle
 
   DerivedParams         dp;
   std::vector<KernBlob> v_tgks;
-  // std::vector<std::vector<size_t>> v_wait_indices;
 
-  Bundle(const HyPas& hp, const Geometry& gg);  //, owrite::Writer& mowri);
+  Bundle(const HyPas& hp, const Geometry& gg);
 };
 }
 }

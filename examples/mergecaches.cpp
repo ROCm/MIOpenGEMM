@@ -25,6 +25,8 @@ int main()
 
   owrite::Writer mowri(Ver::E::MERGE, "");
 
+  auto&& kernel_cache = get_kernel_cache();
+
   Halt          halt = {{0, 5}, {0, 0.1}};
   auto          kcn  = get_merged(kernel_cache, kernel_cache2, halt, mowri);
   std::ofstream floper("/home/james/test48/merged_cache48.txt", std::ios::out);
