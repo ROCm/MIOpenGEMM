@@ -13,8 +13,8 @@
 namespace MIOpenGEMM
 {
 
-
-Program::Program(cl_device_id id, cl_context ctxt) : device_id(id), context(ctxt), sclp(new SafeCLProgram)//, sclp->clprog(nullptr)
+Program::Program(cl_device_id id, cl_context ctxt)
+  : device_id(id), context(ctxt), sclp(new SafeCLProgram)
 {
 }
 
@@ -40,8 +40,8 @@ Program::update(const KernBlob& ks, owrite::Writer& mowri, const std::string& bu
     kblob = ks;
     mowri << "compiling " << KType::M.name[kblob.e_ktype] << ". " << Flush;
     auto start = std::chrono::high_resolution_clock::now();
-    oclr =
-      oclutil::cl_set_program(context, device_id, kblob.kernstr, sclp->clprog, build_opts, mowri, false);
+    oclr       = oclutil::cl_set_program(
+      context, device_id, kblob.kernstr, sclp->clprog, build_opts, mowri, false);
 
     auto                         end   = std::chrono::high_resolution_clock::now();
     std::chrono::duration<float> fp_ms = end - start;

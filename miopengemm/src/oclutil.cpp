@@ -8,11 +8,11 @@
 #include <string>
 #include <thread>
 #include <vector>
-#include <miopengemm/platform.hpp>
 #include <miopengemm/error.hpp>
 #include <miopengemm/hint.hpp>
 #include <miopengemm/oclutil.hpp>
 #include <miopengemm/outputwriter.hpp>
+#include <miopengemm/platform.hpp>
 #include <miopengemm/timer.hpp>
 
 namespace MIOpenGEMM
@@ -544,10 +544,10 @@ Result cl_build_program(cl_program          program,
 
   cl_int ret = future.get();
 
-  size_t buffer_size;
+  size_t      buffer_size;
   std::string buffer(20000, ' ');
 
-  // TODO : incorporate -Wunused-parameters. 
+  // TODO : incorporate -Wunused-parameters.
   cl_set_program_build_info(program,
                             device_list[0],
                             CL_PROGRAM_BUILD_LOG,
@@ -770,7 +770,6 @@ Result cl_set_context_and_device_from_command_queue(const cl_command_queue& comm
   if (oclr.fail())
     return oclr;
 
-  // cl_device_id device_id_to_use;
   oclr = cl_set_command_queue_info(command_queue,
                                    CL_QUEUE_DEVICE,
                                    sizeof(cl_device_id),
@@ -778,21 +777,16 @@ Result cl_set_context_and_device_from_command_queue(const cl_command_queue& comm
                                    NULL,
                                    "getting device id from queue in set_program_and_kernel",
                                    strict);
-  // if (oclr.fail())
   return oclr;
 }
 
-Result cl_set_program(  //_and_kernel(
-  // const cl_command_queue& command_queue,
-  const cl_context&   context,
-  const cl_device_id& device_id_to_use,
-  const std::string&  kernel_string,
-  // const std::string&  kernel_function_name,
-  cl_program& program,
-  // cl_kernel&          kernel,
-  const std::string& build_options,
-  owrite::Writer&    mowri,
-  bool               strict)
+Result cl_set_program(const cl_context&   context,
+                      const cl_device_id& device_id_to_use,
+                      const std::string&  kernel_string,
+                      cl_program&         program,
+                      const std::string&  build_options,
+                      owrite::Writer&     mowri,
+                      bool                strict)
 {
 
   auto kernel_cstr = kernel_string.c_str();
@@ -829,12 +823,6 @@ Result cl_set_program(  //_and_kernel(
 
   // the store as binary option was removed *here*
 
-  // oclr = cl_create_kernel(kernel,
-  // program,
-  // kernel_function_name.c_str(),
-  //"getting kernel in set_program_and_kernel",
-  // strict);
-
   return oclr;
 }
 
@@ -851,8 +839,6 @@ SafeClMem::~SafeClMem()
 
 SafeClEvent::SafeClEvent(const std::string& hash_) : hash(hash_) {}
 
-// SafeClProgram::SafeClProgram(const std::string& hash_) : hash(hash_) {}
-
 SafeClEvent::~SafeClEvent()
 {
   if (clevent != nullptr)
@@ -861,23 +847,6 @@ SafeClEvent::~SafeClEvent()
     auto oclr   = cl_release_event(clevent, "SafeClEvent destructor: " + hash, strict);
   }
 }
-
-// void SafeClProgram::release(){
-// if (clprog != nullptr)
-//{
-// bool strict = true;
-// auto oclr   = cl_release_program(clprog, "SafeClProgram::release " + hash, strict);
-//}
-//}
-
-// SafeClProgram::~SafeClProgram()
-//{
-// if (clprog != nullptr)
-//{
-// bool strict = true;
-// auto oclr   = cl_release_program(clprog, "SafeClProgram destructor: " + hash, strict);
-//}
-//}
 
 // properties = CL_QUEUE_PROFILING_ENABLE :
 // create an inorder command queue with

@@ -3,15 +3,15 @@
  *******************************************************************************/
 
 #include <algorithm>
-#include <numeric>
 #include <array>
 #include <iostream>
+#include <numeric>
 #include <miopengemm/enums.hpp>
 
 namespace MIOpenGEMM
 {
 
-// as declared in outputwriter.hpp:  
+// as declared in outputwriter.hpp:
 owrite::Endline Endl;
 owrite::Flusher Flush;
 

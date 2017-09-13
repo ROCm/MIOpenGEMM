@@ -4,10 +4,10 @@
 #ifndef GUARD_MIOPENGEMM_MIOGEMM_HPP
 #define GUARD_MIOPENGEMM_MIOGEMM_HPP
 
-#include <miopengemm/platform.hpp>
 #include <miopengemm/findparams.hpp>
 #include <miopengemm/geometry.hpp>
 #include <miopengemm/outputwriter.hpp>
+#include <miopengemm/platform.hpp>
 #include <miopengemm/solution.hpp>
 
 namespace MIOpenGEMM

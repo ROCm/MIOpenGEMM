@@ -6,8 +6,8 @@
 
 #include <limits>
 #include <tuple>
-#include <miopengemm/platform.hpp>
 #include <miopengemm/outputwriter.hpp>
+#include <miopengemm/platform.hpp>
 
 namespace MIOpenGEMM
 {

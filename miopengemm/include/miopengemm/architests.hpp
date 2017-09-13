@@ -4,9 +4,9 @@
 #ifndef GUARD_MIOPENGEMM_ARCHITESTS_HPP
 #define GUARD_MIOPENGEMM_ARCHITESTS_HPP
 
-#include <miopengemm/platform.hpp>
 #include <miopengemm/derivedparams.hpp>
 #include <miopengemm/hyperparams.hpp>
+#include <miopengemm/platform.hpp>
 
 namespace MIOpenGEMM
 {

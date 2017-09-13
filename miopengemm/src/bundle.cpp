@@ -108,10 +108,7 @@ std::vector<std::vector<size_t>> get_v_wait_indices(const std::vector<KernBlob>&
   return v_wait_indices;
 }
 
-Bundle::Bundle(const HyPas& hp_, const Geometry& gg_)  //, owrite::Writer& mowri)
-  : hp(hp_),
-    gg(gg_),
-    dp(hp, gg)
+Bundle::Bundle(const HyPas& hp_, const Geometry& gg_) : hp(hp_), gg(gg_), dp(hp, gg)
 {
 
   for (auto emat_x : {Mat::E::A, Mat::E::B})
@@ -156,8 +153,6 @@ Bundle::Bundle(const HyPas& hp_, const Geometry& gg_)  //, owrite::Writer& mowri
   {
     stringutil::indentify(x.kernstr);
   }
-
-  // v_wait_indices = get_v_wait_indices(v_tgks, mowri);
 }
 }
 }

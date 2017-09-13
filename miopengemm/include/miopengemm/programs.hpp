@@ -6,27 +6,29 @@
 #define GUARD_MIOPENGEMM_PROGRAMSES_HPP
 
 #include <algorithm>
-#include <vector>
 #include <memory>
-#include <miopengemm/platform.hpp>
+#include <vector>
 #include <miopengemm/hyperparams.hpp>
 #include <miopengemm/kernelstring.hpp>
 #include <miopengemm/oclutil.hpp>
 #include <miopengemm/outputwriter.hpp>
+#include <miopengemm/platform.hpp>
 
 namespace MIOpenGEMM
 {
 
 using AllKernArgs = std::vector<std::vector<std::pair<size_t, const void*>>>;
 
-class SafeCLProgram{
+class SafeCLProgram
+{
   public:
   cl_program clprog = nullptr;
-  
-  ~SafeCLProgram(){
-  if (clprog)
+
+  ~SafeCLProgram()
+  {
+    if (clprog)
     {
-       oclutil::cl_release_program(clprog, "~Program", true);
+      oclutil::cl_release_program(clprog, "~Program", true);
     }
   }
 };
@@ -56,22 +58,11 @@ class Program
   cl_device_id device_id;
   cl_context   context;
   KernBlob     kblob;
-  // a resource to manage carefully:
-  //cl_program   clprog;
-  
-  std::shared_ptr<SafeCLProgram> sclp;
 
-  //std::unique_ptr<int> bla;
-  
+  std::shared_ptr<SafeCLProgram> sclp;
   Program(cl_device_id, cl_context);
   Program() : Program(nullptr, nullptr) {}
   oclutil::Result update(const KernBlob&, owrite::Writer&, const std::string& build_options);
-  //~Program();
-  
-  //Program & operator=(const Program &) = delete;
-  //Program (const Program &)  = delete;
-  //Program (Program &&)  = default;
-  //Program& operator=(Program &&)  = default;
 
 };
 
@@ -111,11 +102,10 @@ class Programs
 
   Programs() = default;
 
-  //Programs & operator=(const Programs &) = delete;
-  //Programs (const Programs &)  = delete;
-  //Programs (Programs &&)  = default;
-  //Programs& operator=(Programs &&)  = default;
-
+  // Programs & operator=(const Programs &) = delete;
+  // Programs (const Programs &)  = delete;
+  // Programs (Programs &&)  = default;
+  // Programs& operator=(Programs &&)  = default;
 };
 }
 #endif

@@ -6,10 +6,10 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include <miopengemm/platform.hpp>
 #include <miopengemm/error.hpp>
 #include <miopengemm/hint.hpp>
 #include <miopengemm/outputwriter.hpp>
+#include <miopengemm/platform.hpp>
 
 namespace MIOpenGEMM
 {

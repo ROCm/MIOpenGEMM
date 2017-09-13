@@ -3,8 +3,8 @@
  *******************************************************************************/
 #include <algorithm>
 #include <iostream>
-#include <miopengemm/platform.hpp>
 #include <miopengemm/error.hpp>
+#include <miopengemm/platform.hpp>
 #include <miopengemm/redirection.hpp>
 
 namespace MIOpenGEMM
