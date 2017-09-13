@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <array>
 #include <iostream>
+#include <numeric>
 #include <miopengemm/enums.hpp>
 
 namespace MIOpenGEMM

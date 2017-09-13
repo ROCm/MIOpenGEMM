@@ -3,6 +3,7 @@
  *******************************************************************************/
 #include <algorithm>
 #include <iomanip>
+#include <numeric>
 #include <sstream>
 #include <miopengemm/bundle.hpp>
 #include <miopengemm/cpugemm.hpp>
