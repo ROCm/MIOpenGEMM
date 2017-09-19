@@ -68,7 +68,7 @@ runem(std::vector<MIOpenGEMM::Geometry>& geometries,         // GEMM geometries 
   namespace oclutil = MIOpenGEMM::oclutil;
 
   const TFloat alpha = 1.72435898234;
-  const TFloat beta  = -0.9241223982;
+  const TFloat beta  = 0.0;//-0.9241223982;
 
   auto                       toff = MIOpenGEMM::get_zero_offsets();
   MIOpenGEMM::owrite::Writer mowri(MIOpenGEMM::Ver::E::SILENT, "");
@@ -91,16 +91,35 @@ runem(std::vector<MIOpenGEMM::Geometry>& geometries,         // GEMM geometries 
   }
   std::cout << "  ******\n";
 
-  srand(1011);
-  std::cout << "generating random data on CPU..." << std::flush;
-  MIOpenGEMM::setabcw::CpuMemBundle<TFloat> cmb(geometries, toff);
-  std::cout << "done.\n";
-  std::vector<TFloat> c_from_device(cmb.v_mem[Mat::E::C]->size());
 
+  
+
+  
   for (size_t geomi = 0; geomi < geometries.size(); ++geomi)
   {
 
+
     auto& gg = geometries[geomi];
+    
+    srand(1011);
+    //std::cout << "generating random data on CPU..." << std::flush;
+    MIOpenGEMM::setabcw::CpuMemBundle<TFloat> cmb({gg}, toff);
+    //std::cout << "done.\n";
+    std::vector<TFloat> c_from_device(cmb.v_mem[Mat::E::C]->size());
+
+
+    if (beta == 0){
+      for (auto & x : *cmb.v_mem[Mat::E::C]){
+        if (rand()%2){
+          x = std::numeric_limits<float>::quiet_NaN();
+        }
+        else{
+          x = (rand() % 100)/100.;
+        }
+      }
+    }
+    
+
 
 #ifdef MIOPENGEMM_BENCH_CLBLAST
     auto clblast_layout = gg.isColMajor ? CLBlastLayoutColMajor : CLBlastLayoutRowMajor;
@@ -311,7 +330,7 @@ runem(std::vector<MIOpenGEMM::Geometry>& geometries,         // GEMM geometries 
         oclutil::cl_wait_for_events(1, &readevent, "(runem)", true);
 
         TFloat sum_gpu = std::accumulate(c_from_device.begin(), c_from_device.end(), TFloat(0));
-        TFloat sum_cpu = std::accumulate(c_cpu.begin(), c_cpu.end(), TFloat(0));
+        TFloat sum_cpu = std::accumulate(c_cpu.begin(), c_cpu.begin() + c_from_device.size(), TFloat(0));
         std::cout << "sum C [gpu]: " << sum_gpu << ",  sum C [cpu]: " << sum_cpu << std::endl;
       }
 
@@ -413,7 +432,7 @@ int main()
 
   auto geom_to_run = GeomSet::MANUAL;
 
-  bool run_accuracy_test    = false;
+  bool run_accuracy_test    = true;
   bool run_event_timer      = false;
   bool run_miopengemm       = true;
   bool run_isaac            = false;
@@ -521,7 +540,9 @@ int main()
       // geometries = {MIOpenGEMM::get_squareNN_geometry<float>(28)};
       geometries = {{512, 16, 512, false, false, 0, 'f'}
                   , {512, 17, 512, false, false, 0, 'f'}
-                  , {512, 18, 512, false, false, 0, 'f'}};
+                  , {512, 18, 512, false, false, 0, 'f'}
+                  , {1024, 1024, 1024, false, false, 0, 'f'}
+                  };
     }
 
     auto stats = runem<float>(geometries, impl, run_accuracy_test, run_event_timer);

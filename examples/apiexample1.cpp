@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <vector>
+#include <limits>
 #include <miopengemm/gemm.hpp>
 
 int main()
@@ -22,11 +23,11 @@ int main()
   size_t ldc = 2;
 
   float alpha = 1.0;
-  float beta  = 1.0;
+  float beta  = 0.0;
 
   std::vector<float> A = {1, 1, 1, 2, 2, 2};
   std::vector<float> B = {2, 3, 2, 3, 2, 3};
-  std::vector<float> C = {0, 1, 2, 3};
+  std::vector<float> C = {0, 1, std::numeric_limits<float>::quiet_NaN(), 3};
   std::vector<float> C_result(4);
 
   size_t platform_id = 0;
