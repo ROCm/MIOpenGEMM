@@ -209,8 +209,14 @@ void gemm_3fors_generic(const Geometry& gg,
       {
         target_index = y + x * gg.ldX[Mat::E::C];
       }
-      // and set it
-      c[target_index] *= beta;
+      // and set it      
+      if (beta != 0){
+        c[target_index] *= beta;
+      }
+      else{
+        c[target_index] = 0;
+      }
+
       c[target_index] += alpha * finner(a, b, x, y, gg.ldX[Mat::E::A], gg.ldX[Mat::E::B], gg.k);
     }
   }

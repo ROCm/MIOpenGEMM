@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <sstream>
 #include <vector>
+#include <cmath>
 
 #include <miopengemm/geometries.hpp>
 #include <miopengemm/geometry.hpp>
