@@ -8,19 +8,26 @@
 #include <sstream>
 #include <miopengemm/error.hpp>
 #include <miopengemm/outputwriter.hpp>
+#include <miopengemm/geometry.hpp>
 
 namespace MIOpenGEMM
 {
 namespace accuracytests
 {
 
+
 template <typename TFloat>
-void elementwise_compare(const TFloat*   c_before,
-                         double          beta,
-                         const TFloat*   c_cpu,
-                         const TFloat*   c_gpu,
-                         size_t          nels,
-                         owrite::Writer& mowri);
+void elementwise_compare(
+                         const Geometry & gg, 
+                         const Offsets & toff, 
+                         const TFloat*   c_before,  // C matrix before GEMM
+                         const TFloat*   c_cpu,     // C matrix after GEMM on CPU
+                         const TFloat*   c_gpu,     // C matrix after GEMM on GPU.
+                         const TFloat *  c_cpu_abs, // C matrix after GEMM : abs(alpha)*abs(A)abs(B) + abs(beta)*abs(C)
+                         owrite::Writer& mowri
+                         );
+                         
+
 }
 }
 

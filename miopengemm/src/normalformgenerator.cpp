@@ -47,7 +47,7 @@ class NormalFormGenerator : public prepgen::PrepGenerator
        //<< "#define "
        << "#define N_WORK_ITEMS_PER_GROUP " << dp.at(emat_x).cw2_local_work_size << '\n'
        << "#define UNROLL " << hp.sus[Mat::E::C].vs[NonChi::E::UNR] << '\n'
-       << "#define __K__ " << gg.k << '\n';
+       << "#define KV__ " << gg.k << '\n';
 
     append_unroll_block_geometry(emat_x, ss, false, false);
     ss << '\n';
@@ -85,7 +85,7 @@ class NormalFormGenerator : public prepgen::PrepGenerator
     ss << "{"
        << "\n/* setting up where this thread works */\n"
        << "TINT" << Mem::M.name[emat_x] << " group_id = get_group_id(0);\n"
-       << "TINT" << Mem::M.name[emat_x] << " micro_id = get_local_id(0);\n"
+       << "TINT" << Mem::M.name[emat_x] << " micro_id = (TINT)(get_local_id(0));\n"
        << "\n"
        << "TINT" << Mem::M.name[emat_x]
        << " macro_id_pll_unroll = group_id % N_MACRO_TILES_PLL_UNROLL;\n"

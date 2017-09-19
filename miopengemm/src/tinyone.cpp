@@ -219,7 +219,7 @@ Solution TinyOne<TFl>::find1(const FindParams& find_params, const Constraints& c
 }
 
 template <typename TFl>
-void TinyOne<TFl>::accuracy_test(const HyPas& hp, const TFl* c_true_for_test)
+void TinyOne<TFl>::accuracy_test(const HyPas& hp) //, const TFl* c_true_for_test)
 {
 
   // copy the const cpu matrix to the gpu
@@ -258,36 +258,62 @@ void TinyOne<TFl>::accuracy_test(const HyPas& hp, const TFl* c_true_for_test)
                                   "enqueue read to c, in base_basegemm_with_accuracy_test",
                                   true);
 
-  // if the user has not provided the correct answer, compute it
-  if (c_true_for_test == nullptr)
-  {
-    // run gemm on the cpu, result stored in c_for_cpu_compute.
-    c_for_cpu_compute.resize(mem_size[Mem::E::C] / sizeof(TFl));
-    std::memcpy(c_for_cpu_compute.data(), cpu_mem[Mat::E::C], mem_size[Mem::E::C]);
+  // compute product on CPU.
+  std::vector<TFl> c_for_cpu_compute(mem_size[Mem::E::C] / sizeof(TFl));
+  std::memcpy(c_for_cpu_compute.data(), cpu_mem[Mat::E::C], mem_size[Mem::E::C]);
 
-    cpugemm::gemm<TFl>(gg,
-                       toff,
-                       cpu_mem[Mat::E::A],
-                       cpu_mem[Mat::E::B],
-                       c_for_cpu_compute.data(),
-                       Floating::default_alpha,
-                       Floating::default_beta,
+  cpugemm::gemm<TFl>(gg,
+                     toff,
+                     cpu_mem[Mat::E::A],
+                     cpu_mem[Mat::E::B],
+                     c_for_cpu_compute.data(),
+                     Floating::default_alpha,
+                     Floating::default_beta,
+                     mowri);
 
-                       mowri);
+  auto c_true_for_test = c_for_cpu_compute.data();
 
-    c_true_for_test = c_for_cpu_compute.data();
+  //compute absolute GEMM : C <- alpha abs(A)abs(B) + beta abs(C).
+  std::vector<TFl> A_abs(mem_size[Mem::E::A] / sizeof(TFl));
+  std::memcpy(A_abs.data(), cpu_mem[Mat::E::A], mem_size[Mem::E::A]);
+  for (auto & x : A_abs){
+    x = std::abs(x);
   }
 
+  std::vector<TFl> B_abs(mem_size[Mem::E::B] / sizeof(TFl));
+  std::memcpy(B_abs.data(), cpu_mem[Mat::E::B], mem_size[Mem::E::B]);
+  for (auto & x : B_abs){
+    x = std::abs(x);
+  }
+
+
+  std::vector<TFl> C_abs(mem_size[Mem::E::C] / sizeof(TFl));
+  std::memcpy(C_abs.data(), cpu_mem[Mat::E::C], mem_size[Mem::E::C]);
+  for (auto & x : C_abs){
+    x = std::abs(x);
+  }
+
+  cpugemm::gemm<TFl>(gg,
+                     toff,
+                     A_abs.data(),
+                     B_abs.data(),
+                     C_abs.data(),
+                     std::abs(Floating::default_alpha),
+                     std::abs(Floating::default_beta),
+                     mowri);
+                       
+  
   // make sure the read back is complete complete
   oclutil::cl_wait_for_events(
     1, &event_read_c_back.clevent, "in accuracy test, waiting GEMM gpu ", true);
 
   // compare cpu and gpu results
-  accuracytests::elementwise_compare(cpu_mem[Mat::E::C],
-                                     Floating::default_beta,
-                                     c_true_for_test,
-                                     c_copy.data(),
-                                     c_copy.size(),
+  accuracytests::elementwise_compare(gg, 
+                                     toff,
+                                     cpu_mem[Mat::E::C], //before, 
+                                     c_true_for_test, //after cpu
+                                     c_copy.data(), //after gpu
+                                     C_abs.data(), //after abs on cpu
                                      mowri);
 }
 

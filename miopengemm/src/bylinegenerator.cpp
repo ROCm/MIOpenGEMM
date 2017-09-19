@@ -105,7 +105,7 @@ void ByLineGenerator::append_setup_coordinates(std::stringstream& ss)
 
   ss << "\n\n\n/* setting up where this thread works */";
   ss << "TINT" << MCHAR << " group_id = get_group_id(0);\n";
-  ss << "TSHORT local_id = get_local_id(0);\n";
+  ss << "TSHORT local_id = (TSHORT)(get_local_id(0));\n";
   ss << "TINT" << MCHAR << " global_id = group_id*N_WORK_ITEMS_PER_GROUP + local_id;\n";
   ss << "TINT" << MCHAR << " start_uncoal = 0;\n";
   ss << "TINT" << MCHAR << " start_coal = 0;\n";

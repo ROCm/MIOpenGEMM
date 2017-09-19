@@ -70,7 +70,7 @@ runem(std::vector<MIOpenGEMM::Geometry>& geometries,         // GEMM geometries 
   const TFloat alpha = 1.72435898234;
   const TFloat beta  = -0.9241223982;
 
-  auto                       toff = MIOpenGEMM::get_zero_offsets();
+  auto                       toff = MIOpenGEMM::get_padding_offsets();
   MIOpenGEMM::owrite::Writer mowri(MIOpenGEMM::Ver::E::SILENT, "");
   MIOpenGEMM::CLHint         devhint;
 
@@ -95,11 +95,12 @@ runem(std::vector<MIOpenGEMM::Geometry>& geometries,         // GEMM geometries 
   std::cout << "generating random data on CPU..." << std::flush;
   MIOpenGEMM::setabcw::CpuMemBundle<TFloat> cmb(geometries, toff);
   std::cout << "done.\n";
-  std::vector<TFloat> c_from_device(cmb.v_mem[Mat::E::C]->size());
+  //std::vector<TFloat> c_from_device(cmb.v_mem[Mat::E::C]->size());
 
   for (size_t geomi = 0; geomi < geometries.size(); ++geomi)
   {
 
+  
     auto& gg = geometries[geomi];
 
 #ifdef MIOPENGEMM_BENCH_CLBLAST
@@ -129,6 +130,8 @@ runem(std::vector<MIOpenGEMM::Geometry>& geometries,         // GEMM geometries 
     };
     std::array<cl_mem, Mat::E::N> dev_mem;
     cl_mem dev_w = nullptr;
+
+
 
     for (auto x : {Mat::E::A, Mat::E::B, Mat::E::C})
     {
@@ -290,7 +293,14 @@ runem(std::vector<MIOpenGEMM::Geometry>& geometries,         // GEMM geometries 
       // perform accuracy test if first run and accuracy test requested
       if (run_i == 0 && run_accuracy_test)
       {
+        
+        
         cl_event readevent;
+        
+        
+        std::vector<TFloat> c_from_device(memsize(Mat::E::C)/sizeof(TFloat));
+
+
         oclutil::cl_enqueue_read_buffer(cqic.command_queue,
                                         dev_mem[Mat::E::C],
                                         CL_TRUE,
@@ -305,6 +315,7 @@ runem(std::vector<MIOpenGEMM::Geometry>& geometries,         // GEMM geometries 
 
         // openblas (assuming OPENBLAS ON when MIOpenGEMM was built)
         std::vector<TFloat> c_cpu(*cmb.v_mem[Mat::E::C]);
+        c_cpu.resize(c_from_device.size());
         MIOpenGEMM::cpugemm::gemm<TFloat>(
           gg, toff, cmb.r_mem[Mat::E::A], cmb.r_mem[Mat::E::B], c_cpu.data(), alpha, beta, mowri);
 
@@ -413,11 +424,11 @@ int main()
 
   auto geom_to_run = GeomSet::MANUAL;
 
-  bool run_accuracy_test    = false;
+  bool run_accuracy_test    = true;
   bool run_event_timer      = false;
-  bool run_miopengemm       = true;
+  bool run_miopengemm       = false;
   bool run_isaac            = false;
-  bool run_clblast          = false;
+  bool run_clblast          = true;
   bool print_summary_at_end = false;
 
   std::vector<Impl> impls_to_run;

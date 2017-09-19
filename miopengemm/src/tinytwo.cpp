@@ -60,8 +60,8 @@ void TinyTwo::accuracy_test(const HyPas& hp)
 
   switch (active_type)
   {
-  case 'f': f_moa->accuracy_test(hp, nullptr); break;
-  case 'd': d_moa->accuracy_test(hp, nullptr); break;
+  case 'f': f_moa->accuracy_test(hp); break;
+  case 'd': d_moa->accuracy_test(hp); break;
   default: throw miog_error("unrecognised floattype char in TinyTwo accuracy_test with 1 parm");
   }
 }

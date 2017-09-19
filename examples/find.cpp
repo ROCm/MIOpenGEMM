@@ -21,7 +21,7 @@ int main()
   Offsets        offsets = get_zero_offsets();
   owrite::Writer mowri(Ver::E::TERMINAL, "");
   dev::TinyTwo   boa(gg, offsets, mowri, devhint);
-  auto           find_params = get_at_least_n_restarts(20);
+  auto           find_params = get_at_least_n_restarts(1);
   Constraints    constraints("");
   Solution       soln = boa.find2(find_params, constraints);
   if (test_accuracy_of_soln)

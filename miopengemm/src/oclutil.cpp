@@ -542,10 +542,14 @@ Result cl_build_program(cl_program          program,
     throw miog_error(errm);
   }
 
+  std::cout << "here1" << std::endl;
   cl_int ret = future.get();
-
+  std::cout << "here2" << std::endl;
+  
   size_t      buffer_size;
   std::string buffer(20000, ' ');
+
+  std::cout << "here3" << std::endl;
 
   // TODO : incorporate -Wunused-parameters.
   cl_set_program_build_info(program,
@@ -557,15 +561,23 @@ Result cl_build_program(cl_program          program,
                             "x",
                             true);
 
+  std::cout << "here4" << std::endl;
+
   if (ret != CL_SUCCESS)
   {
+    std::cout << "here5a" << std::endl;
+
     std::stringstream ss;
-    ss << "CL Compilation failed:\n" << buffer_size << buffer.substr(buffer_size) << std::endl;
-    return confirm_cl_status(ret, hash, ss.str() + " + (cl_build_program)", strict);
+    ss << "CL Compilation failed:\n" << "(buffer size = " << buffer_size << ") " << " (buffer substring  : "  << buffer.substr(0,buffer_size) << " ) " << "\n";
+    auto errm = ss.str() + " + (cl_build_program)";
+    std::cout << errm << std::endl;
+    return confirm_cl_status(ret, hash, errm, strict);
   }
 
   else
   {
+    std::cout << "here5b" << std::endl;
+
     bool iswhitespace = true;
     for (size_t i = 0; i < buffer_size - 1; ++i)
     {
@@ -576,6 +588,8 @@ Result cl_build_program(cl_program          program,
       }
     }
 
+    std::cout << "here6b" << std::endl;
+
     if (iswhitespace == false)
     {
       std::stringstream ss_comp_warning;
@@ -584,6 +598,8 @@ Result cl_build_program(cl_program          program,
       ss_comp_warning << ">>" << buffer << "<<";
       mowri << ss_comp_warning.str();
     }
+
+    std::cout << "here7b" << std::endl;
 
     return confirm_cl_status(ret, hash, "cl_build_program", strict);
   }

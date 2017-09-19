@@ -59,7 +59,7 @@ Offsets::Offsets(
   tails[Mem::E::W] = tw_;
 }
 
-Offsets get_padding_offsets() { return Offsets(11, 17, 13, 22, 61, 15, 18, 7); }
+Offsets get_padding_offsets() { return Offsets(11, 17, 13, 23, 67, 15, 29, 17); }
 
 Offsets get_zero_offsets() { return Offsets(0, 0, 0, 0, 0, 0, 0, 0); }
 

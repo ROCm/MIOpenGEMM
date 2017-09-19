@@ -41,6 +41,8 @@ endif()
 set( CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." )
 find_package( OpenCL REQUIRED )
 
+#SET (CMAKE_CXX_COMPILER "clang++")
+
 include(EnableCompilerWarnings)
 add_subdirectory(miopengemm)
 add_subdirectory(examples)
