@@ -254,7 +254,11 @@ TFLOAT previous_value; )"
     ss << "\nindex =  STRIDE_PLL_M_C*(write_start_a + dima) + STRIDE_PLL_N_C*(write_start_b + "
           "dimb) ;\n";
 
-    ss << (with_beta_scaling == 0 ? "" : "c[index] *= beta;\n");
+    //ss << (with_beta_scaling == 0 ? "" : "c[index] *= beta;\n");
+    if (with_beta_scaling != 0){
+      ss <<  "if (beta >= 0 && beta <= 0){\nc[index] = 0; \n}\n"
+         << "else {\nc[index] *= beta;}\n";
+    }
 
     if (with_alpha_increment != 0)
     {
