@@ -92,7 +92,19 @@ Programs::Programs(const cl_device_id& id, const cl_context& ctxt, owrite::Write
 void Programs::update(const std::vector<KernBlob>& kbs)
 {
 
-  std::string build_options("-Werror  -cl-std=CL2.0");// -Wf,-Wno-unused-variable -Wf,-Weverything");  //-Wunused-variable"); // "); //
+  std::vector<std::string> warnings_to_ignore = {
+    "conversion", "unused-macros", "shorten-64-to-32", "cast-align"};
+
+  std::stringstream ss_build_options;
+  ss_build_options << "-Werror";
+  ss_build_options << "   -cl-std=CL2.0";  // TODO : macro this.
+  ss_build_options << "   -Wf,-Weverything";
+  for (auto& x : warnings_to_ignore)
+  {
+    ss_build_options << "   -Wf,-Wno-" << x;
+  }
+  std::string build_options = ss_build_options.str();
+
   v_wait_indices = kerngen::get_v_wait_indices(kbs, *ptr_mowri);
   act_inds.resize(0);
   for (size_t kbi = 0; kbi < kbs.size(); ++kbi)
