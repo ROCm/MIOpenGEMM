@@ -23,6 +23,20 @@ void* MFType::operator[](char floattype) const
 {
   return floattype == 'd' ? (void*)(&v_d) : (void*)(&v_f);
 }
+
+
+const MFType & get_m_alpha(){
+  const static MFType m_alpha(default_alpha);
+  return m_alpha;
+}
+
+const MFType & get_m_beta(){
+  const static MFType m_beta(default_beta);
+  return m_beta;
+}
+
+
+
 }
 
 template <typename T>
@@ -66,6 +80,7 @@ std::unordered_map<T, size_t> get_val(const std::vector<T>& a)
 template <typename T>
 T aslower(T X)
 {
+  (void)X;
 }
 
 template <>
@@ -115,7 +130,14 @@ std::vector<std::string> get_name()
   X[E::MAIN]  = "MAIN";
   return X;
 }
-const EnumMapper<std::string> M = get_enum_mapper<std::string>(get_name(), "KType");
+
+
+const EnumMapper<std::string> & M(){
+  static const EnumMapper<std::string> em = get_enum_mapper<std::string>(get_name(), "KType");  
+  return em;
+}
+
+
 }
 
 namespace SummStat
@@ -128,7 +150,12 @@ std::vector<std::string> get_name()
   X[E::MAX]    = "MAX";
   return X;
 }
-const EnumMapper<std::string> M = get_enum_mapper<std::string>(get_name(), "SummStat");
+
+const EnumMapper<std::string> & M(){
+  static const EnumMapper<std::string> em = get_enum_mapper<std::string>(get_name(), "SummStat");
+  return em;
+}
+
 }
 
 namespace Xtr
@@ -140,7 +167,12 @@ std::vector<std::string> get_name()
   X[E::MAX] = "MAX";
   return X;
 }
-const EnumMapper<std::string> M = get_enum_mapper<std::string>(get_name(), "Xtr");
+
+const EnumMapper<std::string> & M(){
+  static const EnumMapper<std::string> em = get_enum_mapper<std::string>(get_name(), "Xtr");
+  return em;
+}
+
 }
 
 namespace MicroAllocation
@@ -152,7 +184,11 @@ std::vector<std::string> get_name()
   X[E::BYB] = "BYB";
   return X;
 }
-const EnumMapper<std::string> M = get_enum_mapper<std::string>(get_name(), "MicroAllocation");
+const EnumMapper<std::string> & M(){
+  static const EnumMapper<std::string> em = get_enum_mapper<std::string>(get_name(), "MicroAllocation");
+  return em;
+}
+
 }
 
 std::vector<int> get_priority_confirmed(std::vector<int> X, size_t target_size)
@@ -187,7 +223,7 @@ std::vector<std::string> get_name()
   return X;
 }
 
-std::vector<int> get_priority()
+std::vector<int> get_priority_basic()
 {
   std::vector<int> X(E::N, std::numeric_limits<int>::max());
   X[E::MIC] = 1;
@@ -200,8 +236,16 @@ std::vector<int> get_priority()
   return X;
 }
 
-const EnumMapper<std::string> M        = get_enum_mapper<std::string>(get_name(), "Chi");
-const std::vector<int>        priority = get_priority_confirmed(get_priority(), E::N);
+const EnumMapper<std::string> & M(){
+  static const EnumMapper<std::string> em = get_enum_mapper<std::string>(get_name(), "Chi");  
+  return em;
+}
+
+const std::vector<int> & get_priority(){
+  const static std::vector<int> priority = get_priority_confirmed(get_priority_basic(), E::N);
+  return priority;
+}
+
 }
 
 namespace OutPart
@@ -219,7 +263,12 @@ std::vector<std::string> get_name()
   X[E::MER] = "MER";
   return X;
 }
-const EnumMapper<std::string> M = get_enum_mapper<std::string>(get_name(), "OutPart");
+
+const EnumMapper<std::string> & M(){
+  static const EnumMapper<std::string> em = get_enum_mapper<std::string>(get_name(), "OutPart");
+  return em;
+}
+
 }
 
 namespace Ver
@@ -239,7 +288,12 @@ std::vector<std::string> get_name()
   X[E::MERGE]        = "MERGE";
   return X;
 }
-const EnumMapper<std::string> M = get_enum_mapper<std::string>(get_name(), "Ver");
+
+const EnumMapper<std::string> & M(){
+  static const EnumMapper<std::string> em = get_enum_mapper<std::string>(get_name(), "Ver");
+  return em;
+}
+
 }
 
 namespace NonChi
@@ -263,7 +317,7 @@ std::vector<std::string> get_name()
   return X;
 }
 
-std::vector<int> get_priority()
+std::vector<int> get_priority_basic()
 {
   std::vector<int> X(E::N, std::numeric_limits<int>::max());
   X[E::UNR] = 1;
@@ -282,8 +336,17 @@ std::vector<int> get_priority()
   return X;
 }
 
-const EnumMapper<std::string> M        = get_enum_mapper<std::string>(get_name(), "NonChi");
-const std::vector<int>        priority = get_priority_confirmed(get_priority(), E::N);
+const EnumMapper<std::string> & M(){
+  static const EnumMapper<std::string> em = get_enum_mapper<std::string>(get_name(), "NonChi");
+  return em;
+}
+
+
+
+const std::vector<int> & get_priority(){
+  const static std::vector<int> prty = get_priority_confirmed(get_priority_basic(), E::N);
+  return prty;
+}
 }
 
 namespace Mat
@@ -296,15 +359,21 @@ std::vector<char> get_name()
   X[E::C] = 'C';
   return X;
 }
-const EnumMapper<char> M = get_enum_mapper<char>(get_name(), "Mat");
+
+
+const EnumMapper<char> & M(){
+  static const EnumMapper<char> em = get_enum_mapper<char>(get_name(), "Mat");
+  return em;
+}
+
 
 const EnumMapper<std::string>* mat_to_xchi(Mat::E emat)
 {
   switch (emat)
   {
-  case Mat::E::A: return &Chi::M;
-  case Mat::E::B: return &Chi::M;
-  case Mat::E::C: return &NonChi::M;
+  case Mat::E::A: return &Chi::M();
+  case Mat::E::B: return &Chi::M();
+  case Mat::E::C: return &NonChi::M();
   default: throw miog_error("unrecognised Mat::E in mat_to_xchi");
   }
 }
@@ -313,9 +382,9 @@ const std::vector<int>* mat_to_priority(Mat::E emat)
 {
   switch (emat)
   {
-  case Mat::E::A: return &Chi::priority;
-  case Mat::E::B: return &Chi::priority;
-  case Mat::E::C: return &NonChi::priority;
+  case Mat::E::A: return &Chi::get_priority();
+  case Mat::E::B: return &Chi::get_priority();
+  case Mat::E::C: return &NonChi::get_priority();
   default: throw miog_error("unrecognised Mat::E in mat_to_priority");
   }
 }
@@ -343,7 +412,12 @@ std::vector<char> get_name()
   X[E::W] = 'W';
   return X;
 }
-const EnumMapper<char> M = get_enum_mapper<char>(get_name(), "Mem");
+
+const EnumMapper<char> & M(){
+  static const EnumMapper<char> em = get_enum_mapper<char>(get_name(), "Mem");
+  return em;
+}
+
 
 Mem::E mat_to_mem(Mat::E emat)
 {
@@ -371,7 +445,7 @@ Mem::E mat_to_mem(Mat::E emat)
 
 namespace KType
 {
-std::array<std::vector<size_t>, E::N> get_dependencies()
+std::array<std::vector<size_t>, E::N> get_dependencies_basic()
 {
   std::vector<size_t> uninitialised_vector{std::numeric_limits<size_t>::max()};
   std::array<std::vector<size_t>, E::N> kdps;
@@ -393,7 +467,12 @@ std::array<std::vector<size_t>, E::N> get_dependencies()
   }
   return kdps;
 }
-std::array<std::vector<size_t>, KType::N> dependencies = get_dependencies();
+
+const std::array<std::vector<size_t>, KType::N> & get_dependencies(){
+  static const std::array<std::vector<size_t>, KType::N> dependencies = get_dependencies_basic();
+  return dependencies;
+}
+
 }
 
 namespace Ver
@@ -415,7 +494,7 @@ std::array<std::array<bool, OutPart::E::N>, E::N> get_base_toX()
   return x;
 }
 
-std::array<std::array<bool, OutPart::E::N>, E::N> get_toTerm()
+std::array<std::array<bool, OutPart::E::N>, E::N> get_toTerm_basic()
 {
   auto x = get_base_toX();
 
@@ -448,9 +527,13 @@ std::array<std::array<bool, OutPart::E::N>, E::N> get_toTerm()
 
   return x;
 }
-const std::array<std::array<bool, OutPart::E::N>, E::N> toTerm = get_toTerm();
 
-std::array<std::array<bool, OutPart::E::N>, E::N> get_toFile()
+const std::array<std::array<bool, OutPart::E::N>, E::N> & get_toTerm(){
+  const static std::array<std::array<bool, OutPart::E::N>, E::N> toTerm = get_toTerm_basic();
+  return toTerm;
+}
+
+std::array<std::array<bool, OutPart::E::N>, E::N> get_toFile_basic()
 {
   auto x = get_base_toX();
   // all output to file, other than tracker
@@ -467,9 +550,13 @@ std::array<std::array<bool, OutPart::E::N>, E::N> get_toFile()
 
   return x;
 }
-const std::array<std::array<bool, OutPart::E::N>, E::N> toFile = get_toFile();
 
-std::array<bool, E::N> get_fileRequired()
+const std::array<std::array<bool, OutPart::E::N>, E::N> & get_toFile(){
+  const static std::array<std::array<bool, OutPart::E::N>, E::N> toFile = get_toFile_basic();
+  return toFile;
+}
+
+std::array<bool, E::N> get_fileRequired_basic()
 {
   std::array<bool, E::N> X;
   X[E::SILENT]       = false;
@@ -484,6 +571,13 @@ std::array<bool, E::N> get_fileRequired()
   X[E::MERGE]        = false;
   return X;
 }
-const std::array<bool, E::N> fileRequired = get_fileRequired();
+
+const std::array<bool, E::N> &  get_fileRequired(){
+  static const std::array<bool, E::N> fileRequired = get_fileRequired_basic();
+  return fileRequired;
+}
+
+
+
 }
 }

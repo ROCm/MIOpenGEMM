@@ -75,7 +75,7 @@ void set_multigeom_abc(const MatData<TFloat>& v_abc,
     {
       std::stringstream ss;
       ss << "currently, this code only generates random matrices with fewer than " << n_elmnts_limit
-         << " elements. The request here is for " << Mat::M.name[emat_x] << " to have "
+         << " elements. The request here is for " << Mat::M().name[emat_x] << " to have "
          << max_n[emat_x] << "elements. ";
       throw miog_error(ss.str());
     }

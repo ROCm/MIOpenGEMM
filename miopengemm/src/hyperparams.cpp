@@ -21,7 +21,7 @@ void reflect_c(std::vector<size_t>& cvs)
 
   if (cvs.size() != NonChi::E::N)
   {
-    throw miog_error("cvs should be of size NonChi::E::N, it is " + cvs.size());
+    throw miog_error("cvs should be of size NonChi::E::N, it is " + std::to_string(cvs.size()));
   }
 
   if (cvs[NonChi::E::SKW] != Status::E::UNDEFINED && cvs[NonChi::E::MAC] != Status::E::UNDEFINED)
@@ -74,7 +74,7 @@ HyPas HyPas::get_reflected(bool swap_ab) const
 
     auto suhyc = sus[Mat::E::C];
     reflect_c(suhyc.vs);
-    return {{sus[Mat::E::B], sus[Mat::E::A], suhyc}};
+    return {{{sus[Mat::E::B], sus[Mat::E::A], suhyc}}};
   }
 }
 
@@ -164,7 +164,7 @@ std::string Constraints::get_r_str() const
   str_array strs;
   for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C})
   {
-    strs[emat] = Mat::M.name[emat] + std::string("_") + sub[emat].get_r_str();
+    strs[emat] = Mat::M().name[emat] + std::string("_") + sub[emat].get_r_str();
   }
   return get_combo_str(strs);
 }
@@ -174,7 +174,7 @@ std::string Constraints::get_sr_str() const
   str_array strs;
   for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C})
   {
-    strs[emat] = Mat::M.name[emat] + std::string("_") + sub[emat].get_sr_str();
+    strs[emat] = Mat::M().name[emat] + std::string("_") + sub[emat].get_sr_str();
   }
   return get_combo_str(strs);
 }
@@ -268,14 +268,14 @@ std::array<std::string, Mat::E::N> get_substrings(const std::string& rconcat)
   std::stringstream ss;
   for (auto& megafrag : megafrags)
   {
-    if (Mat::M.val.count(megafrag[0]) == 0)
+    if (Mat::M().val.count(megafrag[0]) == 0)
     {
       ss << "\nWhile reading hyperstring in get-params-from-string,"
          << "the leading char, `" << megafrag[0] << "', was not recognised. "
          << "The fragment in question is " << megafrag << '.';
       throw miog_error(ss.str());
     }
-    Mat::E emat    = static_cast<Mat::E>(Mat::M.val.at(megafrag[0]));
+    Mat::E emat    = static_cast<Mat::E>(Mat::M().val.at(megafrag[0]));
     size_t minsize = std::string("m__hv").size();
 
     if (megafrag.size() < minsize)
@@ -319,7 +319,7 @@ std::vector<size_t> get_hy_v(std::string hy_s, bool hy_s_full, Mat::E emat)
     if (std::find(start, end, key) == end)
     {
       std::stringstream ss;
-      ss << "While processing the constraint string for Sub Graph `" << Mat::M.name[emat] << "', ";
+      ss << "While processing the constraint string for Sub Graph `" << Mat::M().name[emat] << "', ";
       ss << "the unrecognised key `" + key << "' was not encountered. \n";
       throw miog_error(ss.str());
     }
@@ -343,7 +343,7 @@ std::vector<size_t> get_hy_v(std::string hy_s, bool hy_s_full, Mat::E emat)
       if (hy_v[hpi] == Status::E::UNDEFINED)
       {
         std::stringstream ss;
-        ss << "While processing the constraints string of SubG `" << Mat::M.name[emat] << "', ";
+        ss << "While processing the constraints string of SubG `" << Mat::M().name[emat] << "', ";
         ss << "the parameter `" << p_kv->name[hpi]
            << "' appeared to be unset. Values must all be set as "
            << "hy_s_full is true ";

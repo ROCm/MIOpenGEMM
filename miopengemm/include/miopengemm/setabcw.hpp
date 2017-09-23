@@ -39,7 +39,7 @@ class CpuMemBundle
   {
     v_mem = {&a_mem[Mat::E::A], &a_mem[Mat::E::B], &a_mem[Mat::E::C]};
     setabcw::set_multigeom_abc<TFl>(v_mem, geoms, offsets);
-    r_mem = {a_mem[Mat::E::A].data(), a_mem[Mat::E::B].data(), a_mem[Mat::E::C].data()};
+    r_mem = {{a_mem[Mat::E::A].data(), a_mem[Mat::E::B].data(), a_mem[Mat::E::C].data()}};
   }
 };
 }

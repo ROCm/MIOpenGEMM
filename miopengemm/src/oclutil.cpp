@@ -63,8 +63,15 @@ cl_mem get_copy(cl_command_queue command_queue, cl_mem c, size_t c_nbytes, const
   return c_copied;
 }
 
-const std::string fiji_string("gfx803");
-const std::string vega_string("gfx900");
+const std::string & fiji_string(){
+  const static std::string x("gfx803");
+  return x;
+}
+  
+const std::string & vega_string(){
+  const static std::string x("gfx900");
+  return x;
+}
 
 Result
 confirm_cl_status(cl_int ret, const std::string& hash, const std::string& function, bool strict)
@@ -970,20 +977,20 @@ std::string GetDeviceNameFromMap(const std::string& name)
 {
 
   static std::map<std::string, std::string> device_name_map = {
-    {"Ellesmere", fiji_string},  // TODO : is this correct?
-    {"Baffin", fiji_string},
-    {"RacerX", fiji_string},
-    {"Polaris10", fiji_string},
-    {"Polaris11", fiji_string},
-    {"Tonga", fiji_string},
-    {"Fiji", fiji_string},
-    {"gfx800", fiji_string},
-    {"gfx802", fiji_string},
-    {"gfx803", fiji_string},
-    {"gfx804", fiji_string},
-    {"Vega10", vega_string},
-    {"gfx900", vega_string},
-    {"gfx901", vega_string},
+    {"Ellesmere", fiji_string()},  // TODO : is this correct?
+    {"Baffin", fiji_string()},
+    {"RacerX", fiji_string()},
+    {"Polaris10", fiji_string()},
+    {"Polaris11", fiji_string()},
+    {"Tonga", fiji_string()},
+    {"Fiji", fiji_string()},
+    {"gfx800", fiji_string()},
+    {"gfx802", fiji_string()},
+    {"gfx803", fiji_string()},
+    {"gfx804", fiji_string()},
+    {"Vega10", vega_string()},
+    {"gfx900", vega_string()},
+    {"gfx901", vega_string()},
   };
 
   auto device_name_iterator = device_name_map.find(name);
@@ -1149,7 +1156,7 @@ void DevInfo::initialise()
            platinfo.vendor.find("Advanced Micro") != std::string::npos ||
            platinfo.vendor.find("AMD") != std::string::npos)
   {
-    if (device_name == vega_string)
+    if (device_name == vega_string())
     {
       wg_atom_size = 32;
     }

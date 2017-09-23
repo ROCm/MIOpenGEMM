@@ -33,7 +33,7 @@ int main()
   if (bench_the_soln)
   {
     mowri << "\n\n\nBenchmark\n";
-    boa.benchgemm({soln.hypas}, {{0, 11}, {0, 1000.}});
+    boa.benchgemm({{soln.hypas}}, {{{0, 11}}, {{0, 1000.}}});
   }
 
   std::cout << " \n\n-- snip -- -- -- snip --\n\n";

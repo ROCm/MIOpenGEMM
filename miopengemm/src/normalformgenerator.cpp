@@ -38,12 +38,12 @@ class NormalFormGenerator : public prepgen::PrepGenerator
        << "[mu_pll_i*READ_STRIDE_PLL_K + mu_perp_i*READ_STRIDE_PERP_K];";
   }
 
-  KernBlob get_kernelstring()
+  KernBlob get_kernelstring() override final
   {
     std::stringstream ss;
 
     ss << "#define TFLOAT " << dp.t_float << '\n'
-       << "#define TINT" << Mem::M.name[emat_x] << " " << dp.tints[emat_x] << '\n'
+       << "#define TINT" << Mem::M().name[emat_x] << " " << dp.tints[emat_x] << '\n'
        //<< "#define "
        << "#define N_WORK_ITEMS_PER_GROUP " << dp.at(emat_x).cw2_local_work_size << '\n'
        << "#define UNROLL " << hp.sus[Mat::E::C].vs[NonChi::E::UNR] << '\n'
@@ -84,16 +84,16 @@ class NormalFormGenerator : public prepgen::PrepGenerator
 
     ss << "{"
        << "\n/* setting up where this thread works */\n"
-       << "TINT" << Mem::M.name[emat_x] << " group_id = get_group_id(0);\n"
-       << "TINT" << Mem::M.name[emat_x] << " micro_id = (TINT)(get_local_id(0));\n"
+       << "TINT" << Mem::M().name[emat_x] << " group_id = get_group_id(0);\n"
+       << "TINT" << Mem::M().name[emat_x] << " micro_id = (TINT)(get_local_id(0));\n"
        << "\n"
-       << "TINT" << Mem::M.name[emat_x]
+       << "TINT" << Mem::M().name[emat_x]
        << " macro_id_pll_unroll = group_id % N_MACRO_TILES_PLL_UNROLL;\n"
-       << "TINT" << Mem::M.name[emat_x]
+       << "TINT" << Mem::M().name[emat_x]
        << " macro_id_perp_unroll = group_id / N_MACRO_TILES_PLL_UNROLL;\n"
-       << "TINT" << Mem::M.name[emat_x]
+       << "TINT" << Mem::M().name[emat_x]
        << " micro_id_pll_unroll = micro_id / N_MICRO_TILES_PERP_UNROLL;\n"
-       << "TINT" << Mem::M.name[emat_x]
+       << "TINT" << Mem::M().name[emat_x]
        << " micro_id_perp_unroll = micro_id % N_MICRO_TILES_PERP_UNROLL;\n";
 
     ss << mchar << " += macro_id_pll_unroll*READ_MACRO_STRIDE_PLL_K*UNROLL;\n"

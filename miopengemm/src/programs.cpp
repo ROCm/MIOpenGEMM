@@ -38,7 +38,7 @@ Program::update(const KernBlob& ks, owrite::Writer& mowri, const std::string& bu
     }
 
     kblob = ks;
-    mowri << "compiling " << KType::M.name[kblob.e_ktype] << ". " << Flush;
+    mowri << "compiling " << KType::M().name[kblob.e_ktype] << ". " << Flush;
     auto start = std::chrono::high_resolution_clock::now();
     oclr       = oclutil::cl_set_program(
       context, device_id, kblob.kernstr, sclp->clprog, build_opts, mowri, false);

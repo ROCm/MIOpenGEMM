@@ -16,7 +16,10 @@
 namespace MIOpenGEMM
 {
 
-RandomUtil radutil17;
+RandomUtil & radutil17(){
+  static RandomUtil x;
+  return x;
+}
 
 std::vector<HyPas> Graph::get_neighbors(const HyPas& hp0, bool prioritize) const
 {
@@ -36,7 +39,7 @@ std::vector<HyPas> Graph::get_neighbors(const HyPas& hp0, bool prioritize) const
     }
   }
 
-  radutil17.shuffle(0, Z.size(), Z);
+  radutil17().shuffle(0, Z.size(), Z);
 
   std::sort(uni_prios.begin(), uni_prios.end());
   std::reverse(uni_prios.begin(), uni_prios.end());
@@ -219,7 +222,7 @@ std::string get_location_string(Mat::E emat, size_t hpi)
   }
 
   std::stringstream basess;
-  basess << " Sub-graph: " << Mat::M.name[emat]
+  basess << " Sub-graph: " << Mat::M().name[emat]
          << ". Hyper-p: " << Mat::mat_to_xchi(emat)->name[hpi];
   return basess.str();
 }
@@ -388,8 +391,18 @@ std::string SuGr::get_start_range_string(size_t hpi) const
   return ss.str();
 }
 
-const std::map<size_t, std::vector<size_t>> g_binary = {{Binary::E::NO, {Binary::E::YES}},
-                                                        {Binary::E::YES, {Binary::E::NO}}};
+
+
+std::map<size_t, std::vector<size_t>> get_g_binary_basic(){
+  return {{Binary::E::NO, {Binary::E::YES}}, {Binary::E::YES, {Binary::E::NO}}};
+}
+
+
+const std::map<size_t, std::vector<size_t>> & g_binary(){
+  const static std::map<size_t, std::vector<size_t>> x = get_g_binary_basic();
+  return x;
+}
+ 
 
 Graph::Graph(const Geometry&         gg,
              const oclutil::DevInfo& di,
@@ -493,9 +506,9 @@ void ChiSuGr::initialise_edges()
 
   edges[Chi::E::PAD] = {{0, {1}}, {1, {0, 2}}, {2, {1}}};
 
-  edges[Chi::E::PLU] = {g_binary};
-  edges[Chi::E::LIW] = {g_binary};
-  edges[Chi::E::MIW] = {g_binary};
+  edges[Chi::E::PLU] = {g_binary()};
+  edges[Chi::E::LIW] = {g_binary()};
+  edges[Chi::E::MIW] = {g_binary()};
 
   edges[Chi::E::VEW] = {{1, {2}}, {2, {1, 4}}, {4, {2, 1}}};
 
@@ -571,13 +584,13 @@ void CSuGr::initialise_edges()
                            {13, {10, 12, 14}},
                            {14, {1, 11, 13}}};
 
-  edges[NonChi::E::PUN] = {g_binary};
-  edges[NonChi::E::IWI] = {g_binary};
-  edges[NonChi::E::UFO] = {g_binary};
-  edges[NonChi::E::AFI] = {g_binary};
-  edges[NonChi::E::MIA] = {g_binary};
-  edges[NonChi::E::SZT] = {g_binary};
-  edges[NonChi::E::MAD] = {g_binary};
+  edges[NonChi::E::PUN] = {g_binary()};
+  edges[NonChi::E::IWI] = {g_binary()};
+  edges[NonChi::E::UFO] = {g_binary()};
+  edges[NonChi::E::AFI] = {g_binary()};
+  edges[NonChi::E::MIA] = {g_binary()};
+  edges[NonChi::E::SZT] = {g_binary()};
+  edges[NonChi::E::MAD] = {g_binary()};
 }
 
 void ChiSuGr::refine_start_range()
@@ -701,9 +714,9 @@ bool SuGr::contains(const SuHy& suhy) const
 
 HyPas Graph::get_random_start() const
 {
-  return HyPas({at(Mat::E::A).get_random_start(),
-                at(Mat::E::B).get_random_start(),
-                at(Mat::E::C).get_random_start()});
+  return HyPas({{{at(Mat::E::A).get_random_start()},
+                {at(Mat::E::B).get_random_start()},
+                {at(Mat::E::C).get_random_start()}}});
 }
 
 HyPas Graph::get_random_valid_start() const
@@ -780,7 +793,7 @@ SuHy SuGr::get_random_start() const
   std::vector<size_t> hpvs(Mat::mat_to_xchi(emat)->N);
   for (size_t i = 0; i < Mat::mat_to_xchi(emat)->N; ++i)
   {
-    auto index = radutil17.get_from_range(start_range[i].size());
+    auto index = radutil17().get_from_range(start_range[i].size());
     hpvs[i]    = start_range[i][index];
   }
   return SuHy(emat, std::move(hpvs));

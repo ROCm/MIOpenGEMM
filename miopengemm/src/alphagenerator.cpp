@@ -197,14 +197,14 @@ TFLOAT previous_value; )"
                                   std::string        increment_string,
                                   Mat::E             emat_x)
   {
-    ss << "for (TINT" << Mat::M.name[emat_x] << ' ' << varname << " = 0; " << varname << " < "
+    ss << "for (TINT" << Mat::M().name[emat_x] << ' ' << varname << " = 0; " << varname << " < "
        << bound_string << "; " << increment_string << ")";
   }
 
   void append_load_for_perp(Mat::E emat_x, std::stringstream& ss)
   {
 
-    char X = Mat::M.name[emat_x];
+    char X = Mat::M().name[emat_x];
 
     std::string bound_string = hp.sus[emat_x].vs[Chi::E::LIW] == 0
                                  ? std::string("MICRO_") + X + "_TILE_PERP_UNROLL"
@@ -225,12 +225,12 @@ TFLOAT previous_value; )"
   {
 
     std::string bound_string = hp.sus[emat_x].vs[Chi::E::LIW] == 0
-                                 ? std::string("MICRO_") + Mat::M.name[emat_x] + "_TILE_PLL_UNROLL"
+                                 ? std::string("MICRO_") + Mat::M().name[emat_x] + "_TILE_PLL_UNROLL"
                                  : "UNROLL";
     std::string increment_string =
       hp.sus[emat_x].vs[Chi::E::LIW] == 0
         ? "++mu_pll_i"
-        : std::string("mu_pll_i += UNROLL/MICRO_") + Mat::M.name[emat_x] + "_TILE_PLL_UNROLL";
+        : std::string("mu_pll_i += UNROLL/MICRO_") + Mat::M().name[emat_x] + "_TILE_PLL_UNROLL";
     append_loop_var_bound_incr(ss, "mu_pll_i", bound_string, increment_string, emat_x);
   }
 
@@ -292,8 +292,8 @@ TFLOAT previous_value; )"
 
     for (auto emat : mata_matb)
     {
-      std::string X(1, Mat::M.name[emat]);
-      char        x     = Mat::M.lcase_name[emat];
+      std::string X(1, Mat::M().name[emat]);
+      char        x     = Mat::M().lcase_name[emat];
       std::string dimxi = "dim" + std::string(1, x) + "i";
 
       ss << dp.pragma_unroll_string;
@@ -309,8 +309,8 @@ TFLOAT previous_value; )"
 
     for (auto emat : mata_matb)
     {
-      std::string X(1, Mat::M.name[emat]);
-      char        x     = Mat::M.lcase_name[emat];
+      std::string X(1, Mat::M().name[emat]);
+      char        x     = Mat::M().lcase_name[emat];
       std::string dimxi = "dim" + std::string(1, x) + "i";
 
       ss << dp.pragma_unroll_string;
@@ -425,8 +425,8 @@ barrier(CLK_LOCAL_MEM_FENCE); )";
                                    size_t             special_first_unroll)
   {
 
-    char X = Mat::M.name[emat_x];
-    char x = Mat::M.lcase_name[emat_x];
+    char X = Mat::M().name[emat_x];
+    char x = Mat::M().lcase_name[emat_x];
 
     std::string n_jumps_string =
       (dp.main_split_on_k == 0 || (hp.sus[Mat::E::C].vs[NonChi::E::IWI] == Binary::E::NO))
@@ -487,8 +487,8 @@ barrier(CLK_LOCAL_MEM_FENCE); )";
   {
 
     return (hp.sus[emat_x].vs[Chi::E::MIW] != 0)
-             ? std::string("VEW_") + Mat::M.name[emat_x]
-             : (std::string("MICRO_TILE_LENGTH_") + Mat::M.name[emat_x]);
+             ? std::string("VEW_") + Mat::M().name[emat_x]
+             : (std::string("MICRO_TILE_LENGTH_") + Mat::M().name[emat_x]);
   }
 
   // We previously had a variable unroll_the_math_section = False.
@@ -528,8 +528,8 @@ barrier(CLK_LOCAL_MEM_FENCE); )";
     ss << '\n';
     for (Mat::E emat_x : mata_matb)
     {
-      char X = Mat::M.name[emat_x];
-      char x = Mat::M.lcase_name[emat_x];
+      char X = Mat::M().name[emat_x];
+      char x = Mat::M().lcase_name[emat_x];
 
       ss << '\n'
          << "l" << X << " = local" << X << " + micro_id_" << x << "*"
@@ -608,8 +608,8 @@ if ((group_id_z == N_WORK_ITEMS_PER_C_ELM - 1) && k_remaining > 0){
 
     for (auto emat : mata_matb)
     {
-      char x = Mat::M.lcase_name[emat];
-      char X = Mat::M.name[emat];
+      char x = Mat::M().lcase_name[emat];
+      char X = Mat::M().name[emat];
       ss << dp.pragma_unroll_string << "for (TSHORT dim" << x << " = 0; dim" << x
          << " < MICRO_TILE_LENGTH_" << X << "; ++dim" << x << "){\n";
     }
@@ -626,7 +626,7 @@ if ((group_id_z == N_WORK_ITEMS_PER_C_ELM - 1) && k_remaining > 0){
 
   void append_load_to_register_string(Mat::E emat_x, std::stringstream& ss)
   {
-    char X = Mat::M.name[emat_x];
+    char X = Mat::M().name[emat_x];
 
     ss << '\n' << dp.pragma_unroll_string;
     ss << "for (TSHORT i = 0; i < MICRO_TILE_LENGTH_" << X << "/VEW_" << X << "; ++i){\n";
@@ -679,8 +679,8 @@ if ((group_id_z == N_WORK_ITEMS_PER_C_ELM - 1) && k_remaining > 0){
       size_t nconds = 0;
       for (Mat::E emat : mata_matb)
       {
-        char X        = Mat::M.name[emat];
-        char x        = Mat::M.lcase_name[emat];
+        char X        = Mat::M().name[emat];
+        char x        = Mat::M().lcase_name[emat];
         cond_ab[emat] = "";
         if (dp.at(emat).preshift_final_tile != dp.at(emat).macro_tile_length)
         {
@@ -815,7 +815,7 @@ c += c_offset;
     append_group_id_defns(ss);
 
     ss << "/* Define which part of the C macro-tile this thread will process: "
-       << MicroAllocation::M.name[hp.sus[Mat::E::C].vs[NonChi::E::MIA]] << "*/\n";
+       << MicroAllocation::M().name[hp.sus[Mat::E::C].vs[NonChi::E::MIA]] << "*/\n";
 
     if (hp.sus[Mat::E::C].vs[NonChi::E::MIA] == MicroAllocation::E::BYA)
       ss << R"(
@@ -854,8 +854,8 @@ TINTK k_plus_offset = KV__ + unroll_offset;
   void append_id_string_sym(std::stringstream& ss, Mat::E emat_x)
   {
 
-    char X = Mat::M.name[emat_x];
-    char x = Mat::M.lcase_name[emat_x];
+    char X = Mat::M().name[emat_x];
+    char x = Mat::M().lcase_name[emat_x];
 
     ss << '\n';
 
@@ -967,7 +967,7 @@ TINTK k_plus_offset = KV__ + unroll_offset;
       else
       {
         std::stringstream errm;
-        errm << NonChi::M.name[NonChi::E::IWI] << " should be NO (0) or YES (1), not "
+        errm << NonChi::M().name[NonChi::E::IWI] << " should be NO (0) or YES (1), not "
              << hp.sus[Mat::E::C].vs[NonChi::E::IWI] << '.';
         throw miog_error(errm.str());
       }
@@ -1034,7 +1034,7 @@ TINTK k_plus_offset = KV__ + unroll_offset;
   void add_predefine_chiral(Mat::E emat_x, std::stringstream& ss)
   {
 
-    char x = Mat::M.name[emat_x];
+    char x = Mat::M().name[emat_x];
 
     auto defcom = [emat_x, &ss](std::string&& comment) {
       if (emat_x == Mat::E::A)
@@ -1154,7 +1154,7 @@ TINTK k_plus_offset = KV__ + unroll_offset;
     for (auto emat_x : mata_matb)
 
     {
-      ss << "\n/* ********************************** specific to " << Mat::M.name[emat_x]
+      ss << "\n/* ********************************** specific to " << Mat::M().name[emat_x]
          << " *************************************** */";
       add_predefine_chiral(emat_x, ss);
     }
@@ -1162,7 +1162,7 @@ TINTK k_plus_offset = KV__ + unroll_offset;
     ss << "\n/* integer types for navigating each of the memory buffers */\n";
     for (size_t i = 0; i < Mem::E::N; ++i)
     {
-      ss << "#define TINT" << Mem::M.name[i] << " " << dp.tints[i] << '\n';
+      ss << "#define TINT" << Mem::M().name[i] << " " << dp.tints[i] << '\n';
     }
     ss << "\n/* type for integer in inner most loops (probably inlined anyway)  */\n";
     ss << "#define TSHORT " << dp.tshort << '\n';
@@ -1267,7 +1267,7 @@ TINTK k_plus_offset = KV__ + unroll_offset;
 
     for (auto emat : mata_matb)
     {
-      ss << "\n\n/* ************* " << Mat::M.name[emat] << " setup *************** */";
+      ss << "\n\n/* ************* " << Mat::M().name[emat] << " setup *************** */";
       append_id_string_sym(ss, emat);
     }
 

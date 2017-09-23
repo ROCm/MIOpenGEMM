@@ -33,7 +33,7 @@ std::string DerivedParams::get_string()
   std::stringstream ss;
   for (auto x : {Mat::E::A, Mat::E::B})
   {
-    ss << "\n" << Mat::M.name[x] << "\n" << at(x).get_string();
+    ss << "\n" << Mat::M().name[x] << "\n" << at(x).get_string();
   }
   return ss.str();
 }
@@ -92,7 +92,7 @@ void DerivedParams::reset_cw_params(Mat::E emat_x)
   else
   {
     std::stringstream errm;
-    errm << "In [" << Mat::M.name[emat_x] << "] [" << Chi::M.name[Chi::E::WOS] << "] . ";
+    errm << "In [" << Mat::M().name[emat_x] << "] [" << Chi::M().name[Chi::E::WOS] << "] . ";
     errm << " Input is " << ptr_hp->sus[emat_x].vs[Chi::E::WOS] << " . ";
     errm << " It should be 1 or 2 in reset_cw_params ";
     throw miog_error(errm.str());
@@ -211,11 +211,11 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
     // check 0 : macro tile not too large
     if (ptr_gg->get_non_k_dim(emat_x) < at(emat_x).macro_tile_length)
     {
-      set_status_ss << "ptr_gg->get_non_k_dim( " << Mat::M.name[emat_x] << " )  < at ( "
-                    << Mat::M.name[emat_x]
+      set_status_ss << "ptr_gg->get_non_k_dim( " << Mat::M().name[emat_x] << " )  < at ( "
+                    << Mat::M().name[emat_x]
                     << " ).macro_tile_length, this means the tile is too big "
                        "to work with  "
-                    << Mat::M.name[emat_x] << " . not considering this kernel. ";
+                    << Mat::M().name[emat_x] << " . not considering this kernel. ";
     }
   }
 
@@ -238,7 +238,7 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
     if (at(emat_x).n_elements_in_unroll % val != 0)
     {
       set_status_ss << "this is not supported: " << which << " (" << val
-                    << ") is not a factor of n_elements_in_(" << Mat::M.name[emat_x] << ")_unroll ("
+                    << ") is not a factor of n_elements_in_(" << Mat::M().name[emat_x] << ")_unroll ("
                     << at(emat_x).n_elements_in_unroll << "). \n"
                     << "Consider rounding unroll up. ";
       return std::make_tuple<bool, std::string>(false, set_status_ss.str());
@@ -380,13 +380,13 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
     {
       if (get_stride(emat_x, false, false, ptr_hp->sus[emat_x].vs[Chi::E::WOS]) != 1)
       {
-        ss_viz << "stride perp to k of " << Mat::M.name[emat_x] << " is not 1.\n";
+        ss_viz << "stride perp to k of " << Mat::M().name[emat_x] << " is not 1.\n";
         is_viz = false;
       }
 
       if (at(emat_x).main_micro_tile_perp_unroll % ptr_hp->sus[emat_x].vs[Chi::E::VEW] != 0)
       {
-        ss_viz << "micro load tile perp to unroll of " << Mat::M.name[emat_x] << " ( "
+        ss_viz << "micro load tile perp to unroll of " << Mat::M().name[emat_x] << " ( "
                << at(emat_x).main_micro_tile_perp_unroll << " )  is not divisable by VEW.\n";
         is_viz = false;
       }
@@ -394,7 +394,7 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
       if (ptr_hp->sus[emat_x].vs[Chi::E::MIC] % ptr_hp->sus[emat_x].vs[Chi::E::VEW] != 0)
       {
 
-        ss_viz << "micro tile dim-" << Mat::M.name[emat_x] << " ( "
+        ss_viz << "micro tile dim-" << Mat::M().name[emat_x] << " ( "
                << ptr_hp->sus[emat_x].vs[Chi::E::MIC] << " )  is not divisable by VEW.\n";
         is_viz = false;
       }
@@ -407,7 +407,7 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
 
       if (load_stride_pll_k % ptr_hp->sus[emat_x].vs[Chi::E::VEW] != 0)
       {
-        ss_viz << "load-stride-pll-k for dim-" << Mat::M.name[emat_x] << " ( " << load_stride_pll_k
+        ss_viz << "load-stride-pll-k for dim-" << Mat::M().name[emat_x] << " ( " << load_stride_pll_k
                << " )  is not divisable by VEW. "
                << "main_n_micro_tiles_pll_unroll = " << at(emat_x).main_n_micro_tiles_pll_unroll
                << "  one-stride-pll-k : " << one_stride_pll_k;
@@ -434,7 +434,7 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
       {
         std::stringstream errm;
         errm << "ROCm 1.6 compiler specific case : extreme grid stretch (1xMAX) and "
-             << Mat::M.name[emat] << " has PLU1_LIW0.";
+             << Mat::M().name[emat] << " has PLU1_LIW0.";
         return std::make_tuple(false, errm.str());
       }
     }

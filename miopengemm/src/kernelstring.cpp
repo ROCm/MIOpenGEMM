@@ -20,7 +20,7 @@ bool KernUses::at(Mem::E emat_x) const
   case Mem::E::B: return u_b;
   case Mem::E::C: return u_c;
   case Mem::E::W: return u_w;
-  default: throw miog_error(std::string("unrecognised Mem::E in uses(.), ") + Mem::M.name[emat_x]);
+  default: throw miog_error(std::string("unrecognised Mem::E in uses(.), ") + Mem::M().name[emat_x]);
   }
 }
 
@@ -31,7 +31,7 @@ KernUses::KernUses(bool u_a_, bool u_b_, bool u_c_, bool u_w_, bool u_alpha_, bo
   {
     if (at(x))
     {
-      full += Mem::M.name[x];
+      full += Mem::M().name[x];
     }
   }
 

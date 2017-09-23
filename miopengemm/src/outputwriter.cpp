@@ -37,7 +37,7 @@ void Writer::initialise_file()
 
 Writer::Writer(Ver::E v_, std::string filename_) : v(v_), filename(filename_)
 {
-  if (Ver::fileRequired[v])
+  if (Ver::get_fileRequired()[v])
   {
     initialise_file();
   }
@@ -53,8 +53,8 @@ Writer::Writer(Ver::E v_, std::string filename_) : v(v_), filename(filename_)
   std::ofstream* ptr_file;
   for (size_t op = 0; op < OutPart::E::N; ++op)
   {
-    ptr_file = Ver::toFile[v][op] ? &file : nullptr;
-    bw[op]   = BasicWriter(Ver::toTerm[v][op], ptr_file);
+    ptr_file = Ver::get_toFile()[v][op] ? &file : nullptr;
+    bw[op]   = BasicWriter(Ver::get_toTerm()[v][op], ptr_file);
   }
 }
 

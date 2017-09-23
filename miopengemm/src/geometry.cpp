@@ -97,7 +97,7 @@ void GeometryDerived::reset(char floattype)
   }
   else
   {
-    throw miog_error("what is this floattype : " + floattype +
+    throw miog_error("what is this floattype : " + std::to_string(floattype) +
                      std::string(" ? in reset of geometry"));
   }
   float_size_bits = 8 * float_size_bytes;
@@ -200,7 +200,7 @@ void Geometry::check_ldx_consistent() const
     {
       if (ldX[x] < get_coal(x))
       {
-        errm_ss << "ld" << Mat::M.name[x] << " (" << ldX[x] << ") <  coal_" << Mat::M.name[x]
+        errm_ss << "ld" << Mat::M().name[x] << " (" << ldX[x] << ") <  coal_" << Mat::M().name[x]
                 << " (" << get_coal(x) << ").  ";
       }
     }

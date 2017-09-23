@@ -52,7 +52,7 @@ void BaseGenerator::append_stride_definitions(Mat::E             emat_x,
                                               bool               with_x_in_name)
 {
 
-  char x = Mat::M.name[emat_x];
+  char x = Mat::M().name[emat_x];
   if (withcomments == true)
     ss << "/* strides parallel to k (unroll) in " << x << ". MACRO_STRIDE_" << x
        << " is between unroll tiles, STRIDE_" << x << " is within unroll tiles  */\n";
@@ -74,7 +74,7 @@ void BaseGenerator::append_unroll_block_geometry(Mat::E             emat_x,
                                                  bool               with_x_string)
 {
 
-  char        X        = Mat::M.name[emat_x];
+  char        X        = Mat::M().name[emat_x];
   std::string X_string = with_x_string ? "_" + std::string(1, X) : "";
 
   ss << '\n';

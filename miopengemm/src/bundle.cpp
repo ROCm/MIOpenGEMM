@@ -69,9 +69,9 @@ std::vector<std::vector<size_t>> get_v_wait_indices(const std::vector<KernBlob>&
     v_wait_indices.push_back({});
     for (size_t j = 0; j < v_kblobs.size(); ++j)
     {
-      if (std::find(KType::dependencies.at(v_kblobs[i].e_ktype).begin(),
-                    KType::dependencies.at(v_kblobs[i].e_ktype).end(),
-                    v_kblobs[j].e_ktype) != KType::dependencies.at(v_kblobs[i].e_ktype).end())
+      if (std::find(KType::get_dependencies().at(v_kblobs[i].e_ktype).begin(),
+                    KType::get_dependencies().at(v_kblobs[i].e_ktype).end(),
+                    v_kblobs[j].e_ktype) != KType::get_dependencies().at(v_kblobs[i].e_ktype).end())
       {
         v_wait_indices.back().push_back(j);
       }

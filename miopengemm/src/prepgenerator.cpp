@@ -67,8 +67,8 @@ PrepGenerator::PrepGenerator(Mat::E               emat_x_,
   : basegen::BaseGenerator(hp_, gg_, dp_)
 {
   emat_x = emat_x_;
-  MCHAR  = Mat::M.name[emat_x];
-  mchar  = Mat::M.lcase_name[emat_x];
+  MCHAR  = Mat::M().name[emat_x];
+  mchar  = Mat::M().lcase_name[emat_x];
 }
 }
 }

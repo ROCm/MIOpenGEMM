@@ -118,11 +118,11 @@ void TinyZero::address_check_valid()
     if (gpum[Mem::E::C] == gpum[x])
     {
       std::stringstream ss;
-      ss << "in address_check_valid, " << Mem::M.name[Mem::E::C] << " and " << Mem::M.name[x]
+      ss << "in address_check_valid, " << Mem::M().name[Mem::E::C] << " and " << Mem::M().name[x]
          << " should have distinct memories, "
          << "otherwise race condition arise (one thread writes its result to "
-         << Mem::M.name[Mem::E::C] << "before another one has finished reading from "
-         << Mem::M.name[Mem::E::C] << ')';
+         << Mem::M().name[Mem::E::C] << "before another one has finished reading from "
+         << Mem::M().name[Mem::E::C] << ')';
       throw miog_error(ss.str());
     }
   }
@@ -325,8 +325,8 @@ AllKernArgs TinyZero::get_all_kern_args(const std::vector<KernBlob>& kblobs) con
                                                              gpum.cl_mems,
                                                              toff.offsets,
                                                              gg.derived.float_size_bytes,
-                                                             Floating::m_alpha[gg.floattype],
-                                                             Floating::m_beta[gg.floattype]));
+                                                             Floating::get_m_alpha()[gg.floattype],
+                                                             Floating::get_m_alpha()[gg.floattype]));
   }
 
   return all_kern_args;
@@ -564,7 +564,7 @@ Solution TinyZero::single_descent_find(double             allotted_time,
         mowri << summary[ir];
         if (v_t_total[ir] == k_seconds)
         {
-          mowri << " (" << SummStat::M.name[sumstat] << ')';
+          mowri << " (" << SummStat::M().name[sumstat] << ')';
           if (best_solns_path.size() > 0 &&
               (improvement_factor_required * best_solns_path.back().extime >= k_seconds))
           {
@@ -671,7 +671,7 @@ Solution TinyZero::single_descent_find(double             allotted_time,
   std::string startstring = "hyper parameter string:";
   startstring.resize(leading_size, ' ');
   mowri << '\n'
-        << startstring << "\t time when found:\t " << SummStat::M.lcase_name[sumstat]
+        << startstring << "\t time when found:\t " << SummStat::M().lcase_name[sumstat]
         << " gflops:" << Endl;
 
   for (unsigned i = 0; i < best_solns_path.size(); ++i)

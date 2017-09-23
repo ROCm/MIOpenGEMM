@@ -67,7 +67,7 @@ std::string Halt::get_string() const
   return ss.str();
 }
 
-std::vector<std::string> get_sumstatkey()
+std::vector<std::string> get_sumstatkeys_basic()
 {
   std::vector<std::string> ssv(SummStat::E::N, "unset");
   ssv[SummStat::E::MEAN]   = "MEAN";
@@ -84,7 +84,11 @@ std::vector<std::string> get_sumstatkey()
   return ssv;
 }
 
-const std::vector<std::string> sumstatkey = get_sumstatkey();
+const std::vector<std::string> & get_sumstatkeys(){
+  static const std::vector<std::string> sumstatkeys = get_sumstatkeys_basic();
+  return sumstatkeys;
+}
+
 
 std::string get_sumstatkey(SummStat::E sumstat)
 {
@@ -92,7 +96,7 @@ std::string get_sumstatkey(SummStat::E sumstat)
   {
     throw miog_error("unrecognised sumstat key in get_sumstatkey");
   }
-  return sumstatkey[sumstat];
+  return get_sumstatkeys()[sumstat];
 }
 
 FindParams::FindParams(std::array<size_t, Xtr::E::N> descents,
@@ -115,20 +119,20 @@ std::string FindParams::get_string() const
 
 FindParams get_at_least_n_seconds(double seconds)
 {
-  std::array<size_t, Xtr::E::N> descents{0, 100000};
-  std::array<double, Xtr::E::N> time_outer{seconds, std::min(seconds * 2, seconds + 0.1)};
-  std::array<size_t, Xtr::E::N> per_kernel{0, 4};
-  std::array<double, Xtr::E::N> time_core{0, .1};  // no need to run more than .13 seconds.
+  std::array<size_t, Xtr::E::N> descents{{0, 100000}};
+  std::array<double, Xtr::E::N> time_outer{{seconds, std::min(seconds * 2, seconds + 0.1)}};
+  std::array<size_t, Xtr::E::N> per_kernel{{0, 4}};
+  std::array<double, Xtr::E::N> time_core{{0, .1}};  // no need to run more than .13 seconds.
   SummStat::E sumstat = SummStat::E::MAX;
   return FindParams(descents, time_outer, per_kernel, time_core, sumstat);
 }
 
 FindParams get_at_least_n_restarts(size_t restarts)
 {
-  std::array<size_t, Xtr::E::N> descents{restarts, restarts};
-  std::array<double, Xtr::E::N> time_outer{0, 10000000.};
-  std::array<size_t, Xtr::E::N> per_kernel{0, 5};
-  std::array<double, Xtr::E::N> time_core{0, .1};  // no need to run more than .1 seconds.
+  std::array<size_t, Xtr::E::N> descents{{restarts, restarts}};
+  std::array<double, Xtr::E::N> time_outer{{0, 10000000.}};
+  std::array<size_t, Xtr::E::N> per_kernel{{0, 5}};
+  std::array<double, Xtr::E::N> time_core{{0, .1}};  // no need to run more than .1 seconds.
   SummStat::E sumstat = SummStat::E::MEDIAN;
   return FindParams(descents, time_outer, per_kernel, time_core, sumstat);
 }

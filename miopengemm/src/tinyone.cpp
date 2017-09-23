@@ -166,7 +166,7 @@ void TinyOne<TFl>::opencl_memory_initialise()
   {
     std::stringstream hash;
 
-    hash << "GPU Mem " << Mem::M.name[emem] << " (TinyOne) "
+    hash << "GPU Mem " << Mem::M().name[emem] << " (TinyOne) "
          << "with memory size " << mem_size[emem] << ".";
 
     if (mem_size[emem] > 0)
@@ -193,7 +193,7 @@ void TinyOne<TFl>::opencl_memory_initialise()
                                      0,
                                      NULL,
                                      NULL,
-                                     std::string("enqueueing ") + Mat::M.name[emat] + " writebuff ",
+                                     std::string("enqueueing ") + Mat::M().name[emat] + " writebuff ",
                                      true);
   }
 }
@@ -242,7 +242,7 @@ void TinyOne<TFl>::accuracy_test(const HyPas& hp)  //, const TFl* c_true_for_tes
     1, &event_write_c_to_gpu.clevent, "in accuracy test, waiting GEMM gpu ", true);
 
   // run gemm once on the gpu
-  benchgemm({hp}, {{0, 1}, {0, 1e12}});
+  benchgemm({hp}, {{{0, 1}}, {{0, 1e12}}});
 
   // read the result to c_copy on the cpu
   oclutil::SafeClEvent event_read_c_back("accuracy test read");

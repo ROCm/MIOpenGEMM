@@ -52,11 +52,11 @@ std::string get_cache_entry_string(const CacheKey& ck, const HyPas& hypas, bool 
   cache_write_ss << "{\"" << ck.dvc << "\",  // dev\n";
   cache_write_ss << "{\"" << ck.constraints.get_string() << "\"},  // con\n";
   cache_write_ss << "{\"" << ck.gg.get_string() << "\"}}, // gg\n";
-  cache_write_ss << "{{ // hp\n";
+  cache_write_ss << "{{{ // hp\n";
   auto hp = hypas.get_reflected(swap_ab);
   cache_write_ss << "\"" << hp.sus[Mat::E::A].get_string() << "\",\n";
   cache_write_ss << "\"" << hp.sus[Mat::E::B].get_string() << "\",\n";
-  cache_write_ss << "\"" << hp.sus[Mat::E::C].get_string() << "\"}});\n";
+  cache_write_ss << "\"" << hp.sus[Mat::E::C].get_string() << "\"}}});\n";
   return cache_write_ss.str();
 }
 
