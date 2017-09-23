@@ -3,8 +3,8 @@
  *******************************************************************************/
 
 #include <iostream>
-#include <vector>
 #include <limits>
+#include <vector>
 #include <miopengemm/gemm.hpp>
 
 int main()

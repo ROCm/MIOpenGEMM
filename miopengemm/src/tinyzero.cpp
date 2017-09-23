@@ -298,7 +298,10 @@ std::vector<double> TinyZero::benchgemm(const HyPas& hp, const Halt& hl)
     throw miog_error(atr.msg);
   }
 
-  programs.update(bundle.v_tgks);
+  
+  
+  // here : check if ran succesfully. 
+  
   auto all_kern_args = get_all_kern_args(bundle.v_tgks);
 
   mowri << "hyper-p   :" << hp.get_string() << '\n'
@@ -514,7 +517,11 @@ Solution TinyZero::single_descent_find(double             allotted_time,
       }
 
       // kernel compilation
-      programs.update(bundle.v_tgks);
+      auto compstat = programs.update(bundle.v_tgks);
+      
+      
+
+      
       auto all_kern_args = get_all_kern_args(bundle.v_tgks);
 
       old_track_msg = new_track_msg;

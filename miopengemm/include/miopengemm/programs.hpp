@@ -94,7 +94,7 @@ class Programs
   // (1) act_inds
   // (2) programs and
   // (3) v_wait_indices
-  void update(const std::vector<KernBlob>&);
+  oclutil::Result update(const std::vector<KernBlob>&);
 
   size_t get_n_active() const { return act_inds.size(); }
   Programs(const cl_device_id&, const cl_context&, owrite::Writer& mowri_);

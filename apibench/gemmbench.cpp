@@ -68,9 +68,9 @@ runem(std::vector<MIOpenGEMM::Geometry>& geometries,         // GEMM geometries 
   namespace oclutil = MIOpenGEMM::oclutil;
 
   const TFloat alpha = 1.72435898234;
-  const TFloat beta  = 0.0;//-0.9241223982;
+  const TFloat beta  = 0.0;  //-0.9241223982;
 
-  auto                       toff = MIOpenGEMM::get_padding_offsets();
+  auto                       toff = MIOpenGEMM::get_zero_offsets();
   MIOpenGEMM::owrite::Writer mowri(MIOpenGEMM::Ver::E::SILENT, "");
   MIOpenGEMM::CLHint         devhint;
 
@@ -91,31 +91,29 @@ runem(std::vector<MIOpenGEMM::Geometry>& geometries,         // GEMM geometries 
   }
   std::cout << "  ******\n";
 
-  
   for (size_t geomi = 0; geomi < geometries.size(); ++geomi)
   {
 
     auto& gg = geometries[geomi];
-    
+
     srand(1011);
-    //std::cout << "generating random data on CPU..." << std::flush;
     MIOpenGEMM::setabcw::CpuMemBundle<TFloat> cmb({gg}, toff);
-    //std::cout << "done.\n";
-    std::vector<TFloat> c_from_device(cmb.v_mem[Mat::E::C]->size());
 
+    if (beta == 0)
+    {
+      for (auto& x : *cmb.v_mem[Mat::E::C])
+      {
 
-    if (beta == 0){
-      for (auto & x : *cmb.v_mem[Mat::E::C]){
-        if (rand()%2){
+        if (rand() % 2)
+        {
           x = std::numeric_limits<float>::quiet_NaN();
         }
-        else{
-          x = (rand() % 100)/100.;
+        else
+        {
+          x = (rand() % 100) / 100.;
         }
       }
     }
-    
-
 
 #ifdef MIOPENGEMM_BENCH_CLBLAST
     auto clblast_layout = gg.isColMajor ? CLBlastLayoutColMajor : CLBlastLayoutRowMajor;
@@ -144,8 +142,6 @@ runem(std::vector<MIOpenGEMM::Geometry>& geometries,         // GEMM geometries 
     };
     std::array<cl_mem, Mat::E::N> dev_mem;
     cl_mem dev_w = nullptr;
-
-
 
     for (auto x : {Mat::E::A, Mat::E::B, Mat::E::C})
     {
@@ -230,7 +226,7 @@ runem(std::vector<MIOpenGEMM::Geometry>& geometries,         // GEMM geometries 
                                                                      nullptr,
                                                                      ptr_gemmevent,
                                                                      miog_gemm_ID);
-                                                                     
+
         miog_gemm_ID = mi_status.ID;
         (void)mi_status;
       }
@@ -307,13 +303,16 @@ runem(std::vector<MIOpenGEMM::Geometry>& geometries,         // GEMM geometries 
       // perform accuracy test if first run and accuracy test requested
       if (run_i == 0 && run_accuracy_test)
       {
-        
-        
-        cl_event readevent;
-        
-        
-        std::vector<TFloat> c_from_device(memsize(Mat::E::C)/sizeof(TFloat));
 
+        std::vector<TFloat> c_from_device(cmb.v_mem[Mat::E::C]->size());
+        if (cmb.v_mem[Mat::E::C]->size() * sizeof(TFloat) != memsize(Mat::E::C))
+        {
+          std::cout << "NOT SAME SIZE MEMORIES : BAD" << std::endl;
+        }
+
+        oclutil::cl_flush(cqic.command_queue, "hmm", true);
+
+        cl_event readevent;
 
         oclutil::cl_enqueue_read_buffer(cqic.command_queue,
                                         dev_mem[Mat::E::C],
@@ -329,14 +328,14 @@ runem(std::vector<MIOpenGEMM::Geometry>& geometries,         // GEMM geometries 
 
         // openblas (assuming OPENBLAS ON when MIOpenGEMM was built)
         std::vector<TFloat> c_cpu(*cmb.v_mem[Mat::E::C]);
-        c_cpu.resize(c_from_device.size());
+
         MIOpenGEMM::cpugemm::gemm<TFloat>(
           gg, toff, cmb.r_mem[Mat::E::A], cmb.r_mem[Mat::E::B], c_cpu.data(), alpha, beta, mowri);
 
         oclutil::cl_wait_for_events(1, &readevent, "(runem)", true);
 
         TFloat sum_gpu = std::accumulate(c_from_device.begin(), c_from_device.end(), TFloat(0));
-        TFloat sum_cpu = std::accumulate(c_cpu.begin(), c_cpu.begin() + c_from_device.size(), TFloat(0));
+        TFloat sum_cpu = std::accumulate(c_cpu.begin(), c_cpu.end(), TFloat(0));
         std::cout << "sum C [gpu]: " << sum_gpu << ",  sum C [cpu]: " << sum_cpu << std::endl;
       }
 
@@ -440,7 +439,7 @@ int main()
 
   bool run_accuracy_test    = true;
   bool run_event_timer      = false;
-  bool run_miopengemm       = false;
+  bool run_miopengemm       = true;
   bool run_isaac            = false;
   bool run_clblast          = true;
   bool print_summary_at_end = false;
@@ -544,11 +543,10 @@ int main()
       //}
       // geometries = {{"tC0_tA0_tB0_colMaj0_m13_n13_k13_lda13_ldb13_ldc13_ws0_f32"}};
       // geometries = {MIOpenGEMM::get_squareNN_geometry<float>(28)};
-      geometries = {{512, 16, 512, false, false, 0, 'f'}
-                  , {512, 17, 512, false, false, 0, 'f'}
-                  , {512, 18, 512, false, false, 0, 'f'}
-                  , {1024, 1024, 1024, false, false, 0, 'f'}
-                  };
+      geometries = {{512, 16, 512, false, false, 0, 'f'},
+                    {512, 17, 512, false, false, 0, 'f'},
+                    {512, 18, 512, false, false, 0, 'f'},
+                    {1024, 1024, 1024, false, false, 0, 'f'}};
     }
 
     auto stats = runem<float>(geometries, impl, run_accuracy_test, run_event_timer);

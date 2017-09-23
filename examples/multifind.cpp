@@ -32,9 +32,9 @@ int main()
   //}
 
   std::vector<Geometry> geometries;
-  
+
   auto&& kernel_cache = get_kernel_cache();
-  auto                  keys = kernel_cache.get_keys();
+  auto   keys         = kernel_cache.get_keys();
   for (auto& key : keys)
   {
     // if (key.gg.wSpaceSize > 0){

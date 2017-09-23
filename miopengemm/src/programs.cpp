@@ -89,7 +89,7 @@ Programs::Programs(const cl_device_id& id, const cl_context& ctxt, owrite::Write
   }
 }
 
-void Programs::update(const std::vector<KernBlob>& kbs)
+oclutil::Result Programs::update(const std::vector<KernBlob>& kbs)
 {
 
   std::vector<std::string> warnings_to_ignore = {
@@ -109,9 +109,19 @@ void Programs::update(const std::vector<KernBlob>& kbs)
   act_inds.resize(0);
   for (size_t kbi = 0; kbi < kbs.size(); ++kbi)
   {
-    programs.at(kbs[kbi].e_ktype).update(kbs[kbi], *ptr_mowri, build_options);
+    auto x = programs.at(kbs[kbi].e_ktype).update(kbs[kbi], *ptr_mowri, build_options);
+  
+
+    if (x.fail())
+    {
+      std::stringstream errm;
+      errm << "failed to compile kernel in Programs::update : \n" << x.message;
+      throw miog_error(errm.str());  
+    }
+    
     act_inds.push_back(kbs[kbi].e_ktype);
   }
+  return {};
 }
 
 oclutil::Result Programs::run(const cl_command_queue& queue,

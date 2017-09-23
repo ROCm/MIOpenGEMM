@@ -1,4 +1,4 @@
-// Bencharking MIOpenGEMM on the DeepBench problem suite. 
+// Bencharking MIOpenGEMM on the DeepBench problem suite.
 
 #include <chrono>
 #include <cmath>

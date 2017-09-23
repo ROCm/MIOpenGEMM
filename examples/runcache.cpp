@@ -17,9 +17,9 @@ int runcache_v2(std::map<char, std::vector<std::string>>& filters)
 
   using namespace MIOpenGEMM;
 
-  Offsets offsets    = get_zero_offsets();
-  auto&& kernel_cache = get_kernel_cache();
-  auto    cache_keys = kernel_cache.get_keys();
+  Offsets offsets      = get_zero_offsets();
+  auto&&  kernel_cache = get_kernel_cache();
+  auto    cache_keys   = kernel_cache.get_keys();
 
   // Set device and plaform
   CLHint devhint;
