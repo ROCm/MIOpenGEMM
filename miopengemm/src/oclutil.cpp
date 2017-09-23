@@ -1189,7 +1189,7 @@ void DevInfo::initialise()
       for (char c : st)
       {
 
-        if ((bool)std::isalnum(c) == true)
+        if (static_cast<bool>(std::isalnum(c)) == true)
         {
           idss << c;
         }

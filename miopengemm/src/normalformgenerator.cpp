@@ -46,7 +46,6 @@ class NormalFormGenerator : public prepgen::PrepGenerator
 
     ss << "#define TFLOAT " << dp.t_float << '\n'
        << "#define TINT" << Mem::M().name[emat_x] << " " << dp.tints[emat_x] << '\n'
-       //<< "#define "
        << "#define N_WORK_ITEMS_PER_GROUP " << dp.at(emat_x).cw2_local_work_size << '\n'
        << "#define UNROLL " << hp.sus[Mat::E::C].vs[NonChi::E::UNR] << '\n'
        << "#define KV__ " << gg.k << '\n';
@@ -168,7 +167,8 @@ for (ushort mu_perp_i = 0; mu_perp_i < MICRO_TILE_PERP_UNROLL; ++mu_perp_i) {
     {
     case Mat::E::A: return KType::E::WSA;
     case Mat::E::B: return KType::E::WSB;
-    default: throw miog_error("unrecognised emat_x in get_type of normalformgenerator");
+    case Mat::E::C: throw miog_error("no option `C' in get_ktype in normalformgenerator");
+    case Mat::E::N: throw miog_error("no option `C' in get_ktype in normalformgenerator");
     }
   }
 };

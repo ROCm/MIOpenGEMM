@@ -555,7 +555,7 @@ Solution TinyZero::single_descent_find(double             allotted_time,
       case SummStat::E::MEAN:
         k_seconds = std::accumulate(v_t_total.begin(), v_t_total.end(), 0.) / v_t_total.size();
         break;
-      default: throw miog_error("unrecgnised SummStat in find");
+      case SummStat::E::N: throw miog_error("N not allowed in SummStat in find ");
       }
 
       mowri << get_run_times_heading() << Flush;

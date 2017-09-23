@@ -26,7 +26,7 @@ class MFType
 
   public:
   MFType(double v);
-  void* operator[](char floattype) const;
+  const void* operator[](char floattype) const;
 };
 
 const MFType & get_m_alpha();

@@ -41,7 +41,7 @@ get_arg_sizes_values(const KernBlob& kblob,
   {
     if (kblob.kuses.at(x) == true)
     {
-      arg_sizes_values.emplace_back(sizeof(cl_mem), (void*)&(cl_mems[x]));
+      arg_sizes_values.emplace_back(sizeof(cl_mem), static_cast<const void*>(&(cl_mems[x])));
       arg_sizes_values.emplace_back(sizeof(size_t), &(offsets[x]));
     }
   }

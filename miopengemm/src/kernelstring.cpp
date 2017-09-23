@@ -20,7 +20,7 @@ bool KernUses::at(Mem::E emat_x) const
   case Mem::E::B: return u_b;
   case Mem::E::C: return u_c;
   case Mem::E::W: return u_w;
-  default: throw miog_error(std::string("unrecognised Mem::E in uses(.), ") + Mem::M().name[emat_x]);
+  case Mem::E::N: throw miog_error("N not allowed in KernUses::at");
   }
 }
 

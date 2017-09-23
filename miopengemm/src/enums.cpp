@@ -19,9 +19,9 @@ owrite::Flusher Flush;
 namespace Floating
 {
 MFType::MFType(double v) : v_d(v), v_f(static_cast<float>(v)) {}
-void* MFType::operator[](char floattype) const
+const void* MFType::operator[](char floattype) const
 {
-  return floattype == 'd' ? (void*)(&v_d) : (void*)(&v_f);
+  return floattype == 'd' ? static_cast<const void*>(&v_d) : static_cast<const void*>(&v_f);
 }
 
 
@@ -374,7 +374,7 @@ const EnumMapper<std::string>* mat_to_xchi(Mat::E emat)
   case Mat::E::A: return &Chi::M();
   case Mat::E::B: return &Chi::M();
   case Mat::E::C: return &NonChi::M();
-  default: throw miog_error("unrecognised Mat::E in mat_to_xchi");
+  case Mat::E::N: throw miog_error("unrecognised Mat::E (N) in mat_to_xchi");
   }
 }
 
@@ -385,7 +385,7 @@ const std::vector<int>* mat_to_priority(Mat::E emat)
   case Mat::E::A: return &Chi::get_priority();
   case Mat::E::B: return &Chi::get_priority();
   case Mat::E::C: return &NonChi::get_priority();
-  default: throw miog_error("unrecognised Mat::E in mat_to_priority");
+  case Mat::E::N: throw miog_error("unrecognised Mat::E (N) in mat_to_priority");
   }
 }
 
@@ -396,7 +396,8 @@ Mat::E mem_to_mat(Mem::E emat)
   case Mem::E::A: return Mat::E::A;
   case Mem::E::B: return Mat::E::B;
   case Mem::E::C: return Mat::E::C;
-  default: throw miog_error("no mat enum for supposed mem enum provided");
+  case Mem::E::W: throw miog_error("no mat enum for supposed ::W");
+  case Mem::E::N: throw miog_error("no mat enum for supposed ::N");
   }
 }
 }

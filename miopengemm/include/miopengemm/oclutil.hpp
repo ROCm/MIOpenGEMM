@@ -286,6 +286,8 @@ class SafeClMem
   std::string hash;
   SafeClMem(const std::string& hash);
 
+  SafeClMem ( const SafeClMem & ) = default; //TODO : is this ok?
+
   ~SafeClMem();
 };
 
