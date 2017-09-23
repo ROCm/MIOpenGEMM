@@ -170,6 +170,7 @@ for (ushort mu_perp_i = 0; mu_perp_i < MICRO_TILE_PERP_UNROLL; ++mu_perp_i) {
     case Mat::E::C: throw miog_error("no option `C' in get_ktype in normalformgenerator");
     case Mat::E::N: throw miog_error("no option `C' in get_ktype in normalformgenerator");
     }
+    throw miog_error("failed in get_ktype");
   }
 };
 

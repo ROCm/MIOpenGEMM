@@ -373,6 +373,7 @@ const EnumMapper<std::string>* mat_to_xchi(Mat::E emat)
   case Mat::E::C: return &NonChi::M();
   case Mat::E::N: throw miog_error("unrecognised Mat::E (N) in mat_to_xchi");
   }
+  throw miog_error("failed in mat_to_xchi");
 }
 
 const std::vector<int>* mat_to_priority(Mat::E emat)
@@ -384,6 +385,8 @@ const std::vector<int>* mat_to_priority(Mat::E emat)
   case Mat::E::C: return &NonChi::get_priority();
   case Mat::E::N: throw miog_error("unrecognised Mat::E (N) in mat_to_priority");
   }
+  throw miog_error("failed in mat_to_priority");
+
 }
 
 Mat::E mem_to_mat(Mem::E emat)
@@ -396,6 +399,8 @@ Mat::E mem_to_mat(Mem::E emat)
   case Mem::E::W: throw miog_error("no mat enum for supposed ::W");
   case Mem::E::N: throw miog_error("no mat enum for supposed ::N");
   }
+  throw miog_error("failed in mem_to_mat");
+
 }
 }
 
