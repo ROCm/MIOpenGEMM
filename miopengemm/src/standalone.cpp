@@ -50,7 +50,7 @@ std::string make(const Geometry& gg, const HyPas& hp, owrite::Writer& mowri)
     vals[emat].resize(n_elms[emat]);
     for (auto& x : vals[emat])
     {
-      x = 1. - 2. * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+      x = 1.0f - 2.0f * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
     }
   }
 

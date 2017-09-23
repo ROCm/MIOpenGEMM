@@ -43,10 +43,10 @@ Program::update(const KernBlob& ks, owrite::Writer& mowri, const std::string& bu
     oclr       = oclutil::cl_set_program(
       context, device_id, kblob.kernstr, sclp->clprog, build_opts, mowri, false);
 
-    auto                         end   = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<float> fp_ms = end - start;
-    float                        secs  = fp_ms.count();
-    std::string                  pre   = oclr.fail() ? "Failed in " : "Done in ";
+    auto                          end   = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> fp_ms = end - start;
+    double                        secs  = fp_ms.count();
+    std::string                   pre   = oclr.fail() ? "Failed in " : "Done in ";
     mowri << pre << std::setprecision(3) << secs << std::setprecision(6) << " [s]" << Endl;
   }
   return oclr;

@@ -185,10 +185,10 @@ std::string TinyZero::get_run_time_string(cl_int status)
   {
     ss << std::fixed << std::setprecision(3) << kernel_times.extime << '\t';
 
-    double sumtimes = 0;
+    double sumtimes {0};
     for (size_t k_ind = 0; k_ind < programs.get_n_active(); ++k_ind)
     {
-      auto tk = kernel_times.ktimes[programs.act_inds[k_ind]].v_times.back();
+      double tk = kernel_times.ktimes[programs.act_inds[k_ind]].v_times.back();
       sumtimes += tk;
       ss << " " << tk << "\t";
     }

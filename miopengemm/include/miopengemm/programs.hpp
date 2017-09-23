@@ -36,11 +36,11 @@ class SafeCLProgram
 class KernelTime
 {
   public:
-  size_t             t_start;
-  size_t             t_end;
-  std::vector<float> v_times;
-  void               update_times(const cl_event&);
-  void               reset_times();
+  size_t              t_start;
+  size_t              t_end;
+  std::vector<double> v_times;
+  void                update_times(const cl_event&);
+  void                reset_times();
 };
 
 class KernelTimes

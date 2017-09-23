@@ -125,7 +125,7 @@ Solution find(float            allotted_time,
   Ver::E         e_ver              = verbose ? Ver::E::TERMINAL : Ver::E::SILENT;
   std::string    constraints_string = enforce_determinism ? "C__ICE1" : "";
   Constraints    constraints(constraints_string);
-  auto           find_params = get_at_least_n_seconds(allotted_time);
+  auto           find_params = get_at_least_n_seconds(static_cast<double>(allotted_time));
   owrite::Writer mowri(e_ver, "");
   Offsets        offsets = get_zero_offsets();
   TinyZero       jinx(command_queue, tgg, offsets, a, b, c, c_is_const, workspace_gpu, mowri);
@@ -133,7 +133,7 @@ Solution find(float            allotted_time,
   size_t           rank = 0;
   oclutil::DevInfo devinfo(command_queue);
   Solution soln = get_default_soln(devinfo, tgg, constraints, mowri, IfNoCache::E::GENERIC, rank);
-  if (allotted_time > 0.1)
+  if (allotted_time > 0.1f)
   {
     soln = jinx.find0(constraints, find_params);
   }

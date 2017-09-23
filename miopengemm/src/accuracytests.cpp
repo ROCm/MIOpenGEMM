@@ -88,10 +88,10 @@ void elementwise_compare(const Geometry& gg,
     for (size_t j = 0; j < gg.get_coal(Mat::E::C); ++j)
     {
       size_t coord = toff.offsets[Mem::E::C] + i * gg.ldX[Mat::E::C] + j;
-      max_abs_err  = std::max<double>(max_abs_err, std::abs(c_cpu[coord] - c_gpu[coord]));
-      max_rel_err  = max_abs_err / std::abs(c_cpu[coord] + 1e-9);
-      auto relerr1 =
-        std::abs(c_cpu[coord] - c_gpu[coord]) / (std::max<TFloat>(c_cpu_abs[coord], 1e-9));
+      max_abs_err  = std::max<double>(max_abs_err, static_cast<double>(std::abs(c_cpu[coord] - c_gpu[coord])));
+      max_rel_err  = max_abs_err / (std::abs(static_cast<double>(c_cpu[coord])) + 1e-9);
+      double relerr1 =
+        static_cast<double>(std::abs(c_cpu[coord] - c_gpu[coord])) / (std::max<double>(static_cast<double>(c_cpu_abs[coord]), 1e-9));
 
       max_test_err = std::max<double>(relerr1, max_test_err);
 
