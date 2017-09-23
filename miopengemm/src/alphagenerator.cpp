@@ -993,8 +993,6 @@ TINTK k_plus_offset = KV__ + unroll_offset;
             "to load */\n";
     ss << "const TINT" << X << " " << x << "_offset_pll_unroll = " << str_n_pll << " pll_unroll_"
        << x << "_load_id;\n";
-    ss << "const TINT" << X << " " << x << "_offset_perp_unroll = " << str_n_perp << " perp_unroll_"
-       << x << "_load_id;\n";
 
     if (emat_x == Mat::E::A)
     {
