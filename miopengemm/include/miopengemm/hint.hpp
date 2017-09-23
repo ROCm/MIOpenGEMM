@@ -26,7 +26,7 @@ class BasicHint
   bool is_match_hit(const std::string& s2) const;
   void set(size_t& x, const std::vector<std::string> ts) const;
   virtual std::string get_description() const = 0;
-  virtual ~BasicHint() = default;
+  virtual ~BasicHint()                        = default;
 };
 
 class PlatformHint : public BasicHint

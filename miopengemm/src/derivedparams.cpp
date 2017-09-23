@@ -238,8 +238,8 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
     if (at(emat_x).n_elements_in_unroll % val != 0)
     {
       set_status_ss << "this is not supported: " << which << " (" << val
-                    << ") is not a factor of n_elements_in_(" << Mat::M().name[emat_x] << ")_unroll ("
-                    << at(emat_x).n_elements_in_unroll << "). \n"
+                    << ") is not a factor of n_elements_in_(" << Mat::M().name[emat_x]
+                    << ")_unroll (" << at(emat_x).n_elements_in_unroll << "). \n"
                     << "Consider rounding unroll up. ";
       return std::make_tuple<bool, std::string>(false, set_status_ss.str());
     }
@@ -407,8 +407,8 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
 
       if (load_stride_pll_k % ptr_hp->sus[emat_x].vs[Chi::E::VEW] != 0)
       {
-        ss_viz << "load-stride-pll-k for dim-" << Mat::M().name[emat_x] << " ( " << load_stride_pll_k
-               << " )  is not divisable by VEW. "
+        ss_viz << "load-stride-pll-k for dim-" << Mat::M().name[emat_x] << " ( "
+               << load_stride_pll_k << " )  is not divisable by VEW. "
                << "main_n_micro_tiles_pll_unroll = " << at(emat_x).main_n_micro_tiles_pll_unroll
                << "  one-stride-pll-k : " << one_stride_pll_k;
         is_viz = false;

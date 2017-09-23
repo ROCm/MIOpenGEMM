@@ -193,7 +193,8 @@ void TinyOne<TFl>::opencl_memory_initialise()
                                      0,
                                      NULL,
                                      NULL,
-                                     std::string("enqueueing ") + Mat::M().name[emat] + " writebuff ",
+                                     std::string("enqueueing ") + Mat::M().name[emat] +
+                                       " writebuff ",
                                      true);
   }
 }

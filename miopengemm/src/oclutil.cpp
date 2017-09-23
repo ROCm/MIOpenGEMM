@@ -63,12 +63,14 @@ cl_mem get_copy(cl_command_queue command_queue, cl_mem c, size_t c_nbytes, const
   return c_copied;
 }
 
-const std::string & fiji_string(){
+const std::string& fiji_string()
+{
   const static std::string x("gfx803");
   return x;
 }
-  
-const std::string & vega_string(){
+
+const std::string& vega_string()
+{
   const static std::string x("gfx900");
   return x;
 }
@@ -565,15 +567,14 @@ Result cl_build_program(cl_program          program,
 
   if (ret != CL_SUCCESS)
   {
-    
+
     std::stringstream ss;
     ss << "CL Compilation failed:\n"
        << "(buffer size = " << buffer_size << ") "
        << " (buffer substring  : " << buffer.substr(0, buffer_size) << " ) "
        << "\n";
     auto errm = ss.str() + " + (cl_build_program)";
-    
-    
+
     return confirm_cl_status(ret, hash, errm, strict);
   }
 

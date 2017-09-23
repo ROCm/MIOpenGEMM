@@ -29,10 +29,9 @@ class MFType
   const void* operator[](char floattype) const;
 };
 
-const MFType & get_m_alpha();
+const MFType& get_m_alpha();
 
-const MFType & get_m_beta();
-
+const MFType& get_m_beta();
 }
 
 template <typename T>
@@ -58,7 +57,7 @@ enum E
   MAX,
   N
 };
-const EnumMapper<std::string> & M();
+const EnumMapper<std::string>& M();
 }
 
 namespace Xtr
@@ -69,7 +68,7 @@ enum E
   MAX,
   N
 };
-const EnumMapper<std::string> & M();
+const EnumMapper<std::string>& M();
 }
 
 namespace Chi
@@ -85,10 +84,10 @@ enum E
   VEW,  // vector width
   N
 };
-const EnumMapper<std::string> & M();
+const EnumMapper<std::string>& M();
 
 // prior weight on importance in graph
-const std::vector<int> & get_priority();
+const std::vector<int>& get_priority();
 }
 
 namespace NonChi
@@ -110,10 +109,9 @@ enum E
   MIA,      // work item allocation within workgroup : % or /
   N
 };
-const EnumMapper<std::string> & M();
+const EnumMapper<std::string>& M();
 
-const std::vector<int> & get_priority();
-
+const std::vector<int>& get_priority();
 }
 
 namespace Mat
@@ -125,7 +123,7 @@ enum E
   C,
   N
 };
-const EnumMapper<char> &  M();
+const EnumMapper<char>& M();
 }
 
 namespace Mem
@@ -138,9 +136,9 @@ enum E
   W,
   N
 };
-const EnumMapper<char> & M();
+const EnumMapper<char>& M();
 
-Mem::E                        mat_to_mem(Mat::E);
+Mem::E mat_to_mem(Mat::E);
 }
 
 namespace Mat
@@ -194,7 +192,7 @@ enum E
   BYB = 1,
   N
 };
-const EnumMapper<std::string> & M();
+const EnumMapper<std::string>& M();
 }
 
 namespace Scratch
@@ -221,7 +219,7 @@ enum E
   MER,
   N
 };
-const EnumMapper<std::string> & M();
+const EnumMapper<std::string>& M();
 }
 
 namespace Ver
@@ -240,11 +238,11 @@ enum E
   MULTIBENCH,
   N
 };
-const EnumMapper<std::string> & M();
+const EnumMapper<std::string>& M();
 
-const std::array<bool, E::N> & get_fileRequired();
-const std::array<std::array<bool, OutPart::E::N>, E::N> & get_toFile();
-const std::array<std::array<bool, OutPart::E::N>, E::N> & get_toTerm();
+const std::array<bool, E::N>& get_fileRequired();
+const std::array<std::array<bool, OutPart::E::N>, E::N>& get_toFile();
+const std::array<std::array<bool, OutPart::E::N>, E::N>& get_toTerm();
 }
 
 namespace KType
@@ -257,14 +255,13 @@ enum E
   MAIN,
   N  // how many KTypes
 };
-const EnumMapper<std::string> & M();
+const EnumMapper<std::string>& M();
 
 // maps the dependencices of kernels, order of execution
 // For example deps[MAIN] = {WSA, WSB, BETAC},
 // as all of these must first complete
 // before MAIN can execute
-const std::array<std::vector<size_t>, KType::N> & get_dependencies();
-
+const std::array<std::vector<size_t>, KType::N>& get_dependencies();
 }
 }
 

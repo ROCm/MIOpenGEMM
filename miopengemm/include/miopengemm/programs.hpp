@@ -83,12 +83,12 @@ class Programs
   //     (3.3) enqueue k
   // (4) if update_times, update program times (use act_inds).
   oclutil::Result run(const cl_command_queue&,
-                              const AllKernArgs&,
-                              cl_uint         n_user_wait_list,
-                              const cl_event* user_wait_list,
-                              KernelTimes*    ptr_ktimes,
-                              cl_event*       ptr_user_event,
-                              bool            debug_mode) const;
+                      const AllKernArgs&,
+                      cl_uint         n_user_wait_list,
+                      const cl_event* user_wait_list,
+                      KernelTimes*    ptr_ktimes,
+                      cl_event*       ptr_user_event,
+                      bool            debug_mode) const;
 
   // This function will update
   // (1) act_inds
@@ -105,8 +105,6 @@ class Programs
   // Programs (const Programs &)  = delete;
   // Programs (Programs &&)  = default;
   // Programs& operator=(Programs &&)  = default;
-
 };
-
 }
 #endif

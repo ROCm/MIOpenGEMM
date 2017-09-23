@@ -224,9 +224,10 @@ TFLOAT previous_value; )"
   void append_load_for_pll(Mat::E emat_x, std::stringstream& ss)
   {
 
-    std::string bound_string = hp.sus[emat_x].vs[Chi::E::LIW] == 0
-                                 ? std::string("MICRO_") + Mat::M().name[emat_x] + "_TILE_PLL_UNROLL"
-                                 : "UNROLL";
+    std::string bound_string =
+      hp.sus[emat_x].vs[Chi::E::LIW] == 0
+        ? std::string("MICRO_") + Mat::M().name[emat_x] + "_TILE_PLL_UNROLL"
+        : "UNROLL";
     std::string increment_string =
       hp.sus[emat_x].vs[Chi::E::LIW] == 0
         ? "++mu_pll_i"
@@ -254,9 +255,8 @@ TFLOAT previous_value; )"
     ss << "\nindex =  STRIDE_PLL_M_C*(write_start_a + dima) + STRIDE_PLL_N_C*(write_start_b + "
           "dimb) ;\n";
 
+    // ss << "anothertime\n";
 
-    //ss << "anothertime\n";
-    
     // ss << (with_beta_scaling == 0 ? "" : "c[index] *= beta;\n");
     if (with_beta_scaling != 0)
     {

@@ -319,7 +319,8 @@ std::vector<size_t> get_hy_v(std::string hy_s, bool hy_s_full, Mat::E emat)
     if (std::find(start, end, key) == end)
     {
       std::stringstream ss;
-      ss << "While processing the constraint string for Sub Graph `" << Mat::M().name[emat] << "', ";
+      ss << "While processing the constraint string for Sub Graph `" << Mat::M().name[emat]
+         << "', ";
       ss << "the unrecognised key `" + key << "' was not encountered. \n";
       throw miog_error(ss.str());
     }

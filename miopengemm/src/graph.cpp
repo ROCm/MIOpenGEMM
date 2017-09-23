@@ -16,7 +16,8 @@
 namespace MIOpenGEMM
 {
 
-RandomUtil & radutil17(){
+RandomUtil& radutil17()
+{
   static RandomUtil x;
   return x;
 }
@@ -391,18 +392,16 @@ std::string SuGr::get_start_range_string(size_t hpi) const
   return ss.str();
 }
 
-
-
-std::map<size_t, std::vector<size_t>> get_g_binary_basic(){
+std::map<size_t, std::vector<size_t>> get_g_binary_basic()
+{
   return {{Binary::E::NO, {Binary::E::YES}}, {Binary::E::YES, {Binary::E::NO}}};
 }
 
-
-const std::map<size_t, std::vector<size_t>> & g_binary(){
+const std::map<size_t, std::vector<size_t>>& g_binary()
+{
   const static std::map<size_t, std::vector<size_t>> x = get_g_binary_basic();
   return x;
 }
- 
 
 Graph::Graph(const Geometry&         gg,
              const oclutil::DevInfo& di,
@@ -715,8 +714,8 @@ bool SuGr::contains(const SuHy& suhy) const
 HyPas Graph::get_random_start() const
 {
   return HyPas({{{at(Mat::E::A).get_random_start()},
-                {at(Mat::E::B).get_random_start()},
-                {at(Mat::E::C).get_random_start()}}});
+                 {at(Mat::E::B).get_random_start()},
+                 {at(Mat::E::C).get_random_start()}}});
 }
 
 HyPas Graph::get_random_valid_start() const

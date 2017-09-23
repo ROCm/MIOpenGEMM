@@ -132,7 +132,7 @@ std::string BaseGenerator::get_time_string()
   std::string time_stamp_string = ss.str();
 
   return "";
-  //return stringutil::get_star_wrapped(time_stamp_string.substr(0, time_stamp_string.size() - 1));
+  // return stringutil::get_star_wrapped(time_stamp_string.substr(0, time_stamp_string.size() - 1));
 }
 
 std::string BaseGenerator::get_what_string()

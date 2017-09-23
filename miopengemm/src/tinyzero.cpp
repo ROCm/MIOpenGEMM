@@ -185,7 +185,7 @@ std::string TinyZero::get_run_time_string(cl_int status)
   {
     ss << std::fixed << std::setprecision(3) << kernel_times.extime << '\t';
 
-    double sumtimes {0};
+    double sumtimes{0};
     for (size_t k_ind = 0; k_ind < programs.get_n_active(); ++k_ind)
     {
       double tk = kernel_times.ktimes[programs.act_inds[k_ind]].v_times.back();
@@ -298,10 +298,8 @@ std::vector<double> TinyZero::benchgemm(const HyPas& hp, const Halt& hl)
     throw miog_error(atr.msg);
   }
 
-  
-  
-  // here : check if ran succesfully. 
-  
+  // here : check if ran succesfully.
+
   auto all_kern_args = get_all_kern_args(bundle.v_tgks);
 
   mowri << "hyper-p   :" << hp.get_string() << '\n'
@@ -321,12 +319,13 @@ AllKernArgs TinyZero::get_all_kern_args(const std::vector<KernBlob>& kblobs) con
   for (auto& kblob : kblobs)
   {
 
-    all_kern_args.emplace_back(kerngen::get_arg_sizes_values(kblob,
-                                                             gpum.cl_mems,
-                                                             toff.offsets,
-                                                             gg.derived.float_size_bytes,
-                                                             Floating::get_m_alpha()[gg.floattype],
-                                                             Floating::get_m_alpha()[gg.floattype]));
+    all_kern_args.emplace_back(
+      kerngen::get_arg_sizes_values(kblob,
+                                    gpum.cl_mems,
+                                    toff.offsets,
+                                    gg.derived.float_size_bytes,
+                                    Floating::get_m_alpha()[gg.floattype],
+                                    Floating::get_m_alpha()[gg.floattype]));
   }
 
   return all_kern_args;
@@ -518,10 +517,7 @@ Solution TinyZero::single_descent_find(double             allotted_time,
 
       // kernel compilation
       auto compstat = programs.update(bundle.v_tgks);
-      
-      
 
-      
       auto all_kern_args = get_all_kern_args(bundle.v_tgks);
 
       old_track_msg = new_track_msg;
@@ -562,7 +558,7 @@ Solution TinyZero::single_descent_find(double             allotted_time,
       for (size_t ir = 0; ir < summary.size(); ++ir)
       {
         mowri << summary[ir];
-        if (v_t_total[ir] >= k_seconds && v_t_total[ir] <= k_seconds) // avoid == suppression
+        if (v_t_total[ir] >= k_seconds && v_t_total[ir] <= k_seconds)  // avoid == suppression
         {
           mowri << " (" << SummStat::M().name[sumstat] << ')';
           if (best_solns_path.size() > 0 &&

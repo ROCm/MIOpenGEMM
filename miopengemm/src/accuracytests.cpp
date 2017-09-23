@@ -24,8 +24,9 @@ enum class Status
  * Provide better diagnostics when not correct.
  * Output full matrices to files for visualisation. etc etc etc. */
 
-template <typename T> 
-bool exactly_equal(T a, T b){
+template <typename T>
+bool exactly_equal(T a, T b)
+{
   return (a >= b && a <= b);
 }
 
@@ -88,10 +89,11 @@ void elementwise_compare(const Geometry& gg,
     for (size_t j = 0; j < gg.get_coal(Mat::E::C); ++j)
     {
       size_t coord = toff.offsets[Mem::E::C] + i * gg.ldX[Mat::E::C] + j;
-      max_abs_err  = std::max<double>(max_abs_err, static_cast<double>(std::abs(c_cpu[coord] - c_gpu[coord])));
-      max_rel_err  = max_abs_err / (std::abs(static_cast<double>(c_cpu[coord])) + 1e-9);
-      double relerr1 =
-        static_cast<double>(std::abs(c_cpu[coord] - c_gpu[coord])) / (std::max<double>(static_cast<double>(c_cpu_abs[coord]), 1e-9));
+      max_abs_err =
+        std::max<double>(max_abs_err, static_cast<double>(std::abs(c_cpu[coord] - c_gpu[coord])));
+      max_rel_err    = max_abs_err / (std::abs(static_cast<double>(c_cpu[coord])) + 1e-9);
+      double relerr1 = static_cast<double>(std::abs(c_cpu[coord] - c_gpu[coord])) /
+                       (std::max<double>(static_cast<double>(c_cpu_abs[coord]), 1e-9));
 
       max_test_err = std::max<double>(relerr1, max_test_err);
 
@@ -116,7 +118,8 @@ void elementwise_compare(const Geometry& gg,
     {
       size_t coord = toff.offsets[Mem::E::C] + i * gg.ldX[Mat::E::C] + j;
 
-      status[coord] = exactly_equal(c_cpu[coord], c_gpu[coord]) ? Status::CORRECT : Status::INCORRECT;
+      status[coord] =
+        exactly_equal(c_cpu[coord], c_gpu[coord]) ? Status::CORRECT : Status::INCORRECT;
 
       if (status[coord] == Status::INCORRECT && n_errs_printed < zone * n_per_category)
       {

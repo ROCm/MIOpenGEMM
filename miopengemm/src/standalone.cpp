@@ -179,8 +179,9 @@ int main()
   ss << "  // create and write to buffers \n";
   for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C})
   {
-    ss << "  memobj_" << Mat::M().lcase_name[emat] << " = clCreateBuffer(context, CL_MEM_READ_WRITE, "
-       << Mat::M().lcase_name[emat] << "_n_elms  * sizeof(float), nullptr, &ret);\n";
+    ss << "  memobj_" << Mat::M().lcase_name[emat]
+       << " = clCreateBuffer(context, CL_MEM_READ_WRITE, " << Mat::M().lcase_name[emat]
+       << "_n_elms  * sizeof(float), nullptr, &ret);\n";
     ss << "  checkstatus(ret, \"clCreateBuffer\");\n";
     ss << "  ret = clEnqueueWriteBuffer(\n";
     ss << "  command_queue, memobj_" << Mat::M().lcase_name[emat] << ", CL_TRUE, 0, "

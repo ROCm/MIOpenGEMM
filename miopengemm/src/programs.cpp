@@ -110,15 +110,14 @@ oclutil::Result Programs::update(const std::vector<KernBlob>& kbs)
   for (size_t kbi = 0; kbi < kbs.size(); ++kbi)
   {
     auto x = programs.at(kbs[kbi].e_ktype).update(kbs[kbi], *ptr_mowri, build_options);
-  
 
     if (x.fail())
     {
       std::stringstream errm;
       errm << "failed to compile kernel in Programs::update : \n" << x.message;
-      throw miog_error(errm.str());  
+      throw miog_error(errm.str());
     }
-    
+
     act_inds.push_back(kbs[kbi].e_ktype);
   }
   return {};

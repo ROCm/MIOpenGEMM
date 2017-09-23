@@ -84,11 +84,11 @@ std::vector<std::string> get_sumstatkeys_basic()
   return ssv;
 }
 
-const std::vector<std::string> & get_sumstatkeys(){
+const std::vector<std::string>& get_sumstatkeys()
+{
   static const std::vector<std::string> sumstatkeys = get_sumstatkeys_basic();
   return sumstatkeys;
 }
-
 
 std::string get_sumstatkey(SummStat::E sumstat)
 {

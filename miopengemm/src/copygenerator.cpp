@@ -29,8 +29,9 @@ KType::E CopyGenerator::get_ktype()
   case Mat::E::A: return KType::E::WSA;
   case Mat::E::B: return KType::E::WSB;
   case Mat::E::C: throw miog_error("C not valid in get_ktype of CopyGenerator");
-  case Mat::E::N: throw miog_error("E::N not valid in get_ktype of CopyGenerator");
-//  default: throw miog_error("unrecogised emat_x in get_ktype of CopyGenerator");
+  case Mat::E::N:
+    throw miog_error("E::N not valid in get_ktype of CopyGenerator");
+    //  default: throw miog_error("unrecogised emat_x in get_ktype of CopyGenerator");
   }
 }
 
