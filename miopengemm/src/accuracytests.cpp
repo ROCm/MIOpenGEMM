@@ -23,6 +23,12 @@ enum class Status
 /* TODO : document logic. are matrices positive or zero centeted?
  * Provide better diagnostics when not correct.
  * Output full matrices to files for visualisation. etc etc etc. */
+
+template <typename T> 
+bool exactly_equal(T a, T b){
+  return (a >= b && a <= b);
+}
+
 template <typename TFloat>
 void elementwise_compare(const Geometry& gg,
                          const Offsets&  toff,
@@ -55,7 +61,7 @@ void elementwise_compare(const Geometry& gg,
   // First check the pre-padding zone,
   for (size_t i = 0; i < toff.offsets[Mem::E::C]; ++i)
   {
-    status[i] = c_cpu[i] == c_gpu[i] ? Status::CORRECT : Status::INCORRECT;
+    status[i] = exactly_equal(c_cpu[i], c_gpu[i]) ? Status::CORRECT : Status::INCORRECT;
     if (status[i] == Status::INCORRECT && n_errs_printed < zone * n_per_category)
     {
       ++n_errs_printed;
@@ -67,7 +73,7 @@ void elementwise_compare(const Geometry& gg,
   // Now check the post-padding zone,
   for (size_t i = toff.offsets[Mem::E::C] + n_mat_els; i < nels; ++i)
   {
-    status[i] = c_cpu[i] == c_gpu[i] ? Status::CORRECT : Status::INCORRECT;
+    status[i] = exactly_equal(c_cpu[i], c_gpu[i]) ? Status::CORRECT : Status::INCORRECT;
     if (status[i] == Status::INCORRECT && n_errs_printed < zone * n_per_category)
     {
       ++n_errs_printed;
@@ -110,7 +116,7 @@ void elementwise_compare(const Geometry& gg,
     {
       size_t coord = toff.offsets[Mem::E::C] + i * gg.ldX[Mat::E::C] + j;
 
-      status[coord] = c_cpu[coord] != c_gpu[coord] ? Status::INCORRECT : Status::CORRECT;
+      status[coord] = exactly_equal(c_cpu[coord], c_gpu[coord]) ? Status::CORRECT : Status::INCORRECT;
 
       if (status[coord] == Status::INCORRECT && n_errs_printed < zone * n_per_category)
       {

@@ -23,7 +23,7 @@ enum BetaType
 template <typename T>
 BetaType get_beta_type(T beta)
 {
-  return beta == T(1) ? BetaType::IsOne : BetaType::IsOther;
+  return (beta >= T(1) && beta <= T(1))  ? BetaType::IsOne : BetaType::IsOther;
   //(std::abs<T>(beta - T(1)) < std::numeric_limits<T>::epsilon
 }
 

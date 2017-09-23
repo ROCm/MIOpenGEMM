@@ -210,7 +210,7 @@ void gemm_3fors_generic(const Geometry& gg,
         target_index = y + x * gg.ldX[Mat::E::C];
       }
       // and set it
-      if (beta != 0)
+      if (beta > 0 || beta < 0)
       {
         c[target_index] *= beta;
       }

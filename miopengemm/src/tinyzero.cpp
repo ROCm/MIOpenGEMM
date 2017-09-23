@@ -562,7 +562,7 @@ Solution TinyZero::single_descent_find(double             allotted_time,
       for (size_t ir = 0; ir < summary.size(); ++ir)
       {
         mowri << summary[ir];
-        if (v_t_total[ir] == k_seconds)
+        if (v_t_total[ir] >= k_seconds && v_t_total[ir] <= k_seconds) // avoid == suppression
         {
           mowri << " (" << SummStat::M().name[sumstat] << ')';
           if (best_solns_path.size() > 0 &&
