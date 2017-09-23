@@ -26,6 +26,7 @@ class BasicHint
   bool is_match_hit(const std::string& s2) const;
   void set(size_t& x, const std::vector<std::string> ts) const;
   virtual std::string get_description() const = 0;
+  virtual ~BasicHint() = default;
 };
 
 class PlatformHint : public BasicHint
@@ -34,6 +35,7 @@ class PlatformHint : public BasicHint
   virtual std::string get_description() const override final { return "platforms"; }
   PlatformHint() = default;
   PlatformHint(size_t id_, const std::vector<std::string>& matches_) : BasicHint(id_, matches_) {}
+  virtual ~PlatformHint() = default;
 };
 
 class DeviceHint : public BasicHint
@@ -42,6 +44,7 @@ class DeviceHint : public BasicHint
   virtual std::string get_description() const override final { return "devices"; }
   DeviceHint() = default;
   DeviceHint(size_t id_, const std::vector<std::string>& matches_) : BasicHint(id_, matches_) {}
+  virtual ~DeviceHint() = default;
 };
 
 class CLHint

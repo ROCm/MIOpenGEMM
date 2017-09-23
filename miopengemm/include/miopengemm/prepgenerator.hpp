@@ -31,6 +31,7 @@ class PrepGenerator : public basegen::BaseGenerator
   }
 
   public:
+  virtual ~PrepGenerator() = default;
   PrepGenerator(Mat::E emat_x, const HyPas& hp_, const Geometry& gg_, const DerivedParams& dp_);
 };
 }

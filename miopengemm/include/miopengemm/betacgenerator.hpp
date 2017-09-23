@@ -16,6 +16,7 @@ class BetacGenerator : public bylinegen::ByLineGenerator
 {
 
   public:
+  virtual ~BetacGenerator() = default;
   BetacGenerator(const HyPas& hp_, const Geometry& gg_, const DerivedParams& dp_);
 
   virtual void setup_additional() override final;

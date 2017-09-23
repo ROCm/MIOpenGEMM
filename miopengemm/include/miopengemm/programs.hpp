@@ -82,7 +82,7 @@ class Programs
   //     (3.2) set the arguments of the k
   //     (3.3) enqueue k
   // (4) if update_times, update program times (use act_inds).
-  virtual oclutil::Result run(const cl_command_queue&,
+  oclutil::Result run(const cl_command_queue&,
                               const AllKernArgs&,
                               cl_uint         n_user_wait_list,
                               const cl_event* user_wait_list,
@@ -105,6 +105,8 @@ class Programs
   // Programs (const Programs &)  = delete;
   // Programs (Programs &&)  = default;
   // Programs& operator=(Programs &&)  = default;
+
 };
+
 }
 #endif

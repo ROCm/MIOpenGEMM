@@ -54,6 +54,8 @@ class BaseGenerator
   virtual void setup_final() = 0;
 
   public:
+  virtual ~BaseGenerator() = default;
+  
   /* Does entire setup. Always called just after construction. */
   void setup()
   {

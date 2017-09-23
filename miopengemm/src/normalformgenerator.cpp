@@ -22,6 +22,8 @@ class NormalFormGenerator : public prepgen::PrepGenerator
     : prepgen::PrepGenerator(emat_x_, hp_, gg_, dp_)
   {
   }
+  
+  virtual ~NormalFormGenerator() = default;
 
   virtual void set_type() override final { type = "nform" + std::string(1, mchar); }
 

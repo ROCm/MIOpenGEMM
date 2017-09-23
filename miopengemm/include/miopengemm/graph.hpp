@@ -63,6 +63,7 @@ class SuGr
   bool contains(const SuHy&) const;
   SuHy get_random_start() const;
   void checks() const;
+  virtual ~SuGr() = default;
 };
 
 class CSuGr : public SuGr
@@ -74,6 +75,7 @@ class CSuGr : public SuGr
 
   public:
   CSuGr(const Geometry& gg, const Constraint& constraint, const oclutil::DevInfo& devinfo);
+  virtual ~CSuGr() = default;
 };
 
 class ChiSuGr : public SuGr
@@ -85,18 +87,21 @@ class ChiSuGr : public SuGr
 
   public:
   ChiSuGr(Mat::E, const Geometry&, const Constraint&, const oclutil::DevInfo&);
+  virtual ~ChiSuGr() = default;
 };
 
 class ASuGr : public ChiSuGr
 {
   public:
   ASuGr(const Geometry&, const Constraint&, const oclutil::DevInfo&);
+  virtual ~ASuGr() = default;
 };
 
 class BSuGr : public ChiSuGr
 {
   public:
   BSuGr(const Geometry&, const Constraint&, const oclutil::DevInfo&);
+  virtual ~BSuGr() = default;
 };
 
 class Graph
