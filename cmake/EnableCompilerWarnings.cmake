@@ -28,29 +28,37 @@ else()
             -Wuninitialized
             -Wunreachable-code
             -Wunused
-
             -Wno-sign-compare
         )
         if (CMAKE_${COMPILER}_COMPILER_ID MATCHES "Clang")
             list(APPEND CMAKE_COMPILER_WARNINGS
+                
                 -Weverything
+                -Werror
+                
+                # very difficult to live without these off
                 -Wno-c++98-compat
                 -Wno-c++98-compat-pedantic
-                -Wno-conversion
-                -Wno-double-promotion
-                -Wno-exit-time-destructors
-                -Wno-extra-semi
-                -Wno-float-conversion
-                -Wno-gnu-anonymous-struct
-                -Wno-gnu-zero-variadic-macro-arguments
-                -Wno-missing-braces
-                -Wno-missing-prototypes
-                -Wno-nested-anon-types
                 -Wno-padded
-                -Wno-shorten-64-to-32
-                -Wno-sign-conversion
-                -Wno-unused-command-line-argument
                 -Wno-weak-vtables
+                -Wno-exit-time-destructors
+                
+                ## TODO : profile these warnings
+                -Wno-missing-prototypes
+                -Wno-sign-conversion
+                -Wno-conversion
+                
+                ## from MIOpen, don't seem to be needed in MIOpenGEMM
+                #-Wno-double-promotion
+                #-Wno-extra-semi
+                #-Wno-float-conversion
+                #-Wno-gnu-anonymous-struct
+                #-Wno-gnu-zero-variadic-macro-arguments
+                #-Wno-missing-braces
+                #-Wno-nested-anon-types
+                #-Wno-shorten-64-to-32
+                #-Wno-unused-command-line-argument
+                
             )
         else()
             list(APPEND CMAKE_COMPILER_WARNINGS
