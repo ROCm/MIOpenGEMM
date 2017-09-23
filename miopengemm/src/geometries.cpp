@@ -2,9 +2,9 @@
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <algorithm>
+#include <cmath>
 #include <sstream>
 #include <vector>
-#include <cmath>
 
 #include <miopengemm/geometries.hpp>
 #include <miopengemm/geometry.hpp>

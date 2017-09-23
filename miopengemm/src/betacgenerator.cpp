@@ -33,8 +33,9 @@ void BetacGenerator::setup_additional()
 * It is not quite an axpy, as when ldc is not minimal, 
 * C is not contiguous memory  
 ****************************************************** */ )";
-  //inner_work_string  = "\n/* the beta scaling */\nc[i] *= beta;";
-  inner_work_string  = "\n/* beta scaling */\nif (beta <= 0 && beta >= 0){c[i] = 0;}else{c[i] *= beta;}";
+  // inner_work_string  = "\n/* the beta scaling */\nc[i] *= beta;";
+  inner_work_string =
+    "\n/* beta scaling */\nif (beta <= 0 && beta >= 0){c[i] = 0;}else{c[i] *= beta;}";
 }
 
 void BetacGenerator::append_derived_definitions_additional(std::stringstream& ss) { ss << " "; }

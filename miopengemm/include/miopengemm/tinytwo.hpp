@@ -58,10 +58,10 @@ class TinyTwo
 
   Solution find2(const FindParams& find_params, const Constraints& constraints);
 
-  //template <typename TFloat>
-  //void accuracy_test(const HyPas& hp)
+  // template <typename TFloat>
+  // void accuracy_test(const HyPas& hp)
   //{
-    //get_up_moa<TFloat>()->accuracy_test(hp);
+  // get_up_moa<TFloat>()->accuracy_test(hp);
   //}
 
   void accuracy_test(const HyPas& hp);

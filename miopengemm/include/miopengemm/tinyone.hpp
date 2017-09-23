@@ -43,7 +43,7 @@ class TinyOne
 
   Solution find1(const FindParams& find_params, const Constraints& constraints);
 
-  void accuracy_test(const HyPas& hp); //, const TFloat* c_true_for_test);
+  void accuracy_test(const HyPas& hp);  //, const TFloat* c_true_for_test);
 
   private:
   Geometry gg;
@@ -56,8 +56,8 @@ class TinyOne
   std::array<std::vector<TFloat>, Mat::E::N> __cpu_mem;
 
   std::vector<TFloat> c_copy;
-//  std::vector<TFloat> c_for_cpu_compute;
-  owrite::Writer&     mowri;
+  //  std::vector<TFloat> c_for_cpu_compute;
+  owrite::Writer& mowri;
 
   oclutil::CommandQueueInContext tgcq;
 

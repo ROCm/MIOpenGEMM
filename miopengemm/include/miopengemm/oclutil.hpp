@@ -300,7 +300,6 @@ class SafeClEvent
   ~SafeClEvent();
 };
 
-
 class CommandQueueInContext
 {
   public:

@@ -63,7 +63,6 @@ class Program
   Program(cl_device_id, cl_context);
   Program() : Program(nullptr, nullptr) {}
   oclutil::Result update(const KernBlob&, owrite::Writer&, const std::string& build_options);
-
 };
 
 class Programs

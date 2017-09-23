@@ -219,7 +219,7 @@ Solution TinyOne<TFl>::find1(const FindParams& find_params, const Constraints& c
 }
 
 template <typename TFl>
-void TinyOne<TFl>::accuracy_test(const HyPas& hp) //, const TFl* c_true_for_test)
+void TinyOne<TFl>::accuracy_test(const HyPas& hp)  //, const TFl* c_true_for_test)
 {
 
   // copy the const cpu matrix to the gpu
@@ -273,23 +273,25 @@ void TinyOne<TFl>::accuracy_test(const HyPas& hp) //, const TFl* c_true_for_test
 
   auto c_true_for_test = c_for_cpu_compute.data();
 
-  //compute absolute GEMM : C <- alpha abs(A)abs(B) + beta abs(C).
+  // compute absolute GEMM : C <- alpha abs(A)abs(B) + beta abs(C).
   std::vector<TFl> A_abs(mem_size[Mem::E::A] / sizeof(TFl));
   std::memcpy(A_abs.data(), cpu_mem[Mat::E::A], mem_size[Mem::E::A]);
-  for (auto & x : A_abs){
+  for (auto& x : A_abs)
+  {
     x = std::abs(x);
   }
 
   std::vector<TFl> B_abs(mem_size[Mem::E::B] / sizeof(TFl));
   std::memcpy(B_abs.data(), cpu_mem[Mat::E::B], mem_size[Mem::E::B]);
-  for (auto & x : B_abs){
+  for (auto& x : B_abs)
+  {
     x = std::abs(x);
   }
 
-
   std::vector<TFl> C_abs(mem_size[Mem::E::C] / sizeof(TFl));
   std::memcpy(C_abs.data(), cpu_mem[Mat::E::C], mem_size[Mem::E::C]);
-  for (auto & x : C_abs){
+  for (auto& x : C_abs)
+  {
     x = std::abs(x);
   }
 
@@ -301,19 +303,18 @@ void TinyOne<TFl>::accuracy_test(const HyPas& hp) //, const TFl* c_true_for_test
                      std::abs(Floating::default_alpha),
                      std::abs(Floating::default_beta),
                      mowri);
-                       
-  
+
   // make sure the read back is complete complete
   oclutil::cl_wait_for_events(
     1, &event_read_c_back.clevent, "in accuracy test, waiting GEMM gpu ", true);
 
   // compare cpu and gpu results
-  accuracytests::elementwise_compare(gg, 
+  accuracytests::elementwise_compare(gg,
                                      toff,
-                                     cpu_mem[Mat::E::C], //before, 
-                                     c_true_for_test, //after cpu
-                                     c_copy.data(), //after gpu
-                                     C_abs.data(), //after abs on cpu
+                                     cpu_mem[Mat::E::C],  // before,
+                                     c_true_for_test,     // after cpu
+                                     c_copy.data(),       // after gpu
+                                     C_abs.data(),        // after abs on cpu
                                      mowri);
 }
 

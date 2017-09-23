@@ -545,7 +545,7 @@ Result cl_build_program(cl_program          program,
   std::cout << "here1" << std::endl;
   cl_int ret = future.get();
   std::cout << "here2" << std::endl;
-  
+
   size_t      buffer_size;
   std::string buffer(20000, ' ');
 
@@ -568,7 +568,10 @@ Result cl_build_program(cl_program          program,
     std::cout << "here5a" << std::endl;
 
     std::stringstream ss;
-    ss << "CL Compilation failed:\n" << "(buffer size = " << buffer_size << ") " << " (buffer substring  : "  << buffer.substr(0,buffer_size) << " ) " << "\n";
+    ss << "CL Compilation failed:\n"
+       << "(buffer size = " << buffer_size << ") "
+       << " (buffer substring  : " << buffer.substr(0, buffer_size) << " ) "
+       << "\n";
     auto errm = ss.str() + " + (cl_build_program)";
     std::cout << errm << std::endl;
     return confirm_cl_status(ret, hash, errm, strict);
