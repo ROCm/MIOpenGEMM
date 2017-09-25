@@ -5,6 +5,7 @@
 #include <sstream>
 #include <miopengemm/error.hpp>
 #include <miopengemm/setabcw.hpp>
+#include <iostream>
 
 namespace MIOpenGEMM
 {
@@ -34,13 +35,13 @@ void fill_uni(std::vector<TFloat>& v, size_t r_small, size_t r_big)
 
   for (size_t i = 0; i < r_small; ++i)
   {
-    v[i] = TFloat(-0.5) + TFloat(rand() % 1000) / TFloat(1000);
+    v[i] = TFloat(-1) + TFloat(rand() % 2000) / TFloat(1000);
   }
 
   // previously, had larger in pad region.
   for (size_t i = r_small; i < r_big; ++i)
   {
-    v[i] = TFloat(-0.5) + TFloat(rand() % 1000) / TFloat(1000);
+    v[i] = TFloat(-1) + TFloat(rand() % 2000) / TFloat(1000);
   }
 }
 

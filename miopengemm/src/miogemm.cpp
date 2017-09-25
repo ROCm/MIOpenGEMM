@@ -118,6 +118,7 @@ Solution find(float            allotted_time,
               bool             with_warnings)
 {
 
+  std::cout << tgg.get_string() << std::endl;
   (void)with_warnings;
   bool   c_is_const    = true;
   cl_mem workspace_gpu = nullptr;

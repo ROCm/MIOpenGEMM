@@ -103,8 +103,8 @@ void elementwise_compare(const Geometry& gg,
         ++n_errs_printed;
         errm << "(in matrix zone, "
              << "uncoal = " << i << "/" << gg.get_uncoal(Mat::E::C) << ", coal = " << j << "/"
-             << gg.ldX[Mat::E::C] << ")"
-             << " abs(cpu - gpu)/max(absgemm, 1e-9)=" << relerr1 << ">" << threshold << ". "
+             << gg.ldX[Mat::E::C] << ")\n"
+             << "abs(cpu - gpu)/max(absgemm, 1e-9)=" << relerr1 << ">" << threshold << ". "
              << get_message(coord);
       }
     }

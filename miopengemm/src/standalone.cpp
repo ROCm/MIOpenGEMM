@@ -59,8 +59,8 @@ std::string make(const Geometry& gg, const HyPas& hp, owrite::Writer& mowri)
                        vals[Mat::E::A].data(),
                        vals[Mat::E::B].data(),
                        vals[Mat::E::C].data(),
-                       Floating::default_alpha,
-                       Floating::default_beta,
+                       Floating::get_default_alpha(),
+                       Floating::get_default_beta(),
                        mowri);
 
   float sum_final_cpu = std::accumulate(vals[Mat::E::C].begin(), vals[Mat::E::C].end(), 0.f);
@@ -235,13 +235,13 @@ int main()
   checkstatus(ret, "clSetKernelArg");
 )";
 
-  ss << "  float alpha = " << std::setprecision(20) << Floating::default_alpha << ";";
+  ss << "  float alpha = " << std::setprecision(20) << Floating::get_default_alpha() << ";";
   ss << R"(
   ret = clSetKernelArg(kernel, 6, sizeof(float), &alpha);
   checkstatus(ret, "clSetKernelArg");
 )";
 
-  ss << "  float beta = " << std::setprecision(20) << Floating::default_beta << ";";
+  ss << "  float beta = " << std::setprecision(20) << Floating::get_default_beta() << ";";
   ss << R"(
   ret = clSetKernelArg(kernel, 7, sizeof(float), &beta);
   checkstatus(ret, "clSetKernelArg");

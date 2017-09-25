@@ -15,8 +15,9 @@ namespace MIOpenGEMM
 namespace Floating
 {
 
-static const double default_alpha = 0.415693029182345929;
-static const double default_beta  = 0.273539340934809345;
+
+const double & get_default_alpha();
+const double & get_default_beta();
 
 class MFType
 {

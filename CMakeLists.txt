@@ -37,6 +37,17 @@ if(OPENBLAS)
     add_definitions(-DMIOPENGEMM_USE_OPENBLAS)
 endif()
 
+if (API_BENCH_CLBLAST)
+    find_package(CLBlast REQUIRED)
+    message("-- Adding definition MIOPENGEMM_BENCH_CLBLAST")
+    add_definitions(-DMIOPENGEMM_BENCH_CLBLAST)
+endif()
+
+if (API_BENCH_ISAAC)
+    find_package(Isaac REQUIRED)
+    add_definitions(-DMIOPENGEMM_BENCH_ISAAC)
+endif()
+
 
 set( CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." )
 find_package( OpenCL REQUIRED )
@@ -46,17 +57,6 @@ find_package( OpenCL REQUIRED )
 include(EnableCompilerWarnings)
 add_subdirectory(miopengemm)
 add_subdirectory(examples)
+add_subdirectory(apibench)
 add_subdirectory(tests)
 add_subdirectory(doc)
-
-if (API_BENCH_CLBLAST)
-    find_package(CLBlast REQUIRED)
-    add_definitions(-DMIOPENGEMM_BENCH_CLBLAST)
-endif()
-
-if (API_BENCH_ISAAC)
-    find_package(Isaac REQUIRED)
-    add_definitions(-DMIOPENGEMM_BENCH_ISAAC)
-endif()
-
-add_subdirectory(apibench)

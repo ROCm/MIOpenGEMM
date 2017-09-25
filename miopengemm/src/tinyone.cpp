@@ -132,10 +132,11 @@ void TinyOne<TFl>::initialise_cpu_mem_from_scratch()
   setabcw::set_abc<TFl>(
     {&__cpu_mem[Mat::E::A], &__cpu_mem[Mat::E::B], &__cpu_mem[Mat::E::C]}, gg, toff);
 
-  for (auto& x : __cpu_mem[Mat::E::B])
-  {
-    x *= 1000;
-  }
+  //// why ?
+  //for (auto& x : __cpu_mem[Mat::E::B])
+  //{
+    //x *= 1000;
+  //}
   for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C})
   {
     cpu_mem[emat] = __cpu_mem[emat].data();
@@ -268,8 +269,8 @@ void TinyOne<TFl>::accuracy_test(const HyPas& hp)  //, const TFl* c_true_for_tes
                      cpu_mem[Mat::E::A],
                      cpu_mem[Mat::E::B],
                      c_for_cpu_compute.data(),
-                     Floating::default_alpha,
-                     Floating::default_beta,
+                     Floating::get_default_alpha(),
+                     Floating::get_default_beta(),
                      mowri);
 
   auto c_true_for_test = c_for_cpu_compute.data();
@@ -301,8 +302,8 @@ void TinyOne<TFl>::accuracy_test(const HyPas& hp)  //, const TFl* c_true_for_tes
                      A_abs.data(),
                      B_abs.data(),
                      C_abs.data(),
-                     std::abs(Floating::default_alpha),
-                     std::abs(Floating::default_beta),
+                     std::abs(Floating::get_default_alpha()),
+                     std::abs(Floating::get_default_beta()),
                      mowri);
 
   // make sure the read back is complete complete

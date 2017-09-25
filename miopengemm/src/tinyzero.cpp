@@ -283,6 +283,7 @@ oclutil::Result TinyZero::true_core(std::function<void(std::string)> acton,
 std::vector<double> TinyZero::benchgemm(const HyPas& hp, const Halt& hl)
 {
 
+
   address_check_valid();
   Derivabilty dblt(hp, gg);
   if (dblt.is_derivable == false)
@@ -297,8 +298,8 @@ std::vector<double> TinyZero::benchgemm(const HyPas& hp, const Halt& hl)
   {
     throw miog_error(atr.msg);
   }
-
-  // here : check if ran succesfully.
+ 
+  auto compstat = programs.update(bundle.v_tgks);
 
   auto all_kern_args = get_all_kern_args(bundle.v_tgks);
 
@@ -325,7 +326,7 @@ AllKernArgs TinyZero::get_all_kern_args(const std::vector<KernBlob>& kblobs) con
                                     toff.offsets,
                                     gg.derived.float_size_bytes,
                                     Floating::get_m_alpha()[gg.floattype],
-                                    Floating::get_m_alpha()[gg.floattype]));
+                                    Floating::get_m_beta()[gg.floattype]));
   }
 
   return all_kern_args;

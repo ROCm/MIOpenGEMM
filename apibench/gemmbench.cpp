@@ -30,6 +30,8 @@
 #include <miopengemm/stringutilbase.hpp>
 #include <miopengemm/timer.hpp>
 
+
+
 enum class Impl
 {
   MIO = 0,  // MIOpenGEMM
@@ -55,10 +57,10 @@ template <typename TFloat>
 // returns map from strings desribing the GEMM geometry, to benchmark statistics
 std::map<std::string, RunStats>
 
-runem(std::vector<MIOpenGEMM::Geometry>& geometries,         // GEMM geometries to run
-      Impl                               impl,               // GEMM implementer
-      bool                               run_accuracy_test,  // confirm correctness
-      bool                               run_event_timer)    // get exact times on device
+runem(const MIOpenGEMM::Geometry & gg, // std::vector<MIOpenGEMM::Geometry>& geometries,         // GEMM geometries to run
+      Impl impl,                 // GEMM implementer
+      bool run_accuracy_test,    // confirm correctness
+      bool run_event_timer)      // get exact times on device
 
 {
   std::map<std::string, RunStats> results;
@@ -549,7 +551,18 @@ int main()
                     {1024, 1024, 1024, false, false, 0, 'f'}};
     }
 
-    auto stats = runem<float>(geometries, impl, run_accuracy_test, run_event_timer);
+    std::map<std::string, RunStats> results;
+    for (auto & gg : geometries){
+      x = runem<float>(gg, impl, run_accuracy_test, run_event_timer);
+      results.insert(std::make_pair(gg.get_string(), x));
+    }
+
+    //auto stats = runem<float>(geometries, impl, run_accuracy_test, run_event_timer);
+
+    //results.insert(
+      //std::make_pair(gg.get_string(), RunStats(n_to_time, t_total / 1000., event_timer_times)));
+
+    
 
     if (print_summary_at_end == true)
     {

@@ -11,6 +11,7 @@ function(add_apibench_executable EX_NAME)
     target_include_directories ( ${EX_NAME} PUBLIC 
     ${OPENCL_INCLUDE_DIRS} 
     ${CLBLAST_INCLUDE_DIR}
+    ${ISAAC_INCLUDE_DIR}
     ${OpenBLAS_INCLUDE_DIR}
     ${MIOPENGEMM_INCLUDE_DIR}
 )

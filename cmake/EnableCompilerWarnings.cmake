@@ -42,6 +42,7 @@ else()
                 -Wno-padded
                 -Wno-weak-vtables
                 -Wno-exit-time-destructors
+                -Wno-documentation
                 
                 ## TODO : profile these warnings
                 -Wno-missing-prototypes

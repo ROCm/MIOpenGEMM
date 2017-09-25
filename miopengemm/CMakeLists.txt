@@ -18,14 +18,16 @@ file(GLOB_RECURSE source_files src/*.cpp)
 
 add_library(miopengemm ${source_files})
 
-if(OPENBLAS)
-  target_link_libraries(miopengemm ${OPENCL_LIBRARIES} ${OpenBLAS_LIB})
-else()
-  target_link_libraries(miopengemm ${OPENCL_LIBRARIES})
-endif()
+target_link_libraries(miopengemm ${OPENCL_LIBRARIES} ${OpenBLAS_LIB} ${CLBLAST_LIB} ${ISAAC_LIB})
 
 target_include_directories (miopengemm PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/dev_include>)
-target_include_directories (miopengemm SYSTEM PUBLIC ${OPENCL_INCLUDE_DIRS})
+target_include_directories (miopengemm SYSTEM PUBLIC 
+
+    ${OPENCL_INCLUDE_DIRS} 
+    ${CLBLAST_INCLUDE_DIR}
+    ${ISAAC_INCLUDE_DIR}
+    ${OpenBLAS_INCLUDE_DIR}
+    )
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     target_include_directories (miopengemm PUBLIC ${OPENCL_INCLUDE_DIRS}/Headers)
