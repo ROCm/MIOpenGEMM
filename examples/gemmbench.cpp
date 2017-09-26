@@ -61,14 +61,14 @@ int main()
   problems[static_cast<int>(apitest::GemmImpl::XGEMM)] = {};
   problems[static_cast<int>(apitest::GemmImpl::GEMM0)] = {};
 
-
   bool run_event_timers = true;
-    
-  auto                           toff = get_padding_offsets();
-  owrite::Writer                 mowri(Ver::E::TERMINAL, "");
-  CLHint                         devhint(0, 0);
-  cl_command_queue_properties    cqps = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
-  if (run_event_timers){
+
+  auto                        toff = get_padding_offsets();
+  owrite::Writer              mowri(Ver::E::TERMINAL, "");
+  CLHint                      devhint(0, 0);
+  cl_command_queue_properties cqps = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
+  if (run_event_timers)
+  {
     cqps = cqps | CL_QUEUE_PROFILING_ENABLE;
   }
   oclutil::CommandQueueInContext cqic(mowri, cqps, devhint, "test_gemm0");
@@ -104,9 +104,8 @@ int main()
   Timer timer;
   timer.start();
 
-
   setabcw::CpuMemBundle<float> cmb(geometries, toff);
-    
+
   for (unsigned i = 0; i < geometries.size(); ++i)
   {
     const Geometry& gg = geometries[i];
@@ -117,10 +116,7 @@ int main()
     // number of runs with timer (based on DeepBench timing method).
     size_t n_to_time =
       std::min<size_t>(1500, std::max<size_t>(std::ceil(1e11 / (2 * gg.m * gg.k * gg.n)), 2));
-    bool run_accu         = false;
-
-
-
+    bool run_accu = false;
 
     for (auto&& impl : {apitest::GemmImpl::GEMM0,
                         apitest::GemmImpl::XGEMM,

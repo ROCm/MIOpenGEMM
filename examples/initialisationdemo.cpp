@@ -206,8 +206,11 @@ __global float       *          c
   /* Create Kernel program from the read in source */
   auto   source_c_str = source_str.c_str();
   size_t source_size  = source_str.size();
-  program             = clCreateProgramWithSource(
-    context, 1, static_cast<const char**>(&source_c_str), static_cast<const size_t*>(&source_size), &ret);
+  program             = clCreateProgramWithSource(context,
+                                      1,
+                                      static_cast<const char**>(&source_c_str),
+                                      static_cast<const size_t*>(&source_size),
+                                      &ret);
   checkstatus(ret, "clCreateProgramWithSource");
 
   /* Build Kernel Program */

@@ -7,8 +7,6 @@
 int main()
 {
 
-
-
   using namespace MIOpenGEMM;
 
   bool test_accuracy_of_soln = false;

@@ -460,10 +460,12 @@ RunStats supa_gemm0(cl_command_queue&               queue,
         mowri << "cl event \"gflops\" : [";
       }
 
-      if (run_i < 10 || n_to_time - run_i < 10){
+      if (run_i < 10 || n_to_time - run_i < 10)
+      {
         mowri << ' ' << gg.get_gflops(1e-3 * event_timer_times.back()) << ' ' << Flush;
       }
-      else if (run_i == 10){
+      else if (run_i == 10)
+      {
         mowri << "   ...   " << Flush;
       }
 
