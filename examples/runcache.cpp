@@ -177,7 +177,7 @@ int runcache_v2(std::map<char, std::vector<std::string>>& filters)
       {
         bool aT = x[0] == 'N' ? false : true;
         bool bT = x[1] == 'N' ? false : true;
-        v_tt.push_back({aT, bT});
+        v_tt.push_back({{aT, bT}});
       }
       ss << ' ' << x << ' ';
     }
@@ -232,7 +232,7 @@ int runcache_v2(std::map<char, std::vector<std::string>>& filters)
       if (ck.gg.floattype == 'f')
       {
         dev::TinyOne<TFl> diva(ck.gg, offsets, cmb.r_mem, mowri, devhint);
-        diva.accuracy_test(kernel_cache.at(ck, redirection::get_is_not_canonical(ck.gg)), nullptr);
+        diva.accuracy_test(kernel_cache.at(ck, redirection::get_is_not_canonical(ck.gg)));
         mowri << "\n\n";
       }
     }
@@ -254,7 +254,7 @@ int runcache_v2(std::map<char, std::vector<std::string>>& filters)
         Timer timer;
         timer.start();
         diva.benchgemm({kernel_cache.at(ck, redirection::get_is_not_canonical(ck.gg))},
-                       {{0, 5}, {0, 0.08}});
+                       {{{0, 5}}, {{0, 0.08}}});
         auto x = timer.get_elapsed();
         std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<size_t>(1200. * x)));
       }

@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
   {
     for (size_t i = 0; i < MEM_SIZE; ++i)
     {
-      vmem[i] = 1. - 2. * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+      vmem[i] = 1.f - 2.f * static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
     }
   }
   auto mem = vmem.data();
@@ -207,7 +207,7 @@ __global float       *          c
   auto   source_c_str = source_str.c_str();
   size_t source_size  = source_str.size();
   program             = clCreateProgramWithSource(
-    context, 1, (const char**)&source_c_str, (const size_t*)&source_size, &ret);
+    context, 1, static_cast<const char**>(&source_c_str), static_cast<const size_t*>(&source_size), &ret);
   checkstatus(ret, "clCreateProgramWithSource");
 
   /* Build Kernel Program */
@@ -219,13 +219,13 @@ __global float       *          c
   checkstatus(ret, "clCreateKernel");
 
   /* Set OpenCL kernel argument */
-  ret = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void*)&memobj_a);
+  ret = clSetKernelArg(kernel, 0, sizeof(cl_mem), static_cast<void*>(&memobj_a));
   checkstatus(ret, "clSetKernelArg");
 
-  ret = clSetKernelArg(kernel, 1, sizeof(cl_mem), (void*)&memobj_b);
+  ret = clSetKernelArg(kernel, 1, sizeof(cl_mem), static_cast<void*>(&memobj_b));
   checkstatus(ret, "clSetKernelArg");
 
-  ret = clSetKernelArg(kernel, 2, sizeof(cl_mem), (void*)&memobj_c);
+  ret = clSetKernelArg(kernel, 2, sizeof(cl_mem), static_cast<void*>(&memobj_c));
   checkstatus(ret, "clSetKernelArg");
 
   size_t local_work_size  = 256;

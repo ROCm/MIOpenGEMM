@@ -13,10 +13,10 @@ add_dependencies(check tests)
 function(add_test_executable TEST_NAME)
     add_executable (${TEST_NAME} EXCLUDE_FROM_ALL ${ARGN})
     target_link_libraries(${TEST_NAME} miopengemm)
-    # Cmake does not add flags correctly for gcc
-    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU") 
-        set_target_properties(${TEST_NAME} PROPERTIES COMPILE_FLAGS -pthread LINK_FLAGS -pthread)
-    endif()
+ 
+    #MIOpen has a conditional if(CMAKE_CXX_COMPILER_ID MATCHES "GNU") on setting pthread. 
+    set_target_properties(${TEST_NAME} PROPERTIES COMPILE_FLAGS -pthread LINK_FLAGS -pthread)
+ 
     if(WIN32)
         add_test(NAME ${TEST_NAME} WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH} COMMAND $<TARGET_FILE:${TEST_NAME}>)
     else()

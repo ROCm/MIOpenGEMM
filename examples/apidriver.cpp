@@ -9,6 +9,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <vector>
+
 #include <miopengemm/gemm.hpp>
 
 int driver(bool   isColMajor,
@@ -60,15 +61,15 @@ int driver(bool   isColMajor,
 
   for (size_t i = 0; i < m * k; ++i)
   {
-    host_a[i] = 1. - X2 * ((rand() % 1000) / 1000.);
+    host_a[i] = 1.0f - X2 * ((rand() % 1000) / 1000.0f);
   }
   for (size_t i = 0; i < n * k; ++i)
   {
-    host_b[i] = 1. - X2 * ((rand() % 1000) / 1000.);
+    host_b[i] = 1.0f - X2 * ((rand() % 1000) / 1000.0f);
   }
   for (size_t i = 0; i < m * n; ++i)
   {
-    host_c[i] = 1. - X2 * ((rand() % 1000) / 1000.);
+    host_c[i] = 1.0f - X2 * ((rand() % 1000) / 1000.0f);
   }
 
   size_t platform_id = 0;

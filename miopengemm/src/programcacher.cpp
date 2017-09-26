@@ -6,70 +6,90 @@
 #include <miopengemm/bundle.hpp>
 #include <miopengemm/gemm.hpp>
 #include <miopengemm/geometry.hpp>
+#include <miopengemm/hyperparams.hpp>
 #include <miopengemm/miogemm.hpp>
+#include <miopengemm/programcacher.hpp>
 #include <miopengemm/programs.hpp>
 #include <miopengemm/timer.hpp>
 #include <miopengemm/tinyzero.hpp>
-#include <miopengemm/hyperparams.hpp>
-#include <miopengemm/programcacher.hpp>
 
 namespace MIOpenGEMM
 {
 
+// void ProgramCacher::free(size_t ID)
+//{
+// std::lock_guard<std::mutex> lock(mutt);
+// if (ID >= max_cache_size - 1) // program_cache.size())
+//{
+// std::stringstream errm;
+// errm << "Attempt to free non-existing ID (max allowed ID is " << max_cache_size - 1 << ").";
+// throw miog_error(errm.str());
+//}
+// program_cache[ID].programs = {};
+//// not deleting hyper_params;
 
-void ProgramCacher::free(size_t ID)
+// std::string geom_key("");
+// for (auto& n : IDs)
+//{
+// if (std::get<1>(n) == ID)
+//{
+// geom_key = std::get<0>(n);
+// break;
+//}
+//}
+// if (geom_key == "")
+//{
+// std::stringstream ss;
+// ss << "ID in free does not correspond to any cached geometry.";
+// ss << " Being pedantic and throwing an error (although could continue (..))";
+// throw miog_error(ss.str());
+//}
+// else
+//{
+// IDs.erase(geom_key);
+//}
+
+// available_IDs.push_back(ID);
+//}
+
+int ProgramCacher::get_ID_from_geom(const Geometry&   gg,
+                                    BetaType          betatype,
+                                    cl_command_queue* ptr_queue)
 {
-  std::lock_guard<std::mutex> lock(mutt);
-  if (ID >= program_cache.size())
-  {
-    std::stringstream errm;
-    errm << "Attempt to free non-existing ID (max ID is " << ID << ").";
-    throw miog_error(errm.str());
-  }
-  program_cache[ID].programs = {};
-  // not deleting hyper_params;
-  
-  std::string geom_key("");
-  for (auto& n : IDs)
-  {
-    if (std::get<1>(n) == ID)
-    {
-      geom_key = std::get<0>(n);
-      break;
-    }
-  }
-  if (geom_key == "")
-  {
-    std::stringstream ss;
-    ss << "ID in free does not correspond to any cached geometry.";
-    ss << " Being pedantic and throwing an error (although could continue (..))";
-    throw miog_error(ss.str());
-  }
-  else
-  {
-    IDs.erase(geom_key);
-  }
-}
-
-int ProgramCacher::get_ID_from_geom(const Geometry & gg, BetaType betatype, cl_command_queue* ptr_queue){
-  return get_ID(gg.isColMajor, gg.tX[Mat::E::A], gg.tX[Mat::E::B], gg.tX[Mat::E::C], gg.m, gg.n, gg.k, gg.ldX[Mat::E::A], gg.ldX[Mat::E::B], gg.ldX[Mat::E::C], gg.wSpaceSize, betatype, gg.floattype, ptr_queue);
+  return get_ID(gg.isColMajor,
+                gg.tX[Mat::E::A],
+                gg.tX[Mat::E::B],
+                gg.tX[Mat::E::C],
+                gg.m,
+                gg.n,
+                gg.k,
+                gg.ldX[Mat::E::A],
+                gg.ldX[Mat::E::B],
+                gg.ldX[Mat::E::C],
+                gg.wSpaceSize,
+                betatype,
+                gg.floattype,
+                ptr_queue);
 }
 
 int ProgramCacher::get_ID(bool              isColMajor,
-           bool              tA,
-           bool              tB,
-           bool              tC,
-           size_t            m,
-           size_t            n,
-           size_t            k,
-           size_t            lda,
-           size_t            ldb,
-           size_t            ldc,
-           size_t            w_size,
-           BetaType          beta_type,
-           char              floattype,
-           cl_command_queue* ptr_queue)
+                          bool              tA,
+                          bool              tB,
+                          bool              tC,
+                          size_t            m,
+                          size_t            n,
+                          size_t            k,
+                          size_t            lda,
+                          size_t            ldb,
+                          size_t            ldc,
+                          size_t            w_size,
+                          BetaType          beta_type,
+                          char              floattype,
+                          cl_command_queue* ptr_queue)
 {
+
+  std::unique_lock<std::mutex> lock(mutt);
+
   int               ID = -1;
   std::stringstream ss;
 
@@ -83,12 +103,10 @@ int ProgramCacher::get_ID(bool              isColMajor,
   clGetDeviceInfo(device_id, CL_DEVICE_NAME, info_st.size(), &info_st[0], &info_size);
   std::string device_name = info_st.substr(0, info_size - 1);
 
-  ss << isColMajor << tA << tB << tC << '.' << m << '.' << n << '.' << k << '.' << lda << '.'
-     << ldb << '.' << ldc << '.' << w_size << '.' << beta_type << '.' << floattype << '.'
-     << device_name;
+  ss << isColMajor << tA << tB << tC << '.' << m << '.' << n << '.' << k << '.' << lda << '.' << ldb
+     << '.' << ldc << '.' << w_size << '.' << beta_type << '.' << floattype << '.' << device_name;
 
-  auto                         key = ss.str();
-  std::unique_lock<std::mutex> lock(mutt);
+  auto key = ss.str();
 
   if (IDs.count(key) != 0)
   {
@@ -124,23 +142,32 @@ int ProgramCacher::get_ID(bool              isColMajor,
         v_blobs.push_back(x);
       }
     }
-    program_cache.emplace_back(device_id, context, silent_mowri);
-    hyper_params.emplace_back(soln.hypas);
-    ID       = program_cache.size() - 1;
+
+    ID = current_ID;
+
+    ++current_ID;
+    if (current_ID >= max_cache_size)
+    {
+      std::stringstream errm;
+      errm << "Number of programs exceeded limit of max_cache_size = " << max_cache_size << '.';
+      throw miog_error(errm.str());
+    }
+
+    program_cache[ID] = Programs(device_id, context, silent_mowri);
+    hyper_params[ID]  = soln.hypas;
+
     IDs[key] = ID;
+
     lock.unlock();
-    program_cache.back().update(v_blobs);
+    program_cache[ID].update(v_blobs);
   }
 
   return ID;
 }
-
-
 
 ProgramCacher& get_cacher()
 {
   static ProgramCacher cacher;
   return cacher;
 }
-
 }

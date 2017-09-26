@@ -133,9 +133,9 @@ void TinyOne<TFl>::initialise_cpu_mem_from_scratch()
     {&__cpu_mem[Mat::E::A], &__cpu_mem[Mat::E::B], &__cpu_mem[Mat::E::C]}, gg, toff);
 
   //// why ?
-  //for (auto& x : __cpu_mem[Mat::E::B])
+  // for (auto& x : __cpu_mem[Mat::E::B])
   //{
-    //x *= 1000;
+  // x *= 1000;
   //}
   for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C})
   {
@@ -310,6 +310,8 @@ void TinyOne<TFl>::accuracy_test(const HyPas& hp)  //, const TFl* c_true_for_tes
   oclutil::cl_wait_for_events(
     1, &event_read_c_back.clevent, "in accuracy test, waiting GEMM gpu ", true);
 
+  std::stringstream errmss;
+  errmss << "accuracy test in TinyOne,\n" << gg.get_string() << '\n' << hp.get_string() << '\n';
   // compare cpu and gpu results
   accuracytests::elementwise_compare(gg,
                                      toff,
@@ -317,6 +319,7 @@ void TinyOne<TFl>::accuracy_test(const HyPas& hp)  //, const TFl* c_true_for_tes
                                      c_true_for_test,     // after cpu
                                      c_copy.data(),       // after gpu
                                      C_abs.data(),        // after abs on cpu
+                                     errmss.str(),
                                      mowri);
 }
 

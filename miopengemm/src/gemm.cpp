@@ -2,20 +2,18 @@
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 
-#include <mutex>
 #include <miopengemm/bundle.hpp>
 #include <miopengemm/gemm.hpp>
 #include <miopengemm/geometry.hpp>
+#include <miopengemm/hyperparams.hpp>
 #include <miopengemm/miogemm.hpp>
+#include <miopengemm/programcacher.hpp>
 #include <miopengemm/programs.hpp>
 #include <miopengemm/timer.hpp>
 #include <miopengemm/tinyzero.hpp>
-#include <miopengemm/hyperparams.hpp>
-#include <miopengemm/programcacher.hpp>
 
 namespace MIOpenGEMM
 {
-
 
 // TODO : alpha = 0 optimisation. beta = 0 optimisation.
 template <typename T>

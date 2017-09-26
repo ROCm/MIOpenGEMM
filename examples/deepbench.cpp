@@ -16,6 +16,10 @@
 
 #include <miopengemm/gemm.hpp>
 
+
+int main()
+{
+
 // DeepBench problems, copied (12/09/2017) from DeepBench/code/kernels/gemm_problems.h
 // Vector saves m, n, k, a_t, b_t
 std::vector<std::tuple<int, int, int, bool, bool>> training_set = {
@@ -180,8 +184,6 @@ std::vector<std::tuple<int, int, int, bool, bool>> training_set = {
   std::make_tuple(512, 32, 512, false, true),
   std::make_tuple(1024, 32, 512, false, true)};
 
-int main()
-{
 
   auto confirm = [](cl_int clstat) {
     if (clstat != CL_SUCCESS)

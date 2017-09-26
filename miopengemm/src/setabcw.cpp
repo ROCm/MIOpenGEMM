@@ -1,11 +1,13 @@
 /*******************************************************************************
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
+#include <iostream>
 #include <limits>
 #include <sstream>
+#include <thread>
 #include <miopengemm/error.hpp>
+#include <miopengemm/randomutil.hpp>
 #include <miopengemm/setabcw.hpp>
-#include <iostream>
 
 namespace MIOpenGEMM
 {
@@ -33,21 +35,36 @@ void fill_uni(std::vector<TFloat>& v, size_t r_small, size_t r_big)
     throw miog_error("strange request : in fill_uni, r_big > v.size()");
   }
 
-  for (size_t i = 0; i < r_small; ++i)
+  // previously, had larger values in pad region.
+  (void)r_small;
+
+  unsigned int             n_threads = 4;
+  std::vector<std::thread> threads;
+  for (unsigned int t = 0; t < n_threads; ++t)
   {
-    v[i] = TFloat(-1) + TFloat(rand() % 2000) / TFloat(1000);
+
+    threads.emplace_back([n_threads, r_big, t, &v]() {
+      // this makes the values deterministic, consider using random_device for initialisation
+      unsigned int g_seed = t;
+      for (auto i = (t * r_big) / n_threads; i < ((t + 1) * r_big) / n_threads; ++i)
+      {
+        // fast generation of low quality pseudo-random, see blog at
+        // fast-random-number-generator-on-the-intel-pentiumr-4-processor
+        g_seed                 = (214013 * g_seed + 2531011);
+        unsigned int new_value = (g_seed >> 16) & 0x7FFF;
+        v[i]                   = TFloat(-1) + (new_value % 2000) / TFloat(1000);
+      }
+    });
   }
 
-  // previously, had larger in pad region.
-  for (size_t i = r_small; i < r_big; ++i)
+  for (auto& t : threads)
   {
-    v[i] = TFloat(-1) + TFloat(rand() % 2000) / TFloat(1000);
+    t.join();
   }
 }
 
 template <typename TFloat>
-void set_multigeom_abc(const MatData<TFloat>& v_abc,
-
+void set_multigeom_abc(const MatData<TFloat>&       v_abc,
                        const std::vector<Geometry>& ggs,
                        const Offsets&               toff)
 {

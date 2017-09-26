@@ -5,20 +5,20 @@
 #ifndef GUARD_MIOPENGEMM_PROGRAMCACHER_HPP
 #define GUARD_MIOPENGEMM_PROGRAMCACHER_HPP
 
-#include <mutex>
 #include <algorithm>
 #include <memory>
+#include <mutex>
 #include <vector>
+#include <miopengemm/geometry.hpp>
 #include <miopengemm/hyperparams.hpp>
 #include <miopengemm/kernelstring.hpp>
 #include <miopengemm/oclutil.hpp>
 #include <miopengemm/outputwriter.hpp>
 #include <miopengemm/platform.hpp>
-#include <miopengemm/geometry.hpp>
 #include <miopengemm/programs.hpp>
 
-
-namespace MIOpenGEMM{
+namespace MIOpenGEMM
+{
 
 enum BetaType
 {
@@ -33,17 +33,29 @@ BetaType get_beta_type(T beta)
   //(std::abs<T>(beta - T(1)) < std::numeric_limits<T>::epsilon
 }
 
-
 class ProgramCacher
 {
 
+  private:
+  constexpr static size_t max_cache_size = 20000;
+
+  size_t current_ID = 0;
+
   public:
-  std::vector<Programs> program_cache;
-  std::vector<HyPas> hyper_params;
+  std::array<Programs, max_cache_size> program_cache;  // 7MB @ max_cache_size = 10000.
+  std::array<HyPas, max_cache_size>    hyper_params;
+
   std::unordered_map<std::string, int> IDs;
   std::mutex mutt;
+  // ProgramCacher(){
 
-  void free(size_t ID);
+  // std::cout << " A Programs is of size " << sizeof(Programs) << " bytes" << std::endl;
+  // std::cout << " A HyPas is of size " << sizeof(HyPas) << " bytes" << std::endl;
+
+  //};
+
+  // void free(size_t ID);
+
   int get_ID(bool              isColMajor,
              bool              tA,
              bool              tB,
@@ -58,13 +70,11 @@ class ProgramCacher
              BetaType          beta_type,
              char              floattype,
              cl_command_queue* ptr_queue);
-             
-  int get_ID_from_geom(const Geometry & gg, BetaType beta, cl_command_queue* ptr_queue);
 
+  int get_ID_from_geom(const Geometry& gg, BetaType beta, cl_command_queue* ptr_queue);
 };
 
 ProgramCacher& get_cacher();
-
 }
 
 #endif
