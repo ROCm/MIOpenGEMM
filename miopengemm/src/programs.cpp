@@ -96,7 +96,7 @@ oclutil::Result Programs::update(const std::vector<KernBlob>& kbs)
     "conversion", "unused-macros", "shorten-64-to-32", "cast-align"};
 
   std::stringstream ss_build_options;
-  ss_build_options << "-Werror";
+  //ss_build_options << "-Werror";
   ss_build_options << "   -cl-std=CL2.0";  // TODO : macro this.
   ss_build_options << "   -Wf,-Weverything";
   for (auto& x : warnings_to_ignore)

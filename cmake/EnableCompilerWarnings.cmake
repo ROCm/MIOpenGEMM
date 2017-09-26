@@ -34,7 +34,7 @@ else()
             list(APPEND CMAKE_COMPILER_WARNINGS
                 
                 -Weverything
-                -Werror
+                #-Werror
                 
                 # very difficult to live without these off
                 -Wno-c++98-compat
