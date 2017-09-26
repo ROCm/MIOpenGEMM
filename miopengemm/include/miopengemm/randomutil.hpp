@@ -21,6 +21,7 @@ class RandomUtil
 
   public:
   RandomUtil();
+  RandomUtil(int seed);
   size_t get_from_range(size_t upper);
   template <typename T>
   void shuffle(size_t start_index, size_t end_index, T& t)

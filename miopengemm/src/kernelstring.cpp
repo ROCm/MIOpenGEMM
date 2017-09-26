@@ -23,7 +23,6 @@ bool KernUses::at(Mem::E emat_x) const
   case Mem::E::N: throw miog_error("N not allowed in KernUses::at");
   }
   throw miog_error("failed in KernUses::at");
-  
 }
 
 KernUses::KernUses(bool u_a_, bool u_b_, bool u_c_, bool u_w_, bool u_alpha_, bool u_beta_)

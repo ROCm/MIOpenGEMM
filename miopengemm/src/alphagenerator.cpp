@@ -241,9 +241,6 @@ TFLOAT previous_value; )"
                                   size_t             with_alpha_increment)
   {
 
-    // a good place to break kernel to check error checking.
-    // make this* 1.11101242345 for example
-
     std::string dima_index = hp.sus[Mat::E::A].vs[Chi::E::MIW] == 0
                                ? "dima"
                                : "(dimai*VEW_A)/N_MICRO_IN_MACRO_A + dimai_v";  //
@@ -251,13 +248,13 @@ TFLOAT previous_value; )"
                                ? "dimb"
                                : "(dimbi*VEW_B)/N_MICRO_IN_MACRO_B + dimbi_v";
 
+    // a good place to break kernel to check error checking.
+    // make this* 1.11101242345 for example
+
     std::string alpha_scaled = "alpha*rC[" + dima_index + "][" + dimb_index + "]";
     ss << "\nindex =  STRIDE_PLL_M_C*(write_start_a + dima) + STRIDE_PLL_N_C*(write_start_b + "
           "dimb) ;\n";
 
-    // ss << "anothertime\n";
-
-    // ss << (with_beta_scaling == 0 ? "" : "c[index] *= beta;\n");
     if (with_beta_scaling != 0)
     {
       ss << "if (beta >= 0 && beta <= 0){\nc[index] = 0; \n}\n"

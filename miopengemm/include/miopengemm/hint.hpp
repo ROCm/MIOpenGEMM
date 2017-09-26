@@ -27,6 +27,7 @@ class BasicHint
   void set(size_t& x, const std::vector<std::string> ts) const;
   virtual std::string get_description() const = 0;
   virtual ~BasicHint()                        = default;
+  BasicHint& operator=(const BasicHint&) = default;
 };
 
 class PlatformHint : public BasicHint
@@ -36,6 +37,7 @@ class PlatformHint : public BasicHint
   PlatformHint() = default;
   PlatformHint(size_t id_, const std::vector<std::string>& matches_) : BasicHint(id_, matches_) {}
   virtual ~PlatformHint() = default;
+  PlatformHint& operator=(const PlatformHint&) = default;
 };
 
 class DeviceHint : public BasicHint
@@ -44,7 +46,8 @@ class DeviceHint : public BasicHint
   virtual std::string get_description() const override final { return "devices"; }
   DeviceHint() = default;
   DeviceHint(size_t id_, const std::vector<std::string>& matches_) : BasicHint(id_, matches_) {}
-  virtual ~DeviceHint() = default;
+  DeviceHint& operator=(const DeviceHint&) = default;
+  virtual ~DeviceHint()                    = default;
 };
 
 class CLHint
@@ -61,7 +64,8 @@ class CLHint
   // Construct from Platform ID and Device ID.
   CLHint(size_t pla_id, size_t dev_id);
   // No hint : hope that there's only one device and one platform.
-  CLHint() = default;
+  CLHint()        = default;
+  CLHint& operator=(const CLHint&) = default;
 };
 }
 

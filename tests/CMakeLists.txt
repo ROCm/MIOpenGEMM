@@ -13,6 +13,10 @@ add_dependencies(check tests)
 function(add_test_executable TEST_NAME)
     add_executable (${TEST_NAME} EXCLUDE_FROM_ALL ${ARGN})
     target_link_libraries(${TEST_NAME} miopengemm)
+ 
+    #MIOpen has a conditional if(CMAKE_CXX_COMPILER_ID MATCHES "GNU") on setting pthread. 
+    set_target_properties(${TEST_NAME} PROPERTIES COMPILE_FLAGS -pthread LINK_FLAGS -pthread)
+ 
     if(WIN32)
         add_test(NAME ${TEST_NAME} WORKING_DIRECTORY ${LIBRARY_OUTPUT_PATH} COMMAND $<TARGET_FILE:${TEST_NAME}>)
     else()
@@ -24,3 +28,5 @@ endfunction(add_test_executable)
 
 
 add_test_executable(smallgeometrytests smallgeometrytests.cpp)
+
+add_test_executable(test_gemm0 test_gemm0.cpp)

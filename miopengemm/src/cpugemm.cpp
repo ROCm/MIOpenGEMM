@@ -24,20 +24,20 @@ namespace openblas
 using blasint = size_t;
 
 template <typename TFloat>
-void gemm_openblas_base(const CBLAS_ORDER     Order,
-                        const CBLAS_TRANSPOSE TransA,
-                        const CBLAS_TRANSPOSE TransB,
-                        const blasint         M,
-                        const blasint         N,
-                        const blasint         K,
-                        const TFloat          alpha,
-                        const TFloat*         A,
-                        const blasint         lda,
-                        const TFloat*         B,
-                        const blasint         ldb,
-                        const TFloat          beta,
-                        TFloat*               C,
-                        const blasint         ldc)
+void gemm_openblas_base(const CBLAS_ORDER,
+                        const CBLAS_TRANSPOSE,
+                        const CBLAS_TRANSPOSE,
+                        const blasint,
+                        const blasint,
+                        const blasint,
+                        const TFloat,
+                        const TFloat*,
+                        const blasint,
+                        const TFloat*,
+                        const blasint,
+                        const TFloat,
+                        TFloat*,
+                        const blasint)
 {
   throw miog_error("unrecognised float type in openblas gemm");
 }

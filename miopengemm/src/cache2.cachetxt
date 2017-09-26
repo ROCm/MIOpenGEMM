@@ -74,15 +74,6 @@ kc.add(
 kc.add(
 {"gfx803",  // dev
 {""},  // con
-{"tC0_tA0_tB1_colMaj1_m47524_n363_k1_lda47524_ldb363_ldc47524_ws0_f32"}}, // gg
-{{{ // hp
-"MIC4_PAD1_PLU0_LIW0_MIW0_WOS0_VEW4",
-"MIC2_PAD1_PLU0_LIW1_MIW1_WOS0_VEW1",
-"UNR32_GAL2_PUN0_ICE1_IWI1_SZT0_MAD1_NAW16_UFO0_MAC256_SKW9_AFI0_MIA0"}}});
-
-kc.add(
-{"gfx803",  // dev
-{""},  // con
 {"tC0_tA0_tB1_colMaj1_m130305_n1600_k1_lda130305_ldb1600_ldc130305_ws0_f32"}}, // gg
 {{{ // hp
 "MIC8_PAD2_PLU1_LIW0_MIW1_WOS0_VEW1",

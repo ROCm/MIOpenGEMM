@@ -23,6 +23,7 @@ void elementwise_compare(
   const TFloat*   c_cpu,      // C matrix after GEMM on CPU
   const TFloat*   c_gpu,      // C matrix after GEMM on GPU.
   const TFloat*   c_cpu_abs,  // C matrix after GEMM : abs(alpha)*abs(A)abs(B) + abs(beta)*abs(C)
+  std::string     info_str,   // to be printed in error message if there is a problem
   owrite::Writer& mowri);
 }
 }

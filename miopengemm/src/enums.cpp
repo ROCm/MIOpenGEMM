@@ -18,6 +18,19 @@ owrite::Flusher Flush;
 
 namespace Floating
 {
+
+const double& get_default_alpha()
+{
+  static const double default_alpha = 0.415693029182345929;
+  return default_alpha;
+}
+
+const double& get_default_beta()
+{
+  static const double default_beta = -0.31415011010010110;
+  return default_beta;
+}
+
 MFType::MFType(double v) : v_d(v), v_f(static_cast<float>(v)) {}
 const void* MFType::operator[](char floattype) const
 {
@@ -26,13 +39,13 @@ const void* MFType::operator[](char floattype) const
 
 const MFType& get_m_alpha()
 {
-  const static MFType m_alpha(default_alpha);
+  const static MFType m_alpha(get_default_alpha());
   return m_alpha;
 }
 
 const MFType& get_m_beta()
 {
-  const static MFType m_beta(default_beta);
+  const static MFType m_beta(get_default_beta());
   return m_beta;
 }
 }
@@ -386,7 +399,6 @@ const std::vector<int>* mat_to_priority(Mat::E emat)
   case Mat::E::N: throw miog_error("unrecognised Mat::E (N) in mat_to_priority");
   }
   throw miog_error("failed in mat_to_priority");
-
 }
 
 Mat::E mem_to_mat(Mem::E emat)
@@ -400,7 +412,6 @@ Mat::E mem_to_mat(Mem::E emat)
   case Mem::E::N: throw miog_error("no mat enum for supposed ::N");
   }
   throw miog_error("failed in mem_to_mat");
-
 }
 }
 

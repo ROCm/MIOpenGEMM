@@ -27,7 +27,7 @@ enum class Status
 template <typename T>
 bool exactly_equal(T a, T b)
 {
-  return (a >= b && a <= b);
+  return ((std::isnan(a) && std::isnan(b)) || (a >= b && a <= b));
 }
 
 template <typename TFloat>
@@ -37,6 +37,7 @@ void elementwise_compare(const Geometry& gg,
                          const TFloat*   c_cpu,
                          const TFloat*   c_gpu,
                          const TFloat*   c_cpu_abs,
+                         std::string     info_str,
                          owrite::Writer& mowri)
 {
   double threshold      = 1e-6;
@@ -50,6 +51,8 @@ void elementwise_compare(const Geometry& gg,
 
   std::vector<Status> status(nels, Status::UNCHECKED);
   std::stringstream   errm;
+
+  errm << info_str << '\n';
 
   auto get_message = [c_before, c_cpu, c_gpu, c_cpu_abs, &gg, &toff](size_t i) {
     std::stringstream ss;
@@ -103,8 +106,8 @@ void elementwise_compare(const Geometry& gg,
         ++n_errs_printed;
         errm << "(in matrix zone, "
              << "uncoal = " << i << "/" << gg.get_uncoal(Mat::E::C) << ", coal = " << j << "/"
-             << gg.ldX[Mat::E::C] << ")"
-             << " abs(cpu - gpu)/max(absgemm, 1e-9)=" << relerr1 << ">" << threshold << ". "
+             << gg.ldX[Mat::E::C] << ")\n"
+             << "abs(cpu - gpu)/max(absgemm, 1e-9)=" << relerr1 << ">" << threshold << ". "
              << get_message(coord);
       }
     }
@@ -163,6 +166,7 @@ template void elementwise_compare(const Geometry& gg,
                                   const float*    c_cpu,
                                   const float*    c_gpu,
                                   const float*    c_cpu_abs,
+                                  std::string,
                                   owrite::Writer& mowri);
 
 template void elementwise_compare(const Geometry& gg,
@@ -171,6 +175,7 @@ template void elementwise_compare(const Geometry& gg,
                                   const double*   c_cpu,
                                   const double*   c_gpu,
                                   const double*   c_cpu_abs,
+                                  std::string,
                                   owrite::Writer& mowri);
 }
 }
