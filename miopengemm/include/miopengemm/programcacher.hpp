@@ -47,14 +47,6 @@ class ProgramCacher
 
   std::unordered_map<std::string, int> IDs;
   std::mutex mutt;
-  // ProgramCacher(){
-
-  // std::cout << " A Programs is of size " << sizeof(Programs) << " bytes" << std::endl;
-  // std::cout << " A HyPas is of size " << sizeof(HyPas) << " bytes" << std::endl;
-
-  //};
-
-  // void free(size_t ID);
 
   int get_ID(bool              isColMajor,
              bool              tA,
