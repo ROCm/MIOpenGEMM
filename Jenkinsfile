@@ -16,11 +16,12 @@ def rocmtestnode(variant, name, dockerfile, body) {
         stage("checkout ${variant}") {
             checkout scm
         }
+        def docker_path = "docker/${dockerfiler}.docker";
         stage("image ${variant}") {
             try {
-                docker.build("${image}", ". -f docker/${dockerfiler}.docker")
+                docker.build("${image}", ". -f ${docker_path}")
             } catch(Exception ex) {
-                docker.build("${image}", "--no-cache . -f docker/${dockerfiler}.docker")
+                docker.build("${image}", "--no-cache . -f ${docker_path}")
 
             }
         }
