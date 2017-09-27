@@ -37,4 +37,6 @@ RUN dpkg -i dumb-init_*.deb && rm dumb-init_*.deb
 # Install cget
 RUN pip install cget
 
+# Install rocm cmake
+RUN cget -p /usr/local install RadeonOpenCompute/rocm-cmake
 

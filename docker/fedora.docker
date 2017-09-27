@@ -41,3 +41,6 @@ RUN dnf clean all && dnf -y install \
 # Install cget
 RUN pip install --upgrade pip
 RUN pip install cget
+
+# Install rocm cmake
+RUN cget -p /usr/local install RadeonOpenCompute/rocm-cmake
