@@ -16,7 +16,7 @@ def rocmtestnode(variant, name, dockerfile, body) {
         stage("checkout ${variant}") {
             checkout scm
         }
-        def docker_path = "docker/${dockerfiler}.docker";
+        def docker_path = "docker/${dockerfile}.docker";
         stage("image ${variant}") {
             try {
                 docker.build("${image}", ". -f ${docker_path}")
