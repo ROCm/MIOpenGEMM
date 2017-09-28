@@ -8,11 +8,7 @@ set( miopengemm_INSTALL_DIR miopengemm)
 
 option(BUILD_DEV OFF)
 
-if(BUILD_DEV)
-configure_file(config.hpp.dev dev_include/miopengemm/config.hpp)
-else()
 configure_file(config.hpp.install dev_include/miopengemm/config.hpp)
-endif()
 
 file(GLOB_RECURSE source_files src/*.cpp)
 

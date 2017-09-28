@@ -1,0 +1,42 @@
+FROM ubuntu:16.04
+
+# Support multiarch
+RUN dpkg --add-architecture i386
+
+# Add rocm repository
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y curl apt-utils wget
+RUN curl https://raw.githubusercontent.com/RadeonOpenCompute/ROCm-docker/develop/add-rocm.sh | bash
+
+# Install dependencies required to build hcc
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --allow-unauthenticated \
+    apt-utils \
+    build-essential \
+    clang-3.8 \
+    clang-format-3.8 \
+    clang-tidy-3.8 \
+    cmake \
+    curl \
+    doxygen \
+    g++-multilib \
+    git \
+    rocm-dev \
+    python \
+    python-dev \
+    python-pip \
+    rocm-opencl \
+    rocm-opencl-dev \
+    software-properties-common \
+    wget && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install an init system
+RUN wget https://github.com/Yelp/dumb-init/releases/download/v1.2.0/dumb-init_1.2.0_amd64.deb
+RUN dpkg -i dumb-init_*.deb && rm dumb-init_*.deb
+
+# Install cget
+RUN pip install cget
+
+# Install rocm cmake
+RUN cget -p /usr/local install RadeonOpenCompute/rocm-cmake
+

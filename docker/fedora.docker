@@ -1,0 +1,46 @@
+FROM fedora:24
+
+ARG REPO_RADEON=10.255.8.5
+
+RUN touch /etc/yum.repos.d/rocm.repo
+
+RUN echo "[remote]" >> /etc/yum.repos.d/rocm.repo && \
+    echo "" >> /etc/yum.repos.d/rocm.repo && \
+    echo "name=ROCm Repo" >> /etc/yum.repos.d/rocm.repo && \
+    echo "" >> /etc/yum.repos.d/rocm.repo && \
+    echo "baseurl=http://$REPO_RADEON/rocm/yum/rpm/" >> /etc/yum.repos.d/rocm.repo && \
+    echo "" >> /etc/yum.repos.d/rocm.repo && \
+    echo "enabled=1" >> /etc/yum.repos.d/rocm.repo && \
+    echo "" >> /etc/yum.repos.d/rocm.repo && \
+    echo "gpgcheck=0" >> /etc/yum.repos.d/rocm.repo
+
+RUN dnf clean all && dnf -y install \
+    cmake \
+    file \
+    findutils \
+    gcc-c++ \
+    gcc-c++.i686 \
+    gettext \
+    git \
+    rocm-dev \
+    hsa-rocr-dev \
+    libstdc++-static \
+    make \
+    openssl-devel \
+    pciutils-libs \
+    pkgconfig \
+    pth \
+    python \
+    python-pip \
+    python-devel \
+    redhat-rpm-config \
+    rocm-opencl \
+    rocm-opencl-devel \
+    wget
+
+# Install cget
+RUN pip install --upgrade pip
+RUN pip install cget
+
+# Install rocm cmake
+RUN cget -p /usr/local install RadeonOpenCompute/rocm-cmake
