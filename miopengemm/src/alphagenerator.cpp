@@ -493,8 +493,15 @@ barrier(CLK_LOCAL_MEM_FENCE); )";
   void append_math_section(std::stringstream& ss, size_t use_k_remaining)
   {
 
+    ss << "\n//To make first load `even'\nunr = 1;\n";
+
+    for (Mat::E emat : mata_matb)
+    {
+      append_load_to_register_string(emat, ss);
+    }
+      
     std::string number_of_unrolls = use_k_remaining == 0 ? "UNROLL" : "k_remaining";
-    ss << "\nfor (TSHORT u = 0; u < " << number_of_unrolls << "; ++u){\n";
+    ss << "\nfor (unr = 0; unr < " << number_of_unrolls << " - 1 " << "; ++unr){\n";
 
     for (Mat::E emat : mata_matb)
     {
@@ -505,6 +512,7 @@ barrier(CLK_LOCAL_MEM_FENCE); )";
     append_compute_string(ss);
 
     ss << "}\n";
+    append_compute_string(ss);
   }
 
   void append_relocate_load_math_string(std::stringstream& ss,
@@ -539,7 +547,7 @@ barrier(CLK_LOCAL_MEM_FENCE); )";
     ss <<
       R"(
 /* make sure all maths is complete, so that we can pull in the next unroll slice (if there is one) */
-barrier(CLK_LOCAL_MEM_FENCE); )";
+//barrier(CLK_LOCAL_MEM_FENCE); )";
   }
 
   void append_final_unroll_string(std::stringstream& ss)
@@ -613,11 +621,11 @@ if ((group_id_z == N_WORK_ITEMS_PER_C_ELM - 1) && k_remaining > 0){
 
     if (hp.sus[Mat::E::C].vs[NonChi::E::MAD] == Binary::E::NO)
     {
-      ss << "rC[dima][dimb] += rA[dima]*rB[dimb];   \n}\n}\n";
+      ss << "rC[dima][dimb] += rA[unr%2][dima]*rB[unr%2][dimb];   \n}\n}\n";
     }
     else
     {
-      ss << "rC[dima][dimb] = mad(rA[dima], rB[dimb], rC[dima][dimb]);    \n}\n}\n";
+      ss << "rC[dima][dimb] = mad(rA[unr%2][dima], rB[unr%2][dimb], rC[dima][dimb]);    \n}\n}\n";
     }
   }
 
@@ -632,14 +640,14 @@ if ((group_id_z == N_WORK_ITEMS_PER_C_ELM - 1) && k_remaining > 0){
     {
       for (unsigned j = 0; j < hp.sus[emat_x].vs[Chi::E::VEW]; ++j)
       {
-        ss << "r" << X << "[VEW_" << X << "*i + " << j << "] = l" << X << "["
+        ss << "r" << X << "[(1+unr)%2][VEW_" << X << "*i + " << j << "] = l" << X << "["
            << "i*"
            << "C_INTERWEAVE_STRIDE_" << X << "].s" << j << ";\n";
       }
     }
     else
     {
-      ss << "r" << X << "[i] = l" << X << "[i*C_INTERWEAVE_STRIDE_" << X << "];\n";
+      ss << "r" << X << "[(1+unr)%2][i] = l" << X << "[i*C_INTERWEAVE_STRIDE_" << X << "];\n";
     }
     ss << "}\n";
 
@@ -867,7 +875,7 @@ TINTK k_plus_offset = KV__ + unroll_offset;
     ss << "__local const TVFLOAT" << X << " * l" << X << ";\n";
     if (emat_x == Mat::E::A)
       ss << "/* register memory */ \n";
-    ss << "TFLOAT r" << X << "[MICRO_TILE_LENGTH_" << X << "];\n";
+    ss << "TFLOAT r" << X << "[2][MICRO_TILE_LENGTH_" << X << "];\n";
     if (emat_x == Mat::E::A)
       ss << "/* Define which part of the C macro-tile this thread will process "
             "(% / or / % ? "
@@ -1269,6 +1277,8 @@ TINTK k_plus_offset = KV__ + unroll_offset;
     }
 
     ss << "\n\n\n";
+
+    ss << "TSHORT unr = 0;\n " ;
 
     ss << "/* register memory for C */\n ";
 
