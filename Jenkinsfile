@@ -74,11 +74,4 @@ rocmtest clang: rocmnode('fiji', 'ubuntu') { cmake_build ->
     stage('GCC Release') {
         cmake_build('g++-5', '-DBUILD_DEV=On -DCMAKE_BUILD_TYPE=release')
     }
-}, fedora: rocmnode('fiji', 'fedora') { cmake_build ->
-    stage('Fedora GCC Debug') {
-        cmake_build('g++', '-DBUILD_DEV=On -DCMAKE_BUILD_TYPE=debug')
-    }
-    stage('Fedora GCC Release') {
-        cmake_build('g++', '-DBUILD_DEV=On -DCMAKE_BUILD_TYPE=release')
-    }
 }
