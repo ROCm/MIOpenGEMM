@@ -140,6 +140,21 @@ std::string HyPas::get_string() const
   return ss.str();
 }
 
+std::string HyPas::get_contig_string() const
+{
+
+  std::stringstream ss;
+  for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C})
+  {
+    if (emat != Mat::E::A)
+    {
+      ss << "___";
+    }
+    ss << Mat::M().name[emat] << '_' << sus[emat].get_string();
+  }
+  return ss.str();
+}
+
 std::string Constraints::get_combo_str(const str_array& strs) const
 {
   std::stringstream ss;

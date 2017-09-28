@@ -8,16 +8,16 @@
 int main()
 {
   using namespace MIOpenGEMM;
-  Geometry gg("tC0_tA1_tB0_colMaj1_m4096_n4096_k4096_lda4096_ldb4096_ldc4096_ws100000000_f32");
-  HyPas    hp{{{"MIC6_PAD1_PLU0_LIW0_MIW1_WOS2_VEW1",
-             "MIC8_PAD2_PLU0_LIW0_MIW1_WOS2_VEW2",
-             "UNR16_GAL3_PUN1_ICE1_IWI0_SZT0_NAW16_UFO0_MAC64_SKW10_AFI0_MIA0"}}};
+  Geometry gg("tC0_tA1_tB0_colMaj1_m4001_n4001_k4001_lda4001_ldb4001_ldc4001_ws100000000_f32");
+  HyPas    hp{{{"MIC6_PAD1_PLU0_LIW0_MIW1_WOS0_VEW1",
+             "MIC8_PAD2_PLU0_LIW0_MIW1_WOS0_VEW1",
+             "UNR16_GAL3_PUN1_ICE1_IWI0_SZT0_NAW16_UFO0_MAC64_SKW10_AFI0_MIA0_MAD1"}}};
   owrite::Writer  mowri(Ver::E::TERMINAL, "");
   kerngen::Bundle bundle(hp, gg);
 
   for (auto& x : bundle.v_tgks)
   {
-    auto dirname = "/home/james/ptest/" + gg.get_string() + "/" + hp.get_string() + "/";
+    auto dirname = "/home/james/ptest/" + gg.get_string() + "/" + hp.get_contig_string() + "/";
 
     // WARNING : mkdir only works on linux/mac
     std::string syscall = "mkdir -p " + dirname;
