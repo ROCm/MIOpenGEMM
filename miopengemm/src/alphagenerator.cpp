@@ -467,7 +467,7 @@ barrier(CLK_LOCAL_MEM_FENCE); )";
     ss << " {\n" << dp.pragma_unroll_string;
     append_load_for_pll(emat_x, ss);
     ss << " {\n"
-       << "local" << X << "[MACRO_TILE_LENGTH_" << X << "_AND_PAD/VEW_" << X << "*(" << x
+       << "local" << X << "[0][MACRO_TILE_LENGTH_" << X << "_AND_PAD/VEW_" << X << "*(" << x
        << "_offset_pll_unroll + mu_pll_i) + " << x << "_offset_perp_unroll_v + mu_perp_i] = \n"
        << ss_value_to_get.str() << '\n'
        << "}\n"
@@ -529,7 +529,7 @@ barrier(CLK_LOCAL_MEM_FENCE); )";
       char x = Mat::M().lcase_name[emat_x];
 
       ss << '\n'
-         << "l" << X << " = local" << X << " + micro_id_" << x << "*"
+         << "l" << X << " = local" << X << "[0] + micro_id_" << x << "*"
          << get_c_work_item_next(emat_x) << "/VEW_" << X << ";";
     }
 
@@ -859,7 +859,7 @@ TINTK k_plus_offset = KV__ + unroll_offset;
     if (emat_x == Mat::E::A)
       ss << "/* LDS memory */\n";
     ss << "__local "
-       << "TVFLOAT" << X << " local" << X << "[N_ELEMENTS_IN_PADDED_" << X << "_UNROLL"
+       << "TVFLOAT" << X << " local" << X << "[2][N_ELEMENTS_IN_PADDED_" << X << "_UNROLL"
        << "/VEW_" << X << "];\n";
     if (emat_x == Mat::E::A)
       ss << "/* jumping pointer to locate the LDS to load into register memory "
