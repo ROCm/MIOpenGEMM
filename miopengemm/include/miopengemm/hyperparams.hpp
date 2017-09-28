@@ -82,6 +82,7 @@ class HyPas
 
   void replace_where_defined(const Constraints& constraints);
   std::string get_string() const;
+  std::string get_contig_string() const;
   bool operator==(const HyPas& rhs) const;
   void  checks() const;
   HyPas get_reflected(bool) const;
