@@ -364,7 +364,9 @@ RunStats supa_gemm0(cl_command_queue&               queue,
       if (impl == GemmImpl::GEMM0 || impl == GemmImpl::XGEMM)
       {
         auto id = get_cacher().get_ID_from_geom(gg, get_beta_type(beta), &queue);
-        infoss << get_cacher().hyper_params[id].get_string();
+        if (id >= 0){
+          infoss << get_cacher().hyper_params[id].get_string();
+        }
       }
 
       // read from device
