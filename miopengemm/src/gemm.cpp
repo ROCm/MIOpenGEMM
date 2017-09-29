@@ -63,6 +63,11 @@ GemmStatus xgemm(bool              isColMajor,
                              beta_type,
                              get_floattype_char<T>(),
                              ptr_queue);
+
+    if (ID == UnusualGemmId::ZeroOperation)
+    {
+      return {true, ID};
+    }
   }
 
   const Programs& programs = get_cacher().program_cache[ID];

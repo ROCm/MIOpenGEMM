@@ -88,6 +88,19 @@ int ProgramCacher::get_ID(bool              isColMajor,
                           cl_command_queue* ptr_queue)
 {
 
+  if (m == 0 || n == 0 || k == 0)
+  {
+    if (beta_type == BetaType::IsZero && k == 0 && m > 0 && n > 0)
+    {
+      throw miog_error("beta = 0 and k = 0 and m*n > 0 : needs to implemented (set C to zero)");
+      // should return {true, UnusualGemmId::ZeroKandBeta};
+    }
+    else
+    {
+      return UnusualGemmId::ZeroOperation;
+    }
+  }
+
   std::unique_lock<std::mutex> lock(mutt);
 
   int               ID = -1;
