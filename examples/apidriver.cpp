@@ -42,17 +42,17 @@ int driver(bool   isColMajor,
   switch (init)  // argv[1][0])
   {
   case 'U':
-    std::cout << "initialise hose matrices with uniform random [-1,1] ... ";
+    std::cout << "initialise host matrices with uniform random [-1,1] ... ";
     X2 = 2;
     break;
 
   case 'P':
-    std::cout << "initialise hose matrices with uniform random [0,1] ... ";
+    std::cout << "initialise host matrices with uniform random [0,1] ... ";
     X2 = 1;
     break;
 
   case 'C':
-    std::cout << "initialise hose matrices matrices with 1.0 ... ";
+    std::cout << "initialise host matrices matrices with 1.0 ... ";
     X2 = 0;
     break;
 
