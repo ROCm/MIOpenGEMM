@@ -61,18 +61,20 @@ int driver(bool   isColMajor,
 
   default: throw std::runtime_error("ERROR : unrecognised -d flag.");
   }
-
+  
+  auto getr = [X2](){ return 1e10*(1.0 - static_cast<double>(X2) * ((rand() % RAND_MAX) / double(RAND_MAX))); }; 
+  
   for (size_t i = 0; i < m * k; ++i)
   {
-    host_a[i] = 1.0f - X2 * ((rand() % 1000) / 1000.0f);
+    host_a[i] = getr();
   }
   for (size_t i = 0; i < n * k; ++i)
   {
-    host_b[i] = 1.0f - X2 * ((rand() % 1000) / 1000.0f);
+    host_b[i] = getr();
   }
   for (size_t i = 0; i < m * n; ++i)
   {
-    host_c[i] = 1.0f - X2 * ((rand() % 1000) / 1000.0f);
+    host_c[i] = getr();
   }
 
   size_t platform_id = 0;
@@ -248,8 +250,9 @@ int driver(bool   isColMajor,
   std::chrono::duration<double> fp_ms   = std::chrono::high_resolution_clock::now() - t0;
   auto                          seconds = fp_ms.count();
   auto                          gflops  = n_runs * (m * n * k * 2.) / (1e9 * seconds);
+  auto                          milliseconds_per_run = 1e3*seconds/n_runs;
 
-  std::cout << "done in " << seconds << " seconds [" << gflops << " gflops]" << std::endl;
+  std::cout << "done in " << seconds << " seconds,  " << milliseconds_per_run << " ms per run, " << gflops << " gflops." << std::endl;
 
   clReleaseEvent(event);
   clReleaseMemObject(dev_a);
