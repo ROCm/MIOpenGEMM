@@ -25,6 +25,9 @@
  * C from localC */
 // TODO : experiment with this https://community.amd.com/thread/192119
 // (to see when CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE works).
+// TODO : for m = k = 1760 and n = 64, would it not be better to load B directly from global?
+// reasoning : elements of B are read 27.5x more frequently and can probably live in cache. 
+
 
 namespace MIOpenGEMM
 {
