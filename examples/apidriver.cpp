@@ -22,8 +22,7 @@ int driver(bool   isColMajor,
            float  beta,
            bool   fast_ID,
            char   init,
-           size_t n_runs,
-           bool   verbose)
+           size_t n_runs)
 {
 
   size_t lda = isColMajor == tA ? k : m;
@@ -37,8 +36,6 @@ int driver(bool   isColMajor,
   std::vector<float> host_a(lda * otha);
   std::vector<float> host_b(ldb * othb);
   std::vector<float> host_c(ldc * othc);
-
-  // bool verbose = false;
 
   // the coeffient of random number based on user's option.
   float X2 = 0;
@@ -80,27 +77,21 @@ int driver(bool   isColMajor,
   size_t platform_id = 0;
   size_t device_id   = 0;
 
-  if (verbose)
-    std::cout << "done. \nInitialise OpenCL platform ... " << std::flush;
-
+  std::cout << "done. \nInitialise OpenCL platform ... " << std::flush;
   cl_uint num_platforms;
   clGetPlatformIDs(0, nullptr, &num_platforms);
   std::vector<cl_platform_id> platforms(num_platforms);
   clGetPlatformIDs(num_platforms, platforms.data(), nullptr);
   cl_platform_id platform = platforms[platform_id];
 
-  if (verbose)
-    std::cout << "done. \nInitialise OpenCL device ... " << std::flush;
-
+  std::cout << "done. \nInitialise OpenCL device ... " << std::flush;
   cl_uint num_devices;
   clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, nullptr, &num_devices);
   std::vector<cl_device_id> devices(num_devices);
   clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, num_devices, devices.data(), nullptr);
   cl_device_id device = devices[device_id];
 
-  if (verbose)
-    std::cout << "done. \nInitialise OpenCL context ... " << std::flush;
-
+  std::cout << "done. \nInitialise OpenCL context ... " << std::flush;
   cl_context context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, nullptr);
 
   cl_queue_properties properties =
@@ -116,9 +107,7 @@ int driver(bool   isColMajor,
 
   cl_event event = nullptr;
 
-  if (verbose)
-    std::cout << "done. \nInitialise device memories ... " << std::flush;
-
+  std::cout << "done. \nInitialise device memories ... " << std::flush;
   cl_mem dev_a =
     clCreateBuffer(context, CL_MEM_READ_WRITE, m * k * sizeof(float), nullptr, nullptr);
   cl_mem dev_b =
@@ -132,12 +121,9 @@ int driver(bool   isColMajor,
   clEnqueueWriteBuffer(
     queue, dev_c, CL_TRUE, 0, m * n * sizeof(float), host_c.data(), 0, nullptr, nullptr);
 
-  if (verbose)
-  {
-    std::cout << "done. \nFirst call with this GEMM geometry (generating OpenCL string, compiling, "
-                 "etc) ... "
-              << std::flush;
-  }
+  std::cout
+    << "done. \nFirst call with this GEMM geometry (generating OpenCL string, compiling, etc) ... "
+    << std::flush;
   // the first, warm-up, call to xgemm. notice that ID is -1.
   auto status = MIOpenGEMM::xgemm<float>(isColMajor,
                                          tA,
@@ -174,13 +160,10 @@ int driver(bool   isColMajor,
 
   auto t0 = std::chrono::high_resolution_clock::now();
 
-  if (verbose)
-  {
-    std::cout << "done. \n"
-              << n_runs << " calls "
-              << "(fast_ID=" << fast_ID << ")"
-              << " blocking on the final one ... " << std::flush;
-  }
+  std::cout << "done. \n"
+            << n_runs << " calls "
+            << "(fast_ID=" << fast_ID << ")"
+            << " blocking on the final one ... " << std::flush;
 
   // we have the correct ID from the warm-up call. Should it be used? (makes small problems slightly
   // faster)
@@ -273,7 +256,6 @@ int main(int argc, char* argv[])
   values["isColMajor"] = 0;
   values["tA"]         = 0;
   values["tB"]         = 0;
-  values["verbose"]    = 1;
   values["id"]         = 1;
   int   n_runs         = -1;  // number of times to run GEMM, excluding the first run.
   char  init           = 'U';
@@ -354,32 +336,27 @@ int main(int argc, char* argv[])
     }
   }
 
-  bool isColMajor = static_cast<bool>(values["isColMajor"]);
-  bool tA         = static_cast<bool>(values["tA"]);
-  bool tB         = static_cast<bool>(values["tB"]);
-  bool verbose    = static_cast<bool>(values["verbose"]);
-
-  size_t m       = values["m"];
-  size_t n       = values["n"];
-  size_t k       = values["k"];
-  bool   fast_ID = values["id"];
+  bool   isColMajor = static_cast<bool>(values["isColMajor"]);
+  bool   tA         = static_cast<bool>(values["tA"]);
+  bool   tB         = static_cast<bool>(values["tB"]);
+  size_t m          = values["m"];
+  size_t n          = values["n"];
+  size_t k          = values["k"];
+  bool   fast_ID    = values["id"];
 
   if (n_runs <= 0)
   {
     n_runs = std::min<size_t>(1500, std::max<size_t>(std::ceil(1e11 / (2 * m * k * n)), 2));
   }
 
-  if (verbose == true)
+  std::cout << "running with: \n";
+  for (auto& x : values)
   {
-    std::cout << "running with: \n";
-    for (auto& x : values)
-    {
-      std::cout << "   " << std::get<0>(x) << " = " << std::get<1>(x) << '\n';
-    }
-    std::cout << "   n_runs = " << n_runs << '\n';
-    std::cout << "   init = " << init << '\n' << '\n';
+    std::cout << "   " << std::get<0>(x) << " = " << std::get<1>(x) << '\n';
   }
+  std::cout << "   n_runs = " << n_runs << '\n';
+  std::cout << "   init = " << init << '\n' << '\n';
 
-  int X = driver(isColMajor, tA, tB, m, n, k, alpha, beta, fast_ID, init, n_runs, verbose);
+  int X = driver(isColMajor, tA, tB, m, n, k, alpha, beta, fast_ID, init, n_runs);
   return X;
 }
