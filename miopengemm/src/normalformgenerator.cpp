@@ -86,7 +86,7 @@ class NormalFormGenerator : public prepgen::PrepGenerator
     ss << "{"
        << "\n/* setting up where this thread works */\n"
        << "TINT" << Mem::M().name[emat_x] << " group_id = get_group_id(0);\n"
-       << "TINT" << Mem::M().name[emat_x] << " micro_id = (TINT)(get_local_id(0));\n"
+       << "TINT" << Mem::M().name[emat_x] << " micro_id = (TINT" << Mem::M().name[emat_x] << ")(get_local_id(0));\n"
        << "\n"
        << "TINT" << Mem::M().name[emat_x]
        << " macro_id_pll_unroll = group_id % N_MACRO_TILES_PLL_UNROLL;\n"
