@@ -16,13 +16,15 @@ int main()
   // Geometry gg("tC0_tA1_tB0_colMaj1_m3072_n48000_k1024_lda1024_ldb1024_ldc3072_ws52594944_f32");
   // Geometry gg("tC0_tA0_tB0_colMaj0_m13_n13_k13_lda13_ldb13_ldc13_ws0_f32");
 
-  Geometry       gg = MIOpenGEMM::get_squareNN_geometry<float>(5100);
+  // gg{"tC0_tA1_tB0_colMaj1_m1024_n8_k500000_lda500000_ldb500000_ldc1024_ws0_f32"}; //
+
+  Geometry      gg  = MIOpenGEMM::get_squareNN_geometry<float>(500);
   CLHint         devhint({"Advanced Micro Devices", "gfx803"});
   Offsets        offsets = get_zero_offsets();
   owrite::Writer mowri(Ver::E::TERMINAL, "");
   dev::TinyTwo   boa(gg, offsets, mowri, devhint);
-  auto           find_params = get_at_least_n_restarts(1);
-  Constraints    constraints("");
+  auto           find_params = get_at_least_n_restarts(10);
+  Constraints    constraints("A_LOM1__B_LOM1");//A_LOM0__B_LOM0");
   Solution       soln = boa.find2(find_params, constraints);
   if (test_accuracy_of_soln)
   {

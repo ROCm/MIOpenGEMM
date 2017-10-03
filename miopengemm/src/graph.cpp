@@ -508,7 +508,7 @@ void ChiSuGr::initialise_edges()
   edges[Chi::E::PLU] = {g_binary()};
   edges[Chi::E::LIW] = {g_binary()};
   edges[Chi::E::MIW] = {g_binary()};
-  edges[Chi::E::LOM] = {{Binary::E::YES, {}}};//{g_binary()};
+  edges[Chi::E::LOM] = {g_binary()};
 
   edges[Chi::E::VEW] = {{1, {2}}, {2, {1, 4}}, {4, {2, 1}}};
 

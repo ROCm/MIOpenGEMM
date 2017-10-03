@@ -301,6 +301,13 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
     }
   }
 
+
+  if (ptr_hp->sus[Mat::E::C].vs[NonChi::E::UFO] == Binary::E::YES && 
+  (ptr_hp->sus[Mat::E::A].vs[Chi::E::LOM] == Binary::E::NO || 
+   ptr_hp->sus[Mat::E::B].vs[Chi::E::LOM] == Binary::E::NO)){
+    return std::make_tuple(false, "UFO = yes, so both LOMs must be YES");
+  }
+  
   main_split_on_k      = ptr_hp->sus[Mat::E::C].vs[NonChi::E::ICE] == 1 ? 0 : 1;
   main_does_beta_c_inc = main_split_on_k == 1 ? 0 : 1;
 
