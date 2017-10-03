@@ -508,6 +508,7 @@ void ChiSuGr::initialise_edges()
   edges[Chi::E::PLU] = {g_binary()};
   edges[Chi::E::LIW] = {g_binary()};
   edges[Chi::E::MIW] = {g_binary()};
+  edges[Chi::E::LOM] = {{Binary::E::YES, {}}};//{g_binary()};
 
   edges[Chi::E::VEW] = {{1, {2}}, {2, {1, 4}}, {4, {2, 1}}};
 
@@ -608,6 +609,7 @@ void ChiSuGr::refine_start_range()
   }
 
   start_range[Chi::E::VEW] = {1};
+  start_range[Chi::E::LOM] = {Binary::E::YES};
 
   set_start_mic();
 }

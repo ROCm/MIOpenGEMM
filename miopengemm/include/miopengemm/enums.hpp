@@ -82,6 +82,7 @@ enum E
   MIW,
   WOS,
   VEW,  // vector width
+  LOM,  // use local memory
   N
 };
 const EnumMapper<std::string>& M();

@@ -40,7 +40,7 @@ void elementwise_compare(const Geometry& gg,
                          std::string     info_str,
                          owrite::Writer& mowri)
 {
-  double threshold      = 1e-6;
+  double threshold      = 1e-5;
   size_t nels           = get_mat_size(gg, toff, Mat::E::C);
   size_t n_mat_els      = gg.get_padded_area(Mat::E::C);
   size_t n_errs_printed = 0;
