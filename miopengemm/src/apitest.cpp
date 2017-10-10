@@ -15,7 +15,7 @@
 #include <thread>
 #include <vector>
 
-#include <CL/cl.h>
+#include <miopengemm/platform.hpp>
 #ifdef MIOPENGEMM_BENCH_ISAAC
 #include <clBLAS.h>
 #endif
