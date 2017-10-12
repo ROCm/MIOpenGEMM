@@ -70,7 +70,7 @@ GemmStatus xgemm(bool              isColMajor,
     }
   }
 
-  const Programs& programs = get_cacher().program_cache[ID];
+  const Programs& programs = std::get<0>(*get_cacher().prohyp_cache[ID]);//program_cache[ID];
 
   std::array<cl_mem, Mem::E::N> gpu_mems;
   std::array<size_t, Mem::E::N> offsets;

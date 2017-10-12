@@ -52,8 +52,10 @@ class ProgramCacher
   size_t current_ID = 0;
 
   public:
-  std::array<Programs, max_cache_size> program_cache;  // 7MB @ max_cache_size = 10000.
-  std::array<HyPas, max_cache_size>    hyper_params;
+  //std::array<Programs, max_cache_size> program_cache;  // 7MB @ max_cache_size = 10000.
+  //std::array<HyPas, max_cache_size>    hyper_params;
+
+  std::array<std::unique_ptr<std::pair<Programs, HyPas>>, max_cache_size> prohyp_cache;
 
   std::unordered_map<std::string, int> IDs;
   std::mutex mutt;

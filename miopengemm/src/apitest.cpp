@@ -366,7 +366,8 @@ RunStats supa_gemm0(cl_command_queue&               queue,
       {
         auto id = get_cacher().get_ID_from_geom(gg, get_beta_type(beta), &queue);
         if (id >= 0){
-          infoss << get_cacher().hyper_params[id].get_string();
+          infoss << std::get<1>(*get_cacher().prohyp_cache[id]).get_string();
+          //get_cacher().hyper_params[id].get_string();
         }
       }
 
