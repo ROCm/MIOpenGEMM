@@ -56,6 +56,7 @@ class AlphaGenerator : public basegen::BaseGenerator
     u_w     = (not u_a or not u_b);
     u_alpha = true;
     u_beta  = dp.main_does_beta_c_inc;
+    u_k     = (hp.sus[Mat::E::C].vs[NonChi::E::PAK] == Binary::E::YES) ? true : false;
   }
 
   public:
@@ -884,8 +885,8 @@ const TSHORT micro_id_a = local_id / N_MICRO_IN_MACRO_B;
         R"(
 /* this additional offset of a and b appears because UNROLL_FOR_OFFSET is 1 */
 TSHORT unroll_offset = (13*group_id_a + 7*group_id_b)%UNROLL;
-TINTK k_plus_offset = KV__ + unroll_offset;
 )";
+      ss << "TINTK k_plus_offset = " << dp.kstring << " + unroll_offset;\n";
     }
   }
 
@@ -1201,7 +1202,10 @@ TINTK k_plus_offset = KV__ + unroll_offset;
     ss << "\n\n";
     ss << "/* this kernel was generated for starting geometry : */\n";
     ss << "/* " << gg.get_string() << "*/\n";
-    ss << "#define KV__ " << gg.k << '\n';
+    
+    if (hp.sus[Mat::E::C].vs[NonChi::E::PAK] == Binary::E::NO){
+      ss << "#define KVAL__ " << gg.k << '\n';
+    }
     ss << "#define TFLOAT  " << dp.t_float << '\n';
     ss << "#define DOES_BETA_C_INC " << dp.main_does_beta_c_inc << '\n';
     ss << "#define DOES_ALPHA_A_B_INC 1" << '\n';
@@ -1228,7 +1232,7 @@ TINTK k_plus_offset = KV__ + unroll_offset;
     }
     ss << "\n/* type for integer in inner most loops (probably inlined anyway)  */\n";
     ss << "#define TSHORT " << dp.tshort << '\n';
-    ss << "\n/* type for integers which never exceeds KV__ + UNROLL (for UFO case) */\n";
+    ss << "\n/* type for integers which never exceeds KVAL__ (k) + UNROLL (for UFO case) */\n";
     ss << "#define TINTK " << dp.tintk << '\n';
 
     ss << "\n/* ********************************** common to A and B "
@@ -1362,7 +1366,7 @@ TINTK k_plus_offset = KV__ + unroll_offset;
     ss << "\n}\n";
 
     return {get_ktype(),
-            {u_a, u_b, u_c, u_w, u_alpha, u_beta},
+            {u_a, u_b, u_c, u_w, u_alpha, u_beta, u_k},
             ss.str(),
             kernelname,
             dp.main_global_work_size,

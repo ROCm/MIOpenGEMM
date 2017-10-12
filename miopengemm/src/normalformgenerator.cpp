@@ -152,7 +152,7 @@ for (ushort mu_perp_i = 0; mu_perp_i < MICRO_TILE_PERP_UNROLL; ++mu_perp_i) {
     ss << "\n}\n";
 
     return {get_ktype(),
-            {u_a, u_b, u_c, u_w, u_alpha, u_beta},
+            {u_a, u_b, u_c, u_w, u_alpha, u_beta, u_k},
             ss.str(),
             kernelname,
             get_global_work_size(),

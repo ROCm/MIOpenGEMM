@@ -324,7 +324,8 @@ AllKernArgs TinyZero::get_all_kern_args(const std::vector<KernBlob>& kblobs) con
                                                              toff.offsets,
                                                              gg.derived.float_size_bytes,
                                                              Floating::get_m_alpha()[gg.floattype],
-                                                             Floating::get_m_beta()[gg.floattype]));
+                                                             Floating::get_m_beta()[gg.floattype],
+                                                             gg.k));
   }
 
   return all_kern_args;

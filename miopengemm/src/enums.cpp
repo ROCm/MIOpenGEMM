@@ -327,6 +327,7 @@ std::vector<std::string> get_name()
   X[E::MAD] = "MAD";
   X[E::AFI] = "AFI";
   X[E::MIA] = "MIA";
+  X[E::PAK] = "PAK";
   return X;
 }
 
@@ -346,6 +347,7 @@ std::vector<int> get_priority_basic()
   X[E::AFI] = -1;
   X[E::MIA] = -1;
   X[E::SZT] = -1;
+  X[E::PAK] = -1;
   return X;
 }
 

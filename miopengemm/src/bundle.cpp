@@ -26,14 +26,15 @@ namespace MIOpenGEMM
 namespace kerngen
 {
 
-// parameter order rule: {a, oa, b, ob, c, oc, ws, ows}, alpha, beta
+// parameter order rule: {a, oa, b, ob, c, oc, ws, ows}, alpha, k
 std::vector<std::pair<size_t, const void*>>
 get_arg_sizes_values(const KernBlob& kblob,
                      const std::array<cl_mem, Mem::E::N>& cl_mems,
                      const std::array<size_t, Mem::E::N>& offsets,
                      size_t      float_size_bytes,
                      const void* alpha,
-                     const void* beta)
+                     const void* beta,
+                     const size_t & k)
 {
 
   std::vector<std::pair<size_t, const void*>> arg_sizes_values;
@@ -55,6 +56,11 @@ get_arg_sizes_values(const KernBlob& kblob,
   {
     arg_sizes_values.emplace_back(float_size_bytes, beta);
   }
+  
+  if (kblob.kuses.u_k){
+    arg_sizes_values.emplace_back(sizeof(size_t), &k);
+  }
+  
   return arg_sizes_values;
 }
 

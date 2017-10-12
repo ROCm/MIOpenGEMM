@@ -108,6 +108,7 @@ enum E
   SKW,      // skewness of work-item grid of work group
   AFI,      // do A loops and defs first. outerloops over a dimensions.
   MIA,      // work item allocation within workgroup : % or /
+  PAK,      // pass k as a parameter (as opposed to as a preprocessor string)
   N
 };
 const EnumMapper<std::string>& M();

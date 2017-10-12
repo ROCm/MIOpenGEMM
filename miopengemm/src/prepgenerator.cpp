@@ -14,6 +14,8 @@ void PrepGenerator::set_usage()
 {
 
   u_alpha = false;
+  u_k = false;
+
   if (emat_x == Mat::E::C)
   {
     u_a    = false;

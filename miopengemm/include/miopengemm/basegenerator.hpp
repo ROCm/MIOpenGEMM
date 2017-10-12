@@ -37,6 +37,7 @@ class BaseGenerator
   bool u_w;
   bool u_alpha;
   bool u_beta;
+  bool u_k;
 
   std::string get_time_string();
   std::string get_what_string();

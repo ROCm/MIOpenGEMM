@@ -503,8 +503,12 @@ DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_) : ptr_hp(&hp
 
   pragma_unroll_string = ptr_hp->sus[Mat::E::C].vs[NonChi::E::PUN] == 1 ? "#pragma unroll\n" : "";
 
+  
+  
+  kstring = ptr_hp->sus[Mat::E::C].vs[NonChi::E::PAK] == Binary::E::YES ? "k" : "KVAL__";
+  
   effective_k_varies_string =
-    ptr_hp->sus[Mat::E::C].vs[NonChi::E::UFO] == 0 ? "KV__" : "k_plus_offset";
+    ptr_hp->sus[Mat::E::C].vs[NonChi::E::UFO] == 0 ? kstring : "k_plus_offset";
   t_float = ptr_gg->derived.float_size_bits == 32 ? "float" : "double";
 
   k_effective_mod_G_UNROLL = effective_k_varies_string + " % G_UNROLL";

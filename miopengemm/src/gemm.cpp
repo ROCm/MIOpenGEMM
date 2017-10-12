@@ -90,7 +90,7 @@ GemmStatus xgemm(bool              isColMajor,
   {
     auto& program = programs.programs[index];
     all_kern_args.emplace_back(
-      kerngen::get_arg_sizes_values(program.kblob, gpu_mems, offsets, sizeof(T), &alpha, &beta));
+      kerngen::get_arg_sizes_values(program.kblob, gpu_mems, offsets, sizeof(T), &alpha, &beta, k));
   }
 
   KernelTimes* ktimes     = nullptr;
