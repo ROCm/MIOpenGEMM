@@ -166,13 +166,16 @@ int ProgramCacher::get_ID(bool              isColMajor,
       throw miog_error(errm.str());
     }
 
-    program_cache[ID] = Programs(device_id, context, silent_mowri);
-    hyper_params[ID]  = soln.hypas;
+    prohyp_cache[ID].reset(new std::pair<Programs, HyPas>(Programs(device_id, context, silent_mowri), soln.hypas));
+    //program_cache[ID] = Programs(device_id, context, silent_mowri);
+    //hyper_params[ID]  = soln.hypas;
 
     IDs[key] = ID;
 
     lock.unlock();
-    program_cache[ID].update(v_blobs);
+    
+    std::get<0>(*get_cacher().prohyp_cache[ID]).update(v_blobs);
+    //program_cache[ID].update(v_blobs);
   }
 
   return ID;
