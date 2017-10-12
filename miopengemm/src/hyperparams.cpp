@@ -214,17 +214,17 @@ void SuHy::replace_where_defined(const Constraint& constraint)
 std::string get_str(Mat::E emat, const std::vector<size_t>& vs)
 {
   std::stringstream ss;
-  bool              isempty = true;
+  bool              str_isempty = true;
   for (size_t i = 0; i < Mat::mat_to_xchi(emat)->N; ++i)
   {
     if (vs[i] != Status::E::UNDEFINED)
     {
-      if (!isempty)
+      if (!str_isempty)
       {
         ss << '_';
       }
       ss << Mat::mat_to_xchi(emat)->name[i] << vs[i];
-      isempty = false;
+      str_isempty = false;
     }
   }
   return ss.str();

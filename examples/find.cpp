@@ -24,7 +24,7 @@ int main()
   owrite::Writer mowri(Ver::E::TERMINAL, "");
   dev::TinyTwo   boa(gg, offsets, mowri, devhint);
   auto           find_params = get_at_least_n_restarts(10);
-  Constraints    constraints("A_LOM1__B_LOM1");//A_LOM0__B_LOM0");
+  Constraints    constraints(""); //A_LOM1__B_LOM1");//A_LOM0__B_LOM0");
   Solution       soln = boa.find2(find_params, constraints);
   if (test_accuracy_of_soln)
   {

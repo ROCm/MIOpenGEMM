@@ -1084,6 +1084,31 @@ void DevInfo::initialise()
                      strict);
   device_available = a_bool;
 
+
+  cl_device_local_mem_type device_lmt;
+  cl_set_device_info(device,
+                     CL_DEVICE_LOCAL_MEM_TYPE,
+                     sizeof(cl_device_local_mem_type),
+                     &device_lmt,
+                     NULL,
+                     "obtaining CL_DEVICE_LOCAL_MEM_TYPE",
+                     strict);
+  
+  if (device_lmt == CL_LOCAL){
+    device_has_local_memory = true;
+  }
+  
+  else if (device_lmt == CL_GLOBAL){
+    device_has_local_memory = false;
+  }
+  
+  else{
+    throw miog_error("unrecognised cl_device_local_mem_type : neither CL_GLOBAL nor CL_LOCAL");
+  }
+
+
+
+
   cl_set_device_info(device,
                      CL_DEVICE_GLOBAL_MEM_SIZE,
                      sizeof(cl_ulong),

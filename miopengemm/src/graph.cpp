@@ -177,7 +177,7 @@ bool has_no_effect(const HyPas& hp0, Mat::E emat_x, size_t i)
     }
   }
 
-  // if ICE is 1, the IWI has no effect
+  // if ICE is 1, then IWI has no effect
   if (hp0.sus.at(Mat::E::C).vs[NonChi::E::ICE] == 1)
   {
     if (emat_x == Mat::E::C && i == NonChi::E::IWI)
@@ -185,6 +185,20 @@ bool has_no_effect(const HyPas& hp0, Mat::E emat_x, size_t i)
       return true;
     }
   }
+  
+
+  // If LOM == NO (no local memory used) then PLU and LIW have no effect.
+  if (emat_x == Mat::E::A || emat_x == Mat::E::B)
+  {
+    if (hp0.sus.at(emat_x).vs[Chi::E::LOM] == Binary::E::NO)
+    {
+      if (i == Chi::E::PLU || i == Chi::E::LIW)
+      {
+        return true;
+      }
+    }
+  }
+    
   return false;
 }
 
@@ -609,7 +623,13 @@ void ChiSuGr::refine_start_range()
   }
 
   start_range[Chi::E::VEW] = {1};
-  start_range[Chi::E::LOM] = {Binary::E::YES};
+  
+  if (ptr_devinfo->device_has_local_memory){
+    start_range[Chi::E::LOM] = {Binary::E::YES};
+  }
+  else{
+    start_range[Chi::E::LOM] = {Binary::E::NO};
+  }
 
   set_start_mic();
 }
