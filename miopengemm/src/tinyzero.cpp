@@ -302,7 +302,7 @@ std::vector<double> TinyZero::benchgemm(const HyPas& hp, const Halt& hl)
 
   auto all_kern_args = get_all_kern_args(bundle.v_tgks);
 
-  mowri << "hyper-p   :" << hp.get_string() << '\n'
+  mowri << "hyper-p   :" << '\n' << hp.get_string() << '\n'
         << "geometry  :" << gg.get_string() << '\n'
         << "Entering the core gemm loops" << Endl << get_run_times_heading();
 
@@ -388,7 +388,7 @@ Solution TinyZero::find0(const Constraints& constraints, const FindParams& fparm
 
   mowri << '\n'
         << "Search summary  :  " << ftrack.get_string() << '\n'
-        << stringutil::get_star_wrapped("The gflops found by single descents:") << '\n'
+        << stringutil::get_star_wrapped("The tflops found by single descents:") << '\n'
         << '\n';
 
   std::sort(soln_gflops.begin(), soln_gflops.end());
@@ -494,7 +494,7 @@ Solution TinyZero::single_descent_find(double             allotted_time,
         std::stringstream errm;
         errm << "Non-derivable in single descent find : " << dblt.msg << ".\n";
         errm << "Geometry: " << gg.get_string() << '\n';
-        errm << "hp: " << hp_curr.get_string() << '\n';
+        errm << "hp: " << '\n' << hp_curr.get_string() << '\n';
         throw miog_error(errm.str());
       }
 
@@ -504,7 +504,7 @@ Solution TinyZero::single_descent_find(double             allotted_time,
       ++single_descent_counter;
 
       mowri << "\n[" << single_descent_counter << ", " << std::fixed << std::setprecision(2)
-            << timer.get_elapsed() << std::setprecision(6) << "s]\t" << hp_curr.get_string()
+            << timer.get_elapsed() << std::setprecision(6) << "s]\n" << hp_curr.get_string()
             << Endl;
 
       architests::Stat atr(command_queue, bundle.dp, gg, hp_curr);
@@ -662,9 +662,9 @@ Solution TinyZero::single_descent_find(double             allotted_time,
                      "in architests ");
   }
 
-  auto leading_size = best_solns_path.back().hypas.get_string().size() + 2;
+  auto leading_size = best_solns_path.back().hypas.sus[Mat::E::C].get_string().size() + 5;
 
-  std::string startstring = "hyper parameter string:";
+  std::string startstring = "hyper parameter:";
   startstring.resize(leading_size, ' ');
   mowri << '\n'
         << startstring << "\t time when found:\t " << SummStat::M().lcase_name[sumstat]
@@ -673,9 +673,9 @@ Solution TinyZero::single_descent_find(double             allotted_time,
   for (unsigned i = 0; i < best_solns_path.size(); ++i)
   {
     std::string solnstring = best_solns_path[i].hypas.get_string();
-    solnstring.resize(leading_size, ' ');
+    //solnstring.resize(leading_size, ' ');
     mowri << std::fixed << solnstring << "\t " << disco_times[i] << "\t\t "
-          << gg.get_gflops(best_solns_path[i].extime / 1000.) << Endl;
+          << gg.get_gflops(best_solns_path[i].extime / 1000.) << '\n' << Endl;
   }
 
   return best_solns_path.back();

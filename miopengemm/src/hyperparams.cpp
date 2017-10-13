@@ -133,6 +133,7 @@ std::string HyPas::get_string() const
     if (emat != Mat::E::A)
     {
       ss << "\", ";
+      ss << '\n';
     }
     ss << "\"" << sus[emat].get_string();
   }
