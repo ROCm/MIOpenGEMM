@@ -58,7 +58,7 @@ class Geometry
                   size_t m_,
                   size_t n_,
                   size_t k_,
-                  size_t wSpaceSize_,
+                  std::vector<size_t> wSpaceSize_,
                   char   floattype_);
 
   private:
@@ -82,7 +82,7 @@ class Geometry
   size_t k;
 
   /*! usable amount of workspace, in number of values (i.e. not in bytes). */
-  size_t wSpaceSize;
+  std::vector<size_t> wSpaceSize;
 
   // TODO : investigate optional half-precision 'h'
   // TODO : rename from floattype to numerictype, and consider integer matrix multiplication
@@ -104,15 +104,17 @@ class Geometry
            T      m_,
            T      n_,
            T      k_,
-           size_t wSpaceSize_,
+           std::vector<size_t> wSpaceSize_,
            char   floattype_)
   {
     initialise(isColMajor_, tA_, tB_, tC_, lda_, ldb_, ldc_, m_, n_, k_, wSpaceSize_, floattype_);
   }
 
+
+
   /*! @brief
    * Constructor which assumes isColMajor is true, tC is false, lda, ldb, ldc are minimal */
-  Geometry(size_t m, size_t n, size_t k, bool tA, bool tB, size_t wSpaceSize, char floattype);
+  Geometry(size_t m, size_t n, size_t k, bool tA, bool tB, std::vector<size_t> wSpaceSize, char floattype);
 
   Geometry() = default;
 
@@ -173,7 +175,7 @@ Geometry get_geometry_from_padding(bool   isColMajor,
                                    size_t m,
                                    size_t n,
                                    size_t k,
-                                   size_t wSpaceSize,
+                                   std::vector<size_t> wSpaceSize,
                                    size_t pad_a,
                                    size_t pad_b,
                                    size_t pad_c)
@@ -189,7 +191,7 @@ Geometry get_geometry_from_padding(bool   isColMajor,
 
 template <typename TFloat>
 Geometry get_padded_geometry(
-  bool isColMajor, bool tA, bool tB, bool tC, size_t m, size_t n, size_t k, size_t wSpaceSize)
+  bool isColMajor, bool tA, bool tB, bool tC, size_t m, size_t n, size_t k, std::vector<size_t> wSpaceSize)
 {
   return get_geometry_from_padding<TFloat>(isColMajor, tA, tB, tC, m, n, k, wSpaceSize, 9, 10, 12);
 }
@@ -197,7 +199,7 @@ Geometry get_padded_geometry(
 // lda, ldb, ldc are minimal.
 template <typename TFloat>
 Geometry get_tight_geometry(
-  bool isColMajor, bool tA, bool tB, bool tC, size_t m, size_t n, size_t k, size_t wSpaceSize)
+  bool isColMajor, bool tA, bool tB, bool tC, size_t m, size_t n, size_t k, std::vector<size_t> wSpaceSize)
 {
   return get_geometry_from_padding<TFloat>(isColMajor, tA, tB, tC, m, n, k, wSpaceSize, 0, 0, 0);
 }

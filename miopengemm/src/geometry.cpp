@@ -27,9 +27,8 @@ char get_floattype_char<double>()
 }
 
 Geometry::Geometry(
-  size_t m_, size_t n_, size_t k_, bool tA_, bool tB_, size_t wSpaceSize_, char floattype_)
-  : Geometry(
-      true, tA_, tB_, false, tA_ ? k_ : m_, tB_ ? n_ : k_, m_, m_, n_, k_, wSpaceSize_, floattype_)
+  size_t m_, size_t n_, size_t k_, bool tA_, bool tB_, std::vector<size_t> wSpaceSize_, char floattype_)
+  : Geometry(true, tA_, tB_, false, tA_ ? k_ : m_, tB_ ? n_ : k_, m_, m_, n_, k_, wSpaceSize_, floattype_)
 {
 }
 
@@ -232,7 +231,7 @@ void Geometry::initialise(bool   isColMajor_,
                           size_t m_,
                           size_t n_,
                           size_t k_,
-                          size_t wSpaceSize_,
+                          std::vector<size_t> wSpaceSize_,
                           char   floattype_)
 {
 
@@ -277,11 +276,16 @@ void Geometry::initialise(bool   isColMajor_,
     forPadCopy[emat] = get_uncoal(emat) * (get_coal(emat) + 16);
   }
 
-  wSpaceSufficient[0] = forPadCopy[Mat::E::A] < wSpaceSize;
-  wSpaceSufficient[1] = forPadCopy[Mat::E::B] < wSpaceSize;
-  wSpaceSufficient[2] = 1 * (forPadCopy[Mat::E::A] + forPadCopy[Mat::E::B]) < wSpaceSize;
-  wSpaceSufficient[3] = 2 * (forPadCopy[Mat::E::A] + forPadCopy[Mat::E::B]) < wSpaceSize;
-  wSpaceSufficient[4] = 4 * (forPadCopy[Mat::E::A] + forPadCopy[Mat::E::B]) < wSpaceSize;
+  //TODO : fix up this legacy code.
+  size_t wsp0 = 0;
+  if (wSpaceSize.size() == 1){
+    wsp0 = wSpaceSize[0];
+  }
+  wSpaceSufficient[0] = forPadCopy[Mat::E::A] < wsp0;
+  wSpaceSufficient[1] = forPadCopy[Mat::E::B] < wsp0;
+  wSpaceSufficient[2] = 1 * (forPadCopy[Mat::E::A] + forPadCopy[Mat::E::B]) < wsp0;
+  wSpaceSufficient[3] = 2 * (forPadCopy[Mat::E::A] + forPadCopy[Mat::E::B]) < wsp0;
+  wSpaceSufficient[4] = 4 * (forPadCopy[Mat::E::A] + forPadCopy[Mat::E::B]) < wsp0;
 }
 
 std::map<std::string, size_t> get_key_val_map(std::string geometry_string)
@@ -366,8 +370,21 @@ std::string Geometry::get_networkconfig_string() const
   std::stringstream geometry_stringstream;
   geometry_stringstream << "tC" << tX[Mat::E::C] << "_tA" << tX[Mat::E::A] << "_tB" << tX[Mat::E::B]
                         << "_colMaj" << isColMajor << "_m" << m << "_n" << n << "_k" << k << "_lda"
-                        << ldX[Mat::E::A] << "_ldb" << ldX[Mat::E::B] << "_ldc" << ldX[Mat::E::C]
-                        << "_ws" << wSpaceSize << "_f" << derived.float_size_bits;
+                        << ldX[Mat::E::A] << "_ldb" << ldX[Mat::E::B] << "_ldc" << ldX[Mat::E::C];
+
+  geometry_stringstream << "_ws";
+
+  if (wSpaceSize.size() == 0){
+    geometry_stringstream << 0;
+  }
+  else {
+    geometry_stringstream << wSpaceSize[0];
+    for (auto i = 1; i < wSpaceSize.size(); ++i){
+      geometry_stringstream << '.' << wSpaceSize[i];
+    }
+  }
+                        
+  geometry_stringstream << "_f" << derived.float_size_bits;
   return geometry_stringstream.str();
 }
 
@@ -382,7 +399,9 @@ std::string Geometry::get_tabbed_string() const
                         << " k=" << stringutil::get_char_padded(k, 6)
                         << " lda=" << stringutil::get_char_padded(ldX[Mat::E::A], 6)
                         << " ldb=" << stringutil::get_char_padded(ldX[Mat::E::B], 6)
-                        << " ldc=" << stringutil::get_char_padded(ldX[Mat::E::C], 6)
+                        << " ldc=" << stringutil::get_char_padded(ldX[Mat::E::C], 6);
+  zzzzzzzzzz
+                        
                         << " ws=" << wSpaceSize << " f=" << derived.float_size_bits;
 
   return geometry_stringstream.str();
