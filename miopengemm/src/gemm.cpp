@@ -72,25 +72,25 @@ GemmStatus xgemm(bool              isColMajor,
 
   const Programs& programs = std::get<0>(*get_cacher().prohyp_cache[ID]);//program_cache[ID];
 
-  std::array<cl_mem, Mem::E::N> gpu_mems;
-  std::array<size_t, Mem::E::N> offsets;
+  std::array<cl_mem, Mat::E::N> gpu_mems;
+  cl_mem gpu_mems_www;
+  std::array<size_t, Mat::E::N> offsets;
 
-  gpu_mems[Mem::E::A] = a;
-  gpu_mems[Mem::E::B] = b;
-  gpu_mems[Mem::E::C] = c;
-  gpu_mems[Mem::E::W] = w;
+  gpu_mems[Mat::E::A] = a;
+  gpu_mems[Mat::E::B] = b;
+  gpu_mems[Mat::E::C] = c;
+  gpu_mems_www = w;
 
-  offsets[Mem::E::A] = a_offset;
-  offsets[Mem::E::B] = b_offset;
-  offsets[Mem::E::C] = c_offset;
-  offsets[Mem::E::W] = w_offset;
-
+  offsets[Mat::E::A] = a_offset;
+  offsets[Mat::E::B] = b_offset;
+  offsets[Mat::E::C] = c_offset;
+  
   AllKernArgs all_kern_args(0);
   for (auto& index : programs.act_inds)
   {
     auto& program = programs.programs[index];
     all_kern_args.emplace_back(
-      kerngen::get_arg_sizes_values(program.kblob, gpu_mems, offsets, sizeof(T), &alpha, &beta, k));
+      kerngen::get_arg_sizes_values(program.kblob, gpu_mems, offsets, w_offset, sizeof(T), &alpha, &beta, k));
   }
 
   KernelTimes* ktimes     = nullptr;

@@ -44,33 +44,32 @@ template <typename TFl>
 void TinyOne<TFl>::initialise_common()
 {
 
-  rw_perms[Mem::E::A] = CL_MEM_READ_ONLY;
-  rw_perms[Mem::E::B] = CL_MEM_READ_ONLY;
-  rw_perms[Mem::E::C] = CL_MEM_READ_WRITE;
-  rw_perms[Mem::E::W] = CL_MEM_READ_WRITE;
+  rw_perms[Mat::E::A] = CL_MEM_READ_ONLY;
+  rw_perms[Mat::E::B] = CL_MEM_READ_ONLY;
+  rw_perms[Mat::E::C] = CL_MEM_READ_WRITE;
 
   for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C})
   {
     auto emem      = Mem::mat_to_mem(emat);
     mem_size[emem] = get_mat_memsize(gg, toff, emat);
   }
-  mem_size[Mem::E::W] = get_workspace_memsize();
+  
 
   gg.check_ldx_consistent();
 
-  c_copy.resize(mem_size[Mem::E::C] / sizeof(TFl));
-  std::memcpy(c_copy.data(), cpu_mem[Mem::E::C], mem_size[Mem::E::C]);
+  c_copy.resize(mem_size[Mat::E::C] / sizeof(TFl));
+  std::memcpy(c_copy.data(), cpu_mem[Mat::E::C], mem_size[Mat::E::C]);
 
   opencl_memory_initialise();
 
   up_jinx.reset(new TinyZero(tgcq.command_queue,
                              gg,
                              toff,
-                             gpu_safemem[Mem::E::A].clmem,
-                             gpu_safemem[Mem::E::B].clmem,
-                             gpu_safemem[Mem::E::C].clmem,
+                             gpu_safemem[Mat::E::A].clmem,
+                             gpu_safemem[Mat::E::B].clmem,
+                             gpu_safemem[Mat::E::C].clmem,
                              false,  // is not const
-                             gpu_safemem[Mem::E::W].clmem,
+                             gpu_safemem_www.clmem,
                              mowri));
 }
 
@@ -85,9 +84,10 @@ TinyOne<TFl>::TinyOne(
          CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE,
          xhint,
          "command queue of TinyOne"),
-    gpu_safemem(Mem::E::N, std::string("gpu_safemem vector of TinyOne")),
-    mem_size(Mem::E::N),
-    rw_perms(Mem::E::N)
+    gpu_safemem(Mat::E::N, std::string("gpu_safemem vector of TinyOne")),
+    gpu_safemem_www(std::string("gpu_safemem vector of TinyOne (www)"));
+    mem_size(Mat::E::N),
+    rw_perms(Mat::E::N)
 {
 
   if (gg.derived.float_size_bytes != sizeof(TFl))
@@ -162,16 +162,34 @@ template <typename TFl>
 void TinyOne<TFl>::opencl_memory_initialise()
 {
 
+
+
+    if (get_workspace_memsize() > 0)
+    {
+      
+
+    std::stringstream hash;
+
+    hash << "GPU Mem W (TinyOne) "
+         << "with memory size " << get_workspace_memsize() << ".";
+      
+      oclutil::cl_set_buffer_from_command_queue(gpu_safemem_www.clmem,
+                                                tgcq.command_queue,
+                                                CL_MEM_READ_WRITE,
+                                                get_workspace_memsize(),
+                                                NULL,
+                                                hash.str(),
+                                                true);
+   }
+   
   // allocate memory for a,b,c on device, send it over
-  for (auto emem : {Mem::E::A, Mem::E::B, Mem::E::C, Mem::E::W})
+  for (auto emem : {Mat::E::A, Mat::E::B, Mat::E::C})
   {
     std::stringstream hash;
 
     hash << "GPU Mem " << Mem::M().name[emem] << " (TinyOne) "
          << "with memory size " << mem_size[emem] << ".";
 
-    if (mem_size[emem] > 0)
-    {
       oclutil::cl_set_buffer_from_command_queue(gpu_safemem[emem].clmem,
                                                 tgcq.command_queue,
                                                 rw_perms[emem],
@@ -179,12 +197,7 @@ void TinyOne<TFl>::opencl_memory_initialise()
                                                 NULL,
                                                 hash.str(),
                                                 true);
-    }
-  }
 
-  for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C})
-  {
-    Mem::E emem = Mem::mat_to_mem(emat);
     oclutil::cl_enqueue_write_buffer(tgcq.command_queue,
                                      gpu_safemem[emem].clmem,
                                      CL_TRUE,
@@ -228,10 +241,10 @@ void TinyOne<TFl>::accuracy_test(const HyPas& hp)  //, const TFl* c_true_for_tes
   oclutil::SafeClEvent event_write_c_to_gpu("accuracy test write");
 
   oclutil::cl_enqueue_write_buffer(tgcq.command_queue,
-                                   gpu_safemem[Mem::E::C].clmem,
+                                   gpu_safemem[Mat::E::C].clmem,
                                    CL_TRUE,
                                    0,
-                                   mem_size[Mem::E::C],
+                                   mem_size[Mat::E::C],
                                    cpu_mem[Mat::E::C],
                                    0,
                                    nullptr,
@@ -252,7 +265,7 @@ void TinyOne<TFl>::accuracy_test(const HyPas& hp)  //, const TFl* c_true_for_tes
                                   gpu_safemem[Mat::E::C].clmem,
                                   CL_TRUE,
                                   0,
-                                  mem_size[Mem::E::C],
+                                  mem_size[Mat::E::C],
                                   c_copy.data(),
                                   0,
                                   NULL,
@@ -261,8 +274,8 @@ void TinyOne<TFl>::accuracy_test(const HyPas& hp)  //, const TFl* c_true_for_tes
                                   true);
 
   // compute product on CPU.
-  std::vector<TFl> c_for_cpu_compute(mem_size[Mem::E::C] / sizeof(TFl));
-  std::memcpy(c_for_cpu_compute.data(), cpu_mem[Mat::E::C], mem_size[Mem::E::C]);
+  std::vector<TFl> c_for_cpu_compute(mem_size[Mat::E::C] / sizeof(TFl));
+  std::memcpy(c_for_cpu_compute.data(), cpu_mem[Mat::E::C], mem_size[Mat::E::C]);
 
   cpugemm::gemm<TFl>(gg,
                      toff,
@@ -276,22 +289,22 @@ void TinyOne<TFl>::accuracy_test(const HyPas& hp)  //, const TFl* c_true_for_tes
   auto c_true_for_test = c_for_cpu_compute.data();
 
   // compute absolute GEMM : C <- alpha abs(A)abs(B) + beta abs(C).
-  std::vector<TFl> A_abs(mem_size[Mem::E::A] / sizeof(TFl));
-  std::memcpy(A_abs.data(), cpu_mem[Mat::E::A], mem_size[Mem::E::A]);
+  std::vector<TFl> A_abs(mem_size[Mat::E::A] / sizeof(TFl));
+  std::memcpy(A_abs.data(), cpu_mem[Mat::E::A], mem_size[Mat::E::A]);
   for (auto& x : A_abs)
   {
     x = std::abs(x);
   }
 
-  std::vector<TFl> B_abs(mem_size[Mem::E::B] / sizeof(TFl));
-  std::memcpy(B_abs.data(), cpu_mem[Mat::E::B], mem_size[Mem::E::B]);
+  std::vector<TFl> B_abs(mem_size[Mat::E::B] / sizeof(TFl));
+  std::memcpy(B_abs.data(), cpu_mem[Mat::E::B], mem_size[Mat::E::B]);
   for (auto& x : B_abs)
   {
     x = std::abs(x);
   }
 
-  std::vector<TFl> C_abs(mem_size[Mem::E::C] / sizeof(TFl));
-  std::memcpy(C_abs.data(), cpu_mem[Mat::E::C], mem_size[Mem::E::C]);
+  std::vector<TFl> C_abs(mem_size[Mat::E::C] / sizeof(TFl));
+  std::memcpy(C_abs.data(), cpu_mem[Mat::E::C], mem_size[Mat::E::C]);
   for (auto& x : C_abs)
   {
     x = std::abs(x);

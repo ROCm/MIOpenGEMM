@@ -18,8 +18,10 @@ namespace kerngen
 // parameter order rule: {a, oa, b, ob, c, oc, ws, ows}, alpha, beta, k
 std::vector<std::pair<size_t, const void*>>
 get_arg_sizes_values(const KernBlob& kblob,
-                     const std::array<cl_mem, Mem::E::N>& cl_mems,
-                     const std::array<size_t, Mem::E::N>& offsets,
+                     const std::array<cl_mem, Mat::E::N>& cl_mems,
+                     const cl_mem& cl_mem_www,
+                     const std::array<size_t, Mat::E::N>& offsets,
+                     const size_t & offsets_www,
                      size_t      float_size_bytes,
                      const void* alpha,
                      const void* beta, 

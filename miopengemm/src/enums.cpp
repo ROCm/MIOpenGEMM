@@ -405,61 +405,9 @@ const std::vector<int>* mat_to_priority(Mat::E emat)
   throw miog_error("failed in mat_to_priority");
 }
 
-Mat::E mem_to_mat(Mem::E emat)
-{
-  switch (emat)
-  {
-  case Mem::E::A: return Mat::E::A;
-  case Mem::E::B: return Mat::E::B;
-  case Mem::E::C: return Mat::E::C;
-  case Mem::E::W: throw miog_error("no mat enum for supposed ::W");
-  case Mem::E::N: throw miog_error("no mat enum for supposed ::N");
-  }
-  throw miog_error("failed in mem_to_mat");
-}
 }
 
-namespace Mem
-{
-std::vector<char> get_name()
-{
-  std::vector<char> X(E::N, unfilled<char>());
-  X[E::A] = 'A';
-  X[E::B] = 'B';
-  X[E::C] = 'C';
-  X[E::W] = 'W';
-  return X;
-}
 
-const EnumMapper<char>& M()
-{
-  static const EnumMapper<char> em = get_enum_mapper<char>(get_name(), "Mem");
-  return em;
-}
-
-Mem::E mat_to_mem(Mat::E emat)
-{
-  if (emat == Mat::E::A)
-  {
-    return Mem::E::A;
-  }
-
-  else if (emat == Mat::E::B)
-  {
-    return Mem::E::B;
-  }
-
-  else if (emat == Mat::E::C)
-  {
-    return Mem::E::C;
-  }
-
-  else
-  {
-    throw miog_error("no mem enum for supposed mat enum provided");
-  }
-}
-}
 
 namespace KType
 {

@@ -62,24 +62,24 @@ GpuMms::GpuMms(cl_mem           a_gpu_,
                cl_command_queue cq)
 {
 
-  cl_mems[Mem::E::A] = a_gpu_;
-  cl_mems[Mem::E::B] = b_gpu_;
-  cl_mems[Mem::E::W] = workspace_gpu_;
+  cl_mems[Mat::E::A] = a_gpu_;
+  cl_mems[Mat::E::B] = b_gpu_;
+  cl_mems_www = workspace_gpu_;
 
   if (c_is_const == false)
   {
-    cl_mems[Mem::E::C] = c_gpu_;
+    cl_mems[Mat::E::C] = c_gpu_;
   }
 
   else
   {
-    cl_mems[Mem::E::C] =
+    cl_mems[Mat::E::C] =
       oclutil::get_copy(cq, c_gpu_, c_nbytes, "c_is_const is true, making copy in GpuMms");
-    c_copy.clmem = cl_mems[Mem::E::C];  // for correct destruction
+    c_copy.clmem = cl_mems[Mat::E::C];  // for correct destruction
   }
 }
 
-cl_mem& GpuMms::operator[](Mem::E x) { return cl_mems[x]; }
+cl_mem& GpuMms::operator[](Mat::E x) { return cl_mems[x]; }
 
 TinyZero::TinyZero(cl_command_queue command_queue_,
                    const Geometry   gg_,
@@ -113,32 +113,32 @@ TinyZero::TinyZero(cl_command_queue command_queue_,
 
 void TinyZero::address_check_valid()
 {
-  for (auto x : {Mem::E::A, Mem::E::B})
+  for (auto x : {Mat::E::A, Mat::E::B})
   {
-    if (gpum[Mem::E::C] == gpum[x])
+    if (gpum[Mat::E::C] == gpum[x])
     {
       std::stringstream ss;
-      ss << "in address_check_valid, " << Mem::M().name[Mem::E::C] << " and " << Mem::M().name[x]
+      ss << "in address_check_valid, " << Mem::M().name[Mat::E::C] << " and " << Mem::M().name[x]
          << " should have distinct memories, "
          << "otherwise race condition arise (one thread writes its result to "
-         << Mem::M().name[Mem::E::C] << "before another one has finished reading from "
-         << Mem::M().name[Mem::E::C] << ')';
+         << Mem::M().name[Mat::E::C] << "before another one has finished reading from "
+         << Mem::M().name[Mat::E::C] << ')';
       throw miog_error(ss.str());
     }
   }
 
-  if (gpum[Mem::E::C] == nullptr)
+  if (gpum[Mat::E::C] == nullptr)
   {
     throw miog_error("in address_check_valid, c should not be nullptr");
   }
 
-  if (gpum[Mem::E::W] == nullptr && gg.wSpaceSize != 0)
+  if (gpum_www == nullptr && gg.wSpaceSize != 0)
   {
     throw miog_error("in address_check_valid, pointer to workspace memory is "
                      "the nullptr, but wSpaceSize is not zero");
   }
 
-  if (gpum[Mem::E::W] != nullptr && gg.wSpaceSize == 0)
+  if (gpum_www != nullptr && gg.wSpaceSize == 0)
   {
     throw miog_error("in address_check_valid, pointer to workspace memory is not the "
                      "nullptr, but wSpaceSize is zero. if wSpaceSize is zero please set "
@@ -146,9 +146,9 @@ void TinyZero::address_check_valid()
                      "no workspace used. The workspace offset should be zero too in this case ");
   }
 
-  if (gpum[Mem::E::W] != nullptr &&
-      (gpum[Mem::E::W] == gpum[Mem::E::A] || gpum[Mem::E::W] == gpum[Mem::E::B] ||
-       gpum[Mem::E::W] == gpum[Mem::E::C]))
+  if (gpum_www != nullptr &&
+      (gpum_www == gpum[Mat::E::A] || gpum_www == gpum[Mat::E::B] ||
+       gpum_www == gpum[Mat::E::C]))
   {
     throw miog_error("in address_check_valid, pointer to workspace memory is "
                      "not the nullptr, and it is the same as one of the a,b,c pointers ");
@@ -158,7 +158,7 @@ void TinyZero::address_check_valid()
 void TinyZero::address_check_valid_and_reliable()
 {
   address_check_valid();
-  if (gpum[Mem::E::A] == gpum[Mem::E::B])
+  if (gpum[Mat::E::A] == gpum[Mat::E::B])
   {
     throw miog_error("in address_check_valid_and_reliable, a and b are the same. this will "
                      "effect kernel run time, not sure if this should be allowed, so throwing");

@@ -128,24 +128,8 @@ enum E
 const EnumMapper<char>& M();
 }
 
-namespace Mem
-{
-enum E
-{
-  A = 0,
-  B,
-  C,
-  W,
-  N
-};
-const EnumMapper<char>& M();
-
-Mem::E mat_to_mem(Mat::E);
-}
-
 namespace Mat
 {
-Mat::E                         mem_to_mat(Mem::E);
 const EnumMapper<std::string>* mat_to_xchi(Mat::E);
 const std::vector<int>*        mat_to_priority(Mat::E);
 }

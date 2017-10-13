@@ -1226,10 +1226,11 @@ TSHORT unroll_offset = (13*group_id_a + 7*group_id_b)%UNROLL;
     }
 
     ss << "\n/* integer types for navigating each of the memory buffers */\n";
-    for (size_t i = 0; i < Mem::E::N; ++i)
+    for (size_t i = 0; i < Mat::E::N; ++i)
     {
       ss << "#define TINT" << Mem::M().name[i] << " " << dp.tints[i] << '\n';
     }
+    ss << "#define TINTW " << dp.tints_www << '\n';
     ss << "\n/* type for integer in inner most loops (probably inlined anyway)  */\n";
     ss << "#define TSHORT " << dp.tshort << '\n';
     ss << "\n/* type for integers which never exceeds KVAL__ (k) + UNROLL (for UFO case) */\n";
