@@ -188,7 +188,7 @@ std::string TinyZero::get_run_time_string(cl_int status)
     double sumtimes{0};
     for (size_t k_ind = 0; k_ind < programs.get_n_active(); ++k_ind)
     {
-      double tk = kernel_times.ktimes[programs.act_inds[k_ind]].v_times.back();
+      double tk = kernel_times.ktimes[k_ind].v_times.back();
       sumtimes += tk;
       ss << " " << tk << "\t";
     }
@@ -526,7 +526,8 @@ Solution TinyZero::single_descent_find(double             allotted_time,
       mowri.bw[OutPart::E::TRA] << new_track_msg << Flush;
 
       v_t_total.resize(0);
-      kernel_times.reset_times();
+      
+      kernel_times.reset_with_size(programs.get_n_active());
       std::vector<std::string> summary;
 
       auto oclr = true_core([&summary, &v_t_total](std::string x) { summary.push_back(x); },
