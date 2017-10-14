@@ -64,6 +64,10 @@ class Geometry
                   std::vector<size_t> wSpaceSize_,
                   char   floattype_);
 
+
+  //void append_ws_frag(std::stringstream & ss) const;
+
+
   private:
   // log k ;  log m - log n ;  log m + log n, 0.2*(log ldx's)
   std::array<double, 6> metric_co;
@@ -210,7 +214,7 @@ Geometry get_tight_geometry(
 template <typename TFloat>
 Geometry get_squareNN_geometry(size_t m)
 {
-  return get_geometry_from_padding<TFloat>(true, false, false, false, m, m, m, 0, 0, 0, 0);
+  return get_geometry_from_padding<TFloat>(true, false, false, false, m, m, m, {}, 0, 0, 0);
 }
 
 size_t get_mat_size(const Geometry& gg, const Offsets& toff, Mat::E emat);

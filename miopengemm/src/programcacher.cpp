@@ -82,7 +82,7 @@ int ProgramCacher::get_ID(bool              isColMajor,
                           size_t            lda,
                           size_t            ldb,
                           size_t            ldc,
-                          size_t            w_size,
+                          std::vector<size_t>            w_size,
                           BetaType          beta_type,
                           char              floattype,
                           cl_command_queue* ptr_queue)
@@ -117,7 +117,11 @@ int ProgramCacher::get_ID(bool              isColMajor,
   std::string device_name = info_st.substr(0, info_size - 1);
 
   ss << isColMajor << tA << tB << tC << '.' << m << '.' << n << '.' << k << '.' << lda << '.' << ldb
-     << '.' << ldc << '.' << w_size << '.' << beta_type << '.' << floattype << '.' << device_name;
+     << '.' << ldc << '.';
+     for (auto & x : w_size){
+       ss << x << '.';
+      } 
+      ss << '.' << beta_type << '.' << floattype << '.' << device_name;
 
   auto key = ss.str();
 

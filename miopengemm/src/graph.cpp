@@ -613,7 +613,7 @@ void ChiSuGr::refine_start_range()
   // start_range[Chi::E::LIW] = {Binary::E::NO};
   // start_range[Chi::E::MIW] = {Binary::E::YES};
 
-  if (ptr_gg->wSpaceSize == 0)
+  if (ptr_gg->wSpaceSize.size() == 0 || ptr_gg->wSpaceSize[0] == 0)
   {
     start_range[Chi::E::WOS] = {Scratch::E::UNUSED};
   }

@@ -132,19 +132,19 @@ void TinyZero::address_check_valid()
     throw miog_error("in address_check_valid, c should not be nullptr");
   }
 
-  if (gpum.cl_mems_www == nullptr && gg.wSpaceSize != 0)
-  {
-    throw miog_error("in address_check_valid, pointer to workspace memory is "
-                     "the nullptr, but wSpaceSize is not zero");
-  }
+  //if (gpum.cl_mems_www == nullptr && gg.wSpaceSize != 0)
+  //{
+    //throw miog_error("in address_check_valid, pointer to workspace memory is "
+                     //"the nullptr, but wSpaceSize is not zero");
+  //}
 
-  if (gpum.cl_mems_www != nullptr && gg.wSpaceSize == 0)
-  {
-    throw miog_error("in address_check_valid, pointer to workspace memory is not the "
-                     "nullptr, but wSpaceSize is zero. if wSpaceSize is zero please set "
-                     "workspace_gpu to the nullptr to make super clear that there will be "
-                     "no workspace used. The workspace offset should be zero too in this case ");
-  }
+  //if (gpum.cl_mems_www != nullptr && gg.wSpaceSize == 0)
+  //{
+    //throw miog_error("in address_check_valid, pointer to workspace memory is not the "
+                     //"nullptr, but wSpaceSize is zero. if wSpaceSize is zero please set "
+                     //"workspace_gpu to the nullptr to make super clear that there will be "
+                     //"no workspace used. The workspace offset should be zero too in this case ");
+  //}
 
   if (gpum.cl_mems_www != nullptr &&
       (gpum.cl_mems_www == gpum[Mat::E::A] || gpum.cl_mems_www == gpum[Mat::E::B] ||

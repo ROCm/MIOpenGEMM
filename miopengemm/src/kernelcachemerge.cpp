@@ -221,9 +221,10 @@ KernelCache get_wSpaceReduced(const KernelCache& kc)
   {
     auto          soln = kc.at(ck);
     DerivedParams dps(soln, ck.gg);
-    std::cout << ck.gg.wSpaceSize << "  -->  " << dps.required_workspace << std::endl;
+    std::cout << " reducing : wSpaceSize   -->  required_workspaces \n";
+    
     auto gg_new       = ck.gg;
-    gg_new.wSpaceSize = dps.required_workspace;
+    gg_new.wSpaceSize = dps.required_workspaces;
     CacheKey ck_new(ck.dvc, ck.constraints, gg_new);
     kc_new.add(ck_new, soln);
   }

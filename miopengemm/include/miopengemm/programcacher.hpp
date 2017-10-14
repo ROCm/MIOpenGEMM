@@ -76,7 +76,7 @@ class ProgramCacher
              size_t            lda,
              size_t            ldb,
              size_t            ldc,
-             size_t            w_size,
+             std::vector<size_t>            w_size,
              BetaType          beta_type,
              char              floattype,
              cl_command_queue* ptr_queue);
