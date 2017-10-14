@@ -63,7 +63,7 @@ class TinyOne
 
   // a, b, c gpu memories.
   std::vector<oclutil::SafeClMem> gpu_safemem;
-  
+
   oclutil::SafeClMem gpu_safemem_www;
 
   // sizes of a, b, c and workspace gpu memories.
@@ -71,7 +71,6 @@ class TinyOne
 
   // read write permissions of gpu data
   std::vector<cl_mem_flags> rw_perms;
-
 
   std::unique_ptr<TinyZero> up_jinx;
 

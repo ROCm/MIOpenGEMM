@@ -185,7 +185,6 @@ bool has_no_effect(const HyPas& hp0, Mat::E emat_x, size_t i)
       return true;
     }
   }
-  
 
   // If LOM == NO (no local memory used) then PLU and LIW have no effect.
   if (emat_x == Mat::E::A || emat_x == Mat::E::B)
@@ -198,7 +197,7 @@ bool has_no_effect(const HyPas& hp0, Mat::E emat_x, size_t i)
       }
     }
   }
-    
+
   return false;
 }
 
@@ -624,11 +623,13 @@ void ChiSuGr::refine_start_range()
   }
 
   start_range[Chi::E::VEW] = {1};
-  
-  if (ptr_devinfo->device_has_local_memory){
+
+  if (ptr_devinfo->device_has_local_memory)
+  {
     start_range[Chi::E::LOM] = {Binary::E::YES};
   }
-  else{
+  else
+  {
     start_range[Chi::E::LOM] = {Binary::E::NO};
   }
 

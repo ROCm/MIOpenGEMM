@@ -64,7 +64,7 @@ GpuMms::GpuMms(cl_mem           a_gpu_,
 
   cl_mems[Mat::E::A] = a_gpu_;
   cl_mems[Mat::E::B] = b_gpu_;
-  cl_mems_www = workspace_gpu_;
+  cl_mems_www        = workspace_gpu_;
 
   if (c_is_const == false)
   {
@@ -118,11 +118,11 @@ void TinyZero::address_check_valid()
     if (gpum[Mat::E::C] == gpum[x])
     {
       std::stringstream ss;
-      ss << "in address_check_valid, " << Mem::M().name[Mat::E::C] << " and " << Mem::M().name[x]
+      ss << "in address_check_valid, " << Mat::M().name[Mat::E::C] << " and " << Mat::M().name[x]
          << " should have distinct memories, "
          << "otherwise race condition arise (one thread writes its result to "
-         << Mem::M().name[Mat::E::C] << "before another one has finished reading from "
-         << Mem::M().name[Mat::E::C] << ')';
+         << Mat::M().name[Mat::E::C] << "before another one has finished reading from "
+         << Mat::M().name[Mat::E::C] << ')';
       throw miog_error(ss.str());
     }
   }
@@ -132,13 +132,13 @@ void TinyZero::address_check_valid()
     throw miog_error("in address_check_valid, c should not be nullptr");
   }
 
-  if (gpum_www == nullptr && gg.wSpaceSize != 0)
+  if (gpum.cl_mems_www == nullptr && gg.wSpaceSize != 0)
   {
     throw miog_error("in address_check_valid, pointer to workspace memory is "
                      "the nullptr, but wSpaceSize is not zero");
   }
 
-  if (gpum_www != nullptr && gg.wSpaceSize == 0)
+  if (gpum.cl_mems_www != nullptr && gg.wSpaceSize == 0)
   {
     throw miog_error("in address_check_valid, pointer to workspace memory is not the "
                      "nullptr, but wSpaceSize is zero. if wSpaceSize is zero please set "
@@ -146,9 +146,9 @@ void TinyZero::address_check_valid()
                      "no workspace used. The workspace offset should be zero too in this case ");
   }
 
-  if (gpum_www != nullptr &&
-      (gpum_www == gpum[Mat::E::A] || gpum_www == gpum[Mat::E::B] ||
-       gpum_www == gpum[Mat::E::C]))
+  if (gpum.cl_mems_www != nullptr &&
+      (gpum.cl_mems_www == gpum[Mat::E::A] || gpum.cl_mems_www == gpum[Mat::E::B] ||
+       gpum.cl_mems_www == gpum[Mat::E::C]))
   {
     throw miog_error("in address_check_valid, pointer to workspace memory is "
                      "not the nullptr, and it is the same as one of the a,b,c pointers ");
@@ -302,7 +302,8 @@ std::vector<double> TinyZero::benchgemm(const HyPas& hp, const Halt& hl)
 
   auto all_kern_args = get_all_kern_args(bundle.v_tgks);
 
-  mowri << "hyper-p   :" << '\n' << hp.get_string() << '\n'
+  mowri << "hyper-p   :" << '\n'
+        << hp.get_string() << '\n'
         << "geometry  :" << gg.get_string() << '\n'
         << "Entering the core gemm loops" << Endl << get_run_times_heading();
 
@@ -321,7 +322,9 @@ AllKernArgs TinyZero::get_all_kern_args(const std::vector<KernBlob>& kblobs) con
 
     all_kern_args.emplace_back(kerngen::get_arg_sizes_values(kblob,
                                                              gpum.cl_mems,
+                                                             gpum.cl_mems_www,
                                                              toff.offsets,
+                                                             toff.offsets_www,
                                                              gg.derived.float_size_bytes,
                                                              Floating::get_m_alpha()[gg.floattype],
                                                              Floating::get_m_beta()[gg.floattype],
@@ -504,8 +507,8 @@ Solution TinyZero::single_descent_find(double             allotted_time,
       ++single_descent_counter;
 
       mowri << "\n[" << single_descent_counter << ", " << std::fixed << std::setprecision(2)
-            << timer.get_elapsed() << std::setprecision(6) << "s]\n" << hp_curr.get_string()
-            << Endl;
+            << timer.get_elapsed() << std::setprecision(6) << "s]\n"
+            << hp_curr.get_string() << Endl;
 
       architests::Stat atr(command_queue, bundle.dp, gg, hp_curr);
       if (atr.is_good == false)
@@ -526,7 +529,7 @@ Solution TinyZero::single_descent_find(double             allotted_time,
       mowri.bw[OutPart::E::TRA] << new_track_msg << Flush;
 
       v_t_total.resize(0);
-      
+
       kernel_times.reset_with_size(programs.get_n_active());
       std::vector<std::string> summary;
 
@@ -674,9 +677,10 @@ Solution TinyZero::single_descent_find(double             allotted_time,
   for (unsigned i = 0; i < best_solns_path.size(); ++i)
   {
     std::string solnstring = best_solns_path[i].hypas.get_string();
-    //solnstring.resize(leading_size, ' ');
+    // solnstring.resize(leading_size, ' ');
     mowri << std::fixed << solnstring << "\t " << disco_times[i] << "\t\t "
-          << gg.get_gflops(best_solns_path[i].extime / 1000.) << '\n' << Endl;
+          << gg.get_gflops(best_solns_path[i].extime / 1000.) << '\n'
+          << Endl;
   }
 
   return best_solns_path.back();

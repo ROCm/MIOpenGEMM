@@ -404,10 +404,7 @@ const std::vector<int>* mat_to_priority(Mat::E emat)
   }
   throw miog_error("failed in mat_to_priority");
 }
-
 }
-
-
 
 namespace KType
 {

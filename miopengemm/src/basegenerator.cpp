@@ -42,7 +42,7 @@ void BaseGenerator::append_fargs(std::stringstream& ss)
   append_farg(u_alpha, ss, "\nconst TFLOAT alpha");
   append_farg(u_beta, ss, "\nconst TFLOAT beta");
   append_farg(u_k, ss, "\nconst size_t k");
-  
+
   ss << ")\n";
 }
 

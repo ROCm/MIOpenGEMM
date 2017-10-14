@@ -50,10 +50,8 @@ void TinyOne<TFl>::initialise_common()
 
   for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C})
   {
-    auto emem      = Mem::mat_to_mem(emat);
-    mem_size[emem] = get_mat_memsize(gg, toff, emat);
+    mem_size[emat] = get_mat_memsize(gg, toff, emat);
   }
-  
 
   gg.check_ldx_consistent();
 
@@ -85,7 +83,7 @@ TinyOne<TFl>::TinyOne(
          xhint,
          "command queue of TinyOne"),
     gpu_safemem(Mat::E::N, std::string("gpu_safemem vector of TinyOne")),
-    gpu_safemem_www(std::string("gpu_safemem vector of TinyOne (www)"));
+    gpu_safemem_www(std::string("gpu_safemem vector of TinyOne (www)")),
     mem_size(Mat::E::N),
     rw_perms(Mat::E::N)
 {
@@ -162,47 +160,44 @@ template <typename TFl>
 void TinyOne<TFl>::opencl_memory_initialise()
 {
 
-
-
-    if (get_workspace_memsize() > 0)
-    {
-      
+  if (get_workspace_memsize() > 0)
+  {
 
     std::stringstream hash;
 
     hash << "GPU Mem W (TinyOne) "
          << "with memory size " << get_workspace_memsize() << ".";
-      
-      oclutil::cl_set_buffer_from_command_queue(gpu_safemem_www.clmem,
-                                                tgcq.command_queue,
-                                                CL_MEM_READ_WRITE,
-                                                get_workspace_memsize(),
-                                                NULL,
-                                                hash.str(),
-                                                true);
-   }
-   
+
+    oclutil::cl_set_buffer_from_command_queue(gpu_safemem_www.clmem,
+                                              tgcq.command_queue,
+                                              CL_MEM_READ_WRITE,
+                                              get_workspace_memsize(),
+                                              NULL,
+                                              hash.str(),
+                                              true);
+  }
+
   // allocate memory for a,b,c on device, send it over
-  for (auto emem : {Mat::E::A, Mat::E::B, Mat::E::C})
+  for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C})
   {
     std::stringstream hash;
 
-    hash << "GPU Mem " << Mem::M().name[emem] << " (TinyOne) "
-         << "with memory size " << mem_size[emem] << ".";
+    hash << "GPU Mem " << Mat::M().name[emat] << " (TinyOne) "
+         << "with memory size " << mem_size[emat] << ".";
 
-      oclutil::cl_set_buffer_from_command_queue(gpu_safemem[emem].clmem,
-                                                tgcq.command_queue,
-                                                rw_perms[emem],
-                                                mem_size[emem],
-                                                NULL,
-                                                hash.str(),
-                                                true);
+    oclutil::cl_set_buffer_from_command_queue(gpu_safemem[emat].clmem,
+                                              tgcq.command_queue,
+                                              rw_perms[emat],
+                                              mem_size[emat],
+                                              NULL,
+                                              hash.str(),
+                                              true);
 
     oclutil::cl_enqueue_write_buffer(tgcq.command_queue,
-                                     gpu_safemem[emem].clmem,
+                                     gpu_safemem[emat].clmem,
                                      CL_TRUE,
                                      0,
-                                     mem_size[emem],
+                                     mem_size[emat],
                                      cpu_mem[emat],
                                      0,
                                      NULL,

@@ -30,13 +30,13 @@ namespace kerngen
 std::vector<std::pair<size_t, const void*>>
 get_arg_sizes_values(const KernBlob& kblob,
                      const std::array<cl_mem, Mat::E::N>& cl_mems,
-                     const cl_mem & cl_mems_www,
+                     const cl_mem& cl_mems_www,
                      const std::array<size_t, Mat::E::N>& offsets,
-                     const size_t & offsets_www,
-                     size_t      float_size_bytes,
-                     const void* alpha,
-                     const void* beta,
-                     const size_t & k)
+                     const size_t& offsets_www,
+                     size_t        float_size_bytes,
+                     const void*   alpha,
+                     const void*   beta,
+                     const size_t& k)
 {
 
   std::vector<std::pair<size_t, const void*>> arg_sizes_values;
@@ -53,7 +53,7 @@ get_arg_sizes_values(const KernBlob& kblob,
   {
     arg_sizes_values.emplace_back(sizeof(cl_mem), static_cast<const void*>(&(cl_mems_www)));
     arg_sizes_values.emplace_back(sizeof(size_t), &(offsets_www));
-  }  
+  }
 
   if (kblob.kuses.u_alpha)
   {
@@ -64,11 +64,12 @@ get_arg_sizes_values(const KernBlob& kblob,
   {
     arg_sizes_values.emplace_back(float_size_bytes, beta);
   }
-  
-  if (kblob.kuses.u_k){
+
+  if (kblob.kuses.u_k)
+  {
     arg_sizes_values.emplace_back(sizeof(size_t), &k);
   }
-  
+
   return arg_sizes_values;
 }
 

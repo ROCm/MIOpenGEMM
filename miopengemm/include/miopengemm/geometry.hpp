@@ -20,7 +20,7 @@ class Offsets
   /*! buffering before: number of values before the first value which may be accessed */
   std::array<size_t, Mat::E::N> offsets;
   size_t offsets_www;
-  
+
   /*! buffering after: number of values after the last value which may be accessed.
    * This tail buffering is only used for debugging purposes */
   std::array<size_t, Mat::E::N> tails;

@@ -21,11 +21,11 @@ get_arg_sizes_values(const KernBlob& kblob,
                      const std::array<cl_mem, Mat::E::N>& cl_mems,
                      const cl_mem& cl_mem_www,
                      const std::array<size_t, Mat::E::N>& offsets,
-                     const size_t & offsets_www,
-                     size_t      float_size_bytes,
-                     const void* alpha,
-                     const void* beta, 
-                     const size_t & k);
+                     const size_t& offsets_www,
+                     size_t        float_size_bytes,
+                     const void*   alpha,
+                     const void*   beta,
+                     const size_t& k);
 
 std::vector<std::vector<size_t>> get_v_wait_indices(const std::vector<KernBlob>& v_kblobs,
                                                     owrite::Writer&              mowri);

@@ -107,8 +107,7 @@ void set_multigeom_abc(const MatData<TFloat>&       v_abc,
   for (auto emat_x : {Mat::E::A, Mat::E::B, Mat::E::C})
   {
     v_abc[emat_x]->resize(max_n[emat_x]);
-    auto emem_x = Mem::mat_to_mem(emat_x);
-    fill_uni<TFloat>(*v_abc[emat_x], max_n[emat_x] - toff.tails[emem_x], max_n[emat_x]);
+    fill_uni<TFloat>(*v_abc[emat_x], max_n[emat_x] - toff.tails[emat_x], max_n[emat_x]);
   }
 }
 
@@ -117,7 +116,6 @@ void set_abc(const MatData<TFloat>& v_abc, const Geometry& gg, const Offsets& to
 {
   set_multigeom_abc(v_abc, {gg}, toff);
 }
-
 
 template void set_abc(const MatData<double>& v_abc, const Geometry& gg, const Offsets& toff);
 
@@ -128,6 +126,5 @@ set_multigeom_abc(const MatData<double>& v_abc, const std::vector<Geometry>&, co
 
 template void
 set_multigeom_abc(const MatData<float>& v_abc, const std::vector<Geometry>&, const Offsets& toff);
-
 }
 }
