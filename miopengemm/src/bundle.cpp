@@ -29,22 +29,30 @@ namespace kerngen
 // parameter order rule: {a, oa, b, ob, c, oc, ws, ows}, alpha, k
 std::vector<std::pair<size_t, const void*>>
 get_arg_sizes_values(const KernBlob& kblob,
-                     const std::array<cl_mem, Mem::E::N>& cl_mems,
-                     const std::array<size_t, Mem::E::N>& offsets,
-                     size_t      float_size_bytes,
-                     const void* alpha,
-                     const void* beta,
-                     const size_t & k)
+                     const std::array<cl_mem, Mat::E::N>& cl_mems,
+                     const cl_mem& cl_mems_www,
+                     const std::array<size_t, Mat::E::N>& offsets,
+                     const size_t& offsets_www,
+                     size_t        float_size_bytes,
+                     const void*   alpha,
+                     const void*   beta,
+                     const size_t& k)
 {
 
   std::vector<std::pair<size_t, const void*>> arg_sizes_values;
-  for (auto x : {Mem::E::A, Mem::E::B, Mem::E::C, Mem::E::W})
+  for (auto x : {Mat::E::A, Mat::E::B, Mat::E::C})
   {
     if (kblob.kuses.at(x) == true)
     {
       arg_sizes_values.emplace_back(sizeof(cl_mem), static_cast<const void*>(&(cl_mems[x])));
       arg_sizes_values.emplace_back(sizeof(size_t), &(offsets[x]));
     }
+  }
+
+  if (kblob.kuses.u_w == true)
+  {
+    arg_sizes_values.emplace_back(sizeof(cl_mem), static_cast<const void*>(&(cl_mems_www)));
+    arg_sizes_values.emplace_back(sizeof(size_t), &(offsets_www));
   }
 
   if (kblob.kuses.u_alpha)
@@ -56,11 +64,12 @@ get_arg_sizes_values(const KernBlob& kblob,
   {
     arg_sizes_values.emplace_back(float_size_bytes, beta);
   }
-  
-  if (kblob.kuses.u_k){
+
+  if (kblob.kuses.u_k)
+  {
     arg_sizes_values.emplace_back(sizeof(size_t), &k);
   }
-  
+
   return arg_sizes_values;
 }
 

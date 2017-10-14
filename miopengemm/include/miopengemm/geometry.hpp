@@ -18,13 +18,16 @@ class Offsets
 {
   public:
   /*! buffering before: number of values before the first value which may be accessed */
-  std::array<size_t, Mem::E::N> offsets;
+  std::array<size_t, Mat::E::N> offsets;
+  size_t offsets_www;
+
   /*! buffering after: number of values after the last value which may be accessed.
    * This tail buffering is only used for debugging purposes */
-  std::array<size_t, Mem::E::N> tails;
+  std::array<size_t, Mat::E::N> tails;
+  size_t tails_www;
 
   /*! @brief
-   * constructor, first the 4 offsets (before memory) and then the 4 after (tail) */
+   * constructor, first the 3 offsets (before memory) and then the 3 after (tail) */
   Offsets(size_t oa, size_t ob, size_t oc, size_t ow, size_t ta, size_t tb, size_t tc, size_t tw);
 };
 

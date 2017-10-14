@@ -341,7 +341,7 @@ class DevInfo
   std::string driver_version = "unknown";
   std::string identifier     = "unknown";
 
-  bool   device_available = false;
+  bool   device_available        = false;
   bool   device_has_local_memory = true;
   size_t device_global_mem_size{0};
   size_t device_local_mem_size{0};

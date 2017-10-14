@@ -34,8 +34,7 @@ Geometry::Geometry(
 
 size_t get_mat_size(const Geometry& gg, const Offsets& toff, Mat::E emat)
 {
-  auto emem = Mem::mat_to_mem(emat);
-  return (gg.get_padded_area(emat) + toff.offsets[emem] + toff.tails[emem]);
+  return (gg.get_padded_area(emat) + toff.offsets[emat] + toff.tails[emat]);
 }
 
 size_t get_mat_memsize(const Geometry& gg, const Offsets& toff, Mat::E emat)
@@ -47,15 +46,15 @@ Offsets::Offsets(
   size_t oa_, size_t ob_, size_t oc_, size_t ow_, size_t ta_, size_t tb_, size_t tc_, size_t tw_)
 {
 
-  offsets[Mem::E::A] = oa_;
-  offsets[Mem::E::B] = ob_;
-  offsets[Mem::E::C] = oc_;
-  offsets[Mem::E::W] = ow_;
+  offsets[Mat::E::A] = oa_;
+  offsets[Mat::E::B] = ob_;
+  offsets[Mat::E::C] = oc_;
+  offsets_www        = ow_;
 
-  tails[Mem::E::A] = ta_;
-  tails[Mem::E::B] = tb_;
-  tails[Mem::E::C] = tc_;
-  tails[Mem::E::W] = tw_;
+  tails[Mat::E::A] = ta_;
+  tails[Mat::E::B] = tb_;
+  tails[Mat::E::C] = tc_;
+  tails_www        = tw_;
 }
 
 Offsets get_padding_offsets() { return Offsets(11, 17, 13, 23, 67, 15, 29, 17); }
@@ -469,6 +468,6 @@ double Geometry::get_distance(const Geometry& g2) const
 
 size_t get_total_workspace(const Geometry& gg, const Offsets& toff)
 {
-  return gg.wSpaceSize + toff.offsets[Mem::E::W] + toff.tails[Mem::E::W];
+  return gg.wSpaceSize + toff.offsets_www + toff.tails_www;
 }
 }

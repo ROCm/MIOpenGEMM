@@ -301,13 +301,13 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
     }
   }
 
-
-  if (ptr_hp->sus[Mat::E::C].vs[NonChi::E::UFO] == Binary::E::YES && 
-  (ptr_hp->sus[Mat::E::A].vs[Chi::E::LOM] == Binary::E::NO || 
-   ptr_hp->sus[Mat::E::B].vs[Chi::E::LOM] == Binary::E::NO)){
+  if (ptr_hp->sus[Mat::E::C].vs[NonChi::E::UFO] == Binary::E::YES &&
+      (ptr_hp->sus[Mat::E::A].vs[Chi::E::LOM] == Binary::E::NO ||
+       ptr_hp->sus[Mat::E::B].vs[Chi::E::LOM] == Binary::E::NO))
+  {
     return std::make_tuple(false, "UFO = yes, so both LOMs must be YES");
   }
-  
+
   main_split_on_k      = ptr_hp->sus[Mat::E::C].vs[NonChi::E::ICE] == 1 ? 0 : 1;
   main_does_beta_c_inc = main_split_on_k == 1 ? 0 : 1;
 
@@ -503,10 +503,8 @@ DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_) : ptr_hp(&hp
 
   pragma_unroll_string = ptr_hp->sus[Mat::E::C].vs[NonChi::E::PUN] == 1 ? "#pragma unroll\n" : "";
 
-  
-  
   kstring = ptr_hp->sus[Mat::E::C].vs[NonChi::E::PAK] == Binary::E::YES ? "k" : "KVAL__";
-  
+
   effective_k_varies_string =
     ptr_hp->sus[Mat::E::C].vs[NonChi::E::UFO] == 0 ? kstring : "k_plus_offset";
   t_float = ptr_gg->derived.float_size_bits == 32 ? "float" : "double";
@@ -532,11 +530,11 @@ DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_) : ptr_hp(&hp
                                    ? 1
                                    : 0;
 
-  tints[Mem::E::A] = get_tint(ptr_gg->get_uncoal(Mat::E::A) *
+  tints[Mat::E::A] = get_tint(ptr_gg->get_uncoal(Mat::E::A) *
                               (ptr_gg->ldX[Mat::E::A]));  // TODO : does UFO need increase here ?
-  tints[Mem::E::B] = get_tint(ptr_gg->get_uncoal(Mat::E::B) * (ptr_gg->ldX[Mat::E::B]));
-  tints[Mem::E::C] = get_tint(ptr_gg->get_uncoal(Mat::E::C) * (ptr_gg->ldX[Mat::E::C]));
-  tints[Mem::E::W] = get_tint(ptr_gg->wSpaceSize);
+  tints[Mat::E::B] = get_tint(ptr_gg->get_uncoal(Mat::E::B) * (ptr_gg->ldX[Mat::E::B]));
+  tints[Mat::E::C] = get_tint(ptr_gg->get_uncoal(Mat::E::C) * (ptr_gg->ldX[Mat::E::C]));
+  tints_www        = get_tint(ptr_gg->wSpaceSize);
   tintk            = get_tint(
     ptr_gg->k +
     2 * ptr_hp->sus[Mat::E::C].vs[NonChi::E::ICE] *
@@ -545,10 +543,10 @@ DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_) : ptr_hp(&hp
   if (ptr_hp->sus[Mat::E::C].vs[NonChi::E::SZT] == true)
   {
     std::string ui64 = "ulong";
-    tints[Mem::E::A] = ui64;
-    tints[Mem::E::B] = ui64;
-    tints[Mem::E::C] = ui64;
-    tints[Mem::E::W] = ui64;
+    tints[Mat::E::A] = ui64;
+    tints[Mat::E::B] = ui64;
+    tints[Mat::E::C] = ui64;
+    tints_www        = ui64;
     tintk            = ui64;
   }
 

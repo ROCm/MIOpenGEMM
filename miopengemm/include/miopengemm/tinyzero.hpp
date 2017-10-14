@@ -53,7 +53,8 @@ class FindTracker
 class GpuMms
 {
   public:
-  std::array<cl_mem, Mem::E::N> cl_mems;
+  std::array<cl_mem, Mat::E::N> cl_mems;
+  cl_mem cl_mems_www;
 
   private:
   oclutil::SafeClMem c_copy{"initialised when c_is_const"};
@@ -66,7 +67,7 @@ class GpuMms
          cl_mem           workspace_gpu_,
          size_t           c_nbytes,
          cl_command_queue cq);
-  cl_mem& operator[](Mem::E x);
+  cl_mem& operator[](Mat::E x);
 };
 
 // Lowest level (most basic) of MIOpenGEMM kernel search and benchmark functionality

@@ -97,12 +97,12 @@ void gemm_openblas(const Geometry& gg,
                              gg.n,
                              gg.k,
                              alpha,
-                             a + toff.offsets[Mem::E::A],
+                             a + toff.offsets[Mat::E::A],
                              gg.ldX[Mat::E::A],
-                             b + toff.offsets[Mem::E::B],
+                             b + toff.offsets[Mat::E::B],
                              gg.ldX[Mat::E::B],
                              beta,
-                             c + toff.offsets[Mem::E::C],
+                             c + toff.offsets[Mat::E::C],
                              gg.ldX[Mat::E::C]);
 }
 }
@@ -187,9 +187,9 @@ void gemm_3fors_generic(const Geometry& gg,
   // at this point, must be column contiguous (ala fortran)
   // this is a generic slow matrix multiplier for NN, TN, NT, TT.
 
-  a += toff.offsets[Mem::E::A];
-  b += toff.offsets[Mem::E::B];
-  c += toff.offsets[Mem::E::C];
+  a += toff.offsets[Mat::E::A];
+  b += toff.offsets[Mat::E::B];
+  c += toff.offsets[Mat::E::C];
 
   FInner finner;
 
@@ -294,8 +294,8 @@ void gemm(Geometry        gg,
                         gg.n,
                         gg.ldX[Mat::E::A],
                         gg.ldX[Mat::E::B],
-                        toff.offsets[Mem::E::A],
-                        toff.offsets[Mem::E::B],
+                        toff.offsets[Mat::E::A],
+                        toff.offsets[Mat::E::B],
                         a,
                         b);
   gg.tX[Mat::E::A] = tA;

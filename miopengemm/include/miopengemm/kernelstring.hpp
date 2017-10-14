@@ -26,7 +26,7 @@ class KernUses
   bool u_beta;
   bool u_k;
 
-  bool at(Mem::E emat_x) const;
+  bool at(Mat::E emat_x) const;
 
   KernUses(bool u_a_, bool u_b_, bool u_c_, bool u_w_, bool u_alpha_, bool u_beta_, bool u_k_);
 

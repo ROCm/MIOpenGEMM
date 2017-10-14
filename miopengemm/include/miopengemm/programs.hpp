@@ -47,8 +47,8 @@ class KernelTimes
 {
   public:
   std::vector<KernelTime> ktimes;
-  double extime;
-  void   reset_with_size(size_t size);
+  double                  extime;
+  void reset_with_size(size_t size);
 };
 
 class Program

@@ -61,8 +61,10 @@ class TinyOne
 
   oclutil::CommandQueueInContext tgcq;
 
-  // a, b, c and workspace, gpu memories.
+  // a, b, c gpu memories.
   std::vector<oclutil::SafeClMem> gpu_safemem;
+
+  oclutil::SafeClMem gpu_safemem_www;
 
   // sizes of a, b, c and workspace gpu memories.
   std::vector<size_t> mem_size;

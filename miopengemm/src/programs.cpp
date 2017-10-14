@@ -74,7 +74,8 @@ void KernelTime::reset()
 void KernelTimes::reset_with_size(size_t size)
 {
   ktimes.resize(size);
-  for (auto & x : ktimes){
+  for (auto& x : ktimes)
+  {
     x.reset();
   }
 }
@@ -95,7 +96,7 @@ oclutil::Result Programs::update(const std::vector<KernBlob>& kbs)
     "conversion", "unused-macros", "shorten-64-to-32", "cast-align"};
 
   std::stringstream ss_build_options;
-  //ss_build_options << "-Werror";
+  // ss_build_options << "-Werror";
   ss_build_options << "   -cl-std=CL2.0";  // TODO : macro this.
   ss_build_options << "   -Wf,-Weverything";
   for (auto& x : warnings_to_ignore)
@@ -225,15 +226,16 @@ oclutil::Result Programs::run(const cl_command_queue& queue,
 
   if (ev_from_user && ptr_ktimes != nullptr)
   {
-    
-    if (ptr_ktimes->ktimes.size() != n_active){
+
+    if (ptr_ktimes->ktimes.size() != n_active)
+    {
       std::stringstream ss;
       ss << "size of ktimes is " << ptr_ktimes->ktimes.size() << ", which is not n_active ("
-      << n_active << ')';
-      
+         << n_active << ')';
+
       throw miog_error(ss.str());
     }
-    
+
     size_t maxend   = 0;
     size_t minstart = std::numeric_limits<size_t>::max();
 

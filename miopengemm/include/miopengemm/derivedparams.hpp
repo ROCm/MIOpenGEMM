@@ -125,10 +125,10 @@ class DerivedParams
   std::string infa;
   // the function to use for atomic ints
   std::string fati;
-  
-  //one of "k" and "KVAL__", dependinf on PAK. (pass K).
+
+  // one of "k" and "KVAL__", dependinf on PAK. (pass K).
   std::string kstring;
-  
+
   // one of __K_NORMAL_FORM__   __K__  and  k_plus_offset
   std::string effective_k_varies_string;
   // as their names suggest
@@ -160,7 +160,8 @@ class DerivedParams
 
   size_t get_stride_cw2(Mat::E emat_x, bool pll_k, bool is_macro) const;
 
-  std::array<std::string, Mem::E::N> tints;
+  std::array<std::string, Mat::E::N> tints;
+  std::string tints_www;
   std::string tintk;
   std::string tshort;
 

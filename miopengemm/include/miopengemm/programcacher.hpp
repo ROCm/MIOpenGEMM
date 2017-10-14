@@ -27,19 +27,25 @@ enum BetaType
   IsOther
 };
 
-enum UnusualGemmId {ZeroOperation = -1, ZeroKandBeta = -2};
+enum UnusualGemmId
+{
+  ZeroOperation = -1,
+  ZeroKandBeta  = -2
+};
 
 template <typename T>
 BetaType get_beta_type(T beta)
 {
-  if (beta >= T(0) && beta <= T(0)){
+  if (beta >= T(0) && beta <= T(0))
+  {
     return BetaType::IsZero;
   }
-  
-  else if (beta >= T(1) && beta <= T(1)){
+
+  else if (beta >= T(1) && beta <= T(1))
+  {
     return BetaType::IsOne;
   }
-  
+
   return BetaType::IsOther;
 }
 
@@ -52,8 +58,8 @@ class ProgramCacher
   size_t current_ID = 0;
 
   public:
-  //std::array<Programs, max_cache_size> program_cache;  // 7MB @ max_cache_size = 10000.
-  //std::array<HyPas, max_cache_size>    hyper_params;
+  // std::array<Programs, max_cache_size> program_cache;  // 7MB @ max_cache_size = 10000.
+  // std::array<HyPas, max_cache_size>    hyper_params;
 
   std::array<std::unique_ptr<std::pair<Programs, HyPas>>, max_cache_size> prohyp_cache;
 
