@@ -20,10 +20,6 @@ enum class Status
   CORRECT
 };
 
-/* TODO : document logic. are matrices positive or zero centeted?
- * Provide better diagnostics when not correct.
- * Output full matrices to files for visualisation. etc etc etc. */
-
 template <typename T>
 bool exactly_equal(T a, T b)
 {

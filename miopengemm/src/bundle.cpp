@@ -30,13 +30,13 @@ namespace kerngen
 std::vector<std::pair<size_t, const void*>>
 get_arg_sizes_values(const KernBlob& kblob,
                      const std::array<cl_mem, Mat::E::N>& cl_mems,
-                     const cl_mem& cl_mems_www,
+                     const std::vector<cl_mem>& cl_mems_vws,
                      const std::array<size_t, Mat::E::N>& offsets,
-                     const size_t& offsets_www,
-                     size_t        float_size_bytes,
-                     const void*   alpha,
-                     const void*   beta,
-                     const size_t& k)
+                     const std::vector<size_t>& offsets_vws,
+                     size_t                     float_size_bytes,
+                     const void*                alpha,
+                     const void*                beta,
+                     const size_t&              k)
 {
 
   std::vector<std::pair<size_t, const void*>> arg_sizes_values;
@@ -49,10 +49,14 @@ get_arg_sizes_values(const KernBlob& kblob,
     }
   }
 
-  if (kblob.kuses.u_w == true)
+  for (int workspace_index = 0; workspace_index < kblob.kuses.u_vws.size(); ++workspace_index)
   {
-    arg_sizes_values.emplace_back(sizeof(cl_mem), static_cast<const void*>(&(cl_mems_www)));
-    arg_sizes_values.emplace_back(sizeof(size_t), &(offsets_www));
+    if (kblob.kuses.u_vws[workspace_index] == true)
+    {
+      arg_sizes_values.emplace_back(sizeof(cl_mem),
+                                    static_cast<const void*>(&(cl_mems_vws[workspace_index])));
+      arg_sizes_values.emplace_back(sizeof(size_t), &(offsets_vws[workspace_index]));
+    }
   }
 
   if (kblob.kuses.u_alpha)
@@ -155,6 +159,7 @@ Bundle::Bundle(const HyPas& hp_, const Geometry& gg_) : hp(hp_), gg(gg_), dp(hp,
 
   if (dp.main_does_beta_c_inc == 0)
   {
+
     v_tgks.emplace_back(betacgen::get_betac_kernelstring(hp, gg, dp));
   }
 

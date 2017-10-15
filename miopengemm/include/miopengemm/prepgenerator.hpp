@@ -21,7 +21,7 @@ class PrepGenerator : public basegen::BaseGenerator
   char   MCHAR;
   char   mchar;
 
-  virtual void set_usage() override final;
+  virtual KernUses get_usage() override final;
   void append_basic_what_definitions(std::stringstream& ss);
 
   size_t get_global_work_size()

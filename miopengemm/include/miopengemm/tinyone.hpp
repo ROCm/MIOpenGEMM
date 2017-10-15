@@ -63,8 +63,7 @@ class TinyOne
 
   // a, b, c gpu memories.
   std::vector<oclutil::SafeClMem> gpu_safemem;
-
-  oclutil::SafeClMem gpu_safemem_www;
+  std::vector<oclutil::SafeClMem> gpu_safemem_vws;
 
   // sizes of a, b, c and workspace gpu memories.
   std::vector<size_t> mem_size;
@@ -74,7 +73,10 @@ class TinyOne
 
   std::unique_ptr<TinyZero> up_jinx;
 
-  size_t get_workspace_memsize();
+  size_t get_workspace_memsize(size_t workspace_index);
+
+  // returns a vector of the cl_mems of gpu_safemem_vws.
+  std::vector<cl_mem> get_w_cl_mems();
 
   void opencl_memory_initialise();
 

@@ -42,7 +42,8 @@ void populate(const std::vector<CacheKey>& cache_keys,
               owrite::Writer&              mowri)
 {
 
-  Offsets offsets = get_zero_offsets();
+  // TODO : no we here is an assumption.
+  Offsets offsets = get_zero_offsets(0);
   CLHint  xhint;
 
   // we set the CPU memory once for all geometries.
@@ -222,9 +223,13 @@ KernelCache get_wSpaceReduced(const KernelCache& kc)
     auto          soln = kc.at(ck);
     DerivedParams dps(soln, ck.gg);
     std::cout << " reducing : wSpaceSize   -->  required_workspaces \n";
-    
-    auto gg_new       = ck.gg;
-    gg_new.wSpaceSize = dps.required_workspaces;
+
+    auto gg_new = ck.gg;
+    gg_new.wSpaceSize.resize(0);
+    for (auto& x : dps.required_workspaces)
+    {
+      gg_new.wSpaceSize.push_back(x.n_elms);
+    }
     CacheKey ck_new(ck.dvc, ck.constraints, gg_new);
     kc_new.add(ck_new, soln);
   }

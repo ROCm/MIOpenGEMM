@@ -27,12 +27,6 @@
 // TODO : experiment with this https://community.amd.com/thread/192119
 // (to see when CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE works).
 
-// TODO : for m = k = 1760 and n = 64, would it not be better to load B directly from global?
-// reasoning : elements of B are read 27.5x more frequently and can probably live in cache.
-
-// TODO : make writing m,n,k etc as #defines optional. Maybe the compiler is "over"-optimising.
-// as an example, a kernel for square 5100 works terribly for square 8188: seems unreasonable
-
 namespace MIOpenGEMM
 {
 namespace alphagen
@@ -45,16 +39,31 @@ class AlphaGenerator : public basegen::BaseGenerator
   // TODO : move to derived maybe
   std::vector<Mat::E> mata_matb;
 
-  virtual void set_usage() override final
+  virtual KernUses get_usage() override final
   {
 
-    u_a     = (hp.sus[Mat::E::A].vs[Chi::E::WOS] == Scratch::E::UNUSED) ? true : false;
-    u_b     = (hp.sus[Mat::E::B].vs[Chi::E::WOS] == Scratch::E::UNUSED) ? true : false;
-    u_c     = true;
-    u_w     = (not u_a or not u_b);
-    u_alpha = true;
-    u_beta  = dp.main_does_beta_c_inc;
-    u_k     = (hp.sus[Mat::E::C].vs[NonChi::E::PAK] == Binary::E::YES) ? true : false;
+    bool u_a = (hp.sus[Mat::E::A].vs[Chi::E::WOS] == Scratch::E::UNUSED) ? true : false;
+    bool u_b = (hp.sus[Mat::E::B].vs[Chi::E::WOS] == Scratch::E::UNUSED) ? true : false;
+    bool u_c = true;
+    std::vector<bool> u_vws;
+    u_vws.resize(dp.required_workspaces.size(), false);
+    for (size_t workspace_index = 0; workspace_index < dp.required_workspaces.size();
+         ++workspace_index)
+    {
+
+      // if hp.sus(emat).WOS is not unused,
+      if (hp.sus[dp.required_workspaces[workspace_index].emat].vs[Chi::E::WOS] !=
+          Scratch::E::UNUSED)
+      {
+        u_vws[workspace_index] = true;
+      }
+    }
+
+    bool u_alpha = true;
+    bool u_beta  = dp.main_does_beta_c_inc;
+    bool u_k     = (hp.sus[Mat::E::C].vs[NonChi::E::PAK] == Binary::E::YES) ? true : false;
+
+    return {u_a, u_b, u_c, u_vws, u_alpha, u_beta, u_k};
   }
 
   public:
@@ -653,10 +662,7 @@ if ((group_id_z == N_WORK_ITEMS_PER_C_ELM - 1) && k_remaining > 0){
     {
       for (unsigned j = 0; j < hp.sus[emat_x].vs[Chi::E::VEW]; ++j)
       {
-        // TODO : MIMIC, but vec_x and times STRIDE_PERP_K
-
         ss << "r" << X << "[VEW_" << X << "*i + " << j << "] = ";
-
         if (hp.sus[emat_x].vs[Chi::E::LOM] == Binary::E::YES)
         {
           ss << "l" << X << "[";
@@ -951,8 +957,17 @@ TSHORT unroll_offset = (13*group_id_a + 7*group_id_b)%UNROLL;
         hp.sus[emat_x].vs[Chi::E::WOS] == Scratch::E::NFORM)
     {
       if (emat_x == Mat::E::A)
+      {
         ss << "/* from workspace */\n";
-      ss << "const TFLOAT * restrict " << x << " = w + w_offset + GLOBAL_OFFSET_" << X << ";\n";
+      }
+
+      std::stringstream wstr_ss;
+      wstr_ss << 'w'
+              << dp.get_workspace_id(emat_x,
+                                     static_cast<Scratch::E>(hp.sus[emat_x].vs[Chi::E::WOS]));
+      auto wstr = wstr_ss.str();
+
+      ss << "const TFLOAT * restrict " << x << " = " << wstr << " + " << wstr << "_offset;\n";
     }
 
     else
@@ -996,7 +1011,7 @@ TSHORT unroll_offset = (13*group_id_a + 7*group_id_b)%UNROLL;
       ss << "/* move to corner of the region required by the macro tile */\n";
     ss << x << " += read_macro_tile_start_" << x << "*MACRO_STRIDE_PERP_K_" << X << ";\n";
 
-    if (dp.main_split_on_k != 0)  // TODO : Binary::E::YES ?
+    if (dp.main_split_on_k != 0)
     {
       if (emat_x == Mat::E::A)
         ss << R"(/* a points to top left of region required, but this work group  */
@@ -1198,14 +1213,6 @@ TSHORT unroll_offset = (13*group_id_a + 7*group_id_b)%UNROLL;
     ss << "#define C_INTERWEAVE_STRIDE_" << x << " " << dp.at(emat_x).main_c_interweave_stride
        << '\n';
 
-    if (hp.sus[emat_x].vs[Chi::E::WOS] != Scratch::E::UNUSED)
-    {
-      if (emat_x == Mat::E::A)
-        ss << "/* global memory offset, depends on type of copy of both a,b "
-              "*/\n";
-      ss << "#define GLOBAL_OFFSET_" << x << " " << dp.at(emat_x).cw_global_offset;
-    }
-
     ss << '\n';
   }
 
@@ -1248,7 +1255,7 @@ TSHORT unroll_offset = (13*group_id_a + 7*group_id_b)%UNROLL;
     {
       ss << "#define TINT" << Mat::M().name[i] << " " << dp.tints[i] << '\n';
     }
-    ss << "#define TINTW " << dp.tints_www << '\n';
+
     ss << "\n/* type for integer in inner most loops (probably inlined anyway)  */\n";
     ss << "#define TSHORT " << dp.tshort << '\n';
     ss << "\n/* type for integers which never exceeds KVAL__ (k) + UNROLL (for UFO case) */\n";
@@ -1385,7 +1392,7 @@ TSHORT unroll_offset = (13*group_id_a + 7*group_id_b)%UNROLL;
     ss << "\n}\n";
 
     return {get_ktype(),
-            {u_a, u_b, u_c, u_w, u_alpha, u_beta, u_k},
+            get_usage(),
             ss.str(),
             kernelname,
             dp.main_global_work_size,

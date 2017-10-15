@@ -30,18 +30,28 @@ void BaseGenerator::append_farg(bool u_x, std::stringstream& ss, const std::stri
 
 void BaseGenerator::append_fargs(std::stringstream& ss)
 {
+  auto kuse = get_usage();
   ss << "\n(";
-  append_farg(u_a, ss, "\n__global const TFLOAT * restrict a, \nconst size_t a_offset");
-  append_farg(u_b, ss, "\n__global const TFLOAT * restrict b, \nconst size_t b_offset");
-  append_farg(u_c, ss, "\n__global TFLOAT       *          c, \nconst size_t c_offset");
+  append_farg(kuse.u_a, ss, "\n__global const TFLOAT * restrict a, \nconst size_t a_offset");
+  append_farg(kuse.u_b, ss, "\n__global const TFLOAT * restrict b, \nconst size_t b_offset");
+  append_farg(kuse.u_c, ss, "\n__global TFLOAT       *          c, \nconst size_t c_offset");
   // if using c, we assume workspace is const.
   // this is a hacky, as we might have a kernel
   // which uses c and modifies w as well.
-  std::string cness = (u_c == true) ? "const " : "";
-  append_farg(u_w, ss, "\n__global " + cness + "TFLOAT * restrict w,\nconst size_t w_offset");
-  append_farg(u_alpha, ss, "\nconst TFLOAT alpha");
-  append_farg(u_beta, ss, "\nconst TFLOAT beta");
-  append_farg(u_k, ss, "\nconst size_t k");
+  std::string cness = (kuse.u_c == true) ? "const " : "";
+
+  for (auto workspace_index = 0; workspace_index < dp.required_workspaces.size(); ++workspace_index)
+  {
+    std::stringstream ss_frag;
+    ss_frag << "\n__global " + cness + "TFLOAT * restrict w" << workspace_index
+            << ",\nconst size_t w" << workspace_index << "_offset";
+
+    append_farg(kuse.u_vws[workspace_index], ss, ss_frag.str());
+  }
+
+  append_farg(kuse.u_alpha, ss, "\nconst TFLOAT alpha");
+  append_farg(kuse.u_beta, ss, "\nconst TFLOAT beta");
+  append_farg(kuse.u_k, ss, "\nconst size_t k");
 
   ss << ")\n";
 }

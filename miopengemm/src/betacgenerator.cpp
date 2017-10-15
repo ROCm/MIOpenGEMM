@@ -42,9 +42,12 @@ void BetacGenerator::append_derived_definitions_additional(std::stringstream& ss
 
 KernBlob get_betac_kernelstring(const HyPas& hp, const Geometry& gg, const DerivedParams& dp)
 {
+
   BetacGenerator bcg(hp, gg, dp);
   bcg.setup();
-  return bcg.get_kernelstring();
+
+  auto x = bcg.get_kernelstring();
+  return x;
 }
 }
 }

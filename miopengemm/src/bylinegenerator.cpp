@@ -166,15 +166,14 @@ for (TSHORT i = 0; i < WORK_FOR_LAST_ITEM_IN_COAL; ++i){  )";
 void ByLineGenerator::append_positioning_w_string(std::stringstream& ss)
 {
 
-  ss << R"(
-
-/* moving the y pointer to the first element to process */
-w += GLOBAL_OFFSET_W;
-w += w_offset;
-w += start_uncoal * LDW;
-w += start_coal;
-)";
+  auto wstr = "w" + std::to_string(dp.get_workspace_id(emat_x, Scratch::E::COPY));
+  ss << "\n\n/* moving the y pointer to the first element to process */\n";
+  ss << wstr << " += " << wstr << "_offset;\n";
+  ss << wstr << " += start_uncoal * LDW;\n";
+  ss << wstr << " += start_coal;\n";
 }
+
+// get_workspace_id
 
 KernBlob ByLineGenerator::get_kernelstring()
 {
@@ -218,8 +217,11 @@ KernBlob ByLineGenerator::get_kernelstring()
 
   ss << "\n}\n\n\n";
 
-  return {get_ktype(),
-          {u_a, u_b, u_c, u_w, u_alpha, u_beta, u_k},
+  auto ktype = get_ktype();
+  auto usage = get_usage();
+
+  return {ktype,
+          usage,  // {u_a, u_b, u_c, u_w, u_alpha, u_beta, u_k},
           ss.str(),
           kernelname,
           get_global_work_size(),

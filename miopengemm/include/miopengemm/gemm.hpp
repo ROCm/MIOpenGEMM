@@ -27,17 +27,10 @@ class GemmStatus
 };
 
 /*! @brief
- * Free memory of GEMM ID. Calling this function is not required,
- * but it can be used to reclaim memory early if needed.
- * After free(ID) is called, ID is no longer valid for xgemm.
- */
-void free(size_t ID);
-
-/*! @brief
  * GEneral Matric Multiplication.
  * - \f$ C \leftarrow \alpha op(A) op(B) + \beta C \f$
  * To get started with understanding GEMM parameters
- * isColMajor, tA, tB, m, n, k lda, ldb, ldc, alpha and beta see (TODO).
+ * isColMajor, tA, tB, m, n, k lda, ldb, ldc, alpha and beta see the wiki.
  *
  * @param a
  * memory buffer for matrix A
@@ -86,31 +79,31 @@ void free(size_t ID);
  */
 
 template <typename T>
-GemmStatus xgemm(bool              isColMajor,
-                 bool              tA,
-                 bool              tB,
-                 size_t            m,
-                 size_t            n,
-                 size_t            k,
-                 T                 alpha,
-                 cl_mem            a,
-                 size_t            a_offset,
-                 size_t            lda,
-                 cl_mem            b,
-                 size_t            b_offset,
-                 size_t            ldb,
-                 T                 beta,
-                 cl_mem            c,
-                 size_t            c_offset,
-                 size_t            ldc,
-                 cl_mem            w,
-                 size_t            w_offset,  // TODO : vectorise (as well as w)
-                 std::vector<size_t>            w_size,
-                 cl_command_queue* ptr_queue,
-                 cl_uint           num_events_in_wait_list,
-                 const cl_event*   event_wait_list,
-                 cl_event*         ptr_event,
-                 int               ID);
+GemmStatus xgemm(bool                isColMajor,
+                 bool                tA,
+                 bool                tB,
+                 size_t              m,
+                 size_t              n,
+                 size_t              k,
+                 T                   alpha,
+                 cl_mem              a,
+                 size_t              a_offset,
+                 size_t              lda,
+                 cl_mem              b,
+                 size_t              b_offset,
+                 size_t              ldb,
+                 T                   beta,
+                 cl_mem              c,
+                 size_t              c_offset,
+                 size_t              ldc,
+                 std::vector<cl_mem> w,
+                 std::vector<size_t> w_offset,
+                 std::vector<size_t> w_size,
+                 cl_command_queue*   ptr_queue,
+                 cl_uint             num_events_in_wait_list,
+                 const cl_event*     event_wait_list,
+                 cl_event*           ptr_event,
+                 int                 ID);
 
 /*! @brief
  * GEneral Matric Multiplication.

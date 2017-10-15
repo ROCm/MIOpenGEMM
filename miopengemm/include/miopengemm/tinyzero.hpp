@@ -54,19 +54,19 @@ class GpuMms
 {
   public:
   std::array<cl_mem, Mat::E::N> cl_mems;
-  cl_mem cl_mems_www;
+  std::vector<cl_mem> cl_mems_vws;
 
   private:
   oclutil::SafeClMem c_copy{"initialised when c_is_const"};
 
   public:
-  GpuMms(cl_mem           a_gpu_,
-         cl_mem           b_gpu_,
-         cl_mem           c_gpu_,
-         bool             c_is_const,
-         cl_mem           workspace_gpu_,
-         size_t           c_nbytes,
-         cl_command_queue cq);
+  GpuMms(cl_mem              a_gpu_,
+         cl_mem              b_gpu_,
+         cl_mem              c_gpu_,
+         bool                c_is_const,
+         std::vector<cl_mem> workspace_gpu_,
+         size_t              c_nbytes,
+         cl_command_queue    cq);
   cl_mem& operator[](Mat::E x);
 };
 
@@ -75,15 +75,15 @@ class TinyZero
 {
 
   public:
-  TinyZero(cl_command_queue command_queue_,
-           const Geometry   gg_,
-           const Offsets    toff_,
-           cl_mem           a_gpu_,
-           cl_mem           b_gpu_,
-           cl_mem           c_gpu_,
-           bool             c_is_const,
-           cl_mem           workspace_gpu_,
-           owrite::Writer&  mowri_);
+  TinyZero(cl_command_queue    command_queue_,
+           const Geometry      gg_,
+           const Offsets       toff_,
+           cl_mem              a_gpu_,
+           cl_mem              b_gpu_,
+           cl_mem              c_gpu_,
+           bool                c_is_const,
+           std::vector<cl_mem> workspace_gpu_,
+           owrite::Writer&     mowri_);
 
   std::vector<double> benchgemm(const HyPas& hp, const Halt& hl);
   Solution find0(const Constraints& constraint, const FindParams& find_params);

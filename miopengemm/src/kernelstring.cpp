@@ -25,8 +25,8 @@ bool KernUses::at(Mat::E emat_x) const
 }
 
 KernUses::KernUses(
-  bool u_a_, bool u_b_, bool u_c_, bool u_w_, bool u_alpha_, bool u_beta_, bool u_k_)
-  : u_a(u_a_), u_b(u_b_), u_c(u_c_), u_w(u_w_), u_alpha(u_alpha_), u_beta(u_beta_), u_k(u_k_)
+  bool u_a_, bool u_b_, bool u_c_, std::vector<bool> u_vws_, bool u_alpha_, bool u_beta_, bool u_k_)
+  : u_a(u_a_), u_b(u_b_), u_c(u_c_), u_vws(u_vws_), u_alpha(u_alpha_), u_beta(u_beta_), u_k(u_k_)
 {
   for (auto& x : {Mat::E::A, Mat::E::B, Mat::E::C})
   {
@@ -36,9 +36,15 @@ KernUses::KernUses(
     }
   }
 
-  if (u_w)
+  if (u_vws.size() != 0)
   {
-    full += 'W';
+    for (size_t i = 0; i < u_vws.size(); ++i)
+    {
+      if (u_vws[i])
+      {
+        full += "_W" + std::to_string(i);
+      }
+    }
   }
 
   if (u_alpha)

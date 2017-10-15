@@ -28,6 +28,19 @@ class Derivabilty
 
 bool is_dvble(const HyPas&, const Geometry&);
 
+class WorkSpaceTriple
+{
+
+  public:
+  size_t     n_elms;
+  Mat::E     emat;
+  Scratch::E scratch;
+  bool operator<(const WorkSpaceTriple& right) const { return n_elms < right.n_elms; }
+
+  WorkSpaceTriple(size_t ne, Mat::E em, Scratch::E sc) : n_elms(ne), emat(em), scratch(sc) {}
+  WorkSpaceTriple() = default;
+};
+
 class ChiralDerivedParams
 {
   public:
@@ -49,8 +62,7 @@ class ChiralDerivedParams
   size_t main_c_interweave_stride;
 
   // copy to workspace specific parameters
-  size_t cw_global_offset = uninitialised_size_t;
-  size_t cw_n_elements    = uninitialised_size_t;
+  size_t cw_n_elements = uninitialised_size_t;
 
   // copy to workspace, type 1, specific parameters
   size_t cw1_smallest_possible_ldx = uninitialised_size_t;
@@ -146,8 +158,11 @@ class DerivedParams
   size_t ga3_last_super_column_width = uninitialised_size_t;
 
   // Total required workspace
-  std::vector<size_t> required_workspaces = {}; // TODO : indicate uninitialised somehow ?
-  
+  std::vector<WorkSpaceTriple> required_workspaces = {};
+
+  // searches in required_workspaces for a match.
+  int get_workspace_id(Mat::E emat, Scratch::E scratch) const;
+
   size_t get_target_ld(Mat::E emat_x) const;
 
   size_t get_n_elements_in_x_unroll(char x);
@@ -161,9 +176,9 @@ class DerivedParams
   size_t get_stride_cw2(Mat::E emat_x, bool pll_k, bool is_macro) const;
 
   std::array<std::string, Mat::E::N> tints;
-  std::string tints_www;
-  std::string tintk;
-  std::string tshort;
+  std::vector<std::string> tints_vws;
+  std::string              tintk;
+  std::string              tshort;
 
   void set_should_be_hyperparams();
 

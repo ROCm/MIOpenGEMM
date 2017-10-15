@@ -1,14 +1,14 @@
 /*******************************************************************************
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
+#include <algorithm>
 #include <cmath>
+#include <functional>
 #include <iostream>
 #include <limits>
 #include <map>
 #include <sstream>
 #include <string>
-#include <functional>
-#include <algorithm>
 #include <miopengemm/error.hpp>
 #include <miopengemm/geometry.hpp>
 #include <miopengemm/stringutilbase.hpp>
@@ -44,26 +44,53 @@ size_t get_mat_memsize(const Geometry& gg, const Offsets& toff, Mat::E emat)
   return gg.derived.float_size_bytes * get_mat_size(gg, toff, emat);
 }
 
-Offsets::Offsets(
-  size_t oa_, size_t ob_, size_t oc_, size_t ow_, size_t ta_, size_t tb_, size_t tc_, size_t tw_)
+Offsets::Offsets(size_t              oa_,
+                 size_t              ob_,
+                 size_t              oc_,
+                 std::vector<size_t> ow_,
+                 size_t              ta_,
+                 size_t              tb_,
+                 size_t              tc_,
+                 std::vector<size_t> tw_)
 {
+
+  if (ow_.size() != tw_.size())
+  {
+    throw miog_error(
+      "tail offset and leading offset vectors are not of the same size if Offsets constructor");
+  }
 
   offsets[Mat::E::A] = oa_;
   offsets[Mat::E::B] = ob_;
   offsets[Mat::E::C] = oc_;
-  offsets_www        = ow_;
+  offsets_vws        = ow_;
 
   tails[Mat::E::A] = ta_;
   tails[Mat::E::B] = tb_;
   tails[Mat::E::C] = tc_;
-  tails_www        = tw_;
+  tails_vws        = tw_;
 }
 
-Offsets get_padding_offsets() { return Offsets(11, 17, 13, 23, 67, 15, 29, 17); }
+Offsets get_padding_offsets(size_t n_workspaces)
+{
 
-Offsets get_zero_offsets() { return Offsets(0, 0, 0, 0, 0, 0, 0, 0); }
+  std::vector<size_t> pre_w(n_workspaces, 101);
+  std::vector<size_t> post_w(n_workspaces, 103);
 
-Geometry get_tight_geometry() { return {false, false, false, false, 1, 1, 1, 1, 1, 1, {1}, 'f'}; }
+  return Offsets(11, 17, 13, pre_w, 67, 15, 29, post_w);
+}
+
+Offsets get_zero_offsets(size_t n_workspaces)
+{
+  std::vector<size_t> wsp(n_workspaces, 1);
+  return Offsets(0, 0, 0, wsp, 0, 0, 0, wsp);
+}
+
+Geometry get_tight_geometry(size_t n_workspaces)
+{
+  std::vector<size_t> wsp(n_workspaces, 1);
+  return {false, false, false, false, 1, 1, 1, 1, 1, 1, wsp, 'f'};
+}
 
 char get_floattype(size_t nbits)
 {
@@ -217,21 +244,22 @@ bool Geometry::coal_is_pll_k(Mat::E M) const
 {
   // proof : false, false, true should give 1
   return (static_cast<size_t>(isColMajor) + static_cast<size_t>(tX.at(M)) +
-          static_cast<size_t>(M == Mat::E::A)) % 2;
+          static_cast<size_t>(M == Mat::E::A)) %
+         2;
 }
 
-void Geometry::initialise(bool   isColMajor_,
-                          bool   tA_,
-                          bool   tB_,
-                          bool   tC_,
-                          size_t lda_,
-                          size_t ldb_,
-                          size_t ldc_,
-                          size_t m_,
-                          size_t n_,
-                          size_t k_,
+void Geometry::initialise(bool                isColMajor_,
+                          bool                tA_,
+                          bool                tB_,
+                          bool                tC_,
+                          size_t              lda_,
+                          size_t              ldb_,
+                          size_t              ldc_,
+                          size_t              m_,
+                          size_t              n_,
+                          size_t              k_,
                           std::vector<size_t> wSpaceSize_,
-                          char   floattype_)
+                          char                floattype_)
 {
 
   isColMajor = isColMajor_;
@@ -240,8 +268,8 @@ void Geometry::initialise(bool   isColMajor_,
   k          = k_;
   wSpaceSize = wSpaceSize_;
   std::sort(wSpaceSize.begin(), wSpaceSize.end(), std::greater<size_t>());
-  
-  floattype  = floattype_;
+
+  floattype = floattype_;
 
   tX.resize(Mat::E::N);
   tX[Mat::E::A] = tA_;
@@ -277,10 +305,11 @@ void Geometry::initialise(bool   isColMajor_,
     forPadCopy[emat] = get_uncoal(emat) * (get_coal(emat) + 16);
   }
 
-  //TODO : fix up this legacy code.
+  // This is not correct, now should workspace sizes be compared in the metric?
   size_t wsp0 = 0;
-  if (wSpaceSize.size() == 1){
-    wsp0 = wSpaceSize[0];
+  for (auto& x : wSpaceSize)
+  {
+    wsp0 += x;
   }
   wSpaceSufficient[0] = forPadCopy[Mat::E::A] < wsp0;
   wSpaceSufficient[1] = forPadCopy[Mat::E::B] < wsp0;
@@ -295,13 +324,15 @@ std::map<std::string, std::vector<size_t>> get_key_val_map(std::string geometry_
   std::map<std::string, std::vector<size_t>> key_val_map;
   for (auto& frag : frags)
   {
-    auto key_val     = stringutil::splitnumeric(frag);
-    auto key         = std::get<0>(key_val);
-    auto val         = std::get<1>(key_val);
-    if (key_val_map.count(key) == 0){
+    auto key_val = stringutil::splitnumeric(frag);
+    auto key     = std::get<0>(key_val);
+    auto val     = std::get<1>(key_val);
+    if (key_val_map.count(key) == 0)
+    {
       key_val_map[key] = {val};
     }
-    else{
+    else
+    {
       key_val_map[key].push_back(val);
     }
   }
@@ -334,11 +365,13 @@ Geometry::Geometry(std::string geometry_string)
   bool              good_string{true};
   for (auto& x : key_val_map)
   {
-    if (x.first != "ws" && x.second.size() != 1){
-      errm_ss << "The key in the geometry string `" << x.first << "' is appears " << x.second.size() << " times.";
+    if (x.first != "ws" && x.second.size() != 1)
+    {
+      errm_ss << "The key in the geometry string `" << x.first << "' is appears " << x.second.size()
+              << " times.";
       good_string = false;
     }
-    
+
     if (goldstandard_map.count(x.first) == 0)
     {
       errm_ss << "The key in the geometry string `" << x.first << "' is not valid.  ";
@@ -350,7 +383,8 @@ Geometry::Geometry(std::string geometry_string)
   {
     if (key_val_map.count(x.first) == 0 && x.first != "ws")
     {
-      errm_ss << "The geometry string should contain key `" << x.first << "', but does not. The only optional key is ws. ";
+      errm_ss << "The geometry string should contain key `" << x.first
+              << "', but does not. The only optional key is ws. ";
       good_string = false;
     }
   }
@@ -359,11 +393,12 @@ Geometry::Geometry(std::string geometry_string)
   {
     throw miog_error(errm_ss.str());
   }
-  
-  if (key_val_map.count("ws") == 0){
+
+  if (key_val_map.count("ws") == 0)
+  {
     key_val_map["ws"] = {};
   }
-  
+
   initialise(safeat(key_val_map, "colMaj")[0],
              safeat(key_val_map, "tA")[0],
              safeat(key_val_map, "tB")[0],
@@ -386,30 +421,28 @@ std::string Geometry::get_networkconfig_string() const
   geometry_stringstream << "tC" << tX[Mat::E::C] << "_tA" << tX[Mat::E::A] << "_tB" << tX[Mat::E::B]
                         << "_colMaj" << isColMajor << "_m" << m << "_n" << n << "_k" << k << "_lda"
                         << ldX[Mat::E::A] << "_ldb" << ldX[Mat::E::B] << "_ldc" << ldX[Mat::E::C];
-  //append_ws_frag(geometry_stringstream); 
-                       for (auto & x : wSpaceSize){
-                          geometry_stringstream << "_ws" << x;
-                        }
- 
-                         
+  // append_ws_frag(geometry_stringstream);
+  for (auto& x : wSpaceSize)
+  {
+    geometry_stringstream << "_ws" << x;
+  }
+
   geometry_stringstream << "_f" << derived.float_size_bits;
   return geometry_stringstream.str();
 }
 
-
-//void Geometry::append_ws_frag(std::stringstream & ss) const
+// void Geometry::append_ws_frag(std::stringstream & ss) const
 //{
-  //if (wSpaceSize.size() == 0){
-    //ss << 0;
-  //}
-  //else {
-    //ss << wSpaceSize[0];
-    //for (auto i = 1; i < wSpaceSize.size(); ++i){
-      //ss << '.' << wSpaceSize[i];
-    //}
-  //}
+// if (wSpaceSize.size() == 0){
+// ss << 0;
 //}
-
+// else {
+// ss << wSpaceSize[0];
+// for (auto i = 1; i < wSpaceSize.size(); ++i){
+// ss << '.' << wSpaceSize[i];
+//}
+//}
+//}
 
 std::string Geometry::get_tabbed_string() const
 {
@@ -422,12 +455,12 @@ std::string Geometry::get_tabbed_string() const
                         << " k=" << stringutil::get_char_padded(k, 6)
                         << " lda=" << stringutil::get_char_padded(ldX[Mat::E::A], 6)
                         << " ldb=" << stringutil::get_char_padded(ldX[Mat::E::B], 6)
-                        << " ldc=" << stringutil::get_char_padded(ldX[Mat::E::C], 6)
-                        << " ws={ ";
-                        for (auto & x : wSpaceSize){
-                          geometry_stringstream << x << ' ';
-                        }
-                        geometry_stringstream << '}';
+                        << " ldc=" << stringutil::get_char_padded(ldX[Mat::E::C], 6) << " ws={ ";
+  for (auto& x : wSpaceSize)
+  {
+    geometry_stringstream << x << ' ';
+  }
+  geometry_stringstream << '}';
   geometry_stringstream << " f=" << derived.float_size_bits;
 
   return geometry_stringstream.str();
@@ -488,20 +521,37 @@ double Geometry::get_distance(const Geometry& g2) const
     }
   }
 
-  //TODO : reconsider distance between workspace
-  distance += 1e-5 * (wSpaceSize != g2.wSpaceSize); //std::log(wSpaceSize + 1.1) - std::log(g2.wSpaceSize + 1.1));
+  // this is not correct : distance between workspace, unclear how to define
+  distance += 1e-5 * (wSpaceSize != g2.wSpaceSize);
 
   return distance;
 }
 
-//TODO : reconsider this function
-size_t get_total_workspace(const Geometry& gg, const Offsets& toff)
+size_t get_total_workspace(const Geometry& gg, const Offsets& toff, size_t workspace_index)
 {
-  
-  auto sum_wspace = 0;
-  for (auto & x : gg.wSpaceSize){
-    sum_wspace += x;
+
+  if (workspace_index >= gg.wSpaceSize.size())
+  {
+    std::stringstream ss;
+    ss << "workspace_index (" << workspace_index << ") exceeds number of workspaces ("
+       << gg.wSpaceSize.size() << '.';
+    throw miog_error(ss.str());
   }
-  return sum_wspace + toff.offsets_www + toff.tails_www;
+
+  if (gg.wSpaceSize.size() != toff.tails_vws.size())
+  {
+    std::stringstream ss;
+    ss << "number of workspaces (" << gg.wSpaceSize.size()
+       << ") does not equal number of tails in offset (" << toff.tails_vws.size() << ").";
+    throw miog_error(ss.str());
+  }
+
+  auto sum_wspace = 0;
+  // for (size_t i = 0; i  < gg.wSpaceSize.size()){
+  sum_wspace += gg.wSpaceSize[workspace_index];
+  sum_wspace += toff.offsets_vws[workspace_index];
+  sum_wspace += toff.tails_vws[workspace_index];
+  //}
+  return sum_wspace;
 }
 }

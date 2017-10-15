@@ -30,8 +30,7 @@
 #include <miopengemm/timer.hpp>
 #include <miopengemm/tinyzero.hpp>
 
-// TODO : checks on constraints to check for cleary non-derivables
-// TODO : checks on workspace size
+// TODO : checks on constraints to check for cleary non-derivables and on workspace size
 
 namespace MIOpenGEMM
 {
@@ -53,18 +52,18 @@ std::string FindTracker::get_string() const
   return track_ss.str();
 }
 
-GpuMms::GpuMms(cl_mem           a_gpu_,
-               cl_mem           b_gpu_,
-               cl_mem           c_gpu_,
-               bool             c_is_const,
-               cl_mem           workspace_gpu_,
-               size_t           c_nbytes,
-               cl_command_queue cq)
+GpuMms::GpuMms(cl_mem              a_gpu_,
+               cl_mem              b_gpu_,
+               cl_mem              c_gpu_,
+               bool                c_is_const,
+               std::vector<cl_mem> ws_gpu,
+               size_t              c_nbytes,
+               cl_command_queue    cq)
 {
 
   cl_mems[Mat::E::A] = a_gpu_;
   cl_mems[Mat::E::B] = b_gpu_;
-  cl_mems_www        = workspace_gpu_;
+  cl_mems_vws        = ws_gpu;
 
   if (c_is_const == false)
   {
@@ -81,15 +80,15 @@ GpuMms::GpuMms(cl_mem           a_gpu_,
 
 cl_mem& GpuMms::operator[](Mat::E x) { return cl_mems[x]; }
 
-TinyZero::TinyZero(cl_command_queue command_queue_,
-                   const Geometry   gg_,
-                   const Offsets    toff_,
-                   cl_mem           a_gpu_,
-                   cl_mem           b_gpu_,
-                   cl_mem           c_gpu_,
-                   bool             c_is_const,
-                   cl_mem           workspace_gpu_,
-                   owrite::Writer&  mowri_)
+TinyZero::TinyZero(cl_command_queue    command_queue_,
+                   const Geometry      gg_,
+                   const Offsets       toff_,
+                   cl_mem              a_gpu_,
+                   cl_mem              b_gpu_,
+                   cl_mem              c_gpu_,
+                   bool                c_is_const,
+                   std::vector<cl_mem> workspace_gpu_,
+                   owrite::Writer&     mowri_)
   : command_queue(command_queue_),
     gg(gg_),
     toff(toff_),
@@ -103,6 +102,7 @@ TinyZero::TinyZero(cl_command_queue command_queue_,
     devinfo(command_queue_),
     mowri(mowri_)
 {
+
   cl_context   context;
   cl_device_id device_id;
   oclutil::cl_set_context_and_device_from_command_queue(
@@ -132,26 +132,32 @@ void TinyZero::address_check_valid()
     throw miog_error("in address_check_valid, c should not be nullptr");
   }
 
-  //if (gpum.cl_mems_www == nullptr && gg.wSpaceSize != 0)
-  //{
-    //throw miog_error("in address_check_valid, pointer to workspace memory is "
-                     //"the nullptr, but wSpaceSize is not zero");
-  //}
-
-  //if (gpum.cl_mems_www != nullptr && gg.wSpaceSize == 0)
-  //{
-    //throw miog_error("in address_check_valid, pointer to workspace memory is not the "
-                     //"nullptr, but wSpaceSize is zero. if wSpaceSize is zero please set "
-                     //"workspace_gpu to the nullptr to make super clear that there will be "
-                     //"no workspace used. The workspace offset should be zero too in this case ");
-  //}
-
-  if (gpum.cl_mems_www != nullptr &&
-      (gpum.cl_mems_www == gpum[Mat::E::A] || gpum.cl_mems_www == gpum[Mat::E::B] ||
-       gpum.cl_mems_www == gpum[Mat::E::C]))
+  if (gg.wSpaceSize.size() != gpum.cl_mems_vws.size())
   {
-    throw miog_error("in address_check_valid, pointer to workspace memory is "
-                     "not the nullptr, and it is the same as one of the a,b,c pointers ");
+    throw miog_error("gg.wSpaceSize.size() != cl_mems_vws.size() in tinyzero.cpp");
+  }
+
+  for (size_t i = 0; i < gpum.cl_mems_vws.size(); ++i)
+  {
+    if (gpum.cl_mems_vws[i] == nullptr)
+    {
+      throw miog_error("in address_check_valid, a pointer to workspace memory is nullptr");
+    }
+
+    if (gg.wSpaceSize[i] == 0)
+    {
+      throw miog_error("a zero in wSpaceSize (in tinyzero.cpp)");
+    }
+
+    for (auto& emat : {Mat::E::A, Mat::E::B, Mat::E::C})
+    {
+      if (gpum.cl_mems_vws[i] == gpum[emat])
+      {
+        std::stringstream errm;
+        errm << "workspace memory " << i << " is the same as matrix mem " << Mat::M().name[emat];
+        throw miog_error(errm.str());
+      }
+    }
   }
 }
 
@@ -299,6 +305,7 @@ std::vector<double> TinyZero::benchgemm(const HyPas& hp, const Halt& hl)
   }
 
   auto compstat = programs.update(bundle.v_tgks);
+  kernel_times.reset_with_size(programs.get_n_active());
 
   auto all_kern_args = get_all_kern_args(bundle.v_tgks);
 
@@ -322,9 +329,9 @@ AllKernArgs TinyZero::get_all_kern_args(const std::vector<KernBlob>& kblobs) con
 
     all_kern_args.emplace_back(kerngen::get_arg_sizes_values(kblob,
                                                              gpum.cl_mems,
-                                                             gpum.cl_mems_www,
+                                                             gpum.cl_mems_vws,
                                                              toff.offsets,
-                                                             toff.offsets_www,
+                                                             toff.offsets_vws,
                                                              gg.derived.float_size_bytes,
                                                              Floating::get_m_alpha()[gg.floattype],
                                                              Floating::get_m_beta()[gg.floattype],

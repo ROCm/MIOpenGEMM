@@ -36,12 +36,21 @@ class NormalFormGenerator : public prepgen::PrepGenerator
 
   void append_copy_string(std::stringstream& ss)
   {
-    ss << "w[mu_pll_i*WRITE_STRIDE_PLL_K + mu_perp_i*WRITE_STRIDE_PERP_K] = " << mchar
+
+    std::stringstream wstr_ss;
+    wstr_ss << 'w' << dp.get_workspace_id(emat_x, Scratch::E::NFORM);
+
+    ss << wstr_ss.str()
+       << "[mu_pll_i*WRITE_STRIDE_PLL_K + mu_perp_i*WRITE_STRIDE_PERP_K] = " << mchar
        << "[mu_pll_i*READ_STRIDE_PLL_K + mu_perp_i*READ_STRIDE_PERP_K];";
   }
 
   KernBlob get_kernelstring() override final
   {
+    std::stringstream wstr_ss;
+    wstr_ss << 'w' << dp.get_workspace_id(emat_x, Scratch::E::NFORM);
+    auto wstr = wstr_ss.str();
+
     std::stringstream ss;
 
     ss << "#define TFLOAT " << dp.t_float << '\n'
@@ -70,7 +79,6 @@ class NormalFormGenerator : public prepgen::PrepGenerator
        << "#define N_ELEMENTS_PER_WORK_ITEM " << dp.at(emat_x).cw2_n_elements_to_load_per_workitem
        << '\n'
        << "\n#define N_MACRO_TILES_PLL_UNROLL " << dp.cw2_n_macro_tiles_pll_unroll << '\n'
-       << "\n#define GLOBAL_WORKSPACE_OFFSET " << dp.at(emat_x).cw_global_offset << '\n'
        << "\n#define PRESHIFT_FINAL_TILE " << dp.at(emat_x).preshift_final_tile << '\n';
 
     size_t final_unroll_depth = gg.k % hp.sus[Mat::E::C].vs[NonChi::E::UNR];
@@ -111,15 +119,14 @@ class NormalFormGenerator : public prepgen::PrepGenerator
        << "PRESHIFT_FINAL_TILE)"
        << ";\n}\n"
        << mchar << " += " << mchar << "_offset;\n\n"
-       << "w += GLOBAL_WORKSPACE_OFFSET;\n"
-       << "w += macro_id_pll_unroll  *WRITE_MACRO_STRIDE_PLL_K   *UNROLL;\n"
-       << "w += macro_id_perp_unroll *WRITE_MACRO_STRIDE_PERP_K  "
+       << wstr << " += macro_id_pll_unroll  *WRITE_MACRO_STRIDE_PLL_K   *UNROLL;\n"
+       << wstr << " += macro_id_perp_unroll *WRITE_MACRO_STRIDE_PERP_K  "
        << "*MACRO_TILE_LENGTH;\n"
-       << "w += micro_id_pll_unroll  *WRITE_STRIDE_PLL_K         "
+       << wstr << " += micro_id_pll_unroll  *WRITE_STRIDE_PLL_K         "
        << "*MICRO_TILE_PLL_UNROLL;\n"
-       << "w += micro_id_perp_unroll *WRITE_STRIDE_PERP_K        "
+       << wstr << " += micro_id_perp_unroll *WRITE_STRIDE_PERP_K        "
        << "*MICRO_TILE_PERP_UNROLL;\n"
-       << "w += w_offset;\n";
+       << wstr << " += " << wstr << "_offset;\n";
 
     ss << R"(
 if (macro_id_pll_unroll == N_MACRO_TILES_PLL_UNROLL - 1){
@@ -153,7 +160,8 @@ for (ushort mu_perp_i = 0; mu_perp_i < MICRO_TILE_PERP_UNROLL; ++mu_perp_i) {
     ss << "\n}\n";
 
     return {get_ktype(),
-            {u_a, u_b, u_c, u_w, u_alpha, u_beta, u_k},
+            get_usage(),
+
             ss.str(),
             kernelname,
             get_global_work_size(),

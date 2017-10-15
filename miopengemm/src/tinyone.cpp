@@ -67,12 +67,24 @@ void TinyOne<TFl>::initialise_common()
                              gpu_safemem[Mat::E::B].clmem,
                              gpu_safemem[Mat::E::C].clmem,
                              false,  // is not const
-                             gpu_safemem_www.clmem,
+                             get_w_cl_mems(),
                              mowri));
 }
 
 template <typename TFl>
+std::vector<cl_mem> TinyOne<TFl>::get_w_cl_mems()
+{
+  std::vector<cl_mem> w_cl_mems;
+  for (auto& x : gpu_safemem_vws)
+  {
+    w_cl_mems.push_back(x.clmem);
+  }
+  return w_cl_mems;
+}
+
+template <typename TFl>
 TinyOne<TFl>::TinyOne(
+
   Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const CLHint& xhint, long)
   : gg(gg_),
     toff(toff_),
@@ -83,7 +95,7 @@ TinyOne<TFl>::TinyOne(
          xhint,
          "command queue of TinyOne"),
     gpu_safemem(Mat::E::N, std::string("gpu_safemem vector of TinyOne")),
-    gpu_safemem_www(std::string("gpu_safemem vector of TinyOne (www)")),
+    gpu_safemem_vws(gg.wSpaceSize.size(), std::string("gpu_safemem vector of TinyOne (vws)")),
     mem_size(Mat::E::N),
     rw_perms(Mat::E::N)
 {
@@ -109,6 +121,7 @@ TinyOne<TFl>::TinyOne(Geometry        gg_,
   : TinyOne(gg_, toff_, mowri_, xhint, 42)
 
 {
+
   initialise_cpu_mem(a_, b_, c_);
   initialise_common();
 }
@@ -151,27 +164,31 @@ TinyOne<TFl>::TinyOne(Geometry gg_, Offsets toff_, owrite::Writer& mowri_, const
 }
 
 template <typename TFl>
-size_t TinyOne<TFl>::get_workspace_memsize()
+size_t TinyOne<TFl>::get_workspace_memsize(size_t workspace_index)
 {
-  return get_total_workspace(gg, toff) * sizeof(TFl);
+  return get_total_workspace(gg, toff, workspace_index) * sizeof(TFl);
 }
 
 template <typename TFl>
 void TinyOne<TFl>::opencl_memory_initialise()
 {
 
-  if (get_workspace_memsize() > 0)
+  for (size_t workspace_index = 0; workspace_index < gpu_safemem_vws.size(); ++workspace_index)
   {
-
+    if (get_workspace_memsize(workspace_index) == 0)
+    {
+      std::stringstream errm;
+      errm << "workspace size at workpace_index = " << workspace_index << " is zero, not allowed";
+      throw miog_error(errm.str());
+    }
     std::stringstream hash;
+    hash << "GPU Mem W (TinyOne)  workspace_index = " << workspace_index << " with memory size "
+         << get_workspace_memsize(workspace_index) << ".";
 
-    hash << "GPU Mem W (TinyOne) "
-         << "with memory size " << get_workspace_memsize() << ".";
-
-    oclutil::cl_set_buffer_from_command_queue(gpu_safemem_www.clmem,
+    oclutil::cl_set_buffer_from_command_queue(gpu_safemem_vws[workspace_index].clmem,
                                               tgcq.command_queue,
                                               CL_MEM_READ_WRITE,
-                                              get_workspace_memsize(),
+                                              get_workspace_memsize(workspace_index),
                                               NULL,
                                               hash.str(),
                                               true);

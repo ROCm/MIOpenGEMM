@@ -20,11 +20,24 @@ int main()
 
   Geometry      gg  = MIOpenGEMM::get_squareNN_geometry<float>(500);
   CLHint         devhint({"Advanced Micro Devices", "gfx803"});
-  Offsets        offsets = get_zero_offsets();
+  Offsets        offsets = get_zero_offsets(0); // no workspaces
   owrite::Writer mowri(Ver::E::TERMINAL, "");
   dev::TinyTwo   boa(gg, offsets, mowri, devhint);
   auto           find_params = get_at_least_n_restarts(10);
-  Constraints    constraints(""); //A_LOM1__B_LOM1");//A_LOM0__B_LOM0");
+  
+  
+  Constraints    constraints{{{
+  
+"MIC4_PAD1_PLU1_LIW0_MIW0_WOS0_VEW1_LOM1", 
+"MIC4_PAD2_PLU1_LIW0_MIW0_WOS0_VEW1_LOM1", 
+"UNR64_GAL3_PUN1_ICE1_IWI0_SZT0_MAD0_NAW16_UFO0_MAC64_SKW10_AFI0_MIA0_PAK0"
+
+  
+  }}}; 
+  
+
+  
+  //A_LOM1__B_LOM1");//A_LOM0__B_LOM0");
   Solution       soln = boa.find2(find_params, constraints);
   if (test_accuracy_of_soln)
   {

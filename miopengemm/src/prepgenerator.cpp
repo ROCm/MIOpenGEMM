@@ -10,43 +10,43 @@ namespace MIOpenGEMM
 namespace prepgen
 {
 
-void PrepGenerator::set_usage()
+KernUses PrepGenerator::get_usage()
 {
 
-  u_alpha = false;
-  u_k     = false;
+  KernUses kuses;
+
+  kuses.u_alpha = false;
+  kuses.u_k     = false;
+
+  kuses.u_vws.resize(dp.required_workspaces.size(), false);
+  for (auto workspace_index = 0; workspace_index < dp.required_workspaces.size(); ++workspace_index)
+  {
+    if (dp.required_workspaces[workspace_index].emat == emat_x)
+    {
+      if (dp.required_workspaces[workspace_index].scratch != Scratch::UNUSED)
+      {
+        kuses.u_vws[workspace_index] = true;
+      }
+    }
+  }
 
   if (emat_x == Mat::E::C)
   {
-    u_a    = false;
-    u_b    = false;
-    u_c    = true;
-    u_w    = false;
-    u_beta = true;
+    kuses.u_a    = false;
+    kuses.u_b    = false;
+    kuses.u_c    = true;
+    kuses.u_beta = true;
   }
 
   else
   {
-    u_c    = false;
-    u_w    = true;
-    u_beta = false;
-
-    if (emat_x == Mat::E::A)
-    {
-      u_a = true;
-      u_b = false;
-    }
-    else if (emat_x == Mat::E::B)
-    {
-      u_a = false;
-      u_b = true;
-    }
-
-    else
-    {
-      throw miog_error("Unrecognised emat_x in forallgenerator.cpp");
-    }
+    kuses.u_c    = false;
+    kuses.u_beta = false;
+    kuses.u_a    = emat_x == Mat::E::A ? true : false;
+    kuses.u_b    = !kuses.u_a;
   }
+
+  return kuses;
 }
 
 void PrepGenerator::append_basic_what_definitions(std::stringstream& ss)

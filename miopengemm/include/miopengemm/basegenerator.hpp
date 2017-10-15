@@ -30,15 +30,6 @@ class BaseGenerator
   // set in function set_kernelname.
   std::string kernelname;
 
-  // set in virtual function set_usage.
-  bool u_a;
-  bool u_b;
-  bool u_c;
-  bool u_w;
-  bool u_alpha;
-  bool u_beta;
-  bool u_k;
-
   std::string get_time_string();
   std::string get_what_string();
   std::string get_how_string();
@@ -51,8 +42,8 @@ class BaseGenerator
   virtual void set_type() = 0;
   void         set_kernelname() { kernelname = "miog_" + type; }
 
-  virtual void set_usage()   = 0;
-  virtual void setup_final() = 0;
+  virtual KernUses get_usage()   = 0;
+  virtual void     setup_final() = 0;
 
   public:
   virtual ~BaseGenerator() = default;
@@ -64,7 +55,6 @@ class BaseGenerator
     set_type();
 
     set_kernelname();
-    set_usage();
 
     // do anything else which needs to be done.
     setup_final();

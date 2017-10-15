@@ -72,20 +72,20 @@ int ProgramCacher::get_ID_from_geom(const Geometry&   gg,
                 ptr_queue);
 }
 
-int ProgramCacher::get_ID(bool              isColMajor,
-                          bool              tA,
-                          bool              tB,
-                          bool              tC,
-                          size_t            m,
-                          size_t            n,
-                          size_t            k,
-                          size_t            lda,
-                          size_t            ldb,
-                          size_t            ldc,
-                          std::vector<size_t>            w_size,
-                          BetaType          beta_type,
-                          char              floattype,
-                          cl_command_queue* ptr_queue)
+int ProgramCacher::get_ID(bool                isColMajor,
+                          bool                tA,
+                          bool                tB,
+                          bool                tC,
+                          size_t              m,
+                          size_t              n,
+                          size_t              k,
+                          size_t              lda,
+                          size_t              ldb,
+                          size_t              ldc,
+                          std::vector<size_t> w_size,
+                          BetaType            beta_type,
+                          char                floattype,
+                          cl_command_queue*   ptr_queue)
 {
 
   if (m == 0 || n == 0 || k == 0)
@@ -118,10 +118,11 @@ int ProgramCacher::get_ID(bool              isColMajor,
 
   ss << isColMajor << tA << tB << tC << '.' << m << '.' << n << '.' << k << '.' << lda << '.' << ldb
      << '.' << ldc << '.';
-     for (auto & x : w_size){
-       ss << x << '.';
-      } 
-      ss << '.' << beta_type << '.' << floattype << '.' << device_name;
+  for (auto& x : w_size)
+  {
+    ss << x << '.';
+  }
+  ss << '.' << beta_type << '.' << floattype << '.' << device_name;
 
   auto key = ss.str();
 

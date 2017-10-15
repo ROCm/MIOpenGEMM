@@ -184,6 +184,23 @@ const EnumMapper<std::string>& M()
 }
 }
 
+namespace Scratch
+{
+std::vector<std::string> get_name()
+{
+  std::vector<std::string> X(E::N, unfilled<std::string>());
+  X[E::UNUSED] = "UNUSED";
+  X[E::COPY]   = "COPY";
+  X[E::NFORM]  = "NFORM";
+  return X;
+}
+const EnumMapper<std::string>& M()
+{
+  static const EnumMapper<std::string> em = get_enum_mapper<std::string>(get_name(), "Scratch");
+  return em;
+}
+}
+
 namespace MicroAllocation
 {
 std::vector<std::string> get_name()

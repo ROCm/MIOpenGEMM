@@ -19,13 +19,13 @@ namespace kerngen
 std::vector<std::pair<size_t, const void*>>
 get_arg_sizes_values(const KernBlob& kblob,
                      const std::array<cl_mem, Mat::E::N>& cl_mems,
-                     const cl_mem& cl_mem_www,
+                     const std::vector<cl_mem>& cl_mem_vws,
                      const std::array<size_t, Mat::E::N>& offsets,
-                     const size_t& offsets_www,
-                     size_t        float_size_bytes,
-                     const void*   alpha,
-                     const void*   beta,
-                     const size_t& k);
+                     const std::vector<size_t>& offsets_vws,
+                     size_t                     float_size_bytes,
+                     const void*                alpha,
+                     const void*                beta,
+                     const size_t&              k);
 
 std::vector<std::vector<size_t>> get_v_wait_indices(const std::vector<KernBlob>& v_kblobs,
                                                     owrite::Writer&              mowri);

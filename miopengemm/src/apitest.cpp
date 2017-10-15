@@ -154,7 +154,8 @@ RunStats supa_gemm0(cl_command_queue&               queue,
   // .............................. set up GPU memories ..................................
 
   std::array<cl_mem, Mat::E::N> dev_mem;
-  cl_mem dev_w = nullptr;
+  std::vector<cl_mem> dev_vws = {};
+  dev_vws.resize(gg.wSpaceSize.size());
 
   for (auto x : {Mat::E::A, Mat::E::B, Mat::E::C})
   {
@@ -203,11 +204,15 @@ RunStats supa_gemm0(cl_command_queue&               queue,
                                    "(runem)",
                                    true);
 
-  auto w_mem_size = get_total_workspace(gg, toff) * gg.derived.float_size_bytes;
-  if (w_mem_size > 0)
+  for (size_t workspace_index = 0; workspace_index < gg.wSpaceSize.size(); ++workspace_index)
   {
-    oclutil::cl_set_buffer_from_command_queue(
-      dev_w, queue, CL_MEM_READ_WRITE, w_mem_size, nullptr, " ", true);
+
+    auto w_mem_size = get_total_workspace(gg, toff, workspace_index) * gg.derived.float_size_bytes;
+    if (w_mem_size > 0)
+    {
+      oclutil::cl_set_buffer_from_command_queue(
+        dev_vws[workspace_index], queue, CL_MEM_READ_WRITE, w_mem_size, nullptr, " ", true);
+    }
   }
   // ............................... GPU memories setup  ..................................
 
@@ -249,8 +254,8 @@ RunStats supa_gemm0(cl_command_queue&               queue,
                              dev_mem[Mat::E::C],
                              toff.offsets[Mat::E::C],
                              gg.ldX[Mat::E::C],
-                             dev_w,
-                             toff.offsets_www,
+                             dev_vws,
+                             toff.offsets_vws,
                              gg.wSpaceSize,
                              &queue,
                              0,
@@ -506,7 +511,10 @@ RunStats supa_gemm0(cl_command_queue&               queue,
   {
     oclutil::cl_release_mem_object(dev_mem[x], "release memory in apitest", true);
   }
-  oclutil::cl_release_mem_object(dev_w, "release w in apitest", true);
+  for (auto& dev_w : dev_vws)
+  {
+    oclutil::cl_release_mem_object(dev_w, "release w in apitest", true);
+  }
 
   return RunStats(n_to_time, t_total / 1000., event_timer_times);
 }

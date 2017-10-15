@@ -11,8 +11,6 @@
 #include <miopengemm/stringutilbase.hpp>
 #include <miopengemm/timer.hpp>
 
-// TODO : run an example, and print the examples which failed to be viable in the
-// search for a viable start. It might help in pruning the initial graph.
 namespace MIOpenGEMM
 {
 

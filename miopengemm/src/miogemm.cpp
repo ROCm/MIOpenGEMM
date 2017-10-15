@@ -119,15 +119,15 @@ Solution find(float            allotted_time,
 {
 
   (void)with_warnings;
-  bool   c_is_const    = true;
-  cl_mem workspace_gpu = nullptr;
+  bool                c_is_const    = true;
+  std::vector<cl_mem> workspace_gpu = {};
 
   Ver::E         e_ver              = verbose ? Ver::E::TERMINAL : Ver::E::SILENT;
   std::string    constraints_string = enforce_determinism ? "C__ICE1" : "";
   Constraints    constraints(constraints_string);
   auto           find_params = get_at_least_n_seconds(static_cast<double>(allotted_time));
   owrite::Writer mowri(e_ver, "");
-  Offsets        offsets = get_zero_offsets();
+  Offsets        offsets = get_zero_offsets(0);
   TinyZero       jinx(command_queue, tgg, offsets, a, b, c, c_is_const, workspace_gpu, mowri);
 
   size_t           rank = 0;

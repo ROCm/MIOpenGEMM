@@ -37,7 +37,11 @@ KType::E CopyGenerator::get_ktype()
 void CopyGenerator::setup_additional()
 {
   description_string = R"()";
-  inner_work_string  = std::string("\n/* the copy */\nw[i] = ") + std::string(1, mchar) + "[i];";
+
+  auto              wstr = "w" + std::to_string(dp.get_workspace_id(emat_x, Scratch::E::COPY));
+  std::stringstream inner_work_string_ss;
+  inner_work_string_ss << "\n/* the copy */\n" << wstr << "[i] = " << mchar << "[i];";
+  inner_work_string = inner_work_string_ss.str();
 }
 
 void CopyGenerator::append_derived_definitions_additional(std::stringstream& ss)
@@ -51,7 +55,6 @@ void CopyGenerator::append_derived_definitions_additional(std::stringstream& ss)
   }
 
   ss << "#define LDW " << dp.get_target_ld(emat_x) << "\n";
-  ss << "#define GLOBAL_OFFSET_W " << dp.at(emat_x).cw_global_offset << "\n";
 }
 
 KernBlob

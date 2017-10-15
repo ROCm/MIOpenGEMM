@@ -187,8 +187,10 @@ enum E
 {
   UNUSED = 0,
   COPY,
-  NFORM
+  NFORM,
+  N
 };
+const EnumMapper<std::string>& M();
 }
 
 namespace OutPart

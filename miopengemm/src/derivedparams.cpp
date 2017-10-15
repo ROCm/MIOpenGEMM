@@ -2,10 +2,11 @@
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
 #include <algorithm>
-#include <functional>
 #include <cmath>
+#include <functional>
 #include <iostream>
 #include <sstream>
+#include <tuple>
 #include <miopengemm/derivedparams.hpp>
 #include <miopengemm/error.hpp>
 #include <miopengemm/macgrid.hpp>
@@ -98,11 +99,6 @@ void DerivedParams::reset_cw_params(Mat::E emat_x)
     errm << " It should be 1 or 2 in reset_cw_params ";
     throw miog_error(errm.str());
   }
-
-  at(emat_x).cw_global_offset =
-    (emat_x == Mat::E::B && ptr_hp->sus[Mat::E::A].vs[Chi::E::WOS] != Scratch::E::UNUSED)
-      ? at(Mat::E::A).cw_n_elements
-      : 0;
 }
 
 Derivabilty::Derivabilty(const HyPas& hp, const Geometry& gg)
@@ -206,7 +202,9 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
     if (ptr_hp->sus[emat_x].vs[Chi::E::WOS] != Scratch::E::UNUSED)
     {
       reset_cw_params(emat_x);
-      required_workspaces.push_back(at(emat_x).cw_n_elements);
+      required_workspaces.push_back({at(emat_x).cw_n_elements,
+                                     emat_x,
+                                     static_cast<Scratch::E>(ptr_hp->sus[emat_x].vs[Chi::E::WOS])});
     }
 
     // check 0 : macro tile not too large
@@ -219,27 +217,29 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
                     << Mat::M().name[emat_x] << " . not considering this kernel. ";
     }
   }
-  
-  //sort in descending order
-  std::sort(required_workspaces.begin(), required_workspaces.end(), std::greater<size_t>());
 
-  //assume wSpaceSize is sorted in descending order too. 
-
+  std::sort(required_workspaces.rbegin(), required_workspaces.rend());
+  // here we assume wSpaceSize is sorted in descending order too.
 
   // check -1 : enough workspace memory
-  if (required_workspaces.size() > ptr_gg->wSpaceSize.size()){
-    set_status_ss << "required_workspaces vector is longer than wSpaceSize : too few workspace memories. ";
+  if (required_workspaces.size() > ptr_gg->wSpaceSize.size())
+  {
+    set_status_ss
+      << "required_workspaces vector is longer than wSpaceSize : too few workspace memories. ";
   }
-  
-  
-  else{
-    for (size_t i = 0; i < required_workspaces.size(); ++i){
-      if (ptr_gg->wSpaceSize[i] < required_workspaces[i]){
-        set_status_ss << "The [" << i << "] largest workspace in geometry is " << ptr_gg->wSpaceSize[i] << ", but the [" << i << "] largest required is " << required_workspaces[i] << '.';
+
+  else
+  {
+    for (size_t i = 0; i < required_workspaces.size(); ++i)
+    {
+      if (ptr_gg->wSpaceSize[i] < required_workspaces[i].n_elms)
+      {
+        set_status_ss << "The [" << i << "] largest workspace in geometry is "
+                      << ptr_gg->wSpaceSize[i] << ", but the [" << i << "] largest required is "
+                      << required_workspaces[i].n_elms << '.';
       }
     }
   }
-
 
   if (set_status_ss.str() != "")
   {
@@ -491,7 +491,6 @@ std::string get_tint(size_t memsize)
 DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_) : ptr_hp(&hp_), ptr_gg(&gg_)
 {
 
-    
   auto tup = set_fragile();
 
   if (std::get<0>(tup) == false)
@@ -550,17 +549,13 @@ DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_) : ptr_hp(&hp
                               (ptr_gg->ldX[Mat::E::A]));  // TODO : does UFO need increase here ?
   tints[Mat::E::B] = get_tint(ptr_gg->get_uncoal(Mat::E::B) * (ptr_gg->ldX[Mat::E::B]));
   tints[Mat::E::C] = get_tint(ptr_gg->get_uncoal(Mat::E::C) * (ptr_gg->ldX[Mat::E::C]));
-  
-  
-
-  
-  auto max_wspace_size = 10000;
-  if (ptr_gg->wSpaceSize.size() > 0){
-    max_wspace_size = *std::max_element(ptr_gg->wSpaceSize.begin(), ptr_gg->wSpaceSize.end());
+  tints_vws.resize(ptr_gg->wSpaceSize.size());
+  for (auto workspace_index = 0; workspace_index < tints_vws.size(); ++workspace_index)
+  {
+    tints_vws[workspace_index] = get_tint(ptr_gg->wSpaceSize[workspace_index]);
   }
-  // TODO : one for each workspace, ie make tints_www a vector.
-  tints_www        = get_tint(max_wspace_size);
-  tintk            = get_tint(
+
+  tintk = get_tint(
     ptr_gg->k +
     2 * ptr_hp->sus[Mat::E::C].vs[NonChi::E::ICE] *
       ptr_hp->sus[Mat::E::C].vs[NonChi::E::UNR]);  // TODO : make this tight and prove correct.
@@ -571,15 +566,14 @@ DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_) : ptr_hp(&hp
     tints[Mat::E::A] = ui64;
     tints[Mat::E::B] = ui64;
     tints[Mat::E::C] = ui64;
-    tints_www        = ui64;
-    tintk            = ui64;
+    for (auto& x : tints_vws)
+    {
+      x = ui64;
+    }
+    tintk = ui64;
   }
 
   tshort = "ushort";
-  
-
-
-
 }
 
 /* TODO : move to hyper params */
@@ -642,5 +636,22 @@ size_t DerivedParams::get_stride_cw2(Mat::E emat_x, bool pll_k, bool is_macro) c
     return pll_k == true ? at(emat_x).macro_tile_length : ptr_gg->k;
   }
 }
+
+int DerivedParams::get_workspace_id(Mat::E emat, Scratch::E scratch) const
+{
+  for (int workspace_id = 0; workspace_id < required_workspaces.size(); ++workspace_id)
+  {
+    const auto& triple = required_workspaces[workspace_id];
+    if (triple.emat == emat && triple.scratch == scratch)
+    {
+      return workspace_id;
+    }
+  }
+  std::stringstream errms;
+  errms << "failed to match request in get_workspace_id : " << Mat::M().name[emat] << ','
+        << Scratch::M().name[scratch];
+  throw miog_error(errms.str());
+}
+
 //}
 }
