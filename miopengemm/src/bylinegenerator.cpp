@@ -52,7 +52,7 @@ void ByLineGenerator::append_description_string(std::stringstream& ss) { ss << d
 void ByLineGenerator::append_how_definitions(std::stringstream& ss)
 {
   ss <<
-    R"(/* The number of values from C which each non-edge work-item will scale by beta */
+    R"(/* The number of values which each non-edge work-item will act on */
 #define WORK_PER_THREAD  )"
      << get_work_per_thread() << R"(
 /* The number of work items per work group */
