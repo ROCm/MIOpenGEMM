@@ -109,6 +109,7 @@ enum E
   AFI,      // do A loops and defs first. outerloops over a dimensions.
   MIA,      // work item allocation within workgroup : % or /
   PAK,      // pass k as a parameter (as opposed to as a preprocessor string)
+  STR,      // Strassen depth
   N
 };
 const EnumMapper<std::string>& M();
@@ -188,6 +189,12 @@ enum E
   UNUSED = 0,
   COPY,
   NFORM,
+  STR_A125x67,
+  STR_M25,
+  STR_M34,
+  STR_M167,
+  STR_B34,
+  STR_B167,
   N
 };
 const EnumMapper<std::string>& M();
@@ -241,6 +248,15 @@ enum E
   WSB,
   BETAC,
   MAIN,
+  STRAS11A,
+  STRAS12M,
+  STRAS13B,
+  STRAS14M,
+  STRAS15A,
+  STRAS16B,
+  STRAS17M,
+  STRAS18C,
+  STRAS19C,  
   N  // how many KTypes
 };
 const EnumMapper<std::string>& M();

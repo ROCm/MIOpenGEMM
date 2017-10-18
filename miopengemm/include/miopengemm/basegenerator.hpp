@@ -61,7 +61,6 @@ class BaseGenerator
   }
 
   virtual KernBlob get_kernelstring() = 0;
-
   virtual KType::E get_ktype() = 0;
 
   BaseGenerator(const HyPas& hp_, const Geometry& gg_, const DerivedParams& dp_);
@@ -78,7 +77,7 @@ class BaseGenerator
 
   void append_stride_definitions(Mat::E             emat_x,
                                  std::stringstream& ss,
-                                 size_t             workspace_type,
+                                 Scratch::E         workspace_type,
                                  bool               withcomments,
                                  std::string        macro_prefix,
                                  bool               append_stride_definitions);

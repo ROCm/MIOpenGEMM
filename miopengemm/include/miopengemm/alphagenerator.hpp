@@ -15,6 +15,15 @@ namespace alphagen
 {
 
 KernBlob get_alpha_kernelstring(const HyPas& hp, const Geometry& gg, const DerivedParams& dp);
+KernBlob get_stras_kernelstring(const HyPas&, const Geometry&, const DerivedParams&, KType::E);
+
+
+
+
+    
+ 
+
+
 }
 }
 

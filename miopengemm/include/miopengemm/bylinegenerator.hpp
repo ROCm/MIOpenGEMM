@@ -1,8 +1,8 @@
 /*******************************************************************************
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
-#ifndef GUARD_MIOPENGEMM_FORALLGENERATOR_HPP
-#define GUARD_MIOPENGEMM_FORALLGENERATOR_HPP
+#ifndef GUARD_MIOPENGEMM_BYLINEGENERATOR_HPP
+#define GUARD_MIOPENGEMM_BYLINEGENERATOR_HPP
 
 #include <miopengemm/prepgenerator.hpp>
 

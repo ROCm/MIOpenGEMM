@@ -42,6 +42,8 @@ std::string DerivedParams::get_string()
 
 size_t DerivedParams::get_target_ld(Mat::E emat_x) const { return at(emat_x).cw1_target_ldx; }
 
+
+//get_target(16, get_copy_pad(emat_x), at(emat_x).cw1_smallest_possible_ldx);
 size_t get_target(size_t grid_size, size_t above_distance, size_t x)
 {
   size_t to_grid_line = (x - above_distance) / grid_size + ((x - above_distance) % grid_size != 0);
@@ -66,9 +68,8 @@ void DerivedParams::reset_cw_params(Mat::E emat_x)
   if (emat_x == Mat::E::B && ptr_hp->sus[Mat::E::A].vs[Chi::E::WOS] != Scratch::E::UNUSED &&
       adps.cw_n_elements == uninitialised_size_t)
   {
-    throw miog_error("make sure reset acw1 params is called before reset_bcw1_params, we "
-                     "need that "
-                     "adps.cw1_target_ldx be set here in derivedparams reset of bcw1");
+    throw miog_error("make sure reset acw1 params is called before reset_bcw1_params, we need that"
+                     " adps.cw1_target_ldx be set here in derivedparams reset of bcw1");
   }
 
   // simple copy with padding
@@ -193,13 +194,13 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
     at(emat_x).main_n_elements_to_load_per_workitem =
       at(emat_x).n_elements_in_unroll / main_n_work_items_per_workgroup;
 
-    if (ptr_hp->sus[emat_x].vs[Chi::E::WOS] == Scratch::E::NFORM)
+    if (ptr_hp->sus[Mat::E::C].vs[NonChi::E::STR] == 0 && ptr_hp->sus[emat_x].vs[Chi::E::WOS] == Scratch::E::NFORM)
     {
       at(emat_x).cw2_n_elements_to_load_per_workitem =
         at(emat_x).n_elements_in_unroll / at(emat_x).cw2_local_work_size;
     }
 
-    if (ptr_hp->sus[emat_x].vs[Chi::E::WOS] != Scratch::E::UNUSED)
+    if (ptr_hp->sus[Mat::E::C].vs[NonChi::E::STR] == 0 && ptr_hp->sus[emat_x].vs[Chi::E::WOS] != Scratch::E::UNUSED)
     {
       reset_cw_params(emat_x);
       required_workspaces.push_back({at(emat_x).cw_n_elements,
@@ -400,7 +401,7 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
   {
     if (ptr_hp->sus[emat_x].vs[Chi::E::VEW] != 1)
     {
-      if (get_stride(emat_x, false, false, ptr_hp->sus[emat_x].vs[Chi::E::WOS]) != 1)
+      if (get_stride(emat_x, false, false, static_cast<Scratch::E>(ptr_hp->sus[emat_x].vs[Chi::E::WOS])) != 1)
       {
         ss_viz << "stride perp to k of " << Mat::M().name[emat_x] << " is not 1.\n";
         is_viz = false;
@@ -422,7 +423,7 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
       }
 
       // check if load stride is divisible by vector width.
-      auto one_stride_pll_k  = get_stride(emat_x, true, false, ptr_hp->sus[emat_x].vs[Chi::E::WOS]);
+      auto one_stride_pll_k  = get_stride(emat_x, true, false, static_cast<Scratch::E>(ptr_hp->sus[emat_x].vs[Chi::E::WOS]));
       auto load_stride_pll_k = (ptr_hp->sus[emat_x].vs[Chi::E::LIW] == Binary::E::YES)
                                  ? one_stride_pll_k * at(emat_x).main_n_micro_tiles_pll_unroll
                                  : one_stride_pll_k;
@@ -461,6 +462,28 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
       }
     }
   }
+
+
+  // strassen initialisation. 
+  
+  
+  for (auto emx : {Mat::E::A, Mat::E::B})
+  {
+    at(emx).strassen.subw_coal = ptr_gg->get_coal(emx)/2 + ptr_gg->get_coal(emx)%2 != 0;
+    at(emx).strassen.subw_uncoal = ptr_gg->get_uncoal(emx)/2 + ptr_gg->get_uncoal(emx)%2 != 0;
+    at(emx).strassen.ldw = get_target(at(emx).strassen.workspace_grid, at(emx).strassen.workspace_grid_offset, at(emx).strassen.subw_coal);
+    at(emx).strassen.inter_subw_stride = at(emx).strassen.ldw * at(emx).strassen.subw_uncoal;
+    at(emx).strassen.threads_per_subw = at(emx).strassen.inter_subw_stride / at(emx).strassen.work_per_thread;
+    at(emx).strassen.n_work_iterms_per_line = at(emx).strassen.ldw / at(emx).strassen.work_per_thread;
+    at(emx).strassen.total_nthreads = at(emx).strassen.n_subw * at(emx).strassen.threads_per_subw;
+  
+    //TODO : confirm that ldw is divided by work_per_thread
+    //TODO : if vectorised, confirm that gg.get_coal(emat_x) is divided by work_per_thread
+    //TODO : confirm ldw >= subw_coal
+  }
+  stras_m = ptr_gg->m / 2 + ptr_gg->m%2 != 0;
+  stras_n = ptr_gg->n / 2 + ptr_gg->n%2 != 0;
+  stras_k = ptr_gg->n / 2 + ptr_gg->n%2 != 0;
 
   // ran the gauntlet, returning deriveable is true
   return std::make_tuple(true, "");
@@ -594,38 +617,46 @@ void DerivedParams::set_should_be_hyperparams()
 }
 
 size_t
-DerivedParams::get_stride(Mat::E emat_x, bool pll_k, bool is_macro, size_t workspace_type_) const
+DerivedParams::get_stride(Mat::E emat_x, bool pll_k, bool is_macro, Scratch::E wst) const
 {
 
-  if (workspace_type_ == 0)
+  if (wst == Scratch::E::UNUSED)
   {
-    return get_stride_cw0(emat_x, pll_k);
+    return get_stride_ws_unused(emat_x, pll_k);
   }
 
-  else if (workspace_type_ == 1)
+  else if (wst == Scratch::E::COPY)
   {
-    return get_stride_cw1(emat_x, pll_k);
+    return get_stride_ws_copy(emat_x, pll_k);
   }
 
-  else if (workspace_type_ == 2)
+  else if (wst == Scratch::E::NFORM)
   {
-    return get_stride_cw2(emat_x, pll_k, is_macro);
+    return get_stride_ws_nform(emat_x, pll_k, is_macro);
   }
+  else if (wst == Scratch::E::STR_A125x67){
+    return at(Mat::E::A).strassen.ldw;
+  }
+  
+  else if (wst == Scratch::E::STR_B34 || wst == Scratch::E::STR_B167){
+    return at(Mat::E::B).strassen.ldw;
+  }
+  
   else
     throw miog_error("unrecognised workspace_type in get_strinde in derivedparams");
 }
 
-size_t DerivedParams::get_stride_cw0(Mat::E emat_x, bool pll_k) const
+size_t DerivedParams::get_stride_ws_unused(Mat::E emat_x, bool pll_k) const
 {
   return ptr_gg->coal_is_pll_k(emat_x) == pll_k ? 1 : ptr_gg->ldX.at(emat_x);
 }
 
-size_t DerivedParams::get_stride_cw1(Mat::E emat_x, bool pll_k) const
+size_t DerivedParams::get_stride_ws_copy(Mat::E emat_x, bool pll_k) const
 {
   return ptr_gg->coal_is_pll_k(emat_x) == pll_k ? 1 : at(emat_x).cw1_target_ldx;
 }
 
-size_t DerivedParams::get_stride_cw2(Mat::E emat_x, bool pll_k, bool is_macro) const
+size_t DerivedParams::get_stride_ws_nform(Mat::E emat_x, bool pll_k, bool is_macro) const
 {
   if (is_macro == false)
   {

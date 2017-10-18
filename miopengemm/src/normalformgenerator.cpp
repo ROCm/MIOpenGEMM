@@ -61,9 +61,9 @@ class NormalFormGenerator : public prepgen::PrepGenerator
 
     append_unroll_block_geometry(emat_x, ss, false, false);
     ss << '\n';
-    append_stride_definitions(emat_x, ss, 0, false, "READ_", false);
+    append_stride_definitions(emat_x, ss, Scratch::E::UNUSED, false, "READ_", false);
     ss << '\n';
-    append_stride_definitions(emat_x, ss, 2, false, "WRITE_", false);
+    append_stride_definitions(emat_x, ss, Scratch::E::NFORM, false, "WRITE_", false);
 
     ss << '\n'
        << "#define LOAD_PLL_TO_UNROLL " << dp.at(emat_x).cw2_load_pll_to_unroll << '\n'

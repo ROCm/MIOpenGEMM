@@ -39,37 +39,111 @@ class AlphaGenerator : public basegen::BaseGenerator
   // TODO : move to derived maybe
   std::vector<Mat::E> mata_matb;
 
+  KType::E alphagen_ktype;
+
   virtual KernUses get_usage() override final
   {
 
-    bool u_a = (hp.sus[Mat::E::A].vs[Chi::E::WOS] == Scratch::E::UNUSED) ? true : false;
-    bool u_b = (hp.sus[Mat::E::B].vs[Chi::E::WOS] == Scratch::E::UNUSED) ? true : false;
-    bool u_c = true;
+    bool u_a;
+    bool u_b;
+    bool u_c;
+    if (alphagen_ktype == KType::E::MAIN)
+    {
+      u_a = (hp.sus[Mat::E::A].vs[Chi::E::WOS] == Scratch::E::UNUSED) ? true : false;
+      u_b = (hp.sus[Mat::E::B].vs[Chi::E::WOS] == Scratch::E::UNUSED) ? true : false;
+      u_c = true;
+    }
+
+    // M2 and M5 of Strassen (wikipedia)
+    else if (alphagen_ktype == KType::E::STRAS12M)
+    {
+      u_a = false;
+      u_b = true;
+      u_c = false;
+    }
+
+    // M3 and M4 of Strassen (wikipedia)
+    else if (alphagen_ktype == KType::E::STRAS14M)
+    {
+      u_a = true;
+      u_b = false;
+      u_c = false;
+    }
+
+    // M1, M6 and M7 (wikipedia)
+    else if (alphagen_ktype == KType::E::STRAS17M)
+    {
+      u_a = false;
+      u_b = false;
+      u_c = false;
+    }
+
+    else
+    {
+      throw miog_error("unrecgonised KType::E in AlphaGenerator constructor");
+    }
+
     std::vector<bool> u_vws;
     u_vws.resize(dp.required_workspaces.size(), false);
     for (size_t workspace_index = 0; workspace_index < dp.required_workspaces.size();
          ++workspace_index)
     {
 
-      // if hp.sus(emat).WOS is not unused,
-      if (hp.sus[dp.required_workspaces[workspace_index].emat].vs[Chi::E::WOS] !=
-          Scratch::E::UNUSED)
+      // main uses all workspaces
+      if (alphagen_ktype == KType::E::MAIN)
       {
         u_vws[workspace_index] = true;
+      }
+
+      // M2 and M5 of Strassen : takes A vals from workspace and writes to an M (not C)
+      else if (alphagen_ktype == KType::E::STRAS12M)
+      {
+        if (dp.required_workspaces[workspace_index].scratch == Scratch::E::STR_A125x67 ||
+            dp.required_workspaces[workspace_index].scratch == Scratch::E::STR_M25)
+        {
+          u_vws[workspace_index] = true;
+        }
+      }
+
+      // M3 and M4 of Strassen : takes B vals from workspace and writes to an M (not C)
+      else if (alphagen_ktype == KType::E::STRAS14M)
+      {
+        if (dp.required_workspaces[workspace_index].scratch == Scratch::E::STR_B34 ||
+            dp.required_workspaces[workspace_index].scratch == Scratch::E::STR_M34)
+        {
+          u_vws[workspace_index] = true;
+        }
+      }
+
+      // M1, M6 and M7 : takes A and B vals from workspace, writes to an M.
+      else if (alphagen_ktype == KType::E::STRAS17M)
+      {
+        if (dp.required_workspaces[workspace_index].scratch == Scratch::E::STR_A125x67 ||
+            dp.required_workspaces[workspace_index].scratch == Scratch::E::STR_B34 ||
+            dp.required_workspaces[workspace_index].scratch == Scratch::E::STR_M167)
+        {
+          u_vws[workspace_index] = true;
+        }
+      }
+
+      else
+      {
+        throw miog_error("cannot determine what kinda KType this is in alphagenerator.cpp");
       }
     }
 
     bool u_alpha = true;
-    bool u_beta  = dp.main_does_beta_c_inc;
+    bool u_beta  = KType::E::MAIN && dp.main_does_beta_c_inc;
     bool u_k     = (hp.sus[Mat::E::C].vs[NonChi::E::PAK] == Binary::E::YES) ? true : false;
 
     return {u_a, u_b, u_c, u_vws, u_alpha, u_beta, u_k};
   }
 
   public:
-  AlphaGenerator(const HyPas& hp_, const Geometry& gg_, const DerivedParams& dp_)
+  AlphaGenerator(const HyPas& hp_, const Geometry& gg_, const DerivedParams& dp_, KType::E kt)
     : basegen::BaseGenerator(hp_, gg_, dp_)
   {
+    alphagen_ktype = kt;
 
     if (hp.sus[Mat::E::C].vs[NonChi::E::AFI] == Binary::E::YES)
     {
@@ -818,10 +892,19 @@ const TSHORT group_id_z = group_id % N_WORK_ITEMS_PER_C_ELM;
   {
 
     size_t transposed_xor_is_col_major = (gg.tX[Mat::E::C] + gg.isColMajor) % 2;
-    ss << "#define STRIDE_PLL_M_C " << (transposed_xor_is_col_major == 1 ? 1 : gg.ldX[Mat::E::C])
-       << '\n';
-    ss << "#define STRIDE_PLL_N_C " << (transposed_xor_is_col_major == 0 ? 1 : gg.ldX[Mat::E::C])
-       << '\n';
+    
+    if (hp.sus[Mat::E::C].vs[NonChi::E::STR] == 0){
+      ss << "#define STRIDE_PLL_M_C " << (transposed_xor_is_col_major == 1 ? 1 : gg.ldX[Mat::E::C])
+        << '\n';
+      ss << "#define STRIDE_PLL_N_C " << (transposed_xor_is_col_major == 0 ? 1 : gg.ldX[Mat::E::C])
+        << '\n';
+      }
+    else if (hp.sus[Mat::E::C].vs[NonChi::E::STR] == 1){
+      throw miog_error("need to append stride c defn when STR == 1");
+    }
+    else{
+      throw miog_error("STR > 1 not implemented (from append_stride_c_defn)");
+    }
   }
 
   void append_n_unrolls_remaining_string(std::stringstream& ss)
@@ -1132,9 +1215,9 @@ TSHORT unroll_offset = (13*group_id_a + 7*group_id_b)%UNROLL;
     char x = Mat::M().name[emat_x];
 
     auto defcom = [emat_x, &ss](std::string&& comment) {
-      if (emat_x == Mat::E::A)
-        ss << "/*"
-           << " " << comment << " : */\n";
+      if (emat_x == Mat::E::A){
+        ss << "/* " << comment << " : */\n";
+      }
     };
 
     bool withcomments = emat_x == Mat::E::A;
@@ -1142,36 +1225,67 @@ TSHORT unroll_offset = (13*group_id_a + 7*group_id_b)%UNROLL;
     bool with_x_in_name = true;
     append_unroll_block_geometry(emat_x, ss, withcomments, with_x_in_name);
 
-    append_stride_definitions(
-      emat_x, ss, hp.sus[emat_x].vs[Chi::E::WOS], withcomments, "", with_x_in_name);
+    
+    Scratch::E loc_ws_type = Scratch::E::UNUSED;
+    
+    if (alphagen_ktype == KType::E::MAIN){
+      loc_ws_type = static_cast<Scratch::E>(hp.sus[emat_x].vs[Chi::E::WOS]);
+    }
+    
+    else if (emat_x == Mat::E::A && alphagen_ktype == KType::E::STRAS12M){
+      loc_ws_type = Scratch::E::STR_A125x67;
+    }
+    
+    else if (emat_x == Mat::E::B && alphagen_ktype == KType::E::STRAS14M){
+      loc_ws_type = Scratch::E::STR_B34;
+    }
+    
+    else if (alphagen_ktype == KType::E::STRAS17M){
+      loc_ws_type = Scratch::E::STR_B167;
+    }
+    
+    append_stride_definitions(emat_x, ss, loc_ws_type, withcomments, "", with_x_in_name);
 
     if (emat_x == Mat::E::A)
+    {
       ss << "/* vector float type */\n";
+    }
     ss << "#define TVFLOAT" << x << " " << dp.t_float;
     if (hp.sus[emat_x].vs[Chi::E::VEW] != 1)
+    {
       ss << hp.sus[emat_x].vs[Chi::E::VEW];
+    }
     ss << '\n';
 
     if (emat_x == Mat::E::A)
+    {
       ss << "/* vector width */\n";
-    ss << "#define VEW_" << x << "  " << hp.sus[emat_x].vs[Chi::E::VEW];
-    ss << '\n';
+    }
+    ss << "#define VEW_" << x << "  " << hp.sus[emat_x].vs[Chi::E::VEW] << '\n';
 
     if (emat_x == Mat::E::A)
-      ss << "/* micro tiles define the pattern of C that individual threads "
-            "process */\n";
+    {
+      ss << "/* micro tiles define the pattern of C that individual threads process */\n";
+    }
     ss << "#define MICRO_TILE_LENGTH_" << x << " " << hp.sus[emat_x].vs[Chi::E::MIC] << '\n';
 
     if (emat_x == Mat::E::A)
+    {
       ss << "/* the amount of padding of " << x
          << " in LDS (local) memory, to avoid bank comflicts */\n";
+    }
     ss << "#define PAD_LDS_" << x << "  " << hp.sus[emat_x].vs[Chi::E::PAD] << '\n';
+
     if (emat_x == Mat::E::A)
+    {
       ss << "/* whether loading of " << x << " from global should try to be long in direction of "
                                              "unroll (1) or perpendicular to it (0) */\n";
+    }
     ss << "#define WORK_ITEM_LOAD_" << x << "_PLL_TO_UNROLL " << hp.sus[emat_x].vs[Chi::E::PLU]
        << '\n';
+
     defcom("MACRO_TILE_LENGTH_A + PAD_LDS_A");
+
     ss << "#define MACRO_TILE_LENGTH_" << x << "_AND_PAD "
        << dp.at(emat_x).main_macro_tile_length_and_pad << '\n';
 
@@ -1195,9 +1309,10 @@ TSHORT unroll_offset = (13*group_id_a + 7*group_id_b)%UNROLL;
     ss << "#define N_MICRO_" << x << "_TILES_PLL_UNROLL "
        << dp.at(emat_x).main_n_micro_tiles_pll_unroll << " \n";
     if (emat_x == Mat::E::A)
+    {
       ss << "/* Whether the load tiles are interwoven (ala Cobalt, (1)) or if "
-            "the load tiles are "
-            "truly contiguous tiles (0) */\n";
+            "the load tiles are truly contiguous tiles (0) */\n";
+    }
     ss << "#define LOAD_TO_LDS_INTERWOVEN_" << x << " " << hp.sus[emat_x].vs[Chi::E::LIW] << '\n';
     if (emat_x == Mat::E::A)
       ss << "/* Whether micro tile being processed by a compute item is "
@@ -1264,33 +1379,26 @@ TSHORT unroll_offset = (13*group_id_a + 7*group_id_b)%UNROLL;
     ss << "\n/* ********************************** common to A and B "
           "*************************************** */";
     ss << "\n/* whether or not to shimmy the starting k, in an attempt to "
-          "avoid cache line overuse "
-          "for cases where lda/ldb are powers of 2 */\n";
+          "avoid cache line overuse for cases where lda/ldb are powers of 2 */\n";
     ss << "/* if 0, no shimmying. if 1, instead of starting at k = 0 "
-          "workgroups start at some "
-          "negative offset dependent on work group id */\n";
+          "workgroups start at some negative offset dependent on work group id */\n";
     ss << "/* in the same way as the final unroll populates LDS with zeros in "
-          "k mod UNROLL != 0, "
-          "the initial negative indices here populate with 0 */\n";
+          "k mod UNROLL != 0, the initial negative indices here populate with 0 */\n";
     ss << "#define UNROLL_FOR_OFFSET " << hp.sus[Mat::E::C].vs[NonChi::E::UFO] << '\n';
 
     ss << "/* How much a workgroup loads (global -> LDS) in the k-direction at "
-          "each iteration of "
-          "the outer-most loop */\n";
+          "each iteration of the outer-most loop */\n";
     ss << "#define UNROLL " << hp.sus[Mat::E::C].vs[NonChi::E::UNR] << '\n';
-    ss << "/* whether or not this kernel uses the edge trick (SC17 submission) "
-          "*/\n";
+
+    ss << "/* whether or not this kernel uses the edge trick (SC17 submission) */\n";
     ss << "/* this precompiler defn has no direct influence on the running the "
-          "kernel, "
-          "implementation already done in make_kernel.py */\n";
+          "kernel, implementation already done in make_kernel.py */\n";
     ss << "#define EDGETRICK " << dp.main_use_edge_trick << '\n';
+
     ss << "/* the number of work items working on the same c element. if this "
-          "is 1, there will be "
-          "just one thread doing all k multiply-adds, */\n";
-    ss << "/* otherwise if it is greater than 1, each thread will be computing "
-          "~ k / "
-          "N_WORK_ITEMS_PER_C_ELM of the multiply adds, to be atomically added "
-          "at the end */ \n";
+          "is 1, there will be just one thread doing all k multiply-adds, */\n";
+    ss << "/* otherwise if it is greater than 1, each thread will be computing ~ k / "
+          "N_WORK_ITEMS_PER_C_ELM of the multiply adds, to be atomically added at the end */ \n";
     ss << "#define N_WORK_ITEMS_PER_C_ELM " << hp.sus[Mat::E::C].vs[NonChi::E::ICE] << '\n';
 
     ss << R"(/* define the way in which work groups are assigned to tiles */
@@ -1302,41 +1410,35 @@ TSHORT unroll_offset = (13*group_id_a + 7*group_id_b)%UNROLL;
     append_group_allocation_defn_string(ss);
 
     ss << "/* Whether to use the unroll pragma to encourage the compiler to "
-          "unroll certain loops "
-          "*/\n";
-    ss << "/* Included here for user, in practice it has no direct effect on "
-          "this kernel, as the "
+          "unroll certain loops */\n";
+    ss << "/* Included here for user, in practice it has no direct effect on this kernel, as the "
           "relevent implementation has been done in make_kernel.py */\n";
     ss << "#define PRAGMA_UNROLL_FORLOOPS " << hp.sus[Mat::E::C].vs[NonChi::E::PUN] << '\n';
+
     ss << "/* (deprecated parameter, as of 17 Nov 2016, see git log) How many "
-          "steps ahead are we "
-          "reading into registers, as compared to doing the math. */\n";
+          "steps ahead are we reading into registers, as compared to doing the math. */\n";
     ss << "/* This should be the domain of the compiler, and currently "
-          "(26/08/2016, Catalyst) it "
-          "seems that leaving this as 0 is best.  */\n";
+          "(Catalyst) it seems that leaving this as 0 is best.  */\n";
     ss << "#define N_PREFETCH_FOR_REGISTER_LOAD " << 0 << '\n';
+
     ss << "/* (deprecated parameter, as of 17 Nov 2016, see git log) How many "
-          "steps ahead are we "
-          "reading into LDS, as compared to the unroll loop */\n";
+          "steps ahead are we reading into LDS, as compared to the unroll loop */\n";
     ss << "/* This should be the domain of the compiler, and currently "
-          "(26/08/2016, Catalyst) it "
-          "seems that leaving this as 0 is best.  */\n";
+          "(Catalyst) it seems that leaving this as 0 is best.  */\n";
     ss << "#define N_PREFETCH_FOR_LDS_LOAD " << 0 << '\n';
+
     ss << "#define MACRO_TILE_AREA " << dp.main_macro_tile_area << '\n';
     ss << "#define MICRO_TILE_AREA " << dp.main_micro_tile_area << '\n';
     ss << "#define N_WORK_ITEMS_PER_WORKGROUP  " << dp.main_n_work_items_per_workgroup << '\n';
     ss << "/* two more parameters, which do dot have an effect the running of "
-          "this kernel (used in "
-          "enqueuing) */\n";
-    ss << "/* the total number of work groups this kernel will use (recall "
-          "m,n,k are fixed) */ \n";
-    ss << "/* N_WORK_ITEMS_PER_C_ELM * ((M/MACRO_TILE_LENGTH_A) + "
-          "(M%MACRO_TILE_LENGTH_A != 0)) * "
+          "this kernel (used in enqueuing) */\n";
+    ss << "/* the total number of work groups this kernel will use (recall n,k are fixed) */ \n";
+    ss << "/* N_WORK_ITEMS_PER_C_ELM * ((M/MACRO_TILE_LENGTH_A) + (M%MACRO_TILE_LENGTH_A != 0)) * "
           "((N/MACRO_TILE_LENGTH_B) + (N%MACRO_TILE_LENGTH_B != 0)) */ \n";
     ss << "#define N_WORK_GROUPS " << dp.main_n_work_groups << '\n';
+
     ss << "/* the global work size, ie the total mumber of work items "
-          "(threads) which will run */\n ";
-    ss << "/* N_WORK_GROUPS * N_WORK_ITEMS_PER_WORKGROUP */ \n";
+          "(threads) which will run */\n /* N_WORK_GROUPS * N_WORK_ITEMS_PER_WORKGROUP */ \n";
     ss << "#define GLOBAL_WORK_SIZE " << dp.main_global_work_size << '\n';
 
     append_stride_c_defn(ss);
@@ -1410,12 +1512,24 @@ TSHORT unroll_offset = (13*group_id_a + 7*group_id_b)%UNROLL;
 
   virtual void setup_final() override final {}
 
-  virtual KType::E get_ktype() override final { return KType::E::MAIN; }
+  virtual KType::E get_ktype() override final { return alphagen_ktype; }
 };
 
 KernBlob get_alpha_kernelstring(const HyPas& hp, const Geometry& gg, const DerivedParams& dp)
 {
-  AlphaGenerator ag(hp, gg, dp);
+  AlphaGenerator ag(hp, gg, dp, KType::E::MAIN);
+  ag.setup();
+  return ag.get_kernelstring();
+}
+
+KernBlob
+get_stras_kernelstring(const HyPas& hp, const Geometry& gg, const DerivedParams& dp, KType::E kt)
+{
+  if (kt != KType::E::STRAS12M && kt != KType::E::STRAS14M && kt != KType::E::STRAS17M)
+  {
+    throw miog_error("invalid KType::E in get_stras_kernelstring in alphagenerator.cpp");
+  }
+  AlphaGenerator ag(hp, gg, dp, kt);
   ag.setup();
   return ag.get_kernelstring();
 }

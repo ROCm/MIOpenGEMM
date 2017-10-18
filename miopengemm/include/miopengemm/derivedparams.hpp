@@ -41,9 +41,44 @@ class WorkSpaceTriple
   WorkSpaceTriple() = default;
 };
 
+
+class StrassenCopyParams{
+  public:
+  
+  // should be hyper-params:
+  size_t work_per_thread = 4;
+  size_t n_work_items_per_group = 256;
+  // ldw will n*workspace_grid + workspace_grid_offsets (for some n) 
+  size_t workspace_grid = 16;
+  size_t workspace_grid_offset = 8;
+
+
+  size_t subw_coal = uninitialised_size_t; //gg.get_uncoal(emat_x);
+  size_t subw_uncoal = uninitialised_size_t;
+  size_t ldw = uninitialised_size_t;
+  size_t inter_subw_stride = uninitialised_size_t;
+  size_t threads_per_subw = uninitialised_size_t;
+  size_t n_work_iterms_per_line = uninitialised_size_t;
+
+  // TODO : incorrect. these are specific to which copy:  
+
+  STRAS11A,
+  STRAS13B,
+  STRAS15A,
+  STRAS16B,
+
+  size_t total_nthreads = uninitialised_size_t;
+  size_t n_subw = 3; // in theory obtained from depth
+};
+
+
 class ChiralDerivedParams
 {
+  
   public:
+  
+  StrassenCopyParams strassen;
+  
   size_t macro_tile_length                    = uninitialised_size_t;
   size_t n_elements_in_unroll                 = uninitialised_size_t;
   size_t main_n_elements_to_load_per_workitem = uninitialised_size_t;
@@ -84,6 +119,8 @@ class ChiralDerivedParams
   std::string get_string();
 };
 
+
+
 // all derived parameters
 class DerivedParams
 {
@@ -95,6 +132,10 @@ class DerivedParams
   ChiralDerivedParams adps;
   ChiralDerivedParams bdps;
 
+  size_t stras_m = uninitialised_size_t;
+  size_t stras_n = uninitialised_size_t;
+  size_t stras_k = uninitialised_size_t;
+  
   void reset_ga3_params();
 
   void reset_cw_params(Mat::E emat_x);
@@ -167,13 +208,13 @@ class DerivedParams
 
   size_t get_n_elements_in_x_unroll(char x);
 
-  size_t get_stride(Mat::E emat_x, bool pll_k, bool is_macro, size_t workspace_type) const;
+  size_t get_stride(Mat::E emat_x, bool pll_k, bool is_macro, Scratch::E workspace_type) const;
 
-  size_t get_stride_cw0(Mat::E emat_x, bool pll_k) const;
+  size_t get_stride_ws_unused(Mat::E emat_x, bool pll_k) const;
 
-  size_t get_stride_cw1(Mat::E emat_x, bool pll_k) const;
+  size_t get_stride_ws_copy(Mat::E emat_x, bool pll_k) const;
 
-  size_t get_stride_cw2(Mat::E emat_x, bool pll_k, bool is_macro) const;
+  size_t get_stride_ws_nform(Mat::E emat_x, bool pll_k, bool is_macro) const;
 
   std::array<std::string, Mat::E::N> tints;
   std::vector<std::string> tints_vws;

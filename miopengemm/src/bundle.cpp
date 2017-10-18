@@ -20,6 +20,7 @@
 #include <miopengemm/error.hpp>
 #include <miopengemm/normalformgenerator.hpp>
 #include <miopengemm/stringutilbase.hpp>
+#include <miopengemm/strascopgenerator.hpp>
 
 namespace MIOpenGEMM
 {
@@ -130,41 +131,77 @@ std::vector<std::vector<size_t>> get_v_wait_indices(const std::vector<KernBlob>&
 Bundle::Bundle(const HyPas& hp_, const Geometry& gg_) : hp(hp_), gg(gg_), dp(hp, gg)
 {
 
-  for (auto emat_x : {Mat::E::A, Mat::E::B})
-  {
-
-    if (hp.sus[emat_x].vs[Chi::E::WOS] == Scratch::E::UNUSED)
+  
+  if (hp.sus[Mat::E::C].vs[NonChi::E::STR] == 0){
+  
+    for (auto emat_x : {Mat::E::A, Mat::E::B})
     {
-      // no workspace kernel
+  
+      if (hp.sus[emat_x].vs[Chi::E::WOS] == Scratch::E::UNUSED)
+      {
+        // no workspace kernel
+      }
+  
+      else if (hp.sus[emat_x].vs[Chi::E::WOS] == Scratch::E::COPY)
+      {
+        v_tgks.emplace_back(copygen::get_copy_kernelstring(emat_x, hp, gg, dp));
+      }
+  
+      else if (hp.sus[emat_x].vs[Chi::E::WOS] == Scratch::E::NFORM)
+      {
+        v_tgks.emplace_back(nformgen::get_nform_kernelstring(emat_x, hp, gg, dp));
+      }
+  
+      else
+      {
+        std::stringstream errm;
+        errm << "hp.sus[emat_x].vs[Chi::E::WOS] should be 0, 1 or 2"
+             << "(Scratch::E::UNUSED , Scratch::E::COPY or Scratch::E::NFORM)";
+        throw miog_error(errm.str());
+      }
     }
-
-    else if (hp.sus[emat_x].vs[Chi::E::WOS] == Scratch::E::COPY)
+  
+    if (dp.main_does_beta_c_inc == 0)
     {
-      v_tgks.emplace_back(copygen::get_copy_kernelstring(emat_x, hp, gg, dp));
+      v_tgks.emplace_back(betacgen::get_betac_kernelstring(hp, gg, dp));
     }
-
-    else if (hp.sus[emat_x].vs[Chi::E::WOS] == Scratch::E::NFORM)
-    {
-      v_tgks.emplace_back(nformgen::get_nform_kernelstring(emat_x, hp, gg, dp));
-    }
-
-    else
-    {
-      std::stringstream errm;
-      errm << "hp.sus[emat_x].vs[Chi::E::WOS] should be 0, 1 or 2"
-           << "(Scratch::E::UNUSED , Scratch::E::COPY or Scratch::E::NFORM)";
-      throw miog_error(errm.str());
-    }
+  
+    v_tgks.emplace_back(alphagen::get_alpha_kernelstring(hp, gg, dp));
   }
-
-  if (dp.main_does_beta_c_inc == 0)
-  {
-
+  
+  else{
+    
+    // scale C by beta.
     v_tgks.emplace_back(betacgen::get_betac_kernelstring(hp, gg, dp));
+    
+    // copy A 1,2,5 to workspace-A
+    v_tgks.emplace_back(strasgen::get_stras_kernelstring(hp, gg, dp, KType::E::STRAS11A));
+
+    // perform matrix multiplications to obtain M2 and M5 using workspace-A and B
+    v_tgks.emplace_back(alphagen::get_stras_kernelstring(hp, gg, dp, KType::E::STRAS12M));
+    
+    // copy B 3,4 to workspace-B
+    v_tgks.emplace_back(strasgen::get_stras_kernelstring(hp, gg, dp, KType::E::STRAS13B));
+    
+    // perform matrix multiplications to obtain M3 and M5 using workspace-B and A
+    v_tgks.emplace_back(alphagen::get_stras_kernelstring(hp, gg, dp, KType::E::STRAS14M));
+    
+    // copy A 6,7 to workspace-A    
+    v_tgks.emplace_back(strasgen::get_stras_kernelstring(hp, gg, dp, KType::E::STRAS15A));
+    
+    // copy B 1,6,7 to workspace-B
+    v_tgks.emplace_back(strasgen::get_stras_kernelstring(hp, gg, dp, KType::E::STRAS16B));
+
+    // perform matrix multiplications to obtain M1 M6 and M7 using workspace-B and workspace-A
+    v_tgks.emplace_back(alphagen::get_stras_kernelstring(hp, gg, dp, KType::E::STRAS17M));
+    
+    // gather C21 and C12 from M
+    v_tgks.emplace_back(strasgen::get_stras_kernelstring(hp, gg, dp, KType::E::STRAS18C));
+    
+    // gather C11 and C22 from M
+    v_tgks.emplace_back(strasgen::get_stras_kernelstring(hp, gg, dp, KType::E::STRAS19C));
   }
-
-  v_tgks.emplace_back(alphagen::get_alpha_kernelstring(hp, gg, dp));
-
+    
   // indent the kernel strings, in case someone wants to
   // print them. For (v-minorly) better
   // performance, this should not be done

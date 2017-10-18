@@ -62,34 +62,27 @@ void ByLineGenerator::append_how_definitions(std::stringstream& ss)
 
 void ByLineGenerator::append_derived_definitions(std::stringstream& ss)
 {
-
-  ss << "/*      each (full) work item will process WORK_PER_THREAD elements "
-        "in the coalesced "
-        "direction, */ \n";
-  ss << "/*      so the number of work items per coalesced line is DIM_COAL / "
-        "WORK_PER_THREAD */ \n";
+  ss << "//     each (full) work item will process WORK_PER_THREAD elements in coalesced dir,\n";
+  ss << "//     so the number of work items per coalesced line is DIM_COAL / WORK_PER_THREAD\n";
   ss << "#define N_FULL_WORK_ITEMS_PER_LINE " << n_full_work_items_per_line << "\n";
-  ss << "/*      including the possible final tail thread, */\n";
-  ss << "/*      there are N_FULL_WORK_ITEMS_PER_LINE + (DIM_COAL % "
-        "WORK_PER_THREAD != 0) */ \n";
+
+  ss << "//     including the possible final tail thread,\n";
+  ss << "//     there are N_FULL_WORK_ITEMS_PER_LINE + (DIM_COAL % WORK_PER_THREAD != 0)\n";
   ss << "#define N_WORK_ITEMS_PER_LINE " << n_work_items_per_line << "\n";
-  ss << "/*      in total there are N_FULL_WORK_ITEMS_PER_LINE * DIM_UNCOAL "
-        "full work items, */ \n";
 
+  ss << "//     in total there are N_FULL_WORK_ITEMS_PER_LINE * DIM_UNCOAL full work items,\n";
   ss << "#define N_FULL_WORK_ITEMS " << n_full_work_items << "\n";
-  ss << "/*      and a grand total of N_WORK_ITEMS_PER_LINE * DIM_UNCOAL work "
-        "items. */ \n";
+
+  ss << "//     and a grand total of N_WORK_ITEMS_PER_LINE * DIM_UNCOAL work items.\n";
   ss << "#define N_WORK_ITEMS " << n_work_items << "\n";
-  ss << "/*      tail work items start at WORK_PER_THREAD * "
-        "N_FULL_WORK_ITEMS_PER_LINE in the "
-        "coalesced direction,  */\n";
+  
+  ss << "//     tail workers start at WORK_PER_THREAD * N_FULL_WORK_ITEMS_PER_LINE in coal dir,\n";
   ss << "#define START_IN_COAL_LAST_WORK_ITEM " << start_in_coal_last_work_item << "\n";
-  ss << "/*      and process DIM_COAL % WORK_PER_THREAD elements of c */\n";
 
+  ss << "//     and process DIM_COAL % WORK_PER_THREAD elements of c\n";
   ss << "#define WORK_FOR_LAST_ITEM_IN_COAL " << work_for_last_item_in_coal << "\n";
-  ss << "/*      the target stride between lines, derived from hp and gg (see "
-        "DerivedParams) */\n";
 
+  ss << "//     the target stride between lines, derived from hp and gg (see DerivedParams)\n";
   append_derived_definitions_additional(ss);
 }
 
@@ -103,7 +96,7 @@ size_t ByLineGenerator::get_n_work_groups()
 void ByLineGenerator::append_setup_coordinates(std::stringstream& ss)
 {
 
-  ss << "\n\n\n/* setting up where this thread works */";
+  ss << "\n\n\n// setting up where this thread works\n";
   ss << "TINT" << MCHAR << " group_id = get_group_id(0);\n";
   ss << "TSHORT local_id = (TSHORT)(get_local_id(0));\n";
   ss << "TINT" << MCHAR << " global_id = group_id*N_WORK_ITEMS_PER_GROUP + local_id;\n";

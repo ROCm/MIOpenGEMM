@@ -139,6 +139,18 @@ std::vector<std::string> get_name()
   X[E::WSB]   = "WSB";
   X[E::BETAC] = "BETAC";
   X[E::MAIN]  = "MAIN";
+
+  X[E::STRAS11A]   = "STRAS11A";
+  X[E::STRAS12M]   = "STRAS12M";
+  X[E::STRAS13B]   = "STRAS13B";
+  X[E::STRAS14M]   = "STRAS14M";
+  X[E::STRAS15A]   = "STRAS15A";
+  X[E::STRAS16B]   = "STRAS16B";
+  X[E::STRAS17M]   = "STRAS17M";
+  X[E::STRAS18C]   = "STRAS18C";
+  X[E::STRAS19C]   = "STRAS19C";
+
+
   return X;
 }
 
@@ -345,6 +357,8 @@ std::vector<std::string> get_name()
   X[E::AFI] = "AFI";
   X[E::MIA] = "MIA";
   X[E::PAK] = "PAK";
+  X[E::STR] = "STR";
+  
   return X;
 }
 
@@ -365,6 +379,7 @@ std::vector<int> get_priority_basic()
   X[E::MIA] = -1;
   X[E::SZT] = -1;
   X[E::PAK] = -1;
+  X[E::STR] = 0;
   return X;
 }
 
@@ -437,6 +452,20 @@ std::array<std::vector<size_t>, E::N> get_dependencies_basic()
   kdps[E::WSB]   = {};
   kdps[E::BETAC] = {};
   kdps[E::MAIN]  = {E::BETAC, E::WSA, E::WSB};
+  
+  
+  kdps[E::STRAS11A] = {};
+  kdps[E::STRAS12M]   = {E::STRAS11A};
+  kdps[E::STRAS13B]   = {};
+  kdps[E::STRAS14M]   = {E::STRAS13B};
+  kdps[E::STRAS15A]   = {E::STRAS12M}; // only wait if memory re-used.
+  kdps[E::STRAS16B]   = {};
+  kdps[E::STRAS17M]   = {E::STRAS11A, E::STRAS15A, E::STRAS16B};
+  kdps[E::STRAS18C]   = {E::STRAS12M, E::STRAS14M};
+  kdps[E::STRAS19C]   = {E::BETAC, E::STRAS12M, E::STRAS14M, E::STRAS18C};
+
+
+  
 
   for (auto& x : kdps)
   {

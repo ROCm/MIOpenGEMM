@@ -36,7 +36,7 @@ void BaseGenerator::append_fargs(std::stringstream& ss)
   append_farg(kuse.u_b, ss, "\n__global const TFLOAT * restrict b, \nconst size_t b_offset");
   append_farg(kuse.u_c, ss, "\n__global TFLOAT       *          c, \nconst size_t c_offset");
   // if using c, we assume workspace is const.
-  // this is a hacky, as we might have a kernel
+  // this is hacky, as we might have a kernel
   // which uses c and modifies w as well.
   std::string cness = (kuse.u_c == true) ? "const " : "";
 
@@ -58,25 +58,26 @@ void BaseGenerator::append_fargs(std::stringstream& ss)
 
 void BaseGenerator::append_stride_definitions(Mat::E             emat_x,
                                               std::stringstream& ss,
-                                              size_t             workspace_type,
+                                              Scratch::E         wst,
                                               bool               withcomments,
                                               std::string        macro_prefix,
                                               bool               with_x_in_name)
 {
 
   char x = Mat::M().name[emat_x];
-  if (withcomments == true)
+  if (withcomments == true){
     ss << "/* strides parallel to k (unroll) in " << x << ". MACRO_STRIDE_" << x
        << " is between unroll tiles, STRIDE_" << x << " is within unroll tiles  */\n";
+  }
 
   std::string x_bit = with_x_in_name ? "_" + std::string(1, x) : "";
   for (std::string orth : {"PLL", "PERP"})
   {
     bool pll_k = ("PLL" == orth);
     ss << "#define " << macro_prefix << "STRIDE_" << orth << "_K" << x_bit << " "
-       << dp.get_stride(emat_x, pll_k, false, workspace_type) << '\n';
+       << dp.get_stride(emat_x, pll_k, false, wst) << '\n';
     ss << "#define " << macro_prefix << "MACRO_STRIDE_" << orth << "_K" << x_bit << " "
-       << dp.get_stride(emat_x, pll_k, true, workspace_type) << '\n';
+       << dp.get_stride(emat_x, pll_k, true, wst) << '\n';
   }
 }
 

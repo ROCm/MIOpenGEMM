@@ -19,18 +19,19 @@ int main()
   
   "MIC8_PAD1_PLU0_LIW0_MIW0_WOS1_LOM1_VEW1",
   "MIC6_PAD1_PLU0_LIW0_MIW1_WOS1_LOM1_VEW1",
-  "UNR16_GAL3_PUN0_ICE1_IWI1_SZT0_MAD0_NAW16_UFO0_MAC256_SKW10_AFI0_MIA0_PAK0"}}};
+  "UNR16_GAL3_PUN0_ICE1_IWI1_SZT0_MAD0_NAW16_UFO0_MAC256_SKW10_AFI0_MIA0_PAK0_STR0"}}};
 
    owrite::Writer  mowri(Ver::E::TERMINAL, "");
   kerngen::Bundle bundle(hp, gg);
 
-  for (auto& x : bundle.v_tgks)
-  {
     auto dirname = "/home/james/ptest/" + gg.get_string() + "/" + hp.get_contig_string() + "/";
-
     // WARNING : mkdir only works on linux/mac
     std::string syscall = "mkdir -p " + dirname;
     std::system(syscall.c_str());
+
+
+  for (auto& x : bundle.v_tgks)
+  {
     auto fname = dirname + x.kuses.full + ".cl";
     mowri << "writing " << fname << " ... " << Flush;
     std::ofstream floper(fname, std::ios::out);

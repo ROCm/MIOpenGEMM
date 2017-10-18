@@ -602,6 +602,7 @@ void CSuGr::initialise_edges()
   edges[NonChi::E::MIA] = {g_binary()};
   edges[NonChi::E::SZT] = {g_binary()};
   edges[NonChi::E::PAK] = {g_binary()};
+  edges[NonChi::E::STR] = {{0, {1}}, {1, {0}}};
   edges[NonChi::E::MAD] = {g_binary()};
 }
 
@@ -641,6 +642,7 @@ void CSuGr::refine_start_range()
   start_range[NonChi::E::UFO] = {Binary::E::NO};
   start_range[NonChi::E::SZT] = {Binary::E::NO};
   start_range[NonChi::E::PAK] = {Binary::E::NO};
+  start_range[NonChi::E::STR] = {0};
 
   if ((ptr_gg->m) > 200 && (ptr_gg->n) > 200)
   {

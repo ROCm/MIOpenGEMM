@@ -3,6 +3,7 @@
  *******************************************************************************/
 #include <iostream>
 #include <limits>
+#include <sstream>
 #include <miopengemm/enums.hpp>
 #include <miopengemm/error.hpp>
 #include <miopengemm/kernelstring.hpp>
@@ -28,11 +29,16 @@ KernUses::KernUses(
   bool u_a_, bool u_b_, bool u_c_, std::vector<bool> u_vws_, bool u_alpha_, bool u_beta_, bool u_k_)
   : u_a(u_a_), u_b(u_b_), u_c(u_c_), u_vws(u_vws_), u_alpha(u_alpha_), u_beta(u_beta_), u_k(u_k_)
 {
+  
+  std::stringstream fullss;
   for (auto& x : {Mat::E::A, Mat::E::B, Mat::E::C})
   {
     if (at(x))
     {
-      full += Mat::M().name[x];
+      if (!fullss.str().empty()){
+        fullss << '_';
+      }
+      fullss << Mat::M().name[x];
     }
   }
 
@@ -42,19 +48,29 @@ KernUses::KernUses(
     {
       if (u_vws[i])
       {
-        full += "_W" + std::to_string(i);
+      if (!fullss.str().empty()){
+        fullss << '_';
+      }        
+      fullss <<  'W'  << i;
       }
     }
   }
 
   if (u_alpha)
   {
-    full += "_alpha";
+    if (!fullss.str().empty()){
+      fullss << '_';
+    }            
+    fullss << "alpha";
   }
 
   if (u_beta)
   {
-    full += "_beta";
+    if (!fullss.str().empty()){
+      fullss << '_';
+    }            
+    fullss <<  "beta";
   }
+  full = fullss.str();
 }
 }
