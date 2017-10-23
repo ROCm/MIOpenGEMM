@@ -15,7 +15,7 @@
 int main()
 {
   using namespace MIOpenGEMM;
-Geometry gg{"tC0_tA0_tB1_colMaj1_m5100_n5100_k5100_lda5100_ldb5100_ldc5100_ws0_f32"}; // gg
+Geometry gg{"tC0_tA0_tB1_colMaj1_m5100_n5100_k5100_lda5100_ldb5100_ldc5100_f32"}; // gg
 
 HyPas hp{{{ //hp
 
@@ -25,7 +25,7 @@ HyPas hp{{{ //hp
 
 }}};
   CLHint         devhint;
-  Offsets        offsets = get_zero_offsets();
+  Offsets        offsets = get_zero_offsets(0);
   owrite::Writer mowri(Ver::E::TERMWITHDEPS, "");
   dev::TinyTwo   boa(gg, offsets, mowri, devhint);
 
