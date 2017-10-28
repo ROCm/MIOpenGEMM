@@ -22,7 +22,7 @@ int main()
 
   using namespace MIOpenGEMM;
 
-  auto                           toff = get_padding_offsets();
+  auto                           toff = get_padding_offsets({});
   owrite::Writer                 mowri(Ver::E::TERMINAL, "");
   CLHint                         devhint(0, 0);
   cl_command_queue_properties    cqps = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
@@ -74,10 +74,14 @@ int main()
       case 1 : impls.emplace_back(apitest::GemmImpl::GEMM0);
     }
 
-    int m = 1 + rutil.get_from_range(1000);
-    int n = 1 + rutil.get_from_range(1000);
-    int k = 1 + rutil.get_from_range(1000);
-    geometries.emplace_back(get_padded_geometry<float>(true, false, false, false, m, n, k, 0));
+    int m = 1 + rutil.get_from_range(400);
+    int n = 1 + rutil.get_from_range(400);
+    int k = 1 + rutil.get_from_range(400);
+    //geometries.emplace_back("tC0_tA0_tB0_colMaj1_m200_n77_k40_lda209_ldb50_ldc212_f32");
+    
+    
+    
+    geometries.emplace_back(get_padded_geometry<float>(true, false, false, false, m, n, k, {}));
     
     run_event_timers.emplace_back(false);
   }

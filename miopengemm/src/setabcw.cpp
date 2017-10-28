@@ -20,8 +20,9 @@ void fill_uni(std::vector<TFloat>& v, size_t r_small, size_t r_big)
 
   if (r_small > r_big)
   {
+    
     std::stringstream ss;
-    ss << "strange request : in fill_uni, with r_small > r_big";
+    ss << "strange request : in fill_uni, with r_small = " << r_small << " > r_big = " << r_big;
     throw miog_error(ss.str());
   }
 
