@@ -21,23 +21,23 @@ HyPas get_generic(const Geometry& gg, const Constraints& constraints)
 
   if (gg.m >= 1000 && gg.n >= 1000)
   {
-    hp = {{{"MIC5_PAD2_PLU0_LIW1_MIW1_WOS0_VEW1",
-            "MIC4_PAD2_PLU0_LIW0_MIW1_WOS0_VEW1",
-            "UNR16_GAL1_PUN0_ICE1_IWI0_SZT0_NAW64_UFO0_MAC256_SKW10_AFI1_MIA1_MAD0"}}};
+    hp = {{{"MIC5_PAD2_PLU0_LIW1_MIW1_WOS0_LOM1_VEW1",
+            "MIC4_PAD2_PLU0_LIW0_MIW1_WOS0_LOM1_VEW1",
+            "UNR16_GAL1_PUN0_ICE1_IWI0_SZT0_NAW64_UFO0_MAC256_SKW10_AFI1_MIA1_MAD0_PAK0"}}};
   }
 
   else if (gg.m >= 100 && gg.n >= 100)
   {
-    hp = {{{"MIC1_PAD0_PLU0_LIW0_MIW1_WOS0_VEW1",
-            "MIC2_PAD1_PLU0_LIW1_MIW0_WOS0_VEW1",
-            "UNR64_GAL3_PUN1_ICE1_IWI1_SZT0_NAW16_UFO0_MAC64_SKW10_AFI1_MIA1_MAD0"}}};
+    hp = {{{"MIC1_PAD0_PLU0_LIW0_MIW1_WOS0_LOM1_VEW1",
+            "MIC2_PAD1_PLU0_LIW1_MIW0_WOS0_LOM1_VEW1",
+            "UNR64_GAL3_PUN1_ICE1_IWI1_SZT0_NAW16_UFO0_MAC64_SKW10_AFI1_MIA1_MAD0_PAK0"}}};
   }
 
   else
   {
-    hp = {{{"MIC1_PAD2_PLU0_LIW1_MIW1_WOS0_VEW1",
-            "MIC1_PAD2_PLU0_LIW1_MIW1_WOS0_VEW1",
-            "UNR4_GAL1_PUN0_ICE1_IWI0_SZT1_NAW64_UFO0_MAC1_SKW10_AFI0_MIA0_MAD0"}}};
+    hp = {{{"MIC1_PAD2_PLU0_LIW1_MIW1_WOS0_LOM1_VEW1",
+            "MIC1_PAD2_PLU0_LIW1_MIW1_WOS0_LOM1_VEW1",
+            "UNR4_GAL1_PUN0_ICE1_IWI0_SZT1_NAW64_UFO0_MAC1_SKW10_AFI0_MIA0_MAD0_PAK0"}}};
   }
 
   hp.replace_where_defined(constraints);
@@ -119,15 +119,15 @@ Solution find(float            allotted_time,
 {
 
   (void)with_warnings;
-  bool   c_is_const    = true;
-  cl_mem workspace_gpu = nullptr;
-  
+  bool                c_is_const    = true;
+  std::vector<cl_mem> workspace_gpu = {};
+
   Ver::E         e_ver              = verbose ? Ver::E::TERMINAL : Ver::E::SILENT;
   std::string    constraints_string = enforce_determinism ? "C__ICE1" : "";
   Constraints    constraints(constraints_string);
   auto           find_params = get_at_least_n_seconds(static_cast<double>(allotted_time));
   owrite::Writer mowri(e_ver, "");
-  Offsets        offsets = get_zero_offsets();
+  Offsets        offsets = get_zero_offsets(0);
   TinyZero       jinx(command_queue, tgg, offsets, a, b, c, c_is_const, workspace_gpu, mowri);
 
   size_t           rank = 0;

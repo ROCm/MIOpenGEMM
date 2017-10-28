@@ -15,33 +15,32 @@
 namespace MIOpenGEMM
 {
 
-// TODO : alpha = 0 optimisation. beta = 0 optimisation.
 template <typename T>
-GemmStatus xgemm(bool              isColMajor,
-                 bool              tA,
-                 bool              tB,
-                 size_t            m,
-                 size_t            n,
-                 size_t            k,
-                 T                 alpha,
-                 cl_mem            a,
-                 size_t            a_offset,
-                 size_t            lda,
-                 cl_mem            b,
-                 size_t            b_offset,
-                 size_t            ldb,
-                 T                 beta,
-                 cl_mem            c,
-                 size_t            c_offset,
-                 size_t            ldc,
-                 cl_mem            w,
-                 size_t            w_offset,
-                 size_t            w_size,
-                 cl_command_queue* ptr_queue,
-                 cl_uint           num_events_in_wait_list,
-                 const cl_event*   event_wait_list,
-                 cl_event*         ptr_event_user,
-                 int               ID)
+GemmStatus xgemm(bool                isColMajor,
+                 bool                tA,
+                 bool                tB,
+                 size_t              m,
+                 size_t              n,
+                 size_t              k,
+                 T                   alpha,
+                 cl_mem              a,
+                 size_t              a_offset,
+                 size_t              lda,
+                 cl_mem              b,
+                 size_t              b_offset,
+                 size_t              ldb,
+                 T                   beta,
+                 cl_mem              c,
+                 size_t              c_offset,
+                 size_t              ldc,
+                 std::vector<cl_mem> w,
+                 std::vector<size_t> w_offset,
+                 std::vector<size_t> w_size,
+                 cl_command_queue*   ptr_queue,
+                 cl_uint             num_events_in_wait_list,
+                 const cl_event*     event_wait_list,
+                 cl_event*           ptr_event_user,
+                 int                 ID)
 {
 
   if (ID < 0)
@@ -63,29 +62,34 @@ GemmStatus xgemm(bool              isColMajor,
                              beta_type,
                              get_floattype_char<T>(),
                              ptr_queue);
+
+    if (ID == UnusualGemmId::ZeroOperation)
+    {
+      return {true, ID};
+    }
   }
 
-  const Programs& programs = get_cacher().program_cache[ID];
+  const Programs& programs = std::get<0>(*get_cacher().prohyp_cache[ID]);  // program_cache[ID];
 
-  std::array<cl_mem, Mem::E::N> gpu_mems;
-  std::array<size_t, Mem::E::N> offsets;
+  std::array<cl_mem, Mat::E::N> gpu_mems;
+  std::vector<cl_mem> gpu_mems_vws;
+  std::array<size_t, Mat::E::N> offsets;
 
-  gpu_mems[Mem::E::A] = a;
-  gpu_mems[Mem::E::B] = b;
-  gpu_mems[Mem::E::C] = c;
-  gpu_mems[Mem::E::W] = w;
+  gpu_mems[Mat::E::A] = a;
+  gpu_mems[Mat::E::B] = b;
+  gpu_mems[Mat::E::C] = c;
+  gpu_mems_vws        = w;
 
-  offsets[Mem::E::A] = a_offset;
-  offsets[Mem::E::B] = b_offset;
-  offsets[Mem::E::C] = c_offset;
-  offsets[Mem::E::W] = w_offset;
+  offsets[Mat::E::A] = a_offset;
+  offsets[Mat::E::B] = b_offset;
+  offsets[Mat::E::C] = c_offset;
 
   AllKernArgs all_kern_args(0);
   for (auto& index : programs.act_inds)
   {
     auto& program = programs.programs[index];
-    all_kern_args.emplace_back(
-      kerngen::get_arg_sizes_values(program.kblob, gpu_mems, offsets, sizeof(T), &alpha, &beta));
+    all_kern_args.emplace_back(kerngen::get_arg_sizes_values(
+      program.kblob, gpu_mems, gpu_mems_vws, offsets, w_offset, sizeof(T), &alpha, &beta, k));
   }
 
   KernelTimes* ktimes     = nullptr;
@@ -118,9 +122,9 @@ template GemmStatus xgemm<float>(bool,
                                  cl_mem,
                                  size_t,
                                  size_t,
-                                 cl_mem,
-                                 size_t,
-                                 size_t,
+                                 std::vector<cl_mem>,
+                                 std::vector<size_t>,
+                                 std::vector<size_t>,
                                  cl_command_queue*,
                                  cl_uint,
                                  const cl_event*,
@@ -144,16 +148,15 @@ template GemmStatus xgemm<double>(bool,
                                   cl_mem,
                                   size_t,
                                   size_t,
-                                  cl_mem,
-                                  size_t,
-                                  size_t,
+                                  std::vector<cl_mem>,
+                                  std::vector<size_t>,
+                                  std::vector<size_t>,
                                   cl_command_queue*,
                                   cl_uint,
                                   const cl_event*,
                                   cl_event*,
                                   int ID);
 
-// TODO : beta = 1 optimisation. alpha = 0 optimisation. beta = 0 optimisation.
 template <typename T>
 GemmStatus gemm0(bool              isColMajor,
                  bool              tA,
@@ -194,9 +197,9 @@ GemmStatus gemm0(bool              isColMajor,
                   c,
                   c_offset,
                   ldc,
-                  nullptr,
-                  0,
-                  0,
+                  {},
+                  {},
+                  {},
                   ptr_queue,
                   num_events_in_wait_list,
                   event_wait_list,

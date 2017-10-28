@@ -11,8 +11,6 @@
 #include <miopengemm/stringutilbase.hpp>
 #include <miopengemm/timer.hpp>
 
-// TODO : run an example, and print the examples which failed to be viable in the
-// search for a viable start. It might help in pruning the initial graph.
 namespace MIOpenGEMM
 {
 
@@ -177,7 +175,7 @@ bool has_no_effect(const HyPas& hp0, Mat::E emat_x, size_t i)
     }
   }
 
-  // if ICE is 1, the IWI has no effect
+  // if ICE is 1, then IWI has no effect
   if (hp0.sus.at(Mat::E::C).vs[NonChi::E::ICE] == 1)
   {
     if (emat_x == Mat::E::C && i == NonChi::E::IWI)
@@ -185,6 +183,19 @@ bool has_no_effect(const HyPas& hp0, Mat::E emat_x, size_t i)
       return true;
     }
   }
+
+  // If LOM == NO (no local memory used) then PLU and LIW have no effect.
+  if (emat_x == Mat::E::A || emat_x == Mat::E::B)
+  {
+    if (hp0.sus.at(emat_x).vs[Chi::E::LOM] == Binary::E::NO)
+    {
+      if (i == Chi::E::PLU || i == Chi::E::LIW)
+      {
+        return true;
+      }
+    }
+  }
+
   return false;
 }
 
@@ -508,6 +519,7 @@ void ChiSuGr::initialise_edges()
   edges[Chi::E::PLU] = {g_binary()};
   edges[Chi::E::LIW] = {g_binary()};
   edges[Chi::E::MIW] = {g_binary()};
+  edges[Chi::E::LOM] = {g_binary()};
 
   edges[Chi::E::VEW] = {{1, {2}}, {2, {1, 4}}, {4, {2, 1}}};
 
@@ -589,6 +601,7 @@ void CSuGr::initialise_edges()
   edges[NonChi::E::AFI] = {g_binary()};
   edges[NonChi::E::MIA] = {g_binary()};
   edges[NonChi::E::SZT] = {g_binary()};
+  edges[NonChi::E::PAK] = {g_binary()};
   edges[NonChi::E::MAD] = {g_binary()};
 }
 
@@ -598,7 +611,7 @@ void ChiSuGr::refine_start_range()
   // start_range[Chi::E::LIW] = {Binary::E::NO};
   // start_range[Chi::E::MIW] = {Binary::E::YES};
 
-  if (ptr_gg->wSpaceSize == 0)
+  if (ptr_gg->wSpaceSize.size() == 0 || ptr_gg->wSpaceSize[0] == 0)
   {
     start_range[Chi::E::WOS] = {Scratch::E::UNUSED};
   }
@@ -609,6 +622,15 @@ void ChiSuGr::refine_start_range()
 
   start_range[Chi::E::VEW] = {1};
 
+  if (ptr_devinfo->device_has_local_memory)
+  {
+    start_range[Chi::E::LOM] = {Binary::E::YES};
+  }
+  else
+  {
+    start_range[Chi::E::LOM] = {Binary::E::NO};
+  }
+
   set_start_mic();
 }
 
@@ -618,6 +640,7 @@ void CSuGr::refine_start_range()
   start_range[NonChi::E::ICE] = {1};
   start_range[NonChi::E::UFO] = {Binary::E::NO};
   start_range[NonChi::E::SZT] = {Binary::E::NO};
+  start_range[NonChi::E::PAK] = {Binary::E::NO};
 
   if ((ptr_gg->m) > 200 && (ptr_gg->n) > 200)
   {

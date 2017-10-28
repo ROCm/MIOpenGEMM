@@ -20,10 +20,6 @@ enum class Status
   CORRECT
 };
 
-/* TODO : document logic. are matrices positive or zero centeted?
- * Provide better diagnostics when not correct.
- * Output full matrices to files for visualisation. etc etc etc. */
-
 template <typename T>
 bool exactly_equal(T a, T b)
 {
@@ -40,7 +36,7 @@ void elementwise_compare(const Geometry& gg,
                          std::string     info_str,
                          owrite::Writer& mowri)
 {
-  double threshold      = 1e-6;
+  double threshold      = 1e-5;
   size_t nels           = get_mat_size(gg, toff, Mat::E::C);
   size_t n_mat_els      = gg.get_padded_area(Mat::E::C);
   size_t n_errs_printed = 0;
@@ -63,25 +59,25 @@ void elementwise_compare(const Geometry& gg,
 
   size_t zone = 1;
   // First check the pre-padding zone,
-  for (size_t i = 0; i < toff.offsets[Mem::E::C]; ++i)
+  for (size_t i = 0; i < toff.offsets[Mat::E::C]; ++i)
   {
     status[i] = exactly_equal(c_cpu[i], c_gpu[i]) ? Status::CORRECT : Status::INCORRECT;
     if (status[i] == Status::INCORRECT && n_errs_printed < zone * n_per_category)
     {
       ++n_errs_printed;
-      errm << "(in offset, " << i << '/' << toff.offsets[Mem::E::C] << ')' << get_message(i);
+      errm << "(in offset, " << i << '/' << toff.offsets[Mat::E::C] << ')' << get_message(i);
     }
   }
   ++zone;
 
   // Now check the post-padding zone,
-  for (size_t i = toff.offsets[Mem::E::C] + n_mat_els; i < nels; ++i)
+  for (size_t i = toff.offsets[Mat::E::C] + n_mat_els; i < nels; ++i)
   {
     status[i] = exactly_equal(c_cpu[i], c_gpu[i]) ? Status::CORRECT : Status::INCORRECT;
     if (status[i] == Status::INCORRECT && n_errs_printed < zone * n_per_category)
     {
       ++n_errs_printed;
-      errm << "(in tail, " << nels - i << '/' << toff.tails[Mem::E::C] << ')' << get_message(i);
+      errm << "(in tail, " << nels - i << '/' << toff.tails[Mat::E::C] << ')' << get_message(i);
     }
   }
   ++zone;
@@ -91,7 +87,7 @@ void elementwise_compare(const Geometry& gg,
   {
     for (size_t j = 0; j < gg.get_coal(Mat::E::C); ++j)
     {
-      size_t coord = toff.offsets[Mem::E::C] + i * gg.ldX[Mat::E::C] + j;
+      size_t coord = toff.offsets[Mat::E::C] + i * gg.ldX[Mat::E::C] + j;
       max_abs_err =
         std::max<double>(max_abs_err, static_cast<double>(std::abs(c_cpu[coord] - c_gpu[coord])));
       max_rel_err    = max_abs_err / (std::abs(static_cast<double>(c_cpu[coord])) + 1e-9);
@@ -119,7 +115,7 @@ void elementwise_compare(const Geometry& gg,
   {
     for (size_t j = gg.get_coal(Mat::E::C); j < gg.ldX[Mat::E::C]; ++j)
     {
-      size_t coord = toff.offsets[Mem::E::C] + i * gg.ldX[Mat::E::C] + j;
+      size_t coord = toff.offsets[Mat::E::C] + i * gg.ldX[Mat::E::C] + j;
 
       status[coord] =
         exactly_equal(c_cpu[coord], c_gpu[coord]) ? Status::CORRECT : Status::INCORRECT;

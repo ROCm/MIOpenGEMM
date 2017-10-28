@@ -107,8 +107,7 @@ void set_multigeom_abc(const MatData<TFloat>&       v_abc,
   for (auto emat_x : {Mat::E::A, Mat::E::B, Mat::E::C})
   {
     v_abc[emat_x]->resize(max_n[emat_x]);
-    auto emem_x = Mem::mat_to_mem(emat_x);
-    fill_uni<TFloat>(*v_abc[emat_x], max_n[emat_x] - toff.tails[emem_x], max_n[emat_x]);
+    fill_uni<TFloat>(*v_abc[emat_x], max_n[emat_x] - toff.tails[emat_x], max_n[emat_x]);
   }
 }
 
@@ -116,25 +115,6 @@ template <typename TFloat>
 void set_abc(const MatData<TFloat>& v_abc, const Geometry& gg, const Offsets& toff)
 {
   set_multigeom_abc(v_abc, {gg}, toff);
-}
-
-template <typename TFloat>
-void set_abcw(const MatData<TFloat>& v_abcw, const Geometry& gg, const Offsets& toff)
-{
-
-  if (v_abcw.size() != Mem::E::N)
-  {
-    throw miog_error("vector should contain Mat::E::N (4) pointers in set_abcw");
-  }
-
-  MatData<TFloat> v_abc = v_abcw;
-  v_abc.pop_back();
-  set_abc<TFloat>(v_abc, gg, toff);
-
-  size_t total_workspace = get_total_workspace(gg, toff);
-
-  v_abcw[Mem::E::W]->resize(total_workspace);
-  fill_uni(*(v_abcw[Mem::E::W]), total_workspace, total_workspace);
 }
 
 template void set_abc(const MatData<double>& v_abc, const Geometry& gg, const Offsets& toff);
@@ -146,9 +126,5 @@ set_multigeom_abc(const MatData<double>& v_abc, const std::vector<Geometry>&, co
 
 template void
 set_multigeom_abc(const MatData<float>& v_abc, const std::vector<Geometry>&, const Offsets& toff);
-
-template void set_abcw(const MatData<double>& v_abcw, const Geometry& gg, const Offsets& toff);
-
-template void set_abcw(const MatData<float>& v_abcw, const Geometry& gg, const Offsets& toff);
 }
 }

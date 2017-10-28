@@ -26,7 +26,7 @@ class Constraint
   std::vector<size_t> start_range;
   Constraint()                  = default;
   Constraint(const Constraint&) = default;
-  Constraint& operator=(const Constraint&) = default;  // TODO is this ok?
+  Constraint& operator=(const Constraint&) = default;
   Constraint(Mat::E);
   Constraint(Mat::E, const std::string& r);
   Constraint(Mat::E, const std::string& r, const std::string& sr);
@@ -43,7 +43,7 @@ class Constraints
   Constraints(const std::string& rconcat);
   Constraints(const str_array& r, const str_array& sr);
   Constraints(const Constraints&) = default;
-  Constraints& operator=(const Constraints&) = default;  // TODO is this ok?
+  Constraints& operator=(const Constraints&) = default;
   std::string  get_combo_str(const str_array&) const;
   std::string  get_r_str() const;
   std::string  get_sr_str() const;
@@ -78,10 +78,11 @@ class HyPas
   HyPas(const std::string&);
   HyPas(std::array<SuHy, Mat::E::N>&&);
   HyPas(const HyPas&) = default;
-  HyPas& operator=(const HyPas&) = default;  // TODO is this ok?
+  HyPas& operator=(const HyPas&) = default;
 
   void replace_where_defined(const Constraints& constraints);
   std::string get_string() const;
+  std::string get_contig_string() const;
   bool operator==(const HyPas& rhs) const;
   void  checks() const;
   HyPas get_reflected(bool) const;

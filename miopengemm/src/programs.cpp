@@ -54,7 +54,6 @@ Program::update(const KernBlob& ks, owrite::Writer& mowri, const std::string& bu
 
 void KernelTime::update_times(const cl_event& event)
 {
-
   oclutil::cl_set_event_profiling_info(
     event, CL_PROFILING_COMMAND_START, sizeof(size_t), &t_start, nullptr, "u_times", true);
 
@@ -65,18 +64,19 @@ void KernelTime::update_times(const cl_event& event)
   v_times.push_back(new_time);
 }
 
-void KernelTime::reset_times()
+void KernelTime::reset()
 {
   t_start = 0;
   t_end   = 0;
   v_times.resize(0);
 }
 
-void KernelTimes::reset_times()
+void KernelTimes::reset_with_size(size_t size)
 {
-  for (size_t pi = 0; pi < KType::E::N; ++pi)
+  ktimes.resize(size);
+  for (auto& x : ktimes)
   {
-    ktimes[pi].reset_times();
+    x.reset();
   }
 }
 
@@ -96,7 +96,7 @@ oclutil::Result Programs::update(const std::vector<KernBlob>& kbs)
     "conversion", "unused-macros", "shorten-64-to-32", "cast-align"};
 
   std::stringstream ss_build_options;
-  //ss_build_options << "-Werror";
+  // ss_build_options << "-Werror";
   ss_build_options << "   -cl-std=CL2.0";  // TODO : macro this.
   ss_build_options << "   -Wf,-Weverything";
   for (auto& x : warnings_to_ignore)
@@ -226,13 +226,23 @@ oclutil::Result Programs::run(const cl_command_queue& queue,
 
   if (ev_from_user && ptr_ktimes != nullptr)
   {
+
+    if (ptr_ktimes->ktimes.size() != n_active)
+    {
+      std::stringstream ss;
+      ss << "size of ktimes is " << ptr_ktimes->ktimes.size() << ", which is not n_active ("
+         << n_active << ')';
+
+      throw miog_error(ss.str());
+    }
+
     size_t maxend   = 0;
     size_t minstart = std::numeric_limits<size_t>::max();
 
     oclutil::cl_wait_for_events(1, ptrs_events.back(), "run742", true);
     for (int k_ind = 0; k_ind < n_active; ++k_ind)
     {
-      KernelTime& pt = ptr_ktimes->ktimes[act_inds[k_ind]];
+      KernelTime& pt = ptr_ktimes->ktimes[k_ind];
       pt.update_times(*ptrs_events[k_ind]);
       maxend   = std::max<size_t>(maxend, pt.t_end);
       minstart = std::min<size_t>(minstart, pt.t_start);

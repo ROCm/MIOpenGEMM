@@ -18,23 +18,33 @@ class Offsets
 {
   public:
   /*! buffering before: number of values before the first value which may be accessed */
-  std::array<size_t, Mem::E::N> offsets;
+  std::array<size_t, Mat::E::N> offsets;
+  std::vector<size_t> offsets_vws;
+
   /*! buffering after: number of values after the last value which may be accessed.
    * This tail buffering is only used for debugging purposes */
-  std::array<size_t, Mem::E::N> tails;
+  std::array<size_t, Mat::E::N> tails;
+  std::vector<size_t> tails_vws;
 
   /*! @brief
-   * constructor, first the 4 offsets (before memory) and then the 4 after (tail) */
-  Offsets(size_t oa, size_t ob, size_t oc, size_t ow, size_t ta, size_t tb, size_t tc, size_t tw);
+   * constructor, first the 3 offsets (before memory) and then the 3 after (tail) */
+  Offsets(size_t              oa,
+          size_t              ob,
+          size_t              oc,
+          std::vector<size_t> ow,
+          size_t              ta,
+          size_t              tb,
+          size_t              tc,
+          std::vector<size_t> tw);
 };
 
 /*! @brief
  * factory function to retun Offsets of all non-zeros */
-Offsets get_padding_offsets();
+Offsets get_padding_offsets(size_t n_workspaces);
 
 /*! @brief
  * factory function to retun Offsets of all zeros */
-Offsets get_zero_offsets();
+Offsets get_zero_offsets(size_t n_workspaces);
 
 class GeometryDerived
 {
@@ -48,18 +58,20 @@ class Geometry
 {
 
   private:
-  void initialise(bool   isColMajor_,
-                  bool   tA_,
-                  bool   tB_,
-                  bool   tC_,
-                  size_t lda_,
-                  size_t ldb_,
-                  size_t ldc_,
-                  size_t m_,
-                  size_t n_,
-                  size_t k_,
-                  size_t wSpaceSize_,
-                  char   floattype_);
+  void initialise(bool                isColMajor_,
+                  bool                tA_,
+                  bool                tB_,
+                  bool                tC_,
+                  size_t              lda_,
+                  size_t              ldb_,
+                  size_t              ldc_,
+                  size_t              m_,
+                  size_t              n_,
+                  size_t              k_,
+                  std::vector<size_t> wSpaceSize_,
+                  char                floattype_);
+
+  // void append_ws_frag(std::stringstream & ss) const;
 
   private:
   // log k ;  log m - log n ;  log m + log n, 0.2*(log ldx's)
@@ -82,7 +94,7 @@ class Geometry
   size_t k;
 
   /*! usable amount of workspace, in number of values (i.e. not in bytes). */
-  size_t wSpaceSize;
+  std::vector<size_t> wSpaceSize;
 
   // TODO : investigate optional half-precision 'h'
   // TODO : rename from floattype to numerictype, and consider integer matrix multiplication
@@ -93,6 +105,24 @@ class Geometry
   public:
   GeometryDerived derived;
 
+  template <typename T>
+  Geometry(bool                isColMajor_,
+           bool                tA_,
+           bool                tB_,
+           bool                tC_,
+           T                   lda_,
+           T                   ldb_,
+           T                   ldc_,
+           T                   m_,
+           T                   n_,
+           T                   k_,
+           std::vector<size_t> wSpaceSize_,
+           char                floattype_)
+  {
+    initialise(isColMajor_, tA_, tB_, tC_, lda_, ldb_, ldc_, m_, n_, k_, wSpaceSize_, floattype_);
+  }
+
+  // for back compatibility
   template <typename T>
   Geometry(bool   isColMajor_,
            bool   tA_,
@@ -107,12 +137,21 @@ class Geometry
            size_t wSpaceSize_,
            char   floattype_)
   {
-    initialise(isColMajor_, tA_, tB_, tC_, lda_, ldb_, ldc_, m_, n_, k_, wSpaceSize_, floattype_);
+    if (wSpaceSize_ == 0)
+    {
+      initialise(isColMajor_, tA_, tB_, tC_, lda_, ldb_, ldc_, m_, n_, k_, {}, floattype_);
+    }
+    else
+    {
+      initialise(
+        isColMajor_, tA_, tB_, tC_, lda_, ldb_, ldc_, m_, n_, k_, {wSpaceSize_}, floattype_);
+    }
   }
 
   /*! @brief
    * Constructor which assumes isColMajor is true, tC is false, lda, ldb, ldc are minimal */
-  Geometry(size_t m, size_t n, size_t k, bool tA, bool tB, size_t wSpaceSize, char floattype);
+  Geometry(
+    size_t m, size_t n, size_t k, bool tA, bool tB, std::vector<size_t> wSpaceSize, char floattype);
 
   Geometry() = default;
 
@@ -166,17 +205,17 @@ template <>
 char get_floattype_char<double>();
 
 template <typename TFloat>
-Geometry get_geometry_from_padding(bool   isColMajor,
-                                   bool   tA,
-                                   bool   tB,
-                                   bool   tC,
-                                   size_t m,
-                                   size_t n,
-                                   size_t k,
-                                   size_t wSpaceSize,
-                                   size_t pad_a,
-                                   size_t pad_b,
-                                   size_t pad_c)
+Geometry get_geometry_from_padding(bool                isColMajor,
+                                   bool                tA,
+                                   bool                tB,
+                                   bool                tC,
+                                   size_t              m,
+                                   size_t              n,
+                                   size_t              k,
+                                   std::vector<size_t> wSpaceSize,
+                                   size_t              pad_a,
+                                   size_t              pad_b,
+                                   size_t              pad_c)
 {
 
   char floattype = get_floattype_char<TFloat>();
@@ -188,16 +227,28 @@ Geometry get_geometry_from_padding(bool   isColMajor,
 }
 
 template <typename TFloat>
-Geometry get_padded_geometry(
-  bool isColMajor, bool tA, bool tB, bool tC, size_t m, size_t n, size_t k, size_t wSpaceSize)
+Geometry get_padded_geometry(bool                isColMajor,
+                             bool                tA,
+                             bool                tB,
+                             bool                tC,
+                             size_t              m,
+                             size_t              n,
+                             size_t              k,
+                             std::vector<size_t> wSpaceSize)
 {
   return get_geometry_from_padding<TFloat>(isColMajor, tA, tB, tC, m, n, k, wSpaceSize, 9, 10, 12);
 }
 
 // lda, ldb, ldc are minimal.
 template <typename TFloat>
-Geometry get_tight_geometry(
-  bool isColMajor, bool tA, bool tB, bool tC, size_t m, size_t n, size_t k, size_t wSpaceSize)
+Geometry get_tight_geometry(bool                isColMajor,
+                            bool                tA,
+                            bool                tB,
+                            bool                tC,
+                            size_t              m,
+                            size_t              n,
+                            size_t              k,
+                            std::vector<size_t> wSpaceSize)
 {
   return get_geometry_from_padding<TFloat>(isColMajor, tA, tB, tC, m, n, k, wSpaceSize, 0, 0, 0);
 }
@@ -205,12 +256,12 @@ Geometry get_tight_geometry(
 template <typename TFloat>
 Geometry get_squareNN_geometry(size_t m)
 {
-  return get_geometry_from_padding<TFloat>(true, false, false, false, m, m, m, 0, 0, 0, 0);
+  return get_geometry_from_padding<TFloat>(true, false, false, false, m, m, m, {}, 0, 0, 0);
 }
 
 size_t get_mat_size(const Geometry& gg, const Offsets& toff, Mat::E emat);
 size_t get_mat_memsize(const Geometry& gg, const Offsets& toff, Mat::E emat);
-size_t get_total_workspace(const Geometry& gg, const Offsets& toff);
+size_t get_total_workspace(const Geometry& gg, const Offsets& toff, size_t workspace_index);
 }
 
 #endif

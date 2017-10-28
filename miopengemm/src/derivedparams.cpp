@@ -3,8 +3,10 @@
  *******************************************************************************/
 #include <algorithm>
 #include <cmath>
+#include <functional>
 #include <iostream>
 #include <sstream>
+#include <tuple>
 #include <miopengemm/derivedparams.hpp>
 #include <miopengemm/error.hpp>
 #include <miopengemm/macgrid.hpp>
@@ -97,11 +99,6 @@ void DerivedParams::reset_cw_params(Mat::E emat_x)
     errm << " It should be 1 or 2 in reset_cw_params ";
     throw miog_error(errm.str());
   }
-
-  at(emat_x).cw_global_offset =
-    (emat_x == Mat::E::B && ptr_hp->sus[Mat::E::A].vs[Chi::E::WOS] != Scratch::E::UNUSED)
-      ? at(Mat::E::A).cw_n_elements
-      : 0;
 }
 
 Derivabilty::Derivabilty(const HyPas& hp, const Geometry& gg)
@@ -162,7 +159,7 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
     ptr_hp->sus[Mat::E::B].vs[Chi::E::MIC] * ptr_hp->sus[Mat::E::A].vs[Chi::E::MIC];
   main_n_work_items_per_workgroup = main_macro_tile_area / main_micro_tile_area;
 
-  required_workspace = 0;
+  required_workspaces = {};
 
   std::stringstream set_status_ss;
 
@@ -205,7 +202,9 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
     if (ptr_hp->sus[emat_x].vs[Chi::E::WOS] != Scratch::E::UNUSED)
     {
       reset_cw_params(emat_x);
-      required_workspace += at(emat_x).cw_n_elements;
+      required_workspaces.push_back({at(emat_x).cw_n_elements,
+                                     emat_x,
+                                     static_cast<Scratch::E>(ptr_hp->sus[emat_x].vs[Chi::E::WOS])});
     }
 
     // check 0 : macro tile not too large
@@ -219,11 +218,27 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
     }
   }
 
+  std::sort(required_workspaces.rbegin(), required_workspaces.rend());
+  // here we assume wSpaceSize is sorted in descending order too.
+
   // check -1 : enough workspace memory
-  if (ptr_gg->wSpaceSize < required_workspace)
+  if (required_workspaces.size() > ptr_gg->wSpaceSize.size())
   {
-    set_status_ss << "ptr_gg->wSpaceSize ( " << ptr_gg->wSpaceSize
-                  << " ) is less then the required workspace ( " << required_workspace << " ). ";
+    set_status_ss
+      << "required_workspaces vector is longer than wSpaceSize : too few workspace memories. ";
+  }
+
+  else
+  {
+    for (size_t i = 0; i < required_workspaces.size(); ++i)
+    {
+      if (ptr_gg->wSpaceSize[i] < required_workspaces[i].n_elms)
+      {
+        set_status_ss << "The [" << i << "] largest workspace in geometry is "
+                      << ptr_gg->wSpaceSize[i] << ", but the [" << i << "] largest required is "
+                      << required_workspaces[i].n_elms << '.';
+      }
+    }
   }
 
   if (set_status_ss.str() != "")
@@ -299,6 +314,13 @@ std::tuple<bool, std::string> DerivedParams::set_fragile()
     {
       return std::make_tuple(false, "UFO = yes, so UNR must be greater that k");
     }
+  }
+
+  if (ptr_hp->sus[Mat::E::C].vs[NonChi::E::UFO] == Binary::E::YES &&
+      (ptr_hp->sus[Mat::E::A].vs[Chi::E::LOM] == Binary::E::NO ||
+       ptr_hp->sus[Mat::E::B].vs[Chi::E::LOM] == Binary::E::NO))
+  {
+    return std::make_tuple(false, "UFO = yes, so both LOMs must be YES");
   }
 
   main_split_on_k      = ptr_hp->sus[Mat::E::C].vs[NonChi::E::ICE] == 1 ? 0 : 1;
@@ -496,8 +518,10 @@ DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_) : ptr_hp(&hp
 
   pragma_unroll_string = ptr_hp->sus[Mat::E::C].vs[NonChi::E::PUN] == 1 ? "#pragma unroll\n" : "";
 
+  kstring = ptr_hp->sus[Mat::E::C].vs[NonChi::E::PAK] == Binary::E::YES ? "k" : "KVAL__";
+
   effective_k_varies_string =
-    ptr_hp->sus[Mat::E::C].vs[NonChi::E::UFO] == 0 ? "KV__" : "k_plus_offset";
+    ptr_hp->sus[Mat::E::C].vs[NonChi::E::UFO] == 0 ? kstring : "k_plus_offset";
   t_float = ptr_gg->derived.float_size_bits == 32 ? "float" : "double";
 
   k_effective_mod_G_UNROLL = effective_k_varies_string + " % G_UNROLL";
@@ -521,12 +545,17 @@ DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_) : ptr_hp(&hp
                                    ? 1
                                    : 0;
 
-  tints[Mem::E::A] = get_tint(ptr_gg->get_uncoal(Mat::E::A) *
+  tints[Mat::E::A] = get_tint(ptr_gg->get_uncoal(Mat::E::A) *
                               (ptr_gg->ldX[Mat::E::A]));  // TODO : does UFO need increase here ?
-  tints[Mem::E::B] = get_tint(ptr_gg->get_uncoal(Mat::E::B) * (ptr_gg->ldX[Mat::E::B]));
-  tints[Mem::E::C] = get_tint(ptr_gg->get_uncoal(Mat::E::C) * (ptr_gg->ldX[Mat::E::C]));
-  tints[Mem::E::W] = get_tint(ptr_gg->wSpaceSize);
-  tintk            = get_tint(
+  tints[Mat::E::B] = get_tint(ptr_gg->get_uncoal(Mat::E::B) * (ptr_gg->ldX[Mat::E::B]));
+  tints[Mat::E::C] = get_tint(ptr_gg->get_uncoal(Mat::E::C) * (ptr_gg->ldX[Mat::E::C]));
+  tints_vws.resize(ptr_gg->wSpaceSize.size());
+  for (auto workspace_index = 0; workspace_index < tints_vws.size(); ++workspace_index)
+  {
+    tints_vws[workspace_index] = get_tint(ptr_gg->wSpaceSize[workspace_index]);
+  }
+
+  tintk = get_tint(
     ptr_gg->k +
     2 * ptr_hp->sus[Mat::E::C].vs[NonChi::E::ICE] *
       ptr_hp->sus[Mat::E::C].vs[NonChi::E::UNR]);  // TODO : make this tight and prove correct.
@@ -534,11 +563,14 @@ DerivedParams::DerivedParams(const HyPas& hp_, const Geometry& gg_) : ptr_hp(&hp
   if (ptr_hp->sus[Mat::E::C].vs[NonChi::E::SZT] == true)
   {
     std::string ui64 = "ulong";
-    tints[Mem::E::A] = ui64;
-    tints[Mem::E::B] = ui64;
-    tints[Mem::E::C] = ui64;
-    tints[Mem::E::W] = ui64;
-    tintk            = ui64;
+    tints[Mat::E::A] = ui64;
+    tints[Mat::E::B] = ui64;
+    tints[Mat::E::C] = ui64;
+    for (auto& x : tints_vws)
+    {
+      x = ui64;
+    }
+    tintk = ui64;
   }
 
   tshort = "ushort";
@@ -604,5 +636,22 @@ size_t DerivedParams::get_stride_cw2(Mat::E emat_x, bool pll_k, bool is_macro) c
     return pll_k == true ? at(emat_x).macro_tile_length : ptr_gg->k;
   }
 }
+
+int DerivedParams::get_workspace_id(Mat::E emat, Scratch::E scratch) const
+{
+  for (int workspace_id = 0; workspace_id < required_workspaces.size(); ++workspace_id)
+  {
+    const auto& triple = required_workspaces[workspace_id];
+    if (triple.emat == emat && triple.scratch == scratch)
+    {
+      return workspace_id;
+    }
+  }
+  std::stringstream errms;
+  errms << "failed to match request in get_workspace_id : " << Mat::M().name[emat] << ','
+        << Scratch::M().name[scratch];
+  throw miog_error(errms.str());
+}
+
 //}
 }

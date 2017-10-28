@@ -20,7 +20,7 @@ namespace standalone
 std::string make(const Geometry& gg, const HyPas& hp, owrite::Writer& mowri)
 {
 
-  Offsets toff = get_zero_offsets();
+  Offsets toff = get_zero_offsets(0);
 
   Derivabilty dblt(hp, gg);
   if (dblt.is_derivable == false)

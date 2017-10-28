@@ -72,21 +72,34 @@ int ProgramCacher::get_ID_from_geom(const Geometry&   gg,
                 ptr_queue);
 }
 
-int ProgramCacher::get_ID(bool              isColMajor,
-                          bool              tA,
-                          bool              tB,
-                          bool              tC,
-                          size_t            m,
-                          size_t            n,
-                          size_t            k,
-                          size_t            lda,
-                          size_t            ldb,
-                          size_t            ldc,
-                          size_t            w_size,
-                          BetaType          beta_type,
-                          char              floattype,
-                          cl_command_queue* ptr_queue)
+int ProgramCacher::get_ID(bool                isColMajor,
+                          bool                tA,
+                          bool                tB,
+                          bool                tC,
+                          size_t              m,
+                          size_t              n,
+                          size_t              k,
+                          size_t              lda,
+                          size_t              ldb,
+                          size_t              ldc,
+                          std::vector<size_t> w_size,
+                          BetaType            beta_type,
+                          char                floattype,
+                          cl_command_queue*   ptr_queue)
 {
+
+  if (m == 0 || n == 0 || k == 0)
+  {
+    if (beta_type == BetaType::IsZero && k == 0 && m > 0 && n > 0)
+    {
+      throw miog_error("beta = 0 and k = 0 and m*n > 0 : needs to implemented (set C to zero)");
+      // should return {true, UnusualGemmId::ZeroKandBeta};
+    }
+    else
+    {
+      return UnusualGemmId::ZeroOperation;
+    }
+  }
 
   std::unique_lock<std::mutex> lock(mutt);
 
@@ -104,7 +117,12 @@ int ProgramCacher::get_ID(bool              isColMajor,
   std::string device_name = info_st.substr(0, info_size - 1);
 
   ss << isColMajor << tA << tB << tC << '.' << m << '.' << n << '.' << k << '.' << lda << '.' << ldb
-     << '.' << ldc << '.' << w_size << '.' << beta_type << '.' << floattype << '.' << device_name;
+     << '.' << ldc << '.';
+  for (auto& x : w_size)
+  {
+    ss << x << '.';
+  }
+  ss << '.' << beta_type << '.' << floattype << '.' << device_name;
 
   auto key = ss.str();
 
@@ -153,13 +171,17 @@ int ProgramCacher::get_ID(bool              isColMajor,
       throw miog_error(errm.str());
     }
 
-    program_cache[ID] = Programs(device_id, context, silent_mowri);
-    hyper_params[ID]  = soln.hypas;
+    prohyp_cache[ID].reset(
+      new std::pair<Programs, HyPas>(Programs(device_id, context, silent_mowri), soln.hypas));
+    // program_cache[ID] = Programs(device_id, context, silent_mowri);
+    // hyper_params[ID]  = soln.hypas;
 
     IDs[key] = ID;
 
     lock.unlock();
-    program_cache[ID].update(v_blobs);
+
+    std::get<0>(*get_cacher().prohyp_cache[ID]).update(v_blobs);
+    // program_cache[ID].update(v_blobs);
   }
 
   return ID;

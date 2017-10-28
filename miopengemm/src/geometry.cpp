@@ -1,7 +1,9 @@
 /*******************************************************************************
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
+#include <algorithm>
 #include <cmath>
+#include <functional>
 #include <iostream>
 #include <limits>
 #include <map>
@@ -27,16 +29,14 @@ char get_floattype_char<double>()
 }
 
 Geometry::Geometry(
-  size_t m_, size_t n_, size_t k_, bool tA_, bool tB_, size_t wSpaceSize_, char floattype_)
-  : Geometry(
-      true, tA_, tB_, false, tA_ ? k_ : m_, tB_ ? n_ : k_, m_, m_, n_, k_, wSpaceSize_, floattype_)
+  size_t m_, size_t n_, size_t k_, bool tA_, bool tB_, std::vector<size_t> wSS, char ftype)
+  : Geometry(true, tA_, tB_, false, tA_ ? k_ : m_, tB_ ? n_ : k_, m_, m_, n_, k_, wSS, ftype)
 {
 }
 
 size_t get_mat_size(const Geometry& gg, const Offsets& toff, Mat::E emat)
 {
-  auto emem = Mem::mat_to_mem(emat);
-  return (gg.get_padded_area(emat) + toff.offsets[emem] + toff.tails[emem]);
+  return (gg.get_padded_area(emat) + toff.offsets[emat] + toff.tails[emat]);
 }
 
 size_t get_mat_memsize(const Geometry& gg, const Offsets& toff, Mat::E emat)
@@ -44,26 +44,53 @@ size_t get_mat_memsize(const Geometry& gg, const Offsets& toff, Mat::E emat)
   return gg.derived.float_size_bytes * get_mat_size(gg, toff, emat);
 }
 
-Offsets::Offsets(
-  size_t oa_, size_t ob_, size_t oc_, size_t ow_, size_t ta_, size_t tb_, size_t tc_, size_t tw_)
+Offsets::Offsets(size_t              oa_,
+                 size_t              ob_,
+                 size_t              oc_,
+                 std::vector<size_t> ow_,
+                 size_t              ta_,
+                 size_t              tb_,
+                 size_t              tc_,
+                 std::vector<size_t> tw_)
 {
 
-  offsets[Mem::E::A] = oa_;
-  offsets[Mem::E::B] = ob_;
-  offsets[Mem::E::C] = oc_;
-  offsets[Mem::E::W] = ow_;
+  if (ow_.size() != tw_.size())
+  {
+    throw miog_error(
+      "tail offset and leading offset vectors are not of the same size if Offsets constructor");
+  }
 
-  tails[Mem::E::A] = ta_;
-  tails[Mem::E::B] = tb_;
-  tails[Mem::E::C] = tc_;
-  tails[Mem::E::W] = tw_;
+  offsets[Mat::E::A] = oa_;
+  offsets[Mat::E::B] = ob_;
+  offsets[Mat::E::C] = oc_;
+  offsets_vws        = ow_;
+
+  tails[Mat::E::A] = ta_;
+  tails[Mat::E::B] = tb_;
+  tails[Mat::E::C] = tc_;
+  tails_vws        = tw_;
 }
 
-Offsets get_padding_offsets() { return Offsets(11, 17, 13, 23, 67, 15, 29, 17); }
+Offsets get_padding_offsets(size_t n_workspaces)
+{
 
-Offsets get_zero_offsets() { return Offsets(0, 0, 0, 0, 0, 0, 0, 0); }
+  std::vector<size_t> pre_w(n_workspaces, 101);
+  std::vector<size_t> post_w(n_workspaces, 103);
 
-Geometry get_tight_geometry() { return {false, false, false, false, 1, 1, 1, 1, 1, 1, 1, 'f'}; }
+  return Offsets(11, 17, 13, pre_w, 67, 15, 29, post_w);
+}
+
+Offsets get_zero_offsets(size_t n_workspaces)
+{
+  std::vector<size_t> wsp(n_workspaces, 1);
+  return Offsets(0, 0, 0, wsp, 0, 0, 0, wsp);
+}
+
+Geometry get_tight_geometry(size_t n_workspaces)
+{
+  std::vector<size_t> wsp(n_workspaces, 1);
+  return {false, false, false, false, 1, 1, 1, 1, 1, 1, wsp, 'f'};
+}
 
 char get_floattype(size_t nbits)
 {
@@ -79,8 +106,9 @@ char get_floattype(size_t nbits)
   }
   else
   {
-    throw miog_error("what is the floattype with number of bints : " + std::to_string(nbits) +
-                     std::string(" ? in get_floattype of geometry"));
+    std::stringstream ss;
+    ss << "floattype with number of bits : " << nbits << " ? (in get_floattype of geometry)";
+    throw miog_error(ss.str());
   }
   return ft;
 }
@@ -133,8 +161,7 @@ size_t Geometry::get_padless_dim(Mat::E M, bool isCoal) const
 
   else
   {
-    throw miog_error("unrecognised M passed to get_coal in "
-                     "get_padless_dim of geometry");
+    throw miog_error("unrecognised M passed to get_coal in get_padless_dim of geometry");
   }
 }
 
@@ -154,8 +181,7 @@ size_t Geometry::get_non_k_dim(Mat::E M) const
   else
   {
     throw miog_error("invalid char passed to get_non_k_dim in get_non_k_dim of "
-                     "geometry, it should "
-                     "be either a or b");
+                     "geometry, it should be either a or b");
   }
 }
 
@@ -222,18 +248,18 @@ bool Geometry::coal_is_pll_k(Mat::E M) const
          2;
 }
 
-void Geometry::initialise(bool   isColMajor_,
-                          bool   tA_,
-                          bool   tB_,
-                          bool   tC_,
-                          size_t lda_,
-                          size_t ldb_,
-                          size_t ldc_,
-                          size_t m_,
-                          size_t n_,
-                          size_t k_,
-                          size_t wSpaceSize_,
-                          char   floattype_)
+void Geometry::initialise(bool                isColMajor_,
+                          bool                tA_,
+                          bool                tB_,
+                          bool                tC_,
+                          size_t              lda_,
+                          size_t              ldb_,
+                          size_t              ldc_,
+                          size_t              m_,
+                          size_t              n_,
+                          size_t              k_,
+                          std::vector<size_t> wSpaceSize_,
+                          char                floattype_)
 {
 
   isColMajor = isColMajor_;
@@ -241,7 +267,9 @@ void Geometry::initialise(bool   isColMajor_,
   n          = n_;
   k          = k_;
   wSpaceSize = wSpaceSize_;
-  floattype  = floattype_;
+  std::sort(wSpaceSize.begin(), wSpaceSize.end(), std::greater<size_t>());
+
+  floattype = floattype_;
 
   tX.resize(Mat::E::N);
   tX[Mat::E::A] = tA_;
@@ -277,28 +305,41 @@ void Geometry::initialise(bool   isColMajor_,
     forPadCopy[emat] = get_uncoal(emat) * (get_coal(emat) + 16);
   }
 
-  wSpaceSufficient[0] = forPadCopy[Mat::E::A] < wSpaceSize;
-  wSpaceSufficient[1] = forPadCopy[Mat::E::B] < wSpaceSize;
-  wSpaceSufficient[2] = 1 * (forPadCopy[Mat::E::A] + forPadCopy[Mat::E::B]) < wSpaceSize;
-  wSpaceSufficient[3] = 2 * (forPadCopy[Mat::E::A] + forPadCopy[Mat::E::B]) < wSpaceSize;
-  wSpaceSufficient[4] = 4 * (forPadCopy[Mat::E::A] + forPadCopy[Mat::E::B]) < wSpaceSize;
+  // This is not correct, now should workspace sizes be compared in the metric?
+  size_t wsp0 = 0;
+  for (auto& x : wSpaceSize)
+  {
+    wsp0 += x;
+  }
+  wSpaceSufficient[0] = forPadCopy[Mat::E::A] < wsp0;
+  wSpaceSufficient[1] = forPadCopy[Mat::E::B] < wsp0;
+  wSpaceSufficient[2] = 1 * (forPadCopy[Mat::E::A] + forPadCopy[Mat::E::B]) < wsp0;
+  wSpaceSufficient[3] = 2 * (forPadCopy[Mat::E::A] + forPadCopy[Mat::E::B]) < wsp0;
+  wSpaceSufficient[4] = 4 * (forPadCopy[Mat::E::A] + forPadCopy[Mat::E::B]) < wsp0;
 }
 
-std::map<std::string, size_t> get_key_val_map(std::string geometry_string)
+std::map<std::string, std::vector<size_t>> get_key_val_map(std::string geometry_string)
 {
   auto frags = stringutil::split(geometry_string, "_");
-  std::map<std::string, size_t> key_val_map;
+  std::map<std::string, std::vector<size_t>> key_val_map;
   for (auto& frag : frags)
   {
-    auto key_val     = stringutil::splitnumeric(frag);
-    auto key         = std::get<0>(key_val);
-    auto val         = std::get<1>(key_val);
-    key_val_map[key] = val;
+    auto key_val = stringutil::splitnumeric(frag);
+    auto key     = std::get<0>(key_val);
+    auto val     = std::get<1>(key_val);
+    if (key_val_map.count(key) == 0)
+    {
+      key_val_map[key] = {val};
+    }
+    else
+    {
+      key_val_map[key].push_back(val);
+    }
   }
   return key_val_map;
 }
 
-size_t safeat(std::map<std::string, size_t>& map, std::string key)
+std::vector<size_t> safeat(std::map<std::string, std::vector<size_t>>& map, std::string key)
 {
   if (map.count(key) == 0)
   {
@@ -316,7 +357,7 @@ Geometry::Geometry(std::string geometry_string)
   auto key_val_map = get_key_val_map(geometry_string);
 
   Geometry goldstandard_geometry(
-    false, false, false, false, 100, 100, 100, 100, 100, 100, 100, 'f');
+    false, false, false, false, 100, 100, 100, 100, 100, 100, {100, 200}, 'f');
   std::string goldstandard_geometry_string = goldstandard_geometry.get_string();
   auto        goldstandard_map             = get_key_val_map(goldstandard_geometry_string);
 
@@ -324,6 +365,13 @@ Geometry::Geometry(std::string geometry_string)
   bool              good_string{true};
   for (auto& x : key_val_map)
   {
+    if (x.first != "ws" && x.second.size() != 1)
+    {
+      errm_ss << "The key in the geometry string `" << x.first << "' is appears " << x.second.size()
+              << " times.";
+      good_string = false;
+    }
+
     if (goldstandard_map.count(x.first) == 0)
     {
       errm_ss << "The key in the geometry string `" << x.first << "' is not valid.  ";
@@ -333,9 +381,10 @@ Geometry::Geometry(std::string geometry_string)
 
   for (auto& x : goldstandard_map)
   {
-    if (key_val_map.count(x.first) == 0)
+    if (key_val_map.count(x.first) == 0 && x.first != "ws")
     {
-      errm_ss << "The geometry string should contain key `" << x.first << "', but does not.  ";
+      errm_ss << "The geometry string should contain key `" << x.first
+              << "', but does not. The only optional key is ws. ";
       good_string = false;
     }
   }
@@ -345,18 +394,23 @@ Geometry::Geometry(std::string geometry_string)
     throw miog_error(errm_ss.str());
   }
 
-  initialise(safeat(key_val_map, "colMaj"),
-             safeat(key_val_map, "tA"),
-             safeat(key_val_map, "tB"),
-             safeat(key_val_map, "tC"),
-             safeat(key_val_map, "lda"),
-             safeat(key_val_map, "ldb"),
-             safeat(key_val_map, "ldc"),
-             safeat(key_val_map, "m"),
-             safeat(key_val_map, "n"),
-             safeat(key_val_map, "k"),
+  if (key_val_map.count("ws") == 0)
+  {
+    key_val_map["ws"] = {};
+  }
+
+  initialise(safeat(key_val_map, "colMaj")[0],
+             safeat(key_val_map, "tA")[0],
+             safeat(key_val_map, "tB")[0],
+             safeat(key_val_map, "tC")[0],
+             safeat(key_val_map, "lda")[0],
+             safeat(key_val_map, "ldb")[0],
+             safeat(key_val_map, "ldc")[0],
+             safeat(key_val_map, "m")[0],
+             safeat(key_val_map, "n")[0],
+             safeat(key_val_map, "k")[0],
              safeat(key_val_map, "ws"),
-             get_floattype(safeat(key_val_map, "f")));
+             get_floattype(safeat(key_val_map, "f")[0]));
 }
 
 std::string Geometry::get_string() const { return get_networkconfig_string(); }
@@ -366,10 +420,29 @@ std::string Geometry::get_networkconfig_string() const
   std::stringstream geometry_stringstream;
   geometry_stringstream << "tC" << tX[Mat::E::C] << "_tA" << tX[Mat::E::A] << "_tB" << tX[Mat::E::B]
                         << "_colMaj" << isColMajor << "_m" << m << "_n" << n << "_k" << k << "_lda"
-                        << ldX[Mat::E::A] << "_ldb" << ldX[Mat::E::B] << "_ldc" << ldX[Mat::E::C]
-                        << "_ws" << wSpaceSize << "_f" << derived.float_size_bits;
+                        << ldX[Mat::E::A] << "_ldb" << ldX[Mat::E::B] << "_ldc" << ldX[Mat::E::C];
+  // append_ws_frag(geometry_stringstream);
+  for (auto& x : wSpaceSize)
+  {
+    geometry_stringstream << "_ws" << x;
+  }
+
+  geometry_stringstream << "_f" << derived.float_size_bits;
   return geometry_stringstream.str();
 }
+
+// void Geometry::append_ws_frag(std::stringstream & ss) const
+//{
+// if (wSpaceSize.size() == 0){
+// ss << 0;
+//}
+// else {
+// ss << wSpaceSize[0];
+// for (auto i = 1; i < wSpaceSize.size(); ++i){
+// ss << '.' << wSpaceSize[i];
+//}
+//}
+//}
 
 std::string Geometry::get_tabbed_string() const
 {
@@ -382,8 +455,13 @@ std::string Geometry::get_tabbed_string() const
                         << " k=" << stringutil::get_char_padded(k, 6)
                         << " lda=" << stringutil::get_char_padded(ldX[Mat::E::A], 6)
                         << " ldb=" << stringutil::get_char_padded(ldX[Mat::E::B], 6)
-                        << " ldc=" << stringutil::get_char_padded(ldX[Mat::E::C], 6)
-                        << " ws=" << wSpaceSize << " f=" << derived.float_size_bits;
+                        << " ldc=" << stringutil::get_char_padded(ldX[Mat::E::C], 6) << " ws={ ";
+  for (auto& x : wSpaceSize)
+  {
+    geometry_stringstream << x << ' ';
+  }
+  geometry_stringstream << '}';
+  geometry_stringstream << " f=" << derived.float_size_bits;
 
   return geometry_stringstream.str();
 }
@@ -443,13 +521,37 @@ double Geometry::get_distance(const Geometry& g2) const
     }
   }
 
-  distance += 1e-5 * (std::log(wSpaceSize + 1.1) - std::log(g2.wSpaceSize + 1.1));
+  // this is not correct : distance between workspace, unclear how to define
+  distance += 1e-5 * (wSpaceSize != g2.wSpaceSize);
 
   return distance;
 }
 
-size_t get_total_workspace(const Geometry& gg, const Offsets& toff)
+size_t get_total_workspace(const Geometry& gg, const Offsets& toff, size_t workspace_index)
 {
-  return gg.wSpaceSize + toff.offsets[Mem::E::W] + toff.tails[Mem::E::W];
+
+  if (workspace_index >= gg.wSpaceSize.size())
+  {
+    std::stringstream ss;
+    ss << "workspace_index (" << workspace_index << ") exceeds number of workspaces ("
+       << gg.wSpaceSize.size() << '.';
+    throw miog_error(ss.str());
+  }
+
+  if (gg.wSpaceSize.size() != toff.tails_vws.size())
+  {
+    std::stringstream ss;
+    ss << "number of workspaces (" << gg.wSpaceSize.size()
+       << ") does not equal number of tails in offset (" << toff.tails_vws.size() << ").";
+    throw miog_error(ss.str());
+  }
+
+  auto sum_wspace = 0;
+  // for (size_t i = 0; i  < gg.wSpaceSize.size()){
+  sum_wspace += gg.wSpaceSize[workspace_index];
+  sum_wspace += toff.offsets_vws[workspace_index];
+  sum_wspace += toff.tails_vws[workspace_index];
+  //}
+  return sum_wspace;
 }
 }

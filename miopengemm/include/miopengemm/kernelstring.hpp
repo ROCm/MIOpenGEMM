@@ -16,18 +16,24 @@ class KernUses
 
   public:
   // summarises use of u_a, u_b, u_c
-  std::string full;
+  std::string       full;
+  bool              u_a;
+  bool              u_b;
+  bool              u_c;
+  std::vector<bool> u_vws;
+  bool              u_alpha;
+  bool              u_beta;
+  bool              u_k;
 
-  bool u_a;
-  bool u_b;
-  bool u_c;
-  bool u_w;
-  bool u_alpha;
-  bool u_beta;
+  bool at(Mat::E emat_x) const;
 
-  bool at(Mem::E emat_x) const;
-
-  KernUses(bool u_a_, bool u_b_, bool u_c_, bool u_w_, bool u_alpha_, bool u_beta_);
+  KernUses(bool              u_a_,
+           bool              u_b_,
+           bool              u_c_,
+           std::vector<bool> u_vws_,
+           bool              u_alpha_,
+           bool              u_beta_,
+           bool              u_k_);
 
   KernUses() = default;
 };

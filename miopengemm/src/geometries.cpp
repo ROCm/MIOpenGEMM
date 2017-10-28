@@ -12,7 +12,7 @@
 namespace MIOpenGEMM
 {
 
-std::vector<Geometry> take_fives(size_t wSpaceSize)
+std::vector<Geometry> take_fives(std::vector<size_t> wSpaceSize)
 {
   std::vector<Geometry> geometries;
 
@@ -37,7 +37,7 @@ std::vector<Geometry> take_fives(size_t wSpaceSize)
   return geometries;
 }
 
-std::vector<Geometry> get_deepbench(size_t wSpaceSize)
+std::vector<Geometry> get_deepbench(std::vector<size_t> wSpaceSize)
 {
 
   return {{512, 8, 500000, true, false, wSpaceSize, 'f'},
@@ -202,7 +202,7 @@ std::vector<Geometry> get_deepbench(size_t wSpaceSize)
           {8448, 48000, 2816, false, false, wSpaceSize, 'f'}};
 }
 
-std::vector<Geometry> get_squares(size_t wSpaceSize)
+std::vector<Geometry> get_squares(std::vector<size_t> wSpaceSize)
 {
 
   std::vector<Geometry> geometries;

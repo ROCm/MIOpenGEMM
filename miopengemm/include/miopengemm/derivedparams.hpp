@@ -28,6 +28,19 @@ class Derivabilty
 
 bool is_dvble(const HyPas&, const Geometry&);
 
+class WorkSpaceTriple
+{
+
+  public:
+  size_t     n_elms;
+  Mat::E     emat;
+  Scratch::E scratch;
+  bool operator<(const WorkSpaceTriple& right) const { return n_elms < right.n_elms; }
+
+  WorkSpaceTriple(size_t ne, Mat::E em, Scratch::E sc) : n_elms(ne), emat(em), scratch(sc) {}
+  WorkSpaceTriple() = default;
+};
+
 class ChiralDerivedParams
 {
   public:
@@ -49,8 +62,7 @@ class ChiralDerivedParams
   size_t main_c_interweave_stride;
 
   // copy to workspace specific parameters
-  size_t cw_global_offset = uninitialised_size_t;
-  size_t cw_n_elements    = uninitialised_size_t;
+  size_t cw_n_elements = uninitialised_size_t;
 
   // copy to workspace, type 1, specific parameters
   size_t cw1_smallest_possible_ldx = uninitialised_size_t;
@@ -125,6 +137,10 @@ class DerivedParams
   std::string infa;
   // the function to use for atomic ints
   std::string fati;
+
+  // one of "k" and "KVAL__", dependinf on PAK. (pass K).
+  std::string kstring;
+
   // one of __K_NORMAL_FORM__   __K__  and  k_plus_offset
   std::string effective_k_varies_string;
   // as their names suggest
@@ -142,7 +158,10 @@ class DerivedParams
   size_t ga3_last_super_column_width = uninitialised_size_t;
 
   // Total required workspace
-  size_t required_workspace = uninitialised_size_t;
+  std::vector<WorkSpaceTriple> required_workspaces = {};
+
+  // searches in required_workspaces for a match.
+  int get_workspace_id(Mat::E emat, Scratch::E scratch) const;
 
   size_t get_target_ld(Mat::E emat_x) const;
 
@@ -156,9 +175,10 @@ class DerivedParams
 
   size_t get_stride_cw2(Mat::E emat_x, bool pll_k, bool is_macro) const;
 
-  std::array<std::string, Mem::E::N> tints;
-  std::string tintk;
-  std::string tshort;
+  std::array<std::string, Mat::E::N> tints;
+  std::vector<std::string> tints_vws;
+  std::string              tintk;
+  std::string              tshort;
 
   void set_should_be_hyperparams();
 

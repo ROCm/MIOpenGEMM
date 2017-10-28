@@ -40,15 +40,15 @@ class KernelTime
   size_t              t_end;
   std::vector<double> v_times;
   void                update_times(const cl_event&);
-  void                reset_times();
+  void                reset();
 };
 
 class KernelTimes
 {
   public:
-  std::array<KernelTime, KType::E::N> ktimes;
-  double extime;
-  void   reset_times();
+  std::vector<KernelTime> ktimes;
+  double                  extime;
+  void reset_with_size(size_t size);
 };
 
 class Program

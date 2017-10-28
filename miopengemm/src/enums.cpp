@@ -184,6 +184,23 @@ const EnumMapper<std::string>& M()
 }
 }
 
+namespace Scratch
+{
+std::vector<std::string> get_name()
+{
+  std::vector<std::string> X(E::N, unfilled<std::string>());
+  X[E::UNUSED] = "UNUSED";
+  X[E::COPY]   = "COPY";
+  X[E::NFORM]  = "NFORM";
+  return X;
+}
+const EnumMapper<std::string>& M()
+{
+  static const EnumMapper<std::string> em = get_enum_mapper<std::string>(get_name(), "Scratch");
+  return em;
+}
+}
+
 namespace MicroAllocation
 {
 std::vector<std::string> get_name()
@@ -230,6 +247,7 @@ std::vector<std::string> get_name()
   X[E::MIW] = "MIW";
   X[E::WOS] = "WOS";
   X[E::VEW] = "VEW";
+  X[E::LOM] = "LOM";
   return X;
 }
 
@@ -243,6 +261,7 @@ std::vector<int> get_priority_basic()
   X[E::MIW] = 0;
   X[E::WOS] = 0;
   X[E::VEW] = 0;
+  X[E::LOM] = 0;
   return X;
 }
 
@@ -325,6 +344,7 @@ std::vector<std::string> get_name()
   X[E::MAD] = "MAD";
   X[E::AFI] = "AFI";
   X[E::MIA] = "MIA";
+  X[E::PAK] = "PAK";
   return X;
 }
 
@@ -344,6 +364,7 @@ std::vector<int> get_priority_basic()
   X[E::AFI] = -1;
   X[E::MIA] = -1;
   X[E::SZT] = -1;
+  X[E::PAK] = -1;
   return X;
 }
 
@@ -399,61 +420,6 @@ const std::vector<int>* mat_to_priority(Mat::E emat)
   case Mat::E::N: throw miog_error("unrecognised Mat::E (N) in mat_to_priority");
   }
   throw miog_error("failed in mat_to_priority");
-}
-
-Mat::E mem_to_mat(Mem::E emat)
-{
-  switch (emat)
-  {
-  case Mem::E::A: return Mat::E::A;
-  case Mem::E::B: return Mat::E::B;
-  case Mem::E::C: return Mat::E::C;
-  case Mem::E::W: throw miog_error("no mat enum for supposed ::W");
-  case Mem::E::N: throw miog_error("no mat enum for supposed ::N");
-  }
-  throw miog_error("failed in mem_to_mat");
-}
-}
-
-namespace Mem
-{
-std::vector<char> get_name()
-{
-  std::vector<char> X(E::N, unfilled<char>());
-  X[E::A] = 'A';
-  X[E::B] = 'B';
-  X[E::C] = 'C';
-  X[E::W] = 'W';
-  return X;
-}
-
-const EnumMapper<char>& M()
-{
-  static const EnumMapper<char> em = get_enum_mapper<char>(get_name(), "Mem");
-  return em;
-}
-
-Mem::E mat_to_mem(Mat::E emat)
-{
-  if (emat == Mat::E::A)
-  {
-    return Mem::E::A;
-  }
-
-  else if (emat == Mat::E::B)
-  {
-    return Mem::E::B;
-  }
-
-  else if (emat == Mat::E::C)
-  {
-    return Mem::E::C;
-  }
-
-  else
-  {
-    throw miog_error("no mem enum for supposed mat enum provided");
-  }
 }
 }
 

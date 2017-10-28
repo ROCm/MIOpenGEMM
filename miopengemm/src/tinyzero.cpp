@@ -30,8 +30,7 @@
 #include <miopengemm/timer.hpp>
 #include <miopengemm/tinyzero.hpp>
 
-// TODO : checks on constraints to check for cleary non-derivables
-// TODO : checks on workspace size
+// TODO : checks on constraints to check for cleary non-derivables and on workspace size
 
 namespace MIOpenGEMM
 {
@@ -53,43 +52,43 @@ std::string FindTracker::get_string() const
   return track_ss.str();
 }
 
-GpuMms::GpuMms(cl_mem           a_gpu_,
-               cl_mem           b_gpu_,
-               cl_mem           c_gpu_,
-               bool             c_is_const,
-               cl_mem           workspace_gpu_,
-               size_t           c_nbytes,
-               cl_command_queue cq)
+GpuMms::GpuMms(cl_mem              a_gpu_,
+               cl_mem              b_gpu_,
+               cl_mem              c_gpu_,
+               bool                c_is_const,
+               std::vector<cl_mem> ws_gpu,
+               size_t              c_nbytes,
+               cl_command_queue    cq)
 {
 
-  cl_mems[Mem::E::A] = a_gpu_;
-  cl_mems[Mem::E::B] = b_gpu_;
-  cl_mems[Mem::E::W] = workspace_gpu_;
+  cl_mems[Mat::E::A] = a_gpu_;
+  cl_mems[Mat::E::B] = b_gpu_;
+  cl_mems_vws        = ws_gpu;
 
   if (c_is_const == false)
   {
-    cl_mems[Mem::E::C] = c_gpu_;
+    cl_mems[Mat::E::C] = c_gpu_;
   }
 
   else
   {
-    cl_mems[Mem::E::C] =
+    cl_mems[Mat::E::C] =
       oclutil::get_copy(cq, c_gpu_, c_nbytes, "c_is_const is true, making copy in GpuMms");
-    c_copy.clmem = cl_mems[Mem::E::C];  // for correct destruction
+    c_copy.clmem = cl_mems[Mat::E::C];  // for correct destruction
   }
 }
 
-cl_mem& GpuMms::operator[](Mem::E x) { return cl_mems[x]; }
+cl_mem& GpuMms::operator[](Mat::E x) { return cl_mems[x]; }
 
-TinyZero::TinyZero(cl_command_queue command_queue_,
-                   const Geometry   gg_,
-                   const Offsets    toff_,
-                   cl_mem           a_gpu_,
-                   cl_mem           b_gpu_,
-                   cl_mem           c_gpu_,
-                   bool             c_is_const,
-                   cl_mem           workspace_gpu_,
-                   owrite::Writer&  mowri_)
+TinyZero::TinyZero(cl_command_queue    command_queue_,
+                   const Geometry      gg_,
+                   const Offsets       toff_,
+                   cl_mem              a_gpu_,
+                   cl_mem              b_gpu_,
+                   cl_mem              c_gpu_,
+                   bool                c_is_const,
+                   std::vector<cl_mem> workspace_gpu_,
+                   owrite::Writer&     mowri_)
   : command_queue(command_queue_),
     gg(gg_),
     toff(toff_),
@@ -103,6 +102,7 @@ TinyZero::TinyZero(cl_command_queue command_queue_,
     devinfo(command_queue_),
     mowri(mowri_)
 {
+
   cl_context   context;
   cl_device_id device_id;
   oclutil::cl_set_context_and_device_from_command_queue(
@@ -113,52 +113,58 @@ TinyZero::TinyZero(cl_command_queue command_queue_,
 
 void TinyZero::address_check_valid()
 {
-  for (auto x : {Mem::E::A, Mem::E::B})
+  for (auto x : {Mat::E::A, Mat::E::B})
   {
-    if (gpum[Mem::E::C] == gpum[x])
+    if (gpum[Mat::E::C] == gpum[x])
     {
       std::stringstream ss;
-      ss << "in address_check_valid, " << Mem::M().name[Mem::E::C] << " and " << Mem::M().name[x]
+      ss << "in address_check_valid, " << Mat::M().name[Mat::E::C] << " and " << Mat::M().name[x]
          << " should have distinct memories, "
          << "otherwise race condition arise (one thread writes its result to "
-         << Mem::M().name[Mem::E::C] << "before another one has finished reading from "
-         << Mem::M().name[Mem::E::C] << ')';
+         << Mat::M().name[Mat::E::C] << "before another one has finished reading from "
+         << Mat::M().name[Mat::E::C] << ')';
       throw miog_error(ss.str());
     }
   }
 
-  if (gpum[Mem::E::C] == nullptr)
+  if (gpum[Mat::E::C] == nullptr)
   {
     throw miog_error("in address_check_valid, c should not be nullptr");
   }
 
-  if (gpum[Mem::E::W] == nullptr && gg.wSpaceSize != 0)
+  if (gg.wSpaceSize.size() != gpum.cl_mems_vws.size())
   {
-    throw miog_error("in address_check_valid, pointer to workspace memory is "
-                     "the nullptr, but wSpaceSize is not zero");
+    throw miog_error("gg.wSpaceSize.size() != cl_mems_vws.size() in tinyzero.cpp");
   }
 
-  if (gpum[Mem::E::W] != nullptr && gg.wSpaceSize == 0)
+  for (size_t i = 0; i < gpum.cl_mems_vws.size(); ++i)
   {
-    throw miog_error("in address_check_valid, pointer to workspace memory is not the "
-                     "nullptr, but wSpaceSize is zero. if wSpaceSize is zero please set "
-                     "workspace_gpu to the nullptr to make super clear that there will be "
-                     "no workspace used. The workspace offset should be zero too in this case ");
-  }
+    if (gpum.cl_mems_vws[i] == nullptr)
+    {
+      throw miog_error("in address_check_valid, a pointer to workspace memory is nullptr");
+    }
 
-  if (gpum[Mem::E::W] != nullptr &&
-      (gpum[Mem::E::W] == gpum[Mem::E::A] || gpum[Mem::E::W] == gpum[Mem::E::B] ||
-       gpum[Mem::E::W] == gpum[Mem::E::C]))
-  {
-    throw miog_error("in address_check_valid, pointer to workspace memory is "
-                     "not the nullptr, and it is the same as one of the a,b,c pointers ");
+    if (gg.wSpaceSize[i] == 0)
+    {
+      throw miog_error("a zero in wSpaceSize (in tinyzero.cpp)");
+    }
+
+    for (auto& emat : {Mat::E::A, Mat::E::B, Mat::E::C})
+    {
+      if (gpum.cl_mems_vws[i] == gpum[emat])
+      {
+        std::stringstream errm;
+        errm << "workspace memory " << i << " is the same as matrix mem " << Mat::M().name[emat];
+        throw miog_error(errm.str());
+      }
+    }
   }
 }
 
 void TinyZero::address_check_valid_and_reliable()
 {
   address_check_valid();
-  if (gpum[Mem::E::A] == gpum[Mem::E::B])
+  if (gpum[Mat::E::A] == gpum[Mat::E::B])
   {
     throw miog_error("in address_check_valid_and_reliable, a and b are the same. this will "
                      "effect kernel run time, not sure if this should be allowed, so throwing");
@@ -188,7 +194,7 @@ std::string TinyZero::get_run_time_string(cl_int status)
     double sumtimes{0};
     for (size_t k_ind = 0; k_ind < programs.get_n_active(); ++k_ind)
     {
-      double tk = kernel_times.ktimes[programs.act_inds[k_ind]].v_times.back();
+      double tk = kernel_times.ktimes[k_ind].v_times.back();
       sumtimes += tk;
       ss << " " << tk << "\t";
     }
@@ -299,10 +305,12 @@ std::vector<double> TinyZero::benchgemm(const HyPas& hp, const Halt& hl)
   }
 
   auto compstat = programs.update(bundle.v_tgks);
+  kernel_times.reset_with_size(programs.get_n_active());
 
   auto all_kern_args = get_all_kern_args(bundle.v_tgks);
 
-  mowri << "hyper-p   :" << hp.get_string() << '\n'
+  mowri << "hyper-p   :" << '\n'
+        << hp.get_string() << '\n'
         << "geometry  :" << gg.get_string() << '\n'
         << "Entering the core gemm loops" << Endl << get_run_times_heading();
 
@@ -321,10 +329,13 @@ AllKernArgs TinyZero::get_all_kern_args(const std::vector<KernBlob>& kblobs) con
 
     all_kern_args.emplace_back(kerngen::get_arg_sizes_values(kblob,
                                                              gpum.cl_mems,
+                                                             gpum.cl_mems_vws,
                                                              toff.offsets,
+                                                             toff.offsets_vws,
                                                              gg.derived.float_size_bytes,
                                                              Floating::get_m_alpha()[gg.floattype],
-                                                             Floating::get_m_beta()[gg.floattype]));
+                                                             Floating::get_m_beta()[gg.floattype],
+                                                             gg.k));
   }
 
   return all_kern_args;
@@ -387,7 +398,7 @@ Solution TinyZero::find0(const Constraints& constraints, const FindParams& fparm
 
   mowri << '\n'
         << "Search summary  :  " << ftrack.get_string() << '\n'
-        << stringutil::get_star_wrapped("The gflops found by single descents:") << '\n'
+        << stringutil::get_star_wrapped("The tflops found by single descents:") << '\n'
         << '\n';
 
   std::sort(soln_gflops.begin(), soln_gflops.end());
@@ -493,7 +504,7 @@ Solution TinyZero::single_descent_find(double             allotted_time,
         std::stringstream errm;
         errm << "Non-derivable in single descent find : " << dblt.msg << ".\n";
         errm << "Geometry: " << gg.get_string() << '\n';
-        errm << "hp: " << hp_curr.get_string() << '\n';
+        errm << "hp: " << '\n' << hp_curr.get_string() << '\n';
         throw miog_error(errm.str());
       }
 
@@ -503,8 +514,8 @@ Solution TinyZero::single_descent_find(double             allotted_time,
       ++single_descent_counter;
 
       mowri << "\n[" << single_descent_counter << ", " << std::fixed << std::setprecision(2)
-            << timer.get_elapsed() << std::setprecision(6) << "s]\t" << hp_curr.get_string()
-            << Endl;
+            << timer.get_elapsed() << std::setprecision(6) << "s]\n"
+            << hp_curr.get_string() << Endl;
 
       architests::Stat atr(command_queue, bundle.dp, gg, hp_curr);
       if (atr.is_good == false)
@@ -525,7 +536,8 @@ Solution TinyZero::single_descent_find(double             allotted_time,
       mowri.bw[OutPart::E::TRA] << new_track_msg << Flush;
 
       v_t_total.resize(0);
-      kernel_times.reset_times();
+
+      kernel_times.reset_with_size(programs.get_n_active());
       std::vector<std::string> summary;
 
       auto oclr = true_core([&summary, &v_t_total](std::string x) { summary.push_back(x); },
@@ -661,9 +673,9 @@ Solution TinyZero::single_descent_find(double             allotted_time,
                      "in architests ");
   }
 
-  auto leading_size = best_solns_path.back().hypas.get_string().size() + 2;
+  auto leading_size = best_solns_path.back().hypas.sus[Mat::E::C].get_string().size() + 5;
 
-  std::string startstring = "hyper parameter string:";
+  std::string startstring = "hyper parameter:";
   startstring.resize(leading_size, ' ');
   mowri << '\n'
         << startstring << "\t time when found:\t " << SummStat::M().lcase_name[sumstat]
@@ -672,9 +684,10 @@ Solution TinyZero::single_descent_find(double             allotted_time,
   for (unsigned i = 0; i < best_solns_path.size(); ++i)
   {
     std::string solnstring = best_solns_path[i].hypas.get_string();
-    solnstring.resize(leading_size, ' ');
+    // solnstring.resize(leading_size, ' ');
     mowri << std::fixed << solnstring << "\t " << disco_times[i] << "\t\t "
-          << gg.get_gflops(best_solns_path[i].extime / 1000.) << Endl;
+          << gg.get_gflops(best_solns_path[i].extime / 1000.) << '\n'
+          << Endl;
   }
 
   return best_solns_path.back();

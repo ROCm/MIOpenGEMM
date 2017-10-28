@@ -285,9 +285,7 @@ class SafeClMem
   cl_mem      clmem;
   std::string hash;
   SafeClMem(const std::string& hash);
-
-  SafeClMem(const SafeClMem&) = default;  // TODO : is this ok?
-
+  SafeClMem(const SafeClMem&) = default;
   ~SafeClMem();
 };
 
@@ -341,7 +339,8 @@ class DevInfo
   std::string driver_version = "unknown";
   std::string identifier     = "unknown";
 
-  bool   device_available = false;
+  bool   device_available        = false;
+  bool   device_has_local_memory = true;
   size_t device_global_mem_size{0};
   size_t device_local_mem_size{0};
   size_t device_max_clock_frequency{0};

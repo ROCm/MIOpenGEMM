@@ -82,6 +82,7 @@ enum E
   MIW,
   WOS,
   VEW,  // vector width
+  LOM,  // use local memory
   N
 };
 const EnumMapper<std::string>& M();
@@ -107,6 +108,7 @@ enum E
   SKW,      // skewness of work-item grid of work group
   AFI,      // do A loops and defs first. outerloops over a dimensions.
   MIA,      // work item allocation within workgroup : % or /
+  PAK,      // pass k as a parameter (as opposed to as a preprocessor string)
   N
 };
 const EnumMapper<std::string>& M();
@@ -126,24 +128,8 @@ enum E
 const EnumMapper<char>& M();
 }
 
-namespace Mem
-{
-enum E
-{
-  A = 0,
-  B,
-  C,
-  W,
-  N
-};
-const EnumMapper<char>& M();
-
-Mem::E mat_to_mem(Mat::E);
-}
-
 namespace Mat
 {
-Mat::E                         mem_to_mat(Mem::E);
 const EnumMapper<std::string>* mat_to_xchi(Mat::E);
 const std::vector<int>*        mat_to_priority(Mat::E);
 }
@@ -201,8 +187,10 @@ enum E
 {
   UNUSED = 0,
   COPY,
-  NFORM
+  NFORM,
+  N
 };
+const EnumMapper<std::string>& M();
 }
 
 namespace OutPart
