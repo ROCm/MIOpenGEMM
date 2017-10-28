@@ -21,13 +21,26 @@ int main()
 
   // Geometry gg{"tC0_tA0_tB1_colMaj1_m47524_n363_k1_lda47524_ldb363_ldc47524_ws0_f32"};
 
-  Geometry gg{"tC0_tA0_tB0_colMaj0_m81_n71_k58_lda67_ldb81_ldc83_ws1000000_f32"};
+  //Geometry gg{"tC0_tA0_tB0_colMaj0_m4_n400_k200_lda200_ldb400_ldc400_ws0_f32"};
+
+
+//kc.add(
+//{"gfx803",  // dev
+//{""},  // con
+//{"tC0_tA0_tB0_colMaj1_m363_n1_k363_lda363_ldb363_ldc363_ws0_f32"}}, // gg
+//{{{ //hp
+//}}});
+
+  Geometry gg{"tC0_tA0_tB0_colMaj1_m363_n1_k363_lda363_ldb363_ldc363_ws0_f32"};
 
   HyPas hp = {{{// hp
 
-                "MIC1_PAD2_PLU1_LIW1_MIW0_WOS0_VEW1",
-                "MIC1_PAD1_PLU0_LIW0_MIW0_WOS0_VEW1",
-                "UNR128_GAL2_PUN0_ICE1_IWI1_SZT1_MAD0_NAW16_UFO0_MAC256_SKW9_AFI0_MIA1"}}};
+"MIC3_PAD1_PLU1_LIW1_MIW0_WOS0_VEW1",
+"MIC1_PAD1_PLU0_LIW0_MIW1_WOS0_VEW1",
+"UNR2_GAL1_PUN1_ICE6_IWI1_SZT0_MAD0_NAW64_UFO0_MAC1_SKW10_AFI1_MIA0"
+}}};
+
+//"MIC1_PAD1_PLU0_LIW0_MIW1_WOS0_VEW1", "MIC3_PAD1_PLU1_LIW1_MIW0_WOS0_VEW1", "UNR2_GAL2_PUN1_ICE6_IWI1_SZT0_MAD0_NAW64_UFO0_MAC1_SKW10_AFI0_MIA1"}}};
 
   //"MIC4_PAD1_PLU0_LIW0_MIW0_WOS0_VEW4",
   //"MIC2_PAD1_PLU0_LIW1_MIW1_WOS0_VEW1",

@@ -14,9 +14,9 @@ int main()
 
   // Geometry gg("tC0_tA0_tB1_colMaj1_m3275_n4860_k64_lda3275_ldb4864_ldc3275_ws0_f32");
   // Geometry gg("tC0_tA1_tB0_colMaj1_m3072_n48000_k1024_lda1024_ldb1024_ldc3072_ws52594944_f32");
-  // Geometry gg("tC0_tA0_tB0_colMaj0_m13_n13_k13_lda13_ldb13_ldc13_ws0_f32");
+  Geometry gg("tC0_tA0_tB0_colMaj0_m4_n400_k200_lda200_ldb400_ldc400_ws0_f32");
 
-  Geometry       gg = MIOpenGEMM::get_squareNN_geometry<float>(5100);
+  //Geometry       gg = MIOpenGEMM::get_squareNN_geometry<float>(5100);
   CLHint         devhint({"Advanced Micro Devices", "gfx803"});
   Offsets        offsets = get_zero_offsets();
   owrite::Writer mowri(Ver::E::TERMINAL, "");

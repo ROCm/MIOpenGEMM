@@ -30,3 +30,5 @@ endfunction(add_test_executable)
 add_test_executable(smallgeometrytests smallgeometrytests.cpp)
 
 add_test_executable(test_gemm0 test_gemm0.cpp)
+
+add_test_executable(random_sample_gemm0 random_sample_gemm0.cpp)

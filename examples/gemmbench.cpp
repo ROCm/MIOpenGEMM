@@ -61,7 +61,7 @@ int main()
   problems[static_cast<int>(apitest::GemmImpl::XGEMM)] = {};
   problems[static_cast<int>(apitest::GemmImpl::GEMM0)] = {};
 
-  bool run_event_timers = true;
+  bool run_event_timers = false; //true;
 
   auto                        toff = get_padding_offsets();
   owrite::Writer              mowri(Ver::E::TERMINAL, "");
@@ -97,8 +97,13 @@ int main()
     geometries = {//{512, 16, 512, false, false, 0, 'f'},
                   //{512, 17, 512, false, false, 0, 'f'},
                   //{512, 18, 512, false, false, 0, 'f'},
-                  {1024, 1024, 1024, false, false, 0, 'f'},
-                  {510, 510, 510, false, false, 0, 'f'}};
+                  {4, 400, 400, false, false, 0, 'f'},
+                  {4, 400, 400, true, false, 0, 'f'},
+                  {4, 400, 400, false, true, 0, 'f'},
+                  {4, 400, 400, false, false, 0, 'f'},
+                  };
+                  //{510, 510, 510, false, false, 0, 'f'}};
+                  //4  400  400  400  400  400
   }
 
   Timer timer;
@@ -116,12 +121,12 @@ int main()
     // number of runs with timer (based on DeepBench timing method).
     size_t n_to_time =
       std::min<size_t>(1500, std::max<size_t>(std::ceil(1e11 / (2 * gg.m * gg.k * gg.n)), 2));
-    bool run_accu = false;
+    bool run_accu = true;
 
     for (auto&& impl : {apitest::GemmImpl::GEMM0,
-                        apitest::GemmImpl::XGEMM,
-                        apitest::GemmImpl::CLB,
-                        apitest::GemmImpl::ISAAC})
+                        apitest::GemmImpl::XGEMM}) //,
+                        //apitest::GemmImpl::CLB,
+                        //apitest::GemmImpl::ISAAC})
     {
 
       auto impl_int = static_cast<int>(impl);
