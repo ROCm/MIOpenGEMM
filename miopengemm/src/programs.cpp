@@ -96,6 +96,7 @@ oclutil::Result Programs::update(const std::vector<KernBlob>& kbs)
     "conversion", "unused-macros", "shorten-64-to-32", "cast-align"};
 
   std::stringstream ss_build_options;
+#ifndef __APPLE__
   //ss_build_options << "-Werror";
   ss_build_options << "   -cl-std=CL2.0";  // TODO : macro this.
   ss_build_options << "   -Wf,-Weverything";
@@ -103,6 +104,7 @@ oclutil::Result Programs::update(const std::vector<KernBlob>& kbs)
   {
     ss_build_options << "   -Wf,-Wno-" << x;
   }
+#endif
   std::string build_options = ss_build_options.str();
 
   v_wait_indices = kerngen::get_v_wait_indices(kbs, *ptr_mowri);
