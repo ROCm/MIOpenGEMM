@@ -2,7 +2,7 @@
 # Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
 ################################################################################
 
-add_definitions(-std=c++11)
+add_definitions(-std=c++14)
 
 set( miopengemm_INSTALL_DIR miopengemm)
 
