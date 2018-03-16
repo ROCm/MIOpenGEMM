@@ -25,7 +25,7 @@ def rocmtestnode(variant, name, dockerfile, body) {
 
             }
         }
-        withDockerContainer(image: image, args: '--device=/dev/kfd') {
+        withDockerContainer(image: image, args: '--device=/dev/kfd --device=/dev/dri --group-add video') {
             timeout(time: 1, unit: 'HOURS') {
                 body(cmake_build)
             }
