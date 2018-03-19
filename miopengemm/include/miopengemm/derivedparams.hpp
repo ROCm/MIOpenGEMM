@@ -80,8 +80,8 @@ class DerivedParams
   const HyPas*    ptr_hp;
   const Geometry* ptr_gg;
 
-  ChiralDerivedParams adps;
-  ChiralDerivedParams bdps;
+  ChiralDerivedParams adps{};
+  ChiralDerivedParams bdps{};
 
   void reset_ga3_params();
 

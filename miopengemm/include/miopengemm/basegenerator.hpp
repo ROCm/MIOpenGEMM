@@ -31,12 +31,12 @@ class BaseGenerator
   std::string kernelname;
 
   // set in virtual function set_usage.
-  bool u_a;
-  bool u_b;
-  bool u_c;
-  bool u_w;
-  bool u_alpha;
-  bool u_beta;
+  bool u_a = false;
+  bool u_b = false;
+  bool u_c = false;
+  bool u_w = false;
+  bool u_alpha = false;
+  bool u_beta = false;
 
   std::string get_time_string();
   std::string get_what_string();

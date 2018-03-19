@@ -15,7 +15,7 @@ class PrepGenerator : public basegen::BaseGenerator
 {
 
   protected:
-  size_t n_work_items;
+  size_t n_work_items = 0;
 
   Mat::E emat_x;
   char   MCHAR;

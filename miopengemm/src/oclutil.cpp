@@ -8,6 +8,7 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <cassert>
 #include <miopengemm/error.hpp>
 #include <miopengemm/hint.hpp>
 #include <miopengemm/oclutil.hpp>
@@ -36,16 +37,23 @@ std::string get_device_name(const cl_device_id& device_id, const std::string& ha
 cl_mem get_copy(cl_command_queue command_queue, cl_mem c, size_t c_nbytes, const std::string& hash)
 {
 
-  cl_mem   c_copied;
+  cl_mem   c_copied = nullptr;
   cl_event c_copy_event;
 
-  oclutil::cl_set_buffer_from_command_queue(c_copied,
+  auto r = oclutil::cl_set_buffer_from_command_queue(c_copied,
                                             command_queue,
                                             CL_MEM_READ_WRITE,
                                             c_nbytes,
                                             NULL,
                                             hash + ", in function get_copy which returns a cl_mem",
                                             true);
+
+  if(r.fail())
+  {
+    throw std::runtime_error("set buffer failed");
+  }
+
+  assert(c_copied != nullptr);
 
   oclutil::cl_enqueue_copy_buffer(command_queue,
                                   c,
