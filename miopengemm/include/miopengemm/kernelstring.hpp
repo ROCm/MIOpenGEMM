@@ -18,12 +18,12 @@ class KernUses
   // summarises use of u_a, u_b, u_c
   std::string full;
 
-  bool u_a;
-  bool u_b;
-  bool u_c;
-  bool u_w;
-  bool u_alpha;
-  bool u_beta;
+  bool u_a = false;
+  bool u_b = false;
+  bool u_c = false;
+  bool u_w = false;
+  bool u_alpha = false;
+  bool u_beta = false;
 
   bool at(Mem::E emat_x) const;
 
@@ -35,7 +35,7 @@ class KernUses
 class KernBlob
 {
   public:
-  KType::E    e_ktype;
+  KType::E    e_ktype = KType::E::N;
   KernUses    kuses;
   std::string kernstr;
   std::string fname;
