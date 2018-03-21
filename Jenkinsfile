@@ -25,7 +25,7 @@ def rocmtestnode(variant, name, dockerfile, body) {
 
             }
         }
-        withDockerContainer(image: image, args: '--device=/dev/kfd') {
+        withDockerContainer(image: image, args: '--device=/dev/kfd --device=/dev/dri --group-add video') {
             timeout(time: 1, unit: 'HOURS') {
                 body(cmake_build)
             }
@@ -60,14 +60,14 @@ def rocmnode(name, image, body) {
     }
 }
 
-rocmtest clang: rocmnode('fiji', 'ubuntu') { cmake_build ->
+rocmtest clang: rocmnode('vega', 'ubuntu') { cmake_build ->
     stage('Clang Debug') {
         cmake_build('clang++-3.8', '-DBUILD_DEV=On -DCMAKE_BUILD_TYPE=debug')
     }
     stage('Clang Release') {
         cmake_build('clang++-3.8', '-DBUILD_DEV=On -DCMAKE_BUILD_TYPE=release')
     }
-}, gcc: rocmnode('fiji', 'ubuntu') { cmake_build ->
+}, gcc: rocmnode('vega', 'ubuntu') { cmake_build ->
     stage('GCC Debug') {
         cmake_build('g++-5', '-DBUILD_DEV=On -DCMAKE_BUILD_TYPE=debug')
     }

@@ -5,6 +5,7 @@
 #include <vector>
 #include <miopengemm/error.hpp>
 #include <miopengemm/tiling.hpp>
+#include <cassert>
 
 namespace MIOpenGEMM
 {
@@ -62,7 +63,8 @@ std::tuple<bool, std::string> get_tileability(size_t TH, size_t TW, size_t tS)
     std::make_tuple(false, ss_tileable_status.str());
   }
 
-  size_t tH, tW;
+  size_t tH = 0;
+  size_t tW = 0;
   set_tile_dimensions_no_checks(tH, tW, TH, TW, tS);
 
   if (tH == 0)
@@ -75,6 +77,8 @@ std::tuple<bool, std::string> get_tileability(size_t TH, size_t TW, size_t tS)
   {
     // this would be a pedantic error: no `tall' tile. best `wide' one " + bla
   }
+
+  assert(tW != 0); 
 
   if (TW % tW != 0 || TH % TH != 0 || tW * tH != tS)
   {

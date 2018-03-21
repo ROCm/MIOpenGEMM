@@ -15,11 +15,11 @@ class ByLineGenerator : public prepgen::PrepGenerator
 {
 
   private:
-  size_t n_full_work_items_per_line;
-  size_t n_work_items_per_line;
-  size_t n_full_work_items;
-  size_t start_in_coal_last_work_item;
-  size_t work_for_last_item_in_coal;
+  size_t n_full_work_items_per_line = 0;
+  size_t n_work_items_per_line = 0;
+  size_t n_full_work_items = 0;
+  size_t start_in_coal_last_work_item = 0;
+  size_t work_for_last_item_in_coal = 0;
 
   protected:
   std::string description_string;

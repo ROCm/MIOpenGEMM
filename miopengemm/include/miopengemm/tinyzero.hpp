@@ -96,7 +96,7 @@ class TinyZero
   owrite::Writer&        mowri;
 
   Programs    programs;
-  KernelTimes kernel_times;
+  KernelTimes kernel_times{};
 
   double get_gflops(double timems);
   std::string get_run_times_heading();
