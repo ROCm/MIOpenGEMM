@@ -112,7 +112,8 @@ class Graph
   // any node in the start graph.
   HyPas              get_random_valid_start() const;
   std::vector<HyPas> get_neighbors(const HyPas&, bool prioritize) const;
-  bool contains(const HyPas&) const;
+  bool        contains(const HyPas&) const;
+  std::string get_device_name() const;
 
   private:
   // the number of attempts at finding a

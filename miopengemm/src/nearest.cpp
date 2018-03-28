@@ -17,7 +17,7 @@ bool is_within(
   for (auto& key : kc.get_keys())
   {
     if (graph.contains(kc.at(key)) && key.get_distance(ck) < threshold &&
-        Derivabilty(kc.at(key), ck.gg).is_derivable)
+        Derivabilty(kc.at(key), ck.gg).is_derivable && key.dvc == graph.get_device_name())
     {
       ++count;
       if (count > rank)
@@ -51,7 +51,8 @@ CacheKey get(const CacheKey& ck, const Graph& graph, const KernelCache& kc, size
     auto key      = cache_keys[keyi];
     auto distance = ck.get_distance(key);
     auto hp       = kc.at(key);
-    if (graph.contains(kc.at(key)) && Derivabilty(hp, ck.gg).is_derivable)
+    if (graph.contains(kc.at(key)) && Derivabilty(hp, ck.gg).is_derivable &&
+        (key.dvc == graph.get_device_name()))
     {
       v_di.emplace_back(std::make_tuple(distance, keyi));
     }
