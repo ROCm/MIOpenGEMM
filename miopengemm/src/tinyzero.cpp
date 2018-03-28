@@ -637,7 +637,8 @@ Solution TinyZero::single_descent_find(double             allotted_time,
 
   if (timer.get_elapsed() >= allotted_time)
   {
-    mowri << "stopping the search because allotted time has been surpassed" << Endl;
+    mowri << "stopping the search because allotted time has been surpassed: " << timer.get_elapsed()
+          << " > " << allotted_time << Endl;
   }
 
   else if (improvement_found_on_front == false)
