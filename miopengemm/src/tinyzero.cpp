@@ -357,7 +357,7 @@ Solution TinyZero::find0(const Constraints& constraints, const FindParams& fparm
     // 0, 1, 5, 10, 15, etc
     warmstart = (ftrack.get_descents() < 2 || ftrack.get_descents() % 5 == 0) ? true : false;
 
-    double allotted_sd = std::max(0.1, fparms.hl_outer.max_time - ftrack.get_elapsed());
+    double allotted_sd = std::max(1.0, fparms.hl_outer.max_time - ftrack.get_elapsed());
 
     auto soln = single_descent_find(
       allotted_sd, constraints, fparms.hl_core, ftrack, fparms.sumstat, warmstart, warmstart_rank);
