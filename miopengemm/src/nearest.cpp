@@ -17,7 +17,7 @@ bool is_within(
   for (auto& key : kc.get_keys())
   {
     if (graph.contains(kc.at(key)) && key.get_distance(ck) < threshold &&
-        Derivabilty(kc.at(key), ck.gg).is_derivable)
+        Derivabilty(kc.at(key), ck.gg).is_derivable && key.dvc == graph.get_device_name())
     {
       ++count;
       if (count > rank)
