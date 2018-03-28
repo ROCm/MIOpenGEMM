@@ -81,6 +81,7 @@ KernelCache init_kernel_cache()
 #include "cache1.cachetxt"
 #include "cache2.cachetxt"
 #include "cache3.cachetxt"
+#include "cache4.cachetxt"
   return kc;
 }
 
