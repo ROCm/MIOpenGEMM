@@ -432,14 +432,14 @@ double Geometry::get_distance(const Geometry& g2) const
     {
       for (auto emat : {Mat::E::A, Mat::E::B, Mat::E::C})
       {
-        distance += 0.2 * (std::min<size_t>(ldX[emat] % x, x - ldX[emat] % x) % 4 ==
+        distance += 0.2 * (std::min<size_t>(ldX[emat] % x, x - ldX[emat] % x) % 4 !=
                            std::min<size_t>(g2.ldX[emat] % x, x - g2.ldX[emat] % x) % 4);
       }
     }
 
     for (size_t i = 0; i < wSpaceSufficient.size(); ++i)
     {
-      distance += 0.2 * (wSpaceSufficient[i] == g2.wSpaceSufficient[i]);
+      distance += 0.2 * (wSpaceSufficient[i] != g2.wSpaceSufficient[i]);
     }
   }
 
