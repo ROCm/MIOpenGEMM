@@ -424,6 +424,8 @@ Graph::Graph(const Geometry&         gg,
   p_coupled.push_back({{Mat::E::C, NonChi::E::UNR}, {Mat::E::C, NonChi::E::ICE}});
 }
 
+std::string Graph::get_device_name() const { return devinfo.device_name; }
+
 bool Graph::contains(Mat::E emat, size_t hpi, size_t value) const
 {
   if (emat >= Mat::E::N)
