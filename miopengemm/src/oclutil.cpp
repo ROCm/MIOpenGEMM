@@ -1,6 +1,7 @@
 /*******************************************************************************
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
+#include <cassert>
 #include <chrono>
 #include <future>
 #include <map>
@@ -8,7 +9,6 @@
 #include <string>
 #include <thread>
 #include <vector>
-#include <cassert>
 #include <miopengemm/error.hpp>
 #include <miopengemm/hint.hpp>
 #include <miopengemm/oclutil.hpp>
@@ -40,15 +40,16 @@ cl_mem get_copy(cl_command_queue command_queue, cl_mem c, size_t c_nbytes, const
   cl_mem   c_copied = nullptr;
   cl_event c_copy_event;
 
-  auto r = oclutil::cl_set_buffer_from_command_queue(c_copied,
-                                            command_queue,
-                                            CL_MEM_READ_WRITE,
-                                            c_nbytes,
-                                            NULL,
-                                            hash + ", in function get_copy which returns a cl_mem",
-                                            true);
+  auto r = oclutil::cl_set_buffer_from_command_queue(
+    c_copied,
+    command_queue,
+    CL_MEM_READ_WRITE,
+    c_nbytes,
+    NULL,
+    hash + ", in function get_copy which returns a cl_mem",
+    true);
 
-  if(r.fail())
+  if (r.fail())
   {
     throw std::runtime_error("set buffer failed");
   }
@@ -1041,6 +1042,8 @@ DevInfo::DevInfo(const cl_device_id& device_)
 }
 
 DevInfo get_fiji_devinfo() { return DevInfo("gfx803", 64); }
+
+DevInfo get_vega_devinfo() { return DevInfo("gfx900", 64); }
 
 DevInfo::DevInfo(const std::string& identifier_, size_t was_)
 {
