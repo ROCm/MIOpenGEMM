@@ -1041,12 +1041,13 @@ DevInfo::DevInfo(const cl_device_id& device_)
   initialise();
 }
 
-DevInfo get_fiji_devinfo() { return DevInfo("gfx803", 64); }
+DevInfo get_fiji_devinfo() { return DevInfo("gfx803", "gfx803", 64); }
 
-DevInfo get_vega_devinfo() { return DevInfo("gfx900", 64); }
+DevInfo get_vega_devinfo() { return DevInfo("gfx900", "gfx900", 32); }
 
-DevInfo::DevInfo(const std::string& identifier_, size_t was_)
+DevInfo::DevInfo(const std::string& identifier_, const std::string& device_name_, size_t was_)
 {
+  device_name  = device_name_;
   identifier   = identifier_;
   wg_atom_size = was_;
 }
