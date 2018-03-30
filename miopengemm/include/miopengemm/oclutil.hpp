@@ -358,6 +358,8 @@ class DevInfo
 };
 
 DevInfo get_fiji_devinfo();
+
+DevInfo get_vega_devinfo();
 }
 }
 
