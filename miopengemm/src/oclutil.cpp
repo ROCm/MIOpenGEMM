@@ -1,6 +1,7 @@
 /*******************************************************************************
  * Copyright (C) 2017 Advanced Micro Devices, Inc. All rights reserved.
  *******************************************************************************/
+#include <cassert>
 #include <chrono>
 #include <future>
 #include <map>
@@ -8,7 +9,6 @@
 #include <string>
 #include <thread>
 #include <vector>
-#include <cassert>
 #include <miopengemm/error.hpp>
 #include <miopengemm/hint.hpp>
 #include <miopengemm/oclutil.hpp>
@@ -40,15 +40,16 @@ cl_mem get_copy(cl_command_queue command_queue, cl_mem c, size_t c_nbytes, const
   cl_mem   c_copied = nullptr;
   cl_event c_copy_event;
 
-  auto r = oclutil::cl_set_buffer_from_command_queue(c_copied,
-                                            command_queue,
-                                            CL_MEM_READ_WRITE,
-                                            c_nbytes,
-                                            NULL,
-                                            hash + ", in function get_copy which returns a cl_mem",
-                                            true);
+  auto r = oclutil::cl_set_buffer_from_command_queue(
+    c_copied,
+    command_queue,
+    CL_MEM_READ_WRITE,
+    c_nbytes,
+    NULL,
+    hash + ", in function get_copy which returns a cl_mem",
+    true);
 
-  if(r.fail())
+  if (r.fail())
   {
     throw std::runtime_error("set buffer failed");
   }
@@ -1040,10 +1041,13 @@ DevInfo::DevInfo(const cl_device_id& device_)
   initialise();
 }
 
-DevInfo get_fiji_devinfo() { return DevInfo("gfx803", 64); }
+DevInfo get_fiji_devinfo() { return DevInfo("gfx803", "gfx803", 64); }
 
-DevInfo::DevInfo(const std::string& identifier_, size_t was_)
+DevInfo get_vega_devinfo() { return DevInfo("gfx900", "gfx900", 64); }
+
+DevInfo::DevInfo(const std::string& identifier_, const std::string& device_name_, size_t was_)
 {
+  device_name  = device_name_;
   identifier   = identifier_;
   wg_atom_size = was_;
 }
@@ -1165,15 +1169,7 @@ void DevInfo::initialise()
            platinfo.vendor.find("Advanced Micro") != std::string::npos ||
            platinfo.vendor.find("AMD") != std::string::npos)
   {
-    if (device_name == vega_string())
-    {
-      wg_atom_size = 32;
-    }
-
-    else
-    {
-      wg_atom_size = 64;
-    }
+    wg_atom_size = 64;
   }
 
   else

@@ -354,10 +354,12 @@ class DevInfo
   DevInfo(const cl_device_id& device);
   DevInfo(const CLHint& hint, owrite::Writer& mowri);
   // hack needed temporarily for get_fiji_device.
-  DevInfo(const std::string& identifier, size_t wg_atom_size);
+  DevInfo(const std::string& identifier, const std::string& device_name, size_t wg_atom_size);
 };
 
 DevInfo get_fiji_devinfo();
+
+DevInfo get_vega_devinfo();
 }
 }
 

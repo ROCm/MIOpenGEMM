@@ -121,7 +121,7 @@ Solution find(float            allotted_time,
   (void)with_warnings;
   bool   c_is_const    = true;
   cl_mem workspace_gpu = nullptr;
-  
+
   Ver::E         e_ver              = verbose ? Ver::E::TERMINAL : Ver::E::SILENT;
   std::string    constraints_string = enforce_determinism ? "C__ICE1" : "";
   Constraints    constraints(constraints_string);
@@ -144,10 +144,11 @@ Solution find(float            allotted_time,
 Solution get_default(const Geometry& gg)
 {
 
-  Constraints    constraints{""};
-  auto           fiji_devinfo = oclutil::get_fiji_devinfo();
+  Constraints constraints{""};
+  // auto           devinfo = oclutil::get_fiji_devinfo();
+  auto           devinfo = oclutil::get_vega_devinfo();
   owrite::Writer mowri(Ver::E::SILENT, "");
   size_t         rank = 0;
-  return get_default_soln(fiji_devinfo, gg, constraints, mowri, IfNoCache::GENERIC, rank);
+  return get_default_soln(devinfo, gg, constraints, mowri, IfNoCache::GENERIC, rank);
 }
 }
