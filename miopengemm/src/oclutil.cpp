@@ -1043,7 +1043,7 @@ DevInfo::DevInfo(const cl_device_id& device_)
 
 DevInfo get_fiji_devinfo() { return DevInfo("gfx803", "gfx803", 64); }
 
-DevInfo get_vega_devinfo() { return DevInfo("gfx900", "gfx900", 32); }
+DevInfo get_vega_devinfo() { return DevInfo("gfx900", "gfx900", 64); }
 
 DevInfo::DevInfo(const std::string& identifier_, const std::string& device_name_, size_t was_)
 {
@@ -1169,15 +1169,7 @@ void DevInfo::initialise()
            platinfo.vendor.find("Advanced Micro") != std::string::npos ||
            platinfo.vendor.find("AMD") != std::string::npos)
   {
-    if (device_name == vega_string())
-    {
-      wg_atom_size = 32;
-    }
-
-    else
-    {
-      wg_atom_size = 64;
-    }
+    wg_atom_size = 64;
   }
 
   else
