@@ -70,6 +70,9 @@ CacheKey get(const CacheKey& ck, const Graph& graph, const KernelCache& kc, size
 
   auto nearest_derivable = cache_keys[std::get<1>(v_di[rank])];
 
+  //if(std::get<0>(v_di[rank]) != 0)
+  //std::cerr << nearest_derivable.get_string() << "distance     :    " << std::get<0>(v_di[rank]) << std::endl;
+
   // confirm derivability
   Derivabilty drvble(kc.at(nearest_derivable), ck.gg);
   if (!drvble.is_derivable)

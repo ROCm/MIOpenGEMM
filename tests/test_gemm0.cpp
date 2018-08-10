@@ -35,8 +35,36 @@ int main()
   std::vector<bool>              run_event_timers;
 
   std::vector<Geometry> geometries = get_conv_geometries();
-  geometries.resize(20);
-  geometries.emplace_back("tC0_tA1_tB1_colMaj0_m400_n500_k600_lda1002_ldb1004_ldc1008_ws0_f32");
+  geometries.resize(1);
+
+  //geometries.emplace_back("tC0_tA0_tB0_colMaj1_m6272_n256_k64_lda6272_ldb64_ldc6272_ws0_f32");
+  //geometries.emplace_back("tC0_tA0_tB0_colMaj1_m196_n512_k2048_lda196_ldb2048_ldc196_ws0_f32");
+  geometries.emplace_back("tC0_tA0_tB0_colMaj1_m6272_n256_k64_lda6272_ldb64_ldc6272_ws0_f32");
+  //geometries.emplace_back("tC0_tA0_tB0_colMaj1_m6272_n128_k256_lda6272_ldb256_ldc6272_ws0_f32");
+  //geometries.emplace_back("tC0_tA0_tB0_colMaj1_m12544_n128_k256_lda12544_ldb256_ldc12544_ws0_f32");
+  //geometries.emplace_back("tC0_tA0_tB0_colMaj1_m12544_n128_k256_lda12544_ldb256_ldc12544_ws0_f32");
+  //geometries.emplace_back("tC0_tA0_tB0_colMaj1_m3136_n256_k512_lda3136_ldb512_ldc3136_ws0_f32");
+  //geometries.emplace_back("tC0_tA0_tB0_colMaj1_m12544_n128_k256_lda12544_ldb256_ldc12544_ws0_f32");
+  //geometries.emplace_back("tC0_tA0_tB0_colMaj1_m3136_n256_k256_lda3136_ldb256_ldc3136_ws0_f32");
+  //geometries.emplace_back("tC0_tA0_tB0_colMaj1_m12544_n128_k256_lda12544_ldb256_ldc12544_ws0_f32");
+  //geometries.emplace_back("tC0_tA0_tB0_colMaj1_m3136_n1024_k512_lda3136_ldb512_ldc3136_ws0_f32");
+  //geometries.emplace_back("tC0_tA0_tB0_colMaj1_m3136_n256_k1024_lda3136_ldb1024_ldc3136_ws0_f32");
+  //geometries.emplace_back("tC0_tA0_tB0_colMaj1_m3136_n1024_k512_lda3136_ldb512_ldc3136_ws0_f32");
+  //geometries.emplace_back("tC0_tA0_tB0_colMaj1_m3136_n256_k1024_lda3136_ldb1024_ldc3136_ws0_f32");
+  //geometries.emplace_back("tC0_tA0_tB1_colMaj1_m3136_n512_k1024_lda3136_ldb512_ldc3136_ws0_f32");
+  //geometries.emplace_back("tC0_tA0_tB1_colMaj1_m3136_n512_k256_lda3136_ldb512_ldc3136_ws0_f32");
+  //geometries.emplace_back("tC0_tA0_tB1_colMaj1_m3136_n512_k1024_lda3136_ldb512_ldc3136_ws0_f32");
+  //geometries.emplace_back("tC0_tA0_tB1_colMaj1_m12544_n256_k128_lda12544_ldb256_ldc12544_ws0_f32");
+  //geometries.emplace_back("tC0_tA0_tB1_colMaj1_m12544_n64_k256_lda12544_ldb64_ldc12544_ws0_f32");
+  //geometries.emplace_back("tC0_tA1_tB0_colMaj1_m128_n512_k784_lda784_ldb784_ldc128_ws0_f32");
+  //geometries.emplace_back("tC0_tA0_tB1_colMaj1_m12544_n256_k128_lda12544_ldb256_ldc12544_ws0_f32");
+  //geometries.emplace_back("tC0_tA0_tB1_colMaj1_m3136_n128_k512_lda3136_ldb128_ldc3136_ws0_f32");
+  //geometries.emplace_back("tC0_tA1_tB0_colMaj1_m64_n256_k3136_lda3136_ldb3136_ldc64_ws0_f32");
+  //geometries.emplace_back("tC0_tA1_tB0_colMaj1_m576_n64_k2916_lda2916_ldb2916_ldc576_ws0_f32");
+  //geometries.emplace_back("tC0_tA0_tB1_colMaj1_m3136_n256_k64_lda3136_ldb256_ldc3136_ws0_f32");
+  //geometries.emplace_back("tC0_tA1_tB0_colMaj1_m256_n64_k3136_lda3136_ldb3136_ldc256_ws0_f32");
+  //geometries.emplace_back("tC0_tA0_tB1_colMaj1_m2916_n27_k64_lda2916_ldb27_ldc2916_ws0_f32");
+  //geometries.emplace_back("tC0_tA1_tB0_colMaj1_m64_n64_k12544_lda12544_ldb12544_ldc64_ws0_f32");
 
   // std::vector<Geometry> geometries = get_deepbench(0);
 
@@ -59,16 +87,16 @@ int main()
       betas.emplace_back(0.5);
     }
 
-    n_runs.emplace_back(3 + 3 * (i % 3 == 2));
+    n_runs.emplace_back(1);
 
     run_accus.emplace_back(true);
 
-    if (i % 3 == 0)
-    {
-      impls.emplace_back(apitest::GemmImpl::XGEMM);
-    }
+    //if (i % 3 == 0)
+    //{
+      //impls.emplace_back(apitest::GemmImpl::XGEMM);
+    //}
 
-    else
+    //else
     {
       impls.emplace_back(apitest::GemmImpl::GEMM0);
     }
