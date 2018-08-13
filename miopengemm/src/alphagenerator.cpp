@@ -704,6 +704,12 @@ if ((group_id_z == N_WORK_ITEMS_PER_C_ELM - 1) && k_remaining > 0){
 
         ss << "\n/* the case where this is not an edge tile : will write to "
               "all cells */ \n";
+
+
+        /// A hijack of an issue for miopengemm on some plaforms
+        /// to-do: investigate the issue and make a proper fix
+        ss << "if ((group_id_b != N_GROUPS_B - 1) && (group_id_a != N_GROUPS_A - 1)){ \n";
+#if 0
         if (nconds == 2)
         {
           ss << "if (" << cond_ab[Mat::E::B] << " && " << cond_ab[Mat::E::A] << "){ \n";
@@ -719,6 +725,7 @@ if ((group_id_z == N_WORK_ITEMS_PER_C_ELM - 1) && k_remaining > 0){
             }
           }
         }
+#endif
 
         append_final_write_loops_no_check(ss);
         ss << "\n}";
