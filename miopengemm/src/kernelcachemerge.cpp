@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <chrono>
 #include <functional>
+#include <thread>
 #include <unordered_map>
 #include <miopengemm/kernelcachemerge.hpp>
 #include <miopengemm/setabcw.hpp>

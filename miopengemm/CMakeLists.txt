@@ -14,7 +14,10 @@ file(GLOB_RECURSE source_files src/*.cpp)
 
 add_library(miopengemm ${source_files})
 
-target_link_libraries(miopengemm ${OPENCL_LIBRARIES} ${OpenBLAS_LIB} ${CLBLAST_LIB} ${ISAAC_LIB})
+target_link_libraries(miopengemm
+    PUBLIC ${OPENCL_LIBRARIES} ${OpenBLAS_LIB} ${CLBLAST_LIB} ${ISAAC_LIB}
+    PRIVATE ${CMAKE_THREAD_LIBS_INIT}
+)
 
 target_include_directories (miopengemm PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/dev_include>)
 target_include_directories (miopengemm SYSTEM PUBLIC 
