@@ -52,6 +52,10 @@ endif()
 set( CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." )
 find_package( OpenCL REQUIRED )
 
+SET(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+SET(THREADS_PREFER_PTHREAD_FLAG TRUE)
+find_package(Threads REQUIRED)
+
 #SET (CMAKE_CXX_COMPILER "clang++")
 
 include(EnableCompilerWarnings)

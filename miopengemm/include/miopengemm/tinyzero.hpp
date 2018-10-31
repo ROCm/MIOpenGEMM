@@ -10,7 +10,6 @@
 #include <limits>
 #include <map>
 #include <sstream>
-#include <thread>
 #include <tuple>
 #include <vector>
 #include <miopengemm/architests.hpp>
