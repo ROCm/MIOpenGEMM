@@ -72,8 +72,8 @@ Solution get_default_soln(const oclutil::DevInfo& devinfo,
   CacheKey ck(devinfo.identifier, constraints, gg);
   Graph    graph(gg, devinfo, constraints, mowri);
 
-  bool   catch_ROCm_small_k = false;
-  size_t ROCm_small_k       = 1;
+  bool   catch_ROCm_small_k = true;
+  size_t ROCm_small_k       = 2048;
 
   // TODO : check this.
   if ((catch_ROCm_small_k == false || gg.k > ROCm_small_k) &&
