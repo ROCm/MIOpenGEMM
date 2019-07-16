@@ -21,7 +21,7 @@ include(ROCMSetupVersion)
 include(ROCMInstallSymlinks)
 include(ROCMCreatePackage)
 
-rocm_setup_version(VERSION 1.1.5)
+rocm_setup_version(VERSION 1.1.6)
 
 #Where to find FindOpenCL.cmake and other files which help locate external files and libraries
 list( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
