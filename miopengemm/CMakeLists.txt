@@ -14,7 +14,28 @@ file(GLOB_RECURSE source_files src/*.cpp)
 
 add_library(miopengemm ${source_files})
 
-target_link_libraries(miopengemm ${OPENCL_LIBRARIES} ${OpenBLAS_LIB} ${CLBLAST_LIB} ${ISAAC_LIB})
+target_link_libraries(miopengemm PUBLIC ${OPENCL_LIBRARIES} ${OpenBLAS_LIB} ${CLBLAST_LIB} ${ISAAC_LIB})
+
+if(NOT WIN32 AND NOT APPLE)
+    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/lib.def "
+
+      MIOPENGEMM_1
+      {
+      global:
+          miopengemm*;
+          *MIOpenGEMM*;
+          extern \"C++\" {
+              MIOpenGEMM::*;
+          };
+      local:
+          *;
+      };
+    ")
+
+    target_link_libraries(miopengemm PRIVATE "-Wl,--version-script=${CMAKE_CURRENT_BINARY_DIR}/lib.def")
+    target_link_libraries(miopengemm PRIVATE "-Wl,--exclude-libs,ALL")
+    set_target_properties(miopengemm PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
+endif()
 
 target_include_directories (miopengemm PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/dev_include>)
 target_include_directories (miopengemm SYSTEM PUBLIC 
@@ -28,6 +49,9 @@ target_include_directories (miopengemm SYSTEM PUBLIC
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     target_include_directories (miopengemm PUBLIC ${OPENCL_INCLUDE_DIRS}/Headers)
 endif()
+
+
+
 
 rocm_install_targets(
   TARGETS miopengemm
