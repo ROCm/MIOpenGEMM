@@ -5,6 +5,7 @@
 add_definitions(-std=c++11)
 
 set( miopengemm_INSTALL_DIR miopengemm)
+set( lib_SOVERSION 1.0 )
 
 option(BUILD_DEV OFF)
 
@@ -34,6 +35,7 @@ if(NOT WIN32 AND NOT APPLE)
 
     target_link_libraries(miopengemm PRIVATE "-Wl,--version-script=${CMAKE_CURRENT_BINARY_DIR}/lib.def")
     target_link_libraries(miopengemm PRIVATE "-Wl,--exclude-libs,ALL")
+    rocm_set_soversion(miopengemm ${lib_SOVERSION})
     set_target_properties(miopengemm PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
 endif()
 
