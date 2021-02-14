@@ -1,3 +1,30 @@
+@NonCPS
+def rocmtest(m) {
+    def builders = [:]
+    for(e in m) {
+        def label = e.key;
+        def action = e.value;
+        builders[label] = {
+            action(label)
+        }
+    }
+    parallel builders
+}
+
+@NonCPS
+def rocmnode(name, image, body) {
+    def node_name = 'rocmtest || rocm'
+    if(name == 'fiji') {
+        node_name = 'rocmtest && fiji';
+    } else if(name == 'vega') {
+        node_name = 'rocmtest && vega';
+    } else {
+        node_name = name
+    }
+    return { label ->
+        rocmtestnode(label, node_name, image, body)
+    }
+}
 
 def rocmtestnode(variant, name, dockerfile, body) {
     def image = "miopengemm-${dockerfile}"
@@ -32,33 +59,7 @@ def rocmtestnode(variant, name, dockerfile, body) {
         }
     }
 }
-@NonCPS
-def rocmtest(m) {
-    def builders = [:]
-    for(e in m) {
-        def label = e.key;
-        def action = e.value;
-        builders[label] = {
-            action(label)
-        }
-    }
-    parallel builders
-}
 
-@NonCPS
-def rocmnode(name, image, body) {
-    def node_name = 'rocmtest || rocm'
-    if(name == 'fiji') {
-        node_name = 'rocmtest && fiji';
-    } else if(name == 'vega') {
-        node_name = 'rocmtest && vega';
-    } else {
-        node_name = name
-    }
-    return { label ->
-        rocmtestnode(label, node_name, image, body)
-    }
-}
 
 rocmtest clang: rocmnode('vega', 'ubuntu') { cmake_build ->
     stage('Clang Debug') {
