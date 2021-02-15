@@ -32,7 +32,7 @@ def rocmtestnode(variant, name, dockerfile, body) {
     }
 }
 //@NonCPS
-def rocmnode(name, image, body) {
+def rocmnode(name) {
     def node_name = 'rocmtest || rocm'
     if(name == 'fiji') {
         node_name = 'rocmtest && fiji';
