@@ -42,7 +42,6 @@ def rocmnode(name, image, body) {
         node_name = name
     }
     return rocmtestnode(label, node_name, image, body)
-    }
 }
 pipeline {
     agent none
