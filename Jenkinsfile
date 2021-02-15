@@ -31,19 +31,6 @@ def rocmtestnode(variant, name, dockerfile, body) {
         }
     }
 }
-@NonCPS
-def rocmtest(m) {
-    def builders = [:]
-    for(e in m) {
-        def label = e.key;
-        def action = e.value;
-        builders[label] = {
-            action(label)
-        }
-    }
-    parallel builders
-}
-
 //@NonCPS
 def rocmnode(name, image, body) {
     def node_name = 'rocmtest || rocm'
@@ -54,22 +41,19 @@ def rocmnode(name, image, body) {
     } else {
         node_name = name
     }
-    return { label ->
-        rocmtestnode(label, node_name, image, body)
+    return rocmtestnode(label, node_name, image, body)
     }
 }
 pipeline {
     agent none
-    environment{
-        image = "ubuntu"
-    }
     stages {
         stage("build and deploy for clang and gcc") {
             parallel {
                 stage("clang") {
-                    agent{  label rocmnode('vega', 'ubuntu') }
+                    agent{  label rocmnode("vega") }
+                    //agent{  label rocmnode('vega', 'ubuntu') }
                     stages {
-                        stage("clang Debug") {
+                        stage("Clang Debug") {
                             steps {
                                 cmake_build('clang++-3.8', '-DBUILD_DEV=On -DCMAKE_BUILD_TYPE=debug')
                             }
@@ -83,8 +67,8 @@ pipeline {
                 }
 
                 stage("gcc") {
-                    //agent{  label rocmnode("vega") }
-                     agent{  label rocmnode('vega', 'ubuntu') }
+                    agent{  label rocmnode("vega") }
+                     //agent{  label rocmnode('vega', 'ubuntu') }
                     stages {
                         stage("GCC Debug") {
                             steps {
