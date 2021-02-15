@@ -41,7 +41,7 @@ def rocmnode(name, image, body) {
     } else {
         node_name = name
     }
-    return rocmtestnode(label, node_name, image, body)
+    return node_name
 }
 pipeline {
     agent none
@@ -49,7 +49,7 @@ pipeline {
         stage("build and deploy for clang and gcc") {
             parallel {
                 stage("clang") {
-                    agent{  rocmnode("vega") }
+                    agent{  label rocmnode("vega") }
                     //agent{  label rocmnode('vega', 'ubuntu') }
                     stages {
                         stage("Clang Debug") {
@@ -66,7 +66,7 @@ pipeline {
                 }
 
                 stage("gcc") {
-                    agent{  rocmnode("vega") }
+                    agent{  label rocmnode("vega") }
                      //agent{  label rocmnode('vega', 'ubuntu') }
                     stages {
                         stage("GCC Debug") {
