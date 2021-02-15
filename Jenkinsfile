@@ -67,7 +67,7 @@ pipeline {
         stage("build and deploy for clang and gcc") {
             parallel {
                 stage("clang") {
-                    agent{  label rocmnode("vega") }
+                    agent{  label rocmnode('vega', 'ubuntu') }
                     stages {
                         stage("clang Debug") {
                             steps {
@@ -83,7 +83,8 @@ pipeline {
                 }
 
                 stage("gcc") {
-                    agent{  label rocmnode("vega") }
+                    //agent{  label rocmnode("vega") }
+                     agent{  label rocmnode('vega', 'ubuntu') }
                     stages {
                         stage("GCC Debug") {
                             steps {
