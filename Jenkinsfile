@@ -44,7 +44,7 @@ def rocmtest(m) {
     parallel builders
 }
 
-@NonCPS
+//@NonCPS
 def rocmnode(name, image, body) {
     def node_name = 'rocmtest || rocm'
     if(name == 'fiji') {
