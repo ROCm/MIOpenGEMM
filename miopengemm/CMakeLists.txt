@@ -52,19 +52,22 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     target_include_directories (miopengemm PUBLIC ${OPENCL_INCLUDE_DIRS}/Headers)
 endif()
 
-
-
-
 rocm_install_targets(
   TARGETS miopengemm
-  INCLUDE 
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-  PREFIX ${miopengemm_INSTALL_DIR}
+)
+
+install(
+  DIRECTORY
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/"
+  DESTINATION "include"
+  FILES_MATCHING
+  PATTERN "*.h"
+  PATTERN "*.hpp"
+  PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
 )
 
 rocm_export_targets(
   TARGETS miopengemm
-  PREFIX ${miopengemm_INSTALL_DIR}
 )
 
 rocm_create_package(
@@ -73,6 +76,4 @@ rocm_create_package(
     MAINTAINER "Paul Fultz II <paul.fultz@amd.com>"
     LDCONFIG
 )
-
-rocm_install_symlink_subdir(${miopengemm_INSTALL_DIR})
 
