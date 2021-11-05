@@ -40,6 +40,7 @@ if(NOT WIN32 AND NOT APPLE)
 endif()
 
 target_include_directories (miopengemm PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/dev_include>)
+target_include_directories (miopengemm PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 target_include_directories (miopengemm SYSTEM PUBLIC 
 
     ${OPENCL_INCLUDE_DIRS} 
@@ -58,8 +59,9 @@ rocm_install_targets(
 
 install(
   DIRECTORY
-  "${CMAKE_CURRENT_SOURCE_DIR}/include/"
-  DESTINATION "include"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/miopengemm/"
+  "${CMAKE_CURRENT_BINARY_DIR}/dev_include/miopengemm/"
+  DESTINATION "include/miopengemm/"
   FILES_MATCHING
   PATTERN "*.h"
   PATTERN "*.hpp"
