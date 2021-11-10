@@ -17,6 +17,7 @@ add_library(miopengemm ${source_files})
 target_link_libraries(miopengemm ${OPENCL_LIBRARIES} ${OpenBLAS_LIB} ${CLBLAST_LIB} ${ISAAC_LIB})
 
 target_include_directories (miopengemm PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/dev_include>)
+target_include_directories (miopengemm PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 target_include_directories (miopengemm SYSTEM PUBLIC 
 
     ${OPENCL_INCLUDE_DIRS} 
@@ -31,14 +32,21 @@ endif()
 
 rocm_install_targets(
   TARGETS miopengemm
-  INCLUDE 
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-  PREFIX ${miopengemm_INSTALL_DIR}
+)
+
+install(
+  DIRECTORY
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/miopengemm/"
+  "${CMAKE_CURRENT_BINARY_DIR}/dev_include/miopengemm/"
+  DESTINATION "include/miopengemm/"
+  FILES_MATCHING
+  PATTERN "*.h"
+  PATTERN "*.hpp"
+  PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ
 )
 
 rocm_export_targets(
   TARGETS miopengemm
-  PREFIX ${miopengemm_INSTALL_DIR}
 )
 
 rocm_create_package(
@@ -47,6 +55,4 @@ rocm_create_package(
     MAINTAINER "Paul Fultz II <paul.fultz@amd.com>"
     LDCONFIG
 )
-
-rocm_install_symlink_subdir(${miopengemm_INSTALL_DIR})
 
