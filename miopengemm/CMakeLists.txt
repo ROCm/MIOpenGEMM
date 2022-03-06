@@ -59,12 +59,10 @@ rocm_install_targets(
   TARGETS miopengemm
   INCLUDE 
     ${CMAKE_CURRENT_SOURCE_DIR}/include
-  PREFIX ${miopengemm_INSTALL_DIR}
 )
 
 rocm_export_targets(
   TARGETS miopengemm
-  PREFIX ${miopengemm_INSTALL_DIR}
 )
 
 rocm_create_package(
@@ -73,6 +71,4 @@ rocm_create_package(
     MAINTAINER "Paul Fultz II <paul.fultz@amd.com>"
     LDCONFIG
 )
-
-rocm_install_symlink_subdir(${miopengemm_INSTALL_DIR})
 
