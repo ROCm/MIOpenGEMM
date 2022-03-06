@@ -65,6 +65,15 @@ rocm_export_targets(
   TARGETS miopengemm
 )
 
+if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY)
+  rocm_install(
+    DIRECTORY
+       "${PROJECT_BINARY_DIR}/miopengemm/include"
+        DESTINATION "miopengemm" )
+  message( STATUS "Backward Compatible Sym Link Created for include directories" )
+endif()
+
+
 rocm_create_package(
     NAME miopengemm
     DESCRIPTION "A tool for generating OpenCL matrix multiplication (GEMM) kernels"
