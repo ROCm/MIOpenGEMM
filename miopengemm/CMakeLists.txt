@@ -59,13 +59,20 @@ rocm_install_targets(
   TARGETS miopengemm
   INCLUDE 
     ${CMAKE_CURRENT_SOURCE_DIR}/include
-  PREFIX ${miopengemm_INSTALL_DIR}
 )
 
 rocm_export_targets(
   TARGETS miopengemm
-  PREFIX ${miopengemm_INSTALL_DIR}
 )
+
+if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY)
+  rocm_install(
+    DIRECTORY
+       "${PROJECT_BINARY_DIR}/miopengemm/include"
+        DESTINATION "miopengemm" )
+  message( STATUS "Backward Compatible Sym Link Created for include directories" )
+endif()
+
 
 rocm_create_package(
     NAME miopengemm
@@ -73,6 +80,4 @@ rocm_create_package(
     MAINTAINER "Paul Fultz II <paul.fultz@amd.com>"
     LDCONFIG
 )
-
-rocm_install_symlink_subdir(${miopengemm_INSTALL_DIR})
 
