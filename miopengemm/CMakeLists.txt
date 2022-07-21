@@ -77,7 +77,7 @@ endif()
 rocm_create_package(
     NAME miopengemm
     DESCRIPTION "A tool for generating OpenCL matrix multiplication (GEMM) kernels"
-    MAINTAINER "Paul Fultz II <paul.fultz@amd.com>"
+    MAINTAINER "MIOpen Maintainer <miopen-lib.support@amd.com>"
     LDCONFIG
 )
 
