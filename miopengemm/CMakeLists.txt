@@ -41,7 +41,8 @@ endif()
 
 target_include_directories (miopengemm PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/dev_include>)
 # Opencl headers installed in cmake install includedir and INTERFACE_INCLUDE_DIRECTORIES have that path
-# OPENCL_INCLUDE_DIRS is redundant and not required in config files
+# OPENCL_INCLUDE_DIRS is redundant and not required in install interface.
+# Required for building, so limiting it to build interface
 target_include_directories (miopengemm SYSTEM PUBLIC
 
     $<BUILD_INTERFACE:${OPENCL_INCLUDE_DIRS}>
