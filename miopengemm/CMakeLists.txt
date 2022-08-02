@@ -40,9 +40,12 @@ if(NOT WIN32 AND NOT APPLE)
 endif()
 
 target_include_directories (miopengemm PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/dev_include>)
-target_include_directories (miopengemm SYSTEM PUBLIC 
+# Opencl headers installed in cmake install includedir and INTERFACE_INCLUDE_DIRECTORIES have that path
+# OPENCL_INCLUDE_DIRS is redundant and not required in install interface.
+# Required for building, so limiting it to build interface
+target_include_directories (miopengemm SYSTEM PUBLIC
 
-    ${OPENCL_INCLUDE_DIRS} 
+    $<BUILD_INTERFACE:${OPENCL_INCLUDE_DIRS}>
     ${CLBLAST_INCLUDE_DIR}
     ${ISAAC_INCLUDE_DIR}
     ${OpenBLAS_INCLUDE_DIR}
@@ -57,7 +60,7 @@ endif()
 
 rocm_install_targets(
   TARGETS miopengemm
-  INCLUDE 
+  INCLUDE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
