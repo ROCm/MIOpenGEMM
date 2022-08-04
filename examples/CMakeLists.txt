@@ -8,7 +8,7 @@ add_custom_target(examples COMMENT "Build all examples.")
 
 function(add_example_executable EX_NAME)
     add_executable (${EX_NAME} EXCLUDE_FROM_ALL ${ARGN})
-    target_link_libraries(${EX_NAME} miopengemm)
+    target_link_libraries(${EX_NAME} miopengemm ${OPENCL_LIBRARIES})
     add_dependencies(examples ${EX_NAME})
 endfunction(add_example_executable)
 
