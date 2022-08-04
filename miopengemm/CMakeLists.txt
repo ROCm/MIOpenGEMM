@@ -15,7 +15,10 @@ file(GLOB_RECURSE source_files src/*.cpp)
 
 add_library(miopengemm ${source_files})
 
-target_link_libraries(miopengemm PUBLIC ${OPENCL_LIBRARIES} ${OpenBLAS_LIB} ${CLBLAST_LIB} ${ISAAC_LIB})
+# Adding opencl library as public is resulting in hard coded path for INTERFACE_LINK_LIBRARIES
+# So lmiting it to private, that will remove opencl from the interface link
+target_link_libraries(miopengemm PUBLIC  ${OpenBLAS_LIB} ${CLBLAST_LIB} ${ISAAC_LIB})
+target_link_libraries(miopengemm PRIVATE ${OPENCL_LIBRARIES})
 
 if(NOT WIN32 AND NOT APPLE)
     file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/lib.def "
