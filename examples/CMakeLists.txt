@@ -5,10 +5,10 @@
 SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -pedantic" )
 
 add_custom_target(examples COMMENT "Build all examples.")
-
+find_package (Threads REQUIRED)
 function(add_example_executable EX_NAME)
     add_executable (${EX_NAME} EXCLUDE_FROM_ALL ${ARGN})
-    target_link_libraries(${EX_NAME} miopengemm ${OPENCL_LIBRARIES})
+    target_link_libraries(${EX_NAME} miopengemm ${OPENCL_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
     add_dependencies(examples ${EX_NAME})
 endfunction(add_example_executable)
 
